@@ -274,7 +274,7 @@ STATISTICS = {
 }
 
 
-rule save_statistics_csv:
+rule write_statistics:
     params:
         statistics=STATISTICS,
     input:
@@ -282,17 +282,17 @@ rule save_statistics_csv:
         + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output:
         **{
-            f"{csv}": RESULTS
+            f"{statistic}": RESULTS
             + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
-            + f"{csv}.csv"
-            for carrier in config["plotting"].get("carriers", "all")
-            for csv in STATISTICS
+            + f"{statistic}.csv"
+            for carrier in config["plotting"]["statistics"].get("carriers", "all")
+            for statistic in STATISTICS
         },
         csv_touch=RESULTS
         + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
     log:
         RESULTS
-        + "logs/save_statistics_csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
+        + "logs/write_statistics/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/write_statistics.py"
 
@@ -303,18 +303,18 @@ rule plot_statistics_single:
         statistics=STATISTICS,
     input:
         **{
-            f"{csv}": RESULTS
+            f"{statistic}": RESULTS
             + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
-            + f"{csv}.csv"
-            for carrier in config["plotting"].get("carriers", "all")
-            for csv in STATISTICS
+            + f"{statistic}.csv"
+            for carrier in config["plotting"]["statistics"].get("carriers", "all")
+            for statistic in STATISTICS
         },
     output:
         **{
             f"{plot}": RESULTS
             + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
             + f"{plot}.pdf"
-            for carrier in config["plotting"].get("carriers", "all")
+            for carrier in config["plotting"]["statistics"].get("carriers", "all")
             for plot in STATISTICS
         },
         barplots_touch=RESULTS

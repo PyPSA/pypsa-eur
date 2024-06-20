@@ -102,16 +102,16 @@ rule plot_statistics:
             expand(
                 RESULTS
                 + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
-                country=config["plotting"].get("countries", "all"),
-                carrier=config["plotting"].get("carriers", ["all"]),
+                country=config["plotting"]["statistics"].get("countries", "all"),
+                carrier=config["plotting"]["statistics"].get("carriers", ["all"]),
                 run=config["run"]["name"],
             ),
             expand(
                 RESULTS
                 + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
                 **config["scenario"],
-                country=config["plotting"].get("countries", "all"),
-                carrier=config["plotting"].get("carriers", ["all"]),
+                country=config["plotting"]["statistics"].get("countries", "all"),
+                carrier=config["plotting"]["statistics"].get("carriers", ["all"]),
                 run=config["run"]["name"],
             ),
         ],

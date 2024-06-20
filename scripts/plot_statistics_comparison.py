@@ -40,22 +40,31 @@ def rename_index(df):
     return df
 
 
+def get_carrier_colors(carriers, tech_colors):
+    if not carriers.difference(tech_colors.index).empty:
+        print(
+            f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
+        )
+    carrier_colors = carriers.map(lambda x: tech_colors.get(x, "#808080")).values
+    return carrier_colors
+
+
 def plot_static_comparison(df, ax, stacked=False):
     factor, unit = conversion[output]
     df = df[df != 0]
     df = df.dropna(axis=0, how="all").fillna(0)
     if df.empty:
         return
-    df = df.rename(index=rename_techs).groupby(["component", "carrier"]).sum()
-    carriers = df.index.get_level_values("carrier")
-    if not carriers.difference(tech_colors.index).empty:
-        print(
-            f"Missing colors for carrier: {carriers.difference(tech_colors.index).values}\n Dark grey used instead."
-        )
-    c = carriers.map(lambda x: tech_colors.get(x, "#808080"))
-    df = df.pipe(rename_index).T
     df = df.div(float(factor)) if factor != "-" else df
-    df.plot.bar(color=c.values, ax=ax, stacked=stacked, legend=False, ylabel=unit)
+    df = df.rename(index=rename_techs).groupby(["component", "carrier"]).sum()
+    # sort values in descending order
+    df = df.reindex(df.sum(1).sort_values().index)
+    carriers = df.index.get_level_values("carrier")
+    carrier_colors = get_carrier_colors(carriers, tech_colors)
+    df = df.pipe(rename_index).T
+    # max_carrier_value = df.max(axis=1)
+    # df.div(max_carrier_value, axis=0).where(lambda x: abs(x)<0.05).all()
+    df.plot.bar(color=carrier_colors, ax=ax, stacked=stacked, legend=False, ylabel=unit)
     ax.legend(
         bbox_to_anchor=(1, 1),
         loc="upper left",
@@ -67,8 +76,8 @@ def read_csv(input, output):
     try:
         # filter required csv to plot the wanted output
         files = list(filter(lambda x: output in x, input))
-        pattern = r"elec_.*?(\d{4})"
-        network_labels = [re.search(pattern, f).group() for f in files]
+        # retrieves network labels from folder name
+        network_labels = [file.split("/")[-3] for file in files]
         df = pd.concat(
             [
                 pd.read_csv(f, skiprows=2).set_index(["component", "carrier"])
@@ -92,9 +101,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_statistics_comparison",
+            run="",
             country="all",
             carrier="electricity",
         )
+
     configure_logging(snakemake)
 
     tech_colors = (
@@ -112,6 +123,16 @@ if __name__ == "__main__":
         fig, ax = plt.subplots()
         df = read_csv(snakemake.input, output)
         if df.empty:
+            ax.text(
+                0.5,
+                0.5,
+                "No data available.",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=14,
+                color="red",
+            )
             fig.savefig(snakemake.output[output])
             continue
 

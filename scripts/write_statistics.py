@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import logging
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
@@ -13,31 +15,16 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from pypsa.statistics import get_carrier
+from pypsa.statistics import get_carrier, get_country_and_carrier
 
-
-def get_country(df):
-    country_map = df.filter(like="bus").apply(
-        lambda ds: ds.map(n.buses.location.map(n.buses.country))
-    )
-    country_map = country_map.apply(lambda x: ",".join(x.dropna().unique()), axis=1)
-    country_map = country_map.rename("country")
-    return country_map
-
-
-# grouperfunctions = hier schreiben und dann in statistics.
-def groupby_country_and_carrier(n, c, nice_names=False):
-    df = n.df(c)
-    country = df.pipe(get_country)
-    carrier = get_carrier(n, c, nice_names)
-    return [country, carrier]
+logger = logging.getLogger(__name__)
 
 
 def call_with_handle(func, **kwargs):
     try:
         ds = func(**kwargs)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.info(f"An error occurred: {e}")
         ds = pd.Series()
         pass
     return ds
@@ -48,7 +35,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "save_statistics_csv",
+            "write_statistics",
+            run="",
             simpl="",
             ll="v1.5",
             clusters="37",
@@ -64,7 +52,6 @@ if __name__ == "__main__":
     config = snakemake.config
 
     n = pypsa.Network(snakemake.input.network)
-
     kwargs = {"nice_names": False}
 
     wildcards = dict(snakemake.wildcards)
@@ -73,8 +60,8 @@ if __name__ == "__main__":
 
     if carrier == "all":
         pass
-    elif carrier in config["plotting"].get("carrier_groups", []):
-        bus_carrier = config["plotting"]["carrier_groups"][carrier]
+    elif carrier in config["plotting"]["statistics"].get("carrier_groups", []):
+        bus_carrier = config["plotting"]["statistics"]["carrier_groups"][carrier]
         kwargs["bus_carrier"] = bus_carrier
     elif n.buses.carrier.str.contains(carrier).any():
         if carrier not in n.buses.carrier.unique():
@@ -90,21 +77,21 @@ if __name__ == "__main__":
             f"Carrier {carrier} not found in network or carrier group in config."
         )
 
-    kwargs["groupby"] = groupby_country_and_carrier
+    kwargs["groupby"] = get_country_and_carrier
 
     for output in snakemake.output.keys():
         if "touch" in output:
             continue
-        if output == "energy_balance":
-            supply = call_with_handle(n.statistics.supply, **kwargs)
-            withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
-            ds = (
-                pd.concat([supply, withdrawal.mul(-1)])
-                .groupby(level=["component", "country", "carrier"])
-                .sum()
-            )
-            ds.attrs = supply.attrs
-            ds.attrs["name"] = "Energy Balance"
+        # if output == "energy_balance":
+        #     supply = call_with_handle(n.statistics.supply, **kwargs)
+        #     withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
+        #     ds = (
+        #         pd.concat([supply, withdrawal.mul(-1)])
+        #         .groupby(level=["component", "country", "carrier"])
+        #         .sum()
+        #     )
+        #     ds.attrs = supply.attrs
+        #     ds.attrs["name"] = "Energy Balance"
         elif output == "total_cost":
             opex = call_with_handle(n.statistics.opex, **kwargs)
             capex = call_with_handle(n.statistics.capex, **kwargs)
@@ -115,7 +102,7 @@ if __name__ == "__main__":
             ds = call_with_handle(func, **kwargs)
 
         if ds.empty:
-            print(
+            logging.info(
                 f"Empty series for {output} with bus carrier {bus_carrier} and country {country}."
             )
             pd.Series().to_csv(snakemake.output[output])
