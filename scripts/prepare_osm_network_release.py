@@ -4,14 +4,46 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+import os
 
+import pandas as pd
 import pypsa
 from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def prepare_osm_network_release(network):
+def export_clean_csv(df, columns, output_file):
+    """
+    Export a cleaned DataFrame to a CSV file.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to be exported.
+        columns (list): A list of column names to include in the exported CSV file.
+        output_file (str): The path to the output CSV file.
+
+    Returns:
+        None
+    """
+    rename_dict = {
+        "Bus": "bus_id",
+        "Line": "line_id",
+        "Link": "link_id",
+        "Transformer": "transformer_id",
+        "v_nom": "voltage",
+        "num_parallel": "circuits",
+    }
+
+    if "converter_id" in columns:
+        rename_dict["Link"] = "converter_id"
+
+    # Create the directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    df.reset_index().rename(columns=rename_dict).loc[:, columns].replace(
+        {True: "t", False: "f"}
+    ).to_csv(output_file, index=False, quotechar="'")
+
     return None
 
 
@@ -23,8 +55,6 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-
-    network = pypsa.Network(snakemake.input.base_network)
 
     buses_columns = [
         "bus_id",
@@ -71,4 +101,47 @@ if __name__ == "__main__":
         "geometry",
     ]
 
-    converters_columns = []
+    converters_columns = [
+        "converter_id",
+        "bus0",
+        "bus1",
+        "geometry",
+    ]
+
+    network = pypsa.Network(snakemake.input.base_network)
+
+    # Export to clean csv for release
+    logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
+    export_clean_csv(network.buses, buses_columns, snakemake.output.buses)
+
+    logger.info(
+        f"Exporting {len(network.transformers)} transformers to %s",
+        snakemake.output.transformers,
+    )
+    export_clean_csv(
+        network.transformers, transformers_columns, snakemake.output.transformers
+    )
+
+    logger.info(f"Exporting {len(network.lines)} lines to %s", snakemake.output.lines)
+    export_clean_csv(network.lines, lines_columns, snakemake.output.lines)
+
+    # Boolean that specifies if link element is a converter
+    is_converter = network.links.index.str.startswith("conv") == True
+
+    logger.info(
+        f"Exporting {len(network.links[~is_converter])} links to %s",
+        snakemake.output.links,
+    )
+    export_clean_csv(
+        network.links[~is_converter], links_columns, snakemake.output.links
+    )
+
+    logger.info(
+        f"Exporting {len(network.links[is_converter])} converters to %s",
+        snakemake.output.converters,
+    )
+    export_clean_csv(
+        network.links[is_converter], converters_columns, snakemake.output.converters
+    )
+
+    logger.info("Export of OSM network for release complete.")
