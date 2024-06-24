@@ -104,7 +104,7 @@ def add_existing_renewables(df_agg, costs):
                 n.generators.loc[gens, "bus"]
             ).sum()
 
-        nodal_df = df.loc[n.buses.loc[elec_buses, "country"]]
+        nodal_df = df.reindex(n.buses.loc[elec_buses, "country"])
         nodal_df.index = elec_buses
         nodal_df = nodal_df.multiply(nodal_fraction, axis=0)
 
@@ -879,7 +879,7 @@ if __name__ == "__main__":
             opts="",
             sector_opts="none",
             planning_horizons=2020,
-            run="KN2045_Bal_v4",
+            run="CurrentPolicies",
         )
 
     configure_logging(snakemake)
