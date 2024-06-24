@@ -67,8 +67,8 @@ def read_csv(input, output):
     try:
         # filter required csv to plot the wanted output
         files = list(filter(lambda x: output in x, input))
-        pattern = r"elec_.*?(\d{4})"
-        network_labels = [re.search(pattern, f).group() for f in files]
+        # retrieves network labels from folder name
+        network_labels = [file.split("/")[-3] for file in files]
         df = pd.concat(
             [
                 pd.read_csv(f, skiprows=2).set_index(["component", "carrier"])
@@ -92,9 +92,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_statistics_comparison",
-            country="all",
-            carrier="electricity",
+            run="CurrentPolicies",
+            country="DE",
+            carrier="H2",
         )
+
     configure_logging(snakemake)
 
     tech_colors = pd.Series(snakemake.params.plotting["tech_colors"])
@@ -108,6 +110,16 @@ if __name__ == "__main__":
         fig, ax = plt.subplots()
         df = read_csv(snakemake.input, output)
         if df.empty:
+            ax.text(
+                0.5,
+                0.5,
+                "No data available.",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=14,
+                color="red",
+            )
             fig.savefig(snakemake.output[output])
             continue
 
