@@ -1561,7 +1561,6 @@ def _add_endpoints_to_line(linestring, polygon_dict):
     """
     if not polygon_dict:
         return linestring
-
     polygon_centroids = {
         bus_id: polygon.centroid for bus_id, polygon in polygon_dict.items()
     }
