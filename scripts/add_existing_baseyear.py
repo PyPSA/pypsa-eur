@@ -104,7 +104,7 @@ def add_existing_renewables(df_agg, costs):
                 n.generators.loc[gens, "bus"]
             ).sum()
 
-        nodal_df = df.reindex(n.buses.loc[elec_buses, "country"])
+        nodal_df = df.reindex(n.buses.loc[elec_buses, "country"], fill_value=0)
         nodal_df.index = elec_buses
         nodal_df = nodal_df.multiply(nodal_fraction, axis=0)
 
