@@ -70,8 +70,8 @@ rule base_network:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        line_projects=config_provider("line_projects"),
         lines=config_provider("lines"),
-        links=config_provider("links"),
         transformers=config_provider("transformers"),
     input:
         eg_buses="data/entsoegridkit/buses.csv",
