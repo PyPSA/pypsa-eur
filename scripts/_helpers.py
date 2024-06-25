@@ -625,49 +625,6 @@ def update_config_from_wildcards(config, w, inplace=True):
         if "S" in opts:
             config["sector"]["shipping"] = True
 
-        for o in opts:
-            if not o.startswith("imp"):
-                continue
-            # if imp in sector opts
-            config["sector"]["imp"] = True
-
-            # check if there is a limit in the import option
-            if len(o.split("+")[0]) > 3:
-                limit = int(o.split("+")[0][3:])
-                config["sector"]["import"]["limit"] = limit
-
-            # extract all import carriers if there are any
-            subsets = o.split("+")[1:]
-            translate = dict(
-                H2=["pipeline-h2", "shipping-lh2"],
-                AC=["hvdc-to-elec"],
-                CH4=["shipping-lch4"],
-                NH3=["shipping-lnh3"],
-                FT=["shipping-ftfuel"],
-                MeOH=["shipping-meoh"],
-                St=["shipping-steel"],
-                DRI=["shipping-hbi"],
-            )
-            if len(subsets):
-
-                def parse_carriers(s):
-                    prefixes = sorted(
-                        translate.keys(), key=lambda k: len(k), reverse=True
-                    )
-                    pattern = rf'({"|".join(prefixes)})(\d+(\.\d+)?)?'
-                    match = re.search(pattern, s)
-                    prefix = match.group(1) if match else None
-                    number = float(match.group(2)) if match and match.group(2) else 1.0
-                    return {prefix: number}
-
-                carriers = {
-                    tk: v
-                    for s in subsets
-                    for k, v in parse_carriers(s).items()
-                    for tk in translate.get(k, [])
-                }
-                config["sector"]["import"]["options"] = carriers
-
         if "A" in opts:
             config["sector"]["agriculture"] = True
 
