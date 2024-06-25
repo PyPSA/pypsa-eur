@@ -34,8 +34,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from shapely.geometry import LineString, MultiLineString, Polygon
-from shapely.ops import linemerge
+from shapely.geometry import LineString, MultiLineString, Point, Polygon
+from shapely.ops import linemerge, unary_union
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,17 @@ def _create_polygon(row):
     return polygon
 
 
-def find_closest_polygon(gdf, point):
+def _find_closest_polygon(gdf, point):
+    """
+    Find the closest polygon in a GeoDataFrame to a given point.
+
+    Parameters:
+    gdf (GeoDataFrame): A GeoDataFrame containing polygons.
+    point (Point): A Point object representing the target point.
+
+    Returns:
+    int: The index of the closest polygon in the GeoDataFrame.
+    """
     # Compute the distance to each polygon
     gdf["distance"] = gdf["geometry"].apply(lambda geom: point.distance(geom))
 
@@ -89,83 +99,6 @@ def find_closest_polygon(gdf, point):
     closest_polygon = gdf.loc[closest_idx]
 
     return closest_idx
-
-
-def _extended_linemerge(lines):
-    """
-    Merges a list of LineStrings into a single LineString by finding the
-    closest pair of points between all pairs of LineStrings.
-
-    Parameters:
-    lines (list): A list of LineStrings to be merged.
-
-    Returns:
-    merged_line (LineString): The merged LineString.
-
-    Raises:
-    TypeError: If the input is not a list of LineStrings.
-    """
-    # Ensure we have a list of LineStrings
-    if not isinstance(lines, list):
-        raise TypeError("Input should be a list of LineStrings")
-    if any(not isinstance(line, LineString) for line in lines):
-        raise TypeError("All elements in the list should be LineStrings")
-
-    if len(lines) == 1:
-        return lines[0]
-
-    merged_linestring = linemerge(lines)
-
-    if isinstance(merged_linestring, LineString):
-        return merged_linestring
-    else:
-
-        def find_closest_points(line1, line2):
-            min_dist = np.inf
-            closest_points = (None, None)
-            for point1 in line1.coords:
-                for point2 in line2.coords:
-                    dist = np.linalg.norm(np.array(point1) - np.array(point2))
-                    if dist < min_dist:
-                        min_dist = dist
-                        closest_points = (point1, point2)
-            return closest_points
-
-        def merge_lines(lines):
-            while len(lines) > 1:
-                min_distance = np.inf
-                closest_pair = (None, None)
-                pair_indices = (None, None)
-                for i in range(len(lines)):
-                    for j in range(i + 1, len(lines)):
-                        point1, point2 = find_closest_points(lines[i], lines[j])
-                        distance = np.linalg.norm(np.array(point1) - np.array(point2))
-                        if distance < min_distance:
-                            min_distance = distance
-                            closest_pair = (point1, point2)
-                            pair_indices = (i, j)
-
-                connecting_line = LineString([closest_pair[0], closest_pair[1]])
-                combined_line = linemerge(
-                    MultiLineString(
-                        [
-                            lines[pair_indices[0]],
-                            lines[pair_indices[1]],
-                            connecting_line,
-                        ]
-                    )
-                )
-
-                new_lines = [
-                    line for k, line in enumerate(lines) if k not in pair_indices
-                ]
-                new_lines.append(combined_line)
-                lines = new_lines
-
-            return lines[0]
-
-        lines = list(merged_linestring.geoms)
-        return merge_lines(lines)
 
 
 def _clean_voltage(column):
@@ -571,7 +504,7 @@ def _add_line_endings_to_substations(
     # find the closest polygon index
     joined.loc[joined["index_right"].isna(), "index_right"] = joined.loc[
         joined["index_right"].isna(), "geometry"
-    ].apply(lambda x: find_closest_polygon(gdf_union, x))
+    ].apply(lambda x: _find_closest_polygon(gdf_union, x))
 
     joined.reset_index(inplace=True)
     joined = joined.drop_duplicates(subset="bus_id")
@@ -1129,6 +1062,27 @@ def _clean_lines(df_lines, list_voltages):
 
 def _create_substations_geometry(df_substations):
     """
+    Creates geometries.
+
+    Parameters:
+    df_substations (DataFrame): The input DataFrame containing the substations
+    data.
+
+    Returns:
+    df_substations (DataFrame): A new DataFrame with the
+    polygons ["polygon"] of the substations geometries.
+    """
+    logger.info("Creating substations geometry.")
+    df_substations = df_substations.copy()
+
+    # Create centroids from geometries and keep the original polygons
+    df_substations.loc[:, "polygon"] = df_substations["geometry"]
+
+    return df_substations
+
+
+def _create_substations_centroid(df_substations):
+    """
     Creates centroids from geometries and keeps the original polygons.
 
     Parameters:
@@ -1142,11 +1096,10 @@ def _create_substations_geometry(df_substations):
     logger.info("Creating substations geometry.")
     df_substations = df_substations.copy()
 
-    # Create centroids from geometries and keep the original polygons
-    df_substations.loc[:, "polygon"] = df_substations["geometry"]
-    df_substations.loc[:, "geometry"] = df_substations["geometry"].apply(
+    df_substations.loc[:, "geometry"] = df_substations["polygon"].apply(
         lambda x: x.centroid
     )
+
     df_substations.loc[:, "lon"] = df_substations["geometry"].apply(lambda x: x.x)
     df_substations.loc[:, "lat"] = df_substations["geometry"].apply(lambda x: x.y)
 
@@ -1178,6 +1131,34 @@ def _create_lines_geometry(df_lines):
     df_lines = df_lines[~bool_circle]
 
     return df_lines
+
+
+def _add_bus_centroid_to_line(linestring, point):
+    """
+    Adds the centroid of a substation to a linestring by extending the
+    linestring with a new segment.
+
+    Parameters:
+    linestring (LineString): The original linestring to extend.
+    point (Point): The centroid of the bus.
+
+    Returns:
+    merged (LineString): The extended linestring with the new segment.
+    """
+    start = linestring.coords[0]
+    end = linestring.coords[-1]
+
+    dist_to_start = point.distance(Point(start))
+    dist_to_end = point.distance(Point(end))
+
+    if dist_to_start < dist_to_end:
+        new_segment = LineString([point.coords[0], start])
+    else:
+        new_segment = LineString([point.coords[0], end])
+
+    merged = linemerge([linestring, new_segment])
+
+    return merged
 
 
 def _finalise_substations(df_substations):
@@ -1533,9 +1514,65 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     return gdf_lines
 
 
-# Define a function to check if a polygon intersects any line in the lines GeoDataFrame
-def intersects_any_line(polygon, lines):
-    return lines.intersects(polygon).any()
+def _merge_touching_polygons(df):
+    """
+    Merge touching polygons in a GeoDataFrame.
+
+    Parameters:
+    - df: pandas.DataFrame or geopandas.GeoDataFrame
+        The input DataFrame containing the polygons to be merged.
+
+    Returns:
+    - gdf: geopandas.GeoDataFrame
+        The GeoDataFrame with merged polygons.
+    """
+
+    gdf = gpd.GeoDataFrame(df, geometry="polygon", crs=crs)
+    combined_polygons = unary_union(gdf.geometry)
+    if combined_polygons.geom_type == "MultiPolygon":
+        gdf_combined = gpd.GeoDataFrame(
+            geometry=[poly for poly in combined_polygons.geoms], crs=crs
+        )
+    else:
+        gdf_combined = gpd.GeoDataFrame(geometry=[combined_polygons], crs=crs)
+
+    gdf.reset_index(drop=True, inplace=True)
+
+    for i, combined_geom in gdf_combined.iterrows():
+        mask = gdf.intersects(combined_geom.geometry)
+        gdf.loc[mask, "polygon_merged"] = combined_geom.geometry
+
+    gdf.drop(columns=["polygon"], inplace=True)
+    gdf.rename(columns={"polygon_merged": "polygon"}, inplace=True)
+
+    return gdf
+
+
+def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
+    """
+    Extends the lines in the given GeoDataFrame `gdf_lines` to the centroid of
+    the nearest substations represented by the polygons in the
+    `gdf_substations_polygon` GeoDataFrame.
+
+    Parameters:
+    gdf_lines (GeoDataFrame): A GeoDataFrame containing the lines to be extended.
+    gdf_substations_polygon (GeoDataFrame): A GeoDataFrame containing the polygons representing substations.
+
+    Returns:
+    GeoDataFrame: A new GeoDataFrame with the lines extended to the substations.
+    """
+    gdf = gpd.sjoin(
+        gdf_lines,
+        gdf_substations_polygon.drop_duplicates(subset="polygon", inplace=False),
+        how="left",
+        lsuffix="line",
+        rsuffix="bus",
+        predicate="intersects",
+    ).drop(columns="index_bus")
+
+    # Rest of the code...
+
+    return gdf_lines
 
 
 if __name__ == "__main__":
@@ -1571,6 +1608,12 @@ if __name__ == "__main__":
     df_substations["frequency"] = _clean_frequency(df_substations["frequency"])
     df_substations = _clean_substations(df_substations, list_voltages)
     df_substations = _create_substations_geometry(df_substations)
+    # Merge touching polygons
+    df_substations = _merge_touching_polygons(df_substations)
+    # df_substations["polygon"] = df_substations["polygon"].apply(
+    #     lambda x: x.convex_hull
+    # )
+    df_substations = _create_substations_centroid(df_substations)
     df_substations = _finalise_substations(df_substations)
 
     # Create polygon GeoDataFrame to remove lines within substations
@@ -1579,6 +1622,8 @@ if __name__ == "__main__":
         geometry="polygon",
         crs=crs,
     )
+
+    gdf_substations_polygon["geometry"] = gdf_substations_polygon.polygon.copy()
 
     logger.info("---")
     logger.info("LINES AND CABLES")
@@ -1618,6 +1663,7 @@ if __name__ == "__main__":
     # Create GeoDataFrame
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
     gdf_lines = _remove_lines_within_substations(gdf_lines, gdf_substations_polygon)
+    gdf_lines = _extend_lines_to_substations(gdf_lines, gdf_substations_polygon)
 
     logger.info("---")
     logger.info("HVDC LINKS")
@@ -1661,21 +1707,6 @@ if __name__ == "__main__":
         prefix="link-end",
     )
 
-    # # Drop df_substations.dc == True and tag_source != "link-end"
-    # df_substations = df_substations[
-    #     ~((df_substations.dc == True) & (df_substations.tag_source != "link-end"))
-    # ]
-
-    # # Apply the function to each polygon in the substations GeoDataFrame
-    # gdf_substations_polygon["connected"] = False
-    # gdf_substations_polygon['connected'] = gdf_substations_polygon['polygon'].apply(intersects_any_line, lines=gdf_lines)
-
-    # list_buses_disconnected = gdf_substations_polygon[gdf_substations_polygon['connected'] == False]['bus_id'].tolist()
-
-    # # Drop islanded substations
-    # gdf_substations_polygon = gdf_substations_polygon[~gdf_substations_polygon['bus_id'].isin(list_buses_disconnected)]
-    # df_substations = df_substations[~df_substations['bus_id'].isin(list_buses_disconnected)]
-
     # Drop polygons and create GDF
     gdf_substations = gpd.GeoDataFrame(
         df_substations.drop(columns=["polygon"]), geometry="geometry", crs=crs
@@ -1693,7 +1724,9 @@ if __name__ == "__main__":
     logger.info(
         f"Exporting clean substations with polygon shapes to {output_substations_polygon}"
     )
-    gdf_substations_polygon.to_file(output_substations_polygon, driver="GeoJSON")
+    gdf_substations_polygon.drop(columns=["geometry"]).to_file(
+        output_substations_polygon, driver="GeoJSON"
+    )
     logger.info(f"Exporting clean substations to {output_substations}")
     gdf_substations.to_file(output_substations, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")
