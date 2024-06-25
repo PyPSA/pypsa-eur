@@ -1133,34 +1133,6 @@ def _create_lines_geometry(df_lines):
     return df_lines
 
 
-def _add_bus_centroid_to_line(linestring, point):
-    """
-    Adds the centroid of a substation to a linestring by extending the
-    linestring with a new segment.
-
-    Parameters:
-    linestring (LineString): The original linestring to extend.
-    point (Point): The centroid of the bus.
-
-    Returns:
-    merged (LineString): The extended linestring with the new segment.
-    """
-    start = linestring.coords[0]
-    end = linestring.coords[-1]
-
-    dist_to_start = point.distance(Point(start))
-    dist_to_end = point.distance(Point(end))
-
-    if dist_to_start < dist_to_end:
-        new_segment = LineString([point.coords[0], start])
-    else:
-        new_segment = LineString([point.coords[0], end])
-
-    merged = linemerge([linestring, new_segment])
-
-    return merged
-
-
 def _finalise_substations(df_substations):
     """
     Finalises the substations column types.
