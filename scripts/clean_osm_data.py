@@ -1133,6 +1133,34 @@ def _create_lines_geometry(df_lines):
     return df_lines
 
 
+def _add_bus_centroid_to_line(linestring, point):
+    """
+    Adds the centroid of a substation to a linestring by extending the
+    linestring with a new segment.
+
+    Parameters:
+    linestring (LineString): The original linestring to extend.
+    point (Point): The centroid of the bus.
+
+    Returns:
+    merged (LineString): The extended linestring with the new segment.
+    """
+    start = linestring.coords[0]
+    end = linestring.coords[-1]
+
+    dist_to_start = point.distance(Point(start))
+    dist_to_end = point.distance(Point(end))
+
+    if dist_to_start < dist_to_end:
+        new_segment = LineString([point.coords[0], start])
+    else:
+        new_segment = LineString([point.coords[0], end])
+
+    merged = linemerge([linestring, new_segment])
+
+    return merged
+
+
 def _finalise_substations(df_substations):
     """
     Finalises the substations column types.
@@ -1520,6 +1548,63 @@ def _merge_touching_polygons(df):
     return gdf
 
 
+def _add_endpoints_to_line(linestring, polygon_dict):
+    """
+    Adds endpoints to a line by removing any overlapping areas with polygons.
+
+    Parameters:
+    linestring (LineString): The original line to add endpoints to.
+    polygon_dict (dict): A dictionary of polygons, where the keys are bus IDs and the values are the corresponding polygons.
+
+    Returns:
+    LineString: The modified line with added endpoints.
+    """
+    if not polygon_dict:
+        return linestring
+
+    polygon_centroids = {
+        bus_id: polygon.centroid for bus_id, polygon in polygon_dict.items()
+    }
+    polygon_unary = polygons = unary_union(list(polygon_dict.values()))
+
+    # difference with polygon
+    linestring_new = linestring.difference(polygon_unary)
+
+    if type(linestring_new) == MultiLineString:
+        # keep the longest line in the multilinestring
+        linestring_new = max(linestring_new.geoms, key=lambda x: x.length)
+
+    for p in polygon_centroids:
+        linestring_new = _add_bus_centroid_to_line(linestring_new, polygon_centroids[p])
+
+    return linestring_new
+
+
+def _get_polygons_at_endpoints(linestring, polygon_dict):
+    """
+    Get the polygons that contain the endpoints of a given linestring.
+
+    Parameters:
+    linestring (LineString): The linestring for which to find the polygons at the endpoints.
+    polygon_dict (dict): A dictionary containing polygons as values, with bus_ids as keys.
+
+    Returns:
+    dict: A dictionary containing bus_ids as keys and polygons as values, where the polygons contain the endpoints of the linestring.
+    """
+    # Get the endpoints of the linestring
+    start_point = Point(linestring.coords[0])
+    end_point = Point(linestring.coords[-1])
+
+    # Initialize dictionary to store bus_ids as keys and polygons as values
+    bus_id_polygon_dict = {}
+
+    for bus_id, polygon in polygon_dict.items():
+        if polygon.contains(start_point) or polygon.contains(end_point):
+            bus_id_polygon_dict[bus_id] = polygon
+
+    return bus_id_polygon_dict
+
+
 def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
     """
     Extends the lines in the given GeoDataFrame `gdf_lines` to the centroid of
@@ -1542,7 +1627,41 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
         predicate="intersects",
     ).drop(columns="index_bus")
 
-    # Rest of the code...
+    # Group by 'line_id' and create a dictionary mapping 'bus_id' to 'geometry_bus', excluding the grouping columns
+    gdf = (
+        gdf.groupby("line_id")
+        .apply(
+            lambda x: x[["bus_id", "geometry_bus"]]
+            .dropna()
+            .set_index("bus_id")["geometry_bus"]
+            .to_dict(),
+            include_groups=False,
+        )
+        .reset_index()
+    )
+    gdf.columns = ["line_id", "bus_dict"]
+
+    gdf["intersects_bus"] = gdf.apply(lambda row: len(row["bus_dict"]) > 0, axis=1)
+
+    gdf.loc[:, "line_geometry"] = gdf.join(
+        gdf_lines.set_index("line_id")["geometry"], on="line_id"
+    )["geometry"]
+
+    # Polygons at the endpoints of the linestring
+    gdf["bus_endpoints"] = gdf.apply(
+        lambda row: _get_polygons_at_endpoints(row["line_geometry"], row["bus_dict"]),
+        axis=1,
+    )
+
+    gdf.loc[:, "line_geometry_new"] = gdf.apply(
+        lambda row: _add_endpoints_to_line(row["line_geometry"], row["bus_endpoints"]),
+        axis=1,
+    )
+
+    gdf.set_index("line_id", inplace=True)
+    gdf_lines.set_index("line_id", inplace=True)
+
+    gdf_lines.loc[:, "geometry"] = gdf["line_geometry_new"]
 
     return gdf_lines
 
