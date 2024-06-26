@@ -1047,7 +1047,6 @@ plotting:
     agriculture electricity: '#494778'
     # battery + EVs
     battery: '#ace37f'
-    battery storage: '#ace37f'
     battery charger: '#88a75b'
     battery discharger: '#5d4e29'
     home battery: '#80c944'
@@ -1058,7 +1057,7 @@ plotting:
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    Li ion: '#baf238'
+    EV battery: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
