@@ -1045,6 +1045,7 @@ plotting:
     agriculture electricity: '#494778'
     # battery + EVs
     battery: '#ace37f'
+    battery storage: '#ace37f'
     battery charger: '#88a75b'
     battery discharger: '#5d4e29'
     home battery: '#80c944'
