@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage. (
+
 * Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
 
 * Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.

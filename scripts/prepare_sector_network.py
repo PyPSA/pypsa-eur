@@ -1540,14 +1540,14 @@ def add_EVs(
     temperature,
 ):
 
-    n.add("Carrier", "Li ion")
+    n.add("Carrier", "EV battery")
 
     n.madd(
         "Bus",
         spatial.nodes,
         suffix=" EV battery",
         location=spatial.nodes,
-        carrier="Li ion",
+        carrier="EV battery",
         unit="MWh_el",
     )
 
@@ -1620,9 +1620,9 @@ def add_EVs(
         n.madd(
             "Store",
             spatial.nodes,
-            suffix=" battery storage",
+            suffix=" EV battery",
             bus=spatial.nodes + " EV battery",
-            carrier="battery storage",
+            carrier="EV battery",
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
