@@ -81,7 +81,8 @@ Nevertheless, you can still use open-source solvers for smaller problems.
 .. note::
     The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
     The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
-    For an open-source solver setup install in your ``conda`` environment on OSX/Linux. To install the default solver Gurobi, run
+    For an open-source solver setup install for example HiGHS **and** SCIP in your ``conda`` environment on OSX/Linux.
+    To install the default solver Gurobi, run
 
     .. code:: bash
 
