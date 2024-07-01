@@ -132,8 +132,6 @@ def _add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
 
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
@@ -174,8 +172,6 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
         "offwind-ac",
         "offwind-dc",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
 
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
@@ -948,6 +944,25 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_flexible_egs_constraint(n):
+    """
+    Upper bounds the charging capacity of the geothermal reservoir according to
+    the well capacity.
+    """
+    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
+    storage_index = n.storage_units.loc[
+        n.storage_units.carrier == "geothermal heat"
+    ].index
+
+    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
+    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+
+    n.model.add_constraints(
+        p_nom_lhs <= p_nom_rhs,
+        name="upper_bound_charging_capacity_of_geothermal_reservoir",
+    )
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1012,6 +1027,9 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+
+    if config["sector"]["enhanced_geothermal"]["enable"]:
+        add_flexible_egs_constraint(n)
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality

@@ -7,8 +7,24 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
+Upcoming Release
+================
+
+* Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
+
+* Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
+
+* Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
+
+* Added Enhanced Geothermal Systems for generation of electricity and district heat.
+  Cost and available capacity assumptions based on `Aghahosseini et al. (2020)
+  <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
+  See configuration ``sector: enhanced_geothermal`` for details; by default switched off.
+
+* Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
+
+* Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
@@ -808,7 +824,7 @@ PyPSA-Eur 0.9.0 (5th January 2024)
 
 * The minimum PyPSA version is now 0.26.1.
 
-* Update to ``tsam>=0.2.3`` for performance improvents in temporal clustering.
+* Update to ``tsam>=0.2.3`` for performance improvements in temporal clustering.
 
 * Pin ``snakemake`` version to below 8.0.0, as the new version is not yet
   supported. The next release will switch to the requirement ``snakemake>=8``.

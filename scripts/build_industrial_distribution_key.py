@@ -4,6 +4,36 @@
 # SPDX-License-Identifier: MIT
 """
 Build spatial distribution of industries from Hotmaps database.
+
+Inputs
+-------
+
+- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``
+- ``resources/pop_layout_elec_s{simpl}_{clusters}.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+
+Description
+-------
+
+This rule uses the `Hotmaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`. After removing entries without valid locations, it assigns each industrial site to a bus region based on its location.
+Then, it calculates the nodal distribution key for each sector based on the emissions of the industrial sites in each region. This leads to a distribution key of 1 if there is only one bus per country and <1 if there are multiple buses per country. The sum over buses of one country is 1.
+
+The following subcategories of industry are considered:
+- Iron and steel
+- Cement
+- Refineries
+- Paper and printing
+- Chemical industry
+- Glass
+- Non-ferrous metals
+- Non-metallic mineral products
+- Other non-classified
+Furthermore, the population distribution is added
+- Population
 """
 
 import logging
