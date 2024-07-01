@@ -65,6 +65,7 @@ from functools import partial
 
 import country_converter as coco
 import pandas as pd
+import numpy as np
 from _helpers import set_scenario_config
 from tqdm import tqdm
 
@@ -195,12 +196,15 @@ def add_non_eu28_industrial_energy_demand(countries, demand, production):
         return demand
 
     eu28_production = production.loc[countries.intersection(eu28)].sum()
+    if eu28_production.sum() == 0:
+        logger.info("EU production is zero. Fallback: Filling non EU28 countries with zeros.")
     eu28_energy = demand.groupby(level=1).sum()
     eu28_averages = eu28_energy / eu28_production
 
     demand_non_eu28 = pd.concat(
         {k: v * eu28_averages for k, v in production.loc[non_eu28].iterrows()}
-    )
+    ).fillna(0)
+    demand_non_eu28.replace([np.inf, -np.inf], 0, inplace=True)
 
     return pd.concat([demand, demand_non_eu28])
 
@@ -235,7 +239,14 @@ if __name__ == "__main__":
     year = params.get("reference_year", 2015)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu28), year)
+    if len(countries.intersection(eu28)) > 0:
+        demand = industrial_energy_demand(countries.intersection(eu28), year)
+    else:
+        # e.g. only UA or MD
+        logger.info(
+            f"No industrial energy demand available for {countries}. Filling with average values of EU."
+        )
+        demand = industrial_energy_demand(eu28, year)
 
     # output in MtMaterial/a
     production = (

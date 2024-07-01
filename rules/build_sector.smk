@@ -948,6 +948,7 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
+        electricity=config_provider("electricity"),
         RDIR=RDIR,
     input:
         unpack(input_profile_offwind),
