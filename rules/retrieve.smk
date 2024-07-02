@@ -319,3 +319,34 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity_network"]["base_network"] == "osm-prebuilt"
+):
+
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage("https://sandbox.zenodo.org/records/74826/files/buses.csv"),
+            converters=storage(
+                "https://sandbox.zenodo.org/records/74826/files/converters.csv"
+            ),
+            lines=storage("https://sandbox.zenodo.org/records/74826/files/lines.csv"),
+            links=storage("https://sandbox.zenodo.org/records/74826/files/links.csv"),
+            transformers=storage(
+                "https://sandbox.zenodo.org/records/74826/files/transformers.csv"
+            ),
+        output:
+            buses="data/osm/prebuilt/buses.csv",
+            converters="data/osm/prebuilt/converters.csv",
+            lines="data/osm/prebuilt/lines.csv",
+            links="data/osm/prebuilt/links.csv",
+            transformers="data/osm/prebuilt/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
