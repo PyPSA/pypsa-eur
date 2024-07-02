@@ -58,7 +58,7 @@ rule build_powerplants:
         logs("build_powerplants.log"),
     threads: 1
     resources:
-        mem_mb=5000,
+        mem_mb=7000,
     conda:
         "../envs/environment.yaml"
     script:
