@@ -2505,11 +2505,13 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
-    #Electrobiofuels (BtL with hydrogen addition to make more use of biogenic carbon).
-    #Combination of efuels and biomass to liquid, both based on Fischer-Tropsch.
-    #Experimental version - use with caution
-    if options['electrobiofuels'] and options.get("biomass_spatial", options["biomass_transport"]):
-        efuel_scale_factor = costs.at['BtL', 'C stored']
+    # Electrobiofuels (BtL with hydrogen addition to make more use of biogenic carbon).
+    # Combination of efuels and biomass to liquid, both based on Fischer-Tropsch.
+    # Experimental version - use with caution
+    if options["electrobiofuels"] and options.get(
+        "biomass_spatial", options["biomass_transport"]
+    ):
+        efuel_scale_factor = costs.at["BtL", "C stored"]
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2519,20 +2521,27 @@ def add_biomass(n, costs):
             bus2=spatial.h2.nodes,
             bus3="co2 atmosphere",
             carrier="electrobiofuels",
-            lifetime=costs.at['electrobiofuels', 'lifetime'],
-            efficiency=costs.at['electrobiofuels', 'efficiency-biomass'],
-            efficiency2=-costs.at['electrobiofuels', 'efficiency-hydrogen'],
-            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] + costs.at['BtL', 'CO2 stored']
-            * (1 - costs.at['Fischer-Tropsch', 'capture rate']),
+            lifetime=costs.at["electrobiofuels", "lifetime"],
+            efficiency=costs.at["electrobiofuels", "efficiency-biomass"],
+            efficiency2=-costs.at["electrobiofuels", "efficiency-hydrogen"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["BtL", "CO2 stored"]
+            * (1 - costs.at["Fischer-Tropsch", "capture rate"]),
             p_nom_extendable=True,
-            capital_cost=costs.at['BtL', 'fixed']
-            * costs.at['BtL', 'efficiency'] / costs.at['electrobiofuels', 'efficiency-biomass']
-            + efuel_scale_factor * costs.at['Fischer-Tropsch', 'fixed']
-            * costs.at['Fischer-Tropsch', 'efficiency'] / costs.at['electrobiofuels', 'efficiency-hydrogen'],
-            marginal_cost=costs.at['BtL', 'VOM']
-            * costs.at['BtL', 'efficiency'] / costs.at['electrobiofuels', 'efficiency-biomass']
-            + efuel_scale_factor * costs.at['Fischer-Tropsch', 'VOM']
-            * costs.at['Fischer-Tropsch', 'efficiency'] / costs.at['electrobiofuels', 'efficiency-hydrogen']
+            capital_cost=costs.at["BtL", "fixed"]
+            * costs.at["BtL", "efficiency"]
+            / costs.at["electrobiofuels", "efficiency-biomass"]
+            + efuel_scale_factor
+            * costs.at["Fischer-Tropsch", "fixed"]
+            * costs.at["Fischer-Tropsch", "efficiency"]
+            / costs.at["electrobiofuels", "efficiency-hydrogen"],
+            marginal_cost=costs.at["BtL", "VOM"]
+            * costs.at["BtL", "efficiency"]
+            / costs.at["electrobiofuels", "efficiency-biomass"]
+            + efuel_scale_factor
+            * costs.at["Fischer-Tropsch", "VOM"]
+            * costs.at["Fischer-Tropsch", "efficiency"]
+            / costs.at["electrobiofuels", "efficiency-hydrogen"],
         )
 
     # BioSNG from solid biomass
