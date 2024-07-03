@@ -2417,7 +2417,8 @@ def add_biomass(n, costs):
             bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
             carrier="urban central solid biomass CHP CC",
             p_nom_extendable=True,
-            capital_cost=costs.at[key + " CC", "fixed"] * costs.at[key + " CC", "efficiency"]
+            capital_cost=costs.at[key + " CC", "fixed"]
+            * costs.at[key + " CC", "efficiency"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["solid biomass", "CO2 intensity"],
             marginal_cost=costs.at[key + " CC", "VOM"],
@@ -2478,8 +2479,8 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
-        #Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
-        #process (Methanol) and that electricity demand for this is included in the base process
+        # Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
+        # process (Methanol) and that electricity demand for this is included in the base process
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -3101,8 +3102,8 @@ def add_industry(n, costs):
                 p_nom_extendable=True,
                 capital_cost=costs.at["waste CHP CC", "fixed"]
                 * costs.at["waste CHP CC", "efficiency"]
-                + costs.at['biomass CHP capture', 'fixed']
-                * costs.at['oil', 'CO2 intensity'],
+                + costs.at["biomass CHP capture", "fixed"]
+                * costs.at["oil", "CO2 intensity"],
                 marginal_cost=costs.at["waste CHP CC", "VOM"],
                 efficiency=costs.at["waste CHP CC", "efficiency"],
                 efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
