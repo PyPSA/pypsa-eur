@@ -310,7 +310,10 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
         m = (1 + np.sqrt(1 + r * T)) / T
 
         def exponential_decay(t):
-            return (e_0 / e_1990) * (1 + (m + r) * (t - t_0)) * np.exp(-m * (t - t_0))
+            if t == planning_horizons[-1] and snakemake.params.foresight in ["myopic", "perfect"]:
+                return 0
+            else:
+                return (e_0 / e_1990) * (1 + (m + r) * (t - t_0)) * np.exp(-m * (t - t_0))
 
         co2_cap = pd.Series(
             {t: exponential_decay(t) for t in planning_horizons}, name=o
@@ -1570,14 +1573,16 @@ def add_land_transport(n, costs):
             suffix=" BEV charger",
             bus0=nodes,
             bus1=nodes + " EV battery",
-            p_nom_extendable = True,
-            p_nom_max = p_availEV,
+            #p_nom_extendable = True,
+            #p_nom_max = p_availEV,
+            p_nom = p_availEV,
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
             lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
         )
-
+        print(n.links.p_nom_max[n.links[n.links.carrier.str.contains("BEV charger")].index].sum()/options.get("bev_charge_rate", 0.011))
+        print("Bev charge rate",options.get("bev_charge_rate", 0.011))
         # Only when v2g option is True, add the v2g link
         if options["v2g"]:
             n.madd(
@@ -1586,9 +1591,11 @@ def add_land_transport(n, costs):
                 suffix=" V2G",
                 bus1=nodes,
                 bus0=nodes + " EV battery",
-                p_nom_extendable = True,
+                #p_nom_extendable = True,
                 carrier="V2G",
                 p_max_pu=avail_profile[nodes],
+                #p_nom_max = p_availEV,
+                p_nom = p_availEV,
                 efficiency=options.get("bev_charge_efficiency", 0.9),
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
@@ -1603,14 +1610,19 @@ def add_land_transport(n, costs):
                 nodes,
                 suffix=" EV battery storage",
                 bus=nodes + " EV battery",
-                carrier="EV battery storage",
+                carrier="EV battery storage", #"Li ion",
                 e_cyclic=True,
                 e_nom_extendable=True,
                 e_max_pu=1,
                 e_min_pu=dsm_profile[nodes],
+                e_nom_max = number_cars.values*options.get('bev_energy')* bev_availability,  #options.get("bev_availability"),
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
-        
+        print(number_cars*options.get('bev_energy')* bev_availability)  
+        print("ENOMMAX",n.stores.e_nom_max[n.stores.carrier.str.contains("Li ion|EV battery storage")].sum()/(options.get('bev_energy')*bev_availability)) #options.get("bev_availability")) ) 
+        print("ENOMMAX",n.stores.e_nom_max[n.stores.carrier.str.contains("Li ion|EV battery storage")].sum()/(options.get('bev_energy')*options.get("bev_availability"))) 
+        print("bev energy", options.get('bev_energy'), "bev avail", bev_availability)
+        print(options.get("bev_availability"))
         eff = costs.at['Battery electric (passenger cars)', 'efficiency'] #/(1+dd_EV)
         n.madd(
             "Link",
@@ -1651,9 +1663,9 @@ def add_land_transport(n, costs):
                 n.links.loc[v2g_index, "p_nom"] = p_availEV.add_suffix(' V2G') * electric_share 
                             
             if options["bev_dsm"]:
-                ev_battery_storage_index = n.stores.carrier=="EV battery storage"
+                ev_battery_storage_index = n.stores.carrier==("Li ion" or "EV battery storage")
                 n.stores.loc[ev_battery_storage_index, "e_nom_extendable"] = False
-                e_nom = number_cars* options.get("bev_energy", 0.05) * options["bev_availability"] * electric_share
+                e_nom = number_cars* options.get("bev_energy", 0.05) * bev_availability * electric_share #options["bev_availability"] 
                 n.stores.loc[ev_battery_storage_index, "e_nom"] = e_nom.add_suffix(" EV battery storage")
 
 
@@ -3467,10 +3479,11 @@ def remove_h2_network(n):
 
 def maybe_adjust_costs_and_potentials(n, opts):
     for o in opts:
-        flags = ["+e", "+p", "+m", "+c"]
+        flags = ["+e", "+p", "+m", "+c", "+n", "+l", "+x"]
         if all(flag not in o for flag in flags):
             continue
         oo = o.split("+")
+        print(oo)
         carrier_list = np.hstack(
             (
                 n.generators.carrier.unique(),
@@ -3487,8 +3500,12 @@ def maybe_adjust_costs_and_potentials(n, opts):
                 "e": "e_nom_max",
                 "c": "capital_cost",
                 "m": "marginal_cost",
+                "n": "efficiency2",
+                "l": "efficiency3",
+                "x": "e_nom_extendable"
             }
             attr = attr_lookup[oo[1][0]]
+            print(attr)
             factor = float(oo[1][1:])
             # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
             if carrier == "AC":  # lines do not have carrier
@@ -3496,8 +3513,13 @@ def maybe_adjust_costs_and_potentials(n, opts):
             else:
                 if attr == "p_nom_max":
                     comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == "e_nom_max":
+                elif attr == "e_nom_max" or "e_nom_extendable":
                     comps = {"Store"}
+                    if attr == "e_nom_extendable":
+                        factor = bool(factor)
+                        print(factor)
+                elif attr == "efficiency2" or "efficiency3":
+                    comps = {"Link"}
                 else:
                     comps = {"Generator", "Link", "StorageUnit", "Store"}
                 for c in n.iterate_components(comps):
@@ -3508,6 +3530,11 @@ def maybe_adjust_costs_and_potentials(n, opts):
                     else:
                         sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
+                    print(c.df.loc[sel, attr])
+                    
+            print(n.links.p_nom_max[n.links.carrier.str.contains("V2G")])
+            print(n.stores.e_nom_extendable[n.stores.carrier.str.contains("Li ion" or "EV battery storage")])        
+            
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
 
@@ -3840,9 +3867,25 @@ if __name__ == "__main__":
         options["use_electrolysis_waste_heat"] = False
 
     if "T" in opts:
+        
+        bev_availability = options.get("bev_availability")
+        print(type(options.get("bev_availability")))
+        for o in opts:
+            print(o)
+            if "bevavail" not in o:
+                continue
+            oo = o.split("+")
+            print(oo)
+            bev_availability = float(oo[1])
+            print(type(bev_availability))
+        print(bev_availability)
+
         add_land_transport(n, costs)
         #adjust_land_transport(n)
-
+        print("fast charging",costs.at['Charging infrastructure fast (purely) battery electric vehicles passenger cars', 'fixed'])
+        print("slow charging",costs.at['Charging infrastructure slow (purely) battery electric vehicles passenger cars', 'fixed'])
+        print("capextransport",costs.at["Hydrogen fuel cell (passenger cars)", "fixed"]/options["H2_consumption_1car"])
+        print("capextransport",costs.at["Battery electric (passenger cars)", "fixed"]/options["EV_consumption_1car"])
     if "H" in opts:
         add_heat(n, costs)
 
@@ -3954,5 +3997,5 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)
-    print("nuclear",n.generators.build_year[n.generators.carrier.str.contains("nuclear")])
+
     n.export_to_netcdf(snakemake.output[0])

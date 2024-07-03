@@ -222,6 +222,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     }
 
     for grouping_year, generator in df.index:
+        print(generator)
         # capacity is the capacity in MW at each node for this
         capacity = df.loc[grouping_year, generator]
         capacity = capacity[~capacity.isna()]
@@ -660,7 +661,7 @@ def add_land_transport_installed_before_baseyear(
     eff_ICE.index = eff_ICE.index.str.rstrip('-'+str(grouping_year))
     split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1
     year = range(int(grouping_year-split_years), int(grouping_year),1)
-    pnom = (p_set/eff_ICE).max()/len(year)
+    pnom = (p_set/eff_ICE).max()/(len(year)+1)
     #pnom = ((p_set/(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))).max()) / len(year) 
     pnom.index = pnom.index.str.rstrip('-'+str(grouping_year))
     set_p_nom = pnom 
@@ -683,7 +684,7 @@ def add_land_transport_installed_before_baseyear(
         bus1=nodes + " land transport",
         bus2="co2 atmosphere",
         carrier="land transport oil",
-        capital_cost = 0,
+        capital_cost = costs.at["Liquid fuels ICE (passenger cars)", "fixed"]/options['ICE_consumption_1car'],
         efficiency = eff_ICE,
         efficiency2 = costs.at['oil', 'CO2 intensity'], 
         lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
@@ -692,17 +693,33 @@ def add_land_transport_installed_before_baseyear(
         p_max_pu = profile, 
         build_year = year
         )
-    print(eff_ICE)
-    print(n.links_t.p_max_pu[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
-    print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year),axis=0)).index,'efficiency'])
+        print(year)
+    #print(eff_ICE)
+    #print(n.links_t.p_max_pu[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
+    print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'])
     #print(n.links_t.efficiency[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
+    n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'] = set_p_nom.values
+    print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'])
     n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom_extendable'] = False
     n.links.loc[(n.links.filter(like="land transport EV-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
     n.links.loc[(n.links.filter(like="BEV charger-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
-    n.links.loc[(n.links.filter(like="land transport fuel cell-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
+    n.links.loc[(n.links.filter(like="V2G-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
+
+    ev_battery_storage = n.stores[n.stores.carrier.str.contains("Li ion|EV battery storage")]
+    ev_battery_storage_index = ev_battery_storage.index
+    print("3",ev_battery_storage_index)
+    n.stores.loc[ev_battery_storage_index, "e_nom_extendable"] = False
+    print("4",n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'])
+    #n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'] = False
+    print("5",n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'])
     number_cars = pd.read_csv(snakemake.input.existing_transport, index_col=0)[
         "number cars"
     ]
+
+    print(n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom'])
+    #n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_max'] = number_cars.values*options.get('bev_energy')*options.get("bev_availability"),
+    n.links.loc[(n.links.filter(like="land transport fuel cell-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
+    
     logger.info(f"The model only assumes the minimum number of ICE vehicles to supply the transport demand which represents {round(int(snakemake.config['scenario']['clusters'][0])*p_set.max(axis=0).sum()/number_cars.sum()*100,2)}% of the existing ICE vehicle fleet in 2020")
 
 
