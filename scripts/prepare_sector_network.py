@@ -2478,7 +2478,8 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
-        # TODO: Update with energy penalty
+        #Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
+        #process (Methanol) and that electricity demand for this is included in the base process
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2518,7 +2519,8 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "efficiency"] * costs.at["BioSNG", "VOM"],
         )
 
-        # TODO: Update with energy penalty for CC
+        # Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
+        # process (Methanol) and that electricity demand for this is included in the base process
         n.madd(
             "Link",
             spatial.biomass.nodes,
