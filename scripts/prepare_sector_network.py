@@ -3100,7 +3100,9 @@ def add_industry(n, costs):
                 carrier="waste CHP CC",
                 p_nom_extendable=True,
                 capital_cost=costs.at["waste CHP CC", "fixed"]
-                * costs.at["waste CHP CC", "efficiency"],
+                * costs.at["waste CHP CC", "efficiency"]
+                + costs.at['biomass CHP capture', 'fixed']
+                * costs.at['oil', 'CO2 intensity'],
                 marginal_cost=costs.at["waste CHP CC", "VOM"],
                 efficiency=costs.at["waste CHP CC", "efficiency"],
                 efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
