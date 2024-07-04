@@ -199,6 +199,7 @@ rule make_summary:
         energy=RESULTS + "csvs/energy.csv",
         supply=RESULTS + "csvs/supply.csv",
         supply_energy=RESULTS + "csvs/supply_energy.csv",
+        nodal_supply_energy=RESULTS + "csvs/nodal_supply_energy.csv",
         prices=RESULTS + "csvs/prices.csv",
         weighted_prices=RESULTS + "csvs/weighted_prices.csv",
         market_values=RESULTS + "csvs/market_values.csv",
@@ -229,12 +230,12 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
-        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
-        co2="data/bundle-sector/eea/UNFCCC_v23.csv",
+        eurostat="data/eurostat/Balances-April2023",
+        co2="data/bundle/eea/UNFCCC_v23.csv",
     output:
-        costs=RESULTS + "graphs/costs.pdf",
-        energy=RESULTS + "graphs/energy.pdf",
-        balances=RESULTS + "graphs/balances-energy.pdf",
+        costs=RESULTS + "graphs/costs.svg",
+        energy=RESULTS + "graphs/energy.svg",
+        balances=RESULTS + "graphs/balances-energy.svg",
     threads: 2
     resources:
         mem_mb=10000,

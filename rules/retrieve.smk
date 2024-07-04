@@ -14,23 +14,27 @@ if config["enable"]["retrieve"] is False:
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
-        "ch_cantons.csv",
         "je-e-21.03.02.xls",
         "eez/World_EEZ_v8_2014.shp",
-        "hydro_capacities.csv",
         "naturalearth/ne_10m_admin_0_countries.shp",
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
+        "eea/UNFCCC_v23.csv",
+        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+        "myb1-2017-nitro.xls",
+        "emobility/KFZ__count",
+        "emobility/Pkw__count",
+        "h2_salt_caverns_GWh_per_sqkm.geojson",
+        "natura/natura.tiff",
+        "gebco/GEBCO_2014_2D.nc",
     ]
-
-    if not config.get("tutorial", False):
-        datafiles.extend(["natura/Natura2000_end2015.shp", "GEBCO_2014_2D.nc"])
 
     rule retrieve_databundle:
         output:
-            protected(expand("data/bundle/{file}", file=datafiles)),
+            expand("data/bundle/{file}", file=datafiles),
+            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -41,13 +45,31 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_databundle.py"
 
+    rule retrieve_eurostat_data:
+        output:
+            directory("data/eurostat/Balances-April2023"),
+        log:
+            "logs/retrieve_eurostat_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_data.py"
+
+    rule retrieve_eurostat_household_data:
+        output:
+            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
+        log:
+            "logs/retrieve_eurostat_household_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_household_data.py"
+
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/record/6382570/files/{cutout}.nc",
+                "https://zenodo.org/records/6382570/files/{cutout}.nc",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
@@ -77,64 +99,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_cost_data.py"
-
-
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_natura_raster", True
-):
-
-    rule retrieve_natura_raster:
-        input:
-            storage(
-                "https://zenodo.org/record/4706686/files/natura.tiff",
-                keep_local=True,
-            ),
-        output:
-            resources("natura.tiff"),
-        log:
-            logs("retrieve_natura_raster.log"),
-        resources:
-            mem_mb=5000,
-        retries: 2
-        run:
-            copyfile(input[0], output[0])
-            validate_checksum(output[0], input[0])
-
-
-if config["enable"]["retrieve"] and config["enable"].get(
-    "retrieve_sector_databundle", True
-):
-    datafiles = [
-        "eea/UNFCCC_v23.csv",
-        "switzerland-sfoe/switzerland-new_format.csv",
-        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
-        "Industrial_Database.csv",
-        "emobility/KFZ__count",
-        "emobility/Pkw__count",
-        "h2_salt_caverns_GWh_per_sqkm.geojson",
-    ]
-
-    rule retrieve_sector_databundle:
-        output:
-            protected(expand("data/bundle-sector/{files}", files=datafiles)),
-            protected(directory("data/bundle-sector/jrc-idees-2015")),
-        log:
-            "logs/retrieve_sector_databundle.log",
-        retries: 2
-        conda:
-            "../envs/retrieve.yaml"
-        script:
-            "../scripts/retrieve_sector_databundle.py"
-
-    rule retrieve_eurostat_data:
-        output:
-            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
-        log:
-            "logs/retrieve_eurostat_data.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_eurostat_data.py"
 
 
 if config["enable"]["retrieve"]:
@@ -199,11 +163,11 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/record/6953563/files/shipdensity_global.zip",
+                "https://zenodo.org/records/10973944/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
-            protected("data/shipdensity_global.zip"),
+            "data/shipdensity_global.zip",
         log:
             "logs/retrieve_ship_raster.log",
         resources:
@@ -221,7 +185,7 @@ if config["enable"]["retrieve"]:
     rule download_copernicus_land_cover:
         input:
             storage(
-                "https://zenodo.org/record/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+                "https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
             ),
         output:
             "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -285,7 +249,7 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
-            gpkg=protected("data/WDPA.gpkg"),
+            gpkg="data/WDPA.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -294,7 +258,7 @@ if config["enable"]["retrieve"]:
                 layer_path = (
                     f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
-                print(f"Adding layer {i + 1} of 3 to combined output file.")
+                print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
     rule download_wdpa_marine:
@@ -310,14 +274,14 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_WDOECM_marine.zip",
             folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg=protected("data/WDPA_WDOECM_marine.gpkg"),
+            gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
-                print(f"Adding layer {i + 1} of 3 to combined output file.")
+                print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 

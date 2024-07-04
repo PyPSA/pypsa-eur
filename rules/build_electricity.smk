@@ -58,7 +58,7 @@ rule build_powerplants:
         logs("build_powerplants.log"),
     threads: 1
     resources:
-        mem_mb=5000,
+        mem_mb=7000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -111,7 +111,7 @@ rule build_shapes:
         nuts3=ancient("data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp"),
         nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
-        ch_cantons=ancient("data/bundle/ch_cantons.csv"),
+        ch_cantons=ancient("data/ch_cantons.csv"),
         ch_popgdp=ancient("data/bundle/je-e-21.03.02.xls"),
     output:
         country_shapes=resources("country_shapes.geojson"),
@@ -153,27 +153,6 @@ if config["enable"].get("build_cutout", False):
             "../scripts/build_cutout.py"
 
 
-if config["enable"].get("build_natura_raster", False):
-
-    rule build_natura_raster:
-        input:
-            natura=ancient("data/bundle/natura/Natura2000_end2015.shp"),
-            cutout=lambda w: "cutouts/"
-            + CDIR
-            + config_provider("atlite", "default_cutout")(w)
-            + ".nc",
-        output:
-            resources("natura.tiff"),
-        resources:
-            mem_mb=5000,
-        log:
-            logs("build_natura_raster.log"),
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_natura_raster.py"
-
-
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
@@ -201,7 +180,7 @@ rule determine_availability_matrix_MD_UA:
         wdpa="data/WDPA.gpkg",
         wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
         gebco=lambda w: (
-            "data/bundle/GEBCO_2014_2D.nc"
+            "data/bundle/gebco/GEBCO_2014_2D.nc"
             if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
@@ -214,7 +193,7 @@ rule determine_availability_matrix_MD_UA:
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("regions_onshore.geojson")
-            if w.technology in ("onwind", "solar")
+            if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
@@ -257,7 +236,7 @@ rule build_renewable_profiles:
         base_network=resources("networks/base.nc"),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
-            resources("natura.tiff")
+            "data/bundle/natura/natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
@@ -268,8 +247,11 @@ rule build_renewable_profiles:
         ),
         gebco=ancient(
             lambda w: (
-                "data/bundle/GEBCO_2014_2D.nc"
-                if config_provider("renewable", w.technology)(w).get("max_depth")
+                "data/bundle/gebco/GEBCO_2014_2D.nc"
+                if (
+                    config_provider("renewable", w.technology)(w).get("max_depth")
+                    or config_provider("renewable", w.technology)(w).get("min_depth")
+                )
                 else []
             )
         ),
@@ -282,7 +264,7 @@ rule build_renewable_profiles:
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("regions_onshore.geojson")
-            if w.technology in ("onwind", "solar")
+            if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
@@ -403,6 +385,7 @@ rule add_electricity:
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
+        foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         unpack(input_profile_tech),
@@ -414,11 +397,11 @@ rule add_electricity:
             else resources("networks/base.nc")
         ),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year') (w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
-        hydro_capacities=ancient("data/bundle/hydro_capacities.csv"),
+        hydro_capacities=ancient("data/hydro_capacities.csv"),
         geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
         fuel_price=lambda w: (
@@ -459,7 +442,7 @@ rule simplify_network:
     input:
         network=resources("networks/elec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year') (w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
@@ -507,7 +490,7 @@ rule cluster_network:
             else []
         ),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year') (w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
     output:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
@@ -536,7 +519,7 @@ rule add_extra_components:
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year') (w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
     output:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
@@ -571,7 +554,7 @@ rule prepare_network:
     input:
         resources("networks/elec_s{simpl}_{clusters}_ec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year') (w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:

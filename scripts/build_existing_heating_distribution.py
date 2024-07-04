@@ -5,6 +5,38 @@
 """
 Builds table of existing heat generation capacities for initial planning
 horizon.
+
+Existing heat generation capacities are distributed to nodes based on population.
+Within the nodes, the capacities are distributed to sectors (residential and services) based on sectoral consumption and urban/rural based population distribution.
+
+Inputs:
+-------
+- Existing heating generators: `data/existing_heating_raw.csv` per country
+- Population layout: `resources/{run_name}/pop_layout_s<simpl>_<clusters>.csv`. Output of `scripts/build_clustered_population_layout.py`
+- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s<simpl>_<clusters>.csv`
+- District heating share: `resources/<run_name>/district_heat_share_elec_s<simpl>_<clusters>_<planning_horizons>.csv`
+
+Outputs:
+--------
+- Existing heat generation capacities distributed to nodes: `resources/{run_name}/existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv`
+
+Relevant settings:
+------------------
+.. code:: yaml
+    scenario:
+        planning_horizons
+    sector:
+    existing_capacities:
+
+Notes:
+------
+- Data for Albania, Montenegro and Macedonia is not included in input database and assumed 0.
+- Coal and oil boilers are assimilated to oil boilers.
+- All ground-source heat pumps are assumed in rural areas and all air-source heat pumps are assumed to be in urban areas.
+
+References:
+-----------
+- "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
 import country_converter as coco
 import numpy as np
@@ -55,7 +87,6 @@ def build_existing_heating():
     nodal_heating = nodal_heating.multiply(pop_layout.fraction, axis=0)
 
     district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
-    dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
 
     energy_layout = pd.read_csv(
