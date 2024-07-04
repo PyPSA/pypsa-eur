@@ -2249,12 +2249,14 @@ def add_biomass(n, costs):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
             index=lambda x: x + " solid biomass"
         )
-        msw_biomass_potentials_spatial = biomass_potentials["municipal solid waste"].rename(
-            index=lambda x: x + " municipal solid waste"
-        )
+        msw_biomass_potentials_spatial = biomass_potentials[
+            "municipal solid waste"
+        ].rename(index=lambda x: x + " municipal solid waste")
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
-        msw_biomass_potentials_spatial = biomass_potentials["municipal solid waste"].sum()
+        msw_biomass_potentials_spatial = biomass_potentials[
+            "municipal solid waste"
+        ].sum()
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
@@ -2276,10 +2278,12 @@ def add_biomass(n, costs):
         unit="MWh_LHV",
     )
 
-    n.madd("Bus",
-           spatial.msw.nodes,
-           location=spatial.msw.locations,
-           carrier="municipal solid waste")
+    n.madd(
+        "Bus",
+        spatial.msw.nodes,
+        location=spatial.msw.locations,
+        carrier="municipal solid waste",
+    )
 
     n.madd(
         "Store",
@@ -2301,12 +2305,13 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
-    n.madd("Store",
+    n.madd(
+        "Store",
         spatial.msw.nodes,
         bus=spatial.msw.nodes,
         carrier="municipal solid waste",
         e_nom=msw_biomass_potentials_spatial,
-        marginal_cost=0,#costs.at["municipal solid waste", "fuel"],
+        marginal_cost=0,  # costs.at["municipal solid waste", "fuel"],
         e_initial=msw_biomass_potentials_spatial,
     )
 
@@ -2422,14 +2427,14 @@ def add_biomass(n, costs):
             type="operational_limit",
         )
 
-        #Add municipal solid waste
+        # Add municipal solid waste
         n.madd(
             "Generator",
             spatial.msw.nodes,
             bus=spatial.msw.nodes,
             carrier="municipal solid waste",
             p_nom=10000,
-            marginal_cost=0#costs.at["municipal solid waste", "fuel"]
+            marginal_cost=0  # costs.at["municipal solid waste", "fuel"]
             + bus_transport_costs * average_distance,
         )
         n.add(
@@ -3111,7 +3116,7 @@ def add_industry(n, costs):
             efficiency3=process_co2_per_naphtha,
         )
 
-        if options.get("biomass",True):
+        if options.get("biomass", True):
             n.madd(
                 "Link",
                 spatial.msw.locations,
@@ -3119,7 +3124,7 @@ def add_industry(n, costs):
                 bus1=non_sequestered_hvc_locations,
                 carrier="municipal solid waste",
                 p_nom_extendable=True,
-                efficiency=1.,
+                efficiency=1.0,
             )
 
         n.madd(
