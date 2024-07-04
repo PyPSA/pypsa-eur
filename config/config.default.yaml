@@ -365,7 +365,6 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
-    - Municipal waste
     not included:
     - Sugar from sugar beet
     - Rape seed
@@ -379,6 +378,8 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+    municipal solid waste:
+    - Municipal waste
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -1017,6 +1018,7 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
+    municipal solid waste: '#91ba41'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'

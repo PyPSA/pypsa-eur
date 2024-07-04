@@ -56,6 +56,7 @@ def define_spatial(nodes, options):
     # biomass
 
     spatial.biomass = SimpleNamespace()
+    spatial.msw = SimpleNamespace()
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
@@ -3109,6 +3110,17 @@ def add_industry(n, costs):
             / costs.at["oil", "CO2 intensity"],
             efficiency3=process_co2_per_naphtha,
         )
+
+        if options.get("biomass",True):
+            n.madd(
+                "Link",
+                spatial.msw.locations,
+                bus0=spatial.msw.nodes,
+                bus1=non_sequestered_hvc_locations,
+                carrier="municipal solid waste",
+                p_nom_extendable=True,
+                efficiency=1.,
+            )
 
         n.madd(
             "Link",
