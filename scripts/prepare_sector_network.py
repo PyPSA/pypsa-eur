@@ -542,12 +542,12 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    fossils = ['coal', 'gas', 'oil', 'lignite']
-    if not options.get('fossil_fuels',True) and carrier in fossils:
-        print('Not adding fossil ', carrier)
+    fossils = ["coal", "gas", "oil", "lignite"]
+    if not options.get("fossil_fuels", True) and carrier in fossils:
+        print("Not adding fossil ", carrier)
         extendable = False
     else:
-        print('Adding fossil ', carrier)
+        print("Adding fossil ", carrier)
         extendable = True
 
     n.madd(
@@ -2902,7 +2902,7 @@ def add_industry(n, costs):
             carrier="oil",
         )
 
-    if not options.get('fossil_fuels', True):
+    if not options.get("fossil_fuels", True):
         extendable = False
     else:
         extendable = True
