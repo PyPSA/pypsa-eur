@@ -2287,15 +2287,24 @@ def add_biomass(n, costs):
 
     if options["solid_biomass_import"].get("enable", False):
         biomass_import_price = options["solid_biomass_import"]["price"]
-        biomass_import_max_amount = round(options["solid_biomass_import"]["max_amount"]
-                                          * 1e9 / 3.6,0) #EJ --> MWh
-        biomass_import_upstream_emissions = round(options["solid_biomass_import"]["upstream_emissions_factor"]
-                                             * costs.at['solid biomass', 'CO2 intensity'],4)
+        biomass_import_max_amount = round(
+            options["solid_biomass_import"]["max_amount"] * 1e9 / 3.6, 0
+        )  # EJ --> MWh
+        biomass_import_upstream_emissions = round(
+            options["solid_biomass_import"]["upstream_emissions_factor"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            4,
+        )
 
-        print("Adding biomass import with cost", biomass_import_price,
-              "EUR/MWh, a limit of", options["solid_biomass_import"]["max_amount"],
-              "EJ, and embedded emissions of",
-              options["solid_biomass_import"]["upstream_emissions_factor"] * 100, '%')
+        print(
+            "Adding biomass import with cost",
+            biomass_import_price,
+            "EUR/MWh, a limit of",
+            options["solid_biomass_import"]["max_amount"],
+            "EJ, and embedded emissions of",
+            options["solid_biomass_import"]["upstream_emissions_factor"] * 100,
+            "%",
+        )
 
         n.add("Carrier", "solid biomass import")
 
@@ -2303,7 +2312,7 @@ def add_biomass(n, costs):
             "Bus",
             ["EU solid biomass import"],
             location="EU",
-            carrier="solid biomass import"
+            carrier="solid biomass import",
         )
 
         n.madd(
@@ -2313,7 +2322,7 @@ def add_biomass(n, costs):
             carrier="solid biomass import",
             e_nom=biomass_import_max_amount,
             marginal_cost=biomass_import_price,
-            e_initial=biomass_import_max_amount
+            e_initial=biomass_import_max_amount,
         )
 
         n.madd(
@@ -2324,12 +2333,10 @@ def add_biomass(n, costs):
             bus1=spatial.biomass.nodes,
             bus2="co2 atmosphere",
             carrier="solid biomass import",
-            efficiency=1.,
+            efficiency=1.0,
             efficiency2=biomass_import_upstream_emissions,
-            p_nom_extendable=True
+            p_nom_extendable=True,
         )
-
-
 
     n.madd(
         "Link",
