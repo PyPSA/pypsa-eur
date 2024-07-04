@@ -2496,48 +2496,6 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, "lifetime"],
         )
 
-        if options['waste_chp']:
-            print('Adding waste CHPs')
-            n.madd("Link",
-                   urban_central + " waste CHP",
-                   bus0=urban_central + " municipal solid waste",
-                   bus1=urban_central,
-                   bus4=urban_central + " urban central heat",
-                   bus3="co2 atmosphere",
-                   carrier="urban central waste incineration",
-                   p_nom_extendable=True,
-                   # p_nom=biomass_potential['municipal solid waste'] / 8760,
-                   capital_cost=costs.at['waste CHP', 'fixed'] * costs.at['waste CHP', 'efficiency'],
-                   marginal_cost=costs.at['waste CHP', 'VOM'],
-                   efficiency=costs.at['waste CHP', 'efficiency'],
-                   efficiency4=costs.at['waste CHP', 'efficiency-heat'],
-                   efficiency3=costs.at['solid biomass', 'CO2 intensity']-costs.at['solid biomass', 'CO2 intensity'],
-                   lifetime=costs.at['waste CHP', 'lifetime'])
-
-            if beccs:
-                n.madd("Link",
-                       urban_central + " waste CHP CC",
-                       bus0=urban_central + " municipal solid waste",
-                       bus1=urban_central,
-                       bus4=urban_central + " urban central heat",
-                       bus3="co2 atmosphere",
-                       bus2="co2 stored",
-                       carrier="urban central waste incineration CC",
-                       p_nom_extendable=True,
-                       # p_nom=costs.at['waste CHP CC', 'efficiency'] * biomass_potential['municipal solid waste'] / 8760,
-                       capital_cost=costs.at['waste CHP CC', 'fixed'] * costs.at['waste CHP CC', 'efficiency']
-                                    + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
-                       marginal_cost=costs.at['waste CHP CC', 'VOM'],
-                       efficiency=costs.at['waste CHP CC', 'efficiency'],
-                       efficiency4=costs.at['waste CHP CC', 'efficiency-heat'],
-                       #Assuming same CO2 intensity as solid biomass
-                       efficiency3=costs.at['solid biomass', 'CO2 intensity'] * (1 - options["cc_fraction"])-costs.at['solid biomass', 'CO2 intensity'],
-                       efficiency2=costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
-                       c_b=costs.at['waste CHP CC', 'c_b'],
-                       c_v=costs.at['waste CHP CC', 'c_v'],
-                       lifetime=costs.at['waste CHP CC', 'lifetime'])
-
-
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
         nodes = pop_layout.index
