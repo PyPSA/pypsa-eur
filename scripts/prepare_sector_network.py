@@ -2530,18 +2530,14 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"]
             * costs.at["BtL", "efficiency"]
-            / costs.at["electrobiofuels", "efficiency-biomass"]
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "fixed"]
-            * costs.at["Fischer-Tropsch", "efficiency"]
-            / costs.at["electrobiofuels", "efficiency-hydrogen"],
+            * costs.at["Fischer-Tropsch", "efficiency"],
             marginal_cost=costs.at["BtL", "VOM"]
             * costs.at["BtL", "efficiency"]
-            / costs.at["electrobiofuels", "efficiency-biomass"]
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "VOM"]
-            * costs.at["Fischer-Tropsch", "efficiency"]
-            / costs.at["electrobiofuels", "efficiency-hydrogen"],
+            * costs.at["Fischer-Tropsch", "efficiency"],
         )
 
     # BioSNG from solid biomass
