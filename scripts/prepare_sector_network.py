@@ -2528,13 +2528,11 @@ def add_biomass(n, costs):
             + costs.at["BtL", "CO2 stored"]
             * (1 - costs.at["Fischer-Tropsch", "capture rate"]),
             p_nom_extendable=True,
-            capital_cost=costs.at["BtL", "fixed"]
-            * costs.at["BtL", "efficiency"]
+            capital_cost=costs.at["BtL", "fixed"] * costs.at["BtL", "efficiency"]
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "fixed"]
             * costs.at["Fischer-Tropsch", "efficiency"],
-            marginal_cost=costs.at["BtL", "VOM"]
-            * costs.at["BtL", "efficiency"]
+            marginal_cost=costs.at["BtL", "VOM"] * costs.at["BtL", "efficiency"]
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "VOM"]
             * costs.at["Fischer-Tropsch", "efficiency"],
