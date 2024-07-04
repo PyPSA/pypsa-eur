@@ -292,7 +292,8 @@ rule build_energy_totals:
         swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
         idees="data/bundle/jrc-idees-2015",
         district_heat_share="data/district_heat_share.csv",
-        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
+        eurostat="data/eurostat/Balances-April2023",
+        eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
     output:
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
@@ -509,7 +510,7 @@ rule build_industrial_production_per_country:
     input:
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/bundle/jrc-idees-2015",
-        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
+        eurostat="data/eurostat/Balances-April2023",
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -859,6 +860,40 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
+rule time_aggregation:
+    params:
+        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        solver_name=config_provider("solving", "solver", "name"),
+    input:
+        network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+        hourly_heat_demand_total=lambda w: (
+            resources("hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc")
+            if config_provider("sector", "heating")(w)
+            else []
+        ),
+        solar_thermal_total=lambda w: (
+            resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
+            if config_provider("sector", "solar_thermal")(w)
+            else []
+        ),
+    output:
+        snapshot_weightings=resources(
+            "snapshot_weightings_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.csv"
+        ),
+    threads: 1
+    resources:
+        mem_mb=5000,
+    log:
+        logs("time_aggregation_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.log"),
+    benchmark:
+        benchmarks("time_aggregation_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/time_aggregation.py"
+
+
 def input_profile_offwind(w):
     return {
         f"profile_{tech}": resources(f"profile_{tech}.nc")
@@ -867,10 +902,37 @@ def input_profile_offwind(w):
     }
 
 
+rule build_egs_potentials:
+    params:
+        snapshots=config_provider("snapshots"),
+        sector=config_provider("sector"),
+        costs=config_provider("costs"),
+    input:
+        egs_cost="data/egs_costs.json",
+        regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        air_temperature=(
+            resources("temp_air_total_elec_s{simpl}_{clusters}.nc")
+            if config_provider("sector", "enhanced_geothermal", "var_cf")
+            else []
+        ),
+    output:
+        egs_potentials=resources("egs_potentials_s{simpl}_{clusters}.csv"),
+        egs_overlap=resources("egs_overlap_s{simpl}_{clusters}.csv"),
+        egs_capacity_factors=resources("egs_capacity_factors_s{simpl}_{clusters}.csv"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_egs_potentials_s{simpl}_{clusters}.log"),
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_egs_potentials.py"
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
         co2_budget=config_provider("co2_budget"),
         conventional_carriers=config_provider(
             "existing_capacities", "conventional_carriers"
@@ -891,6 +953,9 @@ rule prepare_sector_network:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
+        snapshot_weightings=resources(
+            "snapshot_weightings_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.csv"
+        ),
         retro_cost=lambda w: (
             resources("retro_cost_elec_s{simpl}_{clusters}.csv")
             if config_provider("sector", "retrofitting", "retro_endogen")(w)
@@ -915,7 +980,7 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
-        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
+        eurostat="data/eurostat/Balances-April2023",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
         ),
@@ -983,6 +1048,21 @@ rule prepare_sector_network:
         solar_thermal_rural=lambda w: (
             resources("solar_thermal_rural_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
+            else []
+        ),
+        egs_potentials=lambda w: (
+            resources("egs_potentials_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        egs_overlap=lambda w: (
+            resources("egs_overlap_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        egs_capacity_factors=lambda w: (
+            resources("egs_capacity_factors_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
     output:

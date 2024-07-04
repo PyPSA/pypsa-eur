@@ -58,7 +58,7 @@ rule build_powerplants:
         logs("build_powerplants.log"),
     threads: 1
     resources:
-        mem_mb=5000,
+        mem_mb=7000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -193,7 +193,7 @@ rule determine_availability_matrix_MD_UA:
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("regions_onshore.geojson")
-            if w.technology in ("onwind", "solar")
+            if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
@@ -264,7 +264,7 @@ rule build_renewable_profiles:
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
             resources("regions_onshore.geojson")
-            if w.technology in ("onwind", "solar")
+            if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: "cutouts/"
@@ -385,6 +385,7 @@ rule add_electricity:
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
         costs=config_provider("costs"),
+        foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         unpack(input_profile_tech),

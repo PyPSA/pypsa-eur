@@ -3,7 +3,49 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build specific energy consumption by carrier and industries.
+Build best case specific energy consumption by carrier and category.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    industry:
+        ammonia:
+..
+
+Inputs
+-------
+- ``resources/ammonia_production.csv``
+- ``data/bundle-sector/jrc-idees-2015``
+
+Outputs
+-------
+
+- ``resources/industry_sector_ratios.csv``
+
+Description
+-------
+
+This script uses the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en>` data to calculate an EU28 average specific energy consumption by carrier and industries.
+The industries are according to the rule `industrial_production_per_country <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_industrial_production_per_country>`.
+
+The following carriers are considered:
+- elec
+- coal
+- coke
+- biomass
+- methane
+- hydrogen
+- heat
+- naphtha
+- process emission
+- process emission from feedstock
+- (ammonia)
+
+If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry>` is set to true the ammonia demand is not converted to hydrogen and electricity but is considered as a separate carrier.
+
+The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
 """
 
 import pandas as pd
@@ -68,6 +110,7 @@ index = [
     "heat",
     "naphtha",
     "ammonia",
+    "methanol",
     "process emission",
     "process emission from feedstock",
 ]
@@ -456,8 +499,7 @@ def chemicals_industry():
 
     sector = "Methanol"
     df[sector] = 0.0
-    df.loc["methane", sector] = params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] = params["MWh_elec_per_tMeOH"]
+    df.loc["methanol", sector] = params["MWh_MeOH_per_tMeOH"]
 
     # Other chemicals
 

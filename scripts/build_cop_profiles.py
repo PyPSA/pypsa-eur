@@ -6,11 +6,40 @@
 Build coefficient of performance (COP) time series for air- or ground-sourced
 heat pumps.
 
-The COP is a function of the temperature difference between source and
-sink.
+The COP is approximated as a quatratic function of the temperature difference between source and
+sink, based on Staffell et al. 2012.
 
-The quadratic regression used is based on Staffell et al. (2012)
-https://doi.org/10.1039/C2EE22653G.
+This rule is executed in ``build_sector.smk``.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+    heat_pump_sink_T:
+
+
+Inputs:
+-------
+- ``resources/<run_name>/temp_soil_total_elec_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
+- ``resources/<run_name>/temp_soil_rural_elec_s<simpl>_<clusters>.nc``: Soil temperature (rural) time series.
+- ``resources/<run_name>/temp_soil_urban_elec_s<simpl>_<clusters>.nc``: Soil temperature (urban) time series.
+- ``resources/<run_name>/temp_air_total_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
+- ``resources/<run_name>/temp_air_rural_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (rural) time series.
+- ``resources/<run_name>/temp_air_urban_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (urban) time series.
+
+Outputs:
+--------
+- ``resources/cop_soil_total_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
+- ``resources/cop_soil_rural_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (rural).
+- ``resources/cop_soil_urban_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (urban).
+- ``resources/cop_air_total_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
+- ``resources/cop_air_rural_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (rural).
+- ``resources/cop_air_urban_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (urban).
+
+
+References
+----------
+[1] Staffell et al., Energy & Environmental Science 11 (2012): A review of domestic heat pumps, https://doi.org/10.1039/C2EE22653G.
 """
 
 import xarray as xr

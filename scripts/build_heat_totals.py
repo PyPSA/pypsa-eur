@@ -4,6 +4,17 @@
 # SPDX-License-Identifier: MIT
 """
 Approximate heat demand for all weather years.
+
+:func:`approximate_heat_demand` approximates annual heat demand based on energy totals and heating degree days (HDD) using a regression of heat demand on HDDs.
+
+Inputs
+------
+- `resources/<run_name>/energy_totals.csv`: Energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
+- `data/era5-annual-HDD-per-country.csv`: Number of heating degree days by year (columns) and country (index).
+
+Outputs
+-------
+- `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
 """
 
 from itertools import product
@@ -14,7 +25,30 @@ from numpy.polynomial import Polynomial
 idx = pd.IndexSlice
 
 
-def approximate_heat_demand(energy_totals, hdd):
+def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
+    """
+    Approximate heat demand for a set of countries based on energy totals and
+    heating degree days (HDD). A polynomial regression of heat demand on HDDs
+    is performed on the data from 2007 to 2021. Then, for 2022 and 2023, the
+    heat demand is estimated from known HDDs based on the regression.
+
+    Parameters
+    ----------
+    energy_totals : pd.DataFrame
+        DataFrame with energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
+    hdd : pd.DataFrame
+        DataFrame with number of heating degree days by year (columns) and country (index).
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with approximated heat demand for each country.
+
+    Notes
+    -----
+    - Missing data is filled forward for GB in 2020 and backward for CH from 2007 to 2009.
+    - If only one year of heating data is available for a country, a point (0, 0) is added to make the polynomial fit work.
+    """
 
     countries = hdd.columns.intersection(energy_totals.index.levels[0])
 

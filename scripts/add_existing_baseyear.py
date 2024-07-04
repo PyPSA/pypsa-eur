@@ -61,9 +61,9 @@ def add_existing_renewables(df_agg, costs):
     Append existing renewables to the df_agg pd.DataFrame with the conventional
     power plants.
     """
-    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind": "Offshore"}
+    tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-ac": "Offshore"}
 
-    countries = snakemake.config["countries"]
+    countries = snakemake.config["countries"]  # noqa: F841
     irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
     irena = irena.query("Country in @countries")
     irena = irena.groupby(["Technology", "Country", "Year"]).Capacity.sum()
@@ -109,12 +109,13 @@ def add_existing_renewables(df_agg, costs):
                 name = f"{node}-{carrier}-{year}"
                 capacity = nodal_df.loc[node, year]
                 if capacity > 0.0:
+                    cost_key = carrier.split("-")[0]
                     df_agg.at[name, "Fueltype"] = carrier
                     df_agg.at[name, "Capacity"] = capacity
                     df_agg.at[name, "DateIn"] = year
-                    df_agg.at[name, "lifetime"] = costs.at[carrier, "lifetime"]
+                    df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
                     df_agg.at[name, "DateOut"] = (
-                        year + costs.at[carrier, "lifetime"] - 1
+                        year + costs.at[cost_key, "lifetime"] - 1
                     )
                     df_agg.at[name, "cluster_bus"] = node
 
@@ -200,19 +201,19 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-    older_assets = (df_agg.DateIn < min(grouping_years)).sum()
-    if older_assets:
+    newer_assets = (df_agg.DateIn > max(grouping_years)).sum()
+    if newer_assets:
         logger.warning(
-            f"There are {older_assets} assets with build year "
-            f"before first power grouping year {min(grouping_years)}. "
+            f"There are {newer_assets} assets with build year "
+            f"after last power grouping year {max(grouping_years)}. "
             "These assets are dropped and not considered."
             "Consider to redefine the grouping years to keep them."
         )
-        to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
+        to_drop = df_agg[df_agg.DateIn > max(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
 
     df_agg["grouping_year"] = np.take(
-        grouping_years[::-1], np.digitize(df_agg.DateIn, grouping_years[::-1])
+        grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
     )
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
@@ -254,7 +255,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         name_suffix = f" {generator}{suffix}-{grouping_year}"
         name_suffix_by = f" {generator}{suffix}-{baseyear}"
         asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind"]:
+        if generator in ["solar", "onwind", "offwind-ac"]:
+            cost_key = generator.split("-")[0]
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
@@ -270,9 +272,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             # this is for the year 2020
             if not already_build.empty:
-                n.generators.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.generators.loc[already_build, "p_nom"] = n.generators.loc[
+                    already_build, "p_nom_min"
+                ] = capacity.loc[already_build.str.replace(name_suffix, "")].values
             new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
             if "m" in snakemake.wildcards.clusters:
@@ -299,10 +301,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         / len(inv_ind),  # split among regions in a country
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
-                        efficiency=costs.at[generator, "efficiency"],
+                        efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu,
                         build_year=grouping_year,
-                        lifetime=costs.at[generator, "lifetime"],
+                        lifetime=costs.at[cost_key, "lifetime"],
                     )
 
             else:
@@ -318,10 +320,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         p_nom=new_capacity,
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
-                        efficiency=costs.at[generator, "efficiency"],
+                        efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu.rename(columns=n.generators.bus),
                         build_year=grouping_year,
-                        lifetime=costs.at[generator, "lifetime"],
+                        lifetime=costs.at[cost_key, "lifetime"],
                     )
 
         else:
@@ -440,8 +442,6 @@ def add_heating_capacities_installed_before_baseyear(
         snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
     )
 
-    techs = existing_heating.columns.get_level_values(1).unique()
-
     for name in existing_heating.columns.get_level_values(0).unique():
         name_type = "central" if name == "urban central" else "decentral"
 
@@ -464,6 +464,11 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
+        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
+        if too_large_grouping_years:
+            logger.warning(
+                f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
+            )
         valid_grouping_years = pd.Series(
             [
                 int(grouping_year)
@@ -473,12 +478,12 @@ def add_heating_capacities_installed_before_baseyear(
             ]
         )
 
+        assert valid_grouping_years.is_monotonic_increasing
+
         # get number of years of each interval
-        _years = (
-            valid_grouping_years.diff()
-            .shift(-1)
-            .fillna(baseyear - valid_grouping_years.iloc[-1])
-        )
+        _years = valid_grouping_years.diff()
+        # Fill NA from .diff() with value for the first interval
+        _years[0] = valid_grouping_years[0] - baseyear + default_lifetime
         # Installation is assumed to be linear for the past
         ratios = _years / _years.sum()
 
@@ -596,13 +601,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            configfiles="config/config.yaml",
             simpl="",
-            clusters="37",
-            ll="v1.0",
+            clusters="20",
+            ll="v1.5",
             opts="",
-            sector_opts="8760-T-H-B-I-A-dist1",
-            planning_horizons=2020,
+            sector_opts="none",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)

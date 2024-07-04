@@ -4,6 +4,25 @@
 # SPDX-License-Identifier: MIT
 """
 Build industrial production per model region.
+
+Inputs
+-------
+
+- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_production_per_node_elec_s{simpl}_{clusters}_{planning_horizons}.csv``
+
+Description
+-------
+
+This rule maps the industrial production per country from a certain time horizon to each bus region.
+The mapping file provides a value between 0 and 1 for each bus and industry subcategory, indicating the share of the country's production of that sector in that bus.
+The industrial production per country is multiplied by the mapping value to get the industrial production per bus.
+The unit of the production is kt/a.
 """
 
 from itertools import product

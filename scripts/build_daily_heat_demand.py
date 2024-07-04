@@ -3,13 +3,50 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build heat demand time series using heating degree day (HDD) approximation.
+This rule builds heat demand time series using heating degree day (HDD)
+approximation.
+
+Snapshots are resampled to daily time resolution and ``Atlite.convert.heat_demand`` is used to convert ambient temperature from the default weather cutout to heat demand time series for the respective cutout.
+
+Heat demand is distributed by population to clustered onshore regions.
+
+The rule is executed in ``build_sector.smk``.
+
+.. seealso::
+    `Atlite.Cutout.heat_demand <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    snapshots:
+    drop_leap_day:
+
+Inputs
+------
+
+- ``resources/<run_name>/pop_layout_<scope>.nc``: Population layout (spatial population distribution).
+- ``resources/<run_name>/regions_onshore_elec_s<simpl>_<clusters>.geojson``: Onshore region shapes.
+- ``cutout``: Weather data cutout, as specified in config
+
+Outputs
+-------
+
+- ``resources/daily_heat_demand_<scope>_elec_s<simpl>_<clusters>.nc``:
+
+Relevant settings
+-----------------
+
+.. code:: yaml
+
+    atlite:
+        default_cutout``:
 """
 
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import xarray as xr
 from _helpers import get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster

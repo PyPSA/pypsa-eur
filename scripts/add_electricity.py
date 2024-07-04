@@ -230,10 +230,9 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.at["OCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
-    costs.at["solar", "capital_cost"] = (
-        config["rooftop_share"] * costs.at["solar-rooftop", "capital_cost"]
-        + (1 - config["rooftop_share"]) * costs.at["solar-utility", "capital_cost"]
-    )
+    costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
+
+    costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
         capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
@@ -271,7 +270,6 @@ def load_powerplants(ppl_fn):
         "bioenergy": "biomass",
         "ccgt, thermal": "CCGT",
         "hard coal": "coal",
-        "natural gas": "OCGT",
     }
     return (
         pd.read_csv(ppl_fn, index_col=0, dtype={"bus": "str"})
@@ -450,8 +448,6 @@ def attach_conventional_generators(
     fuel_price=None,
 ):
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
-    add_missing_carriers(n, carriers)
-    add_co2_emissions(n, costs, carriers)
 
     # Replace carrier "natural gas" with the respective technology (OCGT or
     # CCGT) to align with PyPSA names of "carriers" and avoid filtering "natural
@@ -466,6 +462,11 @@ def attach_conventional_generators(
         .rename(index=lambda s: f"C{str(s)}")
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
+
+    # reduce carriers to those in power plant dataset
+    carriers = list(set(carriers) & set(ppl.carrier.unique()))
+    add_missing_carriers(n, carriers)
+    add_co2_emissions(n, costs, carriers)
 
     if unit_commitment is not None:
         committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")
@@ -883,15 +884,22 @@ if __name__ == "__main__":
 
     estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
     if estimate_renewable_caps["enable"]:
-        tech_map = estimate_renewable_caps["technology_mapping"]
-        expansion_limit = estimate_renewable_caps["expansion_limit"]
-        year = estimate_renewable_caps["year"]
+        if params.foresight != "overnight":
+            logger.info(
+                "Skipping renewable capacity estimation because they are added later "
+                "in rule `add_existing_baseyear` with foresight mode 'myopic'."
+            )
+        else:
+            tech_map = estimate_renewable_caps["technology_mapping"]
+            expansion_limit = estimate_renewable_caps["expansion_limit"]
+            year = estimate_renewable_caps["year"]
 
-        if estimate_renewable_caps["from_opsd"]:
-            attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(
-            n, year, tech_map, expansion_limit, params.countries
-        )
+            if estimate_renewable_caps["from_opsd"]:
+                attach_OPSD_renewables(n, tech_map)
+
+            estimate_renewable_capacities(
+                n, year, tech_map, expansion_limit, params.countries
+            )
 
     update_p_nom_max(n)
 

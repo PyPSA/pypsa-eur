@@ -273,14 +273,15 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
         if links_tyndp.empty:
             return buses, links
 
-    tree = spatial.KDTree(buses[["x", "y"]])
+    tree_buses = buses.query("carrier=='AC'")
+    tree = spatial.KDTree(tree_buses[["x", "y"]])
     _, ind0 = tree.query(links_tyndp[["x1", "y1"]])
-    ind0_b = ind0 < len(buses)
-    links_tyndp.loc[ind0_b, "bus0"] = buses.index[ind0[ind0_b]]
+    ind0_b = ind0 < len(tree_buses)
+    links_tyndp.loc[ind0_b, "bus0"] = tree_buses.index[ind0[ind0_b]]
 
     _, ind1 = tree.query(links_tyndp[["x2", "y2"]])
-    ind1_b = ind1 < len(buses)
-    links_tyndp.loc[ind1_b, "bus1"] = buses.index[ind1[ind1_b]]
+    ind1_b = ind1 < len(tree_buses)
+    links_tyndp.loc[ind1_b, "bus1"] = tree_buses.index[ind1[ind1_b]]
 
     links_tyndp_located_b = (
         links_tyndp["bus0"].notnull() & links_tyndp["bus1"].notnull()
@@ -1187,7 +1188,7 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
 
     shapes = pd.concat(onshore_regions, ignore_index=True)
 
-    return onshore_regions, offshore_regions, shapes
+    return onshore_regions, offshore_regions, shapes, offshore_shapes
 
 
 def append_bus_shapes(n, shapes, type):
@@ -1240,7 +1241,7 @@ if __name__ == "__main__":
         snakemake.config,
     )
 
-    onshore_regions, offshore_regions, shapes = build_bus_shapes(
+    onshore_regions, offshore_regions, shapes, offshore_shapes = build_bus_shapes(
         n,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

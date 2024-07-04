@@ -7,7 +7,6 @@ Concats pypsa networks of single investment periods to one network.
 """
 
 import logging
-import re
 
 import numpy as np
 import pandas as pd

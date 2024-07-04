@@ -33,8 +33,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_databundle:
         output:
-            protected(expand("data/bundle/{file}", file=datafiles)),
-            protected(directory("data/bundle/jrc-idees-2015")),
+            expand("data/bundle/{file}", file=datafiles),
+            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -47,12 +47,21 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_eurostat_data:
         output:
-            directory("data/eurostat/eurostat-energy_balances-april_2023_edition"),
+            directory("data/eurostat/Balances-April2023"),
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
         script:
             "../scripts/retrieve_eurostat_data.py"
+
+    rule retrieve_eurostat_household_data:
+        output:
+            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
+        log:
+            "logs/retrieve_eurostat_household_data.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_eurostat_household_data.py"
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
@@ -158,7 +167,7 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            protected("data/shipdensity_global.zip"),
+            "data/shipdensity_global.zip",
         log:
             "logs/retrieve_ship_raster.log",
         resources:
@@ -240,7 +249,7 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
-            gpkg=protected("data/WDPA.gpkg"),
+            gpkg="data/WDPA.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")
@@ -265,7 +274,7 @@ if config["enable"]["retrieve"]:
             zip="data/WDPA_WDOECM_marine.zip",
             folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg=protected("data/WDPA_WDOECM_marine.gpkg"),
+            gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
             shell("cp {input} {params.zip}")
             shell("unzip -o {params.zip} -d {params.folder}")

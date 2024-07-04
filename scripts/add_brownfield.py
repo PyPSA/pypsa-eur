@@ -132,22 +132,20 @@ def disable_grid_expansion_if_limit_hit(n):
     minimum and extendable is turned off; the corresponding global
     constraint is then dropped.
     """
-    cols = {"cost": "capital_cost", "volume": "length"}
-    for limit_type in ["cost", "volume"]:
-        glcs = n.global_constraints.query(
-            f"type == 'transmission_expansion_{limit_type}_limit'"
-        )
+    types = {"expansion_cost": "capital_cost", "volume_expansion": "length"}
+    for limit_type in types:
+        glcs = n.global_constraints.query(f"type == 'transmission_{limit_type}_limit'")
 
         for name, glc in glcs.iterrows():
             total_expansion = (
                 (
                     n.lines.query("s_nom_extendable")
-                    .eval(f"s_nom_min * {cols[limit_type]}")
+                    .eval(f"s_nom_min * {types[limit_type]}")
                     .sum()
                 )
                 + (
                     n.links.query("carrier == 'DC' and p_nom_extendable")
-                    .eval(f"p_nom_min * {cols[limit_type]}")
+                    .eval(f"p_nom_min * {types[limit_type]}")
                     .sum()
                 )
             ).sum()
@@ -197,6 +195,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     for carrier in params["carriers"]:
         if carrier == "hydro":
             continue
+
         with xr.open_dataset(getattr(input_profiles, "profile_" + carrier)) as ds:
             if ds.indexes["bus"].empty or "year" not in ds.indexes:
                 continue
