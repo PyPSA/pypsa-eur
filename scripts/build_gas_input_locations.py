@@ -135,7 +135,7 @@ if __name__ == "__main__":
             "build_gas_input_locations",
             simpl="",
             clusters="5",
-            configfiles="config/test/config.overnight.yaml"
+            configfiles="config/test/config.overnight.yaml",
         )
 
     configure_logging(snakemake)

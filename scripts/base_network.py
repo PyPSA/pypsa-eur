@@ -893,7 +893,7 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
             },
             crs=n.crs,
         )
-        sel = offshore_regions_c.to_crs(3035).area > 10 # m2
+        sel = offshore_regions_c.to_crs(3035).area > 10  # m2
         offshore_regions_c = offshore_regions_c.loc[sel]
         offshore_regions.append(offshore_regions_c)
 
