@@ -671,7 +671,7 @@ def _set_links_underwater_fraction(n, offshore_shapes):
     if not hasattr(n.links, "geometry"):
         n.links["underwater_fraction"] = 0.0
     else:
-        offshore_shape = gpd.read_file(offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(offshore_shapes).union_all()
         links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
         n.links["underwater_fraction"] = (
             links.intersection(offshore_shape).length / links.length

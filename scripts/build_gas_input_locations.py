@@ -7,6 +7,7 @@ Build import locations for fossil gas from entry-points, LNG terminals and
 production sites with data from SciGRID_gas and Global Energy Monitor.
 """
 
+import json
 import logging
 
 import geopandas as gpd
@@ -19,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
-    df = pd.concat([df, df.param.apply(pd.Series)], axis=1)
+    expanded_param = df.param.apply(json.loads).apply(pd.Series)
+    df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
@@ -133,7 +135,7 @@ if __name__ == "__main__":
             "build_gas_input_locations",
             simpl="",
             clusters="5",
-            configfiles="config/test/config.electricity.yaml"
+            configfiles="config/test/config.overnight.yaml"
         )
 
     configure_logging(snakemake)
@@ -163,7 +165,7 @@ if __name__ == "__main__":
 
     gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how="left")
 
-    gas_input_nodes.rename(columns={"index_right": "bus"}, inplace=True)
+    gas_input_nodes.rename(columns={"name": "bus"}, inplace=True)
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver="GeoJSON")
 

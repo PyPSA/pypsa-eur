@@ -46,7 +46,7 @@ if __name__ == "__main__":
     p = european_ports.to_crs(3857)
     r = regions.to_crs(3857)
     outflows = (
-        p.sjoin_nearest(r).groupby("index_right").properties_outflows.sum().div(1e3)
+        p.sjoin_nearest(r).groupby("name").properties_outflows.sum().div(1e3)
     )
 
     # calculate fraction of each country's port outflows

@@ -43,7 +43,7 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
 
         bus_mapping = gpd.sjoin(
             gdf, bus_regions, how="left", predicate="within"
-        ).index_right
+        )["name"]
         bus_mapping = bus_mapping.groupby(bus_mapping.index).first()
 
         df[f"bus{i}"] = bus_mapping
