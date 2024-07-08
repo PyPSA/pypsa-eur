@@ -269,9 +269,9 @@ def build_eurostat(input_eurostat, countries, year, idees_rename):
 
 def add_unsustainable_potentials(df):
     """
-    Add unsustainable biomass potentials to the given dataframe.
-    The difference between the data of JRC and Eurostat is assumed to be
-    unsustainable biomass.
+    Add unsustainable biomass potentials to the given dataframe. The difference
+    between the data of JRC and Eurostat is assumed to be unsustainable
+    biomass.
 
     Parameters
     ----------
@@ -293,9 +293,7 @@ def add_unsustainable_potentials(df):
     df_unsustainable = (
         build_eurostat(
             countries=snakemake.config["countries"],
-            year=max(
-                min(latest_year, investment_year), 1990
-            ),
+            year=max(min(latest_year, investment_year), 1990),
             input_eurostat=snakemake.input.eurostat,
             idees_rename=idees_rename,
         )
@@ -324,9 +322,15 @@ def add_unsustainable_potentials(df):
     df_unsustainable = df_unsustainable[bio_carriers]
 
     # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
-    reduction_factor = max(0, min(1, 1 - (investment_year - 2020) / (
-        snakemake.config["biomass"]["unsustainable_phase_out"] - 2020
-    )))
+    reduction_factor = max(
+        0,
+        min(
+            1,
+            1
+            - (investment_year - 2020)
+            / (snakemake.config["biomass"]["unsustainable_phase_out"] - 2020),
+        ),
+    )
 
     df *= 1 - reduction_factor
 
@@ -373,9 +377,9 @@ def add_unsustainable_potentials(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
-
         import os
+
+        from _helpers import mock_snakemake
 
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(

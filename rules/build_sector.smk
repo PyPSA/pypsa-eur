@@ -334,7 +334,9 @@ rule build_heat_totals:
 rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
-        waste_incineration=config_provider("sector", "waste_incineration", default=False),
+        waste_incineration=config_provider(
+            "sector", "waste_incineration", default=False
+        ),
     input:
         enspreso_biomass=storage(
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
