@@ -294,7 +294,7 @@ def add_unsustainable_potentials(df):
         build_eurostat(
             countries=snakemake.config["countries"],
             year=max(
-                min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990
+                min(latest_year, investment_year), 1990
             ),
             input_eurostat=snakemake.input.eurostat,
             idees_rename=idees_rename,
@@ -323,27 +323,40 @@ def add_unsustainable_potentials(df):
 
     df_unsustainable = df_unsustainable[bio_carriers]
 
+    # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
+    reduction_factor = max(0, min(1, 1 - (investment_year - 2020) / (
+        snakemake.config["biomass"]["unsustainable_phase_out"] - 2020
+    )))
+
+    df *= 1 - reduction_factor
+
     df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
 
     df_wo_ch["unsustainable solid biomass"] = (
-        df_wo_ch.apply(
-            lambda c: c.sum()
-            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-            * df_unsustainable.loc[c.name[:2], "Primary solid biofuels"],
-            axis=1,
+        (
+            df_wo_ch.apply(
+                lambda c: c.sum()
+                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+                * df_unsustainable.loc[c.name[:2], "Primary solid biofuels"],
+                axis=1,
+            )
         )
-        - df_wo_ch["solid biomass"]
-    ).clip(lower=0)
+        .mul(reduction_factor)
+        .clip(lower=0)
+    )
 
     df_wo_ch["unsustainable biogas"] = (
-        df_wo_ch.apply(
-            lambda c: c.sum()
-            / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-            * df_unsustainable.loc[c.name[:2], "Biogases"],
-            axis=1,
+        (
+            df_wo_ch.apply(
+                lambda c: c.sum()
+                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
+                * df_unsustainable.loc[c.name[:2], "Biogases"],
+                axis=1,
+            )
         )
-        - df_wo_ch["biogas"]
-    ).clip(lower=0)
+        .mul(reduction_factor)
+        .clip(lower=0)
+    )
 
     df_wo_ch["unsustainable bioliquids"] = df_wo_ch.apply(
         lambda c: c.sum()
@@ -369,7 +382,7 @@ if __name__ == "__main__":
             "build_biomass_potentials",
             simpl="",
             clusters="37",
-            planning_horizons=2030,
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)
