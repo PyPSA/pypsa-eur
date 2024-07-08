@@ -70,19 +70,6 @@ def define_spatial(nodes, options):
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
 
-    # municipal solid waste
-
-    if options.get("waste_incineration"):
-        spatial.waste = SimpleNamespace()
-        if options.get("waste_incineration") == "regional":
-            spatial.waste.nodes = nodes + " municipal waste"
-            spatial.waste.locations = nodes
-        else:
-            spatial.waste.nodes = ["EU municipal waste"]
-            spatial.waste.locations = ["EU"]
-
-        spatial.waste.df = pd.DataFrame(vars(spatial.waste), index=nodes)
-
     # unsustainable bioliquids
 
     spatial.bioliquids = SimpleNamespace()
@@ -2293,22 +2280,8 @@ def add_biomass(n, costs):
             "unsustainable bioliquids"
         ].sum()
 
-    if options.get("waste_incineration") == "regional":
-        waste_potentials_spatial = biomass_potentials["waste"].rename(
-            index=lambda x: x + " municipal waste"
-        )
-        unsustainable_waste_potentials_spatial_ = biomass_potentials["waste"].rename(
-            index=lambda x: x + " municipal waste"
-        )
-    else:
-        waste_potentials_spatial = biomass_potentials["waste"].sum()
-        unsustainable_waste_potentials_spatial_ = biomass_potentials[
-            "unsustainable waste"
-        ].sum()
-
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
-    n.add("Carrier", "municipal waste")
 
     n.madd(
         "Bus",
@@ -2323,14 +2296,6 @@ def add_biomass(n, costs):
         spatial.biomass.nodes,
         location=spatial.biomass.locations,
         carrier="solid biomass",
-        unit="MWh_LHV",
-    )
-
-    n.madd(
-        "Bus",
-        spatial.waste.nodes,
-        location=spatial.waste.locations,
-        carrier="municipal waste",
         unit="MWh_LHV",
     )
 
@@ -2351,17 +2316,6 @@ def add_biomass(n, costs):
         marginal_cost=costs.at["biogas", "fuel"],
         e_initial=biogas_potentials_spatial,
     )
-
-    # n.madd(
-    #     "Store",
-    #     spatial.gas.biogas,
-    #     suffix=" unsustainable",
-    #     bus=spatial.gas.biogas,
-    #     carrier="unsustainable biogas",
-    #     e_nom=unsustainable_biogas_potentials_spatial,
-    #     marginal_cost=costs.at["biogas", "fuel"],
-    #     e_initial=unsustainable_biogas_potentials_spatial,
-    # )
 
     n.madd(
         "Generator",
@@ -2424,28 +2378,6 @@ def add_biomass(n, costs):
         + costs.at["BtL", "CO2 stored"],
         p_nom_extendable=True,
     )
-
-    if options.get("waste_incineration") != "False":
-        n.madd(
-            "Store",
-            spatial.waste.nodes,
-            bus=spatial.waste.nodes,
-            carrier="municipal waste",
-            e_nom=waste_potentials_spatial,
-            marginal_cost=0,  # main purpose is not the energy but the waste disposal
-            e_initial=waste_potentials_spatial,
-        )
-
-        n.madd(
-            "Store",
-            spatial.waste.nodes,
-            suffix=" unsustainable",
-            bus=spatial.waste.nodes,
-            carrier="unsustainable municipal waste",
-            e_nom=unsustainable_waste_potentials_spatial_,
-            marginal_cost=0,  # main purpose is not the energy but the waste disposal
-            e_initial=unsustainable_waste_potentials_spatial_,
-        )
 
     n.madd(
         "Link",
@@ -2602,58 +2534,6 @@ def add_biomass(n, costs):
             * costs.at["biomass CHP capture", "capture_rate"],
             lifetime=costs.at[key, "lifetime"],
         )
-
-        if options["waste_incineration"]:
-
-            n.madd(
-                "Link",
-                urban_central,
-                suffix=" urban central waste CHP",
-                bus0=spatial.waste.df.loc[urban_central, "nodes"].values,
-                bus1=urban_central,
-                bus2=urban_central + " urban central heat",
-                carrier="urban central waste CHP",
-                efficiency=costs.at["waste CHP", "efficiency"],
-                efficiency2=costs.at["waste CHP", "efficiency-heat"],
-                p_nom_extendable=True,
-                p_min_pu=1,  # waste CHPs are usually run at a high load
-                capital_cost=costs.at["waste CHP", "fixed"],
-                marginal_cost=costs.at["waste CHP", "VOM"],
-                lifetime=costs.at["waste CHP", "lifetime"],
-            )
-
-            n.madd(
-                "Link",
-                urban_central,
-                suffix=" urban central waste CHP CC",
-                bus0=spatial.waste.df.loc[urban_central, "nodes"].values,
-                bus1=urban_central,
-                bus2=urban_central + " urban central heat",
-                bus3="co2 atmosphere",
-                bus4=spatial.co2.df.loc[urban_central, "nodes"].values,
-                carrier="urban central waste CHP CC",
-                efficiency=costs.at["waste CHP CC", "efficiency"]
-                - costs.at["solid biomass", "CO2 intensity"]
-                * (
-                    costs.at["biomass CHP capture", "electricity-input"]
-                    + costs.at["biomass CHP capture", "compression-electricity-input"]
-                ),
-                efficiency2=costs.at["waste CHP CC", "efficiency-heat"]
-                + costs.at["solid biomass", "CO2 intensity"]
-                * (
-                    costs.at["biomass CHP capture", "heat-output"]
-                    + costs.at["biomass CHP capture", "compression-heat-output"]
-                    - costs.at["biomass CHP capture", "heat-input"]
-                ),
-                efficiency3=-costs.at["solid biomass", "CO2 intensity"]
-                * costs.at["biomass CHP capture", "capture_rate"],
-                efficiency4=costs.at["solid biomass", "CO2 intensity"]
-                * costs.at["biomass CHP capture", "capture_rate"],
-                p_nom_extendable=True,
-                capital_cost=costs.at["waste CHP CC", "fixed"],
-                marginal_cost=costs.at["waste CHP CC", "VOM"],
-                lifetime=costs.at["waste CHP CC", "lifetime"],
-            )
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
