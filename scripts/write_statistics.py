@@ -82,16 +82,6 @@ if __name__ == "__main__":
     for output in snakemake.output.keys():
         if "touch" in output:
             continue
-        # if output == "energy_balance":
-        #     supply = call_with_handle(n.statistics.supply, **kwargs)
-        #     withdrawal = call_with_handle(n.statistics.withdrawal, **kwargs)
-        #     ds = (
-        #         pd.concat([supply, withdrawal.mul(-1)])
-        #         .groupby(level=["component", "country", "carrier"])
-        #         .sum()
-        #     )
-        #     ds.attrs = supply.attrs
-        #     ds.attrs["name"] = "Energy Balance"
         elif output == "total_cost":
             opex = call_with_handle(n.statistics.opex, **kwargs)
             capex = call_with_handle(n.statistics.capex, **kwargs)

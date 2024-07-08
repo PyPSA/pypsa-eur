@@ -58,13 +58,18 @@ def plot_static_comparison(df, ax, stacked=False):
     df = df.div(float(factor)) if factor != "-" else df
     df = df.rename(index=rename_techs).groupby(["component", "carrier"]).sum()
     # sort values in descending order
-    df = df.reindex(df.sum(1).sort_values().index)
+    df = df.reindex(df.abs().sum(1).sort_values().index)
     carriers = df.index.get_level_values("carrier")
     carrier_colors = get_carrier_colors(carriers, tech_colors)
     df = df.pipe(rename_index).T
-    # max_carrier_value = df.max(axis=1)
-    # df.div(max_carrier_value, axis=0).where(lambda x: abs(x)<0.05).all()
-    df.plot.bar(color=carrier_colors, ax=ax, stacked=stacked, legend=False, ylabel=unit)
+    df.plot.bar(
+        color=carrier_colors,
+        ax=ax,
+        stacked=stacked,
+        legend=False,
+        ylabel=unit,
+        linewidth=0.1,
+    )
     ax.legend(
         bbox_to_anchor=(1, 1),
         loc="upper left",
