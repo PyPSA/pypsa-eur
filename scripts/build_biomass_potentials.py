@@ -325,21 +325,6 @@ def add_unsustainable_potentials(df):
 
     df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
 
-    if snakemake.params["waste_incineration"]:
-        df_unsustainable["Primary solid biofuels"] -= df_unsustainable[
-            "Renewable municipal waste"
-        ]
-
-        df_wo_ch["unsustainable waste"] = (
-            df_wo_ch.apply(
-                lambda c: c.sum()
-                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-                * df_unsustainable.loc[c.name[:2], "Renewable municipal waste"],
-                axis=1,
-            )
-            - df_wo_ch["waste"]
-        ).clip(lower=0)
-
     df_wo_ch["unsustainable solid biomass"] = (
         df_wo_ch.apply(
             lambda c: c.sum()
