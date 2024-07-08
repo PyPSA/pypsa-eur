@@ -7,6 +7,7 @@ Preprocess gas network based on data from bthe SciGRID_gas project
 (https://www.gas.scigrid.de/).
 """
 
+import json
 import logging
 
 import geopandas as gpd
@@ -54,8 +55,9 @@ def diameter_to_capacity(pipe_diameter_mm):
 
 def load_dataset(fn):
     df = gpd.read_file(fn)
-    param = df.param.apply(pd.Series)
-    method = df.method.apply(pd.Series)[["diameter_mm", "max_cap_M_m3_per_d"]]
+    param = df.param.apply(json.loads).apply(pd.Series)
+    cols = ["diameter_mm", "max_cap_M_m3_per_d"]
+    method = df.method.apply(json.loads).apply(pd.Series)[cols]
     method.columns = method.columns + "_method"
     df = pd.concat([df, param, method], axis=1)
     to_drop = ["param", "uncertainty", "method", "tags"]
