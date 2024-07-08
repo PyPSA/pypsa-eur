@@ -3,13 +3,45 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build total energy demands per country using JRC IDEES, eurostat, and EEA data.
+Build total energy demands and carbon emissions per country using JRC IDEES,
+eurostat, and EEA data.
+
+- Country-specific data is read in :func:`build_eurostat`, :func:`build_idees` and `build_swiss`.
+- :func:`build_energy_totals` then combines energy data from Eurostat, Swiss, and IDEES data and :func:`rescale_idees_from_eurostat` rescales IDEES data to match Eurostat data.
+- :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
+- Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+    countries:
+    energy:
+
+Inputs
+------
+
+- `resources/<run_name>/nuts3_shapes.gejson`: NUTS3 shapes.
+- `data/bundle/eea_UNFCCC_v23.csv`: CO2 emissions data from EEA.
+- `data/switzerland-new_format-all_years.csv`: Swiss energy data.
+- `data/gr-e-11.03.02.01.01-cc.csv`: Swiss transport data
+- `data/bundle/jrc-idees`: JRC IDEES data.
+- `data/district_heat_share.csv`: District heating shares.
+- `data/eurostat/Balances-April2023`: Eurostat energy balances.
+- `data/eurostat/eurostat-household_energy_balances-february_2024.csv`: Eurostat household energy balances.
+
+Outputs
+-------
+- `resources/<run_name>/energy_totals.csv`: Energy totals per country, sector and year.
+- `resources/<run_name>/co2_totals.csv`: CO2 emissions per country, sector and year.
+- `resources/<run_name>/transport_data.csv`: Transport data per country and year.
+- `resources/<run_name>/district_heat_share.csv`: District heating share per by country and year.
 """
 
 import logging
 import multiprocessing as mp
-import os
 from functools import partial
+from typing import List
 
 import country_converter as coco
 import geopandas as gpd
@@ -23,16 +55,54 @@ logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
-def cartesian(s1, s2):
+def cartesian(s1: pd.Series, s2: pd.Series) -> pd.DataFrame:
     """
-    Cartesian product of two pd.Series.
+    Compute the Cartesian product of two pandas Series.
+
+    Parameters
+    ----------
+        s1: pd.Series
+            The first pandas Series
+        s2: pd.Series:
+            The second pandas Series.
+
+    Returns
+    ----------
+    pd.DataFrame
+        A DataFrame representing the Cartesian product of s1 and s2.
+
+    Examples
+    --------
+    >>> s1 = pd.Series([1, 2, 3], index=["a", "b", "c"])
+    >>> s2 = pd.Series([4, 5, 6], index=["d", "e", "f"])
+    >>> cartesian(s1, s2)
+       d  e   f
+    a  4  5   6
+    b  8 10  12
+    c 12 15  18
     """
     return pd.DataFrame(np.outer(s1, s2), index=s1.index, columns=s2.index)
 
 
-def reverse(dictionary):
+def reverse(dictionary: dict) -> dict:
     """
-    Reverses a keys and values of a dictionary.
+    Reverses the keys and values of a dictionary.
+
+    Parameters
+    ----------
+    dictionary : dict
+        The dictionary to be reversed.
+
+    Returns
+    -------
+    dict
+        A new dictionary with the keys and values reversed.
+
+    Examples
+    --------
+    >>> d = {"a": 1, "b": 2, "c": 3}
+    >>> reverse(d)
+    {1: 'a', 2: 'b', 3: 'c'}
     """
     return {v: k for k, v in dictionary.items()}
 
@@ -69,7 +139,28 @@ to_ipcc = {
 }
 
 
-def eurostat_per_country(input_eurostat, country):
+def eurostat_per_country(input_eurostat: str, country: str) -> pd.DataFrame:
+    """
+    Read energy balance data for a specific country from Eurostat.
+
+    Parameters
+    ----------
+    input_eurostat : str
+        Path to the directory containing Eurostat data files.
+    country : str
+        Country code for the specific country.
+
+    Returns
+    -------
+    pd.DataFrame
+        Concatenated energy balance data for the specified country.
+
+    Notes
+    -----
+    - The function reads `<input_eurostat>/<country>.-Energy-balance-sheets-April-2023-edition.xlsb`
+    - It removes the "Cover" sheet from the data and concatenates all the remaining sheets into a single DataFrame.
+    """
+
     filename = (
         f"{input_eurostat}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
     )
@@ -84,10 +175,38 @@ def eurostat_per_country(input_eurostat, country):
     return pd.concat(sheet)
 
 
-def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=False):
+def build_eurostat(
+    input_eurostat: str,
+    countries: List[str],
+    nprocesses: int = 1,
+    disable_progressbar: bool = False,
+) -> pd.DataFrame:
     """
     Return multi-index for all countries' energy data in TWh/a.
+
+    Parameters:
+    -----------
+    input_eurostat : str
+        Path to the Eurostat database.
+    countries : List[str]
+        List of countries for which energy data is to be retrieved.
+    nprocesses : int, optional
+        Number of processes to use for parallel execution, by default 1.
+    disable_progressbar : bool, optional
+        Whether to disable the progress bar, by default False.
+
+    Returns:
+    --------
+    pd.DataFrame
+        Multi-index DataFrame containing energy data for all countries in TWh/a.
+
+    Notes:
+    ------
+    - The function first renames the countries in the input list using the `idees_rename` mapping and removes "CH".
+    - It then reads country-wise data using :func:`eurostat_per_country` into a single DataFrame.
+    - The data is reordered, converted to TWh/a, and missing values are filled.
     """
+
     countries = {idees_rename.get(country, country) for country in countries} - {"CH"}
 
     func = partial(eurostat_per_country, input_eurostat)
@@ -125,7 +244,6 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
     df = pd.concat([temp, df.loc[~int_avia]])
 
     # Fill in missing data on "Domestic aviation" for each country.
-    domestic_avia = df.index.get_level_values(4) == "Domestic aviation"
     for country in countries:
         slicer = idx[country, :, :, :, "Domestic aviation"]
         # For the Total and Fossil energy columns, fill in zeros with
@@ -154,9 +272,20 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
     return df
 
 
-def build_swiss():
+def build_swiss() -> pd.DataFrame:
     """
     Return a pd.DataFrame of Swiss energy data in TWh/a.
+
+    Returns
+    --------
+    pd.DataFrame
+        Swiss energy data in TWh/a.
+
+    Notes
+    -----
+    - Reads Swiss energy data from `data/switzerland-new_format-all_years.csv`.
+    - Reshapes and renames data.
+    - Converts energy units from PJ/a to TWh/a.
     """
     fn = snakemake.input.swiss
 
@@ -176,7 +305,29 @@ def build_swiss():
     return df
 
 
-def idees_per_country(ct, base_dir):
+def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
+    """
+    Calculate energy totals per country using JRC-IDEES data.
+
+    Parameters
+    ----------
+    ct : str
+        The country code.
+    base_dir : str
+        The base directory where the JRC-IDEES data files are located.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the energy totals per country. Columns are energy uses.
+
+    Notes
+    -----
+    - Retrieves JRC-IDEES data for the specified country from `base_dir` for residential, tertiary, and transport sectors.
+    - Calculates energy totals for each sector, stores them in a dictionary and returns them as data frame.
+    - Assertions ensure indices of JRC-IDEES data are as expected.
+    """
+
     ct_idees = idees_rename.get(ct, ct)
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
     fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
@@ -374,7 +525,27 @@ def idees_per_country(ct, base_dir):
     return pd.DataFrame(ct_totals)
 
 
-def build_idees(countries):
+def build_idees(countries: List[str]) -> pd.DataFrame:
+    """
+    Build energy totals from IDEES database for the given list of countries
+    using :func:`idees_per_country`.
+
+    Parameters
+    ----------
+    countries : List[str]
+        List of country names for which energy totals need to be built.
+
+    Returns
+    -------
+    pd.DataFrame
+        Energy totals for the given countries.
+
+    Notes
+    -----
+    - Retrieves energy totals per country and year using :func:`idees_per_country`.
+    - Returns a DataFrame with columns: country, year, and energy totals for different categories.
+    """
+
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
@@ -396,17 +567,51 @@ def build_idees(countries):
         names=["country", "year"],
     )
 
+    # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
+    totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
-    # convert TWh/100km to kWh/km
-    totals.loc[:, "passenger car efficiency"] *= 10
-
     return totals
 
 
-def build_energy_totals(countries, eurostat, swiss, idees):
+def build_energy_totals(
+    countries: List[str],
+    eurostat: pd.DataFrame,
+    swiss: pd.DataFrame,
+    idees: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Combine energy totals for the specified countries from Eurostat, Swiss, and
+    IDEES data.
+
+    Parameters
+    ----------
+    countries : List[str]
+        List of country codes for which energy totals are to be calculated.
+    eurostat : pd.DataFrame
+        Eurostat energy balances dataframe.
+    swiss : pd.DataFrame
+        Swiss energy data dataframe.
+    idees : pd.DataFrame
+        IDEES energy data dataframe.
+
+    Returns
+    -------
+    pd.DataFrame
+        Energy totals dataframe for the given countries.
+
+    Notes
+    -----
+    - Missing values are filled based on Eurostat energy balances and average values in EU28.
+    - The function also performs specific calculations for Norway and splits road, rail, and aviation traffic for non-IDEES data.
+
+    References
+    ----------
+    - `Norway heating data <http://www.ssb.no/en/energi-og-industri/statistikker/husenergi/hvert-3-aar/2014-07-14>`_
+    """
+
     eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
     eurostat_countries = eurostat.index.levels[0]
     eurostat_years = eurostat.index.levels[1]
@@ -594,7 +799,30 @@ def build_energy_totals(countries, eurostat, swiss, idees):
     return df
 
 
-def build_district_heat_share(countries, idees):
+def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.Series:
+    """
+    Calculate the share of district heating for each country.
+
+    Parameters
+    ----------
+    countries : List[str]
+        List of country codes for which to calculate district heating share.
+    idees : pd.DataFrame
+        IDEES energy data dataframe.
+
+    Returns
+    -------
+    pd.Series
+        Series with the district heating share for each country.
+
+    Notes
+    -----
+    - The function calculates the district heating share as the sum of residential and services derived heat, divided by the sum of residential and services thermal uses.
+    - The district heating share is then reindexed to match the provided list of countries.
+    - Missing district heating shares are filled from `data/district_heat_share.csv`.
+    - The function makes a conservative assumption and takes the minimum district heating share from both the IDEES data and `data/district_heat_share.csv`.
+    """
+
     # district heating share
     district_heat = idees[["derived heat residential", "derived heat services"]].sum(
         axis=1
@@ -628,9 +856,37 @@ def build_district_heat_share(countries, idees):
     return district_heat_share
 
 
-def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
-    # https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16
-    # downloaded 201228 (modified by EEA last on 201221)
+def build_eea_co2(
+    input_co2: str, year: int = 1990, emissions_scope: str = "CO2"
+) -> pd.DataFrame:
+    """
+    Calculate CO2 emissions for a given year based on EEA data in Mt.
+
+    Parameters
+    ----------
+    input_co2 : str
+        Path to the input CSV file with CO2 data.
+    year : int, optional
+        Year for which to calculate emissions, by default 1990.
+    emissions_scope : str, optional
+        Scope of the emissions to consider, by default "CO2".
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with CO2 emissions for the given year.
+
+    Notes
+    -----
+    - The function reads the `input_co2` data and for a specific `year` and `emission scope`
+    - It calculates "industrial non-elec" and "agriculture" emissions from that data
+    - It drops unneeded columns and converts the emissions to Mt.
+
+    References
+    ---------
+    - `EEA CO2 data <https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16>`_ (downloaded 201228, modified by EEA last on 201221)
+    """
+
     df = pd.read_csv(input_co2, encoding="latin-1", low_memory=False)
 
     df.replace(dict(Year="1985-1987"), 1986, inplace=True)
@@ -676,11 +932,43 @@ def build_eea_co2(input_co2, year=1990, emissions_scope="CO2"):
     ]
     emissions.drop(columns=to_drop, inplace=True)
 
-    # convert from Gg to Mt
+    # convert from Gt to Mt
     return emissions / 1e3
 
 
-def build_eurostat_co2(eurostat, year=1990):
+def build_eurostat_co2(eurostat: pd.DataFrame, year: int = 1990) -> pd.Series:
+    """
+    Calculate CO2 emissions for a given year based on Eurostat fuel consumption
+    data and fuel-specific emissions.
+
+    Parameters
+    ----------
+    eurostat : pd.DataFrame
+        DataFrame with Eurostat data.
+    year : int, optional
+        Year for which to calculate emissions, by default 1990.
+
+    Returns
+    -------
+    pd.Series
+        Series with CO2 emissions for the given year.
+
+    Notes
+    -----
+    - The function hard-sets fuel-specific emissions:
+        - solid fuels: 0.36 tCO2_equi/MW_th (approximates coal)
+        - oil: 0.285 tCO2_equi/MW_th (average of distillate and residue)
+        - natural gas: 0.2 tCO2_equi/MW_th
+    - It then multiplies the Eurostat fuel consumption data for `year` by the specific emissions and sums the result.
+
+    References
+    ----------
+    - Oil values from `EIA <https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11>`_
+    - Distillate oil (No. 2)  0.276
+    - Residual oil (No. 6)  0.298
+    - `EIA Electricity Annual <https://www.eia.gov/electricity/annual/html/epa_a_03.html>`_
+    """
+
     eurostat_year = eurostat.xs(year, level="year")
 
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
@@ -690,15 +978,34 @@ def build_eurostat_co2(eurostat, year=1990):
     specific_emissions["Oil (total)"] = 0.285  # Average of distillate and residue
     specific_emissions["Gas"] = 0.2  # For natural gas
 
-    # oil values from https://www.eia.gov/tools/faqs/faq.cfm?id=74&t=11
-    # Distillate oil (No. 2)  0.276
-    # Residual oil (No. 6)  0.298
-    # https://www.eia.gov/electricity/annual/html/epa_a_03.html
-
     return eurostat_year.multiply(specific_emissions).sum(axis=1)
 
 
-def build_co2_totals(countries, eea_co2, eurostat_co2):
+def build_co2_totals(
+    countries: List[str], eea_co2: pd.DataFrame, eurostat_co2: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Combine CO2 emissions data from EEA and Eurostat for a list of countries.
+
+    Parameters
+    ----------
+    countries : List[str]
+        List of country codes for which CO2 totals need to be built.
+    eea_co2 : pd.DataFrame
+        DataFrame with EEA CO2 emissions data.
+    eurostat_co2 : pd.DataFrame
+        DataFrame with Eurostat CO2 emissions data.
+
+    Returns
+    -------
+    pd.DataFrame
+        Combined CO2 emissions data for the given countries.
+
+    Notes
+    -----
+    - The function combines the CO2 emissions from EEA and Eurostat into a single DataFrame for the given countries.
+    """
+
     co2 = eea_co2.reindex(countries)
 
     for ct in pd.Index(countries).intersection(["BA", "RS", "AL", "ME", "MK"]):
@@ -725,9 +1032,38 @@ def build_co2_totals(countries, eea_co2, eurostat_co2):
     return co2
 
 
-def build_transport_data(countries, population, idees):
-    # first collect number of cars
+def build_transport_data(
+    countries: List[str], population: pd.DataFrame, idees: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Build transport data for a set of countries based on IDEES data.
 
+    Parameters
+    ----------
+    countries : List[str]
+        List of country codes.
+    population : pd.DataFrame
+        DataFrame with population data.
+    idees : pd.DataFrame
+        DataFrame with IDEES data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with transport data.
+
+    Notes
+    -----
+    - The function first collects the number of passenger cars.
+    - For Switzerland, it reads the data from `data/gr-e-11.03.02.01.01-cc.csv`.
+    - It fills missing data on the number of cars and fuel efficiency with average data.
+
+    References
+    ----------
+    - Swiss transport data: `BFS <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_
+    """
+
+    # first collect number of cars
     transport_data = pd.DataFrame(idees["passenger cars"])
 
     countries_without_ch = set(countries) - {"CH"}
@@ -738,7 +1074,6 @@ def build_transport_data(countries, population, idees):
 
     transport_data = transport_data.reindex(index=new_index)
 
-    # https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
         swiss_cars = pd.read_csv(fn, index_col=0).loc[2000:2015, ["passenger cars"]]
@@ -769,9 +1104,8 @@ def build_transport_data(countries, population, idees):
 
         transport_data = transport_data.combine_first(fill_values)
 
-    # collect average fuel efficiency in kWh/km
-
-    transport_data["average fuel efficiency"] = idees["passenger car efficiency"]
+    # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
+    transport_data["average fuel efficiency"] = idees["passenger car efficiency"] * 1e6
 
     missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
     if not missing.empty:
@@ -786,16 +1120,38 @@ def build_transport_data(countries, population, idees):
 
 
 def rescale_idees_from_eurostat(
-    idees_countries,
-    energy,
-    eurostat,
-):
+    idees_countries: List[str], energy: pd.DataFrame, eurostat: pd.DataFrame
+) -> pd.DataFrame:
     """
-    Takes JRC IDEES data from 2015 and rescales it by the ratio of the eurostat
-    data and the 2015 eurostat data.
+    Takes JRC IDEES data from 2015 and rescales it by the ratio of the Eurostat
+    data and the 2015 Eurostat data.
+    Missing data: ['passenger car efficiency', 'passenger cars']
 
-    missing data: ['passenger car efficiency', 'passenger cars']
+    Parameters
+    ----------
+    idees_countries : List[str]
+        List of IDEES country codes.
+    energy : pd.DataFrame
+        DataFrame with JRC IDEES data.
+    eurostat : pd.DataFrame
+        DataFrame with Eurostat data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with rescaled IDEES data.
+
+    Notes
+    -----
+    - The function first reads in the Eurostat data for 2015 and calculates the ratio of that data with other Eurostat data.
+    - This ratio is mapped to the IDEES data.
+
+    References
+    ----------
+    - JRC IDEES data: `JRC IDEES <https://ec.europa.eu/jrc/en/publication/eur-scientific-and-technical-research-reports/jrc-idees>`_
+    - Eurostat data: `Eurostat <https://ec.europa.eu/eurostat/data/database>`_
     """
+
     main_cols = ["Total all products", "Electricity"]
     # read in the eurostat data for 2015
     eurostat_2015 = eurostat.xs(2015, level="year")[main_cols]
@@ -855,6 +1211,7 @@ def rescale_idees_from_eurostat(
                 "total passenger cars",
                 "total other road passenger",
                 "total light duty road freight",
+                "total heavy duty road freight",
             ],
             "elec": [
                 "electricity road",
@@ -892,6 +1249,7 @@ def rescale_idees_from_eurostat(
     navigation = [
         "total domestic navigation",
     ]
+    # international navigation is already read in from the eurostat data directly
 
     for country in idees_countries:
         filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
@@ -941,7 +1299,81 @@ def rescale_idees_from_eurostat(
                 energy.loc[slicer_source, navigation].squeeze(axis=0),
             ).values
 
+        # set the total of agriculture/road to the sum of all agriculture/road categories (corresponding to the IDEES data)
+        rows = idx[country, :]
+        cols = [
+            "total agriculture electricity",
+            "total agriculture heat",
+            "total agriculture machinery",
+        ]
+        energy.loc[rows, "total agriculture"] = energy.loc[rows, cols].sum(axis=1)
+
+        cols = [
+            "total passenger cars",
+            "total other road passenger",
+            "total light duty road freight",
+            "total heavy duty road freight",
+        ]
+        energy.loc[rows, "total road"] = energy.loc[rows, cols].sum(axis=1)
+
     return energy
+
+
+def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
+    """
+    Updates energy balances for residential from disaggregated data from
+    Eurostat by mutating input data DataFrame.
+
+    Parameters
+    ----------
+    energy : pd.DataFrame
+        DataFrame with energy data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with updated energy balances.
+
+    Notes
+    -----
+    - The function first reads in the Eurostat data for households and maps the energy types to the corresponding Eurostat codes.
+    - For each energy type, it selects the corresponding data, converts units, and drops unnecessary data.
+    """
+    eurostat_households = pd.read_csv(snakemake.input.eurostat_households)
+
+    # Column mapping for energy type
+    nrg_type = {
+        "total residential": ("FC_OTH_HH_E", "TOTAL"),
+        "total residential space": ("FC_OTH_HH_E_SH", "TOTAL"),
+        "total residential water": ("FC_OTH_HH_E_WH", "TOTAL"),
+        "total residential cooking": ("FC_OTH_HH_E_CK", "TOTAL"),
+        "electricity residential": ("FC_OTH_HH_E", "E7000"),
+        "electricity residential space": ("FC_OTH_HH_E_SH", "E7000"),
+        "electricity residential water": ("FC_OTH_HH_E_WH", "E7000"),
+        "electricity residential cooking": ("FC_OTH_HH_E_CK", "E7000"),
+    }
+
+    for nrg_name, (code, siec) in nrg_type.items():
+
+        # Select energy balance type, rename columns and countries to match IDEES data,
+        # convert TJ to TWh, and drop XK data already since included in RS data
+        col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
+        idx_to_rename = {v: k for k, v in idees_rename.items()}
+        drop_geo = ["EU27_2020", "EA20", "XK"]
+        nrg_data = eurostat_households.query(
+            "nrg_bal == @code and siec == @siec and geo not in @drop_geo and OBS_VALUE > 0"
+        ).copy()
+        nrg_data.rename(columns=col_to_rename, inplace=True)
+        nrg_data = nrg_data.set_index(["country", "year"])[nrg_name] / 3.6e3
+        nrg_data.rename(index=idx_to_rename, inplace=True)
+
+        # update energy balance from household-specific eurostat data
+        idx = nrg_data.index.intersection(energy.index)
+        energy.loc[idx, nrg_name] = nrg_data[idx]
+
+    logger.info(
+        "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
+    )
 
 
 if __name__ == "__main__":
@@ -976,6 +1408,8 @@ if __name__ == "__main__":
     # Data from IDEES only exists from 2000-2015.
     logger.info("Extrapolate IDEES data based on eurostat for years 2015-2021.")
     energy = rescale_idees_from_eurostat(idees_countries, energy, eurostat)
+
+    update_residential_from_eurostat(energy)
 
     energy.to_csv(snakemake.output.energy_name)
 

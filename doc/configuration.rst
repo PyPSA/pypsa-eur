@@ -174,7 +174,7 @@ Switches for some rules and optional features.
    :file: configtables/co2_budget.csv
 
 .. note::
-    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in
+    this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
     sector_opts.
 
 .. _electricity_cf:
@@ -550,9 +550,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/costs.csv
 
-.. note::
-   ``rooftop_share:`` are based on the potentials, assuming
-   (0.1 kW/m2 and 10 m2/person)
 
 .. _clustering_cf:
 

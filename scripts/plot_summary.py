@@ -353,7 +353,7 @@ def plot_balances():
             frameon=False,
         )
 
-        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches="tight")
+        fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
 
 
 def historical_emissions(countries):
@@ -477,9 +477,10 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
     emissions = historical_emissions(countries)
     # add other years https://sdi.eea.europa.eu/data/0569441f-2853-4664-a7cd-db969ef54de0
-    emissions.loc[2019] = 2.971372
-    emissions.loc[2020] = 2.691958
-    emissions.loc[2021] = 2.869355
+    emissions.loc[2019] = 3.414362
+    emissions.loc[2020] = 3.092434
+    emissions.loc[2021] = 3.290418
+    emissions.loc[2022] = 3.213025
 
     if snakemake.config["foresight"] == "myopic":
         path_cb = "results/" + snakemake.params.RDIR + "/csvs/"
@@ -562,7 +563,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
 
     plt.grid(axis="y")
-    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
+    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
     plt.savefig(path, bbox_inches="tight")
 
 

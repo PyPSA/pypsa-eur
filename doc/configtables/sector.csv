@@ -24,7 +24,6 @@ bev_dsm,--,"{true, false}",Add the option for battery electric vehicles (BEV) to
 bev_availability,--,float,The share for battery electric vehicles (BEV) that are able to do demand side management (DSM)
 bev_energy,--,float,The average size of battery electric vehicles (BEV) in MWh
 bev_charge_efficiency,--,float,Battery electric vehicles (BEV) charge and discharge efficiency
-bev_plug_to_wheel _efficiency,km/kWh,float,The distance battery electric vehicles (BEV) can travel in km per kWh of energy charge in battery.  Base value comes from `Tesla Model S <https://www.fueleconomy.gov/feg/>`_
 bev_charge_rate,MWh,float,The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW.
 bev_avail_max,--,float,The maximum share plugged-in availability for passenger electric vehicles.
 bev_avail_mean,--,float,The average share plugged-in availability for passenger electric vehicles.
@@ -32,14 +31,15 @@ v2g,--,"{true, false}",Allows feed-in to grid from EV battery
 land_transport_fuel_cell _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses fuel cells in a given year
 land_transport_electric _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses electric vehicles (EV) in a given year
 land_transport_ice _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE.
-transport_fuel_cell _efficiency,--,float,The H2 conversion efficiencies of fuel cells in transport
-transport_internal _combustion_efficiency,--,float,The oil conversion efficiencies of internal combustion engine (ICE) in transport
+transport_electric_efficiency,MWh/100km,float,The conversion efficiencies of electric vehicles in transport
+transport_fuel_cell_efficiency,MWh/100km,float,The H2 conversion efficiencies of fuel cells in transport
+transport_ice_efficiency,MWh/100km,float,The oil conversion efficiencies of internal combustion engine (ICE) in transport
 agriculture_machinery _electric_share,--,float,The share for agricultural machinery that uses electricity
 agriculture_machinery _oil_share,--,float,The share for agricultural machinery that uses oil
 agriculture_machinery _fuel_efficiency,--,float,The efficiency of electric-powered machinery in the conversion of electricity to meet agricultural needs.
 agriculture_machinery _electric_efficiency,--,float,The efficiency of oil-powered machinery in the conversion of oil to meet agricultural needs.
 Mwh_MeOH_per_MWh_H2,LHV,float,"The energy amount of the produced methanol per energy amount of hydrogen. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
-MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
+MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66."
 MWh_MeOH_per_MWh_e,LHV,float,"The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
 shipping_hydrogen _liquefaction,--,"{true, false}",Whether to include liquefaction costs for hydrogen demand in shipping.
 ,,,
@@ -145,3 +145,11 @@ limit_max_growth,,,
 -- -- {carrier},GW,float,The historic maximum growth of a carrier
 -- max_relative_growth,,,
 -- -- {carrier},p.u.,float,The historic maximum relative growth of a carrier
+,,,
+enhanced_geothermal,,,
+-- enable,--,"{true, false}",Add option to include Enhanced Geothermal Systems
+-- flexible,--,"{true, false}",Add option for flexible operation (see Ricks et al. 2024)
+-- max_hours,--,int,The maximum hours the reservoir can be charged under flexible operation
+-- max_boost,--,float,The maximum boost in power output under flexible operation
+-- var_cf,--,"{true, false}",Add option for variable capacity factor (see Ricks et al. 2024)
+-- sustainability_factor,--,float,Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_)
