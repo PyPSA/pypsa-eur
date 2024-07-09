@@ -3357,16 +3357,22 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             ) * options["use_waste_heat"].get("fischer_tropsch", 1)
 
-        if options["use_waste_heat"].get("methanation", 1) and "Sabatier" in link_carriers:
+        if (
+            options["use_waste_heat"].get("methanation", 1)
+            and "Sabatier" in link_carriers
+        ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            )* options["use_waste_heat"].get("methanation", 1)
+            ) * options["use_waste_heat"].get("methanation", 1)
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
-        if options["use_waste_heat"].get("haber_bosch", 1) and "Haber-Bosch" in link_carriers:
+        if (
+            options["use_waste_heat"].get("haber_bosch", 1)
+            and "Haber-Bosch" in link_carriers
+        ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3380,7 +3386,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
-            )* options["use_waste_heat"].get("haber_bosch", 1)
+            ) * options["use_waste_heat"].get("haber_bosch", 1)
 
         if (
             options["use_waste_heat"].get("methanolisation", 1)
@@ -3392,11 +3398,11 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
                 costs.at["methanolisation", "heat-output"]
                 / costs.at["methanolisation", "hydrogen-input"]
-            )* options["use_waste_heat"].get("methanolisation", 1)
+            ) * options["use_waste_heat"].get("methanolisation", 1)
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if (
-           options["use_waste_heat"].get("electrolysis", 1)
+            options["use_waste_heat"].get("electrolysis", 1)
             and "H2 Electrolysis" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
@@ -3406,13 +3412,16 @@ def add_waste_heat(n):
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
             ) * options["use_waste_heat"].get("electrolysis", 1)
 
-        if options["use_waste_heat"].get("fuel_cell", 1) and "H2 Fuel Cell" in link_carriers:
+        if (
+            options["use_waste_heat"].get("fuel_cell", 1)
+            and "H2 Fuel Cell" in link_carriers
+        ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            )* options["use_waste_heat"].get("fuel_cell", 1)
+            ) * options["use_waste_heat"].get("fuel_cell", 1)
 
 
 def add_agriculture(n, costs):
