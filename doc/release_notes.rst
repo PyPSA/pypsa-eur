@@ -7,8 +7,10 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
+Upcoming Release
+================
+
+* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage. (
 
