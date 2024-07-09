@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v3.1.0a1
+  rev: v4.0.3
   hooks:
   - id: reuse

@@ -155,7 +155,7 @@ def _add_land_use_constraint(n):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def _add_land_use_constraint_m(n, planning_horizons, config):
@@ -207,7 +207,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_solar_potential_constraints(n, config):
