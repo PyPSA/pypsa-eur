@@ -287,9 +287,9 @@ def shapes_to_shapes(orig, dest):
     transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
 
     for i, j in product(range(len(dest)), range(len(orig))):
-        if orig_prepped[j].intersects(dest[i]):
-            area = orig[j].intersection(dest[i]).area
-            transfer[i, j] = area / dest[i].area
+        if orig_prepped[j].intersects(dest.iloc[i]):
+            area = orig.iloc[j].intersection(dest.iloc[i]).area
+            transfer[i, j] = area / dest.iloc[i].area
 
     return transfer
 

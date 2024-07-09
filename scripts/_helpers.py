@@ -406,13 +406,13 @@ def mock_snakemake(
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake
-    from snakemake.settings import (
+    from snakemake.settings.types import (
+        ConfigSettings,
         DAGSettings,
         ResourceSettings,
         StorageSettings,
         WorkflowSettings,
     )
-    from snakemake.settings.types import ConfigSettings
 
     script_dir = Path(__file__).parent.resolve()
     if root_dir is None:
