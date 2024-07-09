@@ -456,7 +456,7 @@ def update_wind_solar_costs(n, costs):
     clustermaps = busmap_s.map(busmap)
 
     # code adapted from pypsa-eur/scripts/add_electricity.py
-    for connection in ["dc", "ac"]:
+    for connection in ["dc", "ac", "float"]:
         tech = "offwind-" + connection
         if tech not in n.generators.carrier.values:
             continue
@@ -2719,6 +2719,7 @@ def add_industry(n, costs):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="methanol",
+        capital_cost=0.02,
     )
 
     n.madd(
