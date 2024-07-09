@@ -332,8 +332,6 @@ def add_unsustainable_potentials(df):
         ),
     )
 
-    df *= 1 - reduction_factor
-
     df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
 
     df_wo_ch["unsustainable solid biomass"] = (
@@ -369,9 +367,12 @@ def add_unsustainable_potentials(df):
         .sum(axis=1)
         .loc[c.name[:2]],
         axis=1,
-    )
+    ).mul(reduction_factor)
+
+    df *= 1 - reduction_factor
 
     df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
+
     return df
 
 
