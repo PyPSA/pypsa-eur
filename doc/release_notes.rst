@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
+
 * In simplifying polygons in :mod:`build_shapes` default to no tolerance.
 
 * Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
