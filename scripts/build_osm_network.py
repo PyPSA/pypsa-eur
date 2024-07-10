@@ -835,6 +835,7 @@ def build_network(
 
     if links.empty:  # create empty dataframe with cols_links as columns
         links = pd.DataFrame(columns=["link_id"] + cols_links)
+        links.set_index("link_id", inplace=True)
 
     to_csv_nafix(lines, outputs["lines"], quotechar="'")  # Generate CSV
     to_csv_nafix(links, outputs["links"], quotechar="'")  # Generate CSV
