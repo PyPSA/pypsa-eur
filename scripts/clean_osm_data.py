@@ -792,6 +792,9 @@ def _filter_by_voltage(df, min_voltage=200000):
     - list_voltages (list): A list of unique voltage values above min_voltage.
       The type of the list elements is string.
     """
+    if df.empty:
+        return df, []
+
     logger.info(
         f"Filtering dataframe by voltage. Only keeping rows above and including {min_voltage} V."
     )
@@ -1307,11 +1310,11 @@ def _finalise_links(df_links):
     )
 
     # Initiate new columns for subsequent build_osm_network step
-    df_links.loc[:, "bus0"] = None
-    df_links.loc[:, "bus1"] = None
-    df_links.loc[:, "length"] = None
-    df_links.loc[:, "under_construction"] = False
-    df_links.loc[:, "dc"] = True
+    df_links["bus0"] = None
+    df_links["bus1"] = None
+    df_links["length"] = None
+    df_links["under_construction"] = False
+    df_links["dc"] = True
 
     # Only include needed columns
     df_links = df_links[

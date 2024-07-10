@@ -773,14 +773,16 @@ def build_network(
 
     # Drop unnecessary index column and set respective element ids as index
     lines.set_index("line_id", inplace=True)
-    links.set_index("link_id", inplace=True)
+    if not links.empty:
+        links.set_index("link_id", inplace=True)
     converters.set_index("converter_id", inplace=True)
     transformers.set_index("transformer_id", inplace=True)
     buses.set_index("bus_id", inplace=True)
 
     # Convert voltages from V to kV
     lines["voltage"] = lines["voltage"] / 1000
-    links["voltage"] = links["voltage"] / 1000
+    if not links.empty:
+        links["voltage"] = links["voltage"] / 1000
     transformers["voltage_bus0"], transformers["voltage_bus1"] = (
         transformers["voltage_bus0"] / 1000,
         transformers["voltage_bus1"] / 1000,
@@ -817,7 +819,8 @@ def build_network(
         "geometry",
     ]
 
-    links = links[cols_links]
+    if not links.empty:
+        links = links[cols_links]
 
     cols_transformers = [
         "bus0",
@@ -829,6 +832,9 @@ def build_network(
     ]
 
     transformers = transformers[cols_transformers]
+
+    if links.empty:  # create empty dataframe with cols_links as columns
+        links = pd.DataFrame(columns=["link_id"] + cols_links)
 
     to_csv_nafix(lines, outputs["lines"], quotechar="'")  # Generate CSV
     to_csv_nafix(links, outputs["links"], quotechar="'")  # Generate CSV
