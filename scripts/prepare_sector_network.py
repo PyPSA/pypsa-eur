@@ -3718,7 +3718,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
 
     n.links = pd.concat([n.links, rev_links], sort=False)
-    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["reversed"] = n.links["reversed"].fillna(False).infer_objects(copy=False)
     n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
 
     # do compression losses after concatenation to take electricity consumption at bus0 in either direction
