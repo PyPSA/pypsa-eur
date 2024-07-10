@@ -491,19 +491,21 @@ def _add_line_endings_to_substations(
         gdf_offshore, how="outer", left_index=True, right_index=True
     )
     gdf_union["geometry"] = gdf_union.apply(
-        lambda row: gpd.GeoSeries([row["geometry_x"], row["geometry_y"]]).unary_union,
+        lambda row: gpd.GeoSeries([row["geometry_x"], row["geometry_y"]]).union_all(),
         axis=1,
     )
     gdf_union = gpd.GeoDataFrame(geometry=gdf_union["geometry"], crs=crs)
     gdf_buses_tofix = gpd.GeoDataFrame(
         buses[bool_multiple_countries], geometry="geometry", crs=crs
     )
-    joined = gpd.sjoin(gdf_buses_tofix, gdf_union, how="left", predicate="within")
+    joined = gpd.sjoin(
+        gdf_buses_tofix, gdf_union.reset_index(), how="left", predicate="within"
+    )
 
     # For all remaining rows where the country/index_right column is NaN, find
     # find the closest polygon index
-    joined.loc[joined["index_right"].isna(), "index_right"] = joined.loc[
-        joined["index_right"].isna(), "geometry"
+    joined.loc[joined["name"].isna(), "name"] = joined.loc[
+        joined["name"].isna(), "geometry"
     ].apply(lambda x: _find_closest_polygon(gdf_union, x))
 
     joined.reset_index(inplace=True)
@@ -511,7 +513,7 @@ def _add_line_endings_to_substations(
     joined.set_index("bus_id", inplace=True)
 
     buses.loc[bool_multiple_countries, "country"] = joined.loc[
-        bool_multiple_countries, "index_right"
+        bool_multiple_countries, "name"
     ]
 
     return buses.reset_index()
