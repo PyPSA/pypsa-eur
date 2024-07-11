@@ -1613,8 +1613,8 @@ if __name__ == "__main__":
         + params["steam_electricity_fraction"]
         != 1
     ):
-        logger.warning(
-            "Fractions for steam processing do not sum to 1 translates to a decrease/increase in energy consumption in the industry sector!"
+        logger.error(
+            "Fractions for steam processing do not sum to 1! Please check config[industry][steam_biomass_fraction], config[industry][steam_hydrogen_fraction] and config[industry][steam_electricity_fraction]!"
         )
 
     logger.info(
