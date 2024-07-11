@@ -390,8 +390,8 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
-  grouping_years_power: [1895, 1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
-  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020] # heat grouping years >= baseyear will be ignored
+  grouping_years_power: [1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025]
+  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # heat grouping years >= baseyear will be ignored
   threshold_capacity: 10
   default_heating_lifetime: 20
   conventional_carriers:
@@ -593,12 +593,13 @@ sector:
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
-  use_fischer_tropsch_waste_heat: true
-  use_haber_bosch_waste_heat: true
-  use_methanolisation_waste_heat: true
-  use_methanation_waste_heat: true
-  use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: true
+  use_waste_heat:
+    fischer_tropsch: 0.25
+    haber_bosch: 0.25
+    methanolisation: 0.25
+    methanation: 0.25
+    fuel_cell: 0.25
+    electrolysis: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
@@ -1170,7 +1171,6 @@ plotting:
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     urban central solid biomass CHP: '#9d9042'
-    solid biomass: '#9d9042'
     solid biomass OP: '#9d9042'
     urban central solid biomass CHP CC: '#6c5d28'
     biomass boiler: '#8A9A5B'
@@ -1209,7 +1209,7 @@ plotting:
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    Li ion: '#baf238'
+    EV battery: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'

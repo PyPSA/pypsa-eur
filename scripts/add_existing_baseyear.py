@@ -231,30 +231,19 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
 
-    older_assets = (df_agg.DateIn < min(grouping_years)).sum()
-    if older_assets:
+    newer_assets = (df_agg.DateIn > max(grouping_years)).sum()
+    if newer_assets:
         logger.warning(
-            f"There are {older_assets} assets with build year "
-            f"before first power grouping year {min(grouping_years)}. "
+            f"There are {newer_assets} assets with build year "
+            f"after last power grouping year {max(grouping_years)}. "
             "These assets are dropped and not considered."
             "Consider to redefine the grouping years to keep them."
         )
-        to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
-        df_agg.drop(to_drop, inplace=True)
-
-    older_assets = (df_agg.DateIn < min(grouping_years)).sum()
-    if older_assets:
-        logger.warning(
-            f"There are {older_assets} assets with build year "
-            f"before first power grouping year {min(grouping_years)}. "
-            "These assets are dropped and not considered."
-            "Consider to redefine the grouping years to keep them."
-        )
-        to_drop = df_agg[df_agg.DateIn < min(grouping_years)].index
+        to_drop = df_agg[df_agg.DateIn > max(grouping_years)].index
         df_agg.drop(to_drop, inplace=True)
 
     df_agg["grouping_year"] = np.take(
-        grouping_years[::-1], np.digitize(df_agg.DateIn, grouping_years[::-1])
+        grouping_years, np.digitize(df_agg.DateIn, grouping_years, right=True)
     )
 
     # calculate (adjusted) remaining lifetime before phase-out (+1 because assuming
@@ -313,9 +302,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
             # this is for the year 2020
             if not already_build.empty:
-                n.generators.loc[already_build, "p_nom_min"] = capacity.loc[
-                    already_build.str.replace(name_suffix, "")
-                ].values
+                n.generators.loc[already_build, "p_nom"] = n.generators.loc[
+                    already_build, "p_nom_min"
+                ] = capacity.loc[already_build.str.replace(name_suffix, "")].values
             new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
             if "m" in snakemake.wildcards.clusters:
@@ -491,7 +480,6 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
 
     # calculate remaining lifetime before phase-out (+1 because assuming
     # phase out date at the end of the year)
-    chp["lifetime"] = chp.DateOut - chp.DateIn + 1
     chp.Fueltype = chp.Fueltype.map(rename_fuel)
 
     # assign clustered bus
@@ -501,6 +489,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
     )
+    chp["lifetime"] = chp.DateOut - chp["grouping_year"] + 1
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
@@ -734,6 +723,11 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
+        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
+        if too_large_grouping_years:
+            logger.warning(
+                f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
+            )
         valid_grouping_years = pd.Series(
             [
                 int(grouping_year)
@@ -743,12 +737,12 @@ def add_heating_capacities_installed_before_baseyear(
             ]
         )
 
+        assert valid_grouping_years.is_monotonic_increasing
+
         # get number of years of each interval
-        _years = (
-            valid_grouping_years.diff()
-            .shift(-1)
-            .fillna(baseyear - valid_grouping_years.iloc[-1])
-        )
+        _years = valid_grouping_years.diff()
+        # Fill NA from .diff() with value for the first interval
+        _years[0] = valid_grouping_years[0] - baseyear + default_lifetime
         # Installation is assumed to be linear for the past
         ratios = _years / _years.sum()
 

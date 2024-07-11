@@ -15,6 +15,19 @@ Upcoming Release
   <https://www.sciencedirect.com/science/article/pii/S0306261920312551>`__.
   See configuration ``sector: enhanced_geothermal`` for details; by default switched off.
 
+* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
+
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage.
+
+* Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
+
+* Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
+
+* Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
+
+* Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
+
+* Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

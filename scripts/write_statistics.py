@@ -20,7 +20,7 @@ def call_with_handle(func, **kwargs):
     try:
         ds = func(**kwargs)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.info(f"An error occurred: {e}")
         ds = pd.Series()
         pass
     return ds
@@ -31,10 +31,10 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "save_statistics_csv",
-            run="240219-test/normal",
+            "write_statistics",
+            run="CurrentPolicies",
             simpl="",
-            ll="v1.2",
+            ll="vopt",
             clusters="22",
             opts="",
             sector_opts="none",
@@ -47,7 +47,6 @@ if __name__ == "__main__":
     config = snakemake.config
 
     n = pypsa.Network(snakemake.input.network)
-
     kwargs = {"nice_names": False}
 
     wildcards = dict(snakemake.wildcards)
@@ -101,7 +100,7 @@ if __name__ == "__main__":
             ds = call_with_handle(func, **kwargs)
 
         if ds.empty:
-            print(
+            logging.info(
                 f"Empty series for {output} with bus carrier {bus_carrier} and country {country}."
             )
             pd.Series().to_csv(snakemake.output[output])

@@ -291,7 +291,7 @@ STATISTICS = {
 }
 
 
-rule save_statistics_csv:
+rule write_statistics:
     params:
         statistics=STATISTICS,
     input:
@@ -307,6 +307,9 @@ rule save_statistics_csv:
         },
         csv_touch=RESULTS
         + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
+    log:
+        RESULTS
+        + "logs/write_statistics/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
     script:
         "../scripts/write_statistics.py"
 
