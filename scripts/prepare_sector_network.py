@@ -1581,8 +1581,7 @@ def add_land_transport(n, costs):
             efficiency=options.get("bev_charge_efficiency", 0.9),
             lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
         )
-        print(n.links.p_nom_max[n.links[n.links.carrier.str.contains("BEV charger")].index].sum()/options.get("bev_charge_rate", 0.011))
-        print("Bev charge rate",options.get("bev_charge_rate", 0.011))
+
         # Only when v2g option is True, add the v2g link
         if options["v2g"]:
             n.madd(
@@ -1618,11 +1617,7 @@ def add_land_transport(n, costs):
                 e_nom_max = number_cars.values*options.get('bev_energy')* bev_availability,  #options.get("bev_availability"),
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
-        print(number_cars*options.get('bev_energy')* bev_availability)  
-        print("ENOMMAX",n.stores.e_nom_max[n.stores.carrier.str.contains("Li ion|EV battery storage")].sum()/(options.get('bev_energy')*bev_availability)) #options.get("bev_availability")) ) 
-        print("ENOMMAX",n.stores.e_nom_max[n.stores.carrier.str.contains("Li ion|EV battery storage")].sum()/(options.get('bev_energy')*options.get("bev_availability"))) 
-        print("bev energy", options.get('bev_energy'), "bev avail", bev_availability)
-        print(options.get("bev_availability"))
+        
         eff = costs.at['Battery electric (passenger cars)', 'efficiency'] #/(1+dd_EV)
         n.madd(
             "Link",
@@ -3483,7 +3478,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
         if all(flag not in o for flag in flags):
             continue
         oo = o.split("+")
-        print(oo)
+        
         carrier_list = np.hstack(
             (
                 n.generators.carrier.unique(),
@@ -3505,7 +3500,7 @@ def maybe_adjust_costs_and_potentials(n, opts):
                 "x": "e_nom_extendable"
             }
             attr = attr_lookup[oo[1][0]]
-            print(attr)
+           
             factor = float(oo[1][1:])
             # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
             if carrier == "AC":  # lines do not have carrier
@@ -3517,7 +3512,6 @@ def maybe_adjust_costs_and_potentials(n, opts):
                     comps = {"Store"}
                     if attr == "e_nom_extendable":
                         factor = bool(factor)
-                        print(factor)
                 elif attr == "efficiency2" or "efficiency3":
                     comps = {"Link"}
                 else:
@@ -3530,10 +3524,8 @@ def maybe_adjust_costs_and_potentials(n, opts):
                     else:
                         sel = c.df.carrier.str.contains(carrier)
                     c.df.loc[sel, attr] *= factor
-                    print(c.df.loc[sel, attr])
-                    
-            print(n.links.p_nom_max[n.links.carrier.str.contains("V2G")])
-            print(n.stores.e_nom_extendable[n.stores.carrier.str.contains("Li ion" or "EV battery storage")])        
+                   
+     
             
             logger.info(f"changing {attr} for {carrier} by factor {factor}")
 
@@ -3869,23 +3861,19 @@ if __name__ == "__main__":
     if "T" in opts:
         
         bev_availability = options.get("bev_availability")
-        print(type(options.get("bev_availability")))
+
         for o in opts:
-            print(o)
+
             if "bevavail" not in o:
                 continue
             oo = o.split("+")
-            print(oo)
+
             bev_availability = float(oo[1])
-            print(type(bev_availability))
-        print(bev_availability)
+
 
         add_land_transport(n, costs)
         #adjust_land_transport(n)
-        print("fast charging",costs.at['Charging infrastructure fast (purely) battery electric vehicles passenger cars', 'fixed'])
-        print("slow charging",costs.at['Charging infrastructure slow (purely) battery electric vehicles passenger cars', 'fixed'])
-        print("capextransport",costs.at["Hydrogen fuel cell (passenger cars)", "fixed"]/options["H2_consumption_1car"])
-        print("capextransport",costs.at["Battery electric (passenger cars)", "fixed"]/options["EV_consumption_1car"])
+
     if "H" in opts:
         add_heat(n, costs)
 

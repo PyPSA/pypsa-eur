@@ -127,6 +127,7 @@ def add_missing_carriers(n, carriers):
     Function to add missing carriers to the network without raising errors.
     """
     missing_carriers = set(carriers) - set(n.carriers.index)
+
     if len(missing_carriers) > 0:
         n.madd("Carrier", missing_carriers)
 
@@ -473,22 +474,38 @@ def attach_conventional_generators(
     # Define generators using modified ppl DataFrame
     caps = ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
     logger.info(f"Adding {len(ppl)} generators with capacities [GW] \n{caps}")
-
-    n.madd(
-        "Generator",
-        ppl.index,
-        carrier=ppl.carrier,
-        bus=ppl.bus,
-        p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-        p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
-        p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
-        efficiency=ppl.efficiency,
-        marginal_cost=marginal_cost,
-        capital_cost=ppl.capital_cost,
-        build_year=ppl.datein.fillna(0).astype(int),
-        lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
-        **committable_attrs,
-    )
+    if snakemake.config["foresight"]== "myopic":
+        n.madd(
+            "Generator",
+            ppl.index,
+            carrier=ppl.carrier,
+            bus=ppl.bus,
+            p_nom_min=0, #ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
+            efficiency=ppl.efficiency,
+            marginal_cost=marginal_cost,
+            capital_cost=ppl.capital_cost,
+            build_year=ppl.datein.fillna(0).astype(int),
+            lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
+            **committable_attrs,
+        )
+    else:
+        n.madd(
+            "Generator",
+            ppl.index,
+            carrier=ppl.carrier,
+            bus=ppl.bus,
+            p_nom_min=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom=ppl.p_nom.where(ppl.carrier.isin(conventional_carriers), 0),
+            p_nom_extendable=ppl.carrier.isin(extendable_carriers["Generator"]),
+            efficiency=ppl.efficiency,
+            marginal_cost=marginal_cost,
+            capital_cost=ppl.capital_cost,
+            build_year=ppl.datein.fillna(0).astype(int),
+            lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
+            **committable_attrs,
+        )
 
     for carrier in set(conventional_params) & set(carriers):
         # Generators with technology affected
@@ -878,6 +895,10 @@ if __name__ == "__main__":
     conventional_inputs = {
         k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
     }
+    conventional_inputs2 = {
+        k: v for k, v in snakemake.input.items() if k.startswith("extendable_")
+    }
+    conventional_inputs.update(conventional_inputs2)
 
     if params.conventional["unit_commitment"]:
         unit_commitment = pd.read_csv(snakemake.input.unit_commitment, index_col=0)
@@ -958,6 +979,6 @@ if __name__ == "__main__":
         )
 
     sanitize_carriers(n, snakemake.config)
-
+   
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output[0])

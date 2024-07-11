@@ -234,7 +234,7 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="cbc"):
 
     assert (
         n_clusters >= len(N) and n_clusters <= N.sum()
-    ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
+    ), f"Number of clusters {n_clusters} must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
 
     if isinstance(focus_weights, dict):
         total_focus = sum(list(focus_weights.values()))
@@ -502,7 +502,6 @@ if __name__ == "__main__":
                 carriers += [f"{c} {label} efficiency" for label in labels]
                 n.generators.carrier.update(gens.carrier + " " + suffix + " efficiency")
         aggregate_carriers = carriers
-
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()

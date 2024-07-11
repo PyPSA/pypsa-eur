@@ -251,7 +251,6 @@ def _aggregate_and_move_components(
     _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
 
     generator_strategies = aggregation_strategies["generators"]
-
     carriers = set(n.generators.carrier) - set(exclude_carriers)
     generators, generators_pnl = aggregateoneport(
         n,
@@ -262,11 +261,10 @@ def _aggregate_and_move_components(
     )
 
     replace_components(n, "Generator", generators, generators_pnl)
-
     for one_port in aggregate_one_ports:
         df, pnl = aggregateoneport(n, busmap, component=one_port)
         replace_components(n, one_port, df, pnl)
-
+    
     buses_to_del = n.buses.index.difference(busmap)
     n.mremove("Bus", buses_to_del)
     for c in n.branch_components:
@@ -300,7 +298,7 @@ def simplify_links(
     labels = pd.Series(labels, n.buses.index)
 
     G = n.graph()
-
+    
     def split_links(nodes):
         nodes = frozenset(nodes)
 
@@ -339,7 +337,7 @@ def simplify_links(
     connection_costs_to_bus = pd.DataFrame(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
-
+    
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
         for b, buses, links in split_links(labels.index[labels == lbl]):
             if len(buses) <= 2:
@@ -401,7 +399,7 @@ def simplify_links(
             # n.add("Link", **params)
 
     logger.debug("Collecting all components using the busmap")
-
+    
     _aggregate_and_move_components(
         n,
         busmap,
@@ -410,6 +408,7 @@ def simplify_links(
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=exclude_carriers,
     )
+    
     return n, busmap
 
 
@@ -529,25 +528,26 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("simplify_network", simpl="")
     configure_logging(snakemake)
-
+    
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
     n = pypsa.Network(snakemake.input.network)
+    
     Nyears = n.snapshot_weightings.objective.sum() / 8760
 
     # remove integer outputs for compatibility with PyPSA v0.26.0
     n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
-
+    
     n, trafo_map = simplify_network_to_380(n)
-
+    
     technology_costs = load_costs(
         snakemake.input.tech_costs,
         params.costs,
         params.max_hours,
         Nyears,
     )
-
+    
     n, simplify_links_map = simplify_links(
         n,
         technology_costs,
@@ -560,7 +560,7 @@ if __name__ == "__main__":
     )
 
     busmaps = [trafo_map, simplify_links_map]
-
+    
     if params.simplify_network["remove_stubs"]:
         n, stub_map = remove_stubs(
             n,
@@ -572,11 +572,11 @@ if __name__ == "__main__":
             aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
-
+    
     if params.simplify_network["to_substations"]:
         n, substation_map = aggregate_to_substations(n, params.aggregation_strategies)
         busmaps.append(substation_map)
-
+    
     # treatment of outliers (nodes without a profile for considered carrier):
     # all nodes that have no profile of the given carrier are being aggregated to closest neighbor
     if params.simplify_network["algorithm"] == "hac":
@@ -592,7 +592,7 @@ if __name__ == "__main__":
                 n, params.aggregation_strategies, buses_i
             )
             busmaps.append(busmap_hac)
-
+    
     if snakemake.wildcards.simpl:
         n, cluster_map = cluster(
             n,
@@ -620,7 +620,7 @@ if __name__ == "__main__":
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     update_p_nom_max(n)
-
+    
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
@@ -628,3 +628,4 @@ if __name__ == "__main__":
     busmap_s.to_csv(snakemake.output.busmap)
 
     cluster_regions(busmaps, snakemake.input, snakemake.output)
+    

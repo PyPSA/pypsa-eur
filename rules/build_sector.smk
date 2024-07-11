@@ -424,7 +424,7 @@ rule build_industrial_production_per_country:
         + "industrial_production_per_country.csv",
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=5000,
     log:
         LOGS + "build_industrial_production_per_country.log",
     benchmark:
