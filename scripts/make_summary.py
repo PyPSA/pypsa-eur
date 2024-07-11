@@ -741,6 +741,8 @@ def make_summaries(networks_dict):
         for output in outputs:
             df[output] = globals()["calculate_" + output](n, label, df[output])
 
+        del n
+
     return df
 
 
@@ -758,8 +760,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    s = snakemake.input.networks[0]
+    base_dir = s[: s.find("results/") + 8]
+
     networks_dict = {
-        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
+        (cluster, ll, opt + sector_opt, planning_horizon): base_dir
         + snakemake.params.RDIR
         + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.params.scenario["simpl"]

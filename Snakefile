@@ -20,6 +20,12 @@ configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
 
+# temporary for mock_snakemake
+# import yaml
+# from snakemake.utils import update_config
+# update_config(config, yaml.safe_load(open("../../config/config.20231025-zecm.yaml")))
+
+
 run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
@@ -54,6 +60,9 @@ include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
+
+
+# include: "rules/plot.smk"
 
 
 if config["foresight"] == "overnight":

@@ -101,11 +101,14 @@ rule build_gas_input_locations:
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+        reference_import_sites=("data/import-sites.csv"),
     output:
         gas_input_nodes=resources("gas_input_locations_s{simpl}_{clusters}.geojson"),
         gas_input_nodes_simplified=resources(
             "gas_input_locations_s{simpl}_{clusters}_simplified.csv"
         ),
+        ports=resources("ports_s{simpl}_{clusters}.csv"),
     resources:
         mem_mb=2000,
     log:
@@ -1017,8 +1020,14 @@ rule prepare_sector_network:
         industrial_demand=resources(
             "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
+        industrial_production=resources(
+            "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"
+        ),
+        industrial_demand_today=resources(
+            "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"
         ),
         district_heat_share=resources(
             "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
@@ -1050,6 +1059,13 @@ rule prepare_sector_network:
             if config_provider("sector", "solar_thermal")(w)
             else []
         ),
+        import_ports=resources("ports_s{simpl}_{clusters}.csv"),
+        import_costs="data/imports/results-230505.csv",
+        import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        country_centroids=storage(
+            "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
+            keep_local=True,
         egs_potentials=lambda w: (
             resources("egs_potentials_s{simpl}_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
@@ -1070,7 +1086,7 @@ rule prepare_sector_network:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     log:
         RESULTS
         + "logs/prepare_sector_network_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",

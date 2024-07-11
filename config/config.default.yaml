@@ -406,6 +406,8 @@ sector:
   heating: true
   biomass: true
   industry: true
+  shipping: false
+  imp: true
   agriculture: true
   district_heating:
     potential: 0.6
@@ -497,7 +499,19 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
+  shipping_ammonia_efficiency: 0.40
+  shipping_lng_efficiency: 0.44
+  shipping_lh2_efficiency: 0.44
+  shipping_endogenous:
+    enable: false
+    fuels:
+    - oil
+    - methanol
+    - LH2
+    - LNG
+    - ammonia
   aviation_demand_factor: 1.
+  land_transport_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
   heat_pump_sink_T: 55.
@@ -536,14 +550,22 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
+  regional_methanol_demand: true
   regional_oil_demand: false
   regional_coal_demand: false
+  methanol_reforming: true
+  methanol_reforming_cc: false
+  methanol_to_kerosene: true
+  methanol_to_power:
+    ccgt: true
+    ccgt_cc: true
+    ocgt: true
+    allam: true
   regional_co2_sequestration_potential:
     enable: false
     attribute:
@@ -567,7 +589,7 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
-  ammonia: false
+  ammonia: true
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -594,7 +616,7 @@ sector:
     electricity distribution grid:
       efficiency_static: 0.97
   H2_network: true
-  gas_network: false
+  gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1
@@ -606,7 +628,110 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
+  biomass_to_methanol: false
+  biomass_to_methanol_cc: false
   biosng: false
+  biosng_cc: false
+  biomass_upgrading_cc: false
+  electrobiofuels: false
+  endogenous_steel: true # false
+  endogenous_hvc: true # false
+  relocation_steel: false
+  flexibility_steel: false
+  import:
+    capacity_boost: 2 # p_nom_max generator
+    limit: false # bool or number in TWh
+    limit_sense: "=="
+    options:
+    - pipeline-h2: 1.0 # relative costs
+    - shipping-lh2: 1.0
+    - shipping-lch4: 1.0
+    - shipping-lnh3: 1.0
+    - shipping-ftfuel: 1.0
+    - shipping-meoh: 1.0
+    - hvdc-to-elec: 1.0
+    - shipping-hbi: 1.0
+    - shipping-steel: 1.0
+    p_nom_max:
+      pipeline-h2: .inf
+    endogenous_hvdc_import:
+      enable: false
+      cost_factor: 1.0
+      exporters:
+      - CN-West
+      - DZ
+      - EG
+      - KZ
+      - LY
+      - MA
+      - SA
+      - TN
+      - TR
+      - UA
+      extra_connections:
+      - MA-DZ
+      - DZ-LY
+      - DZ-TN
+      - TN-LY
+      - LY-EG
+      - EG-SA
+      xlinks:
+        MA:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 3800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 4000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 3200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 1800
+        DZ:
+        # Barcelona
+        - x: 2.37
+          y: 41.57
+          length: 1300
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1800
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1400
+        TN:
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1500
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1500
+        LY:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+        EG:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977 # p.u./km
+      length_factor: 1.25
+      distance_threshold: 0.05 # quantile
+      p_nom_max: .inf # for HVDC links
+      share_of_p_nom_max_available: 1. # for wind and solar generators
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -705,13 +830,17 @@ industry:
     2045: 0.9
     2050: 1.0
   basic_chemicals_without_NH3_production_today: 69. #Mt/a, = 86 Mtethylene-equiv - 17 MtNH3
-  HVC_production_today: 52.
+  HVC_production_today: # DECHEMA report in Mt
+    ethylene: 21.7
+    propylene: 17
+    BTX: 15.7
   MWh_elec_per_tHVC_mechanical_recycling: 0.547
   MWh_elec_per_tHVC_chemical_recycling: 6.9
   chlorine_production_today: 9.58
   MWh_elec_per_tCl: 3.6
   MWh_H2_per_tCl: -0.9372
   methanol_production_today: 1.5
+  MWh_MeOH_per_tMeOH: 5.54
   MWh_elec_per_tMeOH: 0.167
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
@@ -908,6 +1037,13 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  countries:
+  - all
+  carriers:
+  - electricity
+  - heat
+  carrier_groups:
+    electricity: [AC, low_voltage]
 
   nice_names:
     OCGT: "Open-Cycle Gas"
@@ -957,8 +1093,10 @@ plotting:
     solar thermal: '#ffbf2b'
     residential rural solar thermal: '#f1c069'
     services rural solar thermal: '#eabf61'
+    rural solar thermal: '#eabf61'
     residential urban decentral solar thermal: '#e5bc5a'
     services urban decentral solar thermal: '#dfb953'
+    urban decentral solar thermal: '#dfb953'
     urban central solar thermal: '#d7b24c'
     solar rooftop: '#ffea80'
     # gas
@@ -972,15 +1110,22 @@ plotting:
     residential urban decentral gas boiler: '#cb7a36'
     services rural gas boiler: '#c4813f'
     services urban decentral gas boiler: '#ba8947'
+    rural gas boiler: '#c4813f'
+    urban decentral gas boiler: '#ba8947'
     urban central gas boiler: '#b0904f'
     gas: '#e05b09'
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
-    biogas to gas CC: '#e51245'
+    biogas to gas CC: '#e0986c'
+    electrobiofuels: '#b0b87b'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
-    allam: '#B98F76'
+    allam gas: '#B98F76'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
@@ -993,7 +1138,9 @@ plotting:
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
     services rural oil boiler: '#a5a5a5'
+    rural oil boiler: '#a5a5a5'
     residential urban decentral oil boiler: '#a1a1a1'
+    urban decentral oil boiler: '#a1a1a1'
     urban central oil boiler: '#9d9d9d'
     services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
@@ -1023,14 +1170,20 @@ plotting:
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     urban central solid biomass CHP: '#9d9042'
+    solid biomass: '#9d9042'
+    solid biomass OP: '#9d9042'
     urban central solid biomass CHP CC: '#6c5d28'
     biomass boiler: '#8A9A5B'
     residential rural biomass boiler: '#a1a066'
     residential urban decentral biomass boiler: '#b0b87b'
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
+    rural biomass boiler: '#a1a066'
+    urban decentral biomass boiler: '#b0b87b'
     biomass to liquid: '#32CD32'
+    biomass to liquid CC: '#32CDaa'
     BioSNG: '#123456'
+    BioSNG CC: '#123456'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
@@ -1061,8 +1214,10 @@ plotting:
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
     services rural water tanks: '#f3afa3'
+    rural water tanks: '#f3afa3'
     residential urban decentral water tanks: '#f2b2a3'
     services urban decentral water tanks: '#f1b4a4'
+    urban decentral water tanks: '#f1b4a4'
     urban central water tanks: '#e9977d'
     hot water storage: '#e69487'
     hot water charging: '#e8998b'
@@ -1071,12 +1226,16 @@ plotting:
     residential urban decentral water tanks charger: '#b39995'
     services rural water tanks charger: '#b3abb0'
     services urban decentral water tanks charger: '#b3becc'
+    rural water tanks charger: '#b3abb0'
+    urban decentral water tanks charger: '#b3becc'
     hot water discharging: '#e99c8e'
     urban central water tanks discharger: '#b9816e'
     residential rural water tanks discharger: '#ba9685'
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    rural water tanks discharger: '#bbc2b8'
+    urban decentral water tanks discharger: '#bdd8d3'
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
@@ -1091,6 +1250,7 @@ plotting:
     decentral heat: '#750606'
     residential urban decentral heat: '#a33c3c'
     services urban decentral heat: '#cc1f1f'
+    urban decentral heat: '#cc1f1f'
     low-temperature heat for industry: '#8f2727'
     process heat: '#ff0000'
     agriculture heat: '#d9a5a5'
@@ -1100,15 +1260,19 @@ plotting:
     air heat pump: '#36eb41'
     residential urban decentral air heat pump: '#48f74f'
     services urban decentral air heat pump: '#5af95d'
+    urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     ground heat pump: '#2fb537'
     residential rural ground heat pump: '#48f74f'
     residential rural air heat pump: '#48f74f'
     services rural ground heat pump: '#5af95d'
+    rural ground heat pump: '#5af95d'
     Ambient: '#98eb9d'
     CHP: '#8a5751'
     urban central gas CHP: '#8d5e56'
+    urban central lignite CHP: '#8d5e56'
+    urban central coal CHP: '#8d5e56'
     CHP CC: '#634643'
     urban central gas CHP CC: '#6e4e4c'
     CHP heat: '#8a5751'
@@ -1118,7 +1282,9 @@ plotting:
     residential rural resistive heater: '#bef5b5'
     residential urban decentral resistive heater: '#b2f1a9'
     services rural resistive heater: '#a5ed9d'
+    rural resistive heater: '#a5ed9d'
     services urban decentral resistive heater: '#98e991'
+    urban decentral resistive heater: '#98e991'
     urban central resistive heater: '#8cdf85'
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
@@ -1202,6 +1368,39 @@ plotting:
     DC: "#8a1caf"
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
+    import pipeline-h2: '#db8ccd'
+    import shipping-lh2: '#d9b8d3'
+    import shipping-lch4: '#f7a572'
+    import shipping-lnh3: '#87d0e6'
+    import shipping-ftfuel: '#95decb'
+    import shipping-meoh: '#b7dbdb'
+    import shipping-hbi: '#b1bbc9'
+    import shipping-steel: '#94a4be'
+    import hvdc-to-elec: '#91856a'
+    external H2: '#f7cdf0'
+    external H2 Turbine: '#991f83'
+    external H2 Electrolysis: '#991f83'
+    external battery discharger: '#dff7cb'
+    external battery charger: '#dff7cb'
+    external battery: '#dff7cb'
+    external offwind: '#d0e8f5'
+    external onwind: '#accbfc'
+    external solar: '#fcf1c7'
+    external solar-utility: '#fcf1c7'
+    external HVDC: "#8a1caf"
+    steel: '#b1bbc9'
+    DRI + Electric arc: '#b1bbc9'
+    shipping ammonia: '#46caf0'
+    Methanol steam reforming CC: '#468c8b'
+    biomass to methanol CC: '#468c8b'
+    biomass to methanol: '#468c8b'
+    Methanol steam reforming: '#468c8b'
+    shipping LNG: '#e0986c'
+    industry methanol: '#468c8b'
+    industry methanol emissions: '#468c8b'
+    HVC: '#012345'
+    methanol-to-olefins/aromatics: '#012345'
+    electric steam cracker: '#012345'
     load: "#dd2e23"
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'

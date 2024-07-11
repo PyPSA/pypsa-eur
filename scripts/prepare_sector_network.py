@@ -9,9 +9,13 @@ technologies for the buildings, transport and industry sectors.
 
 import logging
 import os
+import re
+import uuid
 from itertools import product
 from types import SimpleNamespace
 
+import country_converter as coco
+import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -19,6 +23,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    generate_periodic_profiles,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -30,15 +35,25 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
+from shapely.geometry import Point
+
+cc = coco.CountryConverter()
+
+geolocator = Nominatim(user_agent=str(uuid.uuid4()), timeout=10)
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=2)
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
+
+DISTANCE_CRS = 3857
 
 
 def define_spatial(nodes, options):
@@ -542,14 +557,15 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    n.madd(
-        "Generator",
-        nodes,
-        bus=nodes,
-        p_nom_extendable=True,
-        carrier=carrier,
-        marginal_cost=costs.at[carrier, "fuel"],
-    )
+    if carrier in costs.index and costs.at[carrier, "fuel"] > 0:
+        n.madd(
+            "Generator",
+            nodes,
+            bus=nodes,
+            p_nom_extendable=True,
+            carrier=carrier,
+            marginal_cost=costs.at[carrier, "fuel"],
+        )
 
 
 # TODO: PyPSA-Eur merge issue
@@ -739,7 +755,7 @@ def add_co2_network(n, costs):
     )
 
 
-def add_allam(n, costs):
+def add_allam_cycle_gas(n, costs):
     logger.info("Adding Allam cycle gas power plants.")
 
     nodes = pop_layout.index
@@ -747,18 +763,219 @@ def add_allam(n, costs):
     n.madd(
         "Link",
         nodes,
-        suffix=" allam",
+        suffix=" allam gas",
         bus0=spatial.gas.df.loc[nodes, "nodes"].values,
         bus1=nodes,
         bus2=spatial.co2.df.loc[nodes, "nodes"].values,
-        carrier="allam",
+        bus3="co2 atmosphere",
+        carrier="allam gas",
         p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.6 * 1.5e6 * 0.1,  # efficiency * EUR/MW * annuity
+        capital_cost=0.66
+        * 1.832e6
+        * (
+            calculate_annuity(25, 0.07) + 0.0385
+        ),  # efficiency * EUR/MW * (annuity + FOM)
         marginal_cost=2,
-        efficiency=0.6,
-        efficiency2=costs.at["gas", "CO2 intensity"],
-        lifetime=30.0,
+        efficiency=0.66,
+        efficiency2=0.98 * costs.at["gas", "CO2 intensity"],
+        efficiency3=0.02 * costs.at["gas", "CO2 intensity"],
+        lifetime=25,
+    )
+
+
+def add_methanol_to_power(n, costs, types={}):
+    # TODO: add costs to technology-data
+
+    nodes = pop_layout.index
+
+    if types["allam"]:
+        logger.info("Adding Allam cycle methanol power plants.")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" allam methanol",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes,
+            bus2=spatial.co2.df.loc[nodes, "nodes"].values,
+            bus3="co2 atmosphere",
+            carrier="allam methanol",
+            p_nom_extendable=True,
+            capital_cost=0.59
+            * 1.832e6
+            * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
+            marginal_cost=2,
+            efficiency=0.59,
+            efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
+            efficiency3=0.02 * costs.at["methanolisation", "carbondioxide-input"],
+            lifetime=25,
+        )
+
+    if types["ccgt"]:
+        logger.info("Adding methanol CCGT power plants.")
+
+        # efficiency * EUR/MW * (annuity + FOM)
+        capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" CCGT methanol",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes,
+            bus2="co2 atmosphere",
+            carrier="CCGT methanol",
+            p_nom_extendable=True,
+            capital_cost=capital_cost,
+            marginal_cost=2,
+            efficiency=0.58,
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+            lifetime=25,
+        )
+
+    if types["ccgt_cc"]:
+        logger.info(
+            "Adding methanol CCGT power plants with post-combustion carbon capture."
+        )
+
+        # TODO consider efficiency changes / energy inputs for CC
+
+        # efficiency * EUR/MW * (annuity + FOM)
+        capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+
+        capital_cost_cc = (
+            capital_cost
+            + costs.at["cement capture", "fixed"]
+            * costs.at["methanolisation", "carbondioxide-input"]
+        )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" CCGT methanol CC",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes,
+            bus2=spatial.co2.df.loc[nodes, "nodes"].values,
+            bus3="co2 atmosphere",
+            carrier="CCGT methanol CC",
+            p_nom_extendable=True,
+            capital_cost=capital_cost_cc,
+            marginal_cost=2,
+            efficiency=0.58,
+            efficiency2=costs.at["cement capture", "capture_rate"]
+            * costs.at["methanolisation", "carbondioxide-input"],
+            efficiency3=(1 - costs.at["cement capture", "capture_rate"])
+            * costs.at["methanolisation", "carbondioxide-input"],
+            lifetime=25,
+        )
+
+    if types["ocgt"]:
+        logger.info("Adding methanol OCGT power plants.")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" OCGT methanol",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes,
+            bus2="co2 atmosphere",
+            carrier="OCGT methanol",
+            p_nom_extendable=True,
+            capital_cost=0.35
+            * 458e3
+            * (
+                calculate_annuity(25, 0.07) + 0.035
+            ),  # efficiency * EUR/MW * (annuity + FOM)
+            marginal_cost=2,
+            efficiency=0.35,
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+            lifetime=25,
+        )
+
+
+def add_methanol_to_kerosene(n, costs):
+    logger.info("Adding methanol-to-kerosene.")
+
+    tech = "methanol-to-kerosene"
+
+    n.madd(
+        "Link",
+        spatial.nodes,
+        suffix=f" {tech}",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.oil.nodes,
+        bus2=spatial.h2.nodes,
+        efficiency=costs.at[tech, "methanol-input"],
+        efficiency2=-costs.at[tech, "hydrogen-input"]
+        / costs.at[tech, "methanol-input"],
+        p_nom_extendable=True,
+        p_min_pu=1,
+        carrier=tech,
+    )
+
+
+def add_methanol_reforming(n, costs):
+    logger.info("Adding methanol steam reforming.")
+
+    nodes = pop_layout.index
+
+    tech = "Methanol steam reforming"
+
+    capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=f" {tech}",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.h2.nodes,
+        bus2="co2 atmosphere",
+        p_nom_extendable=True,
+        capital_cost=capital_cost,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+        carrier=tech,
+        lifetime=costs.at[tech, "lifetime"],
+    )
+
+
+def add_methanol_reforming_cc(n, costs):
+    logger.info("Adding methanol steam reforming with carbon capture.")
+
+    nodes = pop_layout.index
+
+    # TODO: heat release and electricity demand for process and carbon capture
+    # but the energy demands for carbon capture have not yet been added for other CC processes
+    # 10.1016/j.rser.2020.110171: 0.129 kWh_e/kWh_H2, -0.09 kWh_heat/kWh_H2
+
+    tech = "Methanol steam reforming"
+
+    capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+
+    capital_cost_cc = (
+        capital_cost
+        + costs.at["cement capture", "fixed"]
+        * costs.at["methanolisation", "carbondioxide-input"]
+    )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=f" {tech} CC",
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.h2.nodes,
+        bus2="co2 atmosphere",
+        bus3=spatial.co2.nodes,
+        p_nom_extendable=True,
+        capital_cost=capital_cost_cc,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=(1 - costs.at["cement capture", "capture_rate"])
+        * costs.at["methanolisation", "carbondioxide-input"],
+        efficiency3=costs.at["cement capture", "capture_rate"]
+        * costs.at["methanolisation", "carbondioxide-input"],
+        carrier=f"{tech} CC",
+        lifetime=costs.at[tech, "lifetime"],
     )
 
 
@@ -1715,9 +1932,19 @@ def add_land_transport(n, costs):
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, parse_dates=True
     )
+    # transport growth factor
+    demand_factor = get(options["land_transport_demand_factor"], investment_year)
+    if demand_factor != 1:
+        logger.warning(
+            f"Changing land transport demand by {demand_factor*100-100:+.2f}%."
+        )
+
+    transport = demand_factor * transport
+
     number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
         "number cars"
     ]
+    number_cars = demand_factor * number_cars
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
@@ -2327,6 +2554,36 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
         )
 
+    if options.get("electrobiofuels"):
+        add_carrier_buses(n, "oil")
+        n.madd(
+            "Link",
+            spatial.nodes,
+            suffix=" electrobiofuels",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.oil.nodes,
+            bus2=spatial.h2.nodes,
+            bus3="co2 atmosphere",
+            carrier="electrobiofuels",
+            p_nom_extendable=True,
+            lifetime=costs.at["electrobiofuels", "lifetime"],
+            efficiency=costs.at["electrobiofuels", "efficiency-biomass"],
+            efficiency2=-costs.at["electrobiofuels", "efficiency-hydrogen"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["BtL", "CO2 stored"]
+            * (1 - costs.at["Fischer-Tropsch", "capture rate"]),
+            capital_cost=costs.at["BtL", "fixed"]
+            * costs.at["electrobiofuels", "efficiency-biomass"]
+            + costs.at["BtL", "C stored"]
+            * costs.at["Fischer-Tropsch", "fixed"]
+            * costs.at["electrobiofuels", "efficiency-hydrogen"],
+            marginal_cost=costs.at["BtL", "VOM"]
+            * costs.at["electrobiofuels", "efficiency-biomass"]
+            + costs.at["BtL", "C stored"]
+            * costs.at["Fischer-Tropsch", "VOM"]
+            * costs.at["electrobiofuels", "efficiency-hydrogen"],
+        )
+
     if options["biomass_transport"]:
         # add biomass transport
         transport_costs = pd.read_csv(
@@ -2467,6 +2724,8 @@ def add_biomass(n, costs):
 
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
+        add_carrier_buses(n, "oil")
+
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2484,7 +2743,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
-        # TODO: Update with energy penalty
+    if options.get("biomass_to_liquid_cc"):
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2493,7 +2752,7 @@ def add_biomass(n, costs):
             bus1=spatial.oil.nodes,
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
-            carrier="biomass to liquid",
+            carrier="biomass to liquid CC",
             lifetime=costs.at["BtL", "lifetime"],
             efficiency=costs.at["BtL", "efficiency"],
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
@@ -2505,11 +2764,61 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
+    # biomethanol
+
+    if options.get("biomass_to_methanol"):
+        add_carrier_buses(n, "methanol")
+
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" biomass to methanol",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.methanol.nodes,
+            bus2="co2 atmosphere",
+            carrier="biomass to methanol",
+            lifetime=costs.at["biomass-to-methanol", "lifetime"],
+            efficiency=costs.at["biomass-to-methanol", "efficiency"],
+            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["biomass-to-methanol", "CO2 stored"],
+            p_nom_extendable=True,
+            capital_cost=costs.at["biomass-to-methanol", "fixed"]
+            / costs.at["biomass-to-methanol", "efficiency"],
+            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
+            / costs.at["biomass-to-methanol", "efficiency"],
+        )
+
+    if options.get("biomass_to_methanol_cc"):
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" biomass to methanol CC",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.methanol.nodes,
+            bus2="co2 atmosphere",
+            bus3=spatial.co2.nodes,
+            carrier="biomass to methanol CC",
+            lifetime=costs.at["biomass-to-methanol", "lifetime"],
+            efficiency=costs.at["biomass-to-methanol", "efficiency"],
+            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["biomass-to-methanol", "CO2 stored"]
+            * (1 - costs.at["biomass-to-methanol", "capture rate"]),
+            efficiency3=costs.at["biomass-to-methanol", "CO2 stored"]
+            * costs.at["biomass-to-methanol", "capture rate"],
+            p_nom_extendable=True,
+            capital_cost=costs.at["biomass-to-methanol", "fixed"]
+            / costs.at["biomass-to-methanol", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["biomass-to-methanol", "CO2 stored"],
+            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
+            / costs.at["biomass-to-methanol", "efficiency"],
+        )
+
     # BioSNG from solid biomass
     if options["biosng"]:
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            spatial.gas.locations,  # first carrier to be spatially resolved
             suffix=" solid biomass to gas",
             bus0=spatial.biomass.nodes,
             bus1=spatial.gas.nodes,
@@ -2524,16 +2833,16 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "efficiency"] * costs.at["BioSNG", "VOM"],
         )
 
-        # TODO: Update with energy penalty for CC
+    if options.get("biosng_cc"):
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            spatial.gas.locations,  # first carrier to be spatially resolved
             suffix=" solid biomass to gas CC",
             bus0=spatial.biomass.nodes,
             bus1=spatial.gas.nodes,
             bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
-            carrier="BioSNG",
+            carrier="BioSNG CC",
             lifetime=costs.at["BioSNG", "lifetime"],
             efficiency=costs.at["BioSNG", "efficiency"],
             efficiency2=costs.at["BioSNG", "CO2 stored"]
@@ -2556,10 +2865,140 @@ def add_industry(n, costs):
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
+    add_carrier_buses(n, "oil")
+    add_carrier_buses(n, "methanol")
+
     # 1e6 to convert TWh to MWh
     industrial_demand = (
-        pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
-    ) * nyears
+        pd.read_csv(snakemake.input.industrial_demand, index_col=[0, 1]) * 1e6 * nyears
+    )
+    industrial_demand_today = (
+        pd.read_csv(snakemake.input.industrial_demand_today, index_col=0) * 1e6 * nyears
+    )
+
+    industrial_production = (
+        pd.read_csv(snakemake.input.industrial_production, index_col=0)
+        * 1e3
+        * nyears  # kt/a -> t/a
+    )
+
+    endogenous_sectors = []
+    if options["endogenous_steel"]:
+        endogenous_sectors += ["DRI + Electric arc"]
+    if options["endogenous_hvc"]:
+        endogenous_sectors += ["HVC"]
+    sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
+        endogenous_sectors
+    )
+
+    if options["endogenous_steel"]:
+        logger.info("Adding endogenous primary steel demand in tonnes.")
+
+        sector = "DRI + Electric arc"
+
+        no_relocation = not options.get("relocation_steel", False)
+        no_flexibility = not options.get("flexibility_steel", False)
+
+        s = " not" if no_relocation else " "
+        logger.info(f"Steel industry relocation{s} activated.")
+
+        s = " not" if no_flexibility else " "
+        logger.info(f"Steel industry flexibility{s} activated.")
+
+        n.add(
+            "Bus",
+            "EU steel",
+            location="EU",
+            carrier="steel",
+            unit="t",
+        )
+
+        n.add(
+            "Bus",
+            "EU hbi",
+            location="EU",
+            carrier="hbi",
+            unit="t",
+        )
+
+        n.add(
+            "Load",
+            "EU steel",
+            bus="EU steel",
+            carrier="steel",
+            p_set=industrial_production[sector].sum() / nhours,
+        )
+
+        if not no_flexibility:
+            n.add(
+                "Store",
+                "EU steel Store",
+                bus="EU steel",
+                e_nom_extendable=True,
+                e_cyclic=True,
+                carrier="steel",
+            )
+
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            + costs.at["electric arc furnace", "electricity-input"]
+        )
+
+        hydrogen_input = (
+            costs.at["direct iron reduction furnace", "hydrogen-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+        )
+
+        # so that for each region supply matches consumption
+        p_nom = industrial_production[sector] * electricity_input / nhours
+
+        marginal_cost = (
+            costs.at["iron ore DRI-ready", "commodity"]
+            * costs.at["direct iron reduction furnace", "ore-input"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input
+        )
+
+        capital_cost = (
+            costs.at["direct iron reduction furnace", "fixed"]
+            * costs.at["electric arc furnace", "hbi-input"]
+            + costs.at["electric arc furnace", "fixed"]
+        ) / electricity_input
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {sector}",
+            carrier=sector,
+            capital_cost=capital_cost,
+            marginal_cost=marginal_cost,
+            p_nom_max=p_nom if no_relocation else np.inf,
+            p_nom_extendable=True,
+            p_min_pu=1 if no_flexibility else 0,
+            bus0=nodes,
+            bus1="EU steel",
+            bus2=nodes + " H2",
+            efficiency=1 / electricity_input,
+            efficiency2=-hydrogen_input / electricity_input,
+        )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" hbi",
+        carrier="hbi",
+        capital_cost=costs.at["electric arc furnace", "investment"],
+        marginal_cost=0,
+        p_nom_max=p_nom if no_relocation else np.inf,
+        p_nom_extendable=True,
+        p_min_pu=1 if no_flexibility else 0,
+        bus0=nodes,
+        bus1="EU steel",
+        bus2="EU hbi",
+        efficiency=costs.at["electric arc furnace", "electricity-input"],
+        efficiency2=costs.at["electric arc furnace", "hbi-input"],
+    )
 
     n.madd(
         "Bus",
@@ -2571,13 +3010,16 @@ def add_industry(n, costs):
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         p_set = (
-            industrial_demand.loc[spatial.biomass.locations, "solid biomass"].rename(
-                index=lambda x: x + " solid biomass for industry"
-            )
+            industrial_demand.loc[
+                (spatial.biomass.locations, sectors_b), "solid biomass"
+            ]
+            .groupby(level="node")
+            .sum()
+            .rename(index=lambda x: x + " solid biomass for industry")
             / nhours
         )
     else:
-        p_set = industrial_demand["solid biomass"].sum() / nhours
+        p_set = industrial_demand.loc[sectors_b, "solid biomass"].sum() / nhours
 
     n.madd(
         "Load",
@@ -2629,7 +3071,10 @@ def add_industry(n, costs):
         unit="MWh_LHV",
     )
 
-    gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
+    gas_demand = (
+        industrial_demand.loc[(nodes, sectors_b), "methane"].groupby(level="node").sum()
+        / nhours
+    )
 
     if options["gas_network"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
@@ -2681,7 +3126,10 @@ def add_industry(n, costs):
         suffix=" H2 for industry",
         bus=nodes + " H2",
         carrier="H2 for industry",
-        p_set=industrial_demand.loc[nodes, "hydrogen"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "hydrogen"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     # methanol for industry
@@ -2986,9 +3434,127 @@ def add_industry(n, costs):
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
+    if options["endogenous_hvc"]:
+        logger.info("Adding endogenous primary high-value chemicals demand in tonnes.")
+
+        n.add(
+            "Bus",
+            "EU HVC",
+            location="EU",
+            carrier="HVC",
+            unit="t",
+        )
+
+        p_set = demand_factor * industrial_production["HVC"].sum() / nhours
+
+        n.add(
+            "Load",
+            "EU HVC",
+            bus="EU HVC",
+            carrier="HVC",
+            p_set=p_set,
+        )
+
+        # n.add(
+        #     "Store",
+        #     "EU HVC Store",
+        #     bus="EU HVC",
+        #     e_nom_extendable=True,
+        #     e_cyclic=True,
+        #     carrier="HVC",
+        # )
+
+        tech = "methanol-to-olefins/aromatics"
+
+        logger.info(f"Adding {tech}.")
+
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "methanol-input"]
+        )
+
+        co2_release = (
+            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
+            + costs.at["methanolisation", "carbondioxide-input"]
+        )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {tech}",
+            carrier=tech,
+            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
+            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
+            p_nom_extendable=True,
+            bus0=spatial.methanol.nodes,
+            bus1="EU HVC",
+            bus2=nodes,
+            bus3="co2 atmosphere",
+            p_min_pu=1,
+            p_nom_max=p_nom_max.values,
+            efficiency=1 / costs.at[tech, "methanol-input"],
+            efficiency2=-costs.at[tech, "electricity-input"]
+            / costs.at[tech, "methanol-input"],
+            efficiency3=co2_release,
+        )
+
+        tech = "electric steam cracker"
+
+        logger.info(f"Adding {tech}.")
+
+        p_nom_max = (
+            demand_factor
+            * industrial_production.loc[nodes, "HVC"]
+            / nhours
+            * costs.at[tech, "naphtha-input"]
+        )
+
+        co2_release = (
+            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"]
+            + costs.at["oil", "CO2 intensity"]
+        )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" {tech}",
+            carrier=tech,
+            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "naphtha-input"],
+            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "naphtha-input"],
+            p_nom_extendable=True,
+            bus0=spatial.oil.nodes,
+            bus1="EU HVC",
+            bus2=nodes,
+            bus3="co2 atmosphere",
+            p_min_pu=1,
+            p_nom_max=p_nom_max.values,
+            efficiency=1 / costs.at[tech, "naphtha-input"],
+            efficiency2=-costs.at[tech, "electricity-input"]
+            / costs.at[tech, "naphtha-input"],
+            efficiency3=co2_release,
+        )
+
+    p_set = (
+        demand_factor
+        * industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
+        / nhours
+    )
+
+    n.madd(
+        "Load",
+        ["naphtha for industry"],
+        bus=spatial.oil.nodes,
+        carrier="naphtha for industry",
+        p_set=p_set,
+    )
+
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
+    all_aviation = ["total international aviation", "total domestic aviation"]
     p_set_naphtha = (
         demand_factor
-        * industrial_demand.loc[nodes, "naphtha"].rename(
+        * industrial_demand.loc[(nodes, sectors_b), "naphtha"].rename(
             lambda x: x + " naphtha for industry"
         )
         / nhours
@@ -3016,8 +3582,10 @@ def add_industry(n, costs):
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
-        industrial_demand.loc[nodes, "process emission from feedstock"].sum()
-        / industrial_demand.loc[nodes, "naphtha"].sum()
+        industrial_demand.loc[
+            (nodes, sectors_b), "process emission from feedstock"
+        ].sum()
+        / industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
     )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
@@ -3130,7 +3698,7 @@ def add_industry(n, costs):
         )
 
     # aviation
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -3173,6 +3741,53 @@ def add_industry(n, costs):
         efficiency2=costs.at["oil", "CO2 intensity"],
     )
 
+    # industry methanol demand
+
+    p_set_methanol = (
+        industrial_demand.loc[(nodes, sectors_b), "methanol"].sum() / nhours
+    )
+
+    n.madd(
+        "Load",
+        spatial.methanol.locations,
+        suffix=" industry methanol",
+        bus=spatial.methanol.nodes,
+        carrier="industry methanol",
+        p_set=p_set_methanol,
+    )
+
+    co2 = p_set_methanol * costs.at["methanolisation", "carbondioxide-input"]
+
+    n.add(
+        "Load",
+        "industry methanol emissions",
+        bus="co2 atmosphere",
+        carrier="industry methanol emissions",
+        p_set=-co2,
+    )
+
+    # methanolisation
+
+    n.madd(
+        "Link",
+        spatial.h2.locations + " methanolisation",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.methanol.nodes,
+        bus2=nodes,
+        bus3=spatial.co2.nodes,
+        carrier="methanolisation",
+        p_nom_extendable=True,
+        p_min_pu=options.get("min_part_load_methanolisation", 0),
+        capital_cost=costs.at["methanolisation", "fixed"]
+        / costs.at["methanolisation", "hydrogen-input"],  # EUR/MW_H2/a
+        lifetime=costs.at["methanolisation", "lifetime"],
+        efficiency=1 / costs.at["methanolisation", "hydrogen-input"],
+        efficiency2=-costs.at["methanolisation", "electricity-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+        efficiency3=-costs.at["methanolisation", "carbondioxide-input"]
+        / costs.at["methanolisation", "hydrogen-input"],
+    )
+
     # TODO simplify bus expression
     n.madd(
         "Load",
@@ -3187,7 +3802,10 @@ def add_industry(n, costs):
             for node in nodes
         ],
         carrier="low-temperature heat for industry",
-        p_set=industrial_demand.loc[nodes, "low-temperature heat"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "low-temperature heat"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     # remove today's industrial electricity demand by scaling down total electricity demand
@@ -3201,7 +3819,7 @@ def add_industry(n, costs):
             continue
         factor = (
             1
-            - industrial_demand.loc[loads_i, "current electricity"].sum()
+            - industrial_demand_today.loc[loads_i, "electricity"].sum()
             / n.loads_t.p_set[loads_i].sum().sum()
         )
         n.loads_t.p_set[loads_i] *= factor
@@ -3212,7 +3830,10 @@ def add_industry(n, costs):
         suffix=" industry electricity",
         bus=nodes,
         carrier="industry electricity",
-        p_set=industrial_demand.loc[nodes, "electricity"] / nhours,
+        p_set=industrial_demand.loc[(nodes, sectors_b), "electricity"]
+        .groupby(level="node")
+        .sum()
+        / nhours,
     )
 
     n.madd(
@@ -3225,13 +3846,16 @@ def add_industry(n, costs):
 
     if options["co2_spatial"] or options["co2network"]:
         p_set = (
-            -industrial_demand.loc[nodes, "process emission"].rename(
+            -industrial_demand.loc[(nodes, sectors_b), "process emission"].rename(
                 index=lambda x: x + " process emissions"
             )
             / nhours
         )
     else:
-        p_set = -industrial_demand.loc[nodes, "process emission"].sum() / nhours
+        p_set = (
+            -industrial_demand.loc[(nodes, sectors_b), "process emission"].sum()
+            / nhours
+        )
 
     n.madd(
         "Load",
@@ -3270,13 +3894,14 @@ def add_industry(n, costs):
     if options.get("ammonia"):
         if options["ammonia"] == "regional":
             p_set = (
-                industrial_demand.loc[spatial.ammonia.locations, "ammonia"].rename(
-                    index=lambda x: x + " NH3"
-                )
+                industrial_demand.loc[(spatial.ammonia.locations, sectors_b), "ammonia"]
+                .groupby(level="node")
+                .sum()
+                .rename(index=lambda x: x + " NH3")
                 / nhours
             )
         else:
-            p_set = industrial_demand["ammonia"].sum() / nhours
+            p_set = industrial_demand.loc[sectors_b, "ammonia"].sum() / nhours
 
         n.madd(
             "Load",
@@ -3328,10 +3953,261 @@ def add_industry(n, costs):
         )
 
 
+def add_shipping(n, costs):
+    logger.info("Add shipping demand")
+
+    nodes = pop_layout.index
+
+    shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
+    shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
+    shipping_oil_share = get(options["shipping_oil_share"], investment_year)
+
+    total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
+    if total_share != 1:
+        logger.warning(
+            f"Total shipping shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
+        )
+
+    domestic_navigation = pop_weighted_energy_totals.loc[
+        nodes, "total domestic navigation"
+    ].squeeze()
+    international_navigation = (
+        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze() * nyears
+    )
+    all_navigation = domestic_navigation + international_navigation
+    p_set = all_navigation * 1e6 / nhours
+
+    if shipping_hydrogen_share:
+        oil_efficiency = options.get(
+            "shipping_oil_efficiency", options.get("shipping_average_efficiency", 0.4)
+        )
+        efficiency = oil_efficiency / options.get("shipping_lh2_efficiency", 0.44)
+        shipping_hydrogen_share = get(
+            options["shipping_hydrogen_share"], investment_year
+        )
+
+        if options["shipping_hydrogen_liquefaction"]:
+            n.madd(
+                "Bus",
+                nodes,
+                suffix=" H2 liquid",
+                carrier="H2 liquid",
+                location=nodes,
+                unit="MWh_LHV",
+            )
+
+            n.madd(
+                "Link",
+                nodes + " H2 liquefaction",
+                bus0=nodes + " H2",
+                bus1=nodes + " H2 liquid",
+                carrier="H2 liquefaction",
+                efficiency=costs.at["H2 liquefaction", "efficiency"],
+                capital_cost=costs.at["H2 liquefaction", "fixed"],
+                p_nom_extendable=True,
+                lifetime=costs.at["H2 liquefaction", "lifetime"],
+            )
+
+            shipping_bus = nodes + " H2 liquid"
+        else:
+            shipping_bus = nodes + " H2"
+
+        efficiency = options["shipping_oil_efficiency"] / options.get(
+            "shipping_lh2_efficiency", 0.44
+        )
+        p_set_hydrogen = shipping_hydrogen_share * p_set * efficiency
+
+        n.madd(
+            "Load",
+            nodes,
+            suffix=" H2 for shipping",
+            bus=shipping_bus,
+            carrier="H2 for shipping",
+            p_set=p_set_hydrogen,
+        )
+
+    if shipping_methanol_share:
+        add_carrier_buses(n, "methanol")
+
+        efficiency = (
+            options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
+        )
+        p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
+
+        n.madd(
+            "Load",
+            spatial.methanol.nodes,
+            suffix=" shipping methanol",
+            bus=spatial.methanol.nodes,
+            carrier="shipping methanol",
+            p_set=p_set_methanol,
+        )
+
+        # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+        co2 = p_set_methanol * costs.at["methanolisation", "carbondioxide-input"]
+
+        n.add(
+            "Load",
+            "shipping methanol emissions",
+            bus="co2 atmosphere",
+            carrier="shipping methanol emissions",
+            p_set=-co2,
+        )
+
+    if shipping_oil_share:
+        add_carrier_buses(n, "oil")
+
+        p_set_oil = shipping_oil_share * p_set.sum()
+
+        n.madd(
+            "Load",
+            spatial.oil.nodes,
+            suffix=" shipping oil",
+            bus=spatial.oil.nodes,
+            carrier="shipping oil",
+            p_set=p_set_oil,
+        )
+
+        co2 = p_set_oil * costs.at["oil", "CO2 intensity"]
+
+        n.add(
+            "Load",
+            "shipping oil emissions",
+            bus="co2 atmosphere",
+            carrier="shipping oil emissions",
+            p_set=-co2,
+        )
+
+
+def add_shipping_endogenous(n, costs):
+    fuels = options["shipping_endogenous"]["fuels"]
+
+    logger.info(f"Add shipping demand endogenously with options {fuels}")
+
+    nodes = pop_layout.index
+
+    domestic_navigation = pop_weighted_energy_totals.loc[
+        nodes, "total domestic navigation"
+    ].squeeze()
+    international_navigation = (
+        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze() * nyears
+    )
+    all_navigation = domestic_navigation + international_navigation
+
+    # determine demand in MW propulsion
+    oil_efficiency = options["shipping_oil_efficiency"]
+    p_set = oil_efficiency * all_navigation * 1e6 / nhours
+
+    n.madd(
+        "Bus",
+        nodes,
+        suffix=" shipping",
+        unit="MWh propulsion",
+        location=nodes,
+        carrier="shipping",
+    )
+
+    n.madd(
+        "Load",
+        nodes,
+        suffix=" shipping",
+        bus=nodes + " shipping",
+        carrier="shipping",
+        p_set=p_set,
+    )
+
+    if "oil" in fuels:
+        add_carrier_buses(n, "oil")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping oil",
+            carrier="shipping oil",
+            bus0=spatial.oil.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            efficiency=options["shipping_oil_efficiency"],
+            efficiency2=costs.at["oil", "CO2 intensity"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "methanol" in fuels:
+        add_carrier_buses(n, "methanol")
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping methanol",
+            carrier="shipping methanol",
+            bus0=spatial.methanol.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            efficiency=options["shipping_methanol_efficiency"],
+            efficiency2=costs.at["methanolisation", "carbondioxide-input"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "LH2" in fuels:
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LH2",
+            bus0=nodes + " H2",
+            bus1=nodes + " shipping",
+            carrier="shipping LH2",
+            efficiency=options["shipping_lh2_efficiency"]
+            * costs.at["H2 liquefaction", "efficiency"],
+            capital_cost=costs.at["H2 liquefaction", "fixed"],
+            lifetime=costs.at["H2 liquefaction", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "ammonia" in fuels:
+        if not options["ammonia"]:
+            logger.warning(
+                "Ammonia not represented as carrier. Skipping it as shipping fuel option."
+            )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping ammonia",
+            bus0=spatial.ammonia.nodes,
+            bus1=nodes + " shipping",
+            carrier="shipping ammonia",
+            efficiency=options["shipping_ammonia_efficiency"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+    if "LNG" in fuels:
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LNG",
+            bus0=spatial.gas.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            carrier="shipping LNG",
+            efficiency=options["shipping_lng_efficiency"],
+            efficiency2=costs.at["gas", "CO2 intensity"],
+            capital_cost=costs.at["CH4 liquefaction", "fixed"],
+            lifetime=costs.at["CH4 liquefaction", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+
+
 def add_waste_heat(n):
     # TODO options?
 
     logger.info("Add possibility to use industrial waste heat in district heating")
+
+    cf_industry = snakemake.params.industry
 
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
@@ -3529,6 +4405,463 @@ def remove_h2_network(n):
         n.stores.drop("EU H2 Store", inplace=True)
 
 
+def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
+    logger.info("Add import options: endogenous hvdc-to-elec")
+    cf = snakemake.config["sector"]["import"].get("endogenous_hvdc_import", {})
+    if not cf["enable"]:
+        return
+
+    regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
+
+    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu.sel(
+        importer="EUE"
+    )
+
+    p_nom_max = (
+        xr.open_dataset(snakemake.input.import_p_max_pu)
+        .p_nom_max.sel(importer="EUE")
+        .to_pandas()
+    )
+
+    def _coordinates(ct):
+        iso2 = ct.split("-")[0]
+        if iso2 in country_centroids.index:
+            return country_centroids.loc[iso2, ["longitude", "latitude"]].values
+        else:
+            query = cc.convert(iso2, to="name")
+            loc = geocode(dict(country=query), language="en")
+            return [loc.longitude, loc.latitude]
+
+    exporters = pd.DataFrame(
+        {ct: _coordinates(ct) for ct in cf["exporters"]}, index=["x", "y"]
+    ).T
+    geometry = gpd.points_from_xy(exporters.x, exporters.y)
+    exporters = gpd.GeoDataFrame(exporters, geometry=geometry, crs=4326)
+
+    import_links = {}
+    a = regions.representative_point().to_crs(DISTANCE_CRS)
+
+    # Prohibit routes through Russia or Belarus
+    forbidden_hvdc_importers = ["FI", "LV", "LT", "EE"]
+    a = a.loc[~a.index.str[:2].isin(forbidden_hvdc_importers)]
+
+    for ct in exporters.index:
+        b = exporters.to_crs(DISTANCE_CRS).loc[ct].geometry
+        d = a.distance(b)
+        import_links[ct] = (
+            d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna()
+        )  # km
+    import_links = pd.concat(import_links)
+    import_links.loc[
+        import_links.index.get_level_values(0).str.contains("KZ|CN")
+    ] *= 1.2  # proxy for detour through Caucasus
+
+    # xlinks
+    xlinks = {}
+    for bus0, links in cf["xlinks"].items():
+        for link in links:
+            landing_point = gpd.GeoSeries(
+                [Point(link["x"], link["y"])], crs=4326
+            ).to_crs(DISTANCE_CRS)
+            bus1 = (
+                regions.to_crs(DISTANCE_CRS)
+                .geometry.distance(landing_point[0])
+                .idxmin()
+            )
+            xlinks[(bus0, bus1)] = link["length"]
+
+    import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
+    import_links = import_links.drop_duplicates(keep="first")
+    duplicated = import_links.index.duplicated(keep="first")
+    import_links = import_links.loc[~duplicated]
+
+    hvdc_cost = (
+        import_links.values * cf["length_factor"] * costs.at["HVDC submarine", "fixed"]
+        + costs.at["HVDC inverter pair", "fixed"]
+    )
+
+    buses_i = exporters.index
+
+    n.madd("Bus", buses_i, **exporters.drop("geometry", axis=1))
+
+    efficiency = cf["efficiency_static"] * cf["efficiency_per_1000km"] ** (
+        import_links.values / 1e3
+    )
+
+    n.madd(
+        "Link",
+        ["import hvdc-to-elec " + " ".join(idx).strip() for idx in import_links.index],
+        bus0=import_links.index.get_level_values(0),
+        bus1=import_links.index.get_level_values(1),
+        carrier="import hvdc-to-elec",
+        p_min_pu=0,
+        p_nom_extendable=True,
+        length=import_links.values,
+        capital_cost=hvdc_cost * cost_factor,
+        efficiency=efficiency,
+        p_nom_max=cf["p_nom_max"],
+    )
+
+    for tech in ["solar-utility", "onwind"]:
+        p_max_pu_tech = p_max_pu.sel(technology=tech).to_pandas().dropna().T
+
+        exporters_tech_i = exporters.index.intersection(p_max_pu_tech.columns)
+
+        grid_connection = costs.at["electricity grid connection", "fixed"]
+
+        n.madd(
+            "Generator",
+            exporters_tech_i,
+            suffix=" " + tech,
+            bus=exporters_tech_i,
+            carrier=f"external {tech}",
+            p_nom_extendable=True,
+            capital_cost=(costs.at[tech, "fixed"] + grid_connection) * cost_factor,
+            lifetime=costs.at[tech, "lifetime"],
+            p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
+            p_nom_max=p_nom_max[tech].reindex(index=exporters_tech_i)
+            * cf["share_of_p_nom_max_available"],
+        )
+
+    # hydrogen storage
+
+    h2_buses_i = n.madd(
+        "Bus", buses_i, suffix=" H2", carrier="external H2", location=buses_i
+    )
+
+    n.madd(
+        "Store",
+        h2_buses_i,
+        bus=h2_buses_i,
+        carrier="external H2",
+        e_nom_extendable=True,
+        e_cyclic=True,
+        capital_cost=costs.at[
+            "hydrogen storage tank type 1 including compressor", "fixed"
+        ]
+        * cost_factor,
+    )
+
+    n.madd(
+        "Link",
+        h2_buses_i + " Electrolysis",
+        bus0=buses_i,
+        bus1=h2_buses_i,
+        carrier="external H2 Electrolysis",
+        p_nom_extendable=True,
+        efficiency=costs.at["electrolysis", "efficiency"],
+        capital_cost=costs.at["electrolysis", "fixed"] * cost_factor,
+        lifetime=costs.at["electrolysis", "lifetime"],
+    )
+
+    n.madd(
+        "Link",
+        h2_buses_i + " H2 Turbine",
+        bus0=h2_buses_i,
+        bus1=buses_i,
+        carrier="external H2 Turbine",
+        p_nom_extendable=True,
+        efficiency=costs.at["OCGT", "efficiency"],
+        capital_cost=costs.at["OCGT", "fixed"]
+        * costs.at["OCGT", "efficiency"]
+        * cost_factor,
+        lifetime=costs.at["OCGT", "lifetime"],
+    )
+
+    # battery storage
+
+    b_buses_i = n.madd(
+        "Bus", buses_i, suffix=" battery", carrier="external battery", location=buses_i
+    )
+
+    n.madd(
+        "Store",
+        b_buses_i,
+        bus=b_buses_i,
+        carrier="external battery",
+        e_cyclic=True,
+        e_nom_extendable=True,
+        capital_cost=costs.at["battery storage", "fixed"] * cost_factor,
+        lifetime=costs.at["battery storage", "lifetime"],
+    )
+
+    n.madd(
+        "Link",
+        b_buses_i + " charger",
+        bus0=buses_i,
+        bus1=b_buses_i,
+        carrier="external battery charger",
+        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+        capital_cost=costs.at["battery inverter", "fixed"] * cost_factor,
+        p_nom_extendable=True,
+        lifetime=costs.at["battery inverter", "lifetime"],
+    )
+
+    n.madd(
+        "Link",
+        b_buses_i + " discharger",
+        bus0=b_buses_i,
+        bus1=buses_i,
+        carrier="external battery discharger",
+        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+        p_nom_extendable=True,
+        lifetime=costs.at["battery inverter", "lifetime"],
+    )
+
+    # add extra HVDC connections between MENA countries
+
+    for bus0_bus1 in cf.get("extra_connections", []):
+        bus0, bus1 = bus0_bus1.split("-")
+
+        a = exporters.to_crs(DISTANCE_CRS).at[bus0, "geometry"]
+        b = exporters.to_crs(DISTANCE_CRS).at[bus1, "geometry"]
+        d = a.distance(b) / 1e3  # km
+
+        capital_cost = (
+            d * cf["length_factor"] * costs.at["HVDC overhead", "fixed"]
+            + costs.at["HVDC inverter pair", "fixed"]
+        )
+
+        n.add(
+            "Link",
+            f"external HVDC {bus0_bus1}",
+            bus0=bus0,
+            bus1=bus1,
+            carrier="external HVDC",
+            p_min_pu=-1,
+            p_nom_extendable=True,
+            capital_cost=capital_cost * cost_factor,
+            length=d,
+        )
+
+
+def add_import_options(
+    n,
+    capacity_boost=3.0,
+    import_options=[
+        "hvdc-to-elec",
+        "pipeline-h2",
+        "shipping-lh2",
+        "shipping-lch4",
+        "shipping-meoh",
+        "shipping-ftfuel",
+        "shipping-lnh3",
+        "shipping-hbi",
+        "shipping-steel",
+    ],
+    endogenous_hvdc=False,
+):
+    if not isinstance(import_options[0], dict):
+        import_options = {k: 1.0 for k in import_options}
+    else:
+        import_options = {k: v for d in import_options for k, v in d.items()}
+    if not options["gas_network"]:
+        logger.warning(
+            "Gas network is not resolved but recommended for import options."
+        )
+
+    logger.info("Add import options: " + " ".join(import_options.keys()))
+    fn = snakemake.input.gas_input_nodes_simplified
+    import_nodes = pd.read_csv(fn, index_col=0)
+    import_nodes["hvdc-to-elec"] = 15000
+
+    import_config = snakemake.config["sector"]["import"]
+
+    ports = pd.read_csv(snakemake.input.import_ports, index_col=0)
+
+    translate = {
+        "pipeline-h2": "pipeline",
+        "hvdc-to-elec": "hvdc-to-elec",
+        "shipping-lh2": "lng",
+        "shipping-lch4": "lng",
+        "shipping-lnh3": "lng",
+    }
+
+    bus_suffix = {
+        "pipeline-h2": " H2",
+        "hvdc-to-elec": "",
+        "shipping-lh2": " H2",
+        "shipping-lch4": " gas",
+        "shipping-lnh3": " NH3",
+        "shipping-ftfuel": " oil",
+        "shipping-meoh": " methanol",
+        "shipping-steel": " steel",
+        "shipping-hbi": " HBI",
+    }
+
+    co2_intensity = {
+        "shipping-lch4": ("gas", "CO2 intensity"),
+        "shipping-ftfuel": ("oil", "CO2 intensity"),
+        "shipping-meoh": ("methanolisation", "carbondioxide-input"),
+    }
+
+    import_costs = pd.read_csv(
+        snakemake.input.import_costs, delimiter=";", keep_default_na=False
+    )
+
+    # temporary bugfix for Namibia
+    import_costs["exporter"] = import_costs.exporter.replace("", "NA")
+
+    cols = ["esc", "exporter", "importer", "value"]
+    fields = ["Cost per MWh delivered", "Cost per t delivered"]
+    import_costs = import_costs.query("subcategory in @fields")[cols]
+    import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
+
+    for k, v in translate.items():
+        import_nodes[k] = import_nodes[v]
+        ports[k] = ports.get(v)
+
+    if endogenous_hvdc and "hvdc-to-elec" in import_options:
+        add_endogenous_hvdc_import_options(n, import_options.pop("hvdc-to-elec"))
+
+    regionalised_options = {
+        "hvdc-to-elec",
+        "pipeline-h2",
+        "shipping-lh2",
+        "shipping-lch4",
+    }
+
+    for tech in set(import_options).intersection(regionalised_options):
+        import_costs_tech = (
+            import_costs.query("esc == @tech").groupby("importer").marginal_cost.min()
+        ) * import_options[tech]
+
+        sel = ~import_nodes[tech].isna()
+        if tech == "pipeline-h2":
+            entrypoints_internal = ["DE", "BE", "FR", "GB"]
+            entrypoints_via_RU_BY = ["EE", "LT", "LV", "FI"]  # maybe PL Yamal
+            forbidden_pipelines = entrypoints_internal + entrypoints_via_RU_BY
+            sel &= ~import_nodes.index.str[:2].isin(forbidden_pipelines)
+        import_nodes_tech = import_nodes.loc[sel, [tech]]
+
+        import_nodes_tech = import_nodes_tech.rename(columns={tech: "p_nom"})
+
+        marginal_costs = ports[tech].dropna().map(import_costs_tech)
+        import_nodes_tech["marginal_cost"] = marginal_costs
+
+        import_nodes_tech.dropna(inplace=True)
+
+        upper_p_nom_max = import_config["p_nom_max"].get(tech, np.inf)
+
+        suffix = bus_suffix[tech]
+
+        if tech in co2_intensity.keys():
+            buses = import_nodes_tech.index + f"{suffix} import {tech}"
+            capital_cost = 7018.0 if tech == "shipping-lch4" else 0.0  # €/MW/a
+
+            n.madd("Bus", buses + " bus", carrier=f"import {tech}")
+            # TODO:
+            n.madd(
+                "Store",
+                buses + " store",
+                bus=buses + " bus",
+                e_nom_extendable=True,
+                e_nom_min=-np.inf,
+                e_nom_max=0,
+                e_min_pu=1,
+                e_max_pu=0,
+            )
+
+            n.madd(
+                "Link",
+                buses,
+                bus0=buses + " bus",
+                bus1=import_nodes_tech.index + suffix,
+                bus2="co2 atmosphere",
+                carrier=f"import {tech}",
+                efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
+                marginal_cost=import_nodes_tech.marginal_cost.values,
+                p_nom_extendable=True,
+                capital_cost=capital_cost,
+                p_nom_min=import_nodes_tech.p_nom.clip(upper=upper_p_nom_max).values,
+                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
+                .clip(upper=upper_p_nom_max)
+                .values,
+            )
+
+        else:
+            location = import_nodes_tech.index
+            buses = location if tech == "hvdc-to-elec" else location + suffix
+
+            capital_cost = (
+                1.2 * 7018.0 if tech == "shipping-lh2" else 0.0
+            )  # €/MW/a, +20% compared to LNG
+
+            n.madd(
+                "Generator",
+                import_nodes_tech.index + f"{suffix} import {tech}",
+                bus=buses,
+                carrier=f"import {tech}",
+                marginal_cost=import_nodes_tech.marginal_cost.values,
+                p_nom_extendable=True,
+                capital_cost=capital_cost,
+                p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
+                .clip(upper=upper_p_nom_max)
+                .values,
+            )
+
+    # need special handling for copperplated imports
+    copperplated_carbonaceous_options = {
+        "shipping-ftfuel",
+        "shipping-meoh",
+    }
+
+    for tech in set(import_options).intersection(copperplated_carbonaceous_options):
+        marginal_costs = (
+            import_costs.query("esc == @tech").marginal_cost.min()
+            * import_options[tech]
+        )
+
+        suffix = bus_suffix[tech]
+
+        n.add("Bus", f"EU import {tech} bus", carrier=f"import {tech}")
+
+        n.add(
+            "Store",
+            f"EU import {tech} store",
+            bus=f"EU import {tech} bus",
+            e_nom_extendable=True,
+            e_nom_min=-np.inf,
+            e_nom_max=0,
+            e_min_pu=1,
+            e_max_pu=0,
+        )
+
+        n.add(
+            "Link",
+            f"EU import {tech}",
+            bus0=f"EU import {tech} bus",
+            bus1="EU" + suffix,
+            bus2="co2 atmosphere",
+            carrier=f"import {tech}",
+            efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
+            marginal_cost=marginal_costs,
+            p_nom=1e7,
+        )
+
+    copperplated_carbonfree_options = {
+        "shipping-steel",
+        "shipping-hbi",
+        "shipping-lnh3",
+    }
+    # TODO: differentiate between steel and DRI
+    for tech in set(import_options).intersection(copperplated_carbonfree_options):
+        suffix = bus_suffix[tech]
+
+        marginal_costs = (
+            import_costs.query("esc == @tech").marginal_cost.min()
+            * import_options[tech]
+        )
+        n.add(
+            "Generator",
+            f"EU import {tech}",
+            bus="EU" + suffix,
+            carrier=f"import {tech}",
+            marginal_cost=marginal_costs,
+            p_nom=1e7,
+        )
+
+
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -3597,7 +4930,11 @@ def cluster_heat_buses(n):
 
     for c in n.iterate_components(components):
         df = c.df
-        cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
+        cols = df.columns[
+            df.columns.str.contains("bus")
+            | (df.columns == "carrier")
+            | (df.columns == "nice_name")
+        ]
 
         # rename columns and index
         df[cols] = df[cols].apply(
@@ -3682,10 +5019,12 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         return m
 
 
-def lossy_bidirectional_links(n, carrier, efficiencies={}):
+def lossy_bidirectional_links(n, carrier, efficiencies={}, subset=None):
     "Split bidirectional links into two unidirectional links to include transmission losses."
 
-    carrier_i = n.links.query("carrier == @carrier").index
+    if subset is None:
+        subset = n.links.index
+    carrier_i = n.links.query("carrier == @carrier").index.intersection(subset)
 
     if (
         not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
@@ -3981,6 +5320,8 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
+    country_centroids = pd.read_csv(snakemake.input.country_centroids, index_col="ISO")
+
     patch_electricity_network(n)
 
     spatial = define_spatial(pop_layout.index, options)
@@ -4015,6 +5356,12 @@ if __name__ == "__main__":
     if options["industry"]:
         add_industry(n, costs)
 
+    if options["shipping"] and not options["shipping_endogenous"]["enable"]:
+        add_shipping(n, costs)
+
+    if options["shipping_endogenous"]["enable"]:
+        add_shipping_endogenous(n, costs)
+
     if options["heating"]:
         add_waste_heat(n)
 
@@ -4033,8 +5380,39 @@ if __name__ == "__main__":
     if options["co2network"]:
         add_co2_network(n, costs)
 
-    if options["allam_cycle"]:
-        add_allam(n, costs)
+    translate = dict(
+        H2=["pipeline-h2", "shipping-lh2"],
+        AC=["hvdc-to-elec"],
+        CH4=["shipping-lch4"],
+        NH3=["shipping-lnh3"],
+        FT=["shipping-ftfuel"],
+        MeOH=["shipping-meoh"],
+        St=["shipping-steel"],
+        hbi=["shipping-hbi"],
+    )
+
+    if options["imp"]:
+        carriers = options["import"]["options"]
+        add_import_options(
+            n,
+            capacity_boost=options["import"]["capacity_boost"],
+            import_options=carriers,
+            endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"],
+        )
+
+    if options["allam_cycle_gas"]:
+        add_allam_cycle_gas(n, costs)
+
+    add_methanol_to_power(n, costs, types=options["methanol_to_power"])
+
+    if options["methanol_to_kerosene"]:
+        add_methanol_to_kerosene(n, costs)
+
+    if options["methanol_reforming"]:
+        add_methanol_reforming(n, costs)
+
+    if options["methanol_reforming_cc"]:
+        add_methanol_reforming_cc(n, costs)
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

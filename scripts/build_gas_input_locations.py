@@ -13,6 +13,7 @@ import logging
 import geopandas as gpd
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
+from build_bus_regions import voronoi_partition_pts
 from cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
@@ -127,6 +128,26 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     return pd.concat([prod[sel], entry[sel], lng[sel], sto[sel]], ignore_index=True)
 
 
+def assign_reference_import_sites(gas_input_locations, import_sites, europe_shape):
+    europe_shape = europe_shape.squeeze().geometry.buffer(1)  # 1 latlon degree
+
+    for kind in ["lng", "pipeline"]:
+        locs = import_sites.query("type == @kind")
+
+        partition = voronoi_partition_pts(locs[["x", "y"]].values, europe_shape)
+        partition = gpd.GeoDataFrame(dict(name=locs.index, geometry=partition))
+        partition = partition.set_crs(4326).set_index("name")
+
+        match = gpd.sjoin(
+            gas_input_locations.query("type == @kind"), partition, how="left"
+        )
+        gas_input_locations.loc[gas_input_locations["type"] == kind, "port"] = match[
+            "index_right"
+        ]
+
+    return gas_input_locations
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -144,6 +165,9 @@ if __name__ == "__main__":
     regions = load_bus_regions(
         snakemake.input.regions_onshore, snakemake.input.regions_offshore
     )
+
+    europe_shape = gpd.read_file(snakemake.input.europe_shape)
+    import_sites = pd.read_csv(snakemake.input.reference_import_sites, index_col=0)
 
     # add a buffer to eastern countries because some
     # entry points are still in Russian or Ukrainian territory.
@@ -163,6 +187,10 @@ if __name__ == "__main__":
         countries,
     )
 
+    gas_input_locations = assign_reference_import_sites(
+        gas_input_locations, import_sites, europe_shape
+    )
+
     gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how="left")
 
     gas_input_nodes.rename(columns={"name": "bus"}, inplace=True)
@@ -179,3 +207,13 @@ if __name__ == "__main__":
     gas_input_nodes_s.columns.name = "capacity"
 
     gas_input_nodes_s.to_csv(snakemake.output.gas_input_nodes_simplified)
+
+    ports = (
+        gas_input_nodes.groupby(["bus", "type"])["port"]
+        .first()
+        .unstack()
+        .drop("production", axis=1)
+    )
+    ports.columns.name = "port"
+
+    ports.to_csv(snakemake.output.ports)

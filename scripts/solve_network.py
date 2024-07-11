@@ -944,6 +944,32 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_energy_import_limit(n, sns):
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+
+    limit = n.config["sector"].get("import", {}).get("limit", False)
+    limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
+
+    if (import_gens.empty and import_links.empty) or not limit:
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    p_gens = n.model["Generator-p"].loc[sns, import_gens]
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    # using energy content of iron as proxy: 2.1 MWh/t
+    energy_weightings = np.where(import_gens.str.contains("steel"), 2.1, 1.0)
+    energy_weightings = pd.Series(energy_weightings, index=import_gens)
+
+    lhs = (p_gens * weightings * energy_weightings).sum() + (p_links * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")  #
+
+
 def add_flexible_egs_constraint(n):
     """
     Upper bounds the charging capacity of the geothermal reservoir according to
@@ -1021,6 +1047,8 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    if config["sector"]["import"]["limit"]:
+        add_energy_import_limit(n, snapshots)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -1092,11 +1120,17 @@ def solve_network(n, config, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
+
+    if status == "warning":
+        raise RuntimeError(
+            "Solving status 'warning'. Results may not be reliable. Aborting."
+        )
 
     return n
 
@@ -1107,13 +1141,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            configfiles="./config/config.default.yaml",
             simpl="",
-            opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            opts="s",
+            clusters="20",
+            ll="",
+            sector_opts="",
+            planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1123,16 +1157,18 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    n = pypsa.Network(snakemake.input.network)
+    fn = getattr(snakemake.log, "memory", None)
+    with memory_logger(filename=fn, interval=10.0) as mem:
+        n = pypsa.Network(snakemake.input.network)
 
-    n = prepare_network(
-        n,
-        solve_opts,
-        config=snakemake.config,
-        foresight=snakemake.params.foresight,
-        planning_horizons=snakemake.params.planning_horizons,
-        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-    )
+        n = prepare_network(
+            n,
+            solve_opts,
+            config=snakemake.config,
+            foresight=snakemake.params.foresight,
+            planning_horizons=snakemake.params.planning_horizons,
+            co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
+        )
 
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=30.0

@@ -49,7 +49,8 @@ shipping_oil_share,--,Dictionary with planning horizons as keys.,The share of sh
 shipping_methanol _efficiency,--,float,The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_
 ,,,
 shipping_oil_efficiency,--,float,The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011
-aviation_demand_factor,--,float,The proportion of demand for aviation compared to today's consumption
+aviation_demand_factor,--,Dictionary with planning horizons as keys,The proportion of demand for aviation in a given year compared to today's consumption
+land_transport_demand_factor,--,Dictionary with planning horizons as keys,The proportion of demand for land transport in a given year compared to today's consumption
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
 ,,,
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
@@ -81,7 +82,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
-allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
+allam_cycle_gas,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)

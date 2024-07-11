@@ -47,6 +47,11 @@ def rename_techs(label):
         # "H2 Fuel Cell": "hydrogen storage",
         # "H2 pipeline": "hydrogen storage",
         "battery": "battery storage",
+        "external H2": "external H2",
+        "external battery": "external battery",
+        "external offwind": "external offwind",
+        "external onwind": "external onwind",
+        "external solar": "external solar",
         "H2 for industry": "H2 for industry",
         "land transport fuel cell": "land transport fuel cell",
         "land transport oil": "land transport oil",
@@ -282,13 +287,19 @@ def plot_balances():
         df = df / 1e6
 
         # remove trailing link ports
+        forbidden = [
+            "co2",
+            "import shipping-lh2",
+            "import shipping-lnh3",
+            "import pipeline-h2",
+            "import shipping-lch4",
+            "NH3",
+            "H2",
+        ]
         df.index = [
             (
                 i[:-1]
-                if (
-                    (i not in ["co2", "NH3", "H2"])
-                    and (i[-1:] in ["0", "1", "2", "3", "4"])
-                )
+                if ((i not in forbidden) and (i[-1:] in ["0", "1", "2", "3", "4"]))
                 else i
             )
             for i in df.index
