@@ -10,7 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
+* Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
+  The default value for the link efficiency scaling factor was changed from 100% to 25%.
+  It can be set to other values in the configuration ``sector: use_waste_heat:``.
 
 * In simplifying polygons in :mod:`build_shapes` default to no tolerance.
 
