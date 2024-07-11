@@ -55,15 +55,15 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_statistics_single",
-            run="240219-test/normal",
+            run="CurrentPolicies",
             simpl="",
-            ll="v1.2",
+            ll="vopt",
             clusters="22",
             opts="",
             sector_opts="none",
             planning_horizons="2020",
             country="DE",
-            carrier="heat",
+            carrier="H2",
         )
     configure_logging(snakemake)
 
@@ -78,7 +78,17 @@ if __name__ == "__main__":
         fig, ax = plt.subplots()
         ds = read_csv(snakemake.input[output])
         if ds.empty:
-            fig.savefig(snakemake.output[output])
+            ax.text(
+                0.5,
+                0.5,
+                "No data available.",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+                fontsize=18,
+                color="red",
+            )
+            fig.savefig(snakemake.output[output], bbox_inches="tight")
             continue
         plot_static_single(ds, ax)
         fig.savefig(snakemake.output[output], bbox_inches="tight")

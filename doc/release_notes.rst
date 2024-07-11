@@ -11,21 +11,163 @@ Upcoming Release
 ================
 
 * Add H2_retrofit_plants to enable the retrofit of existing OCGT, CCGT and CHP plants to hydrogen for plants built from a certain year on.
-.. Upcoming Release
-.. ================
 
-* Add config ``run: shared_resources: exclude:`` to specify additional files
-  that should be excluded from shared resources with the setting ``run:
-  shared_resources: base``. The function ``_helpers/get_run_path()`` now takes
-  an additional keyword argument ``exclude_from_shared`` with a list of files
-  that should not be shared. This keyword argument accepts a list of strings
-  where the string only needs to match the start of a filename (e.g.
-  ``"transport_data"`` would exclude both ``transport_data.csv`` and
-  ``transport_data_{simpl}_{clusters}.csv`` from being shared across scenarios.
+* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
 
-* Move switch ``run: shared_resources:`` to ``run: shared_resources: policy:``.
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage. (
 
-* Add config land_transport_demand_factor to model growth in land transport demand for different time horizons.
+* Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
+
+* Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
+
+* Reverted outdated hotfix for doubled renewable capacity in myopic optimization.
+
+* Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
+
+
+PyPSA-Eur 0.11.0 (25th May 2024)
+=====================================
+
+**New Features**
+
+* Introduced scenario management to support the simultaneous execution of
+  multiple scenarios with a single ``snakemake`` call. A ``scenarios.yaml`` file
+  allows customizable scenario names with configuration overrides. To enable,
+  set ``run: scenarios: true`` and define the list of scenario names under
+  ``run: name:`` in the configuration file. The scenario file's top-level keys
+  must match the defined scenario names.
+  (https://github.com/PyPSA/pypsa-eur/pull/724,
+  https://github.com/PyPSA/pypsa-eur/pull/975,
+  https://github.com/PyPSA/pypsa-eur/pull/989,
+  https://github.com/PyPSA/pypsa-eur/pull/993,
+  https://github.com/PyPSA/pypsa-eur/pull/1011)
+
+  - A scenarios template file ``config/scenarios.template.yaml`` is included and
+    copied to ``config/scenarios.yaml`` on first use.
+  - The scenario file can be changed via ``run: scenarios: file:``.
+  - Activating scenario management with ``run: scenarios: enable: true``
+    introduces a new wildcard ``{run}``. Configuration settings may now depend
+    on this wildcard. A new ``config_provider()`` function is used in the
+    ``Snakefile`` and ``.smk`` files to handle wildcard values.
+  - Scenario files can be programmatically created using
+    ``config/create_scenarios.py``. This script can be run with ``snakemake -j1
+    create_scenarios``.
+  - The setting ``run: name: all`` will run all scenarios in
+    ``config/scenarios.yaml``. Otherwise, only the scenarios listed under ``run:
+    name:`` will run.
+  - The setting ``run: shared_resources:`` indicates whether resources should be
+    encapsulated by ``run: name:``. The special setting ``run: shared_resources:
+    base`` shares resources until ``add_electricity`` that do not contain
+    wildcards other than ``{"technology", "year", "scope"}``.
+  - Added new configuration options for all ``{opts}`` and ``{sector_opts}``
+    wildcard values to create a unique configuration file (``config.yaml``) per
+    PyPSA network file using ``update_config_from_wildcards()``. This function
+    updates the ``snakemake.config`` object with settings from wildcards.
+  - The cost data was moved from ``data/costs_{year}.csv`` to
+    ``resources/costs_{year}.csv``. The ``retrieve_cost_data`` rule now calls a
+    Python script.
+  - Time clustering settings moved to ``clustering: temporal:`` from
+    ``snapshots:``, simplifying scenario management.
+  - Collection rules have a new wildcard ``run=config["run"]["name"]`` to
+    collect outputs across scenarios.
+  - Scenarios can be encapsulated in a directory using ``run: prefix:``.
+  - The ``{sector_opts}`` wildcard is no longer used by default. All scenario
+    definitions are now in ``config.yaml``.
+  - **Warning:** Scenario management with myopic or perfect foresight pathway
+    optimization requires the first investment period to be shared across all
+    scenarios. The ``wildcard_constraints`` for the ``add_existing_baseyear``
+    rule do not accept wildcard-aware input functions.
+
+* Enhanced support for choosing different weather years.
+  (https://github.com/PyPSA/pypsa-eur/pull/204)
+
+  - Processed energy statistics from Eurostat (1990-2021) and IDEES (2000-2015)
+    are stored for all available years and filtered by the year in ``energy:
+    energy_totals_year:``.
+  - Added option to supplement electricity load data with synthetic time series
+    for years not in OPSD (from https://zenodo.org/records/10820928, ``load:
+    supplement_synthetic:``).
+  - Total annual heat demand for years not in Eurostat (1990-2021) or IDEES
+    (2000-2015) is scaled based on a regression between heating degree days and
+    heat demand for 2007-2021, assuming a similar building stock.
+  - Added option to scale annual hydro-electricity generation data for years not
+    in EIA (1980-2021) based on a regression between annual generation and total
+    runoff per country for 1980-2021 (``renewable: hydro:
+    eia_approximate_missing:``).
+  - Added option to normalize annual hydro generation data by the installed
+    capacity reported by EIA (1980-2021) to eliminate changes due to newly built
+    capacity (``renewable: hydro: eia_approximate_missing:
+    eia_correct_by_capacity:``).
+  - Added option to make hydro generation data independent of weather year
+    (``renewable: hydro: eia_approximate_missing: eia_norm_year:``).
+  - Added option to drop leap days (``enable: drop_leap_day:``).
+  - Added option to make electric load data independent of weather year (``load:
+    fixed_year:``).
+  - Include time series of Swiss passenger vehicles from the Swiss Federal
+    Statistical Office.
+  - Updated hydro-electricity generation and capacity data from EIA.
+  - The easiest way to use multiple weather years is with the new scenario
+    management. An example `create_scenarios.py` script is available in this
+    `Github gist
+    <https://gist.github.com/fneum/47b857862dd9148a22eca5a2e85caa9a>`__.
+
+* New renewable technologies:
+
+  - Solar PV with single-axis horizontal tracking (N-S axis), carrier:
+    ``solar-hsat``. (https://github.com/PyPSA/pypsa-eur/pull/1066)
+  - Floating offshore wind technology for water depths below 60m, carrier:
+    ``offwind-float``. (https://github.com/PyPSA/pypsa-eur/pull/773)
+
+* Added default values for power distribution losses, assuming uniform 3% losses
+  on distribution grid links. These are deducted from national load time series
+  to avoid double counting. Extensions for country-specific loss factors and
+  planning horizon developments are planned.
+
+* Added ``industry: HVC_environment_sequestration_fraction:`` to specify the
+  fraction of carbon in plastics that is permanently sequestered in landfills.
+  The default assumption is that all carbon in plastics is eventually released
+  to the atmosphere. (https://github.com/PyPSA/pypsa-eur/pull/1060)
+
+* Added options for building waste-to-energy plants with and without carbon
+  capture to consume non-recycled and non-sequestered plastics. Config settings:
+  ``industry: waste_to_energy:`` and ``industry: waste_to_energy_cc``. This
+  excludes municipal solid waste. (https://github.com/PyPSA/pypsa-eur/pull/1060)
+
+* Added option to post-discretize line and link capacities based on unit sizes
+  and rounding thresholds in the configuration under ``solving: options:
+  post_discretization:``. This is disabled by default.
+  (https://github.com/PyPSA/pypsa-eur/pull/1064)
+
+* Time aggregation for sector-coupled networks is now its own rule
+  :mod:`time_aggregation`. Time aggregation is constant over planning horizons
+  of the same network when using time step segmentation.
+  (https://github.com/PyPSA/pypsa-eur/pull/1065,
+  https://github.com/PyPSA/pypsa-eur/pull/1075)
+
+* Added config ``run: shared_resources: exclude:`` to specify files excluded
+  from shared resources with ``run: shared_resources: base``. The function
+  ``_helpers/get_run_path()`` now takes an additional keyword argument
+  ``exclude_from_shared`` with a list of files that should not be shared.
+  (https://github.com/PyPSA/pypsa-eur/pull/1050)
+
+* Added existing biomass boilers in :mod:`add_existing_baseyear`.
+  (https://github.com/PyPSA/pypsa-eur/pull/951)
+
+* Added new HVDC transmission projects from `TYNDP 2024 draft projects
+  <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`__.
+  (https://github.com/PyPSA/pypsa-eur/pull/982)
+
+* Linearly interpolated missing investment periods in year-dependent
+  configuration options. (https://github.com/PyPSA/pypsa-eur/pull/943)
+
+* Added shapes to the ``netCDF`` files for different stages of the network
+  object in `base_network`, `simplify_network`, and `cluster_network`. The
+  `build_bus_regions` rule is now integrated into the `base_network` rule.
+  (https://github.com/PyPSA/pypsa-eur/pull/1013,
+  https://github.com/PyPSA/pypsa-eur/pull/1051)
+
+* Added config ``land_transport_demand_factor`` to model growth in land
+  transport demand for different time horizons.
 
 * Allow dictionary for the config aviation_demand_factor.
 
