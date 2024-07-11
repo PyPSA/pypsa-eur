@@ -7,9 +7,13 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
+=======
+Upcoming Release
+================
+
 * New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
+
+* Allow for more conservative waste heat usage assumptions in district heating using a scaling factor for respective link efficiencies
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage. (
 
