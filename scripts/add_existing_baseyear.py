@@ -915,7 +915,7 @@ def add_h2_retro(n, baseyear, params):
             index=lambda x: x.replace(original_carrier, new_carrier),
             inplace=True,
         )
-        df.loc[:, "capital_cost"] = params.retrofit_cost
+        df.loc[:, "capital_cost"] += params.retrofit_cost
         df.loc[:, "efficiency"] = params.retrofit_efficiency
         # Set p_nom_max to gas plant p_nom and existing capacity to zero
         df.loc[:, "p_nom"] = 0
