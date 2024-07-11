@@ -882,7 +882,9 @@ def add_h2_retro(n, baseyear, params):
         # Query to filter the DataFrame
         plant_i = n.links.query(f"carrier == '{original_carrier}'")
         # Further filtering based on build_year excluding the current planning horizon
-        plant_i = plant_i.loc[(plant_i.build_year >= start) & (plant_i.build_year != baseyear)].index
+        plant_i = plant_i.loc[
+            (plant_i.build_year >= start) & (plant_i.build_year != baseyear)
+        ].index
         # Set plants to extendable for constraint in solve_network()
         n.links.loc[plant_i, "p_nom_extendable"] = True
 
