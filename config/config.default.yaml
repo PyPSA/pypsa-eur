@@ -571,12 +571,13 @@ sector:
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
-  use_fischer_tropsch_waste_heat: true
-  use_haber_bosch_waste_heat: true
-  use_methanolisation_waste_heat: true
-  use_methanation_waste_heat: true
-  use_fuel_cell_waste_heat: true
-  use_electrolysis_waste_heat: true
+  use_waste_heat:
+    fischer_tropsch: 0.25
+    haber_bosch: 0.25
+    methanolisation: 0.25
+    methanation: 0.25
+    fuel_cell: 0.25
+    electrolysis: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
