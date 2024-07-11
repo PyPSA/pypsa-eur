@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
+  The default value for the link efficiency scaling factor was changed from 100% to 25%.
+  It can be set to other values in the configuration ``sector: use_waste_heat:``.
+
 * In simplifying polygons in :mod:`build_shapes` default to no tolerance.
 
 * Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
