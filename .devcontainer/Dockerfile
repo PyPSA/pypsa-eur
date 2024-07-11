@@ -12,4 +12,4 @@ RUN echo "source activate pypsa-eur" > ~/.bashrc
 ENV PATH /opt/conda/envs/pypsa-eur/bin:$PATH
 
 # ENTRYPOINT [ "snakemake","--cores","1","solve_networks" ]
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+# ENTRYPOINT ["tail", "-f", "/dev/null"]
