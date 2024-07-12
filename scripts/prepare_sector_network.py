@@ -2348,7 +2348,7 @@ def add_biomass(n, costs):
         carrier="unsustainable solid biomass",
         p_nom=unsustainable_solid_biomass_potentials_spatial / 8760,
         capital_cost=0,
-        marginal_cost=costs.at["solid biomass", "fuel"],
+        marginal_cost=14, # mean of MINBIOWOO costs in ENS_BAU 2030
         efficiency=1,
         p_nom_extendable=False,
     )
