@@ -671,7 +671,7 @@ def _set_links_underwater_fraction(n, offshore_shapes):
     if not hasattr(n.links, "geometry"):
         n.links["underwater_fraction"] = 0.0
     else:
-        offshore_shape = gpd.read_file(offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(offshore_shapes).union_all()
         links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
         n.links["underwater_fraction"] = (
             links.intersection(offshore_shape).length / links.length
@@ -874,7 +874,8 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
                         onshore_locs.values, onshore_shape
                     ),
                     "country": country,
-                }
+                },
+                crs=n.crs,
             )
         )
 
@@ -889,12 +890,14 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
                 "y": offshore_locs["y"],
                 "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape),
                 "country": country,
-            }
+            },
+            crs=n.crs,
         )
-        offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
+        sel = offshore_regions_c.to_crs(3035).area > 10  # m2
+        offshore_regions_c = offshore_regions_c.loc[sel]
         offshore_regions.append(offshore_regions_c)
 
-    shapes = pd.concat(onshore_regions, ignore_index=True)
+    shapes = pd.concat(onshore_regions, ignore_index=True).set_crs(n.crs)
 
     return onshore_regions, offshore_regions, shapes, offshore_shapes
 

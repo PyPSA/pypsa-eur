@@ -28,7 +28,8 @@ if __name__ == "__main__":
 
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     url_eurostat = (
-        "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip"
+        # "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip" # link down
+        "https://tubcloud.tu-berlin.de/s/prkJpL7B9M3cDPb/download/Balances-April2023.zip"
     )
     tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_2023.zip")
     to_fn = Path(f"{rootpath}/data/eurostat/Balances-April2023/")

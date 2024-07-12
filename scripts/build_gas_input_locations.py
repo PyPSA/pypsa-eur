@@ -7,6 +7,7 @@ Build import locations for fossil gas from entry-points, LNG terminals and
 production sites with data from SciGRID_gas and Global Energy Monitor.
 """
 
+import json
 import logging
 
 import geopandas as gpd
@@ -19,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 def read_scigrid_gas(fn):
     df = gpd.read_file(fn)
-    df = pd.concat([df, df.param.apply(pd.Series)], axis=1)
+    expanded_param = df.param.apply(json.loads).apply(pd.Series)
+    df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
     return df
 
@@ -97,11 +99,11 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
         ~(entry.from_country.isin(countries) & entry.to_country.isin(countries))
         & ~entry.name.str.contains("Tegelen")  # only take non-EU entries
         | (entry.from_country == "NO")  # malformed datapoint  # entries from NO to GB
-    ]
+    ].copy()
 
     sto = read_scigrid_gas(sto_fn)
     remove_country = ["RU", "UA", "TR", "BY"]  # noqa: F841
-    sto = sto.query("country_code not in @remove_country")
+    sto = sto.query("country_code not in @remove_country").copy()
 
     # production sites inside the model scope
     prod = build_gem_prod_data(gem_fn)
@@ -132,7 +134,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_gas_input_locations",
             simpl="",
-            clusters="128",
+            clusters="5",
+            configfiles="config/test/config.overnight.yaml",
         )
 
     configure_logging(snakemake)
@@ -162,7 +165,7 @@ if __name__ == "__main__":
 
     gas_input_nodes = gpd.sjoin(gas_input_locations, regions, how="left")
 
-    gas_input_nodes.rename(columns={"index_right": "bus"}, inplace=True)
+    gas_input_nodes.rename(columns={"name": "bus"}, inplace=True)
 
     gas_input_nodes.to_file(snakemake.output.gas_input_nodes, driver="GeoJSON")
 

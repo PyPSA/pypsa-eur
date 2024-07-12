@@ -3342,7 +3342,7 @@ def add_waste_heat(n):
 
         # TODO what is the 0.95 and should it be a config option?
         if (
-            options["use_fischer_tropsch_waste_heat"]
+            options["use_waste_heat"].get("fischer_tropsch", 1)
             and "Fischer-Tropsch" in link_carriers
         ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
@@ -3350,18 +3350,24 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
-            )
+            ) * options["use_waste_heat"].get("fischer_tropsch", 1)
 
-        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
+        if (
+            options["use_waste_heat"].get("methanation", 1)
+            and "Sabatier" in link_carriers
+        ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            )
+            ) * options["use_waste_heat"].get("methanation", 1)
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
-        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
+        if (
+            options["use_waste_heat"].get("haber_bosch", 1)
+            and "Haber-Bosch" in link_carriers
+        ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3375,10 +3381,10 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
-            )
+            ) * options["use_waste_heat"].get("haber_bosch", 1)
 
         if (
-            options["use_methanolisation_waste_heat"]
+            options["use_waste_heat"].get("methanolisation", 1)
             and "methanolisation" in link_carriers
         ):
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
@@ -3387,11 +3393,11 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
                 costs.at["methanolisation", "heat-output"]
                 / costs.at["methanolisation", "hydrogen-input"]
-            )
+            ) * options["use_waste_heat"].get("methanolisation", 1)
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if (
-            options.get("use_electrolysis_waste_heat", False)
+            options["use_waste_heat"].get("electrolysis", 1)
             and "H2 Electrolysis" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
@@ -3399,15 +3405,18 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
-            )
+            ) * options["use_waste_heat"].get("electrolysis", 1)
 
-        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
+        if (
+            options["use_waste_heat"].get("fuel_cell", 1)
+            and "H2 Fuel Cell" in link_carriers
+        ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            )
+            ) * options["use_waste_heat"].get("fuel_cell", 1)
 
 
 def add_agriculture(n, costs):
@@ -3718,7 +3727,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
 
     n.links = pd.concat([n.links, rev_links], sort=False)
-    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["reversed"] = n.links["reversed"].fillna(False).infer_objects(copy=False)
     n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
 
     # do compression losses after concatenation to take electricity consumption at bus0 in either direction
