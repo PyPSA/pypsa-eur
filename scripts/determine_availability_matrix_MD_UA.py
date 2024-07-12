@@ -49,6 +49,7 @@ if __name__ == "__main__":
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
     buses = regions.index
+    buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
