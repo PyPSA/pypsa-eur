@@ -2318,16 +2318,17 @@ def add_biomass(n, costs):
     )
 
     n.madd(
-        "Generator",
+        "Store",
         spatial.gas.biogas,
         suffix=" unsustainable",
         bus=spatial.gas.biogas,
         carrier="unsustainable biogas",
-        p_nom=unsustainable_biogas_potentials_spatial.sum() / 8760,
-        capital_cost=0,
+        e_nom=unsustainable_biogas_potentials_spatial,
         marginal_cost=costs.at["biogas", "fuel"],
+        e_initial=unsustainable_biogas_potentials_spatial,
         efficiency=1,
-        p_nom_extendable=False,
+        e_min_pu=0,
+        e_nom_extendable=False,
     )
 
     n.madd(
@@ -2340,30 +2341,34 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
+    # Add unsustainable solid biomass as Store
     n.madd(
-        "Generator",
+        "Store",
         spatial.biomass.nodes,
         suffix=" unsustainable",
         bus=spatial.biomass.nodes,
         carrier="unsustainable solid biomass",
-        p_nom=unsustainable_solid_biomass_potentials_spatial / 8760,
-        capital_cost=0,
+        e_nom=unsustainable_solid_biomass_potentials_spatial,
         marginal_cost=14,  # mean of MINBIOWOO costs in ENS_BAU 2030
+        e_initial=unsustainable_solid_biomass_potentials_spatial,
         efficiency=1,
-        p_nom_extendable=False,
+        e_min_pu=0,
+        e_nom_extendable=False,
     )
 
+    # Add bioliquids as Store
     n.madd(
-        "Generator",
+        "Store",
         spatial.bioliquids.nodes,
         suffix=" unsustainable",
         bus=spatial.bioliquids.nodes,
         carrier="unsustainable bioliquids",
-        p_nom=unsustainable_liquid_biofuel_potentials_spatial,
+        e_nom=unsustainable_liquid_biofuel_potentials_spatial,
         marginal_cost=costs.at["oil", "fuel"],
-        capital_cost=0,
-        p_nom_extendable=False,
+        e_initial=unsustainable_liquid_biofuel_potentials_spatial,
         efficiency=1,
+        e_min_pu=0,
+        e_nom_extendable=False,
     )
 
     n.madd(
