@@ -151,31 +151,23 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     if "station_id" in buses.columns:
         buses.drop("station_id", axis=1, inplace=True)
 
-    # buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
+    buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
     buses["under_construction"] = buses.under_construction.where(
         lambda s: s.notnull(), False
     ).astype(bool)
-
-    # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
-    # TODO pypsa-eur: Temporary fix: Convex hull, this is important when nodes are between countries
-    # europe_shape = europe_shape.convex_hull
-
     europe_shape_prepped = shapely.prepared.prep(europe_shape)
     buses_in_europe_b = buses[["x", "y"]].apply(
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
-    # TODO pypsa-eur: Find a long-term solution
-    # buses_with_v_nom_to_keep_b = (
-    #     buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
-    # )
-
     v_nom_min = min(config_elec["voltages"])
     v_nom_max = max(config_elec["voltages"])
 
     # Quick fix:
-    buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
+    buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (
+        buses.v_nom <= v_nom_max
+    ) | buses.v_nom.isnull()
 
     logger.info(f"Removing buses outside of range {v_nom_min} - {v_nom_max} V")
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
