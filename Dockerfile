@@ -4,6 +4,8 @@ RUN conda update -n base conda
 RUN conda install -n base conda-libmamba-solver
 RUN conda config --set solver libmamba
 
+WORKDIR /pypsa-eur
+
 COPY . .
 
 RUN conda env create --file envs/environment.yaml
