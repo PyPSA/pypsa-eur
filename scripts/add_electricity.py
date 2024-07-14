@@ -91,6 +91,7 @@ import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
+import rasterio
 import scipy.sparse as sparse
 import xarray as xr
 from _helpers import (
@@ -100,6 +101,8 @@ from _helpers import (
     update_p_nom_max,
 )
 from powerplantmatching.export import map_country_bus
+from rasterio.mask import mask
+from shapely.geometry import box
 from shapely.prepared import prep
 
 idx = pd.IndexSlice
@@ -294,12 +297,12 @@ def shapes_to_shapes(orig, dest):
     return transfer
 
 
-def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.0):
+def attach_load(
+    n, regions, load, nuts3_shapes, gdp_file, ppp_file, countries, scaling=1.0
+):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
-    regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
+    gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
-
-    ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
     logger.info(f"Load data scaled by factor {scaling}.")
     opsd_load *= scaling
@@ -325,7 +328,12 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
         factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
         if cntry in ["UA", "MD"]:
             # overwrite factor because nuts3 provides no data for UA+MD
-            factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
+            gdp_ua_md, ppp_ua_md = calculate_ua_md_gdp_ppp(
+                gdf_regions[gdf_regions.country == cntry], gdp_file, ppp_file
+            )
+            factors = normed(
+                0.6 * normed(gdp_ua_md["gdp"]) + 0.4 * normed(ppp_ua_md["ppp"])
+            )
         return pd.DataFrame(
             factors.values * load.values[:, np.newaxis],
             index=load.index,
@@ -335,7 +343,7 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
     load = pd.concat(
         [
             upsample(cntry, group)
-            for cntry, group in regions.geometry.groupby(regions.country)
+            for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country)
         ],
         axis=1,
     )
@@ -791,6 +799,97 @@ def attach_line_rating(
     n.lines_t.s_max_pu *= s_max_pu
 
 
+def calculate_ua_md_gdp_ppp(gdf_regions, gdp_file, ppp_file):
+    """
+    Calculate the GDP and PPP values for the regions within the bounding box of
+    UA and MD.
+
+    Parameters:
+    gdf_regions (GeoDataFrame): A GeoDataFrame containing the regions.
+    gdp_file (str): The file path to the dataset containing the GDP values for UA and MD.
+    ppp_file (str): The file path to the dataset containing the PPP values for UA and MD.
+
+    Returns:
+    tuple: A tuple containing two GeoDataFrames:
+        - gdp_ua_md: A GeoDataFrame with the aggregated GDP values mapped to each bus.
+        - ppp_ua_md: A GeoDataFrame with the aggregated PPP values mapped to each bus.
+    """
+    # Create a bounding box for UA, MD from region shape, including a buffer of 10000 metres
+    box_ua_md = (
+        gpd.GeoDataFrame(geometry=[box(*gdf_regions.total_bounds)], crs=gdf_regions.crs)
+        .to_crs(epsg=3857)
+        .buffer(10000)
+        .to_crs(gdf_regions.crs)
+    )
+
+    # GDP
+    with xr.open_dataset(gdp_file) as src_gdp_ua_md:
+        src_gdp_ua_md = src_gdp_ua_md.where(
+            (src_gdp_ua_md.longitude >= box_ua_md.bounds.minx.min())
+            & (src_gdp_ua_md.longitude <= box_ua_md.bounds.maxx.max())
+            & (src_gdp_ua_md.latitude >= box_ua_md.bounds.miny.min())
+            & (src_gdp_ua_md.latitude <= box_ua_md.bounds.maxy.max()),
+            drop=True,
+        )
+        gdp_ua_md = src_gdp_ua_md.to_dataframe().reset_index()
+
+    gdp_ua_md = gdp_ua_md.rename(columns={"GDP_per_capita_PPP": "gdp"})
+    gdp_ua_md = gdp_ua_md[gdp_ua_md.time == gdp_ua_md.time.max()]
+    gdp_ua_md = gpd.GeoDataFrame(
+        gdp_ua_md,
+        geometry=gpd.points_from_xy(gdp_ua_md.longitude, gdp_ua_md.latitude),
+        crs="EPSG:4326",
+    )
+
+    gdp_ua_md = gpd.sjoin(
+        gdp_ua_md, gdf_regions.reset_index(), predicate="within"
+    ).drop(columns=["index_right"])
+    gdp_ua_md = (
+        gdp_ua_md.groupby(["Bus", "country", "time"])
+        .agg({"gdp": "sum"})
+        .reset_index(level=["country", "time"])
+    )
+
+    # PPP
+    with rasterio.open(ppp_file) as src_ppp_ua_md:
+        # Mask the raster with the bounding box
+        out_image, out_transform = mask(src_ppp_ua_md, box_ua_md, crop=True)
+        out_image,
+        out_meta = src_ppp_ua_md.meta.copy()
+        out_meta.update(
+            {
+                "driver": "GTiff",
+                "height": out_image.shape[1],
+                "width": out_image.shape[2],
+                "transform": out_transform,
+            }
+        )
+
+    masked_data = out_image[0]  # Use the first band (rest is empty)
+    row_indices, col_indices = np.where(masked_data != src_ppp_ua_md.nodata)
+    values = masked_data[row_indices, col_indices]
+
+    # Affine transformation from pixel coordinates to geo coordinates
+    x_coords, y_coords = rasterio.transform.xy(out_transform, row_indices, col_indices)
+    ppp_ua_md = pd.DataFrame({"x": x_coords, "y": y_coords, "ppp": values})
+
+    ppp_ua_md = gpd.GeoDataFrame(
+        ppp_ua_md,
+        geometry=gpd.points_from_xy(ppp_ua_md.x, ppp_ua_md.y),
+        crs=src_ppp_ua_md.crs,
+    )
+
+    ppp_ua_md = gpd.sjoin(ppp_ua_md, gdf_regions.reset_index(), predicate="within")
+    ppp_ua_md = (
+        ppp_ua_md.groupby(["Bus", "country"])
+        .agg({"ppp": "sum"})
+        .reset_index()
+        .set_index("Bus")
+    )
+
+    return gdp_ua_md, ppp_ua_md
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -821,7 +920,8 @@ if __name__ == "__main__":
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.input.ua_md_gdp,
+        snakemake.input.gdp_file,
+        snakemake.input.ppp_file,
         params.countries,
         params.scaling_factor,
     )
