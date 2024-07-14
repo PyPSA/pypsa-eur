@@ -485,6 +485,17 @@ sector:
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency:
+    enable: false
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 0.988
+      compression_per_1000km: 0.018
+    gas pipeline:
+      efficiency_per_1000km: 1 #0.977
+      compression_per_1000km: 0.01
   H2_network: true
   gas_network: false
   H2_retrofit: false
@@ -640,11 +651,11 @@ solving:
       threads: 8
       method: 2 # barrier
       crossover: 0
-      # BarConvTol: 1.e-6
+      BarConvTol: 1.e-6
       Seed: 123
       AggFill: 0
       PreDual: 0
-      # GURO_PAR_BARDENSETHRESH: 200
+      GURO_PAR_BARDENSETHRESH: 200
     gurobi-numeric-focus:
       name: gurobi
       NumericFocus: 3       # Favour numeric stability over speed

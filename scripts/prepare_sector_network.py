@@ -6,7 +6,7 @@
 Adds all sector-coupling components to the network, including demand and supply
 technologies for the buildings, transport and industry sectors.
 """
-
+ 
 import logging
 import os
 import re
@@ -1106,6 +1106,9 @@ def add_storage_and_grids(n, costs):
 
     n.madd("Bus", nodes + " H2", location=nodes, carrier="H2", unit="MWh_LHV")
 
+    electrolysis_cost_factor = options.get("hydrogen_electrolysis_cost_factor", 1)
+    capex = costs.at["electrolysis", "fixed"] * electrolysis_cost_factor
+    
     n.madd(
         "Link",
         nodes + " H2 Electrolysis",
@@ -1113,7 +1116,7 @@ def add_storage_and_grids(n, costs):
         bus0=nodes,
         p_nom_extendable=True,
         carrier="H2 Electrolysis",
-        efficiency=costs.at["electrolysis", "efficiency"],
+        efficiency=capex,
         capital_cost=costs.at["electrolysis", "fixed"],
         lifetime=costs.at["electrolysis", "lifetime"],
     )
@@ -3394,6 +3397,56 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
+def lossy_bidirectional_links(n, carrier, efficiencies={}):
+    "Split bidirectional links into two unidirectional links to include transmission losses."
+
+    carrier_i = n.links.query("carrier == @carrier").index
+
+    if (
+        not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
+        or carrier_i.empty
+    ):
+        return
+
+    efficiency_static = efficiencies.get("efficiency_static", 1)
+    efficiency_per_1000km = efficiencies.get("efficiency_per_1000km", 1)
+    compression_per_1000km = efficiencies.get("compression_per_1000km", 0)
+
+    logger.info(
+        f"Specified losses for {carrier} transmission "
+        f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km}, compression per 1000km: {compression_per_1000km}). "
+        "Splitting bidirectional links."
+    )
+
+    n.links.loc[carrier_i, "p_min_pu"] = 0
+    n.links.loc[carrier_i, "efficiency"] = (
+        efficiency_static
+        * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
+    )
+    rev_links = (
+        n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
+    )
+    rev_links["length_original"] = rev_links["length"]
+    rev_links["capital_cost"] = 0
+    rev_links["length"] = 0
+    rev_links["reversed"] = True
+    rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
+
+    n.links = pd.concat([n.links, rev_links], sort=False)
+    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
+
+    # do compression losses after concatenation to take electricity consumption at bus0 in either direction
+    carrier_i = n.links.query("carrier == @carrier").index
+    if compression_per_1000km > 0:
+        n.links.loc[carrier_i, "bus2"] = n.links.loc[carrier_i, "bus0"].map(
+            n.buses.location
+        )  # electricity
+        n.links.loc[carrier_i, "efficiency2"] = (
+            -compression_per_1000km * n.links.loc[carrier_i, "length_original"] / 1e3
+        )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -3560,6 +3613,10 @@ if __name__ == "__main__":
 
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
+
+    if options["transmission_efficiency"].pop("enable"):
+        for k, v in options["transmission_efficiency"].items():
+            lossy_bidirectional_links(n, k, v)
 
     first_year_myopic = (snakemake.params.foresight == "myopic") and (
         snakemake.params.planning_horizons[0] == investment_year

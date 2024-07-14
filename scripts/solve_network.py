@@ -494,6 +494,35 @@ def add_battery_constraints(n):
 
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
 
+def add_lossy_bidirectional_link_constraints(n):
+    if not n.links.p_nom_extendable.any() or "reversed" not in n.links.columns:
+        return
+
+    n.links["reversed"] = n.links.reversed.fillna(0).astype(bool)
+    carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
+
+    forward_i = n.links.query(
+        "carrier in @carriers and ~reversed and p_nom_extendable"
+    ).index
+
+    def get_backward_i(forward_i):
+        return pd.Index(
+            [
+                (
+                    re.sub(r"-(\d{4})$", r"-reversed-\1", s)
+                    if re.search(r"-\d{4}$", s)
+                    else s + "-reversed"
+                )
+                for s in forward_i
+            ]
+        )
+
+    backward_i = get_backward_i(forward_i)
+
+    lhs = n.model["Link-p_nom"].loc[backward_i]
+    rhs = n.model["Link-p_nom"].loc[forward_i]
+
+    n.model.add_constraints(lhs == rhs, name="Link-bidirectional_sync")
 
 def add_chp_constraints(n):
     electric = (
@@ -594,6 +623,7 @@ def extra_functionality(n, snapshots):
         if "EQ" in o:
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
+    add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
 
 
