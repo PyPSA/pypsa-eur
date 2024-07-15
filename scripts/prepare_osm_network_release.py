@@ -111,6 +111,8 @@ if __name__ == "__main__":
     network = pypsa.Network(snakemake.input.base_network)
 
     network.buses["dc"] = network.buses.pop("carrier").map({"DC": "t", "AC": "f"})
+    network.lines.length = network.lines.length * 1e3
+    network.links.length = network.links.length * 1e3
 
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
