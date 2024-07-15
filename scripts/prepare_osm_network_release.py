@@ -59,7 +59,6 @@ if __name__ == "__main__":
     buses_columns = [
         "bus_id",
         "voltage",
-        "dc",
         "symbol",
         "under_construction",
         "x",
