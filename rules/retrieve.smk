@@ -321,6 +321,23 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
+if config["enable"]["retrieve"] and any(c in ["UA", "MD"] for c in config["countries"]):
+
+    rule retrieve_gdp_uamd:
+        output:
+            gdp="data/GDP_per_capita_PPP_1990_2015_v2.nc",
+            ppp="data/ppp_2013_1km_Aggregated.tif",
+        log:
+            "logs/retrieve_gdp_uamd.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_gdp_uamd.py"
+
+
 if config["enable"]["retrieve"] and (
     config["electricity_network"]["base_network"] == "osm-prebuilt"
 ):

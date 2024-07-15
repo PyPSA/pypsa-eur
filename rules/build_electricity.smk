@@ -468,7 +468,8 @@ rule add_electricity:
         ),
         load=resources("electricity_demand.csv"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
+        gdp_file="data/GDP_per_capita_PPP_1990_2015_v2.nc",
+        ppp_file="data/ppp_2013_1km_Aggregated.tif",
     output:
         resources("networks/elec.nc"),
     log:
