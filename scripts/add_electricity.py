@@ -236,10 +236,12 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
         capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
+        investment = link1["investment"] + max_hours * store["investment"]
         if link2 is not None:
             capital_cost += link2["capital_cost"]
+            investment_cost += link2["investment"]
         return pd.Series(
-            dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
+            dict(capital_cost=capital_cost, investment=investment, marginal_cost=0.0, co2_emissions=0.0)
         )
 
     costs.loc["battery"] = costs_for_storage(
@@ -352,6 +354,9 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     n.lines["capital_cost"] = (
         n.lines["length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
     )
+    n.lines["investment"] = (
+        n.lines["length"] * length_factor * costs.at["HVAC overhead", "investment"]
+    )
 
     if n.links.empty:
         return
@@ -374,7 +379,20 @@ def update_transmission_costs(n, costs, length_factor=1.0):
         )
         + costs.at["HVDC inverter pair", "capital_cost"]
     )
+    investment = (
+        n.links.loc[dc_b, "length"]
+        * length_factor
+        * (
+            (1.0 - n.links.loc[dc_b, "underwater_fraction"])
+            * costs.at["HVDC overhead", "investment"]
+            + n.links.loc[dc_b, "underwater_fraction"]
+            * costs.at["HVDC submarine", "investment"]
+        )
+        + costs.at["HVDC inverter pair", "investment"]
+    )
+
     n.links.loc[dc_b, "capital_cost"] = costs
+    n.links.loc[dc_b, "investment"] = investment
 
 
 def attach_wind_and_solar(
@@ -406,10 +424,25 @@ def attach_wind_and_solar(
                         * costs.at[car + "-connection-underground", "capital_cost"]
                     )
                 )
+                connection_investment = (
+                    line_length_factor
+                    * ds["average_distance"].to_pandas()
+                    * (
+                        underwater_fraction
+                        * costs.at[car + "-connection-submarine", "investment"]
+                        + (1.0 - underwater_fraction)
+                        * costs.at[car + "-connection-underground", "investment"]
+                    )
+                )
                 capital_cost = (
                     costs.at["offwind", "capital_cost"]
                     + costs.at[car + "-station", "capital_cost"]
                     + connection_cost
+                )
+                investment = (
+                    costs.at["offwind", "investment"]
+                    + costs.at[car + "-station", "investment"]
+                    + connection_investment
                 )
                 logger.info(
                     "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
@@ -418,6 +451,7 @@ def attach_wind_and_solar(
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
+                investment = costs.at[car, "investment"]
 
             n.madd(
                 "Generator",
@@ -430,6 +464,7 @@ def attach_wind_and_solar(
                 weight=ds["weight"].to_pandas(),
                 marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
+                investment=investment,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
                 lifetime=costs.at[supcar, "lifetime"],
@@ -581,6 +616,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             p_nom=ror["p_nom"],
             efficiency=costs.at["ror", "efficiency"],
             capital_cost=costs.at["ror", "capital_cost"],
+            investment=costs.at["ror", "investment"],
             weight=ror["p_nom"],
             p_max_pu=(
                 inflow_t[ror.index]
@@ -601,6 +637,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             bus=phs["bus"],
             p_nom=phs["p_nom"],
             capital_cost=costs.at["PHS", "capital_cost"],
+            investment=costs.at["PHS", "investment"],
             max_hours=phs["max_hours"],
             efficiency_store=np.sqrt(costs.at["PHS", "efficiency"]),
             efficiency_dispatch=np.sqrt(costs.at["PHS", "efficiency"]),
@@ -659,6 +696,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             p_nom=hydro["p_nom"],
             max_hours=hydro_max_hours,
             capital_cost=costs.at["hydro", "capital_cost"],
+            investment=costs.at["hydro", "investment"],
             marginal_cost=costs.at["hydro", "marginal_cost"],
             p_max_pu=p_max_pu,  # dispatch
             p_min_pu=0.0,  # store
