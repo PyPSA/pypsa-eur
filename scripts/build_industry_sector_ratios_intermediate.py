@@ -63,6 +63,8 @@ def build_industry_sector_ratios_intermediate():
             today_sector_ratios_ct * (1 - fraction_future)
             + future_sector_ratios * fraction_future
         )
+        intermediate_sector_ratios[ct].loc["process emission"] = future_sector_ratios.loc["process emission"]
+        intermediate_sector_ratios[ct].loc["process emission from feedstock"] = future_sector_ratios.loc["process emission from feedstock"]
     intermediate_sector_ratios = pd.concat(intermediate_sector_ratios, axis=1)
 
     intermediate_sector_ratios.to_csv(snakemake.output.industry_sector_ratios)
