@@ -321,7 +321,7 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["enable"]["retrieve"] and any(c in ["UA", "MD"] for c in config["countries"]):
+if config["enable"]["retrieve"] and {"UA", "MD"}.intersection(config["countries"]):
 
     rule retrieve_gdp_uamd:
         output:
