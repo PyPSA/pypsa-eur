@@ -688,6 +688,7 @@ def add_co2_tracking(n, costs, options):
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
+        marginal_cost=0.1,
         bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
         carrier="co2 sequestered",
