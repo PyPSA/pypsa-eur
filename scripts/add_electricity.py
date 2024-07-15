@@ -368,7 +368,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     if n.links.loc[dc_b].empty:
         return
 
-    costs = (
+    capital_cost = (
         n.links.loc[dc_b, "length"]
         * length_factor
         * (
@@ -391,7 +391,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
         + costs.at["HVDC inverter pair", "investment"]
     )
 
-    n.links.loc[dc_b, "capital_cost"] = costs
+    n.links.loc[dc_b, "capital_cost"] = capital_cost
     n.links.loc[dc_b, "investment"] = investment
 
 
