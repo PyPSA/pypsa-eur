@@ -239,7 +239,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         investment = link1["investment"] + max_hours * store["investment"]
         if link2 is not None:
             capital_cost += link2["capital_cost"]
-            investment_cost += link2["investment"]
+            investment += link2["investment"]
         return pd.Series(
             dict(capital_cost=capital_cost, investment=investment, marginal_cost=0.0, co2_emissions=0.0)
         )
@@ -832,8 +832,14 @@ def attach_line_rating(
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
+        import sys
 
-        snakemake = mock_snakemake("add_electricity")
+        path = "../submodules/pypsa-eur/scripts"
+        sys.path.insert(0, os.path.abspath(path))
+        snakemake = mock_snakemake(
+            "add_electricity",
+            run="KN2045_Bal_v4",
+            )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
