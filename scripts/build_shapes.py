@@ -91,7 +91,7 @@ def _get_country(target, **keys):
         return np.nan
 
 
-def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
+def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
@@ -106,7 +106,9 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
             )
         else:
             polys = mainpoly
-    return polys.simplify(tolerance=tolerance)
+    if tolerance is not None:
+        polys = polys.simplify(tolerance=tolerance)
+    return polys
 
 
 def countries(naturalearth, country_list):
@@ -124,7 +126,7 @@ def countries(naturalearth, country_list):
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
     ]
-    s = df.set_index("name")["geometry"].map(_simplify_polys)
+    s = df.set_index("name")["geometry"].map(_simplify_polys).set_crs(df.crs)
     if "RS" in country_list:
         s["RS"] = s["RS"].union(s.pop("KV"))
         # cleanup shape union
@@ -145,7 +147,8 @@ def eez(country_shapes, eez, country_list):
         lambda s: _simplify_polys(s, filterremote=False)
     )
     s = gpd.GeoSeries(
-        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3}
+        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3},
+        crs=df.crs,
     )
     s = s.to_frame("geometry")
     s.index.name = "name"
@@ -156,7 +159,7 @@ def country_cover(country_shapes, eez_shapes=None):
     shapes = country_shapes
     if eez_shapes is not None:
         shapes = pd.concat([shapes, eez_shapes])
-    europe_shape = shapes.unary_union
+    europe_shape = shapes.union_all()
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape.geoms, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
@@ -235,11 +238,11 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
         [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
         columns=["NUTS_ID", "country", "pop"],
         geometry=gpd.GeoSeries(),
+        crs=df.crs,
     )
-    manual["geometry"] = manual["country"].map(country_shapes)
+    manual["geometry"] = manual["country"].map(country_shapes.to_crs(df.crs))
     manual = manual.dropna()
     manual = manual.set_index("NUTS_ID")
-    manual = manual.set_crs("ETRS89")
 
     df = pd.concat([df, manual], sort=False)
 
@@ -265,7 +268,8 @@ if __name__ == "__main__":
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     europe_shape = gpd.GeoDataFrame(
-        geometry=[country_cover(country_shapes, offshore_shapes.geometry)]
+        geometry=[country_cover(country_shapes, offshore_shapes.geometry)],
+        crs=country_shapes.crs,
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
 

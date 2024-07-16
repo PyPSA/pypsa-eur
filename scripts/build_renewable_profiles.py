@@ -406,7 +406,7 @@ if __name__ == "__main__":
 
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info("Calculate underwater fraction of connections.")
-        offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).unary_union
+        offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).union_all()
         underwater_fraction = []
         for bus in buses:
             p = centre_of_mass.sel(bus=bus).data
