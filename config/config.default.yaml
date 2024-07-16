@@ -310,6 +310,7 @@ links:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
+  enable: true
   include:
     #tyndp: true # For later, when other TYNDP projects are combined with new version
     nep: true

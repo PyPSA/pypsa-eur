@@ -70,7 +70,6 @@ rule base_network:
         countries=config_provider("countries"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        transmission_projects=config_provider("transmission_projects"),
         lines=config_provider("lines"),
         transformers=config_provider("transformers"),
     input:
@@ -358,6 +357,29 @@ rule build_line_rating:
         "../scripts/build_line_rating.py"
 
 
+rule add_transmission_projects:
+    params:
+        transmission_projects=config_provider("transmission_projects"),
+    input:
+        base_network=resources("networks/base.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+    output:
+        new_lines=resources("transmission_project/new_lines.csv"),
+        new_links=resources("transmission_project/new_links.csv"),
+        adjust_lines=resources("transmission_project/adjust_lines.csv"),
+        adjust_links=resources("transmission_project/adjust_links.csv"),
+        new_buses=resources("transmission_project/new_buses.csv"),
+    log:
+        logs("add_transmission_project.log"),
+    benchmark:
+        benchmarks("add_transmission_project")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/add_transmission_projects.py"
+
+
 def input_profile_tech(w):
     return {
         f"profile_{tech}": resources(f"profile_{tech}.nc")
@@ -387,6 +409,7 @@ rule add_electricity:
         costs=config_provider("costs"),
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        transmission_projects=config_provider("transmission_projects"),
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -395,6 +418,17 @@ rule add_electricity:
             resources("networks/line_rating.nc")
             if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
+        ),
+        transmission_projects=lambda w: (
+            [
+                resources("transmission_project/new_buses.csv"),
+                resources("transmission_project/new_lines.csv"),
+                resources("transmission_project/new_links.csv"),
+                resources("transmission_project/adjust_lines.csv"),
+                resources("transmission_project/adjust_links.csv"),
+            ]
+            if config_provider("transmission_projects", "enable")(w)
+            else []
         ),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
