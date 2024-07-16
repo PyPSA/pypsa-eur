@@ -321,7 +321,7 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["enable"]["retrieve"] and any(c in ["UA", "MD"] for c in config["countries"]):
+if config["enable"]["retrieve"] and {"UA", "MD"}.intersection(config["countries"]):
 
     rule retrieve_gdp_uamd:
         output:
@@ -336,34 +336,3 @@ if config["enable"]["retrieve"] and any(c in ["UA", "MD"] for c in config["count
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_gdp_uamd.py"
-
-
-if config["enable"]["retrieve"] and (
-    config["electricity_network"]["base_network"] == "osm-prebuilt"
-):
-
-    rule retrieve_osm_prebuilt:
-        input:
-            buses=storage("https://sandbox.zenodo.org/records/87679/files/buses.csv"),
-            converters=storage(
-                "https://sandbox.zenodo.org/records/87679/files/converters.csv"
-            ),
-            lines=storage("https://sandbox.zenodo.org/records/87679/files/lines.csv"),
-            links=storage("https://sandbox.zenodo.org/records/87679/files/links.csv"),
-            transformers=storage(
-                "https://sandbox.zenodo.org/records/87679/files/transformers.csv"
-            ),
-        output:
-            buses="data/osm/prebuilt/buses.csv",
-            converters="data/osm/prebuilt/converters.csv",
-            lines="data/osm/prebuilt/lines.csv",
-            links="data/osm/prebuilt/links.csv",
-            transformers="data/osm/prebuilt/transformers.csv",
-        log:
-            "logs/retrieve_osm_prebuilt.log",
-        resources:
-            mem_mb=500,
-        retries: 2
-        run:
-            for key in input.keys():
-                move(input[key], output[key])

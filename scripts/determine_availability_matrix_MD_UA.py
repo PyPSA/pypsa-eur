@@ -49,6 +49,7 @@ if __name__ == "__main__":
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
     buses = regions.index
+    # Limit to "UA" and "MD" regions
     buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
     regions = regions.loc[buses]
 
@@ -154,8 +155,6 @@ if __name__ == "__main__":
     plt.axis("off")
     plt.savefig(snakemake.output.availability_map, bbox_inches="tight", dpi=500)
 
-    # Limit results only to buses for UA and MD
-    buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
     availability = availability.sel(bus=buses)
 
     # Save and plot for verification
