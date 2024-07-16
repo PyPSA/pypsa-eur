@@ -3,7 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
+Maps the GDP and PPP values to non-NUTS3 regions.
 
+The script takes as input the country code, a GeoDataFrame containing
+the regions, and the file paths to the datasets containing the GDP and
+PPP values for non-NUTS3 countries.
 """
 
 import logging
