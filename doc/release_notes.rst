@@ -31,6 +31,10 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* Endogenises the mapping of if GDP per capita and population for non-NUTS3 countries (i.e. MD and UA) needed to calculate the regional distribution of loads. New scripts include ``retrieve_gdp_uamd.py`` and ``build_gdp_ppp_non_nuts3.py```. This allows for correct mapping of GDP and population independent of the underlying electricity grid and buses.
+
+* Recent atlite changes and updated filtering in ``determine_availability_matrix_MD_UA.py``` improves speed and fixes issue https://github.com/PyPSA/pypsa-eur/issues/1090.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 

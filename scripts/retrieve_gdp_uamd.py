@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
 dict_urls = dict(
     {
-        "gdp": "https://datadryad.org/stash/downloads/file_stream/241947",
-        "ppp": "https://github.com/ecohealthalliance/sars_cov_risk/releases/download/v2.0.1/ppp_2020_1km_Aggregated.tif",
+        "gdp_non_nuts3": "https://datadryad.org/stash/downloads/file_stream/241947",
+        "pop_non_nuts3": "https://github.com/ecohealthalliance/sars_cov_risk/releases/download/v2.0.1/ppp_2020_1km_Aggregated.tif",
     }
 )
 
