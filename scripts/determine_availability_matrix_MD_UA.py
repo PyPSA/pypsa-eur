@@ -48,7 +48,6 @@ if __name__ == "__main__":
     regions = (
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
-    buses = regions.index
     # Limit to "UA" and "MD" regions
     buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
     regions = regions.loc[buses]
