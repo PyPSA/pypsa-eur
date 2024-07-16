@@ -325,8 +325,8 @@ if config["enable"]["retrieve"] and {"UA", "MD"}.intersection(config["countries"
 
     rule retrieve_gdp_uamd:
         output:
-            gdp="data/GDP_per_capita_PPP_1990_2015_v2.nc",
-            ppp="data/ppp_2013_1km_Aggregated.tif",
+            gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
+            pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
         log:
             "logs/retrieve_gdp_uamd.log",
         resources:

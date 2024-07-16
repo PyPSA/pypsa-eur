@@ -295,7 +295,7 @@ def shapes_to_shapes(orig, dest):
 
 
 def attach_load(
-    n, regions, load, nuts3_shapes, gdp_ppp_non_nuts3, countries, scaling=1.0
+    n, regions, load, nuts3_shapes, gdp_pop_non_nuts3, countries, scaling=1.0
 ):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
     gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
@@ -306,7 +306,7 @@ def attach_load(
 
     nuts3 = gpd.read_file(nuts3_shapes).set_index("index")
 
-    def upsample(cntry, group, gdp_ppp_non_nuts3):
+    def upsample(cntry, group, gdp_pop_non_nuts3):
         load = opsd_load[cntry]
 
         if len(group) == 1:
@@ -323,15 +323,15 @@ def attach_load(
         # relative factors 0.6 and 0.4 have been determined from a linear
         # regression on the country to continent load data
         factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
-        if cntry in ["UA", "MD"] and gdp_ppp_non_nuts3 is not None:
+        if cntry in ["UA", "MD"] and gdp_pop_non_nuts3 is not None:
             # overwrite factor because nuts3 provides no data for UA+MD
-            gdp_ppp_non_nuts3 = gpd.read_file(gdp_ppp_non_nuts3).set_index("Bus")
-            gdp_ppp_non_nuts3 = gdp_ppp_non_nuts3.loc[
-                gdp_ppp_non_nuts3.country == cntry
+            gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
+            gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
+                gdp_pop_non_nuts3.country == cntry
             ]
             factors = normed(
-                0.6 * normed(gdp_ppp_non_nuts3["gdp"])
-                + 0.4 * normed(gdp_ppp_non_nuts3["ppp"])
+                0.6 * normed(gdp_pop_non_nuts3["gdp"])
+                + 0.4 * normed(gdp_pop_non_nuts3["pop"])
             )
         return pd.DataFrame(
             factors.values * load.values[:, np.newaxis],
@@ -341,7 +341,7 @@ def attach_load(
 
     load = pd.concat(
         [
-            upsample(cntry, group, gdp_ppp_non_nuts3)
+            upsample(cntry, group, gdp_pop_non_nuts3)
             for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country)
         ],
         axis=1,
@@ -823,17 +823,17 @@ if __name__ == "__main__":
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    if "gdp_ppp_non_nuts3" in snakemake.input.keys():
-        gdp_ppp_non_nuts3 = snakemake.input.gdp_ppp_non_nuts3
+    if "gdp_pop_non_nuts3" in snakemake.input.keys():
+        gdp_pop_non_nuts3 = snakemake.input.gdp_pop_non_nuts3
     else:
-        gdp_ppp_non_nuts3 = None
+        gdp_pop_non_nuts3 = None
 
     attach_load(
         n,
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        gdp_ppp_non_nuts3,
+        gdp_pop_non_nuts3,
         params.countries,
         params.scaling_factor,
     )

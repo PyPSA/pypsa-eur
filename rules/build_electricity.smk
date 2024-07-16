@@ -433,32 +433,32 @@ def input_conventional(w):
 
 
 # Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
-def input_gdp_ppp_non_nuts3(w):
+def input_gdp_pop_non_nuts3(w):
     countries = set(config_provider("countries")(w))
     if {"UA", "MD"}.intersection(countries):
-        return {"gdp_ppp_non_nuts3": resources("gdp_ppp_non_nuts3.geojson")}
+        return {"gdp_pop_non_nuts3": resources("gdp_pop_non_nuts3.geojson")}
     return {}
 
 
-rule build_gdp_ppp_non_nuts3:
+rule build_gdp_pop_non_nuts3:
     params:
         countries=config_provider("countries"),
     input:
         base_network=resources("networks/base.nc"),
         regions=resources("regions_onshore.geojson"),
         gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
-        ppp_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
+        pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
     output:
-        resources("gdp_ppp_non_nuts3.geojson"),
+        resources("gdp_pop_non_nuts3.geojson"),
     log:
-        logs("build_gdp_ppp_non_nuts3.log"),
+        logs("build_gdp_pop_non_nuts3.log"),
     threads: 1
     resources:
         mem_mb=1500,
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_gdp_ppp_non_nuts3.py"
+        "../scripts/build_gdp_pop_non_nuts3.py"
 
 
 rule add_electricity:
@@ -476,7 +476,7 @@ rule add_electricity:
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
-        unpack(input_gdp_ppp_non_nuts3),
+        unpack(input_gdp_pop_non_nuts3),
         base_network=resources("networks/base.nc"),
         line_rating=lambda w: (
             resources("networks/line_rating.nc")
