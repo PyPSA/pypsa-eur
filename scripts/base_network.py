@@ -72,7 +72,6 @@ Creates the network topology from an ENTSO-E map extract, and create Voronoi sha
 """
 
 import logging
-import os
 from itertools import product
 
 import geopandas as gpd
