@@ -327,7 +327,8 @@ def attach_load(
             # overwrite factor because nuts3 provides no data for UA+MD
             gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
             gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
-                gdp_pop_non_nuts3.country == cntry
+                (gdp_pop_non_nuts3.country == cntry)
+                & (gdp_pop_non_nuts3.index.isin(substation_lv_i))
             ]
             factors = normed(
                 0.6 * normed(gdp_pop_non_nuts3["gdp"])
