@@ -21,4 +21,6 @@ RUN git ls-files -z | xargs -0 rm
 
 RUN find . -type d -empty -delete
 
+RUN rm -rf scripts
+
 ENTRYPOINT ["tail", "-f", "/dev/null"]
