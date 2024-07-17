@@ -6,7 +6,7 @@ RUN conda config --set solver libmamba
 
 WORKDIR /pypsa-eur
 
-COPY ./envs .
+COPY ./envs ./envs
 
 RUN conda env create --file envs/environment.yaml
 
