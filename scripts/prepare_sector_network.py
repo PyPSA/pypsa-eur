@@ -1238,7 +1238,7 @@ def add_storage_and_grids(n, costs):
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
             gas_pipes["capital_cost"] = 0.1 * gas_pipes.length
-            gas_pipes["p_nom_extendable"] = True            
+            gas_pipes["p_nom_extendable"] = True
         else:
             gas_pipes["p_nom_max"] = np.inf
             gas_pipes["p_nom_min"] = gas_pipes.p_nom
