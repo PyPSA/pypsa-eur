@@ -774,7 +774,7 @@ clustering:
       investment: mean
     one_ports:
       investment: mean
-    
+
   temporal:
     resolution_elec: false
     resolution_sector: false
