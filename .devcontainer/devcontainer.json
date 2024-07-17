@@ -7,7 +7,7 @@
   // // "dockerfile": "Dockerfile"
 
   // },
-  "image": "akshatmittaloet/pypsa-eur:v7.0sol",
+  "image": "akshatmittaloet/pypsa-eur:v8.0",
   "features": {
     "ghcr.io/devcontainers-contrib/features/bash-command:1": {},
     "ghcr.io/eliises/devcontainer-features/bash-profile:1": {}
@@ -48,7 +48,7 @@
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
-  // "workspaceMount": "source=${localWorkspaceFolder}/scripts,target=/pypsa-eur/scripts,type=bind,consistency=cached",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/pypsa-eur,type=bind,consistency=cached",
   "workspaceFolder": "/pypsa-eur"
 
   // "mounts": [

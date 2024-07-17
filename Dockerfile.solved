@@ -4,6 +4,8 @@ RUN conda update -n base conda
 RUN conda install -n base conda-libmamba-solver
 RUN conda config --set solver libmamba
 
+RUN apt-get update && apt-get install -y git
+
 WORKDIR /pypsa-eur
 
 COPY . .
@@ -15,7 +17,7 @@ ENV PATH /opt/conda/envs/pypsa-eur/bin:$PATH
 
 RUN /bin/bash -c "source activate pypsa-eur && snakemake --cores 1 results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml"
 
-RUN "git ls-files -z | xargs -0 rm"
+RUN git ls-files -z | xargs -0 rm
 
 RUN find . -type d -empty -delete
 
