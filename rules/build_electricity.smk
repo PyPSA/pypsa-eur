@@ -389,8 +389,8 @@ rule build_gdp_pop_non_nuts3:
     input:
         base_network=resources("networks/base.nc"),
         regions=resources("regions_onshore.geojson"),
-        gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
-        pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
+        gdp_non_nuts3="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        pop_non_nuts3="data/bundle/ppp_2013_1km_Aggregated.tif",
     output:
         resources("gdp_pop_non_nuts3.geojson"),
     log:
