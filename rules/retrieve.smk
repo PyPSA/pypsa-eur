@@ -165,7 +165,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/10973944/files/shipdensity_global.zip",
+                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
