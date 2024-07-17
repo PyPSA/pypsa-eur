@@ -15,7 +15,8 @@ ENV PATH /opt/conda/envs/pypsa-eur/bin:$PATH
 
 RUN /bin/bash -c "source activate pypsa-eur && snakemake --cores 1 results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml"
 
+RUN "git ls-files -z | xargs -0 rm"
 
-# ENTRYPOINT [ "snakemake","--cores","1","solve_networks" ]
-# ENTRYPOINT ["tail", "-f", "/dev/null"]
-# ENTRYPOINT ["tail", "-f", "/dev/null"]
+RUN find . -type d -empty -delete
+
+ENTRYPOINT ["tail", "-f", "/dev/null"]
