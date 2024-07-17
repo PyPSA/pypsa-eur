@@ -29,6 +29,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "h2_salt_caverns_GWh_per_sqkm.geojson",
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
+        "GDP_per_capita_PPP_1990_2015_v2.nc",
+        "ppp_2013_1km_Aggregated.tif",
     ]
 
     rule retrieve_databundle:
@@ -319,20 +321,3 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
-
-
-if config["enable"]["retrieve"] and {"UA", "MD"}.intersection(config["countries"]):
-
-    rule retrieve_gdp_uamd:
-        output:
-            gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
-            pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
-        log:
-            "logs/retrieve_gdp_uamd.log",
-        resources:
-            mem_mb=5000,
-        retries: 2
-        conda:
-            "../envs/retrieve.yaml"
-        script:
-            "../scripts/retrieve_gdp_uamd.py"

@@ -161,7 +161,6 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
             "orientation": "horizontal",
         },
     )
-    plt.show()
 
     return gdp_pop
 
