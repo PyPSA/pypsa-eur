@@ -769,6 +769,12 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+      investment: mean
+    lines:
+      investment: mean
+    one_ports:
+      investment: mean
+    
   temporal:
     resolution_elec: false
     resolution_sector: false
