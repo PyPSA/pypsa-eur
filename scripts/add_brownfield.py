@@ -89,10 +89,6 @@ def add_brownfield(n, n_p, year):
     # deal with gas network
     pipe_carrier = ["gas pipeline"]
     if snakemake.params.H2_retrofit:
-        # drop capacities of previous year to avoid duplicating
-        to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year != year)
-        n.mremove("Link", n.links.loc[to_drop].index)
-
         # subtract the already retrofitted from today's gas grid capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
@@ -115,10 +111,6 @@ def add_brownfield(n, n_p, year):
             index=pipe_capacity.index
         ).fillna(0)
         n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
-    else:
-        new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year == year)
-        n.links.loc[new_pipes, "p_nom"] = 0.0
-        n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
 
 def disable_grid_expansion_if_limit_hit(n):

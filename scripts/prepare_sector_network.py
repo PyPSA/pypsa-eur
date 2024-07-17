@@ -1253,7 +1253,7 @@ def add_storage_and_grids(n, costs):
             capital_cost=gas_pipes.capital_cost,
             tags=gas_pipes.name,
             carrier="gas pipeline",
-            lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
+            lifetime=np.inf,
         )
 
         # remove fossil generators where there is neither
