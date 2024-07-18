@@ -31,6 +31,8 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* Enable retaining exisiting conventional capacities added in the power only model for sector coupeled applications.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 

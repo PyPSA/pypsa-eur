@@ -136,6 +136,7 @@ biomass_spatial,--,"{true, false}",Add option for resolving biomass demand regio
 biomass_transport,--,"{true, false}",Add option for transporting solid biomass between nodes
 biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
+keep_existing_capacities,--,"{true, false}",Keep existing conventional carriers from the power model. Defaults to false.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
 limit_max_growth,,,
