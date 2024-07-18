@@ -110,7 +110,8 @@ def reverse(dictionary: dict) -> dict:
 idees_rename = {"GR": "EL", "GB": "UK"}
 
 eu28 = cc.EU28as("ISO2").ISO2.tolist()
-
+# TODO GB kicked out JRC-IDEES 2021
+eu27 = cc.EU27as("ISO2").ISO2.tolist()
 eu28_eea = eu28.copy()
 eu28_eea.remove("GB")
 eu28_eea.append("UK")
@@ -329,9 +330,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     """
 
     ct_idees = idees_rename.get(ct, ct)
-    fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
-    fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
-    fn_transport = f"{base_dir}/JRC-IDEES-2015_Transport_{ct_idees}.xlsx"
+    fn_residential = f"{base_dir}/JRC-IDEES-2021_Residential_{ct_idees}.xlsx"
+    fn_tertiary = f"{base_dir}/JRC-IDEES-2021_Tertiary_{ct_idees}.xlsx"
+    fn_transport = f"{base_dir}/JRC-IDEES-2021_Transport_{ct_idees}.xlsx"
 
     ct_totals = {}
 
@@ -357,14 +358,16 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     row = "Energy consumption by fuel - Eurostat structure (ktoe)"
     ct_totals["total residential"] = df.loc[row]
 
-    assert df.index[47] == "Electricity"
-    ct_totals["electricity residential"] = df.iloc[47]
+    assert df.index[40] == "Electricity"
+    ct_totals["electricity residential"] = df.iloc[40]
 
-    assert df.index[46] == "Derived heat"
-    ct_totals["derived heat residential"] = df.iloc[46]
+    # TODO derived heat changed to distributed heat and numbers changed as well!
+    # this needs to be checked
+    assert df.index[39] == "Distributed heat"
+    ct_totals["derived heat residential"] = df.iloc[39]
 
-    assert df.index[50] == "Thermal uses"
-    ct_totals["thermal uses residential"] = df.iloc[50]
+    assert df.index[43] == "Thermal uses"
+    ct_totals["thermal uses residential"] = df.iloc[43]
 
     # services
 
@@ -390,14 +393,15 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     row = "Energy consumption by fuel - Eurostat structure (ktoe)"
     ct_totals["total services"] = df.loc[row]
 
-    assert df.index[50] == "Electricity"
-    ct_totals["electricity services"] = df.iloc[50]
+    assert df.index[43] == "Electricity"
+    ct_totals["electricity services"] = df.iloc[43]
 
-    assert df.index[49] == "Derived heat"
-    ct_totals["derived heat services"] = df.iloc[49]
+    # TODO check derived heat changed to distributed heat
+    assert df.index[42] == "Distributed heat"
+    ct_totals["derived heat services"] = df.iloc[42]
 
-    assert df.index[53] == "Thermal uses"
-    ct_totals["thermal uses services"] = df.iloc[53]
+    assert df.index[46] == "Thermal uses"
+    ct_totals["thermal uses services"] = df.iloc[46]
 
     # agriculture, forestry and fishing
 
@@ -410,7 +414,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
         "Lighting",
         "Ventilation",
         "Specific electricity uses",
-        "Pumping devices (electric)",
+        "Pumping devices (electricity)",
     ]
     ct_totals["total agriculture electricity"] = df.loc[rows].sum()
 
@@ -419,8 +423,8 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     rows = [
         "Motor drives",
-        "Farming machine drives (diesel oil incl. biofuels)",
-        "Pumping devices (diesel oil incl. biofuels)",
+        "Farming machine drives (diesel oil and liquid biofuels)",
+        "Pumping devices (diesel oil and liquid biofuels)",
     ]
     ct_totals["total agriculture machinery"] = df.loc[rows].sum()
 
@@ -435,7 +439,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     ct_totals["electricity road"] = df.loc["Electricity"]
 
-    ct_totals["total two-wheel"] = df.loc["Powered 2-wheelers (Gasoline)"]
+    ct_totals["total two-wheel"] = df.loc["Powered two-wheelers (Gasoline)"]
 
     assert df.index[19] == "Passenger cars"
     ct_totals["total passenger cars"] = df.iloc[19]
@@ -449,58 +453,64 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[39] == "Battery electric vehicles"
     ct_totals["electricity other road passenger"] = df.iloc[39]
 
-    assert df.index[41] == "Light duty vehicles"
+    assert df.index[41] == "Light commercial vehicles"
     ct_totals["total light duty road freight"] = df.iloc[41]
 
     assert df.index[49] == "Battery electric vehicles"
     ct_totals["electricity light duty road freight"] = df.iloc[49]
 
-    row = "Heavy duty vehicles (Diesel oil incl. biofuels)"
+    row = "Heavy goods vehicles (Diesel oil incl. biofuels)"
     ct_totals["total heavy duty road freight"] = df.loc[row]
 
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
 
+    
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
 
-    ct_totals["total rail"] = df.loc["by fuel (EUROSTAT DATA)"]
+    ct_totals["total rail"] = df.loc["by fuel"]
 
     ct_totals["electricity rail"] = df.loc["Electricity"]
 
-    assert df.index[15] == "Passenger transport"
-    ct_totals["total rail passenger"] = df.iloc[15]
+    assert df.index[9] == "Passenger transport"
+    ct_totals["total rail passenger"] = df.iloc[9]
 
-    assert df.index[16] == "Metro and tram, urban light rail"
-    assert df.index[19] == "Electric"
-    assert df.index[20] == "High speed passenger trains"
-    ct_totals["electricity rail passenger"] = df.iloc[[16, 19, 20]].sum()
+    assert df.index[10] == "Metro and tram, urban light rail"
+    assert df.index[13] == "Electric"
+    assert df.index[14] == "High speed passenger trains"
+    ct_totals["electricity rail passenger"] = df.iloc[[10, 13, 14]].sum()
 
-    assert df.index[21] == "Freight transport"
-    ct_totals["total rail freight"] = df.iloc[21]
+    assert df.index[15] == "Freight transport"
+    ct_totals["total rail freight"] = df.iloc[15]
 
-    assert df.index[23] == "Electric"
-    ct_totals["electricity rail freight"] = df.iloc[23]
+    assert df.index[17] == "Electric"
+    ct_totals["electricity rail freight"] = df.iloc[17]
 
     df = pd.read_excel(fn_transport, "TrAvia_ene", index_col=0)
 
-    assert df.index[6] == "Passenger transport"
-    ct_totals["total aviation passenger"] = df.iloc[6]
+    assert df.index[4] == "Passenger transport"
+    ct_totals["total aviation passenger"] = df.iloc[4]
 
-    assert df.index[10] == "Freight transport"
-    ct_totals["total aviation freight"] = df.iloc[10]
+    assert df.index[8] == "Freight transport"
+    ct_totals["total aviation freight"] = df.iloc[8]
 
-    assert df.index[7] == "Domestic"
-    ct_totals["total domestic aviation passenger"] = df.iloc[7]
+    assert df.index[2] == "Domestic"
+    ct_totals["total domestic aviation passenger"] = df.iloc[2]
 
-    assert df.index[8] == "International - Intra-EU"
-    assert df.index[9] == "International - Extra-EU"
-    ct_totals["total international aviation passenger"] = df.iloc[[8, 9]].sum()
+    # TODO added Ukraine to intra EU flights
+    assert df.index[6] == "International - Intra-EEAwUK"
+    assert df.index[7] == "International - Extra-EEAwUK"
+    ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
+    
+    # TODO freight changed from "Domestic and International - Intra-EU" -> split
+    # domestic and international (intra-EU and outside EU)
+    assert df.index[9] == "Domestic"
+    ct_totals["total domestic aviation freight"] = df.iloc[9]
 
-    assert df.index[11] == "Domestic and International - Intra-EU"
-    ct_totals["total domestic aviation freight"] = df.iloc[11]
 
-    assert df.index[12] == "International - Extra-EU"
-    ct_totals["total international aviation freight"] = df.iloc[12]
+    assert df.index[10] == "International - Intra-EEAwUK"
+    assert df.index[11] == "International - Extra-EEAwUK"
+    ct_totals["total international aviation freight"] = df.iloc[[10, 11]].sum()
 
     ct_totals["total domestic aviation"] = (
         ct_totals["total domestic aviation freight"]
@@ -515,7 +525,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     df = pd.read_excel(fn_transport, "TrNavi_ene", index_col=0)
 
     # coastal and inland
-    ct_totals["total domestic navigation"] = df.loc["by fuel (EUROSTAT DATA)"]
+    ct_totals["total domestic navigation"] = df.loc["Energy consumption (ktoe)"]
 
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
 
@@ -567,10 +577,15 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
         names=["country", "year"],
     )
 
+    # clean up dataframe
+    years = np.arange(2000, 2022)
+    totals = totals[totals.index.get_level_values(1).isin(years)]
+    
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
     exclude = totals.columns.str.fullmatch("passenger cars")
+    totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
     return totals
@@ -664,7 +679,8 @@ def build_energy_totals(
 
         for use in uses:
             fuel_use = df[f"electricity {sector} {use}"]
-            fuel = df[f"electricity {sector}"]
+            fuel = (df[f"electricity {sector}"]
+                    .replace(0, np.nan).infer_objects(copy=False))
             avg = fuel_use.div(fuel).mean()
             logger.debug(
                 f"{sector}: average fraction of electricity for {use} is {avg:.3f}"
@@ -680,6 +696,7 @@ def build_energy_totals(
                 df[f"total {sector} {use}"] - df[f"electricity {sector} {use}"]
             )
             nonelectric = df[f"total {sector}"] - df[f"electricity {sector}"]
+            nonelectric = nonelectric.copy().replace(0, np.nan)
             avg = nonelectric_use.div(nonelectric).mean()
             logger.debug(
                 f"{sector}: average fraction of non-electric for {use} is {avg:.3f}"
@@ -716,6 +733,7 @@ def build_energy_totals(
                 nonelectric = (
                     no_norway[f"total {sector}"] - no_norway[f"electricity {sector}"]
                 )
+                nonelectric = nonelectric.copy().replace(0, np.nan)
                 fraction = nonelectric_use.div(nonelectric).mean()
                 df.loc["NO", f"total {sector} {use}"] = (
                     total_heating * fraction
@@ -793,7 +811,8 @@ def build_energy_totals(
         mean_BA = df.loc["BA"].loc[2014:2021, "total residential"].mean()
         mean_RS = df.loc["RS"].loc[2014:2021, "total residential"].mean()
         ratio = mean_BA / mean_RS
-        df.loc["BA"] = df.loc["BA"].replace(0.0, np.nan).values
+        df.loc["BA"] = (df.loc["BA"].replace(0.0, np.nan)
+                        .infer_objects(copy=False).values)
         df.loc["BA"] = df.loc["BA"].combine_first(ratio * df.loc["RS"]).values
 
     return df
@@ -1375,7 +1394,7 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
         "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
     )
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1391,7 +1410,7 @@ if __name__ == "__main__":
     population = nuts3["pop"].groupby(nuts3.country).sum()
 
     countries = snakemake.params.countries
-    idees_countries = pd.Index(countries).intersection(eu28)
+    idees_countries = pd.Index(countries).intersection(eu27)
 
     input_eurostat = snakemake.input.eurostat
     eurostat = build_eurostat(
@@ -1405,8 +1424,8 @@ if __name__ == "__main__":
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
 
-    # Data from IDEES only exists from 2000-2015.
-    logger.info("Extrapolate IDEES data based on eurostat for years 2015-2021.")
+    # Data from IDEES only exists from 2000-2021.
+    logger.info("Extrapolate IDEES data based on eurostat for years 2021-x.")
     energy = rescale_idees_from_eurostat(idees_countries, energy, eurostat)
 
     update_residential_from_eurostat(energy)

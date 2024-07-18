@@ -290,7 +290,7 @@ rule build_energy_totals:
         co2="data/bundle/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
         swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
-        idees="data/bundle/jrc-idees-2015",
+        idees="data/bundle/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/Balances-April2023",
         eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
