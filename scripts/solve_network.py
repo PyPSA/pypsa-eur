@@ -623,6 +623,10 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         ggrouper = n.generators.bus.map(n.buses.country)
         lgrouper = n.loads.bus.map(n.buses.country)
         sgrouper = n.storage_units.bus.map(n.buses.country)
+    elif o[-1] == "l":
+        ggrouper = n.generators.bus.map(n.buses.location)
+        lgrouper = n.loads.bus.map(n.buses.location)
+        sgrouper = n.storage_units.bus.map(n.buses.location)
     else:
         ggrouper = n.generators.bus
         lgrouper = n.loads.bus
