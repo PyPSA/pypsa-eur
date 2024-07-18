@@ -110,7 +110,6 @@ def reverse(dictionary: dict) -> dict:
 idees_rename = {"GR": "EL", "GB": "UK"}
 
 eu28 = cc.EU28as("ISO2").ISO2.tolist()
-# TODO GB kicked out JRC-IDEES 2021
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
 eu28_eea = eu28.copy()
 eu28_eea.remove("GB")
