@@ -31,6 +31,8 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* Enable EQ-constraint on locations, which allows it to be executed for the sector-coupeled model with a more richer technology-mix than solar rooftop
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
