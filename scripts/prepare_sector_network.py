@@ -529,7 +529,9 @@ def add_carrier_buses(n, carrier, nodes=None):
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
     # preliminary value for non-gas carriers to avoid zeros
     capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
-    investment = costs.at["gas storage", "investment"] if carrier == "gas" else 0.02 # Just filling in some value here
+    investment = (
+        costs.at["gas storage", "investment"] if carrier == "gas" else 0.02
+    )  # Just filling in some value here
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
@@ -691,7 +693,9 @@ def add_co2_tracking(n, costs, options):
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
-        investment=options["co2_sequestration_cost"], # Just filling in capital_cost here
+        investment=options[
+            "co2_sequestration_cost"
+        ],  # Just filling in capital_cost here
         bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
         carrier="co2 sequestered",
@@ -895,7 +899,7 @@ def add_generation(n, costs):
             capital_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
             investment=costs.at[generator, "efficiency"]
-            * costs.at[generator, "investment"], 
+            * costs.at[generator, "investment"],
             p_nom_extendable=True,
             carrier=generator,
             efficiency=costs.at[generator, "efficiency"],
@@ -929,7 +933,7 @@ def add_ammonia(n, costs):
         / costs.at["Haber-Bosch", "electricity-input"],
         capital_cost=costs.at["Haber-Bosch", "fixed"]
         / costs.at["Haber-Bosch", "electricity-input"],
-        investment=costs.at["Haber-Bosch","investment"]
+        investment=costs.at["Haber-Bosch", "investment"]
         / costs.at["Haber-Bosch", "electricity-input"],
         marginal_cost=costs.at["Haber-Bosch", "VOM"]
         / costs.at["Haber-Bosch", "electricity-input"],
@@ -998,7 +1002,8 @@ def insert_electricity_distribution_grid(n, costs):
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
         capital_cost=costs.at["electricity distribution grid", "fixed"] * cost_factor,
-        investment=costs.at["electricity distribution grid", "investment"] * cost_factor,
+        investment=costs.at["electricity distribution grid", "investment"]
+        * cost_factor,
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
@@ -1265,7 +1270,9 @@ def add_storage_and_grids(n, costs):
         e_cyclic=True,
         carrier="H2 Store",
         capital_cost=h2_capital_cost,
-        investment=costs.at["hydrogen storage tank type 1 including compressor", "investment"],
+        investment=costs.at[
+            "hydrogen storage tank type 1 including compressor", "investment"
+        ],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -1282,7 +1289,9 @@ def add_storage_and_grids(n, costs):
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
             gas_pipes["capital_cost"] = 0.1 * gas_pipes.length
-            gas_pipes["investment"] = np.nan # I guess with this option no investments occur??
+            gas_pipes["investment"] = (
+                np.nan
+            )  # I guess with this option no investments occur??
         else:
             gas_pipes["p_nom_max"] = np.inf
             gas_pipes["p_nom_min"] = gas_pipes.p_nom
@@ -1428,7 +1437,8 @@ def add_storage_and_grids(n, costs):
             p_nom_extendable=True,
             length=h2_pipes.length.values,
             capital_cost=costs.at["H2 (g) pipeline", "fixed"] * h2_pipes.length.values,
-            investment=costs.at["H2 (g) pipeline", "investment"] * h2_pipes.length.values,
+            investment=costs.at["H2 (g) pipeline", "investment"]
+            * h2_pipes.length.values,
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
@@ -1491,7 +1501,7 @@ def add_storage_and_grids(n, costs):
             capital_cost=costs.at["methanation", "fixed"]
             * costs.at["methanation", "efficiency"],  # costs given per kW_gas
             investment=costs.at["methanation", "investment"]
-            * costs.at["methanation", "efficiency"], 
+            * costs.at["methanation", "efficiency"],
             lifetime=costs.at["methanation", "lifetime"],
         )
 
@@ -1509,9 +1519,9 @@ def add_storage_and_grids(n, costs):
             capital_cost=costs.at["coal", "efficiency"] * costs.at["coal", "fixed"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["coal", "CO2 intensity"],  # NB: fixed cost is per MWel
-            investment=costs.at["coal","efficiency"] * costs.at["coal", "investment"]
+            investment=costs.at["coal", "efficiency"] * costs.at["coal", "investment"]
             + costs.at["biomass CHP capture", "investment"]
-            * costs.at["coal", "CO2 intensity"], 
+            * costs.at["coal", "CO2 intensity"],
             p_nom_extendable=True,
             carrier="coal",
             efficiency=costs.at["coal", "efficiency"],
@@ -2611,7 +2621,8 @@ def add_biomass(n, costs):
             capital_cost=costs.at["BtL", "fixed"]
             + costs.at["biomass CHP capture", "fixed"] * costs.at["BtL", "CO2 stored"],
             investment=costs.at["BtL", "investment"]
-            + costs.at["biomass CHP capture", "investment"] * costs.at["BtL", "CO2 stored"],
+            + costs.at["biomass CHP capture", "investment"]
+            * costs.at["BtL", "CO2 stored"],
             marginal_cost=costs.at["BtL", "efficiency"] * costs.at["BtL", "VOM"],
         )
 
