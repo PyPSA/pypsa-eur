@@ -465,7 +465,6 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[61] == "Passenger cars"
     ct_totals["passenger car efficiency"] = df.iloc[61]
 
-    
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
 
     ct_totals["total rail"] = df.loc["by fuel"]
@@ -501,12 +500,11 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[6] == "International - Intra-EEAwUK"
     assert df.index[7] == "International - Extra-EEAwUK"
     ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
-    
+
     # TODO freight changed from "Domestic and International - Intra-EU" -> split
     # domestic and international (intra-EU and outside EU)
     assert df.index[9] == "Domestic"
     ct_totals["total domestic aviation freight"] = df.iloc[9]
-
 
     assert df.index[10] == "International - Intra-EEAwUK"
     assert df.index[11] == "International - Extra-EEAwUK"
@@ -580,7 +578,7 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # clean up dataframe
     years = np.arange(2000, 2022)
     totals = totals[totals.index.get_level_values(1).isin(years)]
-    
+
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
@@ -679,8 +677,9 @@ def build_energy_totals(
 
         for use in uses:
             fuel_use = df[f"electricity {sector} {use}"]
-            fuel = (df[f"electricity {sector}"]
-                    .replace(0, np.nan).infer_objects(copy=False))
+            fuel = (
+                df[f"electricity {sector}"].replace(0, np.nan).infer_objects(copy=False)
+            )
             avg = fuel_use.div(fuel).mean()
             logger.debug(
                 f"{sector}: average fraction of electricity for {use} is {avg:.3f}"
@@ -811,8 +810,9 @@ def build_energy_totals(
         mean_BA = df.loc["BA"].loc[2014:2021, "total residential"].mean()
         mean_RS = df.loc["RS"].loc[2014:2021, "total residential"].mean()
         ratio = mean_BA / mean_RS
-        df.loc["BA"] = (df.loc["BA"].replace(0.0, np.nan)
-                        .infer_objects(copy=False).values)
+        df.loc["BA"] = (
+            df.loc["BA"].replace(0.0, np.nan).infer_objects(copy=False).values
+        )
         df.loc["BA"] = df.loc["BA"].combine_first(ratio * df.loc["RS"]).values
 
     return df
@@ -1394,7 +1394,8 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
         "Updated energy balances for residential using disaggregate final energy consumption data in Households from Eurostat"
     )
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
