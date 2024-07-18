@@ -907,11 +907,11 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  # costs_max: 1000
-  # costs_threshold: 1
-  # energy_max: 20000
-  # energy_min: -20000
-  # energy_threshold: 50.
+  costs_max: 1000
+  costs_threshold: 1
+  energy_max: 20000
+  energy_min: -20000
+  energy_threshold: 50.
 
   nice_names:
     OCGT: "Open-Cycle Gas"
