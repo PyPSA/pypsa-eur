@@ -31,6 +31,12 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* For countries not contained in the NUTS3-specific datasets (i.e. MD and UA), the mapping of GDP per capita and population per bus region used to spatially distribute electricity demand is now endogenised in a new rule :mod:`build_gdp_ppp_non_nuts3`. https://github.com/PyPSA/pypsa-eur/pull/1146 
+
+* The databundle has been updated to release v0.3.0, which includes raw GDP and population data for countries outside the NUTS system (UA, MD). https://github.com/PyPSA/pypsa-eur/pull/1146 
+
+* Updated filtering in :mod:`determine_availability_matrix_MD_UA.py` to improve speed. https://github.com/PyPSA/pypsa-eur/pull/1146 
+
 * Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
