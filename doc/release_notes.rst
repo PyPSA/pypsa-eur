@@ -39,6 +39,8 @@ Upcoming Release
 
 * Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
 
+* The ``{scope}`` wildcard was removed, since its outputs were not used.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 

@@ -21,20 +21,12 @@ Relevant Settings
 Inputs:
 -------
 - ``resources/<run_name>/temp_soil_total_elec_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
-- ``resources/<run_name>/temp_soil_rural_elec_s<simpl>_<clusters>.nc``: Soil temperature (rural) time series.
-- ``resources/<run_name>/temp_soil_urban_elec_s<simpl>_<clusters>.nc``: Soil temperature (urban) time series.
 - ``resources/<run_name>/temp_air_total_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
-- ``resources/<run_name>/temp_air_rural_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (rural) time series.
-- ``resources/<run_name>/temp_air_urban_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (urban) time series.
 
 Outputs:
 --------
 - ``resources/cop_soil_total_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
-- ``resources/cop_soil_rural_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (rural).
-- ``resources/cop_soil_urban_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (urban).
 - ``resources/cop_air_total_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
-- ``resources/cop_air_rural_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (rural).
-- ``resources/cop_air_urban_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (urban).
 
 
 References
