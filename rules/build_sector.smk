@@ -217,13 +217,19 @@ rule build_temperature_profiles:
 
 rule build_cop_profiles:
     params:
-        heat_pump_sink_T=config_provider("sector", "heat_pump_sink_T"),
+        heat_pump_sink_T_individual_heating=config_provider("sector", "heat_pump_sink_T_individual_heating"),
+        forward_temperature_district_heating=config_provider("sector", "district_heating", "forward_temperature"),
+        return_temperature_district_heating=config_provider("sector", "district_heating", "return_temperature"),
+        heat_source_cooling_district_heating=config_provider("sector", "district_heating", "heat_source_cooling"),
+        heat_pump_cop_approximation=config_provider("sector", "district_heating", "heat_pump_cop_approximation"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
         cop_soil_individual_heating=resources("cop_soil_individual_heating_elec_s{simpl}_{clusters}.nc"),
         cop_air_individual_heating=resources("cop_air_individual_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_air_district_heating=resources("cop_air_district_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_district_heating=resources("cop_soil_district_heating_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -1023,6 +1029,8 @@ rule prepare_sector_network:
         temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
         cop_soil_individual_heating=resources("cop_soil_individual_heating_elec_s{simpl}_{clusters}.nc"),
         cop_air_individual_heating=resources("cop_air_individual_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_air_district_heating=resources("cop_air_district_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_district_heating=resources("cop_soil_district_heating_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)

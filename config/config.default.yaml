@@ -418,6 +418,15 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
+    # check these numbers!
+    forward_temperature: 90 #C
+    return_temperature: 60 #C
+    heat_source_cooling: 6 #K
+    heat_pump_cop_approximation:
+      refrigerant: ammonia
+      heat_exchanger_pinch_point_temperature_difference: 5 #K
+      isentropic_compressor_efficiency: 0.8
+      heat_loss: 0.0
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
@@ -500,7 +509,7 @@ sector:
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
-  heat_pump_sink_T: 55.
+  heat_pump_sink_T_individual_heating: 55.
   reduce_space_heat_exogenously: true
   reduce_space_heat_exogenously_factor:
     2020: 0.10  # this results in a space heat demand reduction of 10%
