@@ -1824,10 +1824,16 @@ def add_heat(n, costs):
     ]
 
     cop = {
-        "air": xr.open_dataarray(snakemake.input.cop_air_decentral_heating)
+        "air decentral": xr.open_dataarray(snakemake.input.cop_air_decentral_heating)
         .to_pandas()
         .reindex(index=n.snapshots),
-        "ground": xr.open_dataarray(snakemake.input.cop_soil_decentral_heating)
+        "ground decentral": xr.open_dataarray(snakemake.input.cop_soil_decentral_heating)
+        .to_pandas()
+        .reindex(index=n.snapshots),
+        "air central": xr.open_dataarray(snakemake.input.cop_air_central_heating)
+        .to_pandas()
+        .reindex(index=n.snapshots),
+        "ground central": xr.open_dataarray(snakemake.input.cop_soil_central_heating)
         .to_pandas()
         .reindex(index=n.snapshots),
     }
@@ -1922,7 +1928,7 @@ def add_heat(n, costs):
         for heat_pump_type in heat_pump_types:
             costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
             efficiency = (
-                cop[heat_pump_type][nodes]
+                cop[f"{heat_pump_type} {name_type}"][nodes]
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name, "efficiency"]
             )
