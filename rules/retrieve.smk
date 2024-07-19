@@ -64,7 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../scripts/retrieve_eurostat_household_data.py"
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
+##### Iberian exception: Follow conventional rule if pypsa_spain[retrieve_Iberian_cutout] is FALSE
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True) and not config["pypsa_spain"].get("retrieve_Iberian_cutout", False):
 
     rule retrieve_cutout:
         input:
@@ -81,6 +82,26 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
+
+
+##### Iberian exception: Follow new rule if pypsa_spain[retrieve_Iberian_cutout] is TRUE
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True) and config["pypsa_spain"].get("retrieve_Iberian_cutout", False):
+
+    rule retrieve_cutout:
+        input:
+            storage(
+                "https://drive.upm.es/s/0HL1G3QmOnHSFmS/download",
+            ),
+        output:
+            protected("cutouts/" + CDIR + "{cutout}.nc"),
+        log:
+            "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
+            # validate_checksum(output[0], input[0])   ##### Do not call function 'validate_checksum' (intended for zenodos links)
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
