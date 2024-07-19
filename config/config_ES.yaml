@@ -20,8 +20,8 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: ""
-  name: ""
+  prefix: "MyPrefix"   #####
+  name: "MyName"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -40,20 +40,18 @@ scenario:
   simpl:
   - ''
   ll:
-  - vopt
+  - v1.0   # vopt   #####
   clusters:
-  - 37
-  - 128
-  - 256
+  - 5   #####
   opts:
   - ''
   sector_opts:
-  - ''
+  - ''   # '1H'   #####
   planning_horizons:
   # - 2020
-  # - 2030
+  - 2030   #####
   # - 2040
-  - 2050
+  # - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries: ['ES']
@@ -78,13 +76,13 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
+  # 2020: 0.701
+  # 2025: 0.524
+  2030: 0.166   # 0.297   ##### objetivo PNIEC para sector eléctrico: 10'891 MtCO2 , en 1990: 65'5754 MtCO2
+  # 2035: 0.150
+  # 2040: 0.071
+  # 2045: 0.032
+  # 2050: 0.000
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -106,17 +104,17 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    Generator: [solar, solar-hsat, onwind, offwind-float, OCGT, CCGT, biomass]   #####
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
+  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2031)   #####
   custom_powerplants: false
   everywhere_powerplants: []
 
-  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  conventional_carriers: [nuclear, OCGT, CCGT, biomass]   #####
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-float, hydro]   #####
 
   estimate_renewable_capacities:
     enable: true
@@ -124,7 +122,7 @@ electricity:
     year: 2020
     expansion_limit: false
     technology_mapping:
-      Offshore: [offwind-ac, offwind-dc, offwind-float]
+      Offshore: [offwind-float]   #####
       Onshore: [onwind]
       PV: [solar]
 
@@ -216,10 +214,10 @@ renewable:
     cutout: europe-2013-era5
     resource:
       method: wind
-      turbine: NREL_ReferenceTurbine_5MW_offshore
+      turbine: NREL_ReferenceTurbine_2020ATB_7MW # NREL_ReferenceTurbine_5MW_offshore   #####
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
+    correction_factor: 1 # 0.8855   #####
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
     # until done more rigorously in #153
@@ -336,13 +334,14 @@ pypsa_eur:
   - DC
   Generator:
   - onwind
-  - offwind-ac
-  - offwind-dc
+  # - offwind-ac   #####
+  # - offwind-dc   #####
   - offwind-float
   - solar-hsat
   - solar
   - ror
   - nuclear
+  - biomass
   StorageUnit:
   - PHS
   - hydro
@@ -402,11 +401,11 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
-  transport: true
-  heating: true
-  biomass: true
-  industry: true
-  agriculture: true
+  transport: false   # true   #####
+  heating: false   # true   #####
+  biomass: false   # true   #####
+  industry: false   # true   #####
+  agriculture: false   # true   #####
   district_heating:
     potential: 0.6
     progress:
@@ -555,8 +554,8 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 200
-  co2_sequestration_cost: 10
+  co2_sequestration_potential: 0   # 200   #####
+  co2_sequestration_cost: 9999   # 10   #####
   co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
@@ -564,7 +563,7 @@ sector:
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
-    # - onshore  # more than 50 km from sea
+  - onshore  # more than 50 km from sea   #####
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
@@ -578,7 +577,7 @@ sector:
   use_fuel_cell_waste_heat: 0.25
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
-  electricity_distribution_grid: true
+  electricity_distribution_grid: false   # true   #####
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
@@ -593,7 +592,7 @@ sector:
       compression_per_1000km: 0.01
     electricity distribution grid:
       efficiency_static: 0.97
-  H2_network: true
+  H2_network: false   # true   #####
   gas_network: false
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
@@ -603,8 +602,9 @@ sector:
   biomass_spatial: false
   biomass_transport: false
   biogas_upgrading_cc: false
-  conventional_generation:
-    OCGT: gas
+  conventional_generation:   #################### Aquí es donde se introducen links, function "add_generation", script "prepare_sector_network.py" 
+    # OCGT: gas   #####
+    CCGT: gas   #####
   biomass_to_liquid: false
   biosng: false
   limit_max_growth:
@@ -889,7 +889,7 @@ solving:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
   map:
-    boundaries: [-11, 30, 34, 71]
+    boundaries: [-14, 6.35, 35, 46.3]   # [-11, 30, 34, 71]   #####
     color_geomap:
       ocean: white
       land: white
