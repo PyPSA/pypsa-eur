@@ -845,9 +845,11 @@ def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.S
     district_heat = idees[["derived heat residential", "derived heat services"]].sum(
         axis=1
     )
-    total_heat = idees[["thermal uses residential", "thermal uses services"]].sum(
-        axis=1
-    ).replace(0, np.nan)
+    total_heat = (
+        idees[["thermal uses residential", "thermal uses services"]]
+        .sum(axis=1)
+        .replace(0, np.nan)
+    )
 
     district_heat_share = district_heat / total_heat
 
@@ -866,7 +868,7 @@ def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.S
     district_heat_share = pd.concat(
         [district_heat_share, dh_share.reindex(new_index, level=0)], axis=1
     ).min(axis=1)
-    
+
     district_heat_share = district_heat_share.reindex(countries, level=0)
 
     district_heat_share.name = "district heat share"
