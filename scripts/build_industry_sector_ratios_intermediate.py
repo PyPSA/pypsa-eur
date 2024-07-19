@@ -58,7 +58,7 @@ def build_industry_sector_ratios_intermediate():
         ]
         today_sector_ratios_ct.loc[:, ~missing_mask] = today_sector_ratios_ct.loc[
             :, ~missing_mask
-        ].fillna(0)
+        ].fillna(future_sector_ratios)
         intermediate_sector_ratios[ct] = (
             today_sector_ratios_ct * (1 - fraction_future)
             + future_sector_ratios * fraction_future

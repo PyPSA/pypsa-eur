@@ -109,6 +109,7 @@ def plot_ch4_map(n):
         "gas pipeline": "#f08080",
         "renewable gas pipeline": "#f08080",
         "gas pipeline new": "#c46868",
+        "renewable gas pipeline new": "#c46868",
         "gas pipeline (in 2020)": "lightgrey",
         "gas pipeline (available)": "#e8d1d1",
     }
