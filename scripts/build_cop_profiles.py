@@ -371,7 +371,7 @@ if __name__ == "__main__":
         delta_T = snakemake.params.heat_pump_sink_T_individual_heating - source_T
 
         cop_individual_heating = coefficient_of_performance_individual_heating(delta_T, source)
-        cop_individual_heating.to_netcdf(snakemake.output[f"cop_{source}_individual_heating"])
+        cop_individual_heating.to_netcdf(snakemake.output[f"cop_{source}_decentral_heating"])
 
         cop_district_heating = CopDistrictHeating(
             forward_temperature_celsius=snakemake.params.forward_temperature_district_heating,
@@ -380,6 +380,6 @@ if __name__ == "__main__":
             source_outlet_temperature_celsius=source_T - snakemake.params.heat_source_cooling_district_heating,
         ).cop()
 
-        cop_district_heating.to_netcdf(snakemake.output[f"cop_{source}_district_heating"])
+        cop_district_heating.to_netcdf(snakemake.output[f"cop_{source}_central_heating"])
         
         
