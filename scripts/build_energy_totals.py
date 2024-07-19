@@ -1103,10 +1103,12 @@ def build_transport_data(
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
     transport_data.rename(columns={"passenger cars": "number cars"}, inplace=True)
-    
+
     # clean up dataframe
     years = np.arange(2000, 2022)
-    transport_data = transport_data[transport_data.index.get_level_values(1).isin(years)]
+    transport_data = transport_data[
+        transport_data.index.get_level_values(1).isin(years)
+    ]
 
     missing = transport_data.index[transport_data["number cars"].isna()]
     if not missing.empty:
