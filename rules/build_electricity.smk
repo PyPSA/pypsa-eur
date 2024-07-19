@@ -202,7 +202,6 @@ rule determine_availability_matrix_MD_UA:
         + ".nc",
     output:
         availability_matrix=resources("availability_matrix_MD-UA_{technology}.nc"),
-        availability_map=resources("availability_matrix_MD-UA_{technology}.png"),
     log:
         logs("determine_availability_matrix_MD_UA_{technology}.log"),
     threads: config["atlite"].get("nprocesses", 4)

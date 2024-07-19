@@ -3,10 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Maps the per-capita GDP and population values to non-NUTS3 regions. The script
-takes as input the country code, a GeoDataFrame containing the regions, and the
-file paths to the datasets containing the GDP and POP values for non-NUTS3
-countries.
+Maps the per-capita GDP and population values to non-NUTS3 regions.
+
+The script takes as input the country code, a GeoDataFrame containing
+the regions, and the file paths to the datasets containing the GDP and
+POP values for non-NUTS3 countries.
 """
 
 import logging
