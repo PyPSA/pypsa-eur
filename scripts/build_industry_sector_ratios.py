@@ -77,9 +77,9 @@ index = [
     "process emission from feedstock",
 ]
 
-eff_bio_steam = 0.89 # following DEA data for solid biomass boiler steam
-eff_h2_steam = 1 # following DEA data for direct firing gas
-eff_elec_steam = 0.99 # following DEA data for electric boiler steam
+eff_bio_steam = 0.89  # following DEA data for solid biomass boiler steam
+eff_h2_steam = 1  # following DEA data for direct firing gas
+eff_elec_steam = 0.99  # following DEA data for electric boiler steam
 
 
 def load_idees_data(sector, country="EU28"):
@@ -908,7 +908,8 @@ def pulp_paper_printing():
         / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Paper: Paper machine - Steam use"] * params["steam_electricity_fraction"]
+        s_ued["Paper: Paper machine - Steam use"]
+        * params["steam_electricity_fraction"]
         / eff_elec_steam
     )
 
@@ -1290,7 +1291,8 @@ def transport_equipment():
         / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Trans. Eq.: Steam processing"] * params["steam_electricity_fraction"]
+        s_ued["Trans. Eq.: Steam processing"]
+        * params["steam_electricity_fraction"]
         / eff_elec_steam
     )
 
@@ -1354,7 +1356,8 @@ def machinery_equipment():
         / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Mach. Eq.: Steam processing"] * params["steam_electricity_fraction"]
+        s_ued["Mach. Eq.: Steam processing"]
+        * params["steam_electricity_fraction"]
         / eff_elec_steam
     )
 
