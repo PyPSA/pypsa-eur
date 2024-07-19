@@ -860,8 +860,9 @@ def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.S
         .squeeze()
     )
     # make conservative assumption and take minimum from both data sets
-    new_index = pd.MultiIndex.from_product([dh_share.index,
-                                            district_heat_share.index.get_level_values(1).unique()])
+    new_index = pd.MultiIndex.from_product(
+        [dh_share.index, district_heat_share.index.get_level_values(1).unique()]
+    )
     district_heat_share = pd.concat(
         [district_heat_share, dh_share.reindex(new_index, level=0)], axis=1
     ).min(axis=1)
