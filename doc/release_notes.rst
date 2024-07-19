@@ -27,6 +27,8 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
+* Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
