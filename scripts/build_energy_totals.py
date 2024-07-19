@@ -1147,8 +1147,8 @@ def rescale_idees_from_eurostat(
     idees_countries: List[str], energy: pd.DataFrame, eurostat: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Takes JRC IDEES data from 2015 and rescales it by the ratio of the Eurostat
-    data and the 2015 Eurostat data.
+    Takes JRC IDEES data from 2021 and rescales it by the ratio of the Eurostat
+    data and the 2021 Eurostat data.
     Missing data: ['passenger car efficiency', 'passenger cars']
 
     Parameters
@@ -1178,7 +1178,7 @@ def rescale_idees_from_eurostat(
 
     main_cols = ["Total all products", "Electricity"]
     # read in the eurostat data for 2015
-    eurostat_2015 = eurostat.xs(2015, level="year")[main_cols]
+    eurostat_2015 = eurostat.xs(2021, level="year")[main_cols]
     # calculate the ratio of the two data sets
     ratio = eurostat[main_cols] / eurostat_2015
     ratio = ratio.droplevel([2, 5])
@@ -1429,10 +1429,6 @@ if __name__ == "__main__":
     idees = build_idees(idees_countries)
 
     energy = build_energy_totals(countries, eurostat, swiss, idees)
-
-    # Data from IDEES only exists from 2000-2021.
-    logger.info("Extrapolate IDEES data based on eurostat for years 2021-x.")
-    energy = rescale_idees_from_eurostat(idees_countries, energy, eurostat)
 
     update_residential_from_eurostat(energy)
 
