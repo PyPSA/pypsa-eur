@@ -24,9 +24,11 @@ run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
 
-logs = path_provider("logs/", RDIR, run["shared_resources"])
-benchmarks = path_provider("benchmarks/", RDIR, run["shared_resources"])
-resources = path_provider("resources/", RDIR, run["shared_resources"])
+shared_resources = run["shared_resources"]["policy"]
+exclude_from_shared = run["shared_resources"]["exclude"]
+logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
 CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
@@ -71,7 +73,7 @@ if config["foresight"] == "perfect":
 
 rule all:
     input:
-        expand(RESULTS + "graphs/costs.pdf", run=config["run"]["name"]),
+        expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
     default_target: True
 
 

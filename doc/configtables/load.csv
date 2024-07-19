@@ -4,4 +4,4 @@ time_shift_for_large_gaps,string,string,"Periods which are used for copying time
 manual_adjustments,bool,"{true, false}","Whether to adjust the load data manually according to the function in :func:`manual_adjustment`."
 scaling_factor,--,float,"Global correction factor for the load time series."
 fixed_year,--,Year or False,"To specify a fixed year for the load time series that deviates from the snapshots' year"
-supplement_synthetic,bool,"{true, false}","Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/record/10820928."
+supplement_synthetic,bool,"{true, false}","Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/records/10820928."

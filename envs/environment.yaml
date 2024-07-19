@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: CC0-1.0
 
 name: pypsa-eur
 channels:
@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa>=0.26.1
+- pypsa>=0.28
 - linopy
 - dask
 
@@ -20,15 +20,15 @@ dependencies:
 - openpyxl!=3.1.1
 - pycountry
 - seaborn
-- snakemake-minimal>=8.11
+- snakemake-minimal>=8.14
 - memory_profiler
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.13
+- powerplantmatching>=0.5.15
 - numpy
 - pandas>=2.1
-- geopandas>=0.11.0
+- geopandas>=1
 - xarray>=2023.11.0
 - rioxarray
 - netcdf4

@@ -129,7 +129,7 @@ def copy_timeslice(load, cntry, start, stop, delta, fn_load=None):
             load.loc[start:stop, cntry] = load.loc[
                 start - delta : stop - delta, cntry
             ].values
-        elif fn_load is not None:
+        elif fn_load is not None and cntry in load:
             duration = pd.date_range(freq="h", start=start - delta, end=stop - delta)
             load_raw = load_timeseries(fn_load, duration, [cntry])
             load.loc[start:stop, cntry] = load_raw.loc[
@@ -312,7 +312,7 @@ if __name__ == "__main__":
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
         # "UA" does not appear in synthetic load data
-        countries = list(set(countries) - set(["UA"]))
+        countries = list(set(countries) - set(["UA", "MD"]))
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 

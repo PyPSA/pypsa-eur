@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 """
 Retrieve gas infrastructure data from
-https://zenodo.org/record/4767098/files/IGGIELGN.zip.
+https://zenodo.org/records/4767098/files/IGGIELGN.zip.
 """
 
 import logging
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    url = "https://zenodo.org/record/4767098/files/IGGIELGN.zip"
+    url = "https://zenodo.org/records/4767098/files/IGGIELGN.zip"
 
     # Save locations
     zip_fn = Path(f"{rootpath}/IGGIELGN.zip")

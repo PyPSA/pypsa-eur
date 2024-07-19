@@ -26,7 +26,7 @@ Relevant settings
 
     renewable:
         {technology}:
-            cutout: corine: luisa: grid_codes: distance: natura: max_depth:
+            cutout: corine: luisa: grid_codes: distance: natura: max_depth: min_depth:
             max_shore_distance: min_shore_distance: capacity_per_sqkm:
             correction_factor: min_p_max_pu: clip_p_max_pu: resource:
 
@@ -52,7 +52,7 @@ Inputs
   CORINE land cover, see `Annex 1 of the technical documentation
   <https://publications.jrc.ec.europa.eu/repository/bitstream/JRC124621/technical_report_luisa_basemap_2018_v7_final.pdf>`_.
 
-- ``data/bundle/GEBCO_2014_2D.nc``: A `bathymetric
+- ``data/bundle/gebco/GEBCO_2014_2D.nc``: A `bathymetric
   <https://en.wikipedia.org/wiki/Bathymetry>`_ data set with a global terrain
   model for ocean and land at 15 arc-second intervals by the `General
   Bathymetric Chart of the Oceans (GEBCO)
@@ -284,6 +284,12 @@ if __name__ == "__main__":
         func = functools.partial(np.greater, -params["max_depth"])
         excluder.add_raster(snakemake.input.gebco, codes=func, crs=4326, nodata=-1000)
 
+    if params.get("min_depth"):
+        func = functools.partial(np.greater, -params["min_depth"])
+        excluder.add_raster(
+            snakemake.input.gebco, codes=func, crs=4326, nodata=-1000, invert=True
+        )
+
     if "min_shore_distance" in params:
         buffer = params["min_shore_distance"]
         excluder.add_geometry(snakemake.input.country_shapes, buffer=buffer)
@@ -400,7 +406,7 @@ if __name__ == "__main__":
 
     if snakemake.wildcards.technology.startswith("offwind"):
         logger.info("Calculate underwater fraction of connections.")
-        offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).unary_union
+        offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).union_all()
         underwater_fraction = []
         for bus in buses:
             p = centre_of_mass.sel(bus=bus).data

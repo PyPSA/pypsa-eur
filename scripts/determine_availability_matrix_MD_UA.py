@@ -147,7 +147,7 @@ if __name__ == "__main__":
     regions_geometry = regions.to_crs(3035).geometry
     band, transform = shape_availability(regions_geometry, excluder)
     fig, ax = plt.subplots(figsize=(4, 8))
-    gpd.GeoSeries(regions_geometry.unary_union).plot(ax=ax, color="none")
+    gpd.GeoSeries(regions_geometry.union_all()).plot(ax=ax, color="none")
     show(band, transform=transform, cmap="Greens", ax=ax)
     plt.axis("off")
     plt.savefig(snakemake.output.availability_map, bbox_inches="tight", dpi=500)
