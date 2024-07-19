@@ -31,11 +31,11 @@ Upcoming Release
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
 
-* PR https://github.com/PyPSA/pypsa-eur/pull/1146 endogenises the mapping of if GDP per capita and population for non-NUTS3 countries (i.e. MD and UA) needed to calculate the regional distribution of loads. New script ``build_gdp_ppp_non_nuts3.py``. This allows for correct mapping of GDP and population independent of the underlying electricity grid and buses. Updated databundle to include cutouts of both GDP and population for MD and UA (see https://zenodo.org/records/10973944). PR https://github.com/PyPSA/pypsa-eur/pull/1146 also fixes bug with Crimea bus - introduced with recent changes in polygon simplifications. UA/MD will be compatible with GridKit to OSM transition.
+* For countries not contained in the NUTS3-specific datasets (i.e. MD and UA), the mapping of GDP per capita and population per bus region used to spatially distribute electricity demand is now endogenised in a new rule :mod:`build_gdp_ppp_non_nuts3`. https://github.com/PyPSA/pypsa-eur/pull/1146 
 
-* The databundle url has been updated to release v.0.3.0, which includes raw GDP and population data for countries outside the NUTS system (UA, MD). Relevant for ``retrieve_databundle`` and ``retrieve_ship_raster``.
+* The databundle has been updated to release v0.3.0, which includes raw GDP and population data for countries outside the NUTS system (UA, MD). https://github.com/PyPSA/pypsa-eur/pull/1146 
 
-* Recent atlite changes and updated filtering in ``determine_availability_matrix_MD_UA.py``` improves speed and fixes issue https://github.com/PyPSA/pypsa-eur/issues/1090.
+* Updated filtering in :mod:`determine_availability_matrix_MD_UA.py` to improve speed. https://github.com/PyPSA/pypsa-eur/pull/1146 
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

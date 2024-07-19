@@ -395,9 +395,11 @@ rule build_gdp_pop_non_nuts3:
         resources("gdp_pop_non_nuts3.geojson"),
     log:
         logs("build_gdp_pop_non_nuts3.log"),
+    benchmark:
+        benchmarks("build_gdp_pop_non_nuts3")
     threads: 1
     resources:
-        mem_mb=1500,
+        mem_mb=8000,
     conda:
         "../envs/environment.yaml"
     script:
