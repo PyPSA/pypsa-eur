@@ -37,6 +37,8 @@ Upcoming Release
 
 * Updated filtering in :mod:`determine_availability_matrix_MD_UA.py` to improve speed. https://github.com/PyPSA/pypsa-eur/pull/1146 
 
+* Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
