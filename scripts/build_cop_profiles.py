@@ -6,8 +6,8 @@
 Build coefficient of performance (COP) time series for air- or ground-sourced
 heat pumps.
 
-The COP is approximated as a quatratic function of the temperature difference between source and
-sink, based on Staffell et al. 2012.
+For individual (decentral) heat pumps, the COP is approximated as a quatratic function of the temperature difference between source and sink, based on Staffell et al. 2012.
+For district (central) heating, the COP is approximated based on Jensen et al. 2018 and parameters from Pieper et al. 2020.
 
 This rule is executed in ``build_sector.smk``.
 
@@ -21,25 +21,21 @@ Relevant Settings
 Inputs:
 -------
 - ``resources/<run_name>/temp_soil_total_elec_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
-- ``resources/<run_name>/temp_soil_rural_elec_s<simpl>_<clusters>.nc``: Soil temperature (rural) time series.
-- ``resources/<run_name>/temp_soil_urban_elec_s<simpl>_<clusters>.nc``: Soil temperature (urban) time series.
 - ``resources/<run_name>/temp_air_total_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
-- ``resources/<run_name>/temp_air_rural_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (rural) time series.
-- ``resources/<run_name>/temp_air_urban_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (urban) time series.
 
 Outputs:
 --------
-- ``resources/cop_soil_total_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
-- ``resources/cop_soil_rural_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (rural).
-- ``resources/cop_soil_urban_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (urban).
-- ``resources/cop_air_total_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
-- ``resources/cop_air_rural_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (rural).
-- ``resources/cop_air_urban_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (urban).
+- ``resources/cop_air_decentral_heating_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (decentral heating).
+- ``resources/cop_soil_decentral_heating_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (decentral heating).
+- ``resources/cop_air_central_heating_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (central heating).
+- ``resources/cop_soil_central_heating_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (central heating).
 
 
 References
 ----------
 [1] Staffell et al., Energy & Environmental Science 11 (2012): A review of domestic heat pumps, https://doi.org/10.1039/C2EE22653G.
+[2] Jensen et al., Proceedings of the13th IIR-Gustav Lorentzen Conference on Natural Refrigerants (2018): Heat pump COP, part 2: Generalized COP estimation of heat pump processes, https://doi.org/10.18462/iir.gl.2018.1386
+[3] Pieper et al., Energy 205 (2020): Comparison of COP estimation methods for large-scale heat pumps used in energy planning, https://doi.org/10.1016/j.energy.2020.117994
 """
 
 from typing import Union
@@ -368,7 +364,7 @@ if __name__ == "__main__":
     for source in ["air", "soil"]:
         source_T = xr.open_dataarray(snakemake.input[f"temp_{source}_total"])
 
-        delta_T = snakemake.params.heat_pump_sink_T_individual_heating - source_T
+        delta_T = snakemake.params.heat_pump_sink_T_decentral_heating - source_T
 
         cop_individual_heating = coefficient_of_performance_individual_heating(delta_T, source)
         cop_individual_heating.to_netcdf(snakemake.output[f"cop_{source}_decentral_heating"])

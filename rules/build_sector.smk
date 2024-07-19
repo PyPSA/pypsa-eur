@@ -218,16 +218,16 @@ rule build_temperature_profiles:
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider("sector", "heat_pump_sink_T_individual_heating"),
-        forward_temperature_central_heating=config_provider("sector", "district_heating", "forward_temperature"),
-        return_temperature_central_heating=config_provider("sector", "district_heating", "return_temperature"),
-        heat_source_cooling_central_heating=config_provider("sector", "district_heating", "heat_source_cooling"),
-        heat_pump_cop_approximation_central_heating=config_provider("sector", "district_heating", "heat_pump_cop_approximation"),
+        forward_temperature_district_heating=config_provider("sector", "district_heating", "forward_temperature"),
+        return_temperature_district_heating=config_provider("sector", "district_heating", "return_temperature"),
+        heat_source_cooling_district_heating=config_provider("sector", "district_heating", "heat_source_cooling"),
+        heat_pump_cop_approximation_district_heating=config_provider("sector", "district_heating", "heat_pump_cop_approximation"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
-        cop_air_decentral_heating=resources("cop_air_decentral_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_decentral_heating=resources("cop_soil_decentral_elec_s{simpl}_{clusters}.nc"),
+        cop_air_decentral_heating=resources("cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_decentral_heating=resources("cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"),
         cop_air_central_heating=resources("cop_air_central_heating_elec_s{simpl}_{clusters}.nc"),
         cop_soil_central_heating=resources("cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"),
     resources:
