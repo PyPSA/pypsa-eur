@@ -1824,10 +1824,10 @@ def add_heat(n, costs):
     ]
 
     cop = {
-        "air": xr.open_dataarray(snakemake.input.cop_air_total)
+        "air": xr.open_dataarray(snakemake.input.cop_air_individual_heating)
         .to_pandas()
         .reindex(index=n.snapshots),
-        "ground": xr.open_dataarray(snakemake.input.cop_soil_total)
+        "ground": xr.open_dataarray(snakemake.input.cop_soil_individual_heating)
         .to_pandas()
         .reindex(index=n.snapshots),
     }

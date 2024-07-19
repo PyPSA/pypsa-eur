@@ -220,18 +220,10 @@ rule build_cop_profiles:
         heat_pump_sink_T=config_provider("sector", "heat_pump_sink_T"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_rural=resources("temp_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_urban=resources("temp_soil_urban_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
     output:
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_individual_heating=resources("cop_soil_individual_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_air_individual_heating=resources("cop_air_individual_heating_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -1029,12 +1021,8 @@ rule prepare_sector_network:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_rural=resources("temp_air_rural_elec_s{simpl}_{clusters}.nc"),
         temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_individual_heating=resources("cop_soil_individual_heating_elec_s{simpl}_{clusters}.nc"),
+        cop_air_individual_heating=resources("cop_air_individual_heating_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
