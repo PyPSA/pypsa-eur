@@ -329,9 +329,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     """
 
     ct_idees = idees_rename.get(ct, ct)
-    fn_residential = f"{base_dir}/JRC-IDEES-2021_Residential_{ct_idees}.xlsx"
-    fn_tertiary = f"{base_dir}/JRC-IDEES-2021_Tertiary_{ct_idees}.xlsx"
-    fn_transport = f"{base_dir}/JRC-IDEES-2021_Transport_{ct_idees}.xlsx"
+    fn_residential = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Residential_{ct_idees}.xlsx"
+    fn_tertiary = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Tertiary_{ct_idees}.xlsx"
+    fn_transport = f"{base_dir}/{ct_idees}/JRC-IDEES-2021_Transport_{ct_idees}.xlsx"
 
     ct_totals = {}
 
@@ -1103,6 +1103,10 @@ def build_transport_data(
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
     transport_data.rename(columns={"passenger cars": "number cars"}, inplace=True)
+    
+    # clean up dataframe
+    years = np.arange(2000, 2022)
+    transport_data = transport_data[transport_data.index.get_level_values(1).isin(years)]
 
     missing = transport_data.index[transport_data["number cars"].isna()]
     if not missing.empty:
