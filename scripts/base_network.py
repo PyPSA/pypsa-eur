@@ -85,8 +85,8 @@ import shapely.wkt
 import yaml
 from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
-from scipy.spatial import KDTree
 from scipy.sparse import csgraph
+from scipy.spatial import KDTree
 from shapely.geometry import LineString, Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
@@ -821,7 +821,7 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
         # (see https://github.com/shapely/shapely/issues/2020)
         pts = gpd.GeoDataFrame(geometry=onshore_pts)
         voronoi = gpd.GeoDataFrame(geometry=onshore_voronoi)
-        onshore_voronoi = gpd.sjoin(pts, voronoi, how='right').set_index("Bus")
+        onshore_voronoi = gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
 
         onshore_regions.append(
             gpd.GeoDataFrame(
@@ -852,7 +852,7 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
         # (see https://github.com/shapely/shapely/issues/2020)
         pts = gpd.GeoDataFrame(geometry=offshore_pts)
         voronoi = gpd.GeoDataFrame(geometry=offshore_voronoi)
-        offshore_voronoi = gpd.sjoin(pts, voronoi, how='right').set_index("Bus")
+        offshore_voronoi = gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
 
         offshore_regions_c = gpd.GeoDataFrame(
             {
