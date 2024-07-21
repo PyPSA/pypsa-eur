@@ -802,7 +802,7 @@ def voronoi(points, outline):
     # https://github.com/shapely/shapely/issues/2020
     pts = gpd.GeoDataFrame(geometry=pts)
     voronoi = gpd.GeoDataFrame(geometry=voronoi)
-    
+
     return gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
 
 
