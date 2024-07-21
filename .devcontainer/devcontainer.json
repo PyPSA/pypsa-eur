@@ -2,12 +2,12 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
   "name": "pypsa eur dev",
-  //   "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  // "image": "mcr.microsoft.com/devcontainers/base:jammy",
   // "build": {
-  // // "dockerfile": "Dockerfile"
-
+  //    "dockerfile": "Dockerfile"
   // },
-  "image": "akshatmittaloet/pypsa-eur:v8.0",
+  "image": "akshatmittaloet/pypsa-eur:v8.0.sol",
+  
   "features": {
     "ghcr.io/devcontainers-contrib/features/bash-command:1": {},
     "ghcr.io/eliises/devcontainer-features/bash-profile:1": {}
@@ -40,19 +40,15 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "ls -a",
-  //   "postCreateCommand": "pip3 install -r requirements.txt"
+  "postCreateCommand": "python -m pip install --upgrade debugpy",
 
   // Configure tool-specific properties.
   // "customizations": {},
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
-  "workspaceMount": "source=${localWorkspaceFolder},target=/pypsa-eur,type=bind,consistency=cached",
-  "workspaceFolder": "/pypsa-eur"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces",
 
-  // "mounts": [
-  //   "source=${localWorkspaceFolder}/scripts,target=pypsa-eur/scripts,type=bind,consistency=cached"
-  // ],
-  // "workspaceFolder": "/pypsa-eur"
+  "postAttachCommand": "mv ../pypsa-eur/* ./ && echo 'All files from pypsa-eur have been copied to workspaces'"
 }
