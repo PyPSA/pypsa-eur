@@ -788,6 +788,24 @@ def base_network(
     return n
 
 
+def voronoi(points, outline):
+    """
+    Create Voronoi polygons from a set of points within an outline.
+    """
+    pts = gpd.GeoSeries(
+        gpd.points_from_xy(points.x, points.y),
+        index=points.index,
+    )
+    voronoi = points.voronoi_polygons(extend_to=outline).clip(outline)
+
+    # can be removed with shapely 2.1 where order is preserved
+    # https://github.com/shapely/shapely/issues/2020
+    pts = gpd.GeoDataFrame(geometry=pts)
+    voronoi = gpd.GeoDataFrame(geometry=voronoi)
+    
+    return gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
+
+
 def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
     country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
     offshore_shapes = gpd.read_file(offshore_shapes)
@@ -809,27 +827,13 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
             )  # preference for substations
             .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
         )
-        onshore_pts = gpd.GeoSeries(
-            gpd.points_from_xy(onshore_locs.x, onshore_locs.y, crs=n.crs),
-            index=onshore_locs.index,
-        )
-        onshore_voronoi = onshore_pts.voronoi_polygons(extend_to=onshore_shape).clip(
-            onshore_shape
-        )
-
-        # can be removed with shapely 2.1 where order is preserved
-        # (see https://github.com/shapely/shapely/issues/2020)
-        pts = gpd.GeoDataFrame(geometry=onshore_pts)
-        voronoi = gpd.GeoDataFrame(geometry=onshore_voronoi)
-        onshore_voronoi = gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
-
         onshore_regions.append(
             gpd.GeoDataFrame(
                 {
                     "name": onshore_locs.index,
                     "x": onshore_locs["x"],
                     "y": onshore_locs["y"],
-                    "geometry": onshore_voronoi,
+                    "geometry": voronoi(onshore_locs, onshore_shape),
                     "country": country,
                 },
                 crs=n.crs,
@@ -840,26 +844,12 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
             continue
         offshore_shape = offshore_shapes[country]
         offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
-        offshore_pts = gpd.GeoSeries(
-            gpd.points_from_xy(offshore_locs.x, offshore_locs.y, crs=n.crs),
-            index=offshore_locs.index,
-        )
-        offshore_voronoi = offshore_pts.voronoi_polygons(extend_to=offshore_shape).clip(
-            offshore_shape
-        )
-
-        # can be removed with shapely 2.1 where order is preserved
-        # (see https://github.com/shapely/shapely/issues/2020)
-        pts = gpd.GeoDataFrame(geometry=offshore_pts)
-        voronoi = gpd.GeoDataFrame(geometry=offshore_voronoi)
-        offshore_voronoi = gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
-
         offshore_regions_c = gpd.GeoDataFrame(
             {
                 "name": offshore_locs.index,
                 "x": offshore_locs["x"],
                 "y": offshore_locs["y"],
-                "geometry": offshore_voronoi,
+                "geometry": voronoi(offshore_locs, offshore_shape),
                 "country": country,
             },
             crs=n.crs,
