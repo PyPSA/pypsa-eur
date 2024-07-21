@@ -85,9 +85,9 @@ import shapely.wkt
 import yaml
 from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
-from scipy import spatial
+from scipy.spatial import KDTree
 from scipy.sparse import csgraph
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import LineString, Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -118,7 +118,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     querycoords = np.vstack(
         [new_links[["x1", "y1", "x2", "y2"]], new_links[["x2", "y2", "x1", "y1"]]]
     )
-    tree = spatial.KDTree(treecoords)
+    tree = KDTree(treecoords)
     dist, ind = tree.query(querycoords, distance_upper_bound=distance_upper_bound)
     found_b = ind < len(links)
     found_i = np.arange(len(new_links) * 2)[found_b] % len(new_links)
@@ -273,7 +273,7 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
             return buses, links
 
     tree_buses = buses.query("carrier=='AC'")
-    tree = spatial.KDTree(tree_buses[["x", "y"]])
+    tree = KDTree(tree_buses[["x", "y"]])
     _, ind0 = tree.query(links_tyndp[["x1", "y1"]])
     ind0_b = ind0 < len(tree_buses)
     links_tyndp.loc[ind0_b, "bus0"] = tree_buses.index[ind0[ind0_b]]
@@ -788,61 +788,6 @@ def base_network(
     return n
 
 
-def voronoi_partition_pts(points, outline):
-    """
-    Compute the polygons of a voronoi partition of `points` within the polygon
-    `outline`. Taken from
-    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
-
-    Attributes
-    ----------
-    points : Nx2 - ndarray[dtype=float]
-    outline : Polygon
-    Returns
-    -------
-    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
-    """
-    points = np.asarray(points)
-
-    if len(points) == 1:
-        polygons = [outline]
-    else:
-        xmin, ymin = np.amin(points, axis=0)
-        xmax, ymax = np.amax(points, axis=0)
-        xspan = xmax - xmin
-        yspan = ymax - ymin
-
-        # to avoid any network positions outside all Voronoi cells, append
-        # the corners of a rectangle framing these points
-        vor = spatial.Voronoi(
-            np.vstack(
-                (
-                    points,
-                    [
-                        [xmin - 3.0 * xspan, ymin - 3.0 * yspan],
-                        [xmin - 3.0 * xspan, ymax + 3.0 * yspan],
-                        [xmax + 3.0 * xspan, ymin - 3.0 * yspan],
-                        [xmax + 3.0 * xspan, ymax + 3.0 * yspan],
-                    ],
-                )
-            )
-        )
-
-        polygons = []
-        for i in range(len(points)):
-            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
-
-            if not poly.is_valid:
-                poly = poly.buffer(0)
-
-            with np.errstate(invalid="ignore"):
-                poly = poly.intersection(outline)
-
-            polygons.append(poly)
-
-    return polygons
-
-
 def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
     country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
     offshore_shapes = gpd.read_file(offshore_shapes)
@@ -864,15 +809,27 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
             )  # preference for substations
             .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
         )
+        onshore_pts = gpd.GeoSeries(
+            gpd.points_from_xy(onshore_locs.x, onshore_locs.y, crs=n.crs),
+            index=onshore_locs.index,
+        )
+        onshore_voronoi = onshore_pts.voronoi_polygons(extend_to=onshore_shape).clip(
+            onshore_shape
+        )
+
+        # can be removed with shapely 2.1 where order is preserved
+        # (see https://github.com/shapely/shapely/issues/2020)
+        pts = gpd.GeoDataFrame(geometry=onshore_pts)
+        voronoi = gpd.GeoDataFrame(geometry=onshore_voronoi)
+        onshore_voronoi = gpd.sjoin(pts, voronoi, how='right').set_index("Bus")
+
         onshore_regions.append(
             gpd.GeoDataFrame(
                 {
                     "name": onshore_locs.index,
                     "x": onshore_locs["x"],
                     "y": onshore_locs["y"],
-                    "geometry": voronoi_partition_pts(
-                        onshore_locs.values, onshore_shape
-                    ),
+                    "geometry": onshore_voronoi,
                     "country": country,
                 },
                 crs=n.crs,
@@ -883,12 +840,26 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
             continue
         offshore_shape = offshore_shapes[country]
         offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
+        offshore_pts = gpd.GeoSeries(
+            gpd.points_from_xy(offshore_locs.x, offshore_locs.y, crs=n.crs),
+            index=offshore_locs.index,
+        )
+        offshore_voronoi = offshore_pts.voronoi_polygons(extend_to=offshore_shape).clip(
+            offshore_shape
+        )
+
+        # can be removed with shapely 2.1 where order is preserved
+        # (see https://github.com/shapely/shapely/issues/2020)
+        pts = gpd.GeoDataFrame(geometry=offshore_pts)
+        voronoi = gpd.GeoDataFrame(geometry=offshore_voronoi)
+        offshore_voronoi = gpd.sjoin(pts, voronoi, how='right').set_index("Bus")
+
         offshore_regions_c = gpd.GeoDataFrame(
             {
                 "name": offshore_locs.index,
                 "x": offshore_locs["x"],
                 "y": offshore_locs["y"],
-                "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape),
+                "geometry": offshore_voronoi,
                 "country": country,
             },
             crs=n.crs,
