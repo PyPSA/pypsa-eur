@@ -81,7 +81,8 @@ def config_provider(*keys, default=None):
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
-    threads = solver_options[option_set].get("threads", 4)
+    solver_option_set = solver_options[option_set]
+    threads = solver_option_set.get("threads") or solver_option_set.get("Threads") or 4
     return threads
 
 
