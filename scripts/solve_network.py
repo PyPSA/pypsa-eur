@@ -471,6 +471,22 @@ def prepare_network(
             p_nom=1e9,  # kW
         )
 
+    if solve_opts.get("curtailment_mode"):
+        n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
+        n.generators_t.p_min_pu = n.generators_t.p_max_pu
+        buses_i = n.buses.query("carrier == 'AC'").index
+        n.madd(
+            "Generator",
+            buses_i,
+            suffix=" curtailment",
+            bus=buses_i,
+            p_min_pu=-1,
+            p_max_pu=0,
+            marginal_cost=-0.1,
+            carrier="curtailment",
+            p_nom=1e6,
+        )
+
     if solve_opts.get("noisy_costs"):
         for t in n.iterate_components():
             # if 'capital_cost' in t.df:
