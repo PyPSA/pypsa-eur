@@ -609,7 +609,7 @@ def fill_missing_years(fill_values: pd.Series) -> pd.Series:
     - The function groups the data by the 'country' level and computes the mean for each group.
     - Zero values in the original Series are replaced by the mean value of their respective country group.
     """
-    means = fill_values.groupby(level='country').transform('mean')
+    means = fill_values.groupby(level="country").transform("mean")
     return fill_values.where(fill_values != 0, means)
 
 
@@ -675,33 +675,36 @@ def build_energy_totals(
     df = pd.concat([df.drop("CH", errors="ignore"), swiss]).sort_index()
 
     # get values for missing countries based on Eurostat EnergyBalances
-    
+
     # agriculture
-    
+
     to_fill = df.index[
         df["total agriculture"].isna()
         & df.index.get_level_values("country").isin(eurostat_countries)
     ]
     c = to_fill.get_level_values("country")
     y = to_fill.get_level_values("year")
-    
+
     # take total final energy consumption from Eurostat
-    eurostat_sector = 'Agriculture & forestry'
+    eurostat_sector = "Agriculture & forestry"
     slicer = idx[c, y, :, :, eurostat_sector]
-    
-    fill_values = eurostat.loc[slicer]["Total all products"].groupby(level=[0,1]).sum()
+
+    fill_values = eurostat.loc[slicer]["Total all products"].groupby(level=[0, 1]).sum()
     # fill missing years for some countries by mean over the other years
     fill_values = fill_missing_years(fill_values)
     df.loc[to_fill, "total agriculture"] = fill_values
-    
+
     # split into end uses by average EU data from IDEES
     uses = ["electricity", "heat", "machinery"]
-    
+
     for use in uses:
-        avg = (idees["total agriculture electricity"]
-               /idees["total agriculture"]).mean()
-        df.loc[to_fill, f"total agriculture {use}"] = df.loc[to_fill, "total agriculture"] * avg
-    
+        avg = (
+            idees["total agriculture electricity"] / idees["total agriculture"]
+        ).mean()
+        df.loc[to_fill, f"total agriculture {use}"] = (
+            df.loc[to_fill, "total agriculture"] * avg
+        )
+
     # divide cooking/space/water according to averages in EU28
 
     uses = ["space", "cooking", "water"]
