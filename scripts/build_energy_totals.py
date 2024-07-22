@@ -55,21 +55,6 @@ logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
-
-# from JRC-2021 methodology p.58
-agriculture_idees_eurostat_mapping = {
-    "Solids": ["C0000X0350-0370", "P1000", "S2000"],
-    "LPG": ["O4630"],
-    "Diesel oil and liquid biofuels": ["O4671XR5220B", "R5210P", "R5210B", "R5220P", "R5220B", "R5230P", "R5230B", "R5290"],
-    "Fuel oil and other liquids": ["O4680", "O4100_TOT_4200-4500XBIO", "O4652XR5210B", "O4651", "O4653", "O4661XR5230B", "O4669", "O4640", "O4691", "O4692", "O4695", "O4694", "O4693", "O4699"],
-    "Natural gas and biogas": ["G3000", "C0350-0370", "R5300"],
-    "Biomass and waste": ["R5110-5150_W6000RI", "R5160", "W6210", "W6100_6220"],
-    "Solar and geothermal": ["RA200", "RA410"],
-    "Ambient heat": ["RA600"],
-    "Distributed heat": ["H8000"],
-    "Electricity": ["E7000"]
-}
-
 def cartesian(s1: pd.Series, s2: pd.Series) -> pd.DataFrame:
     """
     Compute the Cartesian product of two pandas Series.
@@ -603,6 +588,31 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     return totals
 
 
+def fill_missing_years(fill_values: pd.Series) -> pd.Series:
+    """
+    Fill missing years for some countries by mean over the other years.
+
+    Parameters
+    ----------
+    fill_values : pd.Series
+        A pandas Series with a MultiIndex (levels: country and year) representing
+        energy values, where some values may be zero and need to be filled.
+
+    Returns
+    -------
+    pd.Series
+        A pandas Series with zero values replaced by the mean value of the corresponding
+        country.
+
+    Notes
+    -----
+    - The function groups the data by the 'country' level and computes the mean for each group.
+    - Zero values in the original Series are replaced by the mean value of their respective country group.
+    """
+    means = fill_values.groupby(level='country').transform('mean')
+    return fill_values.where(fill_values != 0, means)
+
+
 def build_energy_totals(
     countries: List[str],
     eurostat: pd.DataFrame,
@@ -656,6 +666,8 @@ def build_energy_totals(
 
     slicer = idx[in_eurostat, :, :, "Bunkers", :]
     fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=[0, 1]).sum()
+    # fill missing years for some countries by mean over the other years
+    fill_values = fill_missing_years(fill_values)
     df.loc[in_eurostat, "total international navigation"] = fill_values
 
     # add swiss energy data
@@ -679,8 +691,8 @@ def build_energy_totals(
     
     fill_values = eurostat.loc[slicer]["Total all products"].groupby(level=[0,1]).sum()
     # fill missing years for some countries by mean over the other years
-    means = fill_values.groupby(level='country').transform('mean')
-    fill_values = fill_values.where(fill_values != 0, means)
+    fill_values = fill_missing_years(fill_values)
+    df.loc[to_fill, "total agriculture"] = fill_values
     
     # split into end uses by average EU data from IDEES
     uses = ["electricity", "heat", "machinery"]
@@ -711,6 +723,8 @@ def build_energy_totals(
             fill_values = (
                 eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0, 1]).sum()
             )
+            # fill missing years for some countries by mean over the other years
+            fill_values = fill_missing_years(fill_values)
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
     for sector in ["residential", "services"]:
@@ -786,16 +800,22 @@ def build_energy_totals(
 
     slicer = idx[c, y, :, :, "Domestic aviation"]
     fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=[0, 1]).sum()
+    # fill missing years for some countries by mean over the other years
+    fill_values = fill_missing_years(fill_values)
     df.loc[to_fill, "total domestic aviation"] = fill_values
 
     slicer = idx[c, y, :, :, "International aviation"]
     fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=[0, 1]).sum()
+    # fill missing years for some countries by mean over the other years
+    fill_values = fill_missing_years(fill_values)
     df.loc[to_fill, "total international aviation"] = fill_values
 
     # missing domestic navigation
 
     slicer = idx[c, y, :, :, "Domestic Navigation"]
     fill_values = eurostat.loc[slicer, "Total all products"].groupby(level=[0, 1]).sum()
+    # fill missing years for some countries by mean over the other years
+    fill_values = fill_missing_years(fill_values)
     df.loc[to_fill, "total domestic navigation"] = fill_values
 
     # split road traffic for non-IDEES
