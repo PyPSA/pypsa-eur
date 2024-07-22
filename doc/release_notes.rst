@@ -10,6 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Upadte JRC-IDEES-2015 to  `JRC-IDEES-2021
+<https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
+
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
   The default value for the link efficiency scaling factor was changed from 100% to 25%.
   It can be set to other values in the configuration ``sector: use_TECHNOLOGY_waste_heat``.
