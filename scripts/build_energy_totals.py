@@ -55,6 +55,21 @@ logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
+
+# from JRC-2021 methodology p.58
+agriculture_idees_eurostat_mapping = {
+    "Solids": ["C0000X0350-0370", "P1000", "S2000"],
+    "LPG": ["O4630"],
+    "Diesel oil and liquid biofuels": ["O4671XR5220B", "R5210P", "R5210B", "R5220P", "R5220B", "R5230P", "R5230B", "R5290"],
+    "Fuel oil and other liquids": ["O4680", "O4100_TOT_4200-4500XBIO", "O4652XR5210B", "O4651", "O4653", "O4661XR5230B", "O4669", "O4640", "O4691", "O4692", "O4695", "O4694", "O4693", "O4699"],
+    "Natural gas and biogas": ["G3000", "C0350-0370", "R5300"],
+    "Biomass and waste": ["R5110-5150_W6000RI", "R5160", "W6210", "W6100_6220"],
+    "Solar and geothermal": ["RA200", "RA410"],
+    "Ambient heat": ["RA600"],
+    "Distributed heat": ["H8000"],
+    "Electricity": ["E7000"]
+}
+
 def cartesian(s1: pd.Series, s2: pd.Series) -> pd.DataFrame:
     """
     Compute the Cartesian product of two pandas Series.
@@ -648,6 +663,33 @@ def build_energy_totals(
     df = pd.concat([df.drop("CH", errors="ignore"), swiss]).sort_index()
 
     # get values for missing countries based on Eurostat EnergyBalances
+    
+    # agriculture
+    
+    to_fill = df.index[
+        df["total agriculture"].isna()
+        & df.index.get_level_values("country").isin(eurostat_countries)
+    ]
+    c = to_fill.get_level_values("country")
+    y = to_fill.get_level_values("year")
+    
+    # take total final energy consumption from Eurostat
+    eurostat_sector = 'Agriculture & forestry'
+    slicer = idx[c, y, :, :, eurostat_sector]
+    
+    fill_values = eurostat.loc[slicer]["Total all products"].groupby(level=[0,1]).sum()
+    # fill missing years for some countries by mean over the other years
+    means = fill_values.groupby(level='country').transform('mean')
+    fill_values = fill_values.where(fill_values != 0, means)
+    
+    # split into end uses by average EU data from IDEES
+    uses = ["electricity", "heat", "machinery"]
+    
+    for use in uses:
+        avg = (idees["total agriculture electricity"]
+               /idees["total agriculture"]).mean()
+        df.loc[to_fill, f"total agriculture {use}"] = df.loc[to_fill, "total agriculture"] * avg
+    
     # divide cooking/space/water according to averages in EU28
 
     uses = ["space", "cooking", "water"]
