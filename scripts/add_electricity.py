@@ -834,7 +834,7 @@ if __name__ == "__main__":
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        gdp_pop_non_nuts3,
+        snakemake.input.get("gdp_pop_non_nuts3"),
         params.countries,
         params.scaling_factor,
     )

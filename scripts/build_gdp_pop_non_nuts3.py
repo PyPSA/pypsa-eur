@@ -3,20 +3,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Maps the GDP p.c.
+Maps the per-capita GDP and population values to non-NUTS3 regions.
 
-and population values to non-NUTS3 regions. The script takes as input
-the country code, a GeoDataFrame containing the regions, and the file
-paths to the datasets containing the GDP and POP values for non-NUTS3
-countries.
+The script takes as input the country code, a GeoDataFrame containing
+the regions, and the file paths to the datasets containing the GDP and
+POP values for non-NUTS3 countries.
 """
 
 import logging
 
-import cartopy.crs as ccrs
 import geopandas as gpd
-import matplotlib.colors as colors
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
@@ -60,10 +56,8 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         .to_crs(regions.crs)
     )
 
-    # GDP
-    logger.info(
-        f"Mapping mean GDP p.c. to non-NUTS3 region: {regions.country.unique()}"
-    )
+    # GDP Mapping
+    logger.info(f"Mapping mean GDP p.c. to non-NUTS3 region: {country}")
     with xr.open_dataset(gdp_non_nuts3) as src_gdp:
         src_gdp = src_gdp.where(
             (src_gdp.longitude >= bounding_box.bounds.minx.min())
@@ -88,14 +82,11 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         .reset_index(level=["country"])
     )
 
-    # POP
-    logger.info(
-        f"Mapping summed population to non-NUTS3 region: {regions.country.unique()}"
-    )
+    # Population Mapping
+    logger.info(f"Mapping summed population to non-NUTS3 region: {country}")
     with rasterio.open(pop_non_nuts3) as src_pop:
         # Mask the raster with the bounding box
         out_image, out_transform = mask(src_pop, bounding_box, crop=True)
-        out_image,
         out_meta = src_pop.meta.copy()
         out_meta.update(
             {
@@ -129,40 +120,6 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     )
     gdp_pop.fillna(0, inplace=True)
 
-    # Plot for validation purposes
-    cmap = plt.get_cmap("viridis")
-    norm = colors.Normalize(vmin=0, vmax=gdp_mapped.gdp.max())
-    crs = ccrs.AlbersEqualArea()
-    # two column plot
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5), subplot_kw={"projection": crs})
-    gpd.GeoDataFrame(
-        regions.join(gdp.drop(columns="country"), on="Bus"),
-        crs=src_gdp.attrs["projection"],
-    ).to_crs(crs.proj4_init).plot(
-        ax=axes[0],
-        column="gdp",
-        cmap=cmap,
-        norm=norm,
-        legend=True,
-        legend_kwds={
-            "label": "Mean GDP (mapped to bus regions)",
-            "orientation": "horizontal",
-        },
-    )
-    gpd.GeoDataFrame(
-        regions.join(pop.drop(columns="country"), on="Bus"), crs=src_pop.crs
-    ).to_crs(crs.proj4_init).plot(
-        ax=axes[1],
-        column="pop",
-        cmap=cmap,
-        legend=True,
-        legend_kwds={
-            "label": "Abs. population (mapped to bus regions)",
-            "orientation": "horizontal",
-        },
-    )
-    plt.show()
-
     return gdp_pop
 
 
@@ -180,8 +137,7 @@ if __name__ == "__main__":
     gdp_non_nuts3 = snakemake.input.gdp_non_nuts3
     pop_non_nuts3 = snakemake.input.pop_non_nuts3
 
-    countries_non_nuts3 = pd.Index(("MD", "UA"))
-    subset = set(countries_non_nuts3) & set(snakemake.params.countries)
+    subset = {"MD", "UA"}.intersection(snakemake.params.countries)
 
     gdp_pop = pd.concat(
         [

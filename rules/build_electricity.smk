@@ -259,7 +259,6 @@ rule determine_availability_matrix_MD_UA:
         + ".nc",
     output:
         availability_matrix=resources("availability_matrix_MD-UA_{technology}.nc"),
-        availability_map=resources("availability_matrix_MD-UA_{technology}.png"),
     log:
         logs("determine_availability_matrix_MD_UA_{technology}.log"),
     threads: config["atlite"].get("nprocesses", 4)
@@ -446,15 +445,17 @@ rule build_gdp_pop_non_nuts3:
     input:
         base_network=resources("networks/base.nc"),
         regions=resources("regions_onshore.geojson"),
-        gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
-        pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
+        gdp_non_nuts3="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        pop_non_nuts3="data/bundle/ppp_2013_1km_Aggregated.tif",
     output:
         resources("gdp_pop_non_nuts3.geojson"),
     log:
         logs("build_gdp_pop_non_nuts3.log"),
+    benchmark:
+        benchmarks("build_gdp_pop_non_nuts3")
     threads: 1
     resources:
-        mem_mb=1500,
+        mem_mb=8000,
     conda:
         "../envs/environment.yaml"
     script:
