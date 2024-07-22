@@ -29,6 +29,14 @@ Upcoming Release
 
 * Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
 
+* Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
+
+* Updated pre-built `weather data cutouts
+  <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
+  solar irradiation from the new SARAH-3 dataset while taking all other
+  variables from ERA5. Cutouts are now available for multiple years (2010, 2013,
+  2019, and 2023).
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
