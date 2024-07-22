@@ -1,3 +1,5 @@
+
+
 👋 Welcome to pypsa-eur contribution in a dev container! 
      Works in VS Code, or in docker using the devcontainer cli
 
@@ -8,4 +10,4 @@ For details about dev containers see https://containers.dev
 
 The configuration for the dev container is in the .github/.devcontainer folder.
 
-🔍 To explore VS Code to its fullest, search using the Command Palette (Cmd/Ctrl + Shift + P or F1).
+🔍 To explore VS Code to its fullest, search using the Command Palette (Cmd/Ctrl + Shift + P or F1).+
