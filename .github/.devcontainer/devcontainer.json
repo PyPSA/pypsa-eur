@@ -4,7 +4,7 @@
   "name": "pypsa eur dev",
   // "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "build": {
-     "dockerfile": "../../Dockerfile"
+     "dockerfile": "../../Dockerfile.solved"
   },
   
   "features": {
