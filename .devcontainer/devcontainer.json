@@ -3,5 +3,6 @@
   "name": "pypsa eur dev",
   "image": "ghcr.io/drifter089/pypsa-eur:latest",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind,consistency=cached",
+  "initializeCommand": "docker pull ghcr.io/drifter089/pypsa-eur:latest",
   "workspaceFolder": "/workspaces"
 }
