@@ -879,6 +879,13 @@ solving:
       Threads: 8
       LpMethod: 2
       Crossover: 0
+      RelGap: 1.e-6
+      Dualize: 0
+    copt-gpu:
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.e-5
+      Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
