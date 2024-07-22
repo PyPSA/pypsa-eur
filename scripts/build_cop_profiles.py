@@ -38,10 +38,11 @@ References
 [3] Pieper et al., Energy 205 (2020): Comparison of COP estimation methods for large-scale heat pumps used in energy planning, https://doi.org/10.1016/j.energy.2020.117994
 """
 
-from typing import Union
 from enum import Enum
-import xarray as xr
+from typing import Union
+
 import numpy as np
+import xarray as xr
 from _helpers import set_scenario_config
 
 
@@ -54,16 +55,22 @@ def coefficient_of_performance_individual_heating(delta_T, source="air"):
         raise NotImplementedError("'source' must be one of  ['air', 'soil']")
 
 
-def celsius_to_kelvin(t_celsius: Union[float, xr.DataArray, np.array]) -> Union[float, xr.DataArray, np.array]:
+def celsius_to_kelvin(
+    t_celsius: Union[float, xr.DataArray, np.array]
+) -> Union[float, xr.DataArray, np.array]:
     if (np.asarray(t_celsius) > 200).any():
         raise ValueError("t_celsius > 200. Are you sure you are using the right units?")
     return t_celsius + 273.15
 
 
-def logarithmic_mean(t_hot: Union[float, xr.DataArray, np.ndarray], t_cold: Union[float, xr.DataArray, np.ndarray]) -> Union[float, xr.DataArray, np.ndarray]:
+def logarithmic_mean(
+    t_hot: Union[float, xr.DataArray, np.ndarray],
+    t_cold: Union[float, xr.DataArray, np.ndarray],
+) -> Union[float, xr.DataArray, np.ndarray]:
     if (np.asarray(t_hot <= t_cold)).any():
         raise ValueError("t_hot must be greater than t_cold")
     return (t_hot - t_cold) / np.log(t_hot / t_cold)
+
 
 class CopDistrictHeating:
 
@@ -142,7 +149,8 @@ class CopDistrictHeating:
     @property
     def t_sink_mean(self) -> Union[xr.DataArray, np.array]:
         """
-        Calculate the logarithmic mean temperature difference between the cold and hot sinks.
+        Calculate the logarithmic mean temperature difference between the cold
+        and hot sinks.
 
         Returns
         -------
@@ -166,7 +174,8 @@ class CopDistrictHeating:
     @property
     def delta_t_lift(self) -> Union[xr.DataArray, np.array]:
         """
-        Calculate the temperature lift as the difference between the logarithmic sink and source temperatures.
+        Calculate the temperature lift as the difference between the
+        logarithmic sink and source temperatures.
 
         Returns
         -------
@@ -187,14 +196,14 @@ class CopDistrictHeating:
         -------
         np.array
             The ideal Lorenz COP.
-
         """
         return self.t_sink_mean / self.delta_t_lift
 
     @property
     def delta_t_refrigerant_source(self) -> Union[xr.DataArray, np.array]:
         """
-        Calculate the temperature difference between the refrigerant source inlet and outlet.
+        Calculate the temperature difference between the refrigerant source
+        inlet and outlet.
 
         Returns
         -------
@@ -208,7 +217,8 @@ class CopDistrictHeating:
     @property
     def delta_t_refrigerant_sink(self) -> Union[xr.DataArray, np.array]:
         """
-        Temperature difference between the refrigerant and the sink based on approximation.
+        Temperature difference between the refrigerant and the sink based on
+        approximation.
 
         Returns
         -------
@@ -220,7 +230,8 @@ class CopDistrictHeating:
     @property
     def ratio_evaporation_compression_work(self) -> Union[xr.DataArray, np.array]:
         """
-        Calculate the ratio of evaporation to compression work based on approximation.
+        Calculate the ratio of evaporation to compression work based on
+        approximation.
 
         Returns
         -------
@@ -228,7 +239,7 @@ class CopDistrictHeating:
             The calculated ratio of evaporation to compression work.
         """
         return self._ratio_evaporation_compression_work_approximation()
-    
+
     @property
     def delta_t_sink(self) -> Union[xr.DataArray, np.array]:
         """
@@ -245,7 +256,8 @@ class CopDistrictHeating:
         self, delta_t_source: Union[xr.DataArray, np.array]
     ) -> Union[xr.DataArray, np.array]:
         """
-        Approximates the temperature difference between the refrigerant and the source.
+        Approximates the temperature difference between the refrigerant and the
+        source.
 
         Parameters
         ----------
@@ -291,7 +303,6 @@ class CopDistrictHeating:
 
         The approximate temperature difference at the refrigerant sink is calculated using the following formula:
         a * (t_sink_out - t_source_out + 2 * delta_t_pinch) + b * delta_t_sink + c
-
         """
         if refrigerant not in a.keys():
             raise ValueError(
@@ -366,16 +377,21 @@ if __name__ == "__main__":
 
         delta_T = snakemake.params.heat_pump_sink_T_decentral_heating - source_T
 
-        cop_individual_heating = coefficient_of_performance_individual_heating(delta_T, source)
-        cop_individual_heating.to_netcdf(snakemake.output[f"cop_{source}_decentral_heating"])
+        cop_individual_heating = coefficient_of_performance_individual_heating(
+            delta_T, source
+        )
+        cop_individual_heating.to_netcdf(
+            snakemake.output[f"cop_{source}_decentral_heating"]
+        )
 
         cop_district_heating = CopDistrictHeating(
             forward_temperature_celsius=snakemake.params.forward_temperature_district_heating,
             return_temperature_celsius=snakemake.params.return_temperature_district_heating,
             source_inlet_temperature_celsius=source_T,
-            source_outlet_temperature_celsius=source_T - snakemake.params.heat_source_cooling_district_heating,
+            source_outlet_temperature_celsius=source_T
+            - snakemake.params.heat_source_cooling_district_heating,
         ).cop()
 
-        cop_district_heating.to_netcdf(snakemake.output[f"cop_{source}_central_heating"])
-        
-        
+        cop_district_heating.to_netcdf(
+            snakemake.output[f"cop_{source}_central_heating"]
+        )

@@ -1827,7 +1827,9 @@ def add_heat(n, costs):
         "air decentral": xr.open_dataarray(snakemake.input.cop_air_decentral_heating)
         .to_pandas()
         .reindex(index=n.snapshots),
-        "ground decentral": xr.open_dataarray(snakemake.input.cop_soil_decentral_heating)
+        "ground decentral": xr.open_dataarray(
+            snakemake.input.cop_soil_decentral_heating
+        )
         .to_pandas()
         .reindex(index=n.snapshots),
         "air central": xr.open_dataarray(snakemake.input.cop_air_central_heating)
