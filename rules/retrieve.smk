@@ -71,7 +71,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/6382570/files/{cutout}.nc",
+                "https://zenodo.org/records/12791128/files/{cutout}.nc",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
