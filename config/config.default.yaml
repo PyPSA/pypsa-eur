@@ -795,6 +795,9 @@ industry:
   #2020 recycling rates based on Agora https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf
   #fractions refer to the total primary HVC production in 2020
   #assumes 6.7 Mtplastics produced from recycling in 2020
+  steam_biomass_fraction: 1.0
+  steam_hydrogen_fraction: 0
+  steam_electricity_fraction: 0
   HVC_primary_fraction:
     2020: 1.0
     2025: 0.9

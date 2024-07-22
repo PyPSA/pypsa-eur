@@ -7,8 +7,13 @@
 Release Notes
 ##########################################
 
+=======
 Upcoming Release
 ================
+
+* New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
+
+* New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
 
 * Added Enhanced Geothermal Systems for generation of electricity and district heat.
   Cost and available capacity assumptions based on `Aghahosseini et al. (2020)
