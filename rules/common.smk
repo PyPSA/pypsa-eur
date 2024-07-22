@@ -55,7 +55,7 @@ def dynamic_getter(wildcards, keys, default):
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
-            f"Scenario {scenario_name} not found in file {config['run']['scenario']['file']}."
+            f"Scenario {scenario_name} not found in file {config['run']['scenarios']['file']}."
         )
     config_with_scenario = scenario_config(scenario_name)
     config_with_wildcards = update_config_from_wildcards(
