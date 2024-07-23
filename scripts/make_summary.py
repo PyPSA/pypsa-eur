@@ -292,12 +292,18 @@ def calculate_energy(n, label, energy):
                     .multiply(n.snapshot_weightings.generators, axis=0)
                     .sum()
                 )
-                # remove values where bus is missing (bug in nomopyomo)
-                no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals.loc[no_bus] = float(
-                    n.component_attrs[c.name].loc["p" + port, "default"]
-                )
-                c_energies -= totals.groupby(c.df.carrier).sum()
+
+            ##### It seems that, when attempting port=3 (related to some link and bus that includes 'p3'), 'totals' remains empty
+            ##### Run this block only if the resulting 'totals' is not empty
+                if totals.empty:
+                    print(f'[PyPSA-Spain: ommiting "totals" for c.name={c.name}, port={port}')
+                else:
+                    # remove values where bus is missing (bug in nomopyomo)
+                    no_bus = c.df.index[c.df["bus" + port] == ""]
+                    totals.loc[no_bus] = float(
+                        n.component_attrs[c.name].loc["p" + port, "default"]
+                    )
+                    c_energies -= totals.groupby(c.df.carrier).sum()
 
         c_energies = pd.concat([c_energies], keys=[c.list_name])
 
