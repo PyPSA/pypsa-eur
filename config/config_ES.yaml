@@ -27,8 +27,8 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "MyPrefix"   #####
-  name: "MyName"   #####
+  prefix: "prefix0"   #####
+  name: "name0"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -53,7 +53,7 @@ scenario:
   opts:
   - ''
   sector_opts:
-  - ''   # '1H'   #####
+  - ''
   planning_horizons:
   # - 2020
   - 2030   #####
@@ -65,8 +65,8 @@ countries: ['ES']
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
-  start: "2013-01-01"
-  end: "2014-01-01"
+  start: "2022-01-01"
+  end: "2023-01-01"
   inclusive: 'left'
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
@@ -545,8 +545,8 @@ sector:
   allam_cycle: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
-  SMR: true
-  SMR_cc: true
+  SMR: false   # true   ##### This adds a link with 'p3', which could be breaking 'make_summary.py' ?
+  SMR_cc: false   # true   ##### This adds a link with 'p3', which could be breaking 'make_summary.py' ?
   regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
@@ -780,7 +780,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: '168H'   # false   #####
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
@@ -831,8 +831,8 @@ solving:
     SAFE: false
 
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: cbc   ##### gurobi
+    options: cbc-default   ##### gurobi-default
 
   solver_options:
     highs-default:
