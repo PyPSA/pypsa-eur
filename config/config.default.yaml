@@ -75,7 +75,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -90,9 +89,43 @@ electricity_network:
   base_network: gridkit             # Options: gridkit, osm-prebuilt, osm-raw (built from scratch using OSM data, takes longer)
   osm_group_tolerance_buses: 5000   # unit: meters, default 5000 - Buses within this distance are grouped together
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+lines:
+  types: # Specify voltages (keys) and line types (values) for lines
+    220.: "Al/St 240/40 2-bundle 220.0"
+    300.: "Al/St 240/40 3-bundle 300.0"
+    380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
+  s_max_pu: 0.7
+  s_nom_max: .inf
+  max_extension: 20000 #MW
+  length_factor: 1.25  # Note that 'osm-raw' and 'osm-prebuilt' already contain higher spatial resolution line routes and lengths
+  reconnect_crimea: true  # Only needed for 'gridkit' base_network, in OSM, the lines are already connected
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  dynamic_line_rating:
+    activate: false
+    cutout: europe-2013-era5
+    correction_factor: 0.95
+    max_voltage_difference: false
+    max_line_rating: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
+links:
+  p_max_pu: 1.0
+  p_nom_max: .inf
+  max_extension: 30000 #MW
+  include_tyndp: true
+  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
+transformers:
+  x: 0.1
+  s_nom: 2000.
+  type: ''
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -282,41 +315,6 @@ conventional:
   dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
-lines:
-  types:
-    220.: "Al/St 240/40 2-bundle 220.0"
-    300.: "Al/St 240/40 3-bundle 300.0"
-    380.: "Al/St 240/40 4-bundle 380.0"
-    500.: "Al/St 240/40 4-bundle 380.0"
-    750.: "Al/St 560/50 4-bundle 750.0"
-  s_max_pu: 0.7
-  s_nom_max: .inf
-  max_extension: 20000 #MW
-  length_factor: 1.25
-  reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
-  dynamic_line_rating:
-    activate: false
-    cutout: europe-2013-era5
-    correction_factor: 0.95
-    max_voltage_difference: false
-    max_line_rating: false
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
-links:
-  p_max_pu: 1.0
-  p_nom_max: .inf
-  max_extension: 30000 #MW
-  include_tyndp: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
-transformers:
-  x: 0.1
-  s_nom: 2000.
-  type: ''
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
