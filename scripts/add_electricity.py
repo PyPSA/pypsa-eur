@@ -231,6 +231,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
     costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
+    costs.at["solar", "investment"] = costs.at["solar-utility", "investment"]
 
     costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
@@ -261,7 +262,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         max_hours=max_hours["H2"],
     )
 
-    for attr in ("marginal_cost", "capital_cost"):
+    for attr in ("marginal_cost", "capital_cost", "investment"):
         overwrites = config.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)

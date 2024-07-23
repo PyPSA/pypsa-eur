@@ -434,6 +434,9 @@ def update_wind_solar_costs(n, costs):
     n.generators.loc[n.generators.carrier == "solar", "investment"] = costs.at[
         "solar-utility", "investment"
     ]
+    n.generators.loc[n.generators.carrier == "solar", "investment"] = costs.at[
+        "solar-utility", "investment"
+    ]
 
     n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
         "onwind", "fixed"
@@ -478,6 +481,16 @@ def update_wind_solar_costs(n, costs):
                     * costs.at[tech + "-connection-underground", "fixed"]
                 )
             )
+            connection_investment = (
+                snakemake.params.length_factor
+                * ds["average_distance"].to_pandas()
+                * (
+                    underwater_fraction
+                    * costs.at[tech + "-connection-submarine", "investment"]
+                    + (1.0 - underwater_fraction)
+                    * costs.at[tech + "-connection-underground", "investment"]
+                )
+            ) 
 
             # convert to aggregated clusters with weighting
             weight = ds["weight"].to_pandas()
@@ -491,12 +504,19 @@ def update_wind_solar_costs(n, costs):
             connection_cost = (connection_cost * weight).groupby(
                 genmap
             ).sum() / weight.groupby(genmap).sum()
+            connection_investment = (connection_investment * weight).groupby(
+                genmap
+            ).sum() / weight.groupby(genmap).sum()
 
             capital_cost = (
                 costs.at["offwind", "fixed"]
                 + costs.at[tech + "-station", "fixed"]
                 + connection_cost
             )
+            investment = (
+                costs.at["offwind", "investment"]
+            )
+            connection_investment += costs.at[tech + "-station", "investment"] # Assuming the station belongs to the connection cost
 
             logger.info(
                 "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
@@ -506,6 +526,12 @@ def update_wind_solar_costs(n, costs):
 
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
+            )
+            n.generators.loc[n.generators.carrier == tech, "investment"] = (
+                investment.rename(index=lambda node: node + " " + tech)
+            )
+            n.generators.loc[n.generators.carrier == tech, "connection_investment"] = (
+                connection_investment.rename(index=lambda node: node + " " + tech)
             )
 
 
@@ -1137,12 +1163,12 @@ def insert_gas_distribution_costs(n, costs):
         & (~n.links.carrier.str.contains("urban central"))
     ]
     n.links.loc[gas_b, "capital_cost"] += capital_cost
-    n.links.loc[gas_b, "connection_investment"] = investment
+    n.links.loc[gas_b, "investment"] += investment
 
     # micro CHPs
     mchp = n.links.index[n.links.carrier.str.contains("micro gas")]
     n.links.loc[mchp, "capital_cost"] += capital_cost
-    n.links.loc[mchp, "connection_investment"] = investment
+    n.links.loc[mchp, "investment"] += investment
 
 
 def add_electricity_grid_connection(n, costs):
@@ -1153,7 +1179,7 @@ def add_electricity_grid_connection(n, costs):
     n.generators.loc[gens, "capital_cost"] += costs.at[
         "electricity grid connection", "fixed"
     ]
-    n.generators.loc[gens, "connection_investment"] = costs.at[
+    n.generators.loc[gens, "investment"] += costs.at[
         "electricity grid connection", "investment"
     ]
 
