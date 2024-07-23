@@ -1707,33 +1707,78 @@ def add_ice_cars(n, p_set, ice_share, temperature):
         p_nom_extendable=True,
     )
 
+car_keys = {"fuel_cell": ['FCV Bus city',
+                      'FCV Coach',
+                      'FCV Truck Semi-Trailer max 50 tons',
+                       'FCV Truck Solo max 26 tons',
+                       'FCV Truck Trailer max 56 tons'],
+        "ice": ['Diesel Bus city', 'Diesel Coach',
+               'Diesel Truck Semi-Trailer max 50 tons',
+               'Diesel Truck Solo max 26 tons',
+               'Diesel Truck Trailer max 56 tons'],
+        "electric": ['BEV Bus city', 'BEV Coach',
+                     'BEV Truck Semi-Trailer max 50 tons',
+               'BEV Truck Solo max 26 tons',
+               'BEV Truck Trailer max 56 tons']}
+
+
+def get_car_efficiencies():
+    car_efficiencies =  pd.DataFrame()
+    engine_types = ["fuel_cell", "electric", "ice"]
+    for engine in engine_types:
+        car_efficiencies.loc[engine, "light"] = options[f"transport_{engine}_efficiency"]["light"]
+        # heavy
+        car_efficiency = costs.loc[car_keys[engine], "efficiency"].mean()
+        # convert kWh/km in MWh per 100 km
+        car_efficiency = (1/(1e2*car_efficiency))*1e3
+        car_efficiencies.loc[engine, "heavy"] = car_efficiency
+        
+    return car_efficiencies
+
 
 def add_land_transport(n, costs):
 
     logger.info("Add land transport")
+    
+    nodes = spatial.nodes
 
     # read in transport demand in units driven km [100 km]
     transport = pd.read_csv(
-        snakemake.input.transport_demand, index_col=0, parse_dates=True
-    )
-    number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
-        "number cars"
-    ]
+        snakemake.input.transport_demand, index_col=0, header=[0,1], 
+        parse_dates=True
+    ).reindex(columns=nodes, level=1)
+    
+    transport_data = pd.read_csv(snakemake.input.transport_data, index_col=0)
+    
+    number_cars = transport_data.loc[:,transport_data.columns.str.contains("Number")]
+    
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
+    
     dsm_profile = pd.read_csv(
         snakemake.input.dsm_profile, index_col=0, parse_dates=True
     )
 
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
+    transport_types = transport.columns.levels[0]
+    endogenous = options["endogenous_transport"]
     shares = pd.Series()
     for engine in engine_types:
-        shares[engine] = get(options[f"land_transport_{engine}_share"], investment_year)
-        logger.info(f"{engine} share: {shares[engine]*100}%")
+        for transport_type in transport_types:
+            shares.loc[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
+                                 investment_year)
+            if not endogenous:
+                logger.info(f"{engine} {transport_type} share: {shares.loc[engine, transport_type]*100}%")
+    
 
-    check_land_transport_shares(shares)
+    if not endogenous:
+        check_land_transport_shares(shares)
+    else:
+        logger.info("Endogenous optimisation of land transport sector")
+        # todo make this nicer
+        shares.loc[:,:] = 1/3
 
     p_set = transport[spatial.nodes]
 
@@ -3948,7 +3993,7 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            ll="v1.0",
+            ll="vopt",
             sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2050",
         )
