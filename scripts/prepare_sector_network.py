@@ -490,7 +490,7 @@ def update_wind_solar_costs(n, costs):
                     + (1.0 - underwater_fraction)
                     * costs.at[tech + "-connection-underground", "investment"]
                 )
-            ) 
+            )
 
             # convert to aggregated clusters with weighting
             weight = ds["weight"].to_pandas()
@@ -513,10 +513,10 @@ def update_wind_solar_costs(n, costs):
                 + costs.at[tech + "-station", "fixed"]
                 + connection_cost
             )
-            investment = (
-                costs.at["offwind", "investment"]
-            )
-            connection_investment += costs.at[tech + "-station", "investment"] # Assuming the station belongs to the connection cost
+            investment = costs.at["offwind", "investment"]
+            connection_investment += costs.at[
+                tech + "-station", "investment"
+            ]  # Assuming the station belongs to the connection cost
 
             logger.info(
                 "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(

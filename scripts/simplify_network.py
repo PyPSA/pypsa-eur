@@ -150,7 +150,9 @@ def simplify_network_to_380(n):
     return n, trafo_map
 
 
-def _prepare_connection_costs_per_link(n, costs, renewable_carriers, length_factor, cost_key="capital_cost"):
+def _prepare_connection_costs_per_link(
+    n, costs, renewable_carriers, length_factor, cost_key="capital_cost"
+):
     if n.links.empty:
         return {}
 
@@ -182,7 +184,10 @@ def _compute_connection_costs_to_bus(
 ):
     if connection_costs_per_link is None:
         connection_costs_per_link = _prepare_connection_costs_per_link(
-            n, costs, renewable_carriers, length_factor,
+            n,
+            costs,
+            renewable_carriers,
+            length_factor,
             cost_key=cost_key,
         )
 
@@ -211,7 +216,9 @@ def _compute_connection_costs_to_bus(
     return connection_costs_to_bus
 
 
-def _adjust_costs_using_connection_costs(n, connection_costs_to_bus, connection_investment_to_bus):
+def _adjust_costs_using_connection_costs(
+    n, connection_costs_to_bus, connection_investment_to_bus
+):
     connection_costs = {}
     connection_investment = {}
     for tech in connection_costs_to_bus:
@@ -259,7 +266,9 @@ def _aggregate_and_move_components(
             if not df.empty:
                 import_series_from_dataframe(n, df, c, attr)
 
-    _adjust_costs_using_connection_costs(n, connection_costs_to_bus, connection_investment_to_bus)
+    _adjust_costs_using_connection_costs(
+        n, connection_costs_to_bus, connection_investment_to_bus
+    )
 
     generator_strategies = aggregation_strategies["generators"]
 
@@ -347,7 +356,10 @@ def simplify_links(
         n, costs, renewables, length_factor
     )
     connection_investment_per_link = _prepare_connection_costs_per_link(
-        n, costs, renewables, length_factor,
+        n,
+        costs,
+        renewables,
+        length_factor,
         cost_key="investment",
     )
     connection_costs_to_bus = pd.DataFrame(
@@ -458,7 +470,11 @@ def remove_stubs(
         n, busmap, costs, renewable_carriers, length_factor
     )
     connection_investment_to_bus = _compute_connection_costs_to_bus(
-        n, busmap, costs, renewable_carriers, length_factor,
+        n,
+        busmap,
+        costs,
+        renewable_carriers,
+        length_factor,
         cost_key="investment",
     )
 
