@@ -346,14 +346,14 @@ if config["enable"]["retrieve"] and (
 
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage("https://sandbox.zenodo.org/records/89508/files/buses.csv"),
+            buses=storage("https://zenodo.org/records/12799202/files/buses.csv"),
             converters=storage(
-                "https://sandbox.zenodo.org/records/89508/files/converters.csv"
+                "https://zenodo.org/records/12799202/files/converters.csv"
             ),
-            lines=storage("https://sandbox.zenodo.org/records/89508/files/lines.csv"),
-            links=storage("https://sandbox.zenodo.org/records/89508/files/links.csv"),
+            lines=storage("https://zenodo.org/records/12799202/files/lines.csv"),
+            links=storage("https://zenodo.org/records/12799202/files/links.csv"),
             transformers=storage(
-                "https://sandbox.zenodo.org/records/89508/files/transformers.csv"
+                "https://zenodo.org/records/12799202/files/transformers.csv"
             ),
         output:
             buses="data/osm/prebuilt/buses.csv",
