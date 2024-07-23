@@ -5,6 +5,12 @@
 tutorial: true
 
 
+
+pypsa_spain:
+  retrieve_Iberian_cutout: false
+
+
+
 run:
   name: "test-elec" # use this to keep track of runs with different settings
   disable_progressbar: true
