@@ -22,32 +22,25 @@ from _helpers import (
 
 logger = logging.getLogger(__name__)
 
+transport_cols = {"light":['Powered two-wheelers', 'Passenger cars',
+                   'Light commercial vehicles'],
+                  "heavy": ['Motor coaches, buses and trolley buses',
+                                     'Heavy goods vehicles']}
+
 
 def build_nodal_transport_data(fn, pop_layout, year):
     # get numbers of car and fuel efficiency per country
     transport_data = pd.read_csv(fn, index_col=[0, 1])
-    transport_data = transport_data.xs(min(2015, year), level="year")
+    transport_data = transport_data.xs(year, level="year")
 
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
-    nodal_transport_data["number cars"] = (
-        pop_layout["fraction"] * nodal_transport_data["number cars"]
-    )
-    # fill missing fuel efficiency with average data
-    nodal_transport_data.loc[
-        nodal_transport_data["average fuel efficiency"] == 0.0,
-        "average fuel efficiency",
-    ] = transport_data["average fuel efficiency"].mean()
-
+    
     return nodal_transport_data
 
 
-def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
-    """
-    Returns transport demand per bus in unit km driven [100 km].
-    """
-    # averaged weekly counts from the year 2010-2015
+def get_shape(traffic_fn):
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     # create annual profile take account time zone + summer time
@@ -57,10 +50,21 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         weekly_profile=traffic.values,
     )
     transport_shape = transport_shape / transport_shape.sum()
+    
+    return transport_shape
+
+def build_transport_demand(traffic_fn_Pkw, traffic_fn_Lkw,
+                           airtemp_fn, nodes, nodal_transport_data):
+    """
+    Returns transport demand per bus in unit km driven [100 km].
+    """
+    transport_shape_light =  get_shape(traffic_fn_Pkw)
+    
+    transport_shape_heavy =  get_shape(traffic_fn_Lkw)
 
     # get heating demand for correction to demand time series
     temperature = xr.open_dataarray(airtemp_fn).to_pandas()
-
+    
     # correction factors for vehicle heating
     dd_ICE = transport_degree_factor(
         temperature,
@@ -69,23 +73,43 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
         options["ICE_lower_degree_factor"],
         options["ICE_upper_degree_factor"],
     )
+    
+    # adjust for the heating/cooling demand from ICE totals
+    ice_correction_light = ((transport_shape_light * (1 + dd_ICE)).sum()
+                            / transport_shape_light.sum())
+    ice_correction_heavy = ((transport_shape_light * (1 + dd_ICE)).sum()
+                            / transport_shape_heavy.sum())
+    
+    # non-electrified rail
+    non_elec_rail = (1 - (pop_weighted_energy_totals["electricity rail"]
+                          / pop_weighted_energy_totals["total rail"]))
+    
+    # total demand of driven vehicle-km [mio km]
+    light_duty = nodal_transport_data[[f'mio km-driven {car_type}'
+                                       for car_type in transport_cols["light"]]].sum(axis=1)
+    heavy_duty = nodal_transport_data[[f'mio km-driven {car_type}'
+                                       for car_type in transport_cols["heavy"]]].sum(axis=1)
+    heavy_duty = pd.concat([heavy_duty,
+                             non_elec_rail * nodal_transport_data['mio km-driven Rail']],
+                            axis=1).sum(axis=1)
+    
+    
 
-    # divide out the heating/cooling demand from ICE totals
-    ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
+    def get_demand(profile, total, nyears, ice_correction, name):
+        """Returns from total demand [mio km], given profile and ICE correction
+        demand time-series in unit [100 km]."""
 
-    # unit TWh
-    energy_totals_transport = (
-        pop_weighted_energy_totals["total road"]
-        + pop_weighted_energy_totals["total rail"]
-        - pop_weighted_energy_totals["electricity rail"]
-    )
+        demand = ((profile.multiply(total) * 1e4 * nyears)
+                  .divide(ice_correction))
 
-    # average fuel efficiency in MWh/100 km
-    eff = nodal_transport_data["average fuel efficiency"]
+        return pd.concat([demand], keys=[name], axis=1)
 
-    return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
-        eff * ice_correction
-    )
+    demand_light = get_demand(transport_shape_light, light_duty, nyears,
+                              ice_correction_light, name="light")
+    demand_heavy = get_demand(transport_shape_heavy, heavy_duty, nyears,
+                              ice_correction_heavy, name="heavy")
+
+    return pd.concat([demand_light, demand_heavy], axis=1)
 
 
 def transport_degree_factor(
@@ -162,6 +186,16 @@ def bev_dsm_profile(snapshots, nodes, options):
     )
 
 
+def build_registrations(nodal_transport_data):
+    share_reg = {}
+    for transport_type in ["light", "heavy"]:
+        cols = transport_cols[transport_type]
+        number = nodal_transport_data[[f"Number {car_type}" for car_type in cols]]
+        new_reg = nodal_transport_data[[f"New registration {car_type}" for car_type in cols]]
+        share_reg[transport_type] = new_reg.sum(axis=1).div(number.sum(axis=1))
+   
+    pd.concat(share_reg).to_csv(snakemake.output.car_registration)
+    
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -197,7 +231,8 @@ if __name__ == "__main__":
     )
 
     transport_demand = build_transport_demand(
-        snakemake.input.traffic_data_KFZ,
+        snakemake.input.traffic_data_Pkw,
+        snakemake.input.traffic_data_Lkw,
         snakemake.input.temp_air_total,
         nodes,
         nodal_transport_data,
@@ -213,3 +248,5 @@ if __name__ == "__main__":
     transport_demand.to_csv(snakemake.output.transport_demand)
     avail_profile.to_csv(snakemake.output.avail_profile)
     dsm_profile.to_csv(snakemake.output.dsm_profile)
+    
+    build_registrations(nodal_transport_data)
