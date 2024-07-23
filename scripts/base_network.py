@@ -135,7 +135,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     )
 
 
-def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
+def _load_buses_from_eg(eg_buses, europe_shape, config):
     buses = (
         pd.read_csv(
             eg_buses,
@@ -161,8 +161,8 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
-    v_nom_min = min(config_elec["voltages"])
-    v_nom_max = max(config_elec["voltages"])
+    v_nom_min = min(config["lines"]["types"].keys())
+    v_nom_max = max(config["lines"]["types"].keys())
 
     # Quick fix:
     buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (
@@ -445,7 +445,7 @@ def _reconnect_crimea(lines):
 
 
 def _set_electrical_parameters_lines_eg(lines, config):
-    v_noms = config["electricity"]["voltages"]
+    v_noms = list(config["lines"]["types"].keys())
     linetypes = config["lines"]["types"]
 
     for v_nom in v_noms:
@@ -456,12 +456,13 @@ def _set_electrical_parameters_lines_eg(lines, config):
     return lines
 
 
-def _set_electrical_parameters_lines_osm(lines_config, voltages, lines):
+def _set_electrical_parameters_lines_osm(lines, config):
     if lines.empty:
         lines["type"] = []
         return lines
 
-    linetypes = _get_linetypes_config(lines_config["types"], voltages)
+    v_noms = list(config["lines"]["types"].keys())
+    linetypes = _get_linetypes_config(config["lines"]["types"], v_noms)
 
     lines["carrier"] = "AC"
     lines["dc"] = False
@@ -470,7 +471,7 @@ def _set_electrical_parameters_lines_osm(lines_config, voltages, lines):
         lambda x: _get_linetype_by_voltage(x, linetypes)
     )
 
-    lines["s_max_pu"] = lines_config["s_max_pu"]
+    lines["s_max_pu"] = config["lines"]["s_max_pu"]
 
     return lines
 
@@ -817,7 +818,7 @@ def base_network(
     config,
 ):
 
-    buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
+    buses = _load_buses_from_eg(eg_buses, europe_shape, config)
 
     if config["electricity_network"].get("base_network") == "gridkit":
         links = _load_links_from_eg(buses, eg_links)
@@ -851,9 +852,7 @@ def base_network(
         lines = _set_electrical_parameters_lines_eg(lines, config)
         links = _set_electrical_parameters_links_eg(links, config, links_p_nom)
     elif "osm" in config["electricity_network"].get("base_network"):
-        lines = _set_electrical_parameters_lines_osm(
-            config["lines"], config["electricity"]["voltages"], lines
-        )
+        lines = _set_electrical_parameters_lines_osm(lines, config)
         links = _set_electrical_parameters_links_osm(links, config)
     else:
         raise ValueError("base_network must be either 'gridkit' or 'osm'")
