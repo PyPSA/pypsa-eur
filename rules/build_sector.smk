@@ -339,8 +339,8 @@ rule build_biomass_potentials:
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
-        eurostat="data/eurostat/eurostat-energy_balances-april_2023_edition",
-        nuts2="data/bundle-sector/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        eurostat="data/eurostat/Balances-April2023",
+        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),
