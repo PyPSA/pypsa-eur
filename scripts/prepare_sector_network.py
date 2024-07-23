@@ -527,9 +527,7 @@ def update_wind_solar_costs(n, costs):
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
-            n.generators.loc[n.generators.carrier == tech, "investment"] = (
-                investment.rename(index=lambda node: node + " " + tech)
-            )
+            n.generators.loc[n.generators.carrier == tech, "investment"] = investment
             n.generators.loc[n.generators.carrier == tech, "connection_investment"] = (
                 connection_investment.rename(index=lambda node: node + " " + tech)
             )

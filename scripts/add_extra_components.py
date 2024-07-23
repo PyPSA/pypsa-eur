@@ -173,7 +173,7 @@ def attach_stores(n, costs, extendable_carriers):
             # the efficiencies are "round trip efficiencies"
             efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
             capital_cost=costs.at["battery inverter", "capital_cost"],
-            investment=costs.at["battery inveter", "investment"],
+            investment=costs.at["battery inverter", "investment"],
             p_nom_extendable=True,
             marginal_cost=costs.at["battery inverter", "marginal_cost"],
         )

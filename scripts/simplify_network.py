@@ -457,11 +457,16 @@ def remove_stubs(
     connection_costs_to_bus = _compute_connection_costs_to_bus(
         n, busmap, costs, renewable_carriers, length_factor
     )
+    connection_investment_to_bus = _compute_connection_costs_to_bus(
+        n, busmap, costs, renewable_carriers, length_factor,
+        cost_key="investment",
+    )
 
     _aggregate_and_move_components(
         n,
         busmap,
         connection_costs_to_bus,
+        connection_investment_to_bus,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=simplify_network["exclude_carriers"],
     )
