@@ -1,50 +1,44 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
-#
-# SPDX-License-Identifier: CC0-1.0
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 1
 tutorial: false
 
 logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
+#no need for external API at this point
+#private:
+  #keys:
+    #entsoe_api:
 
-private:
-  keys:
-    entsoe_api:
+#not using any remote clusters
+#remote:
+  #ssh: ""
+  #path: ""
 
-remote:
-  ssh: ""
-  path: ""
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
-run:
-  prefix: ""
-  name: ""
-  scenarios:
-    enable: false
-    file: config/scenarios.yaml
+#The run section is used for running and storing scenarios with different configurations which are not covered by Wildcards.
+run: 
+  prefix: "first"
+  name: "Mynetworks"
+  #scenarios:
+    #enable: false
+    #file: config/scenarios.yaml
   disable_progressbar: false
-  shared_resources:
-    policy: false
-    exclude: []
+  #shared_resources:
+    #policy: false
+    #exclude: []
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
-# Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   simpl:
-  - ''
+  - '10'
   ll:
-  - vopt
+  - v1.25
   clusters:
-  - 37
-  - 128
-  - 256
+  - 5
+  #run a plain network before having any specific scenarios
   opts:
   - ''
   sector_opts:
@@ -55,16 +49,13 @@ scenario:
   # - 2040
   - 2050
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['DE']
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
   start: "2013-01-01"
   end: "2014-01-01"
   inclusive: 'left'
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
   prepare_links_p_nom: false
@@ -75,31 +66,29 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
+#this will be overwritten if the above
+#co2_budget:
+  #2020: 0.701
+  #2025: 0.524
+  #2030: 0.297
+  #2035: 0.150
+  #2040: 0.071
+  #2045: 0.032
+  #2050: 0.000
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
-co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 380., 500., 750.]
-  gaslimit_enable: false
-  gaslimit: false
-  co2limit_enable: false
+  #gaslimit_enable: false
+  #gaslimit: false
+  #co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
 
-  operational_reserve:
-    activate: false
-    epsilon_load: 0.02
-    epsilon_vres: 0.02
-    contingency: 4000
+  #operational_reserve:
+    #activate: false
+    #epsilon_load: 0.02
+    #epsilon_vres: 0.02
+    #contingency: 4000
 
   max_hours:
     battery: 6
@@ -111,9 +100,9 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
-  custom_powerplants: false
-  everywhere_powerplants: []
+  #powerplants_filter: false  #(DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
+  #custom_powerplants: false 
+  #everywhere_powerplants: []
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
@@ -127,12 +116,11 @@ electricity:
       Offshore: [offwind-ac, offwind-dc, offwind-float]
       Onshore: [onwind]
       PV: [solar]
-
+#autarky will be false as this we are not considering any such case as of now
   autarky:
     enable: false
     by_country: false
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-era5
   nprocesses: 4
@@ -159,7 +147,6 @@ atlite:
       sarah_dir:
       features: [influx, temperature]
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
     cutout: europe-2013-era5
@@ -180,6 +167,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+  
   offwind-ac:
     cutout: europe-2013-era5
     resource:
@@ -196,6 +184,7 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+ 
   offwind-dc:
     cutout: europe-2013-era5
     resource:
@@ -212,6 +201,7 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+ 
   offwind-float:
     cutout: europe-2013-era5
     resource:
@@ -230,6 +220,7 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
+  
   solar:
     cutout: europe-2013-sarah
     resource:
@@ -245,6 +236,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+  
   solar-hsat:
     cutout: europe-2013-sarah
     resource:
@@ -260,6 +252,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+  
   hydro:
     cutout: europe-2013-era5
     carriers: [ror, PHS, hydro]
@@ -272,14 +265,12 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
   dynamic_fuel_price: false
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
     220.: "Al/St 240/40 2-bundle 220.0"
@@ -828,18 +819,6 @@ solving:
     options: gurobi-default
 
   solver_options:
-    highs-default:
-      # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 4
-      solver: "ipm"
-      run_crossover: "off"
-      small_matrix_value: 1e-6
-      large_matrix_value: 1e9
-      primal_feasibility_tolerance: 1e-5
-      dual_feasibility_tolerance: 1e-5
-      ipm_optimality_tolerance: 1e-4
-      parallel: "on"
-      random_seed: 123
     gurobi-default:
       threads: 4
       method: 2 # barrier
@@ -849,39 +828,7 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
-    gurobi-numeric-focus:
-      NumericFocus: 3       # Favour numeric stability over speed
-      method: 2             # barrier
-      crossover: 0          # do not use crossover
-      BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
-      BarConvTol: 1.e-5
-      FeasibilityTol: 1.e-4
-      OptimalityTol: 1.e-4
-      ObjScale: -0.5
-      threads: 8
-      Seed: 123
-    gurobi-fallback:        # Use gurobi defaults
-      crossover: 0
-      method: 2             # barrier
-      BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
-      BarConvTol: 1.e-5
-      FeasibilityTol: 1.e-5
-      OptimalityTol: 1.e-5
-      Seed: 123
-      threads: 8
-    cplex-default:
-      threads: 4
-      lpmethod: 4 # barrier
-      solutiontype: 2 # non basic solution, ie no crossover
-      barrier.convergetol: 1.e-5
-      feasopt.tolerance: 1.e-6
-    copt-default:
-      Threads: 8
-      LpMethod: 2
-      Crossover: 0
-    cbc-default: {} # Used in CI
-    glpk-default: {} # Used in CI
-
+      
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
