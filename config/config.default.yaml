@@ -134,35 +134,25 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
-  default_cutout: europe-2013-era5
+  default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base:
       # module: era5
-    europe-2013-era5:
-      module: era5 # in priority order
+    europe-2013-sarah3-era5:
+      module: [sarah, era5] # in priority order
       x: [-12., 42.]
-      y: [33., 72]
+      y: [33., 72.]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
-    europe-2013-sarah:
-      module: [sarah, era5] # in priority order
-      x: [-12., 42.]
-      y: [33., 65]
-      dx: 0.2
-      dy: 0.2
-      time: ['2013', '2013']
-      sarah_interpolate: false
-      sarah_dir:
-      features: [influx, temperature]
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -181,7 +171,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -197,7 +187,7 @@ renewable:
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
   offwind-dc:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -213,7 +203,7 @@ renewable:
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
   offwind-float:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -231,7 +221,7 @@ renewable:
     max_depth: 1000
     clip_p_max_pu: 1.e-2
   solar:
-    cutout: europe-2013-sarah
+    cutout: europe-2013-sarah3-era5
     resource:
       method: pv
       panel: CSi
@@ -246,7 +236,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   solar-hsat:
-    cutout: europe-2013-sarah
+    cutout: europe-2013-sarah3-era5
     resource:
       method: pv
       panel: CSi
@@ -261,7 +251,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
@@ -295,7 +285,7 @@ lines:
   under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
   dynamic_line_rating:
     activate: false
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false
@@ -786,6 +776,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -830,7 +821,7 @@ solving:
   solver_options:
     highs-default:
       # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 4
+      threads: 1
       solver: "ipm"
       run_crossover: "off"
       small_matrix_value: 1e-6
@@ -841,7 +832,7 @@ solving:
       parallel: "on"
       random_seed: 123
     gurobi-default:
-      threads: 4
+      threads: 8
       method: 2 # barrier
       crossover: 0
       BarConvTol: 1.e-6
@@ -878,6 +869,13 @@ solving:
     copt-default:
       Threads: 8
       LpMethod: 2
+      Crossover: 0
+      RelGap: 1.e-6
+      Dualize: 0
+    copt-gpu:
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.e-5
       Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI

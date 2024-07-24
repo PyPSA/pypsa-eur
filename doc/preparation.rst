@@ -16,7 +16,7 @@ using the ``retrieve*`` rules (:ref:`data`).
 Having downloaded the necessary data,
 
 - :mod:`build_shapes` generates GeoJSON files with shapes of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`__ areas.
-- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__ for cutout ``europe-2013-era5`` and SARAH for cutout ``europe-2013-sarah``.
+- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__ for cutout ``europe-2013-sarah3-era5`` and SARAH for cutout ``europe-2013-sarah``.
 
 With these and the externally extracted ENTSO-E online map topology
 (``data/entsoegridkit``), it can build a base PyPSA network with the following rules:
