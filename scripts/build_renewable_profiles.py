@@ -178,6 +178,12 @@ adding up the installable potentials of the individual grid cells. If the model
 comes close to this limit, then the time series may slightly overestimate
 production since it is assumed the geographical distribution is proportional to
 capacity factor.
+
+
+PyPSA-Spain
+------------
+
+Includes q2q transform 
 """
 import functools
 import logging
@@ -191,6 +197,11 @@ from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client
 from pypsa.geo import haversine
 from shapely.geometry import LineString
+
+
+##### PyPSA-Spain
+import pickle
+
 
 logger = logging.getLogger(__name__)
 
@@ -431,6 +442,49 @@ if __name__ == "__main__":
     if "clip_p_max_pu" in params:
         min_p_max_pu = params["clip_p_max_pu"]
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
+
+
+
+    ######################################## PyPSA-Spain : q2q transform
+
+    ##### Allocate relevant variables    
+    q2q_transform = snakemake.params.q2q_transform
+    technology = snakemake.wildcards.technology
+
+
+    if q2q_transform.apply_q2q:
+
+        ########## Retrieve the name of the file with the q2q transform
+        q2q_filename = q2q_transform[technology]
+
+
+        ##### If name_of_function is empty, do nothing
+        if not q2q_filename:            
+            print(f'##### [PyPSA-Spain]: No q2q transform available for {technology}..')
+
+
+        ##### Aply q2q transform
+        else:
+            print(f'##### [PyPSA-Spain]: Applying q2q transform {q2q_filename} to {technology}..')
+
+            with open(q2q_filename, 'rb') as f:
+                interp_func = pickle.load(f)
+
+                ##### Replace dataset values in [1, 1.001] by 1 ##### (TODO: extend q2q transforms a bit beyond 1.0)
+                # Create a mask to select values between 1 y 1.001
+                variable_data = ds['profile']
+                mask = (variable_data >= 1) & (variable_data <= 1.001)
+                # Replace these values with 1
+                variable_data = variable_data.where(~mask, 1)
+                # Assign the modified DataArray to dataset
+                ds['profile'] = variable_data
+
+
+                ds['profile'][:, :, :] = interp_func(ds.variables['profile'])
+
+    ########################################
+
+
 
     ds.to_netcdf(snakemake.output.profile)
 

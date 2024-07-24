@@ -230,6 +230,7 @@ rule build_renewable_profiles:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
+        q2q_transform=config_provider("pypsa_spain","q2q_transform"),
     input:
         unpack(input_ua_md_availability_matrix),
         base_network=resources("networks/base.nc"),
