@@ -47,6 +47,12 @@ Upcoming Release
   variables from ERA5. Cutouts are now available for multiple years (2010, 2013,
   2019, and 2023).
 
+* Added option ``solving: curtailment_mode``` which fixes the dispatch profiles
+  of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu``
+  and adds an auxiliary curtailment generator with negative sign (to absorb
+  excess power) at every AC bus. This can speed up the solving process as the
+  curtailment decision is aggregated into a single generator per region.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
