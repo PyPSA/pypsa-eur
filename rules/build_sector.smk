@@ -1041,8 +1041,6 @@ rule prepare_sector_network:
         ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
         cop_soil_decentral_heating=resources(
             "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
         ),
