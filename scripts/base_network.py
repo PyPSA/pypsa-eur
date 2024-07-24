@@ -796,7 +796,7 @@ def voronoi(points, outline):
         gpd.points_from_xy(points.x, points.y),
         index=points.index,
     )
-    voronoi = points.voronoi_polygons(extend_to=outline).clip(outline)
+    voronoi = pts.voronoi_polygons(extend_to=outline).clip(outline)
 
     # can be removed with shapely 2.1 where order is preserved
     # https://github.com/shapely/shapely/issues/2020
