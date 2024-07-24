@@ -305,23 +305,21 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
+  include_tyndp: true #remove when PR TYNDP data is included
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
   enable: true
   include:
-    #tyndp: true # For later, when other TYNDP projects are combined with new version
+    #tyndp2020: true # For later, when other TYNDP projects are combined with new version
     nep: true
   status:
   - confirmed
   - in_permitting
   - under_construction
     #- under_consideration
-  line_under_construction: keep
-  link_under_construction: zero
-
+  new_link_capacity: keep #keep or zero
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
   x: 0.1
