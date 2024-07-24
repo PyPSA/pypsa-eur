@@ -53,6 +53,9 @@ Upcoming Release
   excess power) at every AC bus. This can speed up the solving process as the
   curtailment decision is aggregated into a single generator per region.
 
+* In :mod:`base_network`, replace own voronoi polygon calculation function with
+  Geopandas `gdf.voronoi_polygons` method.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
