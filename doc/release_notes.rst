@@ -41,6 +41,12 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
+* Updated pre-built `weather data cutouts
+  <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
+  solar irradiation from the new SARAH-3 dataset while taking all other
+  variables from ERA5. Cutouts are now available for multiple years (2010, 2013,
+  2019, and 2023).
+
 * Added option ``solving: curtailment_mode``` which fixes the dispatch profiles
   of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu``
   and adds an auxiliary curtailment generator with negative sign (to absorb
