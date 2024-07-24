@@ -10,6 +10,8 @@ tutorial: false
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
+  apply_q2q: true
+
 
 
 
