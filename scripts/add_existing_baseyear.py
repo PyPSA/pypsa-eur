@@ -707,11 +707,9 @@ def add_land_transport_installed_before_baseyear(
 
     ev_battery_storage = n.stores[n.stores.carrier.str.contains("Li ion|EV battery storage")]
     ev_battery_storage_index = ev_battery_storage.index
-    print("3",ev_battery_storage_index)
     n.stores.loc[ev_battery_storage_index, "e_nom_extendable"] = False
     print("4",n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'])
-    #n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'] = False
-    print("5",n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_extendable'])
+
     number_cars = pd.read_csv(snakemake.input.existing_transport, index_col=0)[
         "number cars"
     ]

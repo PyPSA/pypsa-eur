@@ -150,6 +150,24 @@ def adjust_EVs(n, n_p, year):
                     print(n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index])
                     #n.links_t.p_max_pu[(n.links.filter(like="land transpo-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
                 i = i+1   
+    
+    #Get existing capacity of EV batteries
+    ev_battery_storage = n.stores[n.stores.carrier.str.contains("Li ion|EV battery storage")]
+    sum_ev_battery = ev_battery_storage.groupby("bus")["e_nom"].sum()
+
+    #Set e_nom_max to remaining capacity in relation to maximum capacity of fully electric car fleet of 2025
+    ev_store = n.stores.carrier.str.contains('Li ion|EV battery storage') 
+    ev_store_ext = n.stores[ev_store].query("e_nom_extendable").index
+    print(sum_ev_battery)
+    if sum(sum_ev_battery):
+        enommax = n.stores.loc[ev_store_ext,'e_nom_max']
+        print(enommax)
+        enommax.index = enommax.index.str.rstrip(' storage-'+str(year)) 
+        newpnommax = enommax-sum_ev_battery
+        newpnommax[newpnommax < 0] = 0
+        print(newpnommax)
+        n.stores.loc[ev_store_ext,'e_nom_max'] = newpnommax.values
+
 
 def disable_grid_expansion_if_LV_limit_hit(n):
     if not "lv_limit" in n.global_constraints.index:

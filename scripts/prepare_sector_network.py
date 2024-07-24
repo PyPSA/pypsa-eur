@@ -1618,7 +1618,7 @@ def add_land_transport(n, costs):
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
         
-        eff = costs.at['Battery electric (passenger cars)', 'efficiency'] #/(1+dd_EV)
+        eff = options["transport_electric_vehicle_efficiency"] #costs.at['Battery electric (passenger cars)', 'efficiency'] #/(1+dd_EV)
         n.madd(
             "Link",
             nodes,
