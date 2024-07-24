@@ -220,16 +220,16 @@ rule build_cop_profiles:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
         ),
-        forward_temperature_district_heating=config_provider(
+        forward_temperature_central_heating=config_provider(
             "sector", "district_heating", "forward_temperature"
         ),
-        return_temperature_district_heating=config_provider(
+        return_temperature_central_heating=config_provider(
             "sector", "district_heating", "return_temperature"
         ),
-        heat_source_cooling_district_heating=config_provider(
+        heat_source_cooling_central_heating=config_provider(
             "sector", "district_heating", "heat_source_cooling"
         ),
-        heat_pump_cop_approximation_district_heating=config_provider(
+        heat_pump_cop_approximation_central_heating=config_provider(
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
     input:
@@ -257,7 +257,7 @@ rule build_cop_profiles:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_cop_profiles.py"
+        "../scripts/build_cop_profiles/__main__.py"
 
 
 def solar_thermal_cutout(wildcards):
