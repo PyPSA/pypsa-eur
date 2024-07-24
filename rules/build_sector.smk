@@ -257,7 +257,7 @@ rule build_cop_profiles:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_cop_profiles/__main__.py"
+        "../scripts/build_cop_profiles/run.py"
 
 
 def solar_thermal_cutout(wildcards):
