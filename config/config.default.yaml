@@ -420,7 +420,7 @@ sector:
     district_heating_loss: 0.15
     # check these numbers!
     forward_temperature: 90 #C
-    return_temperature: 60 #C
+    return_temperature: 50 #C
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
