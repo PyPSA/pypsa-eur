@@ -786,6 +786,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -830,7 +831,7 @@ solving:
   solver_options:
     highs-default:
       # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 4
+      threads: 1
       solver: "ipm"
       run_crossover: "off"
       small_matrix_value: 1e-6
@@ -841,7 +842,7 @@ solving:
       parallel: "on"
       random_seed: 123
     gurobi-default:
-      threads: 4
+      threads: 8
       method: 2 # barrier
       crossover: 0
       BarConvTol: 1.e-6

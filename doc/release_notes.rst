@@ -41,6 +41,12 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
+* Added option ``solving: curtailment_mode``` which fixes the dispatch profiles
+  of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu``
+  and adds an auxiliary curtailment generator with negative sign (to absorb
+  excess power) at every AC bus. This can speed up the solving process as the
+  curtailment decision is aggregated into a single generator per region.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
