@@ -452,7 +452,7 @@ if __name__ == "__main__":
     technology = snakemake.wildcards.technology
 
 
-    if q2q_transform.apply_q2q:
+    if q2q_transform['apply_q2q']:
 
         ########## Retrieve the name of the file with the q2q transform
         q2q_filename = q2q_transform[technology]
@@ -465,7 +465,7 @@ if __name__ == "__main__":
 
         ##### Aply q2q transform
         else:
-            print(f'##### [PyPSA-Spain]: Applying q2q transform {q2q_filename} to {technology}..')
+            print(f'##### [PyPSA-Spain]: Applying q2q transform "{q2q_filename}" to {technology}..')
 
             with open(q2q_filename, 'rb') as f:
                 interp_func = pickle.load(f)
@@ -481,6 +481,9 @@ if __name__ == "__main__":
 
 
                 ds['profile'][:, :, :] = interp_func(ds.variables['profile'])
+
+    else:
+        print(f'##### [PyPSA-Spain]: Ommitting q2q transform for {technology}..')
 
     ########################################
 
