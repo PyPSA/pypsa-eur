@@ -379,6 +379,7 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+  unsustainable_phase_out: 2035
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
