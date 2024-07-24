@@ -72,6 +72,7 @@ Creates the network topology from an ENTSO-E map extract, and create Voronoi sha
 """
 
 import logging
+import warnings
 from itertools import product
 
 import geopandas as gpd
@@ -788,22 +789,26 @@ def base_network(
     return n
 
 
-def voronoi(points, outline):
+def voronoi(points, outline, crs=4326):
     """
     Create Voronoi polygons from a set of points within an outline.
     """
     pts = gpd.GeoSeries(
         gpd.points_from_xy(points.x, points.y),
         index=points.index,
+        crs=crs,
     )
     voronoi = pts.voronoi_polygons(extend_to=outline).clip(outline)
 
     # can be removed with shapely 2.1 where order is preserved
     # https://github.com/shapely/shapely/issues/2020
-    pts = gpd.GeoDataFrame(geometry=pts)
-    voronoi = gpd.GeoDataFrame(geometry=voronoi)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        pts = gpd.GeoDataFrame(geometry=pts)
+        voronoi = gpd.GeoDataFrame(geometry=voronoi)
+        joined = gpd.sjoin_nearest(pts, voronoi, how="right")
 
-    return gpd.sjoin(pts, voronoi, how="right").set_index("Bus")
+    return joined.dissolve(by="Bus").squeeze()
 
 
 def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
