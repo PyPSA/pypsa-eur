@@ -1053,8 +1053,6 @@ rule prepare_sector_network:
         cop_soil_central_heating=resources(
             "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
         ),
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
