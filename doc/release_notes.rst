@@ -39,6 +39,8 @@ Upcoming Release
 
 * Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
 
+* The ``{scope}`` wildcard was removed, since its outputs were not used.
+
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
 * Updated pre-built `weather data cutouts
