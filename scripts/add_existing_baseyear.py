@@ -419,11 +419,11 @@ def add_heating_capacities_installed_before_baseyear(
     n,
     baseyear,
     grouping_years,
-    ashp_cop,
-    gshp_cop,
-    time_dep_hp_cop,
+    cop: dict,
+    time_dep_hp_cop: bool,
     costs,
     default_lifetime,
+    existing_heating: pd.DataFrame
 ):
     """
     Parameters
@@ -435,12 +435,12 @@ def add_heating_capacities_installed_before_baseyear(
         currently assumed heating capacities split between residential and
         services proportional to heating load in both 50% capacities
         in rural buses 50% in urban buses
+    cop: dict
+        Dictionary with time-dependent coefficients of perforamnce (COPs) for air and ground heat pumps as values and keys "air decentral", "ground decentral", "air central", "ground central"
+    time_dep_hp_cop: bool
+        If True, time-dependent (dynamic) COPs are used for heat pumps
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
-
-    existing_heating = pd.read_csv(
-        snakemake.input.existing_heating_distribution, header=[0, 1], index_col=0
-    )
 
     for name in existing_heating.columns.get_level_values(0).unique():
         name_type = "central" if name == "urban central" else "decentral"
@@ -457,12 +457,11 @@ def add_heating_capacities_installed_before_baseyear(
         # Add heat pumps
         costs_name = f"decentral {heat_pump_type}-sourced heat pump"
 
-        cop = {"air": ashp_cop, "ground": gshp_cop}
-
-        if time_dep_hp_cop:
-            efficiency = cop[heat_pump_type][nodes]
-        else:
-            efficiency = costs.at[costs_name, "efficiency"]
+        efficiency = (
+                        cop[f"{heat_pump_type} {name_type}"][nodes]
+                        if options["time_dep_hp_cop"]
+                        else costs.at[costs_name, "efficiency"]
+                    )
 
         too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
         if too_large_grouping_years:
@@ -639,29 +638,43 @@ if __name__ == "__main__":
     )
 
     if options["heating"]:
-        time_dep_hp_cop = options["time_dep_hp_cop"]
-        ashp_cop = (
-            xr.open_dataarray(snakemake.input.cop_air_total)
-            .to_pandas()
-            .reindex(index=n.snapshots)
-        )
-        gshp_cop = (
-            xr.open_dataarray(snakemake.input.cop_soil_total)
-            .to_pandas()
-            .reindex(index=n.snapshots)
-        )
-        default_lifetime = snakemake.params.existing_capacities[
-            "default_heating_lifetime"
-        ]
+
         add_heating_capacities_installed_before_baseyear(
-            n,
-            baseyear,
-            grouping_years_heat,
-            ashp_cop,
-            gshp_cop,
-            time_dep_hp_cop,
-            costs,
-            default_lifetime,
+            n=n,
+            baseyear=baseyear,
+            grouping_years=grouping_years_heat,
+            cop={
+                "air decentral": xr.open_dataarray(
+                    snakemake.input.cop_air_decentral_heating
+                )
+                .to_pandas()
+                .reindex(index=n.snapshots),
+                "ground decentral": xr.open_dataarray(
+                    snakemake.input.cop_soil_decentral_heating
+                )
+                .to_pandas()
+                .reindex(index=n.snapshots),
+                "air central": xr.open_dataarray(
+                    snakemake.input.cop_air_central_heating
+                )
+                .to_pandas()
+                .reindex(index=n.snapshots),
+                "ground central": xr.open_dataarray(
+                    snakemake.input.cop_soil_central_heating
+                )
+                .to_pandas()
+                .reindex(index=n.snapshots),
+            },
+            time_dep_hp_cop=options["time_dep_hp_cop"],
+            costs=costs,
+            default_lifetime=snakemake.params.existing_capacities[
+                "default_heating_lifetime"
+            ],
+            existing_heating=pd.read_csv(
+                snakemake.input.existing_heating_distribution,
+                header=[0, 1],
+                index_col=0,
+            ),
         )
 
     if options.get("cluster_heat_buses", False):
