@@ -860,13 +860,36 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
         c_b = n.buses.country == country
 
         onshore_shape = country_shapes[country]
-        onshore_locs = (
-            n.buses.loc[c_b & n.buses.onshore_bus]
-            .sort_values(
-                by="substation_lv", ascending=False
-            )  # preference for substations
-            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
-        )
+
+
+        ############################## PyPSA-Spain
+        if snakemake.params.Voronoi_only_where_loads:
+
+            onshore_locs = (
+                ##### Include condition 'n.buses.substation_lv' to only select where load will be deploy
+                n.buses.loc[c_b & n.buses.onshore_bus & n.buses.substation_lv] 
+                ##### Remove the sorting step
+                # .sort_values(
+                #     by="substation_lv", ascending=False
+                # )  # preference for substations
+                .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+            )
+
+
+        ##### PyPSA-Eur procedure
+        else:
+
+            onshore_locs = (
+                n.buses.loc[c_b & n.buses.onshore_bus]
+                .sort_values(
+                    by="substation_lv", ascending=False
+                )  # preference for substations
+                .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+            )
+
+        ##############################
+
+
         onshore_regions.append(
             gpd.GeoDataFrame(
                 {

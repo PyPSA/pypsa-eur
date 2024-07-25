@@ -10,6 +10,7 @@ tutorial: false
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
+  Voronoi_only_where_loads: true
   q2q_transform:
     apply_q2q: false 
     onwind: 'data_ES/q2q/q2q_onwind_v002.pkl'
