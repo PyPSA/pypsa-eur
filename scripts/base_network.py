@@ -757,7 +757,10 @@ def base_network(
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
-    n.name = "PyPSA-Eur"
+
+    ########## PyPSA-Spain
+    n.name = "PyPSA-Spain"
+    ##########
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
