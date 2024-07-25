@@ -440,6 +440,10 @@ if __name__ == "__main__":
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
 
-    df = add_unsustainable_potentials(df)
+    if (
+        params["include_unsustainable"]
+        and investment_year < params["unsustainable_phase_out"]
+    ):
+        df = add_unsustainable_potentials(df)
 
     df.to_csv(snakemake.output.biomass_potentials)
