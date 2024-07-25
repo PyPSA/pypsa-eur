@@ -865,6 +865,8 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
         ############################## PyPSA-Spain
         if snakemake.params.Voronoi_only_where_loads:
 
+            print(f'##### [PyPSA-Spain]: Creating Voronoi cells only where loads..')
+            
             onshore_locs = (
                 ##### Include condition 'n.buses.substation_lv' to only select where load will be deploy
                 n.buses.loc[c_b & n.buses.onshore_bus & n.buses.substation_lv] 
