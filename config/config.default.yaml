@@ -770,6 +770,7 @@ clustering:
       ramp_limit_up: max
       ramp_limit_down: max
       investment: mean
+      connection_investment: mean
     lines:
       investment: mean
     one_ports:
