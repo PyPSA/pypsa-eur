@@ -19,8 +19,18 @@ rule add_existing_baseyear:
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
+        cop_soil_decentral_heating=resources(
+            "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_decentral_heating=resources(
+            "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
+        ),
+        cop_air_central_heating=resources(
+            "cop_air_central_heating_elec_s{simpl}_{clusters}.nc"
+        ),
+        cop_soil_central_heating=resources(
+            "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
+        ),
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),

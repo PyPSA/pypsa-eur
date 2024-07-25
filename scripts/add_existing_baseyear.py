@@ -436,7 +436,7 @@ def add_heating_capacities_installed_before_baseyear(
         services proportional to heating load in both 50% capacities
         in rural buses 50% in urban buses
     cop: dict
-        Dictionary with time-dependent coefficients of perforamnce (COPs) for air and ground heat pumps as values and keys "air decentral", "ground decentral", "air central", "ground central"
+        Dictionary with time-dependent coefficients of performance (COPs) for air and ground heat pumps as values and keys "air decentral", "ground decentral", "air central", "ground central"
     time_dep_hp_cop: bool
         If True, time-dependent (dynamic) COPs are used for heat pumps
     """
@@ -459,7 +459,7 @@ def add_heating_capacities_installed_before_baseyear(
 
         efficiency = (
             cop[f"{heat_pump_type} {name_type}"][nodes]
-            if options["time_dep_hp_cop"]
+            if time_dep_hp_cop
             else costs.at[costs_name, "efficiency"]
         )
 
