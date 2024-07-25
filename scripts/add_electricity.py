@@ -445,11 +445,8 @@ def attach_wind_and_solar(
                     + costs.at[car + "-station", "capital_cost"]
                     + connection_cost
                 )
-                investment = (
-                    costs.at["offwind", "investment"]
-                    + costs.at[car + "-station", "investment"]
-                    + connection_investment
-                )
+                investment = costs.at["offwind", "investment"]
+                connection_investment += costs.at[car + "-station", "investment"]
                 logger.info(
                     "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
                         connection_cost.min(), connection_cost.max(), car
@@ -458,6 +455,7 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
                 investment = costs.at[car, "investment"]
+                connection_investment = None
 
             n.madd(
                 "Generator",
@@ -471,6 +469,7 @@ def attach_wind_and_solar(
                 marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
                 investment=investment,
+                connection_investment=connection_investment,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
                 lifetime=costs.at[supcar, "lifetime"],
