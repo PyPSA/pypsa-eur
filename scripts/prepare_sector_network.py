@@ -2339,7 +2339,7 @@ def add_biomass(n, costs):
     if snakemake.params.biomass.get(
         "include_unsustainable"
     ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-        
+
         n.madd(
             "Store",
             spatial.gas.biogas,
