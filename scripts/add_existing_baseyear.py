@@ -423,7 +423,7 @@ def add_heating_capacities_installed_before_baseyear(
     time_dep_hp_cop: bool,
     costs,
     default_lifetime,
-    existing_heating: pd.DataFrame
+    existing_heating: pd.DataFrame,
 ):
     """
     Parameters
@@ -458,10 +458,10 @@ def add_heating_capacities_installed_before_baseyear(
         costs_name = f"decentral {heat_pump_type}-sourced heat pump"
 
         efficiency = (
-                        cop[f"{heat_pump_type} {name_type}"][nodes]
-                        if options["time_dep_hp_cop"]
-                        else costs.at[costs_name, "efficiency"]
-                    )
+            cop[f"{heat_pump_type} {name_type}"][nodes]
+            if options["time_dep_hp_cop"]
+            else costs.at[costs_name, "efficiency"]
+        )
 
         too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
         if too_large_grouping_years:
