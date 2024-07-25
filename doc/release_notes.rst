@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Changed heat pump COP approximation for central heating to be based on Jensen et al. 2018 and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
+
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
   The default value for the link efficiency scaling factor was changed from 100% to 25%.
   It can be set to other values in the configuration ``sector: use_TECHNOLOGY_waste_heat``.
