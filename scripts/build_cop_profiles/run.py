@@ -5,9 +5,42 @@
 
 import numpy as np
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, get_country_from_node_name
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
+
+
+def map_temperature_dict_to_onshore_regions(
+    temperature_dict: dict, onshore_regions: xr.DataArray
+) -> xr.DataArray:
+    """
+    Map dictionary of temperatures to onshore regions.
+
+    Parameters:
+    ----------
+    temperature_dict : dictionary
+        Dictionary with temperatures as values and country keys as keys. One key must be named "generic"
+    onshore_regions : xr.DataArray
+        Names of onshore regions
+
+    Returns:
+    -------
+    xr.DataArray
+        The dictionary values mapped to onshore regions with onshore regions as coordinates.
+    """
+    return xr.DataArray(
+        [
+            (
+                temperature_dict[get_country_from_node_name(node_name)]
+                if get_country_from_node_name(node_name) in temperature_dict.keys()
+                else temperature_dict["generic"]
+            )
+            for node_name in onshore_regions["name"].values
+        ],
+        dims=["name"],
+        coords={"name": onshore_regions["name"]},
+    )
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -23,12 +56,12 @@ if __name__ == "__main__":
 
     for source_type in ["air", "soil"]:
         # source inlet temperature (air/soil) is based on weather data
-        source_inlet_temperature_celsius = xr.open_dataarray(
+        source_inlet_temperature_celsius: xr.DataArray = xr.open_dataarray(
             snakemake.input[f"temp_{source_type}_total"]
         )
 
         # Approximate COP for decentral (individual) heating
-        cop_individual_heating = DecentralHeatingCopApproximator(
+        cop_individual_heating: xr.DataArray = DecentralHeatingCopApproximator(
             forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=source_type,
@@ -37,10 +70,25 @@ if __name__ == "__main__":
             snakemake.output[f"cop_{source_type}_decentral_heating"]
         )
 
+        # map forward and return temperatures specified on country-level to onshore regions
+        onshore_regions: xr.DataArray = source_inlet_temperature_celsius["name"]
+        forward_temperature_central_heating: xr.DataArray = (
+            map_temperature_dict_to_onshore_regions(
+                temperature_dict=snakemake.params.forward_temperature_central_heating,
+                onshore_regions=onshore_regions,
+            )
+        )
+        return_temperature_central_heating: xr.DataArray = (
+            map_temperature_dict_to_onshore_regions(
+                temperature_dict=snakemake.params.return_temperature_central_heating,
+                onshore_regions=onshore_regions,
+            )
+        )
+
         # Approximate COP for central (district) heating
-        cop_central_heating = CentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.forward_temperature_central_heating,
-            return_temperature_celsius=snakemake.params.return_temperature_central_heating,
+        cop_central_heating: xr.DataArray = CentralHeatingCopApproximator(
+            forward_temperature_celsius=forward_temperature_central_heating,
+            return_temperature_celsius=return_temperature_central_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
