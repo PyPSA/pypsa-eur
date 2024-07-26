@@ -92,7 +92,9 @@ if __name__ == "__main__":
 
         # The first low density grid cells to reach rural fraction are rural
         asc_density_i = density_cells_ct.sort_values().index
-        asc_density_cumsum = pop_cells_ct[asc_density_i].cumsum() / pop_cells_ct.sum()
+        asc_density_cumsum = (
+            pop_cells_ct.iloc[asc_density_i].cumsum() / pop_cells_ct.sum()
+        )
         rural_fraction_ct = 1 - urban_fraction[ct]
         pop_ct_rural_b = asc_density_cumsum < rural_fraction_ct
         pop_ct_urban_b = ~pop_ct_rural_b

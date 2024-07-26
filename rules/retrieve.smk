@@ -29,6 +29,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "h2_salt_caverns_GWh_per_sqkm.geojson",
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
+        "GDP_per_capita_PPP_1990_2015_v2.nc",
+        "ppp_2013_1km_Aggregated.tif",
     ]
 
     rule retrieve_databundle:
@@ -163,7 +165,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/10973944/files/shipdensity_global.zip",
+                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:

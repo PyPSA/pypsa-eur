@@ -196,6 +196,11 @@ def define_spatial(nodes, options):
     spatial.lignite.nodes = ["EU lignite"]
     spatial.lignite.locations = ["EU"]
 
+    # deep geothermal
+    spatial.geothermal_heat = SimpleNamespace()
+    spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
+    spatial.geothermal_heat.locations = ["EU"]
+
     return spatial
 
 
@@ -683,6 +688,7 @@ def add_co2_tracking(n, costs, options):
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
+        marginal_cost=-0.1,
         bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
         carrier="co2 sequestered",
@@ -976,7 +982,7 @@ def insert_electricity_distribution_grid(n, costs):
         .get("efficiency_static")
     ):
         logger.info(
-            f"Deducting distribution losses from electricity demand: {100*(1-efficiency)}%"
+            f"Deducting distribution losses from electricity demand: {np.around(100*(1-efficiency), decimals=2)}%"
         )
         n.loads_t.p_set.loc[:, n.loads.carrier == "electricity"] *= efficiency
 
@@ -3347,7 +3353,7 @@ def add_waste_heat(n):
 
         # TODO what is the 0.95 and should it be a config option?
         if (
-            options["use_waste_heat"].get("fischer_tropsch", 1)
+            options["use_fischer_tropsch_waste_heat"]
             and "Fischer-Tropsch" in link_carriers
         ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
@@ -3355,10 +3361,10 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
-            ) * options["use_waste_heat"].get("fischer_tropsch", 1)
+            ) * options["use_fischer_tropsch_waste_heat"]
 
         if (
-            options["use_waste_heat"].get("methanation", 1)
+            options["use_methanation_waste_heat"]
             and "Sabatier" in link_carriers
         ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
@@ -3366,11 +3372,11 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            ) * options["use_waste_heat"].get("methanation", 1)
+            ) * options["use_methanation_waste_heat"]
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
         if (
-            options["use_waste_heat"].get("haber_bosch", 1)
+            options["use_haber_bosch_waste_heat"]
             and "Haber-Bosch" in link_carriers
         ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
@@ -3386,10 +3392,10 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
-            ) * options["use_waste_heat"].get("haber_bosch", 1)
+            ) * options["use_haber_bosch_waste_heat"]
 
         if (
-            options["use_waste_heat"].get("methanolisation", 1)
+            options["use_methanolisation_waste_heat"]
             and "methanolisation" in link_carriers
         ):
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
@@ -3398,11 +3404,11 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
                 costs.at["methanolisation", "heat-output"]
                 / costs.at["methanolisation", "hydrogen-input"]
-            ) * options["use_waste_heat"].get("methanolisation", 1)
+            ) * options["use_methanolisation_waste_heat"]
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if (
-            options["use_waste_heat"].get("electrolysis", 1)
+            options["use_electrolysis_waste_heat"]
             and "H2 Electrolysis" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
@@ -3410,10 +3416,10 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
-            ) * options["use_waste_heat"].get("electrolysis", 1)
+            ) * options["use_electrolysis_waste_heat"]
 
         if (
-            options["use_waste_heat"].get("fuel_cell", 1)
+            options["use_fuel_cell_waste_heat"]
             and "H2 Fuel Cell" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
@@ -3421,7 +3427,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            ) * options["use_waste_heat"].get("fuel_cell", 1)
+            ) * options["use_fuel_cell_waste_heat"]
 
 
 def add_agriculture(n, costs):
@@ -3738,7 +3744,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}, subset=None):
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
 
     n.links = pd.concat([n.links, rev_links], sort=False)
-    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["reversed"] = n.links["reversed"].fillna(False).infer_objects(copy=False)
     n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
 
     # do compression losses after concatenation to take electricity consumption at bus0 in either direction
@@ -3750,6 +3756,210 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}, subset=None):
         n.links.loc[carrier_i, "efficiency2"] = (
             -compression_per_1000km * n.links.loc[carrier_i, "length_original"] / 1e3
         )
+
+
+def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
+    """
+    Adds EGS potential to model.
+
+    Built in scripts/build_egs_potentials.py
+    """
+
+    if len(spatial.geothermal_heat.nodes) > 1:
+        logger.warning(
+            "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
+        )
+    logger.info(
+        "[EGS] implemented with 2020 CAPEX from Aghahosseini et al 2021: 'From hot rock to...'."
+    )
+    logger.info(
+        "[EGS] Recommended usage scales CAPEX to future cost expectations using config 'adjustments'."
+    )
+    logger.info("[EGS] During this the relevant carriers are:")
+    logger.info("[EGS] drilling part -> 'geothermal heat'")
+    logger.info(
+        "[EGS] electricity generation part -> 'geothermal organic rankine cycle'"
+    )
+    logger.info("[EGS] district heat distribution part -> 'geothermal district heat'")
+
+    egs_config = snakemake.params["sector"]["enhanced_geothermal"]
+    costs_config = snakemake.config["costs"]
+
+    # matrix defining the overlap between gridded geothermal potential estimation, and bus regions
+    overlap = pd.read_csv(egs_overlap, index_col=0)
+    overlap.columns = overlap.columns.astype(int)
+    egs_potentials = pd.read_csv(egs_potentials, index_col=0)
+
+    Nyears = n.snapshot_weightings.generators.sum() / 8760
+    dr = costs_config["fill_values"]["discount rate"]
+    lt = costs.at["geothermal", "lifetime"]
+    FOM = costs.at["geothermal", "FOM"]
+
+    egs_annuity = calculate_annuity(lt, dr)
+
+    # under egs optimism, the expected cost reductions also cover costs for ORC
+    # hence, the ORC costs are no longer taken from technology-data
+    orc_capex = costs.at["organic rankine cycle", "investment"]
+
+    # cost for ORC is subtracted, as it is already included in the geothermal cost.
+    # The orc cost are attributed to a separate link representing the ORC.
+    # also capital_cost conversion Euro/kW -> Euro/MW
+
+    egs_potentials["capital_cost"] = (
+        (egs_annuity + FOM / (1.0 + FOM))
+        * (egs_potentials["CAPEX"] * 1e3 - orc_capex)
+        * Nyears
+    )
+
+    assert (
+        egs_potentials["capital_cost"] > 0
+    ).all(), "Error in EGS cost, negative values found."
+
+    orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
+    orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
+
+    efficiency_orc = costs.at["organic rankine cycle", "efficiency"]
+    efficiency_dh = costs.at["geothermal", "district heat-input"]
+
+    # p_nom_max conversion GW -> MW
+    egs_potentials["p_nom_max"] = egs_potentials["p_nom_max"] * 1000.0
+
+    # not using add_carrier_buses, as we are not interested in a Store
+    n.add("Carrier", "geothermal heat")
+
+    n.madd(
+        "Bus",
+        spatial.geothermal_heat.nodes,
+        carrier="geothermal heat",
+        unit="MWh_th",
+    )
+
+    n.madd(
+        "Generator",
+        spatial.geothermal_heat.nodes,
+        bus=spatial.geothermal_heat.nodes,
+        carrier="geothermal heat",
+        p_nom_extendable=True,
+    )
+
+    if egs_config["var_cf"]:
+        efficiency = pd.read_csv(
+            snakemake.input.egs_capacity_factors, parse_dates=True, index_col=0
+        )
+        logger.info("Adding Enhanced Geothermal with time-varying capacity factors.")
+    else:
+        efficiency = 1.0
+
+    # if urban central heat exists, adds geothermal as CHP
+    as_chp = "urban central heat" in n.loads.carrier.unique()
+
+    if as_chp:
+        logger.info("Adding EGS as Combined Heat and Power.")
+
+    else:
+        logger.info("Adding EGS for Electricity Only.")
+
+    for bus, bus_overlap in overlap.iterrows():
+        if not bus_overlap.sum():
+            continue
+
+        overlap = bus_overlap.loc[bus_overlap > 0.0]
+        bus_egs = egs_potentials.loc[overlap.index]
+
+        if not len(bus_egs):
+            continue
+
+        bus_egs["p_nom_max"] = bus_egs["p_nom_max"].multiply(bus_overlap)
+        bus_egs = bus_egs.loc[bus_egs.p_nom_max > 0.0]
+
+        appendix = " " + pd.Index(np.arange(len(bus_egs)).astype(str))
+
+        # add surface bus
+        n.madd(
+            "Bus",
+            pd.Index([f"{bus} geothermal heat surface"]),
+            location=bus,
+            unit="MWh_th",
+            carrier="geothermal heat",
+        )
+
+        bus_egs.index = np.arange(len(bus_egs)).astype(str)
+        well_name = f"{bus} enhanced geothermal" + appendix
+
+        if egs_config["var_cf"]:
+            bus_eta = pd.concat(
+                (efficiency[bus].rename(idx) for idx in well_name),
+                axis=1,
+            )
+        else:
+            bus_eta = efficiency
+
+        p_nom_max = bus_egs["p_nom_max"]
+        capital_cost = bus_egs["capital_cost"]
+        bus1 = pd.Series(f"{bus} geothermal heat surface", well_name)
+
+        # adding geothermal wells as multiple generators to represent supply curve
+        n.madd(
+            "Link",
+            well_name,
+            bus0=spatial.geothermal_heat.nodes,
+            bus1=bus1,
+            carrier="geothermal heat",
+            p_nom_extendable=True,
+            p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
+            capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
+            efficiency=bus_eta,
+        )
+
+        # adding Organic Rankine Cycle as a single link
+        n.add(
+            "Link",
+            bus + " geothermal organic rankine cycle",
+            bus0=f"{bus} geothermal heat surface",
+            bus1=bus,
+            p_nom_extendable=True,
+            carrier="geothermal organic rankine cycle",
+            capital_cost=orc_capital_cost * efficiency_orc,
+            efficiency=efficiency_orc,
+        )
+
+        if as_chp and bus + " urban central heat" in n.buses.index:
+            n.add(
+                "Link",
+                bus + " geothermal heat district heat",
+                bus0=f"{bus} geothermal heat surface",
+                bus1=bus + " urban central heat",
+                carrier="geothermal district heat",
+                capital_cost=orc_capital_cost
+                * efficiency_orc
+                * costs.at["geothermal", "district heat surcharge"]
+                / 100.0,
+                efficiency=efficiency_dh,
+                p_nom_extendable=True,
+            )
+        elif as_chp and not bus + " urban central heat" in n.buses.index:
+            n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = (
+                efficiency_orc
+            )
+
+        if egs_config["flexible"]:
+            # this StorageUnit represents flexible operation using the geothermal reservoir.
+            # Hence, it is counter-intuitive to install it at the surface bus,
+            # this is however the more lean and computationally efficient solution.
+
+            max_hours = egs_config["max_hours"]
+            boost = egs_config["max_boost"]
+
+            n.add(
+                "StorageUnit",
+                bus + " geothermal reservoir",
+                bus=f"{bus} geothermal heat surface",
+                carrier="geothermal heat",
+                p_nom_extendable=True,
+                p_min_pu=-boost,
+                max_hours=max_hours,
+                cyclic_state_of_charge=True,
+            )
 
 
 # %%
@@ -3882,6 +4092,12 @@ if __name__ == "__main__":
 
     if options["electricity_distribution_grid"]:
         insert_electricity_distribution_grid(n, costs)
+
+    if options["enhanced_geothermal"].get("enable", False):
+        logger.info("Adding Enhanced Geothermal Systems (EGS).")
+        add_enhanced_geothermal(
+            n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
+        )
 
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 

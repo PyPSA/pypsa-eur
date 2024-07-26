@@ -562,13 +562,12 @@ sector:
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
-  use_waste_heat:
-    fischer_tropsch: 0.25
-    haber_bosch: 0.25
-    methanolisation: 0.25
-    methanation: 0.25
-    fuel_cell: 0.25
-    electrolysis: 0.25
+  use_fischer_tropsch_waste_heat: 0.25
+  use_haber_bosch_waste_heat: 0.25
+  use_methanolisation_waste_heat: 0.25
+  use_methanation_waste_heat: 0.25
+  use_fuel_cell_waste_heat: 0.25
+  use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
@@ -613,6 +612,13 @@ sector:
       solar: 3
       offwind-ac: 3
       offwind-dc: 3
+  enhanced_geothermal:
+    enable: false
+    flexible: true
+    max_hours: 240
+    max_boost: 0.25
+    var_cf: true
+    sustainability_factor: 0.0025
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -774,6 +780,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -818,7 +825,7 @@ solving:
   solver_options:
     highs-default:
       # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 4
+      threads: 1
       solver: "ipm"
       run_crossover: "off"
       small_matrix_value: 1e-6
@@ -829,7 +836,7 @@ solving:
       parallel: "on"
       random_seed: 123
     gurobi-default:
-      threads: 4
+      threads: 8
       method: 2 # barrier
       crossover: 0
       BarConvTol: 1.e-6
@@ -866,6 +873,13 @@ solving:
     copt-default:
       Threads: 8
       LpMethod: 2
+      Crossover: 0
+      RelGap: 1.e-6
+      Dualize: 0
+    copt-gpu:
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.e-5
       Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
@@ -1189,6 +1203,9 @@ plotting:
     waste: '#e3d37d'
     other: '#000000'
     geothermal: '#ba91b1'
+    geothermal heat: '#ba91b1'
+    geothermal district heat: '#d19D00'
+    geothermal organic rankine cycle: '#ffbf00'
     AC: "#70af1d"
     AC-AC: "#70af1d"
     AC line: "#70af1d"
