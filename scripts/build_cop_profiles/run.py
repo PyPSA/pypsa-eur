@@ -5,7 +5,7 @@
 
 import numpy as np
 import xarray as xr
-from _helpers import set_scenario_config, get_country_from_node_name
+from _helpers import get_country_from_node_name, set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
@@ -80,14 +80,14 @@ if __name__ == "__main__":
             map_temperature_dict_to_onshore_regions(
                 temperature_dict=snakemake.params.forward_temperature_central_heating,
                 onshore_regions=onshore_regions,
-                snapshots=source_inlet_temperature_celsius["time"]
+                snapshots=source_inlet_temperature_celsius["time"],
             )
         )
         return_temperature_central_heating: xr.DataArray = (
             map_temperature_dict_to_onshore_regions(
                 temperature_dict=snakemake.params.return_temperature_central_heating,
                 onshore_regions=onshore_regions,
-                snapshots=source_inlet_temperature_celsius["time"]
+                snapshots=source_inlet_temperature_celsius["time"],
             )
         )
 

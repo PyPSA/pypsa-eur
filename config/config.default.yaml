@@ -414,7 +414,7 @@ sector:
       SE: 70
       NO: 70
       FI: 70
-    return_temperature: 
+    return_temperature:
       default: 50
       DK: 40
       SE: 40
