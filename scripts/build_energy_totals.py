@@ -467,9 +467,16 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0).loc[start:end]
     df = df[~df.index.isna()]
     
+    map_code = {}
     for car_type in car_types:
         assert len(df[df.index.str.contains(car_type)]) == 1
         ct_totals[f"{car_type} efficiency"] = df[df.index.str.contains(car_type)].sum()
+        map_code[ct_totals[f"{car_type} efficiency"].Code] = car_type
+    
+    electric = df.loc["Battery electric vehicles"] 
+    for name, row in electric.iterrows():
+        car_type = map_code[row.Code.replace(".BEV", "").replace(".ICE", "")]
+        ct_totals[f"{car_type} efficiency electric"] = row
     
     df = pd.read_excel(fn_transport, "TrRail_ene", index_col=0)
 
@@ -614,11 +621,9 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # clean up dataframe
     years = np.arange(2000, 2022)
     totals = totals[totals.index.get_level_values(1).isin(years)]
-    
-    # efficiency kgoe/100km -> ktoe/100km
-    eff_cols = [car_type + " efficiency" for car_type in car_types]
-    totals.loc[:, eff_cols] /= 1e3
+
     # convert ktoe to TWh
+    # efficiency kgoe/100km -> MWh/100km 
     exclude = (totals.columns.str.contains("Number") 
                | totals.columns.str.contains("mio km-driven")
                | totals.columns.str.contains("New registration")
@@ -1242,9 +1247,11 @@ def build_transport_data(
     
             transport_data[col] = transport_data[col].combine_first(fill_values)
 
-    # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
+    # collect average fuel efficiency in MWh/100km
     for car_type in car_types:      
-        transport_data[f"average fuel efficiency {car_type}"] = idees[f"{car_type} efficiency"] * 1e3
+        transport_data[f"average fuel efficiency {car_type}"] = idees[f"{car_type} efficiency"]
+        if f"{car_type} efficiency electric" in idees.columns:
+            transport_data[f"average fuel efficiency {car_type} electric"] = idees[f"{car_type} efficiency electric"]
     
         missing = transport_data.index[transport_data[f"average fuel efficiency {car_type}"].isna()]
         if not missing.empty:
@@ -1254,6 +1261,11 @@ def build_transport_data(
     
             fill_values = transport_data[f"average fuel efficiency {car_type}"].mean()
             transport_data.loc[missing, f"average fuel efficiency {car_type}"] = fill_values
+            # fill values of electric cars based on 2021
+            if f"{car_type} efficiency electric" in idees.columns:
+                fill_values =  idees[f"{car_type} efficiency electric"].xs(2021,level=1).mean()
+                missing = transport_data.index[transport_data[f"average fuel efficiency {car_type} electric"].isna()]
+                transport_data.loc[missing, f"average fuel efficiency {car_type} electric"] = fill_values
 
 
     return transport_data
