@@ -71,18 +71,15 @@ def define_spatial(nodes, options):
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
 
     # unsustainable bioliquids
-    if snakemake.params.biomass.get(
-        "include_unsustainable"
-    ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-        spatial.bioliquids = SimpleNamespace()
-        if options.get("regional_oil_demand"):
-            spatial.bioliquids.nodes = nodes + " bioliquids"
-            spatial.bioliquids.locations = nodes
-        else:
-            spatial.bioliquids.nodes = ["EU bioliquids"]
-            spatial.bioliquids.locations = ["EU"]
+    spatial.bioliquids = SimpleNamespace()
+    if options.get("regional_oil_demand"):
+        spatial.bioliquids.nodes = nodes + " bioliquids"
+        spatial.bioliquids.locations = nodes
+    else:
+        spatial.bioliquids.nodes = ["EU bioliquids"]
+        spatial.bioliquids.locations = ["EU"]
 
-        spatial.bioliquids.df = pd.DataFrame(vars(spatial.bioliquids), index=nodes)
+    spatial.bioliquids.df = pd.DataFrame(vars(spatial.bioliquids), index=nodes)
 
     # co2
 
