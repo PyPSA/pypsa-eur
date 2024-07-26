@@ -4,6 +4,59 @@
 # SPDX-License-Identifier: MIT
 """
 Build future industrial production per country.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    industry:
+        St_primary_fraction:
+        DRI_fraction:
+        Al_primary_fraction:
+        HVC_primary_fraction:
+        HVC_mechanical_recycling_fraction:
+        HVC_chemical_recycling_fraction:
+.. seealso::
+    Documentation of the configuration file ``config/config.yaml`` at
+    :ref:`industry`
+
+Inputs
+-------
+
+- ``resources/industrial_production_per_country.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
+
+Description
+-------
+
+This rule uses the ``industrial_production_per_country.csv`` file and the expected recycling rates to calculate the future production of the industrial sectors.
+
+**St_primary_fraction**
+The fraction of steel that is coming from primary production. This is more energy intensive than recycling steel (secondary production).
+
+**DRI_fraction**
+The fraction of primary steel that is produced in DRI plants.
+
+**Al_primary_fraction**
+The fraction of aluminium that is coming from primary production. This is more energy intensive than recycling aluminium (secondary production).
+
+**HVC_primary_fraction**
+The fraction of high value chemicals that are coming from primary production (crude oil or Fischer Tropsch).
+
+**HVC_mechanical_recycling_fraction**
+The fraction of high value chemicals that are coming from mechanical recycling.
+
+**HVC_chemical_recycling_fraction**
+The fraction of high value chemicals that are coming from chemical recycling.
+
+If not already present, the information is added as new column in the output file.
+
+The unit of the production is kt/a.
 """
 
 import pandas as pd
