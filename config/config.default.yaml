@@ -408,15 +408,14 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    # check these numbers!
     forward_temperature:
-      generic: 90
+      default: 90
       DK: 70
       SE: 70
       NO: 70
       FI: 70
     return_temperature: 
-      generic: 50
+      default: 50
       DK: 40
       SE: 40
       NO: 40

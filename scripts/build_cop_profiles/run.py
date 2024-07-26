@@ -11,7 +11,7 @@ from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
 
 def map_temperature_dict_to_onshore_regions(
-    temperature_dict: dict, onshore_regions: xr.DataArray
+    temperature_dict: dict, onshore_regions: xr.DataArray, snapshots: xr.DataArray
 ) -> xr.DataArray:
     """
     Map dictionary of temperatures to onshore regions.
@@ -19,7 +19,7 @@ def map_temperature_dict_to_onshore_regions(
     Parameters:
     ----------
     temperature_dict : dictionary
-        Dictionary with temperatures as values and country keys as keys. One key must be named "generic"
+        Dictionary with temperatures as values and country keys as keys. One key must be named "default"
     onshore_regions : xr.DataArray
         Names of onshore regions
 
@@ -30,15 +30,19 @@ def map_temperature_dict_to_onshore_regions(
     """
     return xr.DataArray(
         [
-            (
-                temperature_dict[get_country_from_node_name(node_name)]
-                if get_country_from_node_name(node_name) in temperature_dict.keys()
-                else temperature_dict["generic"]
-            )
-            for node_name in onshore_regions["name"].values
+            [
+                (
+                    temperature_dict[get_country_from_node_name(node_name)]
+                    if get_country_from_node_name(node_name) in temperature_dict.keys()
+                    else temperature_dict["default"]
+                )
+                for node_name in onshore_regions["name"].values
+            ]
+            # pass both nodes and snapshots as dimensions to preserve correct data structure
+            for _ in snapshots["time"].values
         ],
-        dims=["name"],
-        coords={"name": onshore_regions["name"]},
+        dims=["time", "name"],
+        coords={"time": snapshots["time"], "name": onshore_regions["name"]},
     )
 
 
@@ -76,12 +80,14 @@ if __name__ == "__main__":
             map_temperature_dict_to_onshore_regions(
                 temperature_dict=snakemake.params.forward_temperature_central_heating,
                 onshore_regions=onshore_regions,
+                snapshots=source_inlet_temperature_celsius["time"]
             )
         )
         return_temperature_central_heating: xr.DataArray = (
             map_temperature_dict_to_onshore_regions(
                 temperature_dict=snakemake.params.return_temperature_central_heating,
                 onshore_regions=onshore_regions,
+                snapshots=source_inlet_temperature_celsius["time"]
             )
         )
 
