@@ -3365,10 +3365,7 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             ) * options["use_fischer_tropsch_waste_heat"]
 
-        if (
-            options["use_methanation_waste_heat"]
-            and "Sabatier" in link_carriers
-        ):
+        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3377,10 +3374,7 @@ def add_waste_heat(n):
             ) * options["use_methanation_waste_heat"]
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
-        if (
-            options["use_haber_bosch_waste_heat"]
-            and "Haber-Bosch" in link_carriers
-        ):
+        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3420,10 +3414,7 @@ def add_waste_heat(n):
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
             ) * options["use_electrolysis_waste_heat"]
 
-        if (
-            options["use_fuel_cell_waste_heat"]
-            and "H2 Fuel Cell" in link_carriers
-        ):
+        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
