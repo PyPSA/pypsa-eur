@@ -3,6 +3,43 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""
+Approximate heat pump coefficient-of-performance (COP) profiles for different heat sources and systems.
+
+For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+    sector:
+        heat_pump_sink_T_decentral_heating:
+        district_heating:
+            forward_temperature:
+            return_temperature:
+            heat_source_cooling:
+            heat_pump_cop_approximation:
+                refrigerant:
+                heat_exchanger_pinch_point_temperature_difference
+                isentropic_compressor_efficiency:
+                heat_loss:
+            heat_pump_sources:
+                urban central:
+                urban decentral:
+                rural:
+    snapshots:
+
+Inputs
+------
+- `resources/<run_name>/regions_onshore.geojson`: Onshore regions
+- `resources/<run_name>/temp_soil_total`: Ground temperature
+- `resources/<run_name>/temp_air_total`: Air temperature
+
+Outputs
+-------
+- `resources/<run_name>/cop_profiles.nc`: Heat pump coefficient-of-performance (COP) profiles
+"""
+
 import sys
 
 import geopandas as gpd
