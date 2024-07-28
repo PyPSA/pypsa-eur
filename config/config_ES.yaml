@@ -10,7 +10,7 @@ tutorial: false
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
-  Voronoi_only_where_loads: true
+  Voronoi_only_where_loads: false
   q2q_transform:
     apply_q2q: false 
     onwind: 'data_ES/q2q/q2q_onwind_v002.pkl'
@@ -36,8 +36,8 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "prefix0"   #####
-  name: "without_q2q"   #####
+  prefix: "prefix"   #####
+  name: "name"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
