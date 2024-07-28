@@ -1,0 +1,174 @@
+
+########## These notation is the one employed by DATADIS
+
+
+dic_economicSector:
+  '01' : 'RESIDENCIAL'
+  '02' : 'INDUSTRIA'
+  '03' : 'SERVICIOS'
+  '04' : 'NO ESPECIFICADO'
+
+
+dic_community: 
+  '01': 'Andalucía'
+  '02': 'Aragón'
+  '03': 'Principado de Asturias'
+  '04': 'Islas Baleares'
+#  '05': 'Canarias'   ##### Not included in pypsa-es
+  '06': 'Cantabria'
+  '07': 'Castilla y León'
+  '08': 'Castilla La Mancha'
+  '09': 'Cataluña'
+  '10': 'Comunidad Valenciana'
+  '11': 'Extremadura'
+  '12': 'Galicia'
+  '13': 'Comunidad de Madrid'
+  '14': 'Región de Murcia'
+  '15': 'Comunidad Foral de Navarra'
+  '16': 'País Vasco'
+  '17': 'La Rioja'
+#  '18' : 'Ceuta'   ##### Not included in pypsa-es
+#  '19' : 'Melilla'   ##### Not included in pypsa-es
+   
+
+dic_community_NUTSid:
+  '01': ES61
+  '02': ES24
+  '03': ES12
+  '04': ES53
+#  '05': 'Canarias'   ##### Not included in pypsa-es
+  '06': ES13
+  '07': ES41
+  '08': ES42
+  '09': ES51
+  '10': ES52
+  '11': ES43
+  '12': ES11
+  '13': ES30
+  '14': ES62
+  '15': ES22
+  '16': ES21
+  '17': ES23
+#  '18' : 'Ceuta'   ##### Not included in pypsa-es
+#  '19' : 'Melilla'   ##### Not included in pypsa-es
+
+
+
+
+dic_province:
+  '01' : 'Álava'
+  '02' : 'Albacete'
+  '03' : 'Alicante'
+  '04' : 'Almería'
+  '05' : 'Ávila'
+  '06' : 'Badajoz'
+  '07' : 'Baleares'  ### In NUTS3 this is divided into Ibiza, Mallorca y Menorca
+  '08' : 'Barcelona'
+  '09' : 'Burgos'
+  '10' : 'Cáceres'
+  '11' : 'Cádiz'
+  '12' : 'Castellón'
+  '13' : 'Ciudad Real'
+  '14' : 'Córdoba'
+  '15' : 'A Coruña'
+  '16' : 'Cuenca'
+  '17' : 'Girona'
+  '18' : 'Granada'
+  '19' : 'Guadalajara'
+  '20' : 'Guipuzkoa'
+  '21' : 'Huelva'
+  '22' : 'Huesca'
+  '23' : 'Jaén'
+  '24' : 'León'
+  '25' : 'Lleida'
+  '26' : 'La Rioja'
+  '27' : 'Lugo'
+  '28' : 'Madrid'
+  '29' : 'Málaga'
+  '30' : 'Murcia'
+  '31' : 'Navarra'
+  '32' : 'Ourense'
+  '33' : 'Asturias'
+  '34' : 'Palencia'
+  #'35' : 'Las Palmas'   ##### Not included in pypsa-es
+  '36' : 'Pontevedra'
+  '37' : 'Salamanca'
+  #'38' : 'Santa Cruz de Tenerife'   ##### Not included in pypsa-es
+  '39' : 'Cantabria'
+  '40' : 'Segovia'
+  '41' : 'Sevilla'
+  '42' : 'Soria'
+  '43' : 'Tarragona'
+  '44' : 'Teruel'
+  '45' : 'Toledo'
+  '46' : 'Valencia'
+  '47' : 'Valladolid'
+  '48' : 'Vizcaya'
+  '49' : 'Zamora'
+  '50' : 'Zaragoza'
+  #'51' : 'Ceuta'   ##### Not included in pypsa-es
+  #'52' : 'Melilla'   ##### Not included in pypsa-es
+
+
+dic_province_NUTSid:
+  '01': ES211
+  '02': ES421
+  '03': ES521
+  '04': ES611
+  '05': ES411
+  '06': ES431
+  '07': ES532  ### This NUTS3 ID is Mallorca
+  '08': ES511
+  '09': ES412
+  '10': ES432
+  '11': ES612
+  '12': ES522
+  '13': ES422
+  '14': ES613
+  '15': ES111
+  '16': ES423
+  '17': ES512
+  '18': ES614
+  '19': ES424
+  '20': ES212
+  '21': ES615
+  '22': ES241
+  '23': ES616
+  '24': ES413
+  '25': ES513
+  '26': ES230
+  '27': ES112
+  '28': ES300
+  '29': ES617
+  '30': ES620
+  '31': ES220
+  '32': ES113
+  '33': ES120
+  '34': ES414
+  #'35' : 'Las Palmas'   ##### Not included in pypsa-es
+  '36': ES114
+  '37': ES415
+  #'38' : 'Santa Cruz de Tenerife'   ##### Not included in pypsa-es
+  '39': ES130
+  '40': ES416
+  '41': ES618
+  '42': ES417
+  '43': ES514
+  '44': ES242
+  '45': ES425
+  '46': ES523
+  '47': ES418
+  '48': ES213
+  '49': ES419
+  '50': ES243
+  #'51' : 'Ceuta'   ##### Not included in pypsa-es
+  #'52' : 'Melilla'   ##### Not included in pypsa-es
+
+
+dic_country:
+  '01': Spain
+
+
+dic_country_NUTSid:
+  '01': ES
+
