@@ -24,6 +24,7 @@ rule build_electricity_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
         load=config_provider("load"),
+        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
         synthetic=lambda w: (
