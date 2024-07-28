@@ -1,0 +1,19 @@
+dic_NUTS2:
+  'Andalucía': 'ES61'
+  'Aragón': 'ES24'
+  'Principado de Asturias': 'ES12'
+  'Islas Baleares': 'ES53'
+#  'Islas Canarias': 'ES70'   ##### Not included in pypsa-es
+  'Cantabria': 'ES13'
+  'Castilla y León': 'ES41'
+  'Castilla-La Mancha': 'ES42'
+  'Cataluña': 'ES51'
+  'Comunidad Valenciana': 'ES52'
+  'Extremadura': 'ES43'
+  'Galicia': 'ES11'
+  'Comunidad de Madrid': 'ES30'
+  'Región de Murcia': 'ES62'
+  'Comunidad Foral de Navarra': 'ES22'
+  'País Vasco': 'ES21'
+  'La Rioja': 'ES23'
+
