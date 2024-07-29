@@ -237,9 +237,12 @@ rule build_cop_profiles:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
-        **{f"cop_{source}_{sink}": resources(
-            "cop_" + source + "_" + {sink} + "_" + "elec_s{simpl}_{clusters}.nc"
-        ) for sink, source in config_provider("sector", "heat_pump_sources").items()},
+        **{
+            f"cop_{source}_{sink}": resources(
+                "cop_" + source + "_" + {sink} + "_" + "elec_s{simpl}_{clusters}.nc"
+            )
+            for sink, source in config_provider("sector", "heat_pump_sources").items()
+        },
         # cop_air_decentral_heating=resources(
         #     "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
         # ),
