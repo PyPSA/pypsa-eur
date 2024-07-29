@@ -2353,7 +2353,7 @@ def add_heat(n, costs):
                     country=ct,
                     capital_cost=capital_cost[strength]
                     * options["retrofitting"]["cost_factor"],
-                    investment=pd.NA, # TODO add proper investment value
+                    investment=pd.NA,  # TODO add proper investment value
                 )
 
 
