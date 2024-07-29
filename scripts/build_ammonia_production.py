@@ -43,13 +43,13 @@ if __name__ == "__main__":
         skiprows=5,
         header=0,
         index_col=0,
-        skipfooter=19,
+        skipfooter=7,
         na_values=["--"],
     )
 
     ammonia.index = cc.convert(ammonia.index, to="iso2")
 
-    years = [str(i) for i in range(2017, 2022)]
+    years = [str(i) for i in range(2018, 2023)]
 
     ammonia = ammonia.rename(columns=lambda x: str(x))[years]
 

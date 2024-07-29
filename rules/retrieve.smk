@@ -67,7 +67,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_ammonia_demand:
         output:
-            "data/bundle/myb1-2021-nitro-ert.xlsx",
+            "data/bundle/myb1-2022-nitro-ert.xlsx",
         log:
             "logs/retrieve_ammonia_demand.log",
         retries: 2
