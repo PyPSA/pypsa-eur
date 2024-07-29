@@ -293,6 +293,7 @@ def separate_basic_chemicals(demand, year):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
+    # ammonia data from 2017-2021
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
@@ -301,8 +302,11 @@ def separate_basic_chemicals(demand, year):
     logger.info(f"Following countries have no ammonia demand: {missing.tolist()}")
 
     demand["Ammonia"] = 0.0
-
-    demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year)]
+    
+    year_to_use = min(max(year, 2017), 2021)
+    if year_to_use != year:
+        logger.info(f"Using data from {year_to_use} for ammonia production.")
+    demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year_to_use)]
 
     demand["Basic chemicals"] -= demand["Ammonia"]
 
