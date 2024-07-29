@@ -8,7 +8,7 @@ Build industrial energy demand per country.
 Inputs
 -------
 
-- ``data/bundle/jrc-idees-2015``
+- ``data/bundle/jrc-idees-2021``
 - ``industrial_production_per_country.csv``
 
 Outputs
@@ -120,7 +120,7 @@ jrc_names = {"GR": "EL", "GB": "UK"}
 
 def industrial_energy_demand_per_country(country, year, jrc_dir):
     jrc_country = jrc_names.get(country, country)
-    fn = f"{jrc_dir}/JRC-IDEES-2015_EnergyBalance_{jrc_country}.xlsx"
+    fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
 
     sheets = list(sector_sheets.values())
     df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)

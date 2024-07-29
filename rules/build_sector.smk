@@ -509,7 +509,7 @@ rule build_industrial_production_per_country:
         countries=config_provider("countries"),
     input:
         ammonia_production=resources("ammonia_production.csv"),
-        jrc="data/bundle/jrc-idees-2015",
+        jrc="data/bundle/jrc-idees-2021",
         eurostat="data/eurostat/Balances-April2023",
     output:
         industrial_production_per_country=resources(
@@ -656,7 +656,7 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
     input:
-        jrc="data/bundle/jrc-idees-2015",
+        jrc="data/bundle/jrc-idees-2021",
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
