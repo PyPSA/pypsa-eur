@@ -45,23 +45,6 @@ class BaseCopApproximator(ABC):
         """
         pass
 
-    def celsius_to_kelvin(
-        t_celsius: Union[float, xr.DataArray, np.array]
-    ) -> Union[float, xr.DataArray, np.array]:
-        if (np.asarray(t_celsius) > 200).any():
-            raise ValueError(
-                "t_celsius > 200. Are you sure you are using the right units?"
-            )
-        return t_celsius + 273.15
-
-    def logarithmic_mean(
-        t_hot: Union[float, xr.DataArray, np.ndarray],
-        t_cold: Union[float, xr.DataArray, np.ndarray],
-    ) -> Union[float, xr.DataArray, np.ndarray]:
-        if (np.asarray(t_hot <= t_cold)).any():
-            raise ValueError("t_hot must be greater than t_cold")
-        return (t_hot - t_cold) / np.log(t_hot / t_cold)
-
     @staticmethod
     def celsius_to_kelvin(
         t_celsius: Union[float, xr.DataArray, np.array]
