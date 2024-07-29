@@ -273,6 +273,9 @@ if __name__ == "__main__":
     #
     if snakemake.params.electricity_demand['customise_electricity_demand']:
 
+        print(f'##### [PyPSA-Spain]: Creating customised electricity demand for Spain..')
+
+
         #################### Unwrap parameters
         electricity_demand = snakemake.params.electricity_demand
 

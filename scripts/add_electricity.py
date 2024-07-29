@@ -320,9 +320,24 @@ def attach_load(
             transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
         )
 
-        # relative factors 0.6 and 0.4 have been determined from a linear
-        # regression on the country to continent load data
-        factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
+
+        ######################################## PyPSA-Spain
+
+        ##### Use specific 'pop' and 'gdp' coefficients computed for ES
+        # 'normed' makes the elements of a vector to sum 1
+        if params.update_gdp_pop and cntry=='ES':
+            print(f'##### [PyPSA-Spain]: Using updated "gdp" and "pop" coefficients for ES ..')
+            ##### New                
+            factors = normed(0.18 * normed(gdp_n) + 0.82 * normed(pop_n))   
+        else:
+            ##### Original
+            # relative factors 0.6 and 0.4 have been determined from a linear
+            # regression on the country to continent load data
+            factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))   
+
+        ########################################
+
+
         if cntry in ["UA", "MD"]:
             # overwrite factor because nuts3 provides no data for UA+MD
             gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
@@ -351,6 +366,139 @@ def attach_load(
     n.madd(
         "Load", substation_lv_i, bus=substation_lv_i, p_set=load
     )  # carrier="electricity"
+
+
+
+
+
+######################################## PyPSA-Spain
+
+def attach_load_vPyPSA_Spain(
+    n, regions, load, nuts3_shapes, countries, scaling=1.0 # remove 'gdp_pop_non_nuts3' from inputs
+):
+    """
+    ########## This version is to:
+    # - Use a specific load time series for each region (community NUTS2 or province NUTS3), rather than using the load profile at national level.
+    # - The regions are named through the NUTS ID, see columns in 'resources/electricity_demand.csv'
+    """
+
+    ##### Filters 522 buses with substation_lv=True out of the 1109 buses in peninsular Spain
+    substation_lv_i = n.buses.index[n.buses["substation_lv"]]
+    
+    ##### Creates a gdf with index=name, and filters the 522 buses defined above
+    # Columns are: x, y, country, geometry
+    gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
+    
+    ##### Original: read country load time series
+    # opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
+    ##### New: read region load time series (country filter removed)
+    opsd_load = pd.read_csv(load, index_col=0, parse_dates=True)
+    logger.info(f"Load data scaled by factor {scaling}.")
+    opsd_load *= scaling
+
+    ########## Creates gdf with index=CCnnn (NUTS3 code)
+    # Columns are: pop, gdp, country, geometry
+    nuts3 = gpd.read_file(nuts3_shapes).set_index("index")
+
+    ########## This function will be called with a .groupby, so that:
+    # cntry: is a country within regions.country (here, only 'ES')
+    # group: is one of the (522) geometries within regions.geometry of the country cntry (ES)
+    #        with bus number as index
+    def upsample(cntry, group):##### , gdp_pop_non_nuts3):
+
+        ##### Original
+        # load = opsd_load[cntry]
+        # if len(group) == 1:
+        #     return pd.DataFrame({group.index[0]: load})        
+        ##### New: define where to add return_rr (with the load time series of each substation within rr)
+        return_total = pd.DataFrame(0, index = opsd_load.index, columns = group.index) 
+
+        for rr_ID in opsd_load.columns:  ##### rr_ID is the NUTS ID
+
+            load = opsd_load[rr_ID]
+
+
+            ##### Original: take NUTS3 in country
+            # nuts3_cntry = nuts3.loc[nuts3.country == cntry]
+            ##### New:
+            nuts3_rr = nuts3[nuts3.index.str.contains(rr_ID)]   
+        
+            ##### Get a matrix with area overlap percentages
+            #  rows are ~522 substations, columns are NUTS3 in región 
+            # .tocsr() is to put the sparse matrix in 'Compressed Sparse Row' format.            
+            transfer = shapes_to_shapes(group, nuts3_rr.geometry).T.tocsr()   
+
+            ##### Series with substations, (overlapped area) x (gdp) from corresponding NUTS3 of rr
+            gdp_n = pd.Series(
+                transfer.dot(nuts3_rr["gdp"].fillna(1.0).values), index=group.index
+            )
+
+            ##### Series with substations, (overlapped area) x (pop) from corresponding NUTS3 of rr
+            pop_n = pd.Series(
+                transfer.dot(nuts3_rr["pop"].fillna(1.0).values), index=group.index
+            )
+
+            
+            ##### Use specific 'pop' and 'gdp' coefficients computed for ES
+            # 'normed' makes the elements of a vector to sum 1
+            if params.update_gdp_pop:
+                print(f'##### [PyPSA-Spain]: Using updated "gdp" and "pop" coefficients for ES ..')
+                ##### New                
+                factors = normed(0.18 * normed(gdp_n) + 0.82 * normed(pop_n))   
+            else:
+                ##### Original
+                # relative factors 0.6 and 0.4 have been determined from a linear
+                # regression on the country to continent load data
+                factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))   
+
+
+            ##### Remove for Ukraine and Moldavia 
+            # if cntry in ["UA", "MD"]:
+            #     # overwrite factor because nuts3 provides no data for UA+MD
+            #     gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
+            #     gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
+            #         (gdp_pop_non_nuts3.country == cntry)
+            #         & (gdp_pop_non_nuts3.index.isin(substation_lv_i))
+            #     ]
+            #     factors = normed(
+            #         0.6 * normed(gdp_pop_non_nuts3["gdp"])
+            #         + 0.4 * normed(gdp_pop_non_nuts3["pop"])
+            #     )
+
+            ##### Original: return df
+            # return pd.DataFrame(
+            #     factors.values * load.values[:, np.newaxis],
+            #     index=load.index,
+            #     columns=factors.index,
+            # )
+            ##### New: add to return_total
+            return_rr = pd.DataFrame(
+                factors.values * load.values[:, np.newaxis], 
+                index=load.index,
+                columns=factors.index,
+            )
+
+            return_total += return_rr
+
+        return return_total
+            
+
+    load = pd.concat(
+        [
+            upsample(cntry, group)#####, gdp_pop_non_nuts3)
+            for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country)
+        ],
+        axis=1,
+    )
+
+    n.madd(
+        "Load", substation_lv_i, bus=substation_lv_i, p_set=load
+    )  # carrier="electricity"
+
+
+########################################
+
+
 
 
 def update_transmission_costs(n, costs, length_factor=1.0):
@@ -824,15 +972,38 @@ if __name__ == "__main__":
     )
     ppl = load_powerplants(snakemake.input.powerplants)
 
-    attach_load(
-        n,
-        snakemake.input.regions,
-        snakemake.input.load,
-        snakemake.input.nuts3_shapes,
-        snakemake.input.get("gdp_pop_non_nuts3"),
-        params.countries,
-        params.scaling_factor,
-    )
+
+    ################################################## PyPSA-Spain
+    #
+    # Generate electricity demand according to PyPSA-Spain customisation
+    #
+    if params.customise_electricity_demand:
+
+        print(f'##### [PyPSA-Spain]: Using attach_load_vPyPSA_Spain to attache regional electricity demand in ES..')
+
+        attach_load_vPyPSA_Spain(
+            n,
+            snakemake.input.regions,
+            snakemake.input.load,
+            snakemake.input.nuts3_shapes,
+            # snakemake.input.get("gdp_pop_non_nuts3"),
+            params.countries,
+            params.scaling_factor,
+        )
+
+    else:
+            attach_load(
+            n,
+            snakemake.input.regions,
+            snakemake.input.load,
+            snakemake.input.nuts3_shapes,
+            snakemake.input.get("gdp_pop_non_nuts3"),
+            params.countries,
+            params.scaling_factor,
+        )
+            
+    ##################################################
+
 
     update_transmission_costs(n, costs, params.length_factor)
 

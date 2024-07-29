@@ -11,8 +11,9 @@ tutorial: false
 pypsa_spain:
   retrieve_Iberian_cutout: true
   Voronoi_only_where_loads: false
+  update_gdp_pop: false
   electricity_demand:
-    customise_electricity_demand: true
+    customise_electricity_demand: false
     annual_value: 230 # TWh
     profiles: 'data_ES/electricity_demand/electricity_demand_profiles_province_by_economicSector_2022.csv'
     percentages: 'data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv' 
@@ -41,8 +42,8 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "electricity_demand"   #####
-  name: "true"   #####
+  prefix: "customise_electricity_demand"   #####
+  name: "false"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
