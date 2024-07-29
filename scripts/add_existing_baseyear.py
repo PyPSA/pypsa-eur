@@ -445,7 +445,9 @@ def add_heating_capacities_installed_before_baseyear(
     for heat_system in existing_heating.columns.get_level_values(0).unique():
         system_type = "central" if heat_system == "urban central" else "decentral"
 
-        nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{heat_system} heat")])
+        nodes = pd.Index(
+            n.buses.location[n.buses.index.str.contains(f"{heat_system} heat")]
+        )
 
         if (system_type != "central") and options["electricity_distribution_grid"]:
             nodes_elec = nodes + " low voltage"
@@ -457,11 +459,12 @@ def add_heating_capacities_installed_before_baseyear(
         costs_name = f"{system_type} {heat_source}-sourced heat pump"
 
         efficiency = (
-            cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes).to_pandas().reindex(index=n.snapshots)
+            cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes)
+            .to_pandas()
+            .reindex(index=n.snapshots)
             if options["time_dep_hp_cop"]
             else costs.at[costs_name, "efficiency"]
         )
-
 
         too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
         if too_large_grouping_years:
@@ -498,7 +501,9 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating.loc[nodes, (heat_system, f"{heat_source} heat pump")]
+                p_nom=existing_heating.loc[
+                    nodes, (heat_system, f"{heat_source} heat pump")
+                ]
                 * ratio
                 / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),

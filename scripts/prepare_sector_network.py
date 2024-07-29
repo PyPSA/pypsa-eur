@@ -1913,7 +1913,9 @@ def add_heat(n, costs):
         for heat_source in snakemake.params.heat_pump_sources[system_type]:
             costs_name = f"{system_type} {heat_source}-sourced heat pump"
             efficiency = (
-                cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes).to_pandas().reindex(index=n.snapshots)
+                cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes)
+                .to_pandas()
+                .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name, "efficiency"]
             )

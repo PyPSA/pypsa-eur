@@ -214,6 +214,7 @@ rule build_temperature_profiles:
     script:
         "../scripts/build_temperature_profiles.py"
 
+
 # def output_cop(wildcards):
 #     return {
 #         f"cop_{source}_{sink}": resources(
@@ -221,6 +222,7 @@ rule build_temperature_profiles:
 #         )
 #         for sink, source in config["sector"]["heat_pump_sources"].items()
 #     }
+
 
 rule build_cop_profiles:
     params:
