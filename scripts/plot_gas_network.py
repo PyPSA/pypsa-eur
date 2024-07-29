@@ -65,6 +65,8 @@ def plot_ch4_map(n):
         .sum()
         .rename(index=lambda x: x.replace(" gas", ""))
     )
+    # remove "renewable" from bus names
+    methanation.index = methanation.index.str.replace(" renewable", "")
     # make a fake MultiIndex so that area is correct for legend
     methanation.index = pd.MultiIndex.from_product([methanation.index, ["methanation"]])
 
@@ -105,7 +107,9 @@ def plot_ch4_map(n):
 
     pipe_colors = {
         "gas pipeline": "#f08080",
+        "renewable gas pipeline": "#f08080",
         "gas pipeline new": "#c46868",
+        "renewable gas pipeline new": "#c46868",
         "gas pipeline (in 2020)": "lightgrey",
         "gas pipeline (available)": "#e8d1d1",
     }
@@ -231,9 +235,11 @@ if __name__ == "__main__":
             "plot_gas_network",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-dist1",
+            clusters="22",
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons=2020,
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)

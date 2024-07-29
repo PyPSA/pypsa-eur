@@ -900,14 +900,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/scenarios.automated.yaml",
+            configfiles="config/config.yaml",
             simpl="",
-            clusters="22",
-            ll="vopt",
+            clusters="20",
+            ll="v1.5",
             opts="",
             sector_opts="none",
-            planning_horizons=2020,
-            run="KN2045_Bal_v4",
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
