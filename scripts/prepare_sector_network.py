@@ -5116,12 +5116,12 @@ if __name__ == "__main__":
             "prepare_sector_network",
             # configfiles="test/config.overnight.yaml",
             simpl="",
-            clusters="22",
+            clusters="37",
             opts="",
             ll="vopt",
             sector_opts="none",
-            planning_horizons="2020",
-            run="KN2045_Bal_v4"
+            planning_horizons="2030",
+            run="all_import_le-20"
         )
 
     configure_logging(snakemake)
@@ -5224,12 +5224,29 @@ if __name__ == "__main__":
         hbi=["shipping-hbi"],
     )
 
-    if options["imp"]:
+    if options["import"]["non_eu"]:
         carriers = options["import"]["options"]
+        # for DE-import the options all or only electricity + h2 are interesting
+        if options["import"]["carriers"] == "all":
+            carriers = ["pipeline-h2",
+                        "shipping-lh2",
+                        "shipping-lch4",
+                        "shipping-lnh3",
+                        "shipping-ftfuel",
+                        "shipping-meoh",
+                        "hvdc-to-elec",
+                        "shipping-hbi",
+                        "shipping-steel"]
+        elif options["import"]["carriers"] == "eleh2":
+            carriers = ["pipeline-h2",
+                        "shipping-lh2",
+                        "hvdc-to-elec"]
+        carriers = {k: options["import"]["cost_factor"] for k in carriers}
+
         add_import_options(
             n,
             capacity_boost=options["import"]["capacity_boost"],
-            import_options=carriers,
+            import_options=[carriers],
             endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"],
         )
 
@@ -5317,5 +5334,3 @@ if __name__ == "__main__":
     sanitize_locations(n)
 
     n.export_to_netcdf(snakemake.output[0])
-
-# %%

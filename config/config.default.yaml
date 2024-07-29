@@ -407,7 +407,6 @@ sector:
   biomass: true
   industry: true
   shipping: true
-  imp: true
   agriculture: true
   district_heating:
     potential: 0.6
@@ -641,6 +640,7 @@ sector:
   relocation_steel: false
   flexibility_steel: false
   import:
+    non_eu: true
     capacity_boost: 2 # p_nom_max generator
     limit: false # bool or number in TWh
     limit_sense: "=="
