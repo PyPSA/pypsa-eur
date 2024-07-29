@@ -808,7 +808,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
-    curtailment_mode: false
+    curtailment_mode: true   # false   #####
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
