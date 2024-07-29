@@ -416,6 +416,12 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
+  heat_pump_sources:
+    central_heating:
+      - air
+    decentral_heating:
+      - air
+      - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
