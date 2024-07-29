@@ -408,7 +408,6 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    # check these numbers!
     forward_temperature: 90 #C
     return_temperature: 50 #C
     heat_source_cooling: 6 #K
@@ -1063,7 +1062,7 @@ plotting:
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    Li ion: '#baf238'
+    EV battery: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'

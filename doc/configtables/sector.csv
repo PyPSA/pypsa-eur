@@ -10,10 +10,10 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- return_temperature,°C,float,Return temperature in district heating. Must be lower than forward temperature
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
--- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
--- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
--- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
--- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
+-- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
+-- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
+-- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
+-- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
