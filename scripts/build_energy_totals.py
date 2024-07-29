@@ -360,10 +360,8 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[40] == "Electricity"
     ct_totals["electricity residential"] = df.iloc[40]
 
-    # TODO derived heat changed to distributed heat and numbers changed as well!
-    # this needs to be checked
     assert df.index[39] == "Distributed heat"
-    ct_totals["derived heat residential"] = df.iloc[39]
+    ct_totals["distributed heat residential"] = df.iloc[39]
 
     assert df.index[43] == "Thermal uses"
     ct_totals["thermal uses residential"] = df.iloc[43]
@@ -395,9 +393,8 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[43] == "Electricity"
     ct_totals["electricity services"] = df.iloc[43]
 
-    # TODO check derived heat changed to distributed heat
     assert df.index[42] == "Distributed heat"
-    ct_totals["derived heat services"] = df.iloc[42]
+    ct_totals["distributed heat services"] = df.iloc[42]
 
     assert df.index[46] == "Thermal uses"
     ct_totals["thermal uses services"] = df.iloc[46]
@@ -900,14 +897,14 @@ def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.S
 
     Notes
     -----
-    - The function calculates the district heating share as the sum of residential and services derived heat, divided by the sum of residential and services thermal uses.
+    - The function calculates the district heating share as the sum of residential and services distributed heat, divided by the sum of residential and services thermal uses.
     - The district heating share is then reindexed to match the provided list of countries.
     - Missing district heating shares are filled from `data/district_heat_share.csv`.
     - The function makes a conservative assumption and takes the minimum district heating share from both the IDEES data and `data/district_heat_share.csv`.
     """
 
     # district heating share
-    district_heat = idees[["derived heat residential", "derived heat services"]].sum(
+    district_heat = idees[["distributed heat residential", "distributed heat services"]].sum(
         axis=1
     )
     total_heat = (
@@ -1265,7 +1262,7 @@ def rescale_idees_from_eurostat(
                 "total residential water",
                 "total residential cooking",
                 "total residential",
-                "derived heat residential",
+                "distributed heat residential",
                 "thermal uses residential",
             ],
             "elec": [
@@ -1281,7 +1278,7 @@ def rescale_idees_from_eurostat(
                 "total services water",
                 "total services cooking",
                 "total services",
-                "derived heat services",
+                "distributed heat services",
                 "thermal uses services",
             ],
             "elec": [
