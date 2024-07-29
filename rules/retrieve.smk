@@ -65,6 +65,15 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_jrc_idees.py"
 
+    rule retrieve_ammonia_demand:
+        output:
+            "data/bundle/myb1-2021-nitro-ert.xlsx",
+        log:
+            "logs/retrieve_ammonia_demand.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_ammonia_demand.py"
+
     rule retrieve_eurostat_household_data:
         output:
             "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
