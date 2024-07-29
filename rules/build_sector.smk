@@ -1020,6 +1020,9 @@ rule prepare_sector_network:
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"
         ),
+        industrial_production=resources(
+            "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         district_heat_share=resources(
             "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
