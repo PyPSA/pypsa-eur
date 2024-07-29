@@ -1238,12 +1238,14 @@ def add_storage_and_grids(n, costs):
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
             gas_pipes["capital_cost"] = 0.1 * gas_pipes.length
+            gas_pipes["p_nom_extendable"] = True
         else:
             gas_pipes["p_nom_max"] = np.inf
             gas_pipes["p_nom_min"] = gas_pipes.p_nom
             gas_pipes["capital_cost"] = (
                 gas_pipes.length * costs.at["CH4 (g) pipeline", "fixed"]
             )
+            gas_pipes["p_nom_extendable"] = False
 
         n.madd(
             "Link",
@@ -1252,14 +1254,14 @@ def add_storage_and_grids(n, costs):
             bus1=gas_pipes.bus1 + " gas",
             p_min_pu=gas_pipes.p_min_pu,
             p_nom=gas_pipes.p_nom,
-            p_nom_extendable=True,
+            p_nom_extendable=gas_pipes.p_nom_extendable,
             p_nom_max=gas_pipes.p_nom_max,
             p_nom_min=gas_pipes.p_nom_min,
             length=gas_pipes.length,
             capital_cost=gas_pipes.capital_cost,
             tags=gas_pipes.name,
             carrier="gas pipeline",
-            lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
+            lifetime=np.inf,
         )
 
         # remove fossil generators where there is neither
@@ -3363,10 +3365,7 @@ def add_waste_heat(n):
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
             ) * options["use_fischer_tropsch_waste_heat"]
 
-        if (
-            options["use_methanation_waste_heat"]
-            and "Sabatier" in link_carriers
-        ):
+        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3375,10 +3374,7 @@ def add_waste_heat(n):
             ) * options["use_methanation_waste_heat"]
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
-        if (
-            options["use_haber_bosch_waste_heat"]
-            and "Haber-Bosch" in link_carriers
-        ):
+        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -3418,10 +3414,7 @@ def add_waste_heat(n):
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
             ) * options["use_electrolysis_waste_heat"]
 
-        if (
-            options["use_fuel_cell_waste_heat"]
-            and "H2 Fuel Cell" in link_carriers
-        ):
+        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
