@@ -722,9 +722,7 @@ def add_co2_tracking(n, costs, options):
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
-        investment=options[
-            "co2_sequestration_cost"
-        ],  # Just filling in capital_cost here
+        investment=pd.NA,
         marginal_cost=-0.1,
         bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
@@ -806,8 +804,7 @@ def add_allam(n, costs):
         p_nom_extendable=True,
         # TODO: add costs to technology-data
         capital_cost=0.6 * 1.5e6 * 0.1,  # efficiency * EUR/MW * annuity
-        # TODO: add investment
-        # investment=0.6 * 1.5e6,  # efficiency * EUR/MW
+        investment=0.6 * 1.5e6,  # efficiency * EUR/MW
         marginal_cost=2,
         efficiency=0.6,
         efficiency2=costs.at["gas", "CO2 intensity"],
@@ -1319,9 +1316,7 @@ def add_storage_and_grids(n, costs):
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
             gas_pipes["capital_cost"] = 0.1 * gas_pipes.length
-            gas_pipes["investment"] = (
-                np.nan
-            )  # I guess with this option no investments occur??
+            gas_pipes["investment"] = np.nan
             gas_pipes["p_nom_extendable"] = True
         else:
             gas_pipes["p_nom_max"] = np.inf
@@ -2358,7 +2353,7 @@ def add_heat(n, costs):
                     country=ct,
                     capital_cost=capital_cost[strength]
                     * options["retrofitting"]["cost_factor"],
-                    # TODO add investment
+                    investment=pd.NA, # TODO add proper investment value
                 )
 
 

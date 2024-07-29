@@ -463,7 +463,7 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
                 investment = costs.at[car, "investment"]
-                connection_investment = None
+                connection_investment = pd.NA
 
             n.madd(
                 "Generator",
@@ -555,7 +555,7 @@ def attach_conventional_generators(
         efficiency=ppl.efficiency,
         marginal_cost=marginal_cost,
         capital_cost=ppl.capital_cost,
-        # Not clear how to get investment for these Generators, hence ignoring it for now
+        investment=ppl.investment,
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         **committable_attrs,
@@ -845,16 +845,9 @@ def attach_line_rating(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        import sys
-
         from _helpers import mock_snakemake
-
-        path = "../submodules/pypsa-eur/scripts"
-        sys.path.insert(0, os.path.abspath(path))
-        snakemake = mock_snakemake(
-            "add_electricity",
-            run="KN2045_Bal_v4",
-        )
+        snakemake = mock_snakemake("add_electricity")
+    
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
