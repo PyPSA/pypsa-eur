@@ -1825,23 +1825,6 @@ def add_heat(n, costs):
         "urban central",
     ]
 
-    cop = {
-        "air decentral": xr.open_dataarray(snakemake.input.cop_air_decentral_heating)
-        .to_pandas()
-        .reindex(index=n.snapshots),
-        "ground decentral": xr.open_dataarray(
-            snakemake.input.cop_soil_decentral_heating
-        )
-        .to_pandas()
-        .reindex(index=n.snapshots),
-        "air central": xr.open_dataarray(snakemake.input.cop_air_central_heating)
-        .to_pandas()
-        .reindex(index=n.snapshots),
-        "ground central": xr.open_dataarray(snakemake.input.cop_soil_central_heating)
-        .to_pandas()
-        .reindex(index=n.snapshots),
-    }
-
     if options["solar_thermal"]:
         solar_thermal = (
             xr.open_dataarray(snakemake.input.solar_thermal_total)
@@ -1851,31 +1834,32 @@ def add_heat(n, costs):
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    for name in heat_systems:
-        name_type = "central" if name == "urban central" else "decentral"
+    cop = xr.open_dataarray(snakemake.input.cop_profiles)
+    for heat_system in heat_systems:
+        system_type = "central" if heat_system == "urban central" else "decentral"
 
-        if name == "urban central":
+        if heat_system == "urban central":
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
 
-        n.add("Carrier", name + " heat")
+        n.add("Carrier", heat_system + " heat")
 
         n.madd(
             "Bus",
-            nodes + f" {name} heat",
+            nodes + f" {heat_system} heat",
             location=nodes,
-            carrier=name + " heat",
+            carrier=heat_system + " heat",
             unit="MWh_th",
         )
 
-        if name == "urban central" and options.get("central_heat_vent"):
+        if heat_system == "urban central" and options.get("central_heat_vent"):
             n.madd(
                 "Generator",
-                nodes + f" {name} heat vent",
-                bus=nodes + f" {name} heat",
+                nodes + f" {heat_system} heat vent",
+                bus=nodes + f" {heat_system} heat",
                 location=nodes,
-                carrier=name + " heat vent",
+                carrier=heat_system + " heat vent",
                 p_nom_extendable=True,
                 p_max_pu=0,
                 p_min_pu=-1,
@@ -1886,18 +1870,18 @@ def add_heat(n, costs):
 
         for sector in sectors:
             # heat demand weighting
-            if "rural" in name:
+            if "rural" in heat_system:
                 factor = 1 - urban_fraction[nodes]
-            elif "urban central" in name:
+            elif "urban central" in heat_system:
                 factor = dist_fraction[nodes]
-            elif "urban decentral" in name:
+            elif "urban decentral" in heat_system:
                 factor = urban_fraction[nodes] - dist_fraction[nodes]
             else:
                 raise NotImplementedError(
-                    f" {name} not in " f"heat systems: {heat_systems}"
+                    f" {heat_system} not in " f"heat systems: {heat_systems}"
                 )
 
-            if sector in name:
+            if sector in heat_system:
                 heat_load = (
                     heat_demand[[sector + " water", sector + " space"]]
                     .T.groupby(level=1)
@@ -1906,7 +1890,7 @@ def add_heat(n, costs):
                     .multiply(factor)
                 )
 
-        if name == "urban central":
+        if heat_system == "urban central":
             heat_load = (
                 heat_demand.T.groupby(level=1)
                 .sum()
@@ -1919,20 +1903,17 @@ def add_heat(n, costs):
         n.madd(
             "Load",
             nodes,
-            suffix=f" {name} heat",
-            bus=nodes + f" {name} heat",
-            carrier=name + " heat",
+            suffix=f" {heat_system} heat",
+            bus=nodes + f" {heat_system} heat",
+            carrier=heat_system + " heat",
             p_set=heat_load,
         )
 
         ## Add heat pumps
-
-        heat_pump_types = ["air"] if "urban" in name else ["ground", "air"]
-
-        for heat_pump_type in heat_pump_types:
-            costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
+        for heat_source in snakemake.params.heat_pump_sources[system_type]:
+            costs_name = f"{system_type} {heat_source}-sourced heat pump"
             efficiency = (
-                cop[f"{heat_pump_type} {name_type}"][nodes]
+                cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes).to_pandas().reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name, "efficiency"]
             )
@@ -1940,10 +1921,10 @@ def add_heat(n, costs):
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} {heat_pump_type} heat pump",
+                suffix=f" {heat_system} {heat_source} heat pump",
                 bus0=nodes,
-                bus1=nodes + f" {name} heat",
-                carrier=f"{name} {heat_pump_type} heat pump",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} {heat_source} heat pump",
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"]
@@ -1953,59 +1934,59 @@ def add_heat(n, costs):
             )
 
         if options["tes"]:
-            n.add("Carrier", name + " water tanks")
+            n.add("Carrier", heat_system + " water tanks")
 
             n.madd(
                 "Bus",
-                nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks",
                 location=nodes,
-                carrier=name + " water tanks",
+                carrier=heat_system + " water tanks",
                 unit="MWh_th",
             )
 
             n.madd(
                 "Link",
-                nodes + f" {name} water tanks charger",
-                bus0=nodes + f" {name} heat",
-                bus1=nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water tanks",
                 efficiency=costs.at["water tank charger", "efficiency"],
-                carrier=name + " water tanks charger",
+                carrier=heat_system + " water tanks charger",
                 p_nom_extendable=True,
             )
 
             n.madd(
                 "Link",
-                nodes + f" {name} water tanks discharger",
-                bus0=nodes + f" {name} water tanks",
-                bus1=nodes + f" {name} heat",
-                carrier=name + " water tanks discharger",
+                nodes + f" {heat_system} water tanks discharger",
+                bus0=nodes + f" {heat_system} water tanks",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=heat_system + " water tanks discharger",
                 efficiency=costs.at["water tank discharger", "efficiency"],
                 p_nom_extendable=True,
             )
 
-            tes_time_constant_days = options["tes_tau"][name_type]
+            tes_time_constant_days = options["tes_tau"][system_type]
 
             n.madd(
                 "Store",
-                nodes + f" {name} water tanks",
-                bus=nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks",
+                bus=nodes + f" {heat_system} water tanks",
                 e_cyclic=True,
                 e_nom_extendable=True,
-                carrier=name + " water tanks",
+                carrier=heat_system + " water tanks",
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                capital_cost=costs.at[name_type + " water tank storage", "fixed"],
-                lifetime=costs.at[name_type + " water tank storage", "lifetime"],
+                capital_cost=costs.at[system_type + " water tank storage", "fixed"],
+                lifetime=costs.at[system_type + " water tank storage", "lifetime"],
             )
 
         if options["resistive_heaters"]:
-            key = f"{name_type} resistive heater"
+            key = f"{system_type} resistive heater"
 
             n.madd(
                 "Link",
-                nodes + f" {name} resistive heater",
+                nodes + f" {heat_system} resistive heater",
                 bus0=nodes,
-                bus1=nodes + f" {name} heat",
-                carrier=name + " resistive heater",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=heat_system + " resistive heater",
                 efficiency=costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "efficiency"]
                 * costs.at[key, "fixed"]
@@ -2015,16 +1996,16 @@ def add_heat(n, costs):
             )
 
         if options["boilers"]:
-            key = f"{name_type} gas boiler"
+            key = f"{system_type} gas boiler"
 
             n.madd(
                 "Link",
-                nodes + f" {name} gas boiler",
+                nodes + f" {heat_system} gas boiler",
                 p_nom_extendable=True,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
-                bus1=nodes + f" {name} heat",
+                bus1=nodes + f" {heat_system} heat",
                 bus2="co2 atmosphere",
-                carrier=name + " gas boiler",
+                carrier=heat_system + " gas boiler",
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=costs.at[key, "efficiency"]
@@ -2034,22 +2015,22 @@ def add_heat(n, costs):
             )
 
         if options["solar_thermal"]:
-            n.add("Carrier", name + " solar thermal")
+            n.add("Carrier", heat_system + " solar thermal")
 
             n.madd(
                 "Generator",
                 nodes,
-                suffix=f" {name} solar thermal collector",
-                bus=nodes + f" {name} heat",
-                carrier=name + " solar thermal",
+                suffix=f" {heat_system} solar thermal collector",
+                bus=nodes + f" {heat_system} heat",
+                carrier=heat_system + " solar thermal",
                 p_nom_extendable=True,
-                capital_cost=costs.at[name_type + " solar thermal", "fixed"]
+                capital_cost=costs.at[system_type + " solar thermal", "fixed"]
                 * overdim_factor,
                 p_max_pu=solar_thermal[nodes],
-                lifetime=costs.at[name_type + " solar thermal", "lifetime"],
+                lifetime=costs.at[system_type + " solar thermal", "lifetime"],
             )
 
-        if options["chp"] and name == "urban central":
+        if options["chp"] and heat_system == "urban central":
             # add gas CHP; biomass CHP is added in biomass section
             n.madd(
                 "Link",
@@ -2106,16 +2087,16 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
-        if options["chp"] and options["micro_chp"] and name != "urban central":
+        if options["chp"] and options["micro_chp"] and heat_system != "urban central":
             n.madd(
                 "Link",
-                nodes + f" {name} micro gas CHP",
+                nodes + f" {heat_system} micro gas CHP",
                 p_nom_extendable=True,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
                 bus1=nodes,
-                bus2=nodes + f" {name} heat",
+                bus2=nodes + f" {heat_system} heat",
                 bus3="co2 atmosphere",
-                carrier=name + " micro gas CHP",
+                carrier=heat_system + " micro gas CHP",
                 efficiency=costs.at["micro CHP", "efficiency"],
                 efficiency2=costs.at["micro CHP", "efficiency-heat"],
                 efficiency3=costs.at["gas", "CO2 intensity"],
@@ -2150,27 +2131,27 @@ def add_heat(n, costs):
             heat_demand["services space"] + heat_demand["residential space"]
         ) / heat_demand.T.groupby(level=[1]).sum().T
 
-        for name in n.loads[
+        for heat_system in n.loads[
             n.loads.carrier.isin([x + " heat" for x in heat_systems])
         ].index:
-            node = n.buses.loc[name, "location"]
+            node = n.buses.loc[heat_system, "location"]
             ct = pop_layout.loc[node, "ct"]
 
             # weighting 'f' depending on the size of the population at the node
-            if "urban central" in name:
+            if "urban central" in heat_system:
                 f = dist_fraction[node]
-            elif "urban decentral" in name:
+            elif "urban decentral" in heat_system:
                 f = urban_fraction[node] - dist_fraction[node]
             else:
                 f = 1 - urban_fraction[node]
             if f == 0:
                 continue
             # get sector name ("residential"/"services"/or both "tot" for urban central)
-            if "urban central" in name:
+            if "urban central" in heat_system:
                 sec = "tot"
-            if "residential" in name:
+            if "residential" in heat_system:
                 sec = "residential"
-            if "services" in name:
+            if "services" in heat_system:
                 sec = "services"
 
             # get floor aread at node and region (urban/rural) in m^2
@@ -2178,7 +2159,7 @@ def add_heat(n, costs):
                 pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
             ).loc[sec] * f
             # total heat demand at node [MWh]
-            demand = n.loads_t.p_set[name]
+            demand = n.loads_t.p_set[heat_system]
 
             # space heat demand at node [MWh]
             space_heat_demand = demand * w_space[sec][node]
@@ -2219,12 +2200,12 @@ def add_heat(n, costs):
 
             # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
             for strength in strengths:
-                node_name = " ".join(name.split(" ")[2::])
+                node_name = " ".join(heat_system.split(" ")[2::])
                 n.madd(
                     "Generator",
                     [node],
                     suffix=" retrofitting " + strength + " " + node_name,
-                    bus=name,
+                    bus=heat_system,
                     carrier="retrofitting",
                     p_nom_extendable=True,
                     p_nom_max=dE_diff[strength]

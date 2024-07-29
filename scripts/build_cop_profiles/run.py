@@ -4,10 +4,38 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
+
+
+def get_cop(
+    heat_system_type: str,
+    heat_source: str,
+    source_inlet_temperature_celsius: xr.DataArray,
+) -> xr.DataArray:
+    if heat_system_type == "decentral":
+        return DecentralHeatingCopApproximator(
+            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
+            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            source_type=heat_source,
+        ).approximate_cop()
+
+    elif heat_system_type == "central":
+        return CentralHeatingCopApproximator(
+            forward_temperature_celsius=snakemake.params.forward_temperature_central_heating,
+            return_temperature_celsius=snakemake.params.return_temperature_central_heating,
+            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            source_outlet_temperature_celsius=source_inlet_temperature_celsius
+            - snakemake.params.heat_source_cooling_central_heating,
+        ).approximate_cop()
+    else:
+        raise ValueError(
+            f"Invalid heat system type '{heat_system_type}'. Must be one of ['decentral', 'central']"
+        )
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -21,30 +49,28 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    for source_type in ["air", "soil"]:
-        # source inlet temperature (air/soil) is based on weather data
-        source_inlet_temperature_celsius = xr.open_dataarray(
-            snakemake.input[f"temp_{source_type}_total"]
+    cop_all_system_types = []
+    for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
+        cop_this_system_type = []
+        for heat_source in heat_sources:
+            source_inlet_temperature_celsius = xr.open_dataarray(
+                snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
+            )
+            cop_da = get_cop(
+                heat_system_type=heat_system_type,
+                heat_source=heat_source,
+                source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            )
+            cop_this_system_type.append(cop_da)
+        cop_all_system_types.append(
+            xr.concat(
+                cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
+            )
         )
 
-        # Approximate COP for decentral (individual) heating
-        cop_individual_heating = DecentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
-            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-            source_type=source_type,
-        ).approximate_cop()
-        cop_individual_heating.to_netcdf(
-            snakemake.output[f"cop_{source_type}_decentral_heating"]
-        )
+    cop_dataarray = xr.concat(
+        cop_all_system_types,
+        dim=pd.Index(snakemake.params.heat_pump_sources.keys(), name="heat_system"),
+    )
 
-        # Approximate COP for central (district) heating
-        cop_central_heating = CentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.forward_temperature_central_heating,
-            return_temperature_celsius=snakemake.params.return_temperature_central_heating,
-            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-            source_outlet_temperature_celsius=source_inlet_temperature_celsius
-            - snakemake.params.heat_source_cooling_central_heating,
-        ).approximate_cop()
-        cop_central_heating.to_netcdf(
-            snakemake.output[f"cop_{source_type}_central_heating"]
-        )
+    cop_dataarray.to_netcdf(snakemake.output.cop_profiles)

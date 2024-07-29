@@ -442,26 +442,26 @@ def add_heating_capacities_installed_before_baseyear(
     """
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
-    for name in existing_heating.columns.get_level_values(0).unique():
-        name_type = "central" if name == "urban central" else "decentral"
+    for heat_system in existing_heating.columns.get_level_values(0).unique():
+        system_type = "central" if heat_system == "urban central" else "decentral"
 
-        nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{name} heat")])
+        nodes = pd.Index(n.buses.location[n.buses.index.str.contains(f"{heat_system} heat")])
 
-        if (name_type != "central") and options["electricity_distribution_grid"]:
+        if (system_type != "central") and options["electricity_distribution_grid"]:
             nodes_elec = nodes + " low voltage"
         else:
             nodes_elec = nodes
 
-        heat_pump_type = "air" if "urban" in name else "ground"
-
         # Add heat pumps
-        costs_name = f"decentral {heat_pump_type}-sourced heat pump"
+        heat_source = snakemake.params.heat_pump_sources[system_type]
+        costs_name = f"{system_type} {heat_source}-sourced heat pump"
 
         efficiency = (
-            cop[f"{heat_pump_type} {name_type}"][nodes]
-            if time_dep_hp_cop
+            cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes).to_pandas().reindex(index=n.snapshots)
+            if options["time_dep_hp_cop"]
             else costs.at[costs_name, "efficiency"]
         )
+
 
         too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
         if too_large_grouping_years:
@@ -491,14 +491,14 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} {heat_pump_type} heat pump-{grouping_year}",
+                suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
                 bus0=nodes_elec,
-                bus1=nodes + " " + name + " heat",
-                carrier=f"{name} {heat_pump_type} heat pump",
+                bus1=nodes + " " + heat_system + " heat",
+                carrier=f"{heat_system} {heat_source} heat pump",
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
-                p_nom=existing_heating.loc[nodes, (name, f"{heat_pump_type} heat pump")]
+                p_nom=existing_heating.loc[nodes, (heat_system, f"{heat_source} heat pump")]
                 * ratio
                 / costs.at[costs_name, "efficiency"],
                 build_year=int(grouping_year),
@@ -509,66 +509,66 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} resistive heater-{grouping_year}",
+                suffix=f" {heat_system} resistive heater-{grouping_year}",
                 bus0=nodes_elec,
-                bus1=nodes + " " + name + " heat",
-                carrier=name + " resistive heater",
-                efficiency=costs.at[f"{name_type} resistive heater", "efficiency"],
+                bus1=nodes + " " + heat_system + " heat",
+                carrier=heat_system + " resistive heater",
+                efficiency=costs.at[f"{system_type} resistive heater", "efficiency"],
                 capital_cost=(
-                    costs.at[f"{name_type} resistive heater", "efficiency"]
-                    * costs.at[f"{name_type} resistive heater", "fixed"]
+                    costs.at[f"{system_type} resistive heater", "efficiency"]
+                    * costs.at[f"{system_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating.loc[nodes, (name, "resistive heater")]
+                    existing_heating.loc[nodes, (heat_system, "resistive heater")]
                     * ratio
-                    / costs.at[f"{name_type} resistive heater", "efficiency"]
+                    / costs.at[f"{system_type} resistive heater", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{name_type} resistive heater", "lifetime"],
+                lifetime=costs.at[f"{system_type} resistive heater", "lifetime"],
             )
 
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} gas boiler-{grouping_year}",
+                suffix=f" {heat_system} gas boiler-{grouping_year}",
                 bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
-                bus1=nodes + " " + name + " heat",
+                bus1=nodes + " " + heat_system + " heat",
                 bus2="co2 atmosphere",
-                carrier=name + " gas boiler",
-                efficiency=costs.at[f"{name_type} gas boiler", "efficiency"],
+                carrier=heat_system + " gas boiler",
+                efficiency=costs.at[f"{system_type} gas boiler", "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
-                    costs.at[f"{name_type} gas boiler", "efficiency"]
-                    * costs.at[f"{name_type} gas boiler", "fixed"]
+                    costs.at[f"{system_type} gas boiler", "efficiency"]
+                    * costs.at[f"{system_type} gas boiler", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating.loc[nodes, (name, "gas boiler")]
+                    existing_heating.loc[nodes, (heat_system, "gas boiler")]
                     * ratio
-                    / costs.at[f"{name_type} gas boiler", "efficiency"]
+                    / costs.at[f"{system_type} gas boiler", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
+                lifetime=costs.at[f"{system_type} gas boiler", "lifetime"],
             )
 
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} oil boiler-{grouping_year}",
+                suffix=f" {heat_system} oil boiler-{grouping_year}",
                 bus0=spatial.oil.nodes,
-                bus1=nodes + " " + name + " heat",
+                bus1=nodes + " " + heat_system + " heat",
                 bus2="co2 atmosphere",
-                carrier=name + " oil boiler",
+                carrier=heat_system + " oil boiler",
                 efficiency=costs.at["decentral oil boiler", "efficiency"],
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
                 p_nom=(
-                    existing_heating.loc[nodes, (name, "oil boiler")]
+                    existing_heating.loc[nodes, (heat_system, "oil boiler")]
                     * ratio
                     / costs.at["decentral oil boiler", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{name_type} gas boiler", "lifetime"],
+                lifetime=costs.at[f"{system_type} gas boiler", "lifetime"],
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country

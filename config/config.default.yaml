@@ -417,9 +417,9 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
   heat_pump_sources:
-    central_heating:
+    central:
       - air
-    decentral_heating:
+    decentral:
       - air
       - ground
   cluster_heat_buses: true

@@ -39,12 +39,12 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         return_temperature_celsius : Union[xr.DataArray, np.array]
             The return temperature in Celsius.
         source: str
-            The source of the heat pump. Must be either 'air' or 'soil'
+            The source of the heat pump. Must be either 'air' or 'ground'
         """
 
         self.delta_t = forward_temperature_celsius - source_inlet_temperature_celsius
-        if source_type not in ["air", "soil"]:
-            raise ValueError("'source' must be one of ['air', 'soil']")
+        if source_type not in ["air", "ground"]:
+            raise ValueError("'source' must be one of ['air', 'ground']")
         else:
             self.source_type = source_type
 
@@ -57,7 +57,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         """
         if self.source_type == "air":
             return self._approximate_cop_air_source()
-        elif self.source_type == "soil":
+        elif self.source_type == "ground":
             return self._approximate_cop_ground_source()
 
     def _approximate_cop_air_source(self) -> Union[xr.DataArray, np.array]:
