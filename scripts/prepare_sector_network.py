@@ -688,6 +688,7 @@ def add_co2_tracking(n, costs, options):
         e_nom_extendable=True,
         e_nom_max=e_nom_max,
         capital_cost=options["co2_sequestration_cost"],
+        marginal_cost=-0.1,
         bus=sequestration_buses,
         lifetime=options["co2_sequestration_lifetime"],
         carrier="co2 sequestered",
@@ -1237,12 +1238,14 @@ def add_storage_and_grids(n, costs):
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
             gas_pipes["capital_cost"] = 0.1 * gas_pipes.length
+            gas_pipes["p_nom_extendable"] = True
         else:
             gas_pipes["p_nom_max"] = np.inf
             gas_pipes["p_nom_min"] = gas_pipes.p_nom
             gas_pipes["capital_cost"] = (
                 gas_pipes.length * costs.at["CH4 (g) pipeline", "fixed"]
             )
+            gas_pipes["p_nom_extendable"] = False
 
         n.madd(
             "Link",
@@ -1251,14 +1254,14 @@ def add_storage_and_grids(n, costs):
             bus1=gas_pipes.bus1 + " gas",
             p_min_pu=gas_pipes.p_min_pu,
             p_nom=gas_pipes.p_nom,
-            p_nom_extendable=True,
+            p_nom_extendable=gas_pipes.p_nom_extendable,
             p_nom_max=gas_pipes.p_nom_max,
             p_nom_min=gas_pipes.p_nom_min,
             length=gas_pipes.length,
             capital_cost=gas_pipes.capital_cost,
             tags=gas_pipes.name,
             carrier="gas pipeline",
-            lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
+            lifetime=np.inf,
         )
 
         # remove fossil generators where there is neither
@@ -3350,7 +3353,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
-            )
+            ) * options["use_fischer_tropsch_waste_heat"]
 
         if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
@@ -3358,7 +3361,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
                 0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            )
+            ) * options["use_methanation_waste_heat"]
 
         # DEA quotes 15% of total input (11% of which are high-value heat)
         if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
@@ -3375,7 +3378,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
-            )
+            ) * options["use_haber_bosch_waste_heat"]
 
         if (
             options["use_methanolisation_waste_heat"]
@@ -3387,11 +3390,11 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
                 costs.at["methanolisation", "heat-output"]
                 / costs.at["methanolisation", "hydrogen-input"]
-            )
+            ) * options["use_methanolisation_waste_heat"]
 
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if (
-            options.get("use_electrolysis_waste_heat", False)
+            options["use_electrolysis_waste_heat"]
             and "H2 Electrolysis" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
@@ -3399,7 +3402,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
-            )
+            ) * options["use_electrolysis_waste_heat"]
 
         if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
@@ -3407,7 +3410,7 @@ def add_waste_heat(n):
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            )
+            ) * options["use_fuel_cell_waste_heat"]
 
 
 def add_agriculture(n, costs):
@@ -3718,7 +3721,7 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
 
     n.links = pd.concat([n.links, rev_links], sort=False)
-    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["reversed"] = n.links["reversed"].fillna(False).infer_objects(copy=False)
     n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
 
     # do compression losses after concatenation to take electricity consumption at bus0 in either direction

@@ -184,7 +184,7 @@ def separate_basic_chemicals(demand, production):
 
     demand.drop(columns="Basic chemicals", inplace=True)
 
-    demand["HVC"].clip(lower=0, inplace=True)
+    demand["HVC"] = demand["HVC"].clip(lower=0)
 
     return demand
 
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     demand = add_non_eu28_industrial_energy_demand(countries, demand, production)
 
     # for format compatibility
-    demand = demand.stack(dropna=False).unstack(level=[0, 2])
+    demand = demand.stack(future_stack=True).unstack(level=[0, 2])
 
     # style and annotation
     demand.index.name = "TWh/a"
