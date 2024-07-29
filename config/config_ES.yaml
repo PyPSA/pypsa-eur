@@ -808,6 +808,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -900,6 +901,13 @@ solving:
     copt-default:
       Threads: 8
       LpMethod: 2
+      Crossover: 0
+      RelGap: 1.e-6
+      Dualize: 0
+    copt-gpu:
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.e-5
       Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
@@ -1078,7 +1086,7 @@ plotting:
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    Li ion: '#baf238'
+    EV battery: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
