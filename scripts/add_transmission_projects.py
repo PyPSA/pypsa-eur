@@ -502,6 +502,7 @@ if __name__ == "__main__":
                 status=transmission_projects["status"],
             )
     if not new_lines_df.empty:
+        line_type = "Al/St 240/40 4-bundle 380.0"
         # Add new line type for new lines
         new_lines_df.loc[:, "type"] = "Al/St 240/40 4-bundle 380.0"
         new_lines_df.loc[:, "num_parallel"] = 2
@@ -521,6 +522,14 @@ if __name__ == "__main__":
             ),
             axis=1,
         )
+        # get s_nom from line type
+        s_nom = (
+            np.sqrt(3)
+            * n.line_types.loc[line_type].i_nom
+            * new_lines_df["v_nom"]
+            * new_lines_df["num_parallel"]
+        )
+        new_lines_df["s_nom"] = s_nom
     if not new_links_df.empty:
         # Add carrier types of lines and links
         new_links_df.loc[:, "carrier"] = "DC"
