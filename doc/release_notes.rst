@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Changed heat pump COP approximation for central heating to be based on Jensen et al. 2018 and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
+* Changed heat pump COP approximation for central heating to be based on `Jensen et al. (2018) <https://backend.orbit.dtu.dk/ws/portalfiles/portal/151965635/MAIN_Final.pdf>`__ and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
 
