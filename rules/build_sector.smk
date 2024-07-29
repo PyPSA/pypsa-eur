@@ -437,7 +437,7 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs="data/bundle/myb1-2017-nitro.xls",
+        usgs="data/bundle/myb1-2021-nitro-ert.xlsx",
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
