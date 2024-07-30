@@ -418,10 +418,10 @@ sector:
       heat_loss: 0.0
   heat_pump_sources:
     central:
-    - air
+      - air
     decentral:
-    - air
-    - ground
+      - air
+      - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
