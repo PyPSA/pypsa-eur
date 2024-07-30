@@ -368,7 +368,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     n.lines["capital_cost"] = (
         n.lines["length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
     )
-    n.lines["investment"] = (
+    n.lines["overnight_cost"] = (
         n.lines["length"] * length_factor * costs.at["HVAC overhead", "investment"]
     )
 
@@ -406,7 +406,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     )
 
     n.links.loc[dc_b, "capital_cost"] = capital_cost
-    n.links.loc[dc_b, "investment"] = overnight_cost
+    n.links.loc[dc_b, "overnight_cost"] = overnight_cost
 
 
 def attach_wind_and_solar(

@@ -426,7 +426,7 @@ def clustering_for_n_clusters(
             fill_value=0,
         )
 
-        nc.links["investment"] = nc.links["investment"].add(
+        nc.links["overnight_cost"] = nc.links["overnight_cost"].add(
             (nc.links.length - n.links.length)
             .clip(lower=0)
             .mul(extended_link_investment)
