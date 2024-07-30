@@ -360,7 +360,7 @@ def simplify_links(
         costs,
         renewables,
         length_factor,
-        cost_key="overnight_cost",
+        cost_key="investment",
     )
     connection_costs_to_bus = pd.DataFrame(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
@@ -400,7 +400,7 @@ def simplify_links(
                 length_factor,
                 connection_overnight_cost_per_link,
                 buses,
-                cost_key="overnight_cost",
+                cost_key="investment",
             )
 
             all_links = [i for _, i in sum(links, [])]
@@ -477,7 +477,7 @@ def remove_stubs(
         costs,
         renewable_carriers,
         length_factor,
-        cost_key="overnight_cost",
+        cost_key="investment",
     )
 
     _aggregate_and_move_components(

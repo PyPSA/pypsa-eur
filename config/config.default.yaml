@@ -723,7 +723,7 @@ costs:
     VOM: 0
     efficiency: 1
     fuel: 0
-    overnight_cost: 0
+    investment: 0
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07

@@ -10,7 +10,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Added `investment` column to all components. These are the total upfront investments. The column is intended only for reporting and has no effect on the optimisation. For offshore wind, the `investment` column contains only investments into the wind park, the `connection_investment` is reported in a separate column.
+* Added `overnight_cost` column to all components. These are the total upfront investments. The column is intended only for reporting and has no effect on the optimisation. For offshore wind, the `overnight_cost` column contains only investments into the wind park, the `connection_overnight_cost` is reported in a separate column.
 
 * New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
 

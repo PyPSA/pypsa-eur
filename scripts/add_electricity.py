@@ -555,7 +555,7 @@ def attach_conventional_generators(
         efficiency=ppl.efficiency,
         marginal_cost=marginal_cost,
         capital_cost=ppl.capital_cost,
-        overnight_cost=ppl.overnight_cost,
+        overnight_cost=ppl.investment,
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         **committable_attrs,
