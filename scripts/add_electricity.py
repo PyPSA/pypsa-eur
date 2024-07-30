@@ -231,15 +231,23 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
 
     costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
+    costs.at["solar", "investment"] = costs.at["solar-utility", "investment"]
 
     costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
     def costs_for_storage(store, link1, link2=None, max_hours=1.0):
         capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
+        overnight_cost = link1["investment"] + max_hours * store["investment"]
         if link2 is not None:
             capital_cost += link2["capital_cost"]
+            overnight_cost += link2["investment"]
         return pd.Series(
-            dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
+            dict(
+                capital_cost=capital_cost,
+                overnight_cost=overnight_cost,
+                marginal_cost=0.0,
+                co2_emissions=0.0,
+            )
         )
 
     costs.loc["battery"] = costs_for_storage(
@@ -254,7 +262,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         max_hours=max_hours["H2"],
     )
 
-    for attr in ("marginal_cost", "capital_cost"):
+    for attr in ("marginal_cost", "capital_cost", "overnight_cost"):
         overwrites = config.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
@@ -360,6 +368,9 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     n.lines["capital_cost"] = (
         n.lines["length"] * length_factor * costs.at["HVAC overhead", "capital_cost"]
     )
+    n.lines["overnight_cost"] = (
+        n.lines["length"] * length_factor * costs.at["HVAC overhead", "investment"]
+    )
 
     if n.links.empty:
         return
@@ -371,7 +382,7 @@ def update_transmission_costs(n, costs, length_factor=1.0):
     if n.links.loc[dc_b].empty:
         return
 
-    costs = (
+    capital_cost = (
         n.links.loc[dc_b, "length"]
         * length_factor
         * (
@@ -382,7 +393,20 @@ def update_transmission_costs(n, costs, length_factor=1.0):
         )
         + costs.at["HVDC inverter pair", "capital_cost"]
     )
-    n.links.loc[dc_b, "capital_cost"] = costs
+    overnight_cost = (
+        n.links.loc[dc_b, "length"]
+        * length_factor
+        * (
+            (1.0 - n.links.loc[dc_b, "underwater_fraction"])
+            * costs.at["HVDC overhead", "investment"]
+            + n.links.loc[dc_b, "underwater_fraction"]
+            * costs.at["HVDC submarine", "investment"]
+        )
+        + costs.at["HVDC inverter pair", "investment"]
+    )
+
+    n.links.loc[dc_b, "capital_cost"] = capital_cost
+    n.links.loc[dc_b, "overnight_cost"] = overnight_cost
 
 
 def attach_wind_and_solar(
@@ -414,11 +438,23 @@ def attach_wind_and_solar(
                         * costs.at[car + "-connection-underground", "capital_cost"]
                     )
                 )
+                connection_overnight_cost = (
+                    line_length_factor
+                    * ds["average_distance"].to_pandas()
+                    * (
+                        underwater_fraction
+                        * costs.at[car + "-connection-submarine", "investment"]
+                        + (1.0 - underwater_fraction)
+                        * costs.at[car + "-connection-underground", "investment"]
+                    )
+                )
                 capital_cost = (
                     costs.at["offwind", "capital_cost"]
                     + costs.at[car + "-station", "capital_cost"]
                     + connection_cost
                 )
+                overnight_cost = costs.at["offwind", "investment"]
+                connection_overnight_cost += costs.at[car + "-station", "investment"]
                 logger.info(
                     "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
                         connection_cost.min(), connection_cost.max(), car
@@ -426,6 +462,8 @@ def attach_wind_and_solar(
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
+                overnight_cost = costs.at[car, "investment"]
+                connection_overnight_cost = pd.NA
 
             n.madd(
                 "Generator",
@@ -438,6 +476,8 @@ def attach_wind_and_solar(
                 weight=ds["weight"].to_pandas(),
                 marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
+                overnight_cost=overnight_cost,
+                connection_overnight_cost=connection_overnight_cost,
                 efficiency=costs.at[supcar, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
                 lifetime=costs.at[supcar, "lifetime"],
@@ -515,6 +555,7 @@ def attach_conventional_generators(
         efficiency=ppl.efficiency,
         marginal_cost=marginal_cost,
         capital_cost=ppl.capital_cost,
+        overnight_cost=ppl.investment,
         build_year=ppl.datein.fillna(0).astype(int),
         lifetime=(ppl.dateout - ppl.datein).fillna(np.inf),
         **committable_attrs,
@@ -589,6 +630,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             p_nom=ror["p_nom"],
             efficiency=costs.at["ror", "efficiency"],
             capital_cost=costs.at["ror", "capital_cost"],
+            overnight_cost=costs.at["ror", "investment"],
             weight=ror["p_nom"],
             p_max_pu=(
                 inflow_t[ror.index]
@@ -609,6 +651,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             bus=phs["bus"],
             p_nom=phs["p_nom"],
             capital_cost=costs.at["PHS", "capital_cost"],
+            overnight_cost=costs.at["PHS", "investment"],
             max_hours=phs["max_hours"],
             efficiency_store=np.sqrt(costs.at["PHS", "efficiency"]),
             efficiency_dispatch=np.sqrt(costs.at["PHS", "efficiency"]),
@@ -667,6 +710,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             p_nom=hydro["p_nom"],
             max_hours=hydro_max_hours,
             capital_cost=costs.at["hydro", "capital_cost"],
+            overnight_cost=costs.at["hydro", "investment"],
             marginal_cost=costs.at["hydro", "marginal_cost"],
             p_max_pu=p_max_pu,  # dispatch
             p_min_pu=0.0,  # store
@@ -804,6 +848,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("add_electricity")
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

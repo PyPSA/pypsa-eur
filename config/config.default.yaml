@@ -727,7 +727,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
+  # Marginal and capital costs, as well as investments can be overwritten
   # capital_cost:
   #   onwind: 500
   marginal_cost:
@@ -765,6 +765,13 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+      overnight_cost: mean
+      connection_overnight_cost: mean
+    lines:
+      overnight_cost: mean
+    one_ports:
+      overnight_cost: mean
+
   temporal:
     resolution_elec: false
     resolution_sector: false
