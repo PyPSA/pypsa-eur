@@ -84,7 +84,7 @@ def attach_storageunits(n, costs, extendable_carriers, max_hours):
             carrier=carrier,
             p_nom_extendable=True,
             capital_cost=costs.at[carrier, "capital_cost"],
-            investment=costs.at[carrier, "investment"],
+            overnight_cost=costs.at[carrier, "investment"],
             marginal_cost=costs.at[carrier, "marginal_cost"],
             efficiency_store=costs.at[lookup_store[carrier], "efficiency"]
             ** roundtrip_correction,
@@ -113,7 +113,7 @@ def attach_stores(n, costs, extendable_carriers):
             e_nom_extendable=True,
             e_cyclic=True,
             capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
-            investment=costs.at["hydrogen storage underground", "investment"],
+            overnight_cost=costs.at["hydrogen storage underground", "investment"],
         )
 
         n.madd(
@@ -125,7 +125,7 @@ def attach_stores(n, costs, extendable_carriers):
             p_nom_extendable=True,
             efficiency=costs.at["electrolysis", "efficiency"],
             capital_cost=costs.at["electrolysis", "capital_cost"],
-            investment=costs.at["electrolysis", "investment"],
+            overnight_cost=costs.at["electrolysis", "investment"],
             marginal_cost=costs.at["electrolysis", "marginal_cost"],
         )
 
@@ -140,7 +140,7 @@ def attach_stores(n, costs, extendable_carriers):
             # NB: fixed cost is per MWel
             capital_cost=costs.at["fuel cell", "capital_cost"]
             * costs.at["fuel cell", "efficiency"],
-            investment=costs.at["fuel cell", "investment"]
+            overnight_cost=costs.at["fuel cell", "investment"]
             * costs.at["fuel cell", "efficiency"],
             marginal_cost=costs.at["fuel cell", "marginal_cost"],
         )
@@ -158,7 +158,7 @@ def attach_stores(n, costs, extendable_carriers):
             e_cyclic=True,
             e_nom_extendable=True,
             capital_cost=costs.at["battery storage", "capital_cost"],
-            investment=costs.at["battery storage", "investment"],
+            overnight_cost=costs.at["battery storage", "investment"],
             marginal_cost=costs.at["battery", "marginal_cost"],
         )
 
@@ -173,7 +173,7 @@ def attach_stores(n, costs, extendable_carriers):
             # the efficiencies are "round trip efficiencies"
             efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
             capital_cost=costs.at["battery inverter", "capital_cost"],
-            investment=costs.at["battery inverter", "investment"],
+            overnight_cost=costs.at["battery inverter", "investment"],
             p_nom_extendable=True,
             marginal_cost=costs.at["battery inverter", "marginal_cost"],
         )
@@ -226,7 +226,7 @@ def attach_hydrogen_pipelines(n, costs, extendable_carriers):
         p_nom_extendable=True,
         length=h2_links.length.values,
         capital_cost=costs.at["H2 pipeline", "capital_cost"] * h2_links.length,
-        investment=costs.at["H2 pipeline", "investment"] * h2_links.length,
+        overnight_cost=costs.at["H2 pipeline", "investment"] * h2_links.length,
         efficiency=costs.at["H2 pipeline", "efficiency"],
         carrier="H2 pipeline",
     )

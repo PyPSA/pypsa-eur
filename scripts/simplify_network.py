@@ -217,10 +217,10 @@ def _compute_connection_costs_to_bus(
 
 
 def _adjust_costs_using_connection_costs(
-    n, connection_costs_to_bus, connection_investment_to_bus
+    n, connection_costs_to_bus, connection_overnight_cost_to_bus
 ):
     connection_costs = {}
-    connection_investment = {}
+    connection_overnight_cost = {}
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
         costs = (
@@ -228,14 +228,14 @@ def _adjust_costs_using_connection_costs(
             .map(connection_costs_to_bus[tech])
             .loc[lambda s: s > 0]
         )
-        investment = (
+        overnight_cost = (
             n.generators.loc[tech_b, "bus"]
-            .map(connection_investment_to_bus[tech])
+            .map(connection_overnight_cost_to_bus[tech])
             .loc[lambda s: s > 0]
         )
         if not costs.empty:
             n.generators.loc[costs.index, "capital_cost"] += costs
-            n.generators.loc[costs.index, "investment"] += investment
+            n.generators.loc[costs.index, "overnight_cost"] += overnight_cost
             logger.info(
                 "Displacing {} generator(s) and adding connection costs to capital_costs: {} ".format(
                     tech,
@@ -246,14 +246,14 @@ def _adjust_costs_using_connection_costs(
                 )
             )
             connection_costs[tech] = costs
-            connection_investment[tech] = investment
+            connection_overnight_cost[tech] = overnight_cost
 
 
 def _aggregate_and_move_components(
     n,
     busmap,
     connection_costs_to_bus,
-    connection_investment_to_bus,
+    connection_overnight_cost_to_bus,
     aggregate_one_ports={"Load", "StorageUnit"},
     aggregation_strategies=dict(),
     exclude_carriers=None,
@@ -267,7 +267,7 @@ def _aggregate_and_move_components(
                 import_series_from_dataframe(n, df, c, attr)
 
     _adjust_costs_using_connection_costs(
-        n, connection_costs_to_bus, connection_investment_to_bus
+        n, connection_costs_to_bus, connection_overnight_cost_to_bus
     )
 
     generator_strategies = aggregation_strategies["generators"]
@@ -355,17 +355,17 @@ def simplify_links(
     connection_costs_per_link = _prepare_connection_costs_per_link(
         n, costs, renewables, length_factor
     )
-    connection_investment_per_link = _prepare_connection_costs_per_link(
+    connection_overnight_cost_per_link = _prepare_connection_costs_per_link(
         n,
         costs,
         renewables,
         length_factor,
-        cost_key="investment",
+        cost_key="overnight_cost",
     )
     connection_costs_to_bus = pd.DataFrame(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
-    connection_investment_to_bus = pd.DataFrame(
+    connection_overnight_cost_to_bus = pd.DataFrame(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
 
@@ -390,15 +390,15 @@ def simplify_links(
                 connection_costs_per_link,
                 buses,
             )
-            connection_investment_to_bus.loc[buses] += _compute_connection_costs_to_bus(
+            connection_overnight_cost_to_bus.loc[buses] += _compute_connection_costs_to_bus(
                 n,
                 busmap,
                 costs,
                 renewables,
                 length_factor,
-                connection_investment_per_link,
+                connection_overnight_cost_per_link,
                 buses,
-                cost_key="investment",
+                cost_key="overnight_cost",
             )
 
             all_links = [i for _, i in sum(links, [])]
@@ -445,7 +445,7 @@ def simplify_links(
         n,
         busmap,
         connection_costs_to_bus,
-        connection_investment_to_bus,
+        connection_overnight_cost_to_bus,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=exclude_carriers,
     )
@@ -469,20 +469,20 @@ def remove_stubs(
     connection_costs_to_bus = _compute_connection_costs_to_bus(
         n, busmap, costs, renewable_carriers, length_factor
     )
-    connection_investment_to_bus = _compute_connection_costs_to_bus(
+    connection_overnight_cost_to_bus = _compute_connection_costs_to_bus(
         n,
         busmap,
         costs,
         renewable_carriers,
         length_factor,
-        cost_key="investment",
+        cost_key="overnight_cost",
     )
 
     _aggregate_and_move_components(
         n,
         busmap,
         connection_costs_to_bus,
-        connection_investment_to_bus,
+        connection_overnight_cost_to_bus,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=simplify_network["exclude_carriers"],
     )

@@ -89,7 +89,7 @@ def maybe_adjust_costs_and_potentials(n, adjustments):
                 "p_nom_max": {"Generator", "Link", "StorageUnit"},
                 "e_nom_max": {"Store"},
                 "capital_cost": {"Generator", "Link", "StorageUnit", "Store"},
-                "investment": {"Generator", "Link", "StorageUnit", "Store"},
+                "overnight_cost": {"Generator", "Link", "StorageUnit", "Store"},
                 "marginal_cost": {"Generator", "Link", "StorageUnit", "Store"},
             }
             for c in n.iterate_components(comps[attr]):

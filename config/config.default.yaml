@@ -723,7 +723,7 @@ costs:
     VOM: 0
     efficiency: 1
     fuel: 0
-    investment: 0
+    overnight_cost: 0
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
@@ -765,12 +765,12 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
-      investment: mean
-      connection_investment: mean
+      overnight_cost: mean
+      connection_overnight_cost: mean
     lines:
-      investment: mean
+      overnight_cost: mean
     one_ports:
-      investment: mean
+      overnight_cost: mean
 
   temporal:
     resolution_elec: false
