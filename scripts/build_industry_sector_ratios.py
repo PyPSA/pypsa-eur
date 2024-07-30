@@ -119,6 +119,10 @@ index = [
     "process emission from feedstock",
 ]
 
+eff_bio_steam = 0.89  # following DEA data for solid biomass boiler steam
+eff_h2_steam = 1  # following DEA data for direct firing gas
+eff_elec_steam = 0.99  # following DEA data for electric boiler steam
+
 
 def load_idees_data(sector, country="EU28"):
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
@@ -934,23 +938,21 @@ def pulp_paper_printing():
     assert s_fec.index[0] == "Paper: Paper machine - Steam use"
     assert s_ued.index[0] == "Paper: Paper machine - Steam use"
 
-    # Efficiency changes due to biomass/hydrogen
-    eff_bio = s_ued["Biomass"] / s_fec["Biomass"]
-    eff_h2 = s_ued["Natural gas (incl. biogas)"] / s_fec["Natural gas (incl. biogas)"]
-    # electric efficiency is assumed to be 1
-
+    # Efficiency changes due to biomass/hydrogen/electricity
     df.loc["biomass", sector] += (
         s_ued["Paper: Paper machine - Steam use"]
         * params["steam_biomass_fraction"]
-        / eff_bio
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Paper: Paper machine - Steam use"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Paper: Paper machine - Steam use"] * params["steam_electricity_fraction"]
+        s_ued["Paper: Paper machine - Steam use"]
+        * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_fec = idees["fec"][66:77]
@@ -958,23 +960,20 @@ def pulp_paper_printing():
     assert s_fec.index[0] == "Paper: Product finishing - Steam use"
     assert s_ued.index[0] == "Paper: Product finishing - Steam use"
 
-    # Efficiency changes due to biomass/hydrogen
-    eff_bio = s_ued["Biomass"] / s_fec["Biomass"]
-    eff_h2 = s_ued["Natural gas (incl. biogas)"] / s_fec["Natural gas (incl. biogas)"]
-
     df.loc["biomass", sector] += (
         s_ued["Paper: Product finishing - Steam use"]
         * params["steam_biomass_fraction"]
-        / eff_bio
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Paper: Product finishing - Steam use"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
         s_ued["Paper: Product finishing - Steam use"]
         * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][9:10]
@@ -1323,24 +1322,20 @@ def transport_equipment():
     df.loc["elec", sector] += s_fec["Trans. Eq.: Product finishing"]
 
     # Steam processing is supplied with biomass/hydrogen/electricity
-    eff_biomass = s_ued["Biomass"] / s_fec["Biomass"]
-    eff_h2 = (
-        s_ued["Natural gas (incl. biogas)"].iloc[3]
-        / s_fec["Natural gas (incl. biogas)"].iloc[3]
-    )
-
     df.loc["biomass", sector] += (
         s_ued["Trans. Eq.: Steam processing"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Trans. Eq.: Steam processing"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Trans. Eq.: Steam processing"] * params["steam_electricity_fraction"]
+        s_ued["Trans. Eq.: Steam processing"]
+        * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][3:4]
@@ -1392,24 +1387,20 @@ def machinery_equipment():
     df.loc["elec", sector] += s_fec["Mach. Eq.: Product finishing"]
 
     # Steam processing is supplied with biomass/hydrogen/electricity
-    eff_biomass = s_ued["Biomass"] / s_fec["Biomass"]
-    eff_h2 = (
-        s_ued["Natural gas (incl. biogas)"].iloc[3]
-        / s_fec["Natural gas (incl. biogas)"].iloc[3]
-    )
-
     df.loc["biomass", sector] += (
         s_ued["Mach. Eq.: Steam processing"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Mach. Eq.: Steam processing"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
-        s_ued["Mach. Eq.: Steam processing"] * params["steam_electricity_fraction"]
+        s_ued["Mach. Eq.: Steam processing"]
+        * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][3:4]
@@ -1452,40 +1443,36 @@ def textiles_and_leather():
     df.loc["elec", sector] += s_fec["Textiles: Finishing Electric"]
 
     # Steam processing is supplied with biomass/hydrogen/electricity
-    eff_biomass = s_ued[15:26]["Biomass"] / s_fec[15:26]["Biomass"]
-    eff_h2 = (
-        s_ued[15:26]["Natural gas (incl. biogas)"]
-        / s_fec[15:26]["Natural gas (incl. biogas)"]
-    )
-
     df.loc["biomass", sector] += (
         s_ued["Textiles: Pretreatment with steam"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Textiles: Pretreatment with steam"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
         s_ued["Textiles: Pretreatment with steam"]
         * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     df.loc["biomass", sector] += (
         s_ued["Textiles: Wet processing with steam"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Textiles: Wet processing with steam"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
         s_ued["Textiles: Wet processing with steam"]
         * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][3:4]
@@ -1528,25 +1515,20 @@ def wood_and_wood_products():
     df.loc["elec", sector] += s_fec["Wood: Finishing Electric"]
 
     # Steam processing is supplied with biomass/hydrogen/electricity
-    eff_biomass = s_ued[15:25]["Biomass"] / s_fec[15:25]["Biomass"]
-    eff_h2 = (
-        s_ued[15:25]["Natural gas (incl. biogas)"]
-        / s_fec[15:25]["Natural gas (incl. biogas)"]
-    )
-
     df.loc["biomass", sector] += (
         s_ued["Wood: Specific processes with steam"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Wood: Specific processes with steam"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
         s_ued["Wood: Specific processes with steam"]
         * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][3:4]
@@ -1604,25 +1586,20 @@ def other_industrial_sectors():
     df.loc["elec", sector] += s_fec[key]
 
     # Steam processing is supplied with biomass/hydrogen/electricity
-    eff_biomass = s_ued[15:25]["Biomass"] / s_fec[15:25]["Biomass"]
-    eff_h2 = (
-        s_ued[15:25]["Natural gas (incl. biogas)"]
-        / s_fec[15:25]["Natural gas (incl. biogas)"]
-    )
-
     df.loc["biomass", sector] += (
         s_ued["Other Industrial sectors: Steam processing"]
         * params["steam_biomass_fraction"]
-        / eff_biomass
+        / eff_bio_steam
     )
     df.loc["hydrogen", sector] += (
         s_ued["Other Industrial sectors: Steam processing"]
         * params["steam_hydrogen_fraction"]
-        / eff_h2
+        / eff_h2_steam
     )
     df.loc["elec", sector] += (
         s_ued["Other Industrial sectors: Steam processing"]
         * params["steam_electricity_fraction"]
+        / eff_elec_steam
     )
 
     s_out = idees["out"][3:4]
