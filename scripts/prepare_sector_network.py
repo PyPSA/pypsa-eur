@@ -2778,7 +2778,8 @@ def add_industry(n, costs):
         nodes, ["total domestic navigation"]
     ].squeeze()
     international_navigation = (
-        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze(axis=1) * nyears
+        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze(axis=1)
+        * nyears
     )
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / nhours
