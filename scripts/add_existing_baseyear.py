@@ -437,7 +437,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "fixed"]
                         * costs.at[key, "efficiency"],
-                        overnight_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                        overnight_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
                         efficiency=costs.at[key, "efficiency"],
                         build_year=grouping_year,

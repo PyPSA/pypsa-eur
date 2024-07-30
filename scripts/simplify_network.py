@@ -390,7 +390,9 @@ def simplify_links(
                 connection_costs_per_link,
                 buses,
             )
-            connection_overnight_cost_to_bus.loc[buses] += _compute_connection_costs_to_bus(
+            connection_overnight_cost_to_bus.loc[
+                buses
+            ] += _compute_connection_costs_to_bus(
                 n,
                 busmap,
                 costs,

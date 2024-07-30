@@ -532,10 +532,12 @@ def update_wind_solar_costs(n, costs):
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
-            n.generators.loc[n.generators.carrier == tech, "overnight_cost"] = overnight_cost
-            n.generators.loc[n.generators.carrier == tech, "connection_overnight_cost"] = (
-                connection_overnight_cost.rename(index=lambda node: node + " " + tech)
+            n.generators.loc[n.generators.carrier == tech, "overnight_cost"] = (
+                overnight_cost
             )
+            n.generators.loc[
+                n.generators.carrier == tech, "connection_overnight_cost"
+            ] = connection_overnight_cost.rename(index=lambda node: node + " " + tech)
 
 
 def add_carrier_buses(n, carrier, nodes=None):
@@ -993,7 +995,9 @@ def add_ammonia(n, costs):
         e_cyclic=True,
         carrier="ammonia store",
         capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "fixed"],
-        overnight_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "investment"],
+        overnight_cost=costs.at[
+            "NH3 (l) storage tank incl. liquefaction", "investment"
+        ],
         lifetime=costs.at["NH3 (l) storage tank incl. liquefaction", "lifetime"],
     )
 
@@ -1546,7 +1550,8 @@ def add_storage_and_grids(n, costs):
             capital_cost=costs.at["coal", "efficiency"] * costs.at["coal", "fixed"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["coal", "CO2 intensity"],  # NB: fixed cost is per MWel
-            overnight_cost=costs.at["coal", "efficiency"] * costs.at["coal", "investment"]
+            overnight_cost=costs.at["coal", "efficiency"]
+            * costs.at["coal", "investment"]
             + costs.at["biomass CHP capture", "investment"]
             * costs.at["coal", "CO2 intensity"],
             p_nom_extendable=True,
@@ -2097,7 +2102,9 @@ def add_heat(n, costs):
                 carrier=name + " water tanks",
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 capital_cost=costs.at[name_type + " water tank storage", "fixed"],
-                overnight_cost=costs.at[name_type + " water tank storage", "investment"],
+                overnight_cost=costs.at[
+                    name_type + " water tank storage", "investment"
+                ],
                 lifetime=costs.at[name_type + " water tank storage", "lifetime"],
             )
 
