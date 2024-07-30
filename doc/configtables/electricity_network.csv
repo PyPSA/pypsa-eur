@@ -1,0 +1,3 @@
+,Unit,Values,Description
+base_network, --, "Any value in {'gridkit', 'osm-prebuilt', 'osm-raw}", "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer."
+osm_group_tolerance_buses, meters, float, "Specifies the radius in which substations shall be clustered to a single bus. Default recommendation: 5000 (meters)"
