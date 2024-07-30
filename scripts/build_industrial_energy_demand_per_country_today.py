@@ -34,7 +34,7 @@ For each country and each subcategory of
 - Glass production
 - HVC
 - Integrated steelworks
-- Machinery Equipment
+- Machinery equipment
 - Methanol
 - Other industrial sectors
 - Other chemicals
@@ -44,7 +44,7 @@ For each country and each subcategory of
 - Printing and media reproduction
 - Pulp production
 - Textiles and leather
-- Transport Equipment
+- Transport equipment
 - Wood and wood products
 
 the output file contains the energy demand in TWh/a for the following carriers
