@@ -10,13 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Update JRC-IDEES-2015 to  `JRC-IDEES-2021
-<https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
 
-
-* Update Ammonia production from USGS to 2022 `data
-<https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx>`__.
-
+* Update Ammonia production from USGS to 2022 `data <https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx>`__.
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
 
