@@ -58,6 +58,9 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     # drop pipes within the same region
     df = df.loc[df.bus1 != df.bus0]
 
+    if df.empty:
+        return df
+
     # recalculate lengths as center to center * length factor
     df["length"] = df.apply(
         lambda p: length_factor
