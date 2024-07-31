@@ -91,6 +91,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     ) -> Union[xr.DataArray, np.array]:
         Calculate the ratio of evaporation to compression work based on approximation.
     """
+
     def __init__(
         self,
         forward_temperature_celsius: Union[xr.DataArray, np.array],

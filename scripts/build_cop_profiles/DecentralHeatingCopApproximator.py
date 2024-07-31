@@ -70,7 +70,8 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
     def approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
-        Compute the COP values using quadratic regression for air-/ground-source heat pumps.
+        Compute the COP values using quadratic regression for air-/ground-
+        source heat pumps.
 
         Returns
         -------
