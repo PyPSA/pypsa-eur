@@ -10,11 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
-* Upadte JRC-IDEES-2015 to  `JRC-IDEES-2021
+* Update JRC-IDEES-2015 to  `JRC-IDEES-2021
 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
 
 
-* Updata Ammonia production from USGS to 2022 `data
+* Update Ammonia production from USGS to 2022 `data
 <https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx>`__.
 
 
