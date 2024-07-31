@@ -33,10 +33,8 @@ if __name__ == "__main__":
 
     to_fn = snakemake.output[0]
 
-
     # download .zip file
     logger.info(f"Downloading Ammonia demand from {url}.")
     progress_retrieve(url, to_fn, disable=disable_progress)
-
 
     logger.info(f"Ammonia demand data available in '{to_fn}'.")

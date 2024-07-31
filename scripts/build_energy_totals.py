@@ -587,7 +587,7 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
 
 def fill_missing_years(fill_values: pd.Series) -> pd.Series:
     """
-    Fill missing years for some countries by first using forward fill (ffill) 
+    Fill missing years for some countries by first using forward fill (ffill)
     and then backward fill (bfill).
 
     Parameters
@@ -599,14 +599,14 @@ def fill_missing_years(fill_values: pd.Series) -> pd.Series:
     Returns
     -------
     pd.Series
-        A pandas Series with zero values replaced by the forward-filled and 
+        A pandas Series with zero values replaced by the forward-filled and
         backward-filled values of the corresponding country.
 
     Notes
     -----
-    - The function groups the data by the 'country' level and performs forward fill 
+    - The function groups the data by the 'country' level and performs forward fill
       and backward fill to fill zero values.
-    - Zero values in the original Series are replaced by the ffilled and bfilled 
+    - Zero values in the original Series are replaced by the ffilled and bfilled
       value of their respective country group.
     """
     # Replace zero values with NaN for correct filling
@@ -913,9 +913,9 @@ def build_district_heat_share(countries: List[str], idees: pd.DataFrame) -> pd.S
     """
 
     # district heating share
-    district_heat = idees[["distributed heat residential", "distributed heat services"]].sum(
-        axis=1
-    )
+    district_heat = idees[
+        ["distributed heat residential", "distributed heat services"]
+    ].sum(axis=1)
     total_heat = (
         idees[["thermal uses residential", "thermal uses services"]]
         .sum(axis=1)

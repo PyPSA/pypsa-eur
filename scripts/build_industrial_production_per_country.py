@@ -167,7 +167,6 @@ eb_sectors = {
 }
 
 
-
 # TODO: this should go in a csv in `data`
 # Annual energy consumption in Switzerland by sector in 2015 (in TJ)
 # From: Energieverbrauch in der Industrie und im Dienstleistungssektor, Der Bundesrat
@@ -201,9 +200,9 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     if country == "CH":
         e_country = e_switzerland * tj_to_ktoe
     else:
-        ct_eurostat = country.replace("GB","UK")
+        ct_eurostat = country.replace("GB", "UK")
         if ct_eurostat == "UK":
-            year=2019
+            year = 2019
             logger.info("Assume Eurostat data for GB from 2019.")
         # estimate physical output, energy consumption in the sector and country
         fn = f"{eurostat_dir}/{ct_eurostat}-Energy-balance-sheets-April-2023-edition.xlsb"
@@ -302,7 +301,7 @@ def separate_basic_chemicals(demand, year):
     logger.info(f"Following countries have no ammonia demand: {missing.tolist()}")
 
     demand["Ammonia"] = 0.0
-    
+
     year_to_use = min(max(year, 2018), 2022)
     if year_to_use != year:
         logger.info(f"Using data from {year_to_use} for ammonia production.")

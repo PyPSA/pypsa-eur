@@ -48,10 +48,9 @@ If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/lates
 The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
 """
 
+import country_converter as coco
 import pandas as pd
 from _helpers import mute_print, set_scenario_config
-import country_converter as coco
-
 
 cc = coco.CountryConverter()
 
@@ -59,7 +58,6 @@ cc = coco.CountryConverter()
 toe_to_MWh = 11.630
 
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
-
 
 
 sheet_names = {
@@ -122,7 +120,8 @@ def iron_and_steel():
     approaches to producing iron and steel. The two primary approaches are
     integrated steelworks and electric arc furnaces (EAF). The function assumes
     that integrated steelworks will be replaced entirely by electric arc
-    furnaces due to their higher efficiency and greater reliance on electricity.
+    furnaces due to their higher efficiency and greater reliance on
+    electricity.
 
     Returns:
         pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
@@ -237,7 +236,7 @@ def iron_and_steel():
 
     df.loc["heat", sector] += s_fec["Low-enthalpy heat"]
 
-    subsector = 'Steel: Sinter/Pellet-making'
+    subsector = "Steel: Sinter/Pellet-making"
 
     s_fec = idees["fec"][14:20]
     s_ued = idees["ued"][14:20]
@@ -251,7 +250,7 @@ def iron_and_steel():
 
     df.loc["coal", sector] += s_fec["Solids"]
 
-    subsector =  'Steel: Blast /Basic oxygen furnace'
+    subsector = "Steel: Blast /Basic oxygen furnace"
 
     s_fec = idees["fec"][20:26]
     s_ued = idees["ued"][20:26]
@@ -272,7 +271,7 @@ def iron_and_steel():
     assert s_fec.index[0] == subsector
     assert s_ued.index[0] == subsector
 
-    key = 'Steel: Furnaces, refining and rolling - Electric'
+    key = "Steel: Furnaces, refining and rolling - Electric"
     eff = s_ued[key] / s_fec[key]
 
     # assume fully electrified, other processes scaled by used energy
@@ -285,7 +284,7 @@ def iron_and_steel():
     assert s_fec.index[0] == subsector
     assert s_ued.index[0] == subsector
 
-    key = 'Steel: Product finishing - Electric'
+    key = "Steel: Product finishing - Electric"
     eff = s_ued[key] / s_fec[key]
 
     # assume fully electrified
@@ -311,10 +310,11 @@ def iron_and_steel():
 
 def chemicals_industry():
     """
-    This function calculates the energy consumption and emissions for the chemicals industry,
-    focusing on various subsectors such as basic chemicals, steam processing, furnaces,
-    and process cooling. The function also accounts for specific processes in ammonia,
-    chlorine, methanol production, and other chemicals.
+    This function calculates the energy consumption and emissions for the
+    chemicals industry, focusing on various subsectors such as basic chemicals,
+    steam processing, furnaces, and process cooling. The function also accounts
+    for specific processes in ammonia, chlorine, methanol production, and other
+    chemicals.
 
     Returns:
         pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
@@ -513,14 +513,14 @@ def chemicals_industry():
 
     df.loc["heat", sector] += s_fec["Low-enthalpy heat"]
 
-    subsector = 'Chemicals: High-enthalpy heat processing'
+    subsector = "Chemicals: High-enthalpy heat processing"
 
     s_fec = idees["fec"][70:83]
     s_ued = idees["ued"][70:83]
     assert s_fec.index[0] == subsector
     assert s_ued.index[0] == subsector
 
-    key = 'High-enthalpy heat processing - Electric (microwave)'
+    key = "High-enthalpy heat processing - Electric (microwave)"
     eff_elec = s_ued[key] / s_fec[key]
 
     # assume fully electrified
@@ -587,14 +587,14 @@ def chemicals_industry():
 
     df.loc["heat", sector] += s_fec["Low-enthalpy heat"]
 
-    subsector = 'Chemicals: High-enthalpy heat processing'
+    subsector = "Chemicals: High-enthalpy heat processing"
 
     s_fec = idees["fec"][119:132]
     s_ued = idees["ued"][119:132]
     assert s_fec.index[0] == subsector
     assert s_ued.index[0] == subsector
 
-    key = 'High-enthalpy heat processing - Electric (microwave)'
+    key = "High-enthalpy heat processing - Electric (microwave)"
     eff_elec = s_ued[key] / s_fec[key]
 
     # assume fully electrified
@@ -647,9 +647,10 @@ def chemicals_industry():
 
 def nonmetalic_mineral_products():
     """
-    This function calculates the energy consumption and emissions for the non-metallic mineral
-    products industry, focusing on three main sectors: cement, ceramics, and glass production.
-    It takes into account the specific processes and their associated energy types and emissions.
+    This function calculates the energy consumption and emissions for the non-
+    metallic mineral products industry, focusing on three main sectors: cement,
+    ceramics, and glass production. It takes into account the specific
+    processes and their associated energy types and emissions.
 
     Returns:
         pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
@@ -691,9 +692,9 @@ def nonmetalic_mineral_products():
 
     # pre-processing: keep existing elec and biomass, rest to methane
     df.loc["elec", sector] += s_fec["Cement: Grinding, milling of raw material"]
-    df.loc["biomass", sector] += s_fec['Biomass and waste']
+    df.loc["biomass", sector] += s_fec["Biomass and waste"]
     df.loc["methane", sector] += (
-        s_fec["Cement: Pre-heating and pre-calcination"] - s_fec['Biomass and waste']
+        s_fec["Cement: Pre-heating and pre-calcination"] - s_fec["Biomass and waste"]
     )
 
     subsector = "Cement: Clinker production (kilns)"
@@ -703,11 +704,11 @@ def nonmetalic_mineral_products():
     assert s_fec.index[0] == subsector
     assert s_ued.index[0] == subsector
 
-    df.loc["biomass", sector] += s_fec['Biomass and waste']
+    df.loc["biomass", sector] += s_fec["Biomass and waste"]
     df.loc["methane", sector] += (
-        s_fec["Cement: Clinker production (kilns)"] - s_fec['Biomass and waste']
+        s_fec["Cement: Clinker production (kilns)"] - s_fec["Biomass and waste"]
     )
-    df.loc["elec", sector] += s_fec['Cement: Grinding, packaging and precasting']
+    df.loc["elec", sector] += s_fec["Cement: Grinding, packaging and precasting"]
 
     # Process emissions
 
@@ -757,7 +758,7 @@ def nonmetalic_mineral_products():
     key = "Ceramics: Microwave drying and sintering"
     # the values are zero in new JRC-data -> assume here value from JRC-2015
     # eff_elec = s_ued[key] / s_fec[key]
-    eff_elec = 11.6/26
+    eff_elec = 11.6 / 26
 
     sel = [
         "Ceramics: Mixing of raw material",
@@ -844,13 +845,12 @@ def nonmetalic_mineral_products():
 def pulp_paper_printing():
     """
     Models the energy consumption for the pulp, paper, and printing sector,
-    assuming complete electrification of all processes. This sector does not have
-    any process emissions associated with it.
-    
+    assuming complete electrification of all processes. This sector does not
+    have any process emissions associated with it.
+
     Returns:
         pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
                       for the pulp, paper, and printing sector.
-  
     """
 
     sector = "Pulp, paper and printing"
@@ -892,7 +892,7 @@ def pulp_paper_printing():
     df.loc["elec", sector] += s_fec[sel].sum()
 
     # Efficiency changes due to biomass
-    eff_bio = s_ued['Biomass and waste'] / s_fec['Biomass and waste']
+    eff_bio = s_ued["Biomass and waste"] / s_fec["Biomass and waste"]
     df.loc["biomass", sector] += s_ued["Pulp: Pulping thermal"] / eff_bio
 
     s_out = idees["out"][8:9]
@@ -947,7 +947,7 @@ def pulp_paper_printing():
     assert s_ued.index[0] == "Paper: Paper machine - Steam use"
 
     # Efficiency changes due to biomass
-    eff_bio = s_ued['Biomass and waste'] / s_fec['Biomass and waste']
+    eff_bio = s_ued["Biomass and waste"] / s_fec["Biomass and waste"]
     df.loc["biomass", sector] += s_ued["Paper: Paper machine - Steam use"] / eff_bio
 
     s_fec = idees["fec"][68:79]
@@ -956,7 +956,7 @@ def pulp_paper_printing():
     assert s_ued.index[0] == "Paper: Product finishing - Steam use"
 
     # Efficiency changes due to biomass
-    eff_bio = s_ued['Biomass and waste'] / s_fec['Biomass and waste']
+    eff_bio = s_ued["Biomass and waste"] / s_fec["Biomass and waste"]
     df.loc["biomass", sector] += s_ued["Paper: Product finishing - Steam use"] / eff_bio
 
     s_out = idees["out"][9:10]
@@ -1003,13 +1003,12 @@ def pulp_paper_printing():
 
 def food_beverages_tobacco():
     """
-    Calculates the energy consumption for the food, beverages, and tobacco sector,
-    assuming complete electrification of all processes. This sector does not have 
-    any process emissions associated with it.
+    Calculates the energy consumption for the food, beverages, and tobacco
+    sector, assuming complete electrification of all processes. This sector
+    does not have any process emissions associated with it.
 
-    
     Returns:
-        pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material) 
+        pd.DataFrame: A DataFrame containing the energy consumption (in MWh/t material)
                       for the food, beverages, and tobacco sector.
     """
 
@@ -1099,12 +1098,12 @@ def non_ferrous_metals():
 
     s_fec = idees["fec"][14:25]
     s_ued = idees["ued"][14:25]
-    assert s_fec.index[0] == 'Alumina production: High-enthalpy heat'
-    assert s_ued.index[0] == 'Alumina production: High-enthalpy heat'
+    assert s_fec.index[0] == "Alumina production: High-enthalpy heat"
+    assert s_ued.index[0] == "Alumina production: High-enthalpy heat"
 
     eff_met = s_ued["Natural gas and biogas"] / s_fec["Natural gas and biogas"]
     df.loc["methane", sector] += (
-        s_fec['Alumina production: High-enthalpy heat'] / eff_met
+        s_fec["Alumina production: High-enthalpy heat"] / eff_met
     )
 
     # Efficiency changes due to electrification
@@ -1205,7 +1204,7 @@ def non_ferrous_metals():
     key = "Aluminium processing  (metallurgy e.g. cast house, reheating)"
     df.loc["elec", sector] += s_ued[key] / eff_elec
 
-    key = 'Aluminium finishing - Electric'
+    key = "Aluminium finishing - Electric"
     eff_elec = s_ued[key] / s_fec[key]
     df.loc["elec", sector] += s_ued["Aluminium finishing"] / eff_elec
 
@@ -1305,7 +1304,7 @@ def transport_equipment():
     df.loc["elec", sector] += s_fec["Trans. Eq.: Product finishing"]
 
     # Steam processing is supplied with biomass
-    eff_biomass = s_ued['Biomass and waste'] / s_fec['Biomass and waste']
+    eff_biomass = s_ued["Biomass and waste"] / s_fec["Biomass and waste"]
     df.loc["biomass", sector] += s_ued["Trans. Eq.: Steam processing"] / eff_biomass
 
     s_out = idees["out"][3:4]
@@ -1357,7 +1356,7 @@ def machinery_equipment():
     df.loc["elec", sector] += s_fec["Mach. Eq.: Product finishing"]
 
     # Steam processing is supplied with biomass
-    eff_biomass = s_ued['Biomass and waste'] / s_fec['Biomass and waste']
+    eff_biomass = s_ued["Biomass and waste"] / s_fec["Biomass and waste"]
     df.loc["biomass", sector] += s_ued["Mach. Eq.: Steam processing"] / eff_biomass
 
     s_out = idees["out"][3:4]
@@ -1402,7 +1401,7 @@ def textiles_and_leather():
     df.loc["elec", sector] += s_fec["Textiles: Finishing Electric"]
 
     # Steam processing is supplied with biomass
-    eff_biomass = s_ued[15:26]['Biomass and waste'] / s_fec[15:26]['Biomass and waste']
+    eff_biomass = s_ued[15:26]["Biomass and waste"] / s_fec[15:26]["Biomass and waste"]
     df.loc["biomass", sector] += (
         s_ued["Textiles: Pretreatment with steam"] / eff_biomass
     )
@@ -1450,7 +1449,7 @@ def wood_and_wood_products():
     df.loc["elec", sector] += s_fec["Wood: Finishing Electric"]
 
     # Steam processing is supplied with biomass
-    eff_biomass = s_ued[15:25]['Biomass and waste'] / s_fec[15:25]['Biomass and waste']
+    eff_biomass = s_ued[15:25]["Biomass and waste"] / s_fec[15:25]["Biomass and waste"]
     df.loc["biomass", sector] += (
         s_ued["Wood: Specific processes with steam"] / eff_biomass
     )
@@ -1468,7 +1467,7 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-    
+
     sector = "Other industrial sectors"
     idees = load_idees_data(sector)
 
@@ -1510,7 +1509,7 @@ def other_industrial_sectors():
     df.loc["elec", sector] += s_fec[key]
 
     # Steam processing is supplied with biomass
-    eff_biomass = s_ued[15:25]['Biomass and waste'] / s_fec[15:25]['Biomass and waste']
+    eff_biomass = s_ued[15:25]["Biomass and waste"] / s_fec[15:25]["Biomass and waste"]
     df.loc["biomass", sector] += (
         s_ued["Other Industrial sectors: Steam processing"] / eff_biomass
     )
@@ -1534,9 +1533,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("build_industry_sector_ratios")
     set_scenario_config(snakemake)
 
-
     params = snakemake.params.industry
-    
+
     year = params["reference_year"]
 
     df = pd.concat(
