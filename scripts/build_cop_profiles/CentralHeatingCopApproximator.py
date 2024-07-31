@@ -20,8 +20,77 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     default parameters from Pieper et al. (2020). The method is based on
     a thermodynamic heat pump model with some hard-to-know parameters
     being approximated.
-    """
 
+    Attributes:
+    ----------
+    forward_temperature_celsius : Union[xr.DataArray, np.array]
+        The forward temperature in Celsius.
+    return_temperature_celsius : Union[xr.DataArray, np.array]
+        The return temperature in Celsius.
+    source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The source inlet temperature in Celsius.
+    source_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The source outlet temperature in Celsius.
+    delta_t_pinch_point : float, optional
+        The pinch point temperature difference, by default 5.
+    isentropic_compressor_efficiency : float, optional
+        The isentropic compressor efficiency, by default 0.8.
+    heat_loss : float, optional
+        The heat loss, by default 0.0.
+
+    Methods:
+    -------
+    __init__(
+        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
+        return_temperature_celsius: Union[xr.DataArray, np.array],
+        source_outlet_temperature_celsius: Union[xr.DataArray, np.array],
+        delta_t_pinch_point: float = 5,
+        isentropic_compressor_efficiency: float = 0.8,
+        heat_loss: float = 0.0,
+    ) -> None:
+        Initializes the CentralHeatingCopApproximator object.
+
+    approximate_cop(self) -> Union[xr.DataArray, np.array]:
+        Calculate the coefficient of performance (COP) for the system.
+
+    _approximate_delta_t_refrigerant_source(
+        self, delta_t_source: Union[xr.DataArray, np.array]
+    ) -> Union[xr.DataArray, np.array]:
+        Approximates the temperature difference between the refrigerant and the source.
+
+    _approximate_delta_t_refrigerant_sink(
+        self,
+        refrigerant: str = "ammonia",
+        a: float = {"ammonia": 0.2, "isobutane": -0.0011},
+        b: float = {"ammonia": 0.2, "isobutane": 0.3},
+        c: float = {"ammonia": 0.016, "isobutane": 2.4},
+    ) -> Union[xr.DataArray, np.array]:
+        Approximates the temperature difference between the refrigerant and heat sink.
+
+    _ratio_evaporation_compression_work_approximation(
+        self,
+        refrigerant: str = "ammonia",
+        a: float = {"ammonia": 0.0014, "isobutane": 0.0035},
+    ) -> Union[xr.DataArray, np.array]:
+        Calculate the ratio of evaporation to compression work based on approximation.
+
+    _approximate_delta_t_refrigerant_sink(
+        self,
+        refrigerant: str = "ammonia",
+        a: float = {"ammonia": 0.2, "isobutane": -0.0011},
+        b: float = {"ammonia": 0.2, "isobutane": 0.3},
+        c: float = {"ammonia": 0.016, "isobutane": 2.4},
+    ) -> Union[xr.DataArray, np.array]:
+        Approximates the temperature difference between the refrigerant and heat sink.
+
+    _ratio_evaporation_compression_work_approximation(
+        self,
+        refrigerant: str = "ammonia",
+        a: float = {"ammonia": 0.0014, "isobutane": 0.0035},
+    ) -> Union[xr.DataArray, np.array]:
+        Calculate the ratio of evaporation to compression work based on approximation.
+    """
     def __init__(
         self,
         forward_temperature_celsius: Union[xr.DataArray, np.array],
@@ -33,6 +102,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         heat_loss: float = 0.0,
     ) -> None:
         """
+        Initializes the CentralHeatingCopApproximator object.
 
         Parameters:
         ----------
@@ -74,6 +144,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         Calculate the coefficient of performance (COP) for the system.
 
         Returns:
+        --------
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
         return (
