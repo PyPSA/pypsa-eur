@@ -13,6 +13,13 @@ Upcoming Release
 * Upadte JRC-IDEES-2015 to  `JRC-IDEES-2021
 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
 
+
+* Updata Ammonia production from USGS to 2022 `data
+<https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx>`__.
+
+
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
+
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
   The default value for the link efficiency scaling factor was changed from 100% to 25%.
   It can be set to other values in the configuration ``sector: use_TECHNOLOGY_waste_heat``.
