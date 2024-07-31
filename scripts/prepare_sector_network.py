@@ -99,6 +99,15 @@ def define_spatial(nodes, options):
         spatial.gas.industry_cc = nodes + " gas for industry CC"
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+    elif options["regional_gas_demand"]:
+        spatial.gas.nodes = ["EU gas"]
+        spatial.gas.locations = ["EU"]
+        spatial.gas.demand_locations = nodes
+        spatial.gas.biogas = nodes + " biogas"
+        spatial.gas.industry = nodes + " gas for industry"
+        spatial.gas.industry_cc = nodes + " gas for industry CC"
+        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
+        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
@@ -2370,7 +2379,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"]:
+    if options["gas_network"] or options["regional_gas_demand"]:
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -2390,7 +2399,7 @@ def add_biomass(n, costs):
     n.madd(
         "Bus",
         spatial.gas.biogas,
-        location=spatial.gas.locations,
+        location=spatial.gas.demand_locations,
         carrier="biogas",
         unit="MWh_LHV",
     )
@@ -2785,14 +2794,14 @@ def add_industry(n, costs):
     n.madd(
         "Bus",
         spatial.gas.industry,
-        location=spatial.gas.locations,
+        location=spatial.gas.demand_locations,
         carrier="gas for industry",
         unit="MWh_LHV",
     )
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
-    if options["gas_network"]:
+    if options["gas_network"] or options["regional_gas_demand"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
     else:
         spatial_gas_demand = gas_demand.sum()
@@ -4130,10 +4139,11 @@ if __name__ == "__main__":
             # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2050",
+            clusters="22",
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons="2020",
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)
