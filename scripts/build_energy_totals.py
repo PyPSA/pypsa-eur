@@ -732,7 +732,6 @@ def build_energy_totals(
                 eurostat.loc[slicer, eurostat_fuels[fuel]].groupby(level=[0, 1]).sum()
             )
             # fill missing years for some countries by mean over the other years
-            breakpoint()
             fill_values = fill_missing_years(fill_values)
             df.loc[to_fill, f"{fuel} {sector}"] = fill_values
 
