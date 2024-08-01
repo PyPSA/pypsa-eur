@@ -93,7 +93,9 @@ def define_spatial(nodes, options):
 
     if options["gas_network"]:
         if ~options["regional_gas_demand"]:
-            logger.warning("Gas network requires regionsl gas demand. Please check config['sector']['regional_gas_demand']")
+            logger.warning(
+                "Gas network requires regionsl gas demand. Please check config['sector']['regional_gas_demand']"
+            )
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.demand_locations = nodes
