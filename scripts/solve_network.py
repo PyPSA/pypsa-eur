@@ -997,6 +997,8 @@ def add_h2_retrofit_constraint(n):
         logger.info(
             f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
         )
+
+
 def add_flexible_egs_constraint(n):
     """
     Upper bounds the charging capacity of the geothermal reservoir according to
