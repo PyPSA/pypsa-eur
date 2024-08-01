@@ -95,7 +95,12 @@ def _find_country_for_bus(bus, shapes):
 
 
 def _connect_new_lines(
-    lines, n, new_buses_df, offshore_shapes=None, distance_upper_bound=np.inf
+    lines,
+    n,
+    new_buses_df,
+    offshore_shapes=None,
+    distance_upper_bound=np.inf,
+    bus_carrier="AC",
 ):
     """
     Find the closest existing bus to the port of each line.
@@ -104,7 +109,9 @@ def _connect_new_lines(
     inside an offshore region, a new bus is created. and the line is
     connected to it.
     """
-    bus_tree = spatial.KDTree(n.buses[["x", "y"]])
+    bus_carrier = np.atleast_1d(bus_carrier)
+    buses = n.buses.query("carrier in @bus_carrier").copy()
+    bus_tree = spatial.KDTree(buses[["x", "y"]])
 
     for port in [0, 1]:
         lines_port = lines.geometry.apply(
@@ -114,9 +121,8 @@ def _connect_new_lines(
         )
         distances, indices = bus_tree.query(lines_port)
         # Series of lines with closest bus in the existing network and whether they match the distance criterion
-        lines_port["neighbor"] = n.buses.iloc[indices].index
+        lines_port["neighbor"] = buses.iloc[indices].index
         lines_port["match_distance"] = distances < distance_upper_bound
-
         # For buses which are not close to any existing bus, only add a new bus if the line is going offshore (e.g. North Sea Wind Power Hub)
         if not lines_port.match_distance.all() and offshore_shapes.union_all():
             potential_new_buses = lines_port[~lines_port.match_distance]
@@ -234,7 +240,7 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     found_i = np.arange(len(querylines))[found_b] % len(new_lines)
     # create a DataFrame with the distances, new line and its closest existing line
     line_map = pd.DataFrame(
-        dict(D=dist[found_b], i=lines.index[ind[found_b] % len(lines)]),
+        dict(D=dist[found_b], existing_line=lines.index[ind[found_b] % len(lines)]),
         index=new_lines.index[found_i].rename("new_lines"),
     )
     if type == "new":
@@ -242,7 +248,7 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
             found = line_map.index
             logger.warning(
                 "Found new lines similar to existing lines:\n"
-                + str(line_map["i"].to_dict())
+                + str(line_map["existing_line"].to_dict())
                 + "\n Lines are assumed to be duplicated and will be ignored."
             )
     elif type == "upgraded":
@@ -256,11 +262,11 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     # only keep the closer line of the new line pair (since lines are checked in both directions)
     line_map = line_map.sort_values(by="D")[
         lambda ds: ~ds.index.duplicated(keep="first")
-    ].sort_index()["i"]
+    ].sort_index()["existing_line"]
     return line_map
 
 
-def _adjust_decommissing(upgraded_lines, line_map):
+def _adjust_decommissioning(upgraded_lines, line_map):
     """
     Adjust the decommissioning year of the existing lines to the built year of
     the upgraded lines.
@@ -384,8 +390,12 @@ def _add_projects(
         if isinstance(status, dict):
             status = status[plan]
         lines = lines.loc[lines.project_status.isin(status)]
+        if lines.empty:
+            continue
         if "new_lines" in key:
-            new_lines, new_buses_df = _connect_new_lines(lines, n, new_buses_df)
+            new_lines, new_buses_df = _connect_new_lines(
+                lines, n, new_buses_df, bus_carrier="AC"
+            )
             duplicate_lines = _find_closest_lines(
                 n.lines, new_lines, distance_upper_bound=0.10, type="new"
             )
@@ -407,6 +417,7 @@ def _add_projects(
                 new_buses_df,
                 offshore_shapes=offshore_shapes,
                 distance_upper_bound=0.4,
+                bus_carrier=["AC", "DC"],
             )
             duplicate_links = _find_closest_lines(
                 n.links, new_links, distance_upper_bound=0.10, type="new"
@@ -428,10 +439,10 @@ def _add_projects(
                 n.lines, lines, distance_upper_bound=0.30, type="upgraded"
             )
             upgraded_lines = lines.loc[line_map.index]
+            lines_to_adjust = _adjust_decommissioning(upgraded_lines, line_map)
+            adjust_lines_df = pd.concat([adjust_lines_df, lines_to_adjust])
             upgraded_lines = _get_upgraded_lines("Line", n, upgraded_lines, line_map)
             new_lines_df = pd.concat([new_lines_df, upgraded_lines])
-            lines_to_adjust = _adjust_decommissing(upgraded_lines, line_map)
-            adjust_lines_df = pd.concat([adjust_lines_df, lines_to_adjust])
         elif "upgraded_links" in key:
             line_map = _find_closest_lines(
                 n.links.query("carrier=='DC'"),
@@ -440,10 +451,11 @@ def _add_projects(
                 type="upgraded",
             )
             upgraded_links = lines.loc[line_map.index]
+            links_to_adjust = _adjust_decommissioning(upgraded_links, line_map)
+            adjust_links_df = pd.concat([adjust_links_df, links_to_adjust])
             upgraded_links = _get_upgraded_lines("Link", n, upgraded_links, line_map)
             new_links_df = pd.concat([new_links_df, upgraded_links])
-            links_to_adjust = _adjust_decommissing(upgraded_links, line_map)
-            adjust_links_df = pd.concat([adjust_links_df, links_to_adjust])
+            _set_underwater_fraction(new_links_df, offshore_shapes)
         else:
             logger.warning(f"Unknown project type {key}")
             continue
