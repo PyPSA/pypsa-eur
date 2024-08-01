@@ -422,6 +422,15 @@ sector:
     decentral:
     - air
     - ground
+  heat_systems:
+    rural:
+    - residential rural
+    - services rural
+    urban decentral:
+    - residential urban decentral
+    - services urban decentral
+    urban central:
+    - urban central
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
