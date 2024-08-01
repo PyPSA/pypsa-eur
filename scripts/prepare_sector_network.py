@@ -544,7 +544,7 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     fossils = ["coal", "gas", "oil", "lignite"]
     if options.get("fossil_fuels", True) and carrier in fossils:
-       
+
         n.madd(
             "Generator",
             nodes,
