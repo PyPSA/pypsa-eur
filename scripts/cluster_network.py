@@ -386,6 +386,7 @@ def clustering_for_n_clusters(
     algorithm="hac",
     feature=None,
     extended_link_costs=0,
+    extended_link_investment=0,
     focus_weights=None,
 ):
     if not isinstance(custom_busmap, pd.Series):
@@ -421,6 +422,14 @@ def clustering_for_n_clusters(
             (nc.links.length - n.links.length)
             .clip(lower=0)
             .mul(extended_link_costs)
+            .dropna(),
+            fill_value=0,
+        )
+
+        nc.links["overnight_cost"] = nc.links["overnight_cost"].add(
+            (nc.links.length - n.links.length)
+            .clip(lower=0)
+            .mul(extended_link_investment)
             .dropna(),
             fill_value=0,
         )
@@ -516,12 +525,15 @@ if __name__ == "__main__":
     else:
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-        hvac_overhead_cost = load_costs(
+        costs = load_costs(
             snakemake.input.tech_costs,
             params.costs,
             params.max_hours,
             Nyears,
-        ).at["HVAC overhead", "capital_cost"]
+        )
+        hvac_overhead_cost = costs.at["HVAC overhead", "capital_cost"]
+
+        hvac_overhead_investment = costs.at["HVAC overhead", "investment"]
 
         custom_busmap = params.custom_busmap
         if custom_busmap:
@@ -542,6 +554,7 @@ if __name__ == "__main__":
             params.cluster_network["algorithm"],
             params.cluster_network["feature"],
             hvac_overhead_cost,
+            hvac_overhead_investment,
             params.focus_weights,
         )
 

@@ -4,6 +4,60 @@
 # SPDX-License-Identifier: MIT
 """
 Build industrial energy demand per country.
+
+Inputs
+-------
+
+- ``data/bundle/jrc-idees-2015``
+- ``industrial_production_per_country.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_energy_demand_per_country_today.csv``
+
+Description
+-------
+
+This rule uses the industrial_production_per_country.csv file and the JRC-IDEES data to derive an energy demand per country and sector. If the country is not in the EU28, an average energy demand depending on the production volume is derived.
+For each country and each subcategory of
+
+- Alumina production
+- Aluminium - primary production
+- Aluminium - secondary production
+- Ammonia
+- Cement
+- Ceramics & other NMM
+- Chlorine
+- Electric arc
+- Food, beverages and tobacco
+- Glass production
+- HVC
+- Integrated steelworks
+- Machinery Equipment
+- Methanol
+- Other Industrial Sectors
+- Other chemicals
+- Other non-ferrous metals
+- Paper production
+- Pharmaceutical products etc.
+- Printing and media reproduction
+- Pulp production
+- Textiles and leather
+- Transport Equipment
+- Wood and wood products
+
+the output file contains the energy demand in TWh/a for the following carriers
+
+- biomass
+- electricity
+- gas
+- heat
+- hydrogen
+- liquid
+- other
+- solid
+- waste
 """
 
 import multiprocessing as mp
@@ -130,7 +184,7 @@ def separate_basic_chemicals(demand, production):
 
     demand.drop(columns="Basic chemicals", inplace=True)
 
-    demand["HVC"].clip(lower=0, inplace=True)
+    demand["HVC"] = demand["HVC"].clip(lower=0)
 
     return demand
 
@@ -194,7 +248,7 @@ if __name__ == "__main__":
     demand = add_non_eu28_industrial_energy_demand(countries, demand, production)
 
     # for format compatibility
-    demand = demand.stack(dropna=False).unstack(level=[0, 2])
+    demand = demand.stack(future_stack=True).unstack(level=[0, 2])
 
     # style and annotation
     demand.index.name = "TWh/a"

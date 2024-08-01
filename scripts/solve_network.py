@@ -155,7 +155,7 @@ def _add_land_use_constraint(n):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def _add_land_use_constraint_m(n, planning_horizons, config):
@@ -207,7 +207,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_solar_potential_constraints(n, config):
@@ -469,6 +469,22 @@ def prepare_network(
             sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
             marginal_cost=load_shedding,  # Eur/kWh
             p_nom=1e9,  # kW
+        )
+
+    if solve_opts.get("curtailment_mode"):
+        n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
+        n.generators_t.p_min_pu = n.generators_t.p_max_pu
+        buses_i = n.buses.query("carrier == 'AC'").index
+        n.madd(
+            "Generator",
+            buses_i,
+            suffix=" curtailment",
+            bus=buses_i,
+            p_min_pu=-1,
+            p_max_pu=0,
+            marginal_cost=-0.1,
+            carrier="curtailment",
+            p_nom=1e6,
         )
 
     if solve_opts.get("noisy_costs"):
@@ -981,6 +997,23 @@ def add_h2_retrofit_constraint(n):
         logger.info(
             f"Added constraint for retrofitting {gas_carrier} gas to {h2_carrier}."
         )
+def add_flexible_egs_constraint(n):
+    """
+    Upper bounds the charging capacity of the geothermal reservoir according to
+    the well capacity.
+    """
+    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
+    storage_index = n.storage_units.loc[
+        n.storage_units.carrier == "geothermal heat"
+    ].index
+
+    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
+    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+
+    n.model.add_constraints(
+        p_nom_lhs <= p_nom_rhs,
+        name="upper_bound_charging_capacity_of_geothermal_reservoir",
+    )
 
 
 def add_co2_atmosphere_constraint(n, snapshots):
@@ -1048,6 +1081,9 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+
+    if config["sector"]["enhanced_geothermal"]["enable"]:
+        add_flexible_egs_constraint(n)
 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
