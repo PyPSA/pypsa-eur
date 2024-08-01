@@ -92,14 +92,17 @@ def define_spatial(nodes, options):
     spatial.gas = SimpleNamespace()
 
     if options["gas_network"]:
+        if ~options["regional_gas_demand"]:
+            logger.warning("Gas network requires regionsl gas demand. Please check config['sector']['regional_gas_demand']")
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
+        spatial.gas.demand_locations = nodes
         spatial.gas.biogas = nodes + " biogas"
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
-    elif options["regional_gas_demand"]:
+    elif options["regional_gas_demand"] and not options["gas_network"]:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
         spatial.gas.demand_locations = nodes
@@ -111,6 +114,7 @@ def define_spatial(nodes, options):
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
+        spatial.gas.demand_locations = ["EU"]
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
