@@ -2775,10 +2775,11 @@ def add_industry(n, costs):
         )
 
     domestic_navigation = pop_weighted_energy_totals.loc[
-        nodes, "total domestic navigation"
+        nodes, ["total domestic navigation"]
     ].squeeze()
     international_navigation = (
-        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze() * nyears
+        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze(axis=1)
+        * nyears
     )
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / nhours
@@ -3946,12 +3947,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
+            clusters="1",
+            ll="vopt",
+            sector_opts="",
             planning_horizons="2050",
         )
 
