@@ -10,6 +10,14 @@ Release Notes
 Upcoming Release
 ================
 
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
+
+* Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
+  The default value for the link efficiency scaling factor was changed from 100% to 25%.
+  It can be set to other values in the configuration ``sector: use_TECHNOLOGY_waste_heat``.
+
+* In simplifying polygons in :mod:`build_shapes` default to no tolerance.
+
 * Set non-zero capital_cost for methanol stores to avoid unrealistic storage sizes
 
 * Set p_nom = p_nom_min for generators with baseyear == grouping_year in add_existing_baseyear. This has no effect on the optimization but helps n.statistics to correctly report already installed capacities.
@@ -24,6 +32,33 @@ Upcoming Release
 * Partially revert https://github.com/PyPSA/pypsa-eur/pull/967 to return to old grouping year logic (which was mostly correct)
 
 * Bugfix: Correctly read in threshold capacity below which to remove components from previous planning horizons in :mod:`add_brownfield`.
+
+* For countries not contained in the NUTS3-specific datasets (i.e. MD and UA), the mapping of GDP per capita and population per bus region used to spatially distribute electricity demand is now endogenised in a new rule :mod:`build_gdp_ppp_non_nuts3`. https://github.com/PyPSA/pypsa-eur/pull/1146
+
+* The databundle has been updated to release v0.3.0, which includes raw GDP and population data for countries outside the NUTS system (UA, MD). https://github.com/PyPSA/pypsa-eur/pull/1146
+
+* Updated filtering in :mod:`determine_availability_matrix_MD_UA.py` to improve speed. https://github.com/PyPSA/pypsa-eur/pull/1146
+
+* Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
+
+* The ``{scope}`` wildcard was removed, since its outputs were not used.
+
+* Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
+
+* Updated pre-built `weather data cutouts
+  <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
+  solar irradiation from the new SARAH-3 dataset while taking all other
+  variables from ERA5. Cutouts are now available for multiple years (2010, 2013,
+  2019, and 2023).
+
+* Added option ``solving: curtailment_mode``` which fixes the dispatch profiles
+  of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu``
+  and adds an auxiliary curtailment generator with negative sign (to absorb
+  excess power) at every AC bus. This can speed up the solving process as the
+  curtailment decision is aggregated into a single generator per region.
+
+* In :mod:`base_network`, replace own voronoi polygon calculation function with
+  Geopandas `gdf.voronoi_polygons` method.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
