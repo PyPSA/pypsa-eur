@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
+
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
 
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
