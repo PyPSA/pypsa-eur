@@ -142,13 +142,6 @@ The ``{sector_opts}`` wildcard is only used for sector-coupling studies.
    :widths: 10,20,10,10
    :file: configtables/sector-opts.csv
 
-.. _scope:
-
-The ``{scope}`` wildcard
-========================
-
-Takes values ``residential``, ``urban``, ``total``.
-
 .. _planning_horizons:
 
 The ``{planning_horizons}`` wildcard

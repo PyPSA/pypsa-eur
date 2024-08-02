@@ -22,12 +22,12 @@ Inputs
 ------
 
 - ``data/heat_load_profile_BDEW.csv``: Intraday heat profile for water and space heating demand for the residential and services sectors for weekends and weekdays.
-- ``resources/daily_heat_demand_<scope>_elec_s<simpl>_<clusters>.nc``: Daily heat demand per cluster.
+- ``resources/daily_heat_demand_total_elec_s<simpl>_<clusters>.nc``: Daily heat demand per cluster.
 
 Outputs
 -------
 
-- ``resources/hourly_heat_demand_<scope>_elec_s<simpl>_<clusters>.nc``:
+- ``resources/hourly_heat_demand_total_elec_s<simpl>_<clusters>.nc``:
 """
 
 from itertools import product
@@ -41,10 +41,10 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_hourly_heat_demands",
+            "build_hourly_heat_demand",
             scope="total",
             simpl="",
-            clusters=48,
+            clusters=5,
         )
     set_scenario_config(snakemake)
 
@@ -85,6 +85,6 @@ if __name__ == "__main__":
 
     heat_demand.index.name = "snapshots"
 
-    ds = heat_demand.stack().to_xarray()
+    ds = heat_demand.stack(future_stack=True).to_xarray()
 
     ds.to_netcdf(snakemake.output.heat_demand)
