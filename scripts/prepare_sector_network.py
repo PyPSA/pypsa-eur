@@ -59,27 +59,18 @@ def define_spatial(nodes, options):
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
+        spatial.biomass.bioliquids = nodes + " bioliquids"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
         spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
     else:
         spatial.biomass.nodes = ["EU solid biomass"]
+        spatial.biomass.bioliquids = ["EU unsustainable bioliquids"]
         spatial.biomass.locations = ["EU"]
         spatial.biomass.industry = ["solid biomass for industry"]
         spatial.biomass.industry_cc = ["solid biomass for industry CC"]
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
-
-    # unsustainable bioliquids
-    spatial.bioliquids = SimpleNamespace()
-    if options.get("regional_oil_demand"):
-        spatial.bioliquids.nodes = nodes + " bioliquids"
-        spatial.bioliquids.locations = nodes
-    else:
-        spatial.bioliquids.nodes = ["EU bioliquids"]
-        spatial.bioliquids.locations = ["EU"]
-
-    spatial.bioliquids.df = pd.DataFrame(vars(spatial.bioliquids), index=nodes)
 
     # co2
 
@@ -2248,52 +2239,37 @@ def add_biomass(n, costs):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
-        if snakemake.params.biomass.get(
-            "include_unsustainable"
-        ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-            unsustainable_biogas_potentials_spatial = biomass_potentials[
-                "unsustainable biogas"
-            ].rename(index=lambda x: x + " biogas")
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].rename(index=lambda x: x + " biogas")
     else:
         biogas_potentials_spatial = biomass_potentials["biogas"].sum()
-        if snakemake.params.biomass.get(
-            "include_unsustainable"
-        ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-            unsustainable_biogas_potentials_spatial = biomass_potentials[
-                "unsustainable biogas"
-            ].sum()
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].sum()
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
             index=lambda x: x + " solid biomass"
         )
-        if snakemake.params.biomass.get(
-            "include_unsustainable"
-        ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-            unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
-                "unsustainable solid biomass"
-            ].rename(index=lambda x: x + " solid biomass")
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].rename(index=lambda x: x + " solid biomass")
 
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
-        if snakemake.params.biomass.get(
-            "include_unsustainable"
-        ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-            unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
-                "unsustainable solid biomass"
-            ].sum()
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].sum()
 
-    if snakemake.params.biomass.get(
-        "include_unsustainable"
-    ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
-        if options["regional_oil_demand"]:
-            unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-                "unsustainable bioliquids"
-            ].rename(index=lambda x: x + " bioliquids")
-        else:
-            unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-                "unsustainable bioliquids"
-            ].sum()
+    if options["regional_oil_demand"]:
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " bioliquids")
+    else:
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].sum()
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
@@ -2334,9 +2310,7 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
-    if snakemake.params.biomass.get(
-        "include_unsustainable"
-    ) and investment_year < snakemake.params.biomass.get("unsustainable_phase_out"):
+    if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
 
         n.madd(
             "Store",
@@ -2347,8 +2321,6 @@ def add_biomass(n, costs):
             e_nom=unsustainable_biogas_potentials_spatial,
             marginal_cost=costs.at["biogas", "fuel"],
             e_initial=unsustainable_biogas_potentials_spatial,
-            efficiency=1,
-            e_min_pu=0,
             e_nom_extendable=False,
         )
 
@@ -2361,44 +2333,40 @@ def add_biomass(n, costs):
             e_nom=unsustainable_solid_biomass_potentials_spatial,
             marginal_cost=14,  # mean of MINBIOWOO costs in ENS_BAU 2030
             e_initial=unsustainable_solid_biomass_potentials_spatial,
-            efficiency=1,
-            e_min_pu=0,
             e_nom_extendable=False,
         )
 
         n.madd(
             "Bus",
-            spatial.bioliquids.nodes,
-            location=spatial.bioliquids.locations,
+            spatial.biomass.bioliquids,
+            location=spatial.biomass.locations,
             carrier="unsustainable bioliquids",
             unit="MWh_LHV",
         )
 
         n.madd(
             "Store",
-            spatial.bioliquids.nodes,
+            spatial.biomass.bioliquids,
             suffix=" unsustainable",
-            bus=spatial.bioliquids.nodes,
+            bus=spatial.biomass.bioliquids,
             carrier="unsustainable bioliquids",
             e_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["oil", "fuel"],
             e_initial=unsustainable_liquid_biofuel_potentials_spatial,
-            efficiency=1,
-            e_min_pu=0,
             e_nom_extendable=False,
         )
 
         n.madd(
             "Link",
-            spatial.bioliquids.nodes,
-            bus0=spatial.bioliquids.nodes,
+            spatial.biomass.bioliquids,
+            bus0=spatial.biomass.bioliquids,
             bus1=spatial.oil.nodes,
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
             + costs.at["BtL", "CO2 stored"],
-            p_nom_extendable=True,
+            p_nom=unsustainable_liquid_biofuel_potentials_spatial / 1e3,
         )
 
     n.madd(
