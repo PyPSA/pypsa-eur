@@ -55,7 +55,7 @@ def dynamic_getter(wildcards, keys, default):
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
-            f"Scenario {scenario_name} not found in file {config['run']['scenario']['file']}."
+            f"Scenario {scenario_name} not found in file {config['run']['scenarios']['file']}."
         )
     config_with_scenario = scenario_config(scenario_name)
     config_with_wildcards = update_config_from_wildcards(
@@ -81,7 +81,8 @@ def config_provider(*keys, default=None):
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
-    threads = solver_options[option_set].get("threads", 4)
+    solver_option_set = solver_options[option_set]
+    threads = solver_option_set.get("threads") or solver_option_set.get("Threads") or 4
     return threads
 
 
