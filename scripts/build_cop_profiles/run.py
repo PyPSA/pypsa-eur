@@ -12,18 +12,18 @@ from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
 
 def get_cop(
-    heat_system_type: str,
+    heat_system_category: str,
     heat_source: str,
     source_inlet_temperature_celsius: xr.DataArray,
 ) -> xr.DataArray:
-    if heat_system_type == "decentral":
+    if heat_system_category in ["urban decentral", "rural"]:
         return DecentralHeatingCopApproximator(
             forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=heat_source,
         ).approximate_cop()
 
-    elif heat_system_type == "central":
+    elif heat_system_category == "urban central":
         return CentralHeatingCopApproximator(
             forward_temperature_celsius=snakemake.params.forward_temperature_central_heating,
             return_temperature_celsius=snakemake.params.return_temperature_central_heating,
@@ -33,7 +33,7 @@ def get_cop(
         ).approximate_cop()
     else:
         raise ValueError(
-            f"Invalid heat system type '{heat_system_type}'. Must be one of ['decentral', 'central']"
+            f"Invalid heat system type '{heat_system_category}'. Must be one of ['urban decentral', 'urban central', 'rural]"
         )
 
 
@@ -50,14 +50,14 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     cop_all_system_types = []
-    for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
+    for heat_system_category, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
             source_inlet_temperature_celsius = xr.open_dataarray(
                 snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
             )
             cop_da = get_cop(
-                heat_system_type=heat_system_type,
+                heat_system_category=heat_system_category,
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             )

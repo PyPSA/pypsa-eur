@@ -1840,9 +1840,9 @@ def add_heat(n, costs):
 
         n.madd(
             "Bus",
-            nodes + f" {heat_system} heat",
+            nodes + f" {heat_system.value} heat",
             location=nodes,
-            carrier=f"{heat_system} heat",
+            carrier=f"{heat_system.value} heat",
             unit="MWh_th",
         )
 
@@ -1891,10 +1891,10 @@ def add_heat(n, costs):
         )
 
         ## Add heat pumps
-        for heat_source in snakemake.params.heat_pump_sources[heat_system.system_type]:
+        for heat_source in snakemake.params.heat_pump_sources[heat_system.system_category]:
             costs_name = heat_system.heat_pump_costs_name(heat_source)
             efficiency = (
-                cop.sel(heat_system=heat_system.system_type, heat_source=heat_source, name=nodes)
+                cop.sel(heat_system=heat_system.system_category, heat_source=heat_source, name=nodes)
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
@@ -2013,7 +2013,7 @@ def add_heat(n, costs):
                 lifetime=costs.at[heat_system.system_type + " solar thermal", "lifetime"],
             )
 
-        if options["chp"] and heat_system == "urban central":
+        if options["chp"] and heat_system == HeatSystem.URBAN_CENTRAL:
             # add gas CHP; biomass CHP is added in biomass section
             n.madd(
                 "Link",
@@ -2070,7 +2070,7 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
-        if options["chp"] and options["micro_chp"] and heat_system != "urban central":
+        if options["chp"] and options["micro_chp"] and heat_system.value != "urban central":
             n.madd(
                 "Link",
                 nodes + f" {heat_system} micro gas CHP",
@@ -2079,7 +2079,7 @@ def add_heat(n, costs):
                 bus1=nodes,
                 bus2=nodes + f" {heat_system} heat",
                 bus3="co2 atmosphere",
-                carrier=heat_system + " micro gas CHP",
+                carrier=heat_system.value + " micro gas CHP",
                 efficiency=costs.at["micro CHP", "efficiency"],
                 efficiency2=costs.at["micro CHP", "efficiency-heat"],
                 efficiency3=costs.at["gas", "CO2 intensity"],
@@ -2106,36 +2106,35 @@ def add_heat(n, costs):
 
         # share of space heat demand 'w_space' of total heat demand
         w_space = {}
-        for sector in HeatSector:
-            w_space[sector.value] = heat_demand[sector.value + " space"] / (
-                heat_demand[sector.value + " space"] + heat_demand[sector.value + " water"]
+        for sector in sectors:
+            w_space[sector] = heat_demand[sector + " space"] / (
+                heat_demand[sector + " space"] + heat_demand[sector + " water"]
             )
         w_space["tot"] = (
             heat_demand["services space"] + heat_demand["residential space"]
         ) / heat_demand.T.groupby(level=[1]).sum().T
 
-        for heat_system in n.loads[
-            n.loads.carrier.isin([x.value + " heat" for x in HeatSystem])
+        for name in n.loads[
+            n.loads.carrier.isin([x + " heat" for x in heat_systems])
         ].index:
-            node = n.buses.loc[heat_system, "location"]
+            node = n.buses.loc[name, "location"]
             ct = pop_layout.loc[node, "ct"]
 
             # weighting 'f' depending on the size of the population at the node
-            if "urban central" in heat_system:
+            if "urban central" in name:
                 f = dist_fraction[node]
-            elif "urban decentral" in heat_system:
+            elif "urban decentral" in name:
                 f = urban_fraction[node] - dist_fraction[node]
             else:
                 f = 1 - urban_fraction[node]
             if f == 0:
                 continue
-
             # get sector name ("residential"/"services"/or both "tot" for urban central)
-            if "urban central" in heat_system:
+            if "urban central" in name:
                 sec = "tot"
-            if "residential" in heat_system:
+            if "residential" in name:
                 sec = "residential"
-            if "services" in heat_system:
+            if "services" in name:
                 sec = "services"
 
             # get floor aread at node and region (urban/rural) in m^2
@@ -2143,7 +2142,7 @@ def add_heat(n, costs):
                 pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
             ).loc[sec] * f
             # total heat demand at node [MWh]
-            demand = n.loads_t.p_set[heat_system]
+            demand = n.loads_t.p_set[name]
 
             # space heat demand at node [MWh]
             space_heat_demand = demand * w_space[sec][node]
@@ -2184,12 +2183,12 @@ def add_heat(n, costs):
 
             # add for each retrofitting strength a generator with heat generation profile following the profile of the heat demand
             for strength in strengths:
-                node_name = " ".join(heat_system.split(" ")[2::])
+                node_name = " ".join(name.split(" ")[2::])
                 n.madd(
                     "Generator",
                     [node],
                     suffix=" retrofitting " + strength + " " + node_name,
-                    bus=heat_system,
+                    bus=name,
                     carrier="retrofitting",
                     p_nom_extendable=True,
                     p_nom_max=dE_diff[strength]

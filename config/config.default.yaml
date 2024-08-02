@@ -417,20 +417,13 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
   heat_pump_sources:
-    central:
+    urban central:
     - air
-    decentral:
+    urban decentral:
+    - air
+    rural:
     - air
     - ground
-  heat_systems:
-    rural:
-    - residential rural
-    - services rural
-    urban decentral:
-    - residential urban decentral
-    - services urban decentral
-    urban central:
-    - urban central
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
