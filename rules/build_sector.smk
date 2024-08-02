@@ -965,7 +965,7 @@ rule prepare_sector_network:
         emissions_scope=config_provider("energy", "emissions"),
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        heat_systems=config_provider("sector", "heat_systems")
+        heat_systems=config_provider("sector", "heat_systems"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,

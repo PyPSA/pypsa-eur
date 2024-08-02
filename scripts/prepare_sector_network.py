@@ -22,9 +22,6 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.enums.HeatSystem import HeatSystem
-from scripts.enums.HeatSystemType import HeatSystemType
-from scripts.enums.HeatSector import HeatSector
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import (
     build_co2_totals,
@@ -39,6 +36,10 @@ from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
+
+from scripts.enums.HeatSector import HeatSector
+from scripts.enums.HeatSystem import HeatSystem
+from scripts.enums.HeatSystemType import HeatSystemType
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -1833,7 +1834,11 @@ def add_heat(n, costs):
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
     cop = xr.open_dataarray(snakemake.input.cop_profiles)
-    for heat_system in HeatSystem: #this loops through all heat systems defined in _entities.HeatSystem
+    for (
+        heat_system
+    ) in (
+        HeatSystem
+    ):  # this loops through all heat systems defined in _entities.HeatSystem
 
         if heat_system == HeatSystem.URBAN_CENTRAL:
             nodes = dist_fraction.index[dist_fraction > 0]
@@ -1864,16 +1869,22 @@ def add_heat(n, costs):
             )
 
         ## Add heat load
-        factor = heat_system.heat_demand_weighting(urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes])
+        factor = heat_system.heat_demand_weighting(
+            urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
+        )
         if not heat_system == HeatSystem.URBAN_CENTRAL:
             heat_load = (
-                heat_demand[[heat_system.sector.value + " water", heat_system.sector.value + " space"]]
+                heat_demand[
+                    [
+                        heat_system.sector.value + " water",
+                        heat_system.sector.value + " space",
+                    ]
+                ]
                 .T.groupby(level=1)
                 .sum()
                 .T[nodes]
                 .multiply(factor)
             )
-
 
         if heat_system == HeatSystem.URBAN_CENTRAL:
             heat_load = (
@@ -1895,10 +1906,16 @@ def add_heat(n, costs):
         )
 
         ## Add heat pumps
-        for heat_source in snakemake.params.heat_pump_sources[heat_system.system_type.value]:
+        for heat_source in snakemake.params.heat_pump_sources[
+            heat_system.system_type.value
+        ]:
             costs_name = heat_system.heat_pump_costs_name(heat_source)
             efficiency = (
-                cop.sel(heat_system=heat_system.system_type.value, heat_source=heat_source, name=nodes)
+                cop.sel(
+                    heat_system=heat_system.system_type.value,
+                    heat_source=heat_source,
+                    name=nodes,
+                )
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
@@ -1951,7 +1968,9 @@ def add_heat(n, costs):
                 p_nom_extendable=True,
             )
 
-            tes_time_constant_days = options["tes_tau"][heat_system.central_or_decentral]
+            tes_time_constant_days = options["tes_tau"][
+                heat_system.central_or_decentral
+            ]
 
             n.madd(
                 "Store",
@@ -1961,8 +1980,12 @@ def add_heat(n, costs):
                 e_nom_extendable=True,
                 carrier=f"{heat_system} water tanks",
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                capital_cost=costs.at[heat_system.central_or_decentral + " water tank storage", "fixed"],
-                lifetime=costs.at[heat_system.central_or_decentral + " water tank storage", "lifetime"],
+                capital_cost=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "fixed"
+                ],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+                ],
             )
 
         if options["resistive_heaters"]:
@@ -2011,10 +2034,14 @@ def add_heat(n, costs):
                 bus=nodes + f" {heat_system} heat",
                 carrier=f"{heat_system} solar thermal",
                 p_nom_extendable=True,
-                capital_cost=costs.at[heat_system.central_or_decentral + " solar thermal", "fixed"]
+                capital_cost=costs.at[
+                    heat_system.central_or_decentral + " solar thermal", "fixed"
+                ]
                 * overdim_factor,
                 p_max_pu=solar_thermal[nodes],
-                lifetime=costs.at[heat_system.central_or_decentral + " solar thermal", "lifetime"],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " solar thermal", "lifetime"
+                ],
             )
 
         if options["chp"] and heat_system == HeatSystem.URBAN_CENTRAL:
@@ -2074,7 +2101,11 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
-        if options["chp"] and options["micro_chp"] and heat_system.value != "urban central":
+        if (
+            options["chp"]
+            and options["micro_chp"]
+            and heat_system.value != "urban central"
+        ):
             n.madd(
                 "Link",
                 nodes + f" {heat_system} micro gas CHP",

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 # SPDX-License-Identifier: MIT
 
 from enum import Enum
+
 
 class HeatSector(Enum):
     """
@@ -22,4 +24,3 @@ class HeatSector(Enum):
             str: The string representation of the heat sector.
         """
         return self.value
-
