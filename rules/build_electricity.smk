@@ -202,7 +202,6 @@ rule determine_availability_matrix_MD_UA:
         + ".nc",
     output:
         availability_matrix=resources("availability_matrix_MD-UA_{technology}.nc"),
-        availability_map=resources("availability_matrix_MD-UA_{technology}.png"),
     log:
         logs("determine_availability_matrix_MD_UA_{technology}.log"),
     threads: config["atlite"].get("nprocesses", 4)
@@ -375,6 +374,37 @@ def input_conventional(w):
     }
 
 
+# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
+def input_gdp_pop_non_nuts3(w):
+    countries = set(config_provider("countries")(w))
+    if {"UA", "MD"}.intersection(countries):
+        return {"gdp_pop_non_nuts3": resources("gdp_pop_non_nuts3.geojson")}
+    return {}
+
+
+rule build_gdp_pop_non_nuts3:
+    params:
+        countries=config_provider("countries"),
+    input:
+        base_network=resources("networks/base.nc"),
+        regions=resources("regions_onshore.geojson"),
+        gdp_non_nuts3="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        pop_non_nuts3="data/bundle/ppp_2013_1km_Aggregated.tif",
+    output:
+        resources("gdp_pop_non_nuts3.geojson"),
+    log:
+        logs("build_gdp_pop_non_nuts3.log"),
+    benchmark:
+        benchmarks("build_gdp_pop_non_nuts3")
+    threads: 1
+    resources:
+        mem_mb=8000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_gdp_pop_non_nuts3.py"
+
+
 rule add_electricity:
     params:
         length_factor=config_provider("lines", "length_factor"),
@@ -390,6 +420,7 @@ rule add_electricity:
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
+        unpack(input_gdp_pop_non_nuts3),
         base_network=resources("networks/base.nc"),
         line_rating=lambda w: (
             resources("networks/line_rating.nc")
@@ -411,7 +442,6 @@ rule add_electricity:
         ),
         load=resources("electricity_demand.csv"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        ua_md_gdp="data/GDP_PPP_30arcsec_v3_mapped_default.csv",
     output:
         resources("networks/elec.nc"),
     log:

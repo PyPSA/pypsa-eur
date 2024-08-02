@@ -116,7 +116,7 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
-    gdf.rename(columns={"index_right": "bus"}, inplace=True)
+    gdf.rename(columns={"name": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
 
     # the .sjoin can lead to duplicates if a geom is in two overlapping regions
