@@ -598,6 +598,7 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  electrobiofuels: false
   biosng: false
   limit_max_growth:
     enable: false
@@ -620,6 +621,11 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
+  solid_biomass_import:
+    enable: false
+    price: 54 #EUR/MWh
+    max_amount: 1390 # TWh
+    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -1018,6 +1024,7 @@ plotting:
     biomass: '#baa741'
     solid biomass: '#baa741'
     municipal solid waste: '#91ba41'
+    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1031,6 +1038,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'

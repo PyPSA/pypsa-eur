@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Add option to import solid biomass
+
+* Add option to produce electrobiofuels (flag ``electrobiofuels`) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
+
 * Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
