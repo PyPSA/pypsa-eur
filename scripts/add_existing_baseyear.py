@@ -23,9 +23,10 @@ from _helpers import (
 )
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+
+from scripts.enums.HeatSector import HeatSector
 from scripts.enums.HeatSystem import HeatSystem
 from scripts.enums.HeatSystemType import HeatSystemType
-from scripts.enums.HeatSector import HeatSector
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -462,7 +463,11 @@ def add_heating_capacities_installed_before_baseyear(
         costs_name = f"{heat_system.system_type} {heat_source}-sourced heat pump"
 
         efficiency = (
-            cop.sel(heat_system=heat_system.system_type.value, heat_source=heat_source, name=nodes)
+            cop.sel(
+                heat_system=heat_system.system_type.value,
+                heat_source=heat_source,
+                name=nodes,
+            )
             .to_pandas()
             .reindex(index=n.snapshots)
             if options["time_dep_hp_cop"]
@@ -521,18 +526,26 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0=nodes_elec,
                 bus1=nodes + " " + heat_system.value + " heat",
                 carrier=heat_system + " resistive heater",
-                efficiency=costs.at[f"{heat_system.system_type} resistive heater", "efficiency"],
+                efficiency=costs.at[
+                    f"{heat_system.system_type} resistive heater", "efficiency"
+                ],
                 capital_cost=(
-                    costs.at[f"{heat_system.system_type} resistive heater", "efficiency"]
+                    costs.at[
+                        f"{heat_system.system_type} resistive heater", "efficiency"
+                    ]
                     * costs.at[f"{heat_system.system_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
                     existing_heating.loc[nodes, (heat_system.value, "resistive heater")]
                     * ratio
-                    / costs.at[f"{heat_system.system_type} resistive heater", "efficiency"]
+                    / costs.at[
+                        f"{heat_system.system_type} resistive heater", "efficiency"
+                    ]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{heat_system.system_type} resistive heater", "lifetime"],
+                lifetime=costs.at[
+                    f"{heat_system.system_type} resistive heater", "lifetime"
+                ],
             )
 
             n.madd(
@@ -543,7 +556,9 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system + " gas boiler",
-                efficiency=costs.at[f"{heat_system.system_type} gas boiler", "efficiency"],
+                efficiency=costs.at[
+                    f"{heat_system.system_type} gas boiler", "efficiency"
+                ],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
                     costs.at[f"{heat_system.system_type} gas boiler", "efficiency"]
