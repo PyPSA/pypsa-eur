@@ -293,6 +293,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             capital_cost = n.generators.loc[
                 n.generators.carrier == generator + suffix, "capital_cost"
             ].mean()
+            overnight_cost = n.generators.loc[
+                n.generators.carrier == generator + suffix, "overnight_cost"
+            ].mean()
             marginal_cost = n.generators.loc[
                 n.generators.carrier == generator + suffix, "marginal_cost"
             ].mean()
@@ -331,6 +334,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         / len(inv_ind),  # split among regions in a country
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
+                        overnight_cost=overnight_cost,
                         efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu,
                         build_year=grouping_year,
@@ -350,6 +354,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         p_nom=new_capacity,
                         marginal_cost=marginal_cost,
                         capital_cost=capital_cost,
+                        overnight_cost=overnight_cost,
                         efficiency=costs.at[cost_key, "efficiency"],
                         p_max_pu=p_max_pu.rename(columns=n.generators.bus),
                         build_year=grouping_year,
@@ -411,6 +416,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         * costs.at[generator, "VOM"],  # NB: VOM is per MWel
                         capital_cost=costs.at[generator, "efficiency"]
                         * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
+                        overnight_cost=costs.at[generator, "efficiency"]
+                        * costs.at[
+                            generator, "investment"
+                        ],  # NB: investment is per MWel
                         p_nom=new_capacity / costs.at[generator, "efficiency"],
                         efficiency=costs.at[generator, "efficiency"],
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
@@ -434,6 +443,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         carrier=generator,
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
+                        overnight_cost=costs.at[key, "fixed"]
                         * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
                         efficiency=costs.at[key, "efficiency"],
@@ -591,6 +602,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     carrier=f"urban central {generator} CHP",
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power.dropna(),
                     efficiency2=efficiency_heat.dropna(),
@@ -610,6 +622,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     carrier=generator,
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power,
                     efficiency2=efficiency_heat,
@@ -647,6 +660,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 carrier=f"urban central {generator} CHP",
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
@@ -666,6 +680,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 carrier=generator,
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency-heat"],
@@ -758,6 +773,8 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
+                overnight_cost=costs.at[costs_name, "efficiency"]
+                * costs.at[costs_name, "investment"],
                 p_nom=existing_heating.loc[nodes, (name, f"{heat_pump_type} heat pump")]
                 * ratio
                 / costs.at[costs_name, "efficiency"],
@@ -777,6 +794,10 @@ def add_heating_capacities_installed_before_baseyear(
                 capital_cost=(
                     costs.at[f"{name_type} resistive heater", "efficiency"]
                     * costs.at[f"{name_type} resistive heater", "fixed"]
+                ),
+                overnight_cost=(
+                    costs.at[f"{name_type} resistive heater", "efficiency"]
+                    * costs.at[f"{name_type} resistive heater", "investment"]
                 ),
                 p_nom=(
                     existing_heating.loc[nodes, (name, "resistive heater")]
@@ -801,6 +822,10 @@ def add_heating_capacities_installed_before_baseyear(
                     costs.at[f"{name_type} gas boiler", "efficiency"]
                     * costs.at[f"{name_type} gas boiler", "fixed"]
                 ),
+                overnight_cost=(
+                    costs.at[f"{name_type} gas boiler", "efficiency"]
+                    * costs.at[f"{name_type} gas boiler", "investment"]
+                ),
                 p_nom=(
                     existing_heating.loc[nodes, (name, "gas boiler")]
                     * ratio
@@ -822,6 +847,8 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at["decentral oil boiler", "efficiency"]
                 * costs.at["decentral oil boiler", "fixed"],
+                overnight_cost=costs.at["decentral oil boiler", "efficiency"]
+                * costs.at["decentral oil boiler", "investment"],
                 p_nom=(
                     existing_heating.loc[nodes, (name, "oil boiler")]
                     * ratio
@@ -841,6 +868,8 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"],
+                overnight_cost=costs.at["biomass boiler", "efficiency"]
+                * costs.at["biomass boiler", "investment"],
                 p_nom=(
                     existing_heating.loc[nodes, (name, "biomass boiler")]
                     * ratio
@@ -879,14 +908,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/scenarios.automated.yaml",
+            configfiles="config/config.yaml",
             simpl="",
-            clusters="22",
-            ll="vopt",
+            clusters="20",
+            ll="v1.5",
             opts="",
             sector_opts="none",
             planning_horizons=2030,
-            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)

@@ -414,7 +414,7 @@ def mock_snakemake(
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake
-    from snakemake.settings import (
+    from snakemake.settings.types import (
         ConfigSettings,
         DAGSettings,
         ResourceSettings,

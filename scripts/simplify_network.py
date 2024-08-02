@@ -150,7 +150,9 @@ def simplify_network_to_380(n):
     return n, trafo_map
 
 
-def _prepare_connection_costs_per_link(n, costs, renewable_carriers, length_factor):
+def _prepare_connection_costs_per_link(
+    n, costs, renewable_carriers, length_factor, cost_key="capital_cost"
+):
     if n.links.empty:
         return {}
 
@@ -160,9 +162,9 @@ def _prepare_connection_costs_per_link(n, costs, renewable_carriers, length_fact
             * length_factor
             * (
                 n.links.underwater_fraction
-                * costs.at[tech + "-connection-submarine", "capital_cost"]
+                * costs.at[tech + "-connection-submarine", cost_key]
                 + (1.0 - n.links.underwater_fraction)
-                * costs.at[tech + "-connection-underground", "capital_cost"]
+                * costs.at[tech + "-connection-underground", cost_key]
             )
         )
         for tech in renewable_carriers
@@ -178,10 +180,15 @@ def _compute_connection_costs_to_bus(
     length_factor,
     connection_costs_per_link=None,
     buses=None,
+    cost_key="capital_cost",
 ):
     if connection_costs_per_link is None:
         connection_costs_per_link = _prepare_connection_costs_per_link(
-            n, costs, renewable_carriers, length_factor
+            n,
+            costs,
+            renewable_carriers,
+            length_factor,
+            cost_key=cost_key,
         )
 
     if buses is None:
@@ -209,33 +216,45 @@ def _compute_connection_costs_to_bus(
     return connection_costs_to_bus
 
 
-def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
+def _adjust_costs_using_connection_costs(
+    n, connection_costs_to_bus, connection_overnight_cost_to_bus
+):
     connection_costs = {}
+    connection_overnight_cost = {}
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
-        costs = (
+        connection_capital_cost = (
             n.generators.loc[tech_b, "bus"]
             .map(connection_costs_to_bus[tech])
             .loc[lambda s: s > 0]
         )
-        if not costs.empty:
-            n.generators.loc[costs.index, "capital_cost"] += costs
+        connection_overnight_cost = (
+            n.generators.loc[tech_b, "bus"]
+            .map(connection_overnight_cost_to_bus[tech])
+            .loc[lambda s: s > 0]
+        )
+        if not connection_capital_cost.empty:
+            n.generators.loc[connection_capital_cost.index, "capital_cost"] += connection_capital_cost
+            n.generators.loc[connection_overnight_cost.index, "connection_overnight_cost"] += connection_overnight_cost
+
             logger.info(
                 "Displacing {} generator(s) and adding connection costs to capital_costs: {} ".format(
                     tech,
                     ", ".join(
                         "{:.0f} Eur/MW/a for `{}`".format(d, b)
-                        for b, d in costs.items()
+                        for b, d in connection_capital_cost.items()
                     ),
                 )
             )
-            connection_costs[tech] = costs
+            connection_costs[tech] = connection_capital_cost
+            connection_overnight_cost[tech] = connection_overnight_cost
 
 
 def _aggregate_and_move_components(
     n,
     busmap,
     connection_costs_to_bus,
+    connection_overnight_cost_to_bus,
     aggregate_one_ports={"Load", "StorageUnit"},
     aggregation_strategies=dict(),
     exclude_carriers=None,
@@ -248,7 +267,9 @@ def _aggregate_and_move_components(
             if not df.empty:
                 import_series_from_dataframe(n, df, c, attr)
 
-    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus)
+    _adjust_costs_using_connection_costs(
+        n, connection_costs_to_bus, connection_overnight_cost_to_bus
+    )
 
     generator_strategies = aggregation_strategies["generators"]
 
@@ -335,8 +356,18 @@ def simplify_links(
     connection_costs_per_link = _prepare_connection_costs_per_link(
         n, costs, renewables, length_factor
     )
+    connection_overnight_cost_per_link = _prepare_connection_costs_per_link(
+        n,
+        costs,
+        renewables,
+        length_factor,
+        cost_key="investment",
+    )
     connection_costs_to_bus = pd.DataFrame(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
+    )
+    connection_overnight_cost_to_bus = pd.DataFrame(
+        0.0, index=n.buses.index, columns=list(connection_overnight_cost_per_link)
     )
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
@@ -359,6 +390,18 @@ def simplify_links(
                 length_factor,
                 connection_costs_per_link,
                 buses,
+            )
+            connection_overnight_cost_to_bus.loc[
+                buses
+            ] += _compute_connection_costs_to_bus(
+                n,
+                busmap,
+                costs,
+                renewables,
+                length_factor,
+                connection_overnight_cost_per_link,
+                buses,
+                cost_key="investment",
             )
 
             all_links = [i for _, i in sum(links, [])]
@@ -405,6 +448,7 @@ def simplify_links(
         n,
         busmap,
         connection_costs_to_bus,
+        connection_overnight_cost_to_bus,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=exclude_carriers,
     )
@@ -428,11 +472,20 @@ def remove_stubs(
     connection_costs_to_bus = _compute_connection_costs_to_bus(
         n, busmap, costs, renewable_carriers, length_factor
     )
+    connection_overnight_cost_to_bus = _compute_connection_costs_to_bus(
+        n,
+        busmap,
+        costs,
+        renewable_carriers,
+        length_factor,
+        cost_key="investment",
+    )
 
     _aggregate_and_move_components(
         n,
         busmap,
         connection_costs_to_bus,
+        connection_overnight_cost_to_bus,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=simplify_network["exclude_carriers"],
     )

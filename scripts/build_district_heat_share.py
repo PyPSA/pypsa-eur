@@ -4,6 +4,29 @@
 # SPDX-License-Identifier: MIT
 """
 Build district heat shares at each node, depending on investment year.
+
+Inputs:
+-------
+- `resources/<run_name>/pop_layout.csv`: Population layout for each node: Total, urban and rural population.
+- `resources/<run_name>/district_heat_share.csv`: Historical district heat share at each country. Output of `scripts/build_energy_totals.py`.
+
+Outputs:
+--------
+- `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
+
+Relevant settings:
+------------------
+.. code:: yaml
+    sector:
+        district_heating:
+    energy:
+        energy_totals_year:
+
+Notes:
+------
+- The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.
+- The `sector.district_heating.potential` setting defines the max. district heating share.
+- The max. share of district heating is increased by a progress factor, depending on the investment year (See `sector.district_heating.progress` setting).
 """
 
 import logging
@@ -63,7 +86,7 @@ if __name__ == "__main__":
     urban_fraction = pd.concat([urban_fraction, dist_fraction_node], axis=1).max(axis=1)
 
     # difference of max potential and today's share of district heating
-    diff = (urban_fraction * central_fraction) - dist_fraction_node
+    diff = ((urban_fraction * central_fraction) - dist_fraction_node).clip(lower=0)
     progress = get(
         snakemake.config["sector"]["district_heating"]["progress"], investment_year
     )

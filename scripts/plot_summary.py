@@ -364,7 +364,7 @@ def plot_balances():
             frameon=False,
         )
 
-        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches="tight")
+        fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
 
 
 def historical_emissions(countries):
@@ -574,7 +574,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     )
 
     plt.grid(axis="y")
-    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
+    path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
     plt.savefig(path, bbox_inches="tight")
 
 
