@@ -23,6 +23,9 @@ from _helpers import (
 )
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from scripts.enums.HeatSystem import HeatSystem
+from scripts.enums.HeatSystemType import HeatSystemType
+from scripts.enums.HeatSector import HeatSector
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -443,23 +446,23 @@ def add_heating_capacities_installed_before_baseyear(
     logger.debug(f"Adding heating capacities installed before {baseyear}")
 
     for heat_system in existing_heating.columns.get_level_values(0).unique():
-        system_type = "central" if heat_system == "urban central" else "decentral"
+        heat_system = HeatSystem(heat_system)
 
         nodes = pd.Index(
             n.buses.location[n.buses.index.str.contains(f"{heat_system} heat")]
         )
 
-        if (system_type != "central") and options["electricity_distribution_grid"]:
+        if (not heat_system.is_central) and options["electricity_distribution_grid"]:
             nodes_elec = nodes + " low voltage"
         else:
             nodes_elec = nodes
 
         # Add heat pumps
-        heat_source = snakemake.params.heat_pump_sources[system_type]
-        costs_name = f"{system_type} {heat_source}-sourced heat pump"
+        heat_source = snakemake.params.heat_pump_sources[heat_system.system_type.value]
+        costs_name = f"{heat_system.system_type} {heat_source}-sourced heat pump"
 
         efficiency = (
-            cop.sel(heat_system=system_type, heat_source=heat_source, name=nodes)
+            cop.sel(heat_system=heat_system.system_type.value, heat_source=heat_source, name=nodes)
             .to_pandas()
             .reindex(index=n.snapshots)
             if options["time_dep_hp_cop"]
@@ -496,13 +499,13 @@ def add_heating_capacities_installed_before_baseyear(
                 nodes,
                 suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
                 bus0=nodes_elec,
-                bus1=nodes + " " + heat_system + " heat",
+                bus1=nodes + " " + heat_system.value + " heat",
                 carrier=f"{heat_system} {heat_source} heat pump",
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"],
                 p_nom=existing_heating.loc[
-                    nodes, (heat_system, f"{heat_source} heat pump")
+                    nodes, (heat_system.value, f"{heat_source} heat pump")
                 ]
                 * ratio
                 / costs.at[costs_name, "efficiency"],
@@ -516,20 +519,20 @@ def add_heating_capacities_installed_before_baseyear(
                 nodes,
                 suffix=f" {heat_system} resistive heater-{grouping_year}",
                 bus0=nodes_elec,
-                bus1=nodes + " " + heat_system + " heat",
+                bus1=nodes + " " + heat_system.value + " heat",
                 carrier=heat_system + " resistive heater",
-                efficiency=costs.at[f"{system_type} resistive heater", "efficiency"],
+                efficiency=costs.at[f"{heat_system.system_type} resistive heater", "efficiency"],
                 capital_cost=(
-                    costs.at[f"{system_type} resistive heater", "efficiency"]
-                    * costs.at[f"{system_type} resistive heater", "fixed"]
+                    costs.at[f"{heat_system.system_type} resistive heater", "efficiency"]
+                    * costs.at[f"{heat_system.system_type} resistive heater", "fixed"]
                 ),
                 p_nom=(
-                    existing_heating.loc[nodes, (heat_system, "resistive heater")]
+                    existing_heating.loc[nodes, (heat_system.value, "resistive heater")]
                     * ratio
-                    / costs.at[f"{system_type} resistive heater", "efficiency"]
+                    / costs.at[f"{heat_system.system_type} resistive heater", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{system_type} resistive heater", "lifetime"],
+                lifetime=costs.at[f"{heat_system.system_type} resistive heater", "lifetime"],
             )
 
             n.madd(
@@ -540,19 +543,19 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system + " gas boiler",
-                efficiency=costs.at[f"{system_type} gas boiler", "efficiency"],
+                efficiency=costs.at[f"{heat_system.system_type} gas boiler", "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
-                    costs.at[f"{system_type} gas boiler", "efficiency"]
-                    * costs.at[f"{system_type} gas boiler", "fixed"]
+                    costs.at[f"{heat_system.system_type} gas boiler", "efficiency"]
+                    * costs.at[f"{heat_system.system_type} gas boiler", "fixed"]
                 ),
                 p_nom=(
                     existing_heating.loc[nodes, (heat_system, "gas boiler")]
                     * ratio
-                    / costs.at[f"{system_type} gas boiler", "efficiency"]
+                    / costs.at[f"{heat_system.system_type} gas boiler", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{system_type} gas boiler", "lifetime"],
+                lifetime=costs.at[f"{heat_system.system_type} gas boiler", "lifetime"],
             )
 
             n.madd(
@@ -573,7 +576,7 @@ def add_heating_capacities_installed_before_baseyear(
                     / costs.at["decentral oil boiler", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{system_type} gas boiler", "lifetime"],
+                lifetime=costs.at[f"{heat_system.system_type} gas boiler", "lifetime"],
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
