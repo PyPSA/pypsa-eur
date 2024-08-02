@@ -137,9 +137,7 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
 def add_dynamic_emission_prices(n):
     co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0, parse_dates=True)
     co2_price = co2_price[~co2_price.index.duplicated()]
-    co2_price = (
-        co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
-    )
+    co2_price = co2_price.reindex(n.snapshots).ffill().bfill()
 
     emissions = (
         n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency

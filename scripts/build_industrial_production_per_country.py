@@ -301,7 +301,8 @@ def separate_basic_chemicals(demand, year):
     demand["Basic chemicals"] -= demand["Ammonia"]
 
     # EE, HR and LT got negative demand through subtraction - poor data
-    demand["Basic chemicals"].clip(lower=0.0, inplace=True)
+    col = "Basic chemicals"
+    demand[col] = demand[col].clip(lower=0.0)
 
     # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
     distribution_key = (

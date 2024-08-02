@@ -48,7 +48,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    url = "https://zenodo.org/records/10973944/files/bundle.tar.xz"
+    url = "https://zenodo.org/records/12760663/files/bundle.tar.xz"
 
     tarball_fn = Path(f"{rootpath}/bundle.tar.xz")
     to_fn = Path(rootpath) / Path(snakemake.output[0]).parent.parent

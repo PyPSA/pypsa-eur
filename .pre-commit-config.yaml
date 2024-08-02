@@ -67,7 +67,7 @@ repos:
 
   # Do YAML formatting (before the linter checks it for misses)
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.13.0
+  rev: v2.14.0
   hooks:
   - id: pretty-format-yaml
     args: [--autofix, --indent, "2", --preserve-quotes]
@@ -87,6 +87,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v3.1.0a1
+  rev: v4.0.3
   hooks:
   - id: reuse

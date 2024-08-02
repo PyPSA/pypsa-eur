@@ -103,7 +103,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_cutout", cutout="europe-2013-era5")
+        snakemake = mock_snakemake("build_cutout", cutout="europe-2013-sarah3-era5")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
