@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config
 import sys; sys.path.append("..")
-from scripts._entities import HeatSystemType
+from scripts.enums.HeatSystemType import HeatSystemType
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 

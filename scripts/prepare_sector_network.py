@@ -22,7 +22,9 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from _entities import HeatSystem, HeatSector
+from scripts.enums.HeatSystem import HeatSystem
+from scripts.enums.HeatSystemType import HeatSystemType
+from scripts.enums.HeatSector import HeatSector
 from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
 from build_energy_totals import (
     build_co2_totals,
