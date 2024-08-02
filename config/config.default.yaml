@@ -597,6 +597,7 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  electrobiofuels: false
   biosng: false
   limit_max_growth:
     enable: false
@@ -1029,6 +1030,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'
