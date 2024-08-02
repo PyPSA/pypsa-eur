@@ -3040,36 +3040,7 @@ def add_industry(n, costs):
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            spatial.oil.nodes,
-            suffix=" Store",
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
+    add_carrier_buses(n, "oil")
 
     if shipping_oil_share:
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
