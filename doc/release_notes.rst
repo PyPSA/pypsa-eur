@@ -10,7 +10,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Add option to produce electrobiofuels from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
+* Add option to import solid biomass
+
+* Add option to produce electrobiofuels (flag ``electrobiofuels`) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
 
 * Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
 

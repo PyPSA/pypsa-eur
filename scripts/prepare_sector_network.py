@@ -2291,6 +2291,54 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
+    if options["solid_biomass_import"].get("enable", False):
+        biomass_import_price = options["solid_biomass_import"]["price"]
+        # convert TWh in MWh
+        biomass_import_max_amount = options["solid_biomass_import"]["max_amount"] * 1e6
+        biomass_import_upstream_emissions = options["solid_biomass_import"][
+            "upstream_emissions_factor"
+        ]
+
+        logger.info(
+            "Adding biomass import with cost %.2f EUR/MWh, a limit of %.2f TWh, and embedded emissions of %.2f%%",
+            biomass_import_price,
+            options["solid_biomass_import"]["max_amount"],
+            biomass_import_upstream_emissions * 100,
+        )
+
+        n.add("Carrier", "solid biomass import")
+
+        n.madd(
+            "Bus",
+            ["EU solid biomass import"],
+            location="EU",
+            carrier="solid biomass import",
+        )
+
+        n.madd(
+            "Store",
+            ["solid biomass import"],
+            bus=["EU solid biomass import"],
+            carrier="solid biomass import",
+            e_nom=biomass_import_max_amount,
+            marginal_cost=biomass_import_price,
+            e_initial=biomass_import_max_amount,
+        )
+
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" solid biomass import",
+            bus0=["EU solid biomass import"],
+            bus1=spatial.biomass.nodes,
+            bus2="co2 atmosphere",
+            carrier="solid biomass import",
+            efficiency=1.0,
+            efficiency2=biomass_import_upstream_emissions
+            * costs.at["solid biomass", "CO2 intensity"],
+            p_nom_extendable=True,
+        )
+
     n.madd(
         "Link",
         spatial.gas.biogas_to_gas,
