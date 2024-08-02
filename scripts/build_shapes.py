@@ -133,9 +133,9 @@ def eez(eez, country_list):
     df = gpd.read_file(eez)
     iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")
     df = df.query("ISO_TER1 in @iso3_list and POL_TYPE == '200NM'").copy()
-    df['name'] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
+    df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
-        lambda s: _simplify_polys(s, tolerance=0.01, filterremote=False)
+        lambda s: _simplify_polys(s, filterremote=False)
     )
     s = s.to_frame("geometry").set_crs(df.crs)
     s.index.name = "name"
@@ -249,9 +249,7 @@ if __name__ == "__main__":
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
-    offshore_shapes = eez(
-        snakemake.input.eez, snakemake.params.countries
-    )
+    offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     europe_shape = gpd.GeoDataFrame(
