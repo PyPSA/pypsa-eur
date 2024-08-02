@@ -200,7 +200,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
-    
+
     return spatial
 
 
@@ -2517,8 +2517,11 @@ def add_biomass(n, costs):
     if options["electrobiofuels"]:
 
         efuel_scale_factor = costs.at["BtL", "C stored"]
-        name = (pd.Index(spatial.biomass.nodes) + " " 
-                + pd.Index(spatial.h2.nodes.str.replace(" H2", "")))
+        name = (
+            pd.Index(spatial.biomass.nodes)
+            + " "
+            + pd.Index(spatial.h2.nodes.str.replace(" H2", ""))
+        )
         n.madd(
             "Link",
             name,
