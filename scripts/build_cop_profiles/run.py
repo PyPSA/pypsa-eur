@@ -7,23 +7,35 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config
+import sys; sys.path.append("..")
+from scripts._entities import HeatSystemType
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
 
 def get_cop(
-    heat_system_category: str,
+    heat_system_type: str,
     heat_source: str,
     source_inlet_temperature_celsius: xr.DataArray,
 ) -> xr.DataArray:
-    if heat_system_category in ["urban decentral", "rural"]:
-        return DecentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
-            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-            source_type=heat_source,
-        ).approximate_cop()
+    """
+    Calculate the coefficient of performance (COP) for a heating system.
 
-    elif heat_system_category == "urban central":
+    Parameters
+    ----------
+    heat_system_type : str
+        The type of heating system.
+    heat_source : str
+        The heat source used in the heating system.
+    source_inlet_temperature_celsius : xr.DataArray
+        The inlet temperature of the heat source in Celsius.
+
+    Returns
+    -------
+    xr.DataArray
+        The calculated coefficient of performance (COP) for the heating system.
+    """
+    if HeatSystemType(heat_system_type).is_central:
         return CentralHeatingCopApproximator(
             forward_temperature_celsius=snakemake.params.forward_temperature_central_heating,
             return_temperature_celsius=snakemake.params.return_temperature_central_heating,
@@ -31,10 +43,14 @@ def get_cop(
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
         ).approximate_cop()
+
     else:
-        raise ValueError(
-            f"Invalid heat system type '{heat_system_category}'. Must be one of ['urban decentral', 'urban central', 'rural]"
-        )
+        return DecentralHeatingCopApproximator(
+            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
+            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            source_type=heat_source,
+        ).approximate_cop()
+
 
 
 if __name__ == "__main__":
@@ -50,14 +66,14 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     cop_all_system_types = []
-    for heat_system_category, heat_sources in snakemake.params.heat_pump_sources.items():
+    for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
             source_inlet_temperature_celsius = xr.open_dataarray(
                 snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
             )
             cop_da = get_cop(
-                heat_system_category=heat_system_category,
+                heat_system_type=heat_system_type,
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             )
