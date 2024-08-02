@@ -2358,7 +2358,8 @@ def add_biomass(n, costs):
             * costs.at["solid biomass", "CO2 intensity"],
             p_nom_extendable=True,
         )
-
+    
+    e_max_pu = pd.Series([1] * (len(snapshots) - 1) + [0], index=n.snapshots)
     n.madd(
         "Store",
         spatial.msw.nodes,
@@ -2366,6 +2367,7 @@ def add_biomass(n, costs):
         carrier="municipal solid waste",
         e_nom=msw_biomass_potentials_spatial,
         marginal_cost=0,  # costs.at["municipal solid waste", "fuel"],
+        e_max_pu=e_max_pu,
         e_initial=msw_biomass_potentials_spatial,
     )
 
