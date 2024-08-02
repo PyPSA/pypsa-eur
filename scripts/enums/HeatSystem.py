@@ -5,8 +5,9 @@
 
 from enum import Enum
 
-from .HeatSystemType import HeatSystemType
-from .HeatSector import HeatSector
+from scripts.enums.HeatSector import HeatSector
+from scripts.enums.HeatSystemType import HeatSystemType
+
 
 class HeatSystem(Enum):
     """
@@ -55,7 +56,7 @@ class HeatSystem(Enum):
 
     def __init__(self, *args):
         super().__init__(*args)
-    
+
     def __str__(self) -> str:
         """
         Returns the string representation of the heat system.
@@ -81,7 +82,7 @@ class HeatSystem(Enum):
             return "central"
         else:
             return "decentral"
-    
+
     @property
     def system_type(self) -> HeatSystemType:
         """
@@ -99,7 +100,10 @@ class HeatSystem(Enum):
         """
         if self == HeatSystem.URBAN_CENTRAL:
             return HeatSystemType.URBAN_CENTRAL
-        elif self == HeatSystem.RESIDENTIAL_URBAN_DECENTRAL or self == HeatSystem.SERVICES_URBAN_DECENTRAL:
+        elif (
+            self == HeatSystem.RESIDENTIAL_URBAN_DECENTRAL
+            or self == HeatSystem.SERVICES_URBAN_DECENTRAL
+        ):
             return HeatSystemType.URBAN_DECENTRAL
         elif self == HeatSystem.RESIDENTIAL_RURAL or self == HeatSystem.SERVICES_RURAL:
             return HeatSystemType.RURAL
@@ -127,7 +131,7 @@ class HeatSystem(Enum):
         ):
             return HeatSector.SERVICES
         else:
-            'tot'
+            "tot"
 
     @property
     def is_rural(self) -> bool:
@@ -143,7 +147,7 @@ class HeatSystem(Enum):
             return True
         else:
             return False
-    
+
     @property
     def is_urban_decentral(self) -> bool:
         """
@@ -154,7 +158,10 @@ class HeatSystem(Enum):
         bool
             True if the heat system is for urban decentralized areas, False otherwise.
         """
-        if self == HeatSystem.RESIDENTIAL_URBAN_DECENTRAL or self == HeatSystem.SERVICES_URBAN_DECENTRAL:
+        if (
+            self == HeatSystem.RESIDENTIAL_URBAN_DECENTRAL
+            or self == HeatSystem.SERVICES_URBAN_DECENTRAL
+        ):
             return True
         else:
             return False
@@ -166,12 +173,14 @@ class HeatSystem(Enum):
 
         Returns
         -------
-        bool True if the heat system is for urban areas, False otherwise.  """
+        bool True if the heat system is for urban areas, False otherwise.
+        """
         return not self.is_rural
-    
+
     def heat_demand_weighting(self, urban_fraction=None, dist_fraction=None) -> float:
         """
-        Calculates the heat demand weighting based on urban fraction and distribution fraction.
+        Calculates the heat demand weighting based on urban fraction and
+        distribution fraction.
 
         Parameters
         ----------
@@ -198,7 +207,7 @@ class HeatSystem(Enum):
             return urban_fraction - dist_fraction
         else:
             raise RuntimeError(f"Invalid heat system: {self}")
-        
+
     def heat_pump_costs_name(self, heat_source: str) -> str:
         """
         Generates the name for the heat pump costs based on the heat source.
@@ -214,5 +223,3 @@ class HeatSystem(Enum):
             The name for the heat pump costs.
         """
         return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
-
-

@@ -5,6 +5,7 @@
 
 from enum import Enum
 
+
 class HeatSystemType(Enum):
     """
     Enumeration representing different types of heat systems.
@@ -22,7 +23,7 @@ class HeatSystemType(Enum):
             str: The string representation of the heat system type.
         """
         return self.value
-    
+
     @property
     def is_central(self) -> bool:
         """
@@ -32,4 +33,3 @@ class HeatSystemType(Enum):
             bool: True if the heat system type is central, False otherwise.
         """
         return self == HeatSystemType.URBAN_CENTRAL
-

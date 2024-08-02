@@ -7,10 +7,14 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config
-import sys; sys.path.append("..")
-from scripts.enums.HeatSystemType import HeatSystemType
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
+
+from scripts.enums.HeatSystemType import HeatSystemType
+
+import sys
+
+sys.path.append("..")
 
 
 def get_cop(
@@ -50,7 +54,6 @@ def get_cop(
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=heat_source,
         ).approximate_cop()
-
 
 
 if __name__ == "__main__":
