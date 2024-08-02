@@ -279,7 +279,10 @@ def add_unsustainable_potentials(df):
             countries=snakemake.config["countries"],
             input_eurostat=snakemake.input.eurostat,
         )
-        .xs(max(min(latest_year, snakemake.wildcards.planning_horizons), 1990), level=1)
+        .xs(
+            max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
+            level=1,
+        )
         .xs("Primary production", level=2)
         .droplevel([1, 2, 3])
     )
