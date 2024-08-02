@@ -19,6 +19,45 @@ logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
 
 
+def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+    """
+    Calculate the unsustainable biomass potential for a given resource type or
+    regex.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    df_unsustainable : pd.DataFrame
+        The dataframe with unsustainable biomass potentials.
+    share_unsus : float
+        The share of unsustainable biomass potential retained.
+    resource_type : str or regex
+        The resource type to calculate the unsustainable potential for.
+
+    Returns
+    -------
+    pd.Series
+        The unsustainable biomass potential for the given resource type or regex.
+    """
+
+    if "|" in resource_type:
+        resource_potential = df_unsustainable.filter(regex=resource_type).sum(axis=1)
+    else:
+        resource_potential = df_unsustainable[resource_type]
+
+    return (
+        df.apply(
+            lambda c: c.sum()
+            / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
+            * resource_potential.loc[c.name[:2]],
+            axis=1,
+        )
+        .mul(share_unsus)
+        .clip(lower=0)
+    )
+
+
 def build_nuts_population_data(year=2013):
     pop = pd.read_csv(
         snakemake.input.nuts3_population,
@@ -238,10 +277,9 @@ def add_unsustainable_potentials(df):
     df_unsustainable = (
         build_eurostat(
             countries=snakemake.config["countries"],
-            year=max(min(latest_year, investment_year), 1990),
             input_eurostat=snakemake.input.eurostat,
-            idees_rename=idees_rename,
         )
+        .xs(max(min(latest_year, snakemake.wildcards.planning_horizons), 1990), level=1)
         .xs("Primary production", level=2)
         .droplevel([1, 2, 3])
     )
@@ -271,40 +309,23 @@ def add_unsustainable_potentials(df):
 
     df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
 
-    df_wo_ch["unsustainable solid biomass"] = (
-        (
-            df_wo_ch.apply(
-                lambda c: c.sum()
-                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-                * df_unsustainable.loc[c.name[:2], "Primary solid biofuels"],
-                axis=1,
-            )
-        )
-        .mul(share_unsus)
-        .clip(lower=0)
+    # Calculate unsustainable solid biomass
+    df_wo_ch["unsustainable solid biomass"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Primary solid biofuels"
     )
 
-    df_wo_ch["unsustainable biogas"] = (
-        (
-            df_wo_ch.apply(
-                lambda c: c.sum()
-                / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-                * df_unsustainable.loc[c.name[:2], "Biogases"],
-                axis=1,
-            )
-        )
-        .mul(share_unsus)
-        .clip(lower=0)
+    # Calculate unsustainable biogas
+    df_wo_ch["unsustainable biogas"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Biogases"
     )
 
-    df_wo_ch["unsustainable bioliquids"] = df_wo_ch.apply(
-        lambda c: c.sum()
-        / df_wo_ch.loc[df_wo_ch.index.str[:2] == c.name[:2]].sum().sum()
-        * df_unsustainable.filter(regex="gasoline|diesel|kerosene|liquid")
-        .sum(axis=1)
-        .loc[c.name[:2]],
-        axis=1,
-    ).mul(share_unsus)
+    # Calculate unsustainable bioliquids
+    df_wo_ch["unsustainable bioliquids"] = _calc_unsustainable_potential(
+        df_wo_ch,
+        df_unsustainable,
+        share_unsus,
+        resource_type="gasoline|diesel|kerosene|liquid",
+    )
 
     share_sus = params.get("share_sustainable_potential_available").get(investment_year)
     df *= share_sus
@@ -316,16 +337,14 @@ def add_unsustainable_potentials(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        import os
 
         from _helpers import mock_snakemake
 
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
             clusters="37",
-            planning_horizons=2030,
+            planning_horizons=2020,
         )
 
     configure_logging(snakemake)
@@ -375,9 +394,9 @@ if __name__ == "__main__":
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.T.groupby(grouper).sum().T
 
+    df = add_unsustainable_potentials(df)
+
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
-
-    df = add_unsustainable_potentials(df)
 
     df.to_csv(snakemake.output.biomass_potentials)

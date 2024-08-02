@@ -2312,6 +2312,10 @@ def add_biomass(n, costs):
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
 
+        # Create timeseries to force usage of unsustainable potentials
+        e_max_pu = pd.Series(1, index=n.snapshots)
+        e_max_pu.iloc[-1] = 0
+
         n.madd(
             "Store",
             spatial.gas.biogas,
@@ -2322,6 +2326,9 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["biogas", "fuel"],
             e_initial=unsustainable_biogas_potentials_spatial,
             e_nom_extendable=False,
+            e_max_pu=e_max_pu.rename(
+                spatial.gas.biogas[0] + " unsustainable"
+            ).to_frame(),
         )
 
         n.madd(
@@ -2334,6 +2341,9 @@ def add_biomass(n, costs):
             marginal_cost=14,  # mean of MINBIOWOO costs in ENS_BAU 2030
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
+            e_max_pu=e_max_pu.rename(
+                spatial.biomass.nodes[0] + " unsustainable"
+            ).to_frame(),
         )
 
         n.madd(
@@ -2351,9 +2361,12 @@ def add_biomass(n, costs):
             bus=spatial.biomass.bioliquids,
             carrier="unsustainable bioliquids",
             e_nom=unsustainable_liquid_biofuel_potentials_spatial,
-            marginal_cost=costs.at["oil", "fuel"],
+            marginal_cost=81.36,  # mean of MINBIOCRP11 costs in ENS_BAU 2030
             e_initial=unsustainable_liquid_biofuel_potentials_spatial,
             e_nom_extendable=False,
+            e_max_pu=e_max_pu.rename(
+                spatial.biomass.bioliquids[0] + " unsustainable"
+            ).to_frame(),
         )
 
         n.madd(
@@ -4023,11 +4036,9 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        import os
 
         from _helpers import mock_snakemake
 
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         snakemake = mock_snakemake(
             "prepare_sector_network",
             # configfiles="test/config.overnight.yaml",
