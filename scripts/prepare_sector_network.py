@@ -2358,7 +2358,7 @@ def add_biomass(n, costs):
             * costs.at["solid biomass", "CO2 intensity"],
             p_nom_extendable=True,
         )
-    
+
     e_max_pu = pd.Series([1] * (len(snapshots) - 1) + [0], index=n.snapshots)
     n.madd(
         "Store",
