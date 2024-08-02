@@ -218,11 +218,13 @@ if config["enable"]["retrieve"]:
     # Use point-of-view (POV) variant of Germany so that Crimea is included.
     rule retrieve_naturalearth_countries:
         input:
-            storage("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip")
+            storage(
+                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+            ),
         params:
             zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
         output:
-            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp"
+            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
         run:
             move(input[0], params["zip"])
             output_folder = Path(output["countries"]).parent
