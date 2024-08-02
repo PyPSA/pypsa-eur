@@ -577,12 +577,41 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
+    generator_nodes = nodes
+    generator_carrier = carrier
+
+    if carrier in cf_industry["fuel_refining"]:
+
+        n.madd(
+            "Bus",
+            nodes + " primary",
+            location=location,
+            carrier=carrier + " primary",
+            unit=unit,
+        )
+
+        n.madd(
+            "Link",
+            nodes + " refining",
+            bus0=nodes + " primary",
+            bus1=nodes,
+            bus2="co2 atmosphere",
+            location=location,
+            carrier=carrier + " refining",
+            p_nom=1e6,
+            efficiency=1 - (cf_industry["fuel_refining"][carrier]["emissions"] / costs.at[carrier, "CO2 intensity"]),
+            efficiency2=cf_industry["fuel_refining"][carrier]["emissions"],
+        )
+
+        generator_nodes = nodes + " primary"
+        generator_carrier = carrier + " primary"
+
     n.madd(
         "Generator",
-        nodes,
-        bus=nodes,
+        generator_nodes,
+        bus=generator_nodes,
         p_nom_extendable=True,
-        carrier=carrier,
+        carrier=generator_carrier,
         marginal_cost=costs.at[carrier, "fuel"],
     )
 
