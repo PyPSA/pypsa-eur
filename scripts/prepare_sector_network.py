@@ -200,7 +200,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
-
+    
     return spatial
 
 
@@ -2514,13 +2514,14 @@ def add_biomass(n, costs):
     # Electrobiofuels (BtL with hydrogen addition to make more use of biogenic carbon).
     # Combination of efuels and biomass to liquid, both based on Fischer-Tropsch.
     # Experimental version - use with caution
-    if options["electrobiofuels"] and options.get(
-        "biomass_spatial", options["biomass_transport"]
-    ):
+    if options["electrobiofuels"]:
+
         efuel_scale_factor = costs.at["BtL", "C stored"]
+        name = (pd.Index(spatial.biomass.nodes) + " " 
+                + pd.Index(spatial.h2.nodes.str.replace(" H2", "")))
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            name,
             suffix=" electrobiofuels",
             bus0=spatial.biomass.nodes,
             bus1=spatial.oil.nodes,
