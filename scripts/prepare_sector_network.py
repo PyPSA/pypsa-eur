@@ -542,14 +542,17 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    n.madd(
-        "Generator",
-        nodes,
-        bus=nodes,
-        p_nom_extendable=True,
-        carrier=carrier,
-        marginal_cost=costs.at[carrier, "fuel"],
-    )
+    fossils = ["coal", "gas", "oil", "lignite"]
+    if options.get("fossil_fuels", True) and carrier in fossils:
+
+        n.madd(
+            "Generator",
+            nodes,
+            bus=nodes,
+            p_nom_extendable=True,
+            carrier=carrier,
+            marginal_cost=costs.at[carrier, "fuel"],
+        )
 
 
 # TODO: PyPSA-Eur merge issue
@@ -2898,7 +2901,7 @@ def add_industry(n, costs):
             carrier="oil",
         )
 
-    if "oil" not in n.generators.carrier.unique():
+    if options.get("fossil_fuels", True) and "oil" not in n.generators.carrier.unique():
         n.madd(
             "Generator",
             spatial.oil.nodes,

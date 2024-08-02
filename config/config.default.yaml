@@ -397,6 +397,7 @@ sector:
   biomass: true
   industry: true
   agriculture: true
+  fossil_fuels: true
   district_heating:
     potential: 0.6
     progress:
