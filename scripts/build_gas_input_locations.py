@@ -201,7 +201,7 @@ def assign_reference_import_sites(gas_input_locations, import_sites, europe_shap
             gas_input_locations.query("type == @kind"), partition, how="left"
         )
         gas_input_locations.loc[gas_input_locations["type"] == kind, "port"] = match[
-            "index_right"
+            "name"
         ]
 
     return gas_input_locations
@@ -214,8 +214,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_gas_input_locations",
             simpl="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="37",
+            configfiles="config/scenarios.yaml",
+            run="no_import_he",
         )
 
     configure_logging(snakemake)
