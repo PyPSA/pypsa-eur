@@ -234,8 +234,12 @@ def _adjust_costs_using_connection_costs(
             .loc[lambda s: s > 0]
         )
         if not connection_capital_cost.empty:
-            n.generators.loc[connection_capital_cost.index, "capital_cost"] += connection_capital_cost
-            n.generators.loc[connection_overnight_cost.index, "connection_overnight_cost"] += connection_overnight_cost
+            n.generators.loc[
+                connection_capital_cost.index, "capital_cost"
+            ] += connection_capital_cost
+            n.generators.loc[
+                connection_overnight_cost.index, "connection_overnight_cost"
+            ] += connection_overnight_cost
 
             logger.info(
                 "Displacing {} generator(s) and adding connection costs to capital_costs: {} ".format(
