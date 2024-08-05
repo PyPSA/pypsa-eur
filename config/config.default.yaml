@@ -1183,8 +1183,8 @@ plotting:
     Methanol steam reforming: '#FFBF00'
     Methanol steam reforming CC: '#A2EA8A'
     methanolisation: '#00FFBF'
-    biomass-to-methanol: #EAD28A
-    biomass-to-methanol CC: #EADBAD
+    biomass-to-methanol: '#EAD28A'
+    biomass-to-methanol CC: '#EADBAD'
     allam methanol: '#B98F76'
     CCGT methanol: '#B98F76'
     CCGT methanol CC: '#B98F76'
