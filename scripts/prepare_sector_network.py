@@ -1011,15 +1011,14 @@ def add_methanol_to_kerosene(n, costs):
         * costs.at[tech, "methanol-input"]
     )
 
-    # cost data available at https://www.concawe.eu/wp-content/uploads/Rpt_22-17.pdf table 94
+    capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
     n.madd(
         "Link",
         spatial.methanol.locations,
         suffix=f" {tech}",
         carrier=tech,
-        # capital_cost= ,
-        bus0=spatial.methanol.nodes,
+        capital_cost=capital_cost,
         bus1=spatial.oil.kerosene,
         bus2=spatial.h2.nodes,
         efficiency=costs.at[tech, "methanol-input"],
