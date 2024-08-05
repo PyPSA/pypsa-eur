@@ -453,12 +453,16 @@ def add_heating_capacities_installed_before_baseyear(
             n.buses.location[n.buses.index.str.contains(f"{heat_system} heat")]
         )
 
-        if (not heat_system == HeatSystem.URBAN_CENTRAL) and options["electricity_distribution_grid"]:
+        if (not heat_system == HeatSystem.URBAN_CENTRAL) and options[
+            "electricity_distribution_grid"
+        ]:
             nodes_elec = nodes + " low voltage"
         else:
             nodes_elec = nodes
 
-            too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
+            too_large_grouping_years = [
+                gy for gy in grouping_years if gy >= int(baseyear)
+            ]
             if too_large_grouping_years:
                 logger.warning(
                     f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
@@ -483,11 +487,17 @@ def add_heating_capacities_installed_before_baseyear(
 
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
             # Add heat pumps
-            for heat_source in snakemake.params.heat_pump_sources[heat_system.system_type.value]:
+            for heat_source in snakemake.params.heat_pump_sources[
+                heat_system.system_type.value
+            ]:
                 costs_name = heat_system.heat_pump_costs_name(heat_source)
 
                 efficiency = (
-                    cop.sel(heat_system=heat_system.system_type.value, heat_source=heat_source, name=nodes)
+                    cop.sel(
+                        heat_system=heat_system.system_type.value,
+                        heat_source=heat_source,
+                        name=nodes,
+                    )
                     .to_pandas()
                     .reindex(index=n.snapshots)
                     if options["time_dep_hp_cop"]
@@ -521,7 +531,9 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0=nodes_elec,
                 bus1=nodes + " " + heat_system.value + " heat",
                 carrier=heat_system.value + " resistive heater",
-                efficiency=costs.at[heat_system.resistive_heater_costs_name, "efficiency"],
+                efficiency=costs.at[
+                    heat_system.resistive_heater_costs_name, "efficiency"
+                ],
                 capital_cost=(
                     costs.at[heat_system.resistive_heater_costs_name, "efficiency"]
                     * costs.at[heat_system.resistive_heater_costs_name, "fixed"]
@@ -576,7 +588,9 @@ def add_heating_capacities_installed_before_baseyear(
                     / costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[f"{heat_system.central_or_decentral} gas boiler", "lifetime"],
+                lifetime=costs.at[
+                    f"{heat_system.central_or_decentral} gas boiler", "lifetime"
+                ],
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
