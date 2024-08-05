@@ -7,6 +7,7 @@ rule add_existing_baseyear:
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -19,6 +20,7 @@ rule add_existing_baseyear:
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
         cop_soil_decentral_heating=resources(
             "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
         ),
