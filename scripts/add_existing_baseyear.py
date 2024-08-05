@@ -24,9 +24,9 @@ from _helpers import (
 from add_electricity import sanitize_carriers
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
-from scripts.enums.HeatSector import HeatSector
-from scripts.enums.HeatSystem import HeatSystem
-from scripts.enums.HeatSystemType import HeatSystemType
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system import HeatSystem
+from scripts.definitions.heat_system_type import HeatSystemType
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()

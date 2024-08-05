@@ -37,9 +37,9 @@ from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 
-from scripts.enums.HeatSector import HeatSector
-from scripts.enums.HeatSystem import HeatSystem
-from scripts.enums.HeatSystemType import HeatSystemType
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system import HeatSystem
+from scripts.definitions.heat_system_type import HeatSystemType
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)

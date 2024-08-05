@@ -12,7 +12,7 @@ from _helpers import set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
-from scripts.enums.HeatSystemType import HeatSystemType
+from scripts.definitions.heat_system_type import HeatSystemType
 
 sys.path.append("..")
 
