@@ -1802,7 +1802,7 @@ def build_heat_demand(n):
     return heat_demand
 
 
-def add_heat(n, costs):
+def add_heat(n, costs, cop):
     logger.info("Add heat sector")
 
     sectors = ["residential", "services"]
@@ -1833,7 +1833,6 @@ def add_heat(n, costs):
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    cop = xr.open_dataarray(snakemake.input.cop_profiles)
     for (
         heat_system
     ) in (
@@ -4098,7 +4097,7 @@ if __name__ == "__main__":
         add_land_transport(n, costs)
 
     if options["heating"]:
-        add_heat(n, costs)
+        add_heat(n=n, costs=costs, cop=xr.open_dataarray(snakemake.input.cop_profiles))
 
     if options["biomass"]:
         add_biomass(n, costs)

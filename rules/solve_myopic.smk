@@ -69,6 +69,7 @@ rule add_brownfield:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
@@ -77,18 +78,7 @@ rule add_brownfield:
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs=resources("costs_{planning_horizons}.csv"),
-        cop_soil_decentral_heating=resources(
-            "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_decentral_heating=resources(
-            "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_central_heating=resources(
-            "cop_air_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_soil_central_heating=resources(
-            "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

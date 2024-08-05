@@ -210,7 +210,7 @@ class HeatSystem(Enum):
 
     def heat_pump_costs_name(self, heat_source: str) -> str:
         """
-        Generates the name for the heat pump costs based on the heat source.
+        Generates the name for the heat pump costs based on the heat source and system.
 
         Parameters
         ----------
@@ -223,3 +223,41 @@ class HeatSystem(Enum):
             The name for the heat pump costs.
         """
         return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
+
+    @property
+    def resistive_heater_costs_name(self) -> str:
+        """
+        Generates the name for the resistive heater costs based on the heat system.
+
+        Returns
+        -------
+        str
+            The name for the heater costs.
+        """
+        return f"{self.central_or_decentral} resistive heater"
+
+    @property
+    def gas_boiler_costs_name(self) -> str:
+        """
+        Generates the name for the gas boiler costs based on the heat system.
+
+        Returns
+        -------
+        str
+            The name for the gas boiler costs.
+        """
+        return f"{self.central_or_decentral} gas boiler"
+
+    @property
+    def oil_boiler_costs_name(self) -> str:
+        """
+        Generates the name for the oil boiler costs based on the heat system.
+
+        Returns
+        -------
+        str
+            The name for the oil boiler costs.
+        """
+        return "decentral oil boiler"
+
+
