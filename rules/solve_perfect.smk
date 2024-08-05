@@ -21,18 +21,6 @@ rule add_existing_baseyear:
             )
         ),
         cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_decentral_heating=resources(
-            "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_decentral_heating=resources(
-            "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_central_heating=resources(
-            "cop_air_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_soil_central_heating=resources(
-            "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
