@@ -2605,7 +2605,7 @@ def add_methanol(n, costs):
             carrier="methanol transport",
         )
 
-    if "biomass" in n.buses.carrier.unique():
+    if n.buses.carrier.str.contains("biomass").any():
         if options["biomass_to_methanol"]:
             add_biomass_to_methanol(n, costs)
 
