@@ -2780,12 +2780,11 @@ def add_low_t_industry(n, nodes, industrial_demand, costs, must_run):
             * costs.at["solid biomass", "CO2 intensity"],
             marginal_cost=costs.at["solid biomass boiler steam CC", "VOM"],
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-           * costs.at["biomass CHP capture", "capture_rate"],
+            * costs.at["biomass CHP capture", "capture_rate"],
             efficiency3=costs.at["solid biomass", "CO2 intensity"]
             * (1 - costs.at["biomass CHP capture", "capture_rate"])
             - costs.at["solid biomass", "CO2 intensity"],
             lifetime=costs.at["solid biomass boiler steam CC", "lifetime"],
-           
         )
 
     if options["industry_t"]["low_T"]["methane"]:
@@ -2875,9 +2874,10 @@ def add_low_t_industry(n, nodes, industrial_demand, costs, must_run):
 
 def add_medium_t_industry(n, nodes, industrial_demand, costs, must_run):
     """
-    Add medium temperature heat for industry. Medium and high temperature
-    heat demands are taken from today's industry methane demand and split
-    according to config setting.
+    Add medium temperature heat for industry.
+
+    Medium and high temperature heat demands are taken from today's
+    industry methane demand and split according to config setting.
     """
 
     logger.info("Add medium temperature industry.")
@@ -3013,9 +3013,10 @@ def add_medium_t_industry(n, nodes, industrial_demand, costs, must_run):
 
 def add_high_t_industry(n, nodes, industrial_demand, costs, must_run):
     """
-    Add high temperature heat for industry. Medium and high temperature
-    heat demands are taken from today's industry methane demand and split
-    according to config setting.
+    Add high temperature heat for industry.
+
+    Medium and high temperature heat demands are taken from today's
+    industry methane demand and split according to config setting.
     """
 
     logger.info("Add high temperature industry.")
