@@ -65,10 +65,10 @@ The dataset consists of:
   (alternating current lines at and above 220kV voltage level and all high
   voltage direct current lines) and 3803 substations.
 - The open power plant database
-  [powerplantmatching](https://github.com/FRESNA/powerplantmatching).
+  [powerplantmatching](https://github.com/PyPSA/powerplantmatching).
 - Electrical demand time series from the
   [OPSD project](https://open-power-system-data.org/).
-- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/FRESNA/atlite).
+- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/PyPSA/atlite).
 - Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [atlite library](https://github.com/PyPSA/atlite).
 
 A sector-coupled extension adds demand
