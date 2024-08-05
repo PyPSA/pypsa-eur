@@ -458,7 +458,6 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             nodes_elec = nodes
 
-<<<<<<< HEAD
             too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
             if too_large_grouping_years:
                 logger.warning(
@@ -471,28 +470,6 @@ def add_heating_capacities_installed_before_baseyear(
                     if int(grouping_year) + default_lifetime > int(baseyear)
                     and int(grouping_year) < int(baseyear)
                 ]
-=======
-        # Add heat pumps
-        heat_source = snakemake.params.heat_pump_sources[heat_system.system_type.value]
-        costs_name = f"{heat_system.system_type} {heat_source}-sourced heat pump"
-
-        efficiency = (
-            cop.sel(
-                heat_system=heat_system.system_type.value,
-                heat_source=heat_source,
-                name=nodes,
-            )
-            .to_pandas()
-            .reindex(index=n.snapshots)
-            if options["time_dep_hp_cop"]
-            else costs.at[costs_name, "efficiency"]
-        )
-
-        too_large_grouping_years = [gy for gy in grouping_years if gy >= int(baseyear)]
-        if too_large_grouping_years:
-            logger.warning(
-                f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
->>>>>>> 0259e066e4a5688d002e47ec9b34bc9e45ae437d
             )
 
             assert valid_grouping_years.is_monotonic_increasing
@@ -543,42 +520,19 @@ def add_heating_capacities_installed_before_baseyear(
                 suffix=f" {heat_system} resistive heater-{grouping_year}",
                 bus0=nodes_elec,
                 bus1=nodes + " " + heat_system.value + " heat",
-<<<<<<< HEAD
                 carrier=heat_system.value + " resistive heater",
                 efficiency=costs.at[heat_system.resistive_heater_costs_name, "efficiency"],
                 capital_cost=(
                     costs.at[heat_system.resistive_heater_costs_name, "efficiency"]
                     * costs.at[heat_system.resistive_heater_costs_name, "fixed"]
-=======
-                carrier=heat_system + " resistive heater",
-                efficiency=costs.at[
-                    f"{heat_system.system_type} resistive heater", "efficiency"
-                ],
-                capital_cost=(
-                    costs.at[
-                        f"{heat_system.system_type} resistive heater", "efficiency"
-                    ]
-                    * costs.at[f"{heat_system.system_type} resistive heater", "fixed"]
->>>>>>> 0259e066e4a5688d002e47ec9b34bc9e45ae437d
                 ),
                 p_nom=(
                     existing_heating.loc[nodes, (heat_system.value, "resistive heater")]
                     * ratio
-<<<<<<< HEAD
                     / costs.at[heat_system.resistive_heater_costs_name, "efficiency"]
                 ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
-=======
-                    / costs.at[
-                        f"{heat_system.system_type} resistive heater", "efficiency"
-                    ]
-                ),
-                build_year=int(grouping_year),
-                lifetime=costs.at[
-                    f"{heat_system.system_type} resistive heater", "lifetime"
-                ],
->>>>>>> 0259e066e4a5688d002e47ec9b34bc9e45ae437d
             )
 
             n.madd(
@@ -588,15 +542,8 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=f"{nodes}  {heat_system} heat",
                 bus2="co2 atmosphere",
-<<<<<<< HEAD
                 carrier=heat_system.value + " gas boiler",
                 efficiency=costs.at[heat_system.gas_boiler_costs_name, "efficiency"],
-=======
-                carrier=heat_system + " gas boiler",
-                efficiency=costs.at[
-                    f"{heat_system.system_type} gas boiler", "efficiency"
-                ],
->>>>>>> 0259e066e4a5688d002e47ec9b34bc9e45ae437d
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
                     costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
