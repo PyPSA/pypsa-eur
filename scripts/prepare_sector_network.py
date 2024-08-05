@@ -2266,26 +2266,31 @@ def add_biomass(n, costs):
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
-    
-    
-    if (options["municipal_solid_waste"] and not options["industry"]
-        and cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]):
-        logger.warning("Flag municipal_solid_waste can be only used with industry "
-                       "sector waste to energy."
-                       "Setting municipal_solid_waste=False.")
+
+    if (
+        options["municipal_solid_waste"]
+        and not options["industry"]
+        and cf_industry["waste_to_energy"]
+        or cf_industry["waste_to_energy_cc"]
+    ):
+        logger.warning(
+            "Flag municipal_solid_waste can be only used with industry "
+            "sector waste to energy."
+            "Setting municipal_solid_waste=False."
+        )
         options["municipal_solid_waste"] = False
-    
+
     if options["municipal_solid_waste"]:
-        
+
         n.add("Carrier", "municipal solid waste")
-        
+
         n.madd(
             "Bus",
             spatial.msw.nodes,
             location=spatial.msw.locations,
             carrier="municipal solid waste",
         )
-        
+
         e_max_pu = pd.Series([1] * (len(n.snapshots) - 1) + [0], index=n.snapshots)
         n.madd(
             "Store",
@@ -2297,7 +2302,7 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu,
             e_initial=msw_biomass_potentials_spatial,
         )
-        
+
     n.madd(
         "Bus",
         spatial.gas.biogas,
@@ -2313,7 +2318,6 @@ def add_biomass(n, costs):
         carrier="solid biomass",
         unit="MWh_LHV",
     )
-
 
     n.madd(
         "Store",
@@ -2382,8 +2386,6 @@ def add_biomass(n, costs):
             * costs.at["solid biomass", "CO2 intensity"],
             p_nom_extendable=True,
         )
-    
-    
 
     n.madd(
         "Link",
@@ -2455,7 +2457,7 @@ def add_biomass(n, costs):
             marginal_cost=biomass_transport.costs * biomass_transport.length.values,
             carrier="solid biomass transport",
         )
-        
+
         if options["municipal_solid_waste"]:
             n.madd(
                 "Link",
@@ -2497,7 +2499,7 @@ def add_biomass(n, costs):
             constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
-        
+
         if options["municipal_solid_waste"]:
             # Add municipal solid waste
             n.madd(
