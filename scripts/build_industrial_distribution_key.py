@@ -1,21 +1,52 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
 Build spatial distribution of industries from Hotmaps database.
+
+Inputs
+-------
+
+- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``
+- ``resources/pop_layout_elec_s{simpl}_{clusters}.csv``
+
+Outputs
+-------
+
+- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+
+Description
+-------
+
+This rule uses the `Hotmaps database <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`. After removing entries without valid locations, it assigns each industrial site to a bus region based on its location.
+Then, it calculates the nodal distribution key for each sector based on the emissions of the industrial sites in each region. This leads to a distribution key of 1 if there is only one bus per country and <1 if there are multiple buses per country. The sum over buses of one country is 1.
+
+The following subcategories of industry are considered:
+- Iron and steel
+- Cement
+- Refineries
+- Paper and printing
+- Chemical industry
+- Glass
+- Non-ferrous metals
+- Non-metallic mineral products
+- Other non-classified
+Furthermore, the population distribution is added
+- Population
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import uuid
 from itertools import product
 
+import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from packaging.version import Version, parse
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
+cc = coco.CountryConverter()
 
 
 def locate_missing_industrial_sites(df):
@@ -29,7 +60,7 @@ def locate_missing_industrial_sites(df):
     try:
         from geopy.extra.rate_limiter import RateLimiter
         from geopy.geocoders import Nominatim
-    except:
+    except ImportError:
         raise ModuleNotFoundError(
             "Optional dependency 'geopy' not found."
             "Install via 'conda install -c conda-forge geopy'"
@@ -83,15 +114,21 @@ def prepare_hotmaps_database(regions):
 
     gdf = gpd.GeoDataFrame(df, geometry="coordinates", crs="EPSG:4326")
 
-    kws = (
-        dict(op="within")
-        if parse(gpd.__version__) < Version("0.10")
-        else dict(predicate="within")
-    )
-    gdf = gpd.sjoin(gdf, regions, how="inner", **kws)
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
-    gdf.rename(columns={"index_right": "bus"}, inplace=True)
+    gdf.rename(columns={"name": "bus"}, inplace=True)
     gdf["country"] = gdf.bus.str[:2]
+
+    # the .sjoin can lead to duplicates if a geom is in two overlapping regions
+    if gdf.index.duplicated().any():
+        # get all duplicated entries
+        duplicated_i = gdf.index[gdf.index.duplicated()]
+        # convert from raw data country name to iso-2-code
+        code = cc.convert(gdf.loc[duplicated_i, "Country"], to="iso2")  # noqa: F841
+        # screen out malformed country allocation
+        gdf_filtered = gdf.loc[duplicated_i].query("country == @code")
+        # concat not duplicated and filtered gdf
+        gdf = pd.concat([gdf.drop(duplicated_i), gdf_filtered])
 
     return gdf
 
@@ -115,7 +152,9 @@ def build_nodal_distribution_key(hotmaps, regions, countries):
         facilities = hotmaps.query("country == @country and Subsector == @sector")
 
         if not facilities.empty:
-            emissions = facilities["Emissions_ETS_2014"]
+            emissions = facilities["Emissions_ETS_2014"].fillna(
+                hotmaps["Emissions_EPRTR_2014"].dropna()
+            )
             if emissions.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
@@ -138,10 +177,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",
             simpl="",
-            clusters=48,
+            clusters=128,
         )
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

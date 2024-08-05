@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+run:
+  name: "validation"
+
+scenario:
+  ll:
+  - v1.0
+  clusters:
+  - 37
+  opts:
+  - 'Ept'
+
+snapshots:
+  start: "2019-01-01"
+  end: "2020-01-01"
+  inclusive: 'left'
+
+enable:
+  retrieve_cutout: false
+
+electricity:
+  co2limit: 1e9
+
+  extendable_carriers:
+    Generator: []
+    StorageUnit: []
+    Store: []
+    Link: []
+
+  powerplants_filter: not (DateOut < 2019)
+
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
+
+  estimate_renewable_capacities:
+    year: 2019
+
+atlite:
+  default_cutout: europe-2019-era5
+  cutouts:
+    europe-2019-era5:
+      module: era5
+      x: [-12., 35.]
+      y: [33., 72]
+      dx: 0.3
+      dy: 0.3
+      time: ['2019', '2019']
+
+renewable:
+  onwind:
+    cutout: europe-2019-era5
+  offwind-ac:
+    cutout: europe-2019-era5
+  offwind-dc:
+    cutout: europe-2019-era5
+  solar:
+    cutout: europe-2019-era5
+  hydro:
+    cutout: europe-2019-era5
+    flatten_dispatch: 0.01
+
+conventional:
+  unit_commitment: false
+  dynamic_fuel_price: true
+  nuclear:
+    p_max_pu: "data/nuclear_p_max_pu.csv"
+  biomass:
+    p_max_pu: 0.65
+
+lines:
+  s_max_pu: 0.23
+  under_construction: 'remove'
+
+links:
+  include_tyndp: false
+
+costs:
+  year: 2020
+  emission_prices:
+    co2: 25
+
+clustering:
+  simplify_network:
+    exclude_carriers: [oil, coal, lignite, OCGT, CCGT]
+  cluster_network:
+    consider_efficiency_classes: true
+
+solving:
+  options:
+    load_shedding: true
+    rolling_horizon: false
+    horizon: 1000
+    overlap: 48

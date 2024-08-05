@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -38,7 +38,7 @@ Inputs
 
 - ``data/bundle/nama_10r_3popgdp.tsv.gz``: Average annual population by NUTS3 region (`eurostat <http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nama_10r_3popgdp&lang=en>`__)
 - ``data/bundle/nama_10r_3gdp.tsv.gz``: Gross domestic product (GDP) by NUTS 3 regions (`eurostat <http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=nama_10r_3gdp&lang=en>`__)
-- ``data/bundle/ch_cantons.csv``: Mapping between Swiss Cantons and NUTS3 regions
+- ``data/ch_cantons.csv``: Mapping between Swiss Cantons and NUTS3 regions
 - ``data/bundle/je-e-21.03.02.xls``: Population and GDP data per Canton (`BFS - Swiss Federal Statistical Office <https://www.bfs.admin.ch/bfs/en/home/news/whats-new.assetdetail.7786557.html>`_ )
 
 Outputs
@@ -77,7 +77,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pycountry as pyc
-from _helpers import configure_logging
+from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ def _get_country(target, **keys):
         return np.nan
 
 
-def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
+def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
@@ -106,7 +106,9 @@ def _simplify_polys(polys, minarea=0.1, tolerance=0.01, filterremote=True):
             )
         else:
             polys = mainpoly
-    return polys.simplify(tolerance=tolerance)
+    if tolerance is not None:
+        polys = polys.simplify(tolerance=tolerance)
+    return polys
 
 
 def countries(naturalearth, country_list):
@@ -119,12 +121,12 @@ def countries(naturalearth, country_list):
     fieldnames = (
         df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
     )
-    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[0:2]
+    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
 
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
     ]
-    s = df.set_index("name")["geometry"].map(_simplify_polys)
+    s = df.set_index("name")["geometry"].map(_simplify_polys).set_crs(df.crs)
     if "RS" in country_list:
         s["RS"] = s["RS"].union(s.pop("KV"))
         # cleanup shape union
@@ -145,7 +147,8 @@ def eez(country_shapes, eez, country_list):
         lambda s: _simplify_polys(s, filterremote=False)
     )
     s = gpd.GeoSeries(
-        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3}
+        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3},
+        crs=df.crs,
     )
     s = s.to_frame("geometry")
     s.index.name = "name"
@@ -156,9 +159,9 @@ def country_cover(country_shapes, eez_shapes=None):
     shapes = country_shapes
     if eez_shapes is not None:
         shapes = pd.concat([shapes, eez_shapes])
-    europe_shape = shapes.unary_union
+    europe_shape = shapes.union_all()
     if isinstance(europe_shape, MultiPolygon):
-        europe_shape = max(europe_shape, key=attrgetter("area"))
+        europe_shape = max(europe_shape.geoms, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
 
 
@@ -174,8 +177,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(pop.pop("unit,geo\\time").str.split(","))
         )
         .loc["THS"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
@@ -184,8 +187,8 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             pd.MultiIndex.from_tuples(gdp.pop("unit,geo\\time").str.split(","))
         )
         .loc["EUR_HAB"]
-        .applymap(lambda x: pd.to_numeric(x, errors="coerce"))
-        .fillna(method="bfill", axis=1)
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
     )["2014"]
 
     cantons = pd.read_csv(ch_cantons)
@@ -235,11 +238,11 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
         [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
         columns=["NUTS_ID", "country", "pop"],
         geometry=gpd.GeoSeries(),
+        crs=df.crs,
     )
-    manual["geometry"] = manual["country"].map(country_shapes)
+    manual["geometry"] = manual["country"].map(country_shapes.to_crs(df.crs))
     manual = manual.dropna()
     manual = manual.set_index("NUTS_ID")
-    manual = manual.set_crs("ETRS89")
 
     df = pd.concat([df, manual], sort=False)
 
@@ -254,6 +257,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
@@ -264,7 +268,8 @@ if __name__ == "__main__":
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     europe_shape = gpd.GeoDataFrame(
-        geometry=[country_cover(country_shapes, offshore_shapes.geometry)]
+        geometry=[country_cover(country_shapes, offshore_shapes.geometry)],
+        crs=country_shapes.crs,
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
 

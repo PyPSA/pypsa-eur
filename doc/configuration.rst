@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -9,18 +9,19 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file located in the root directory. Users should copy the provided default configuration (``config/config.default.yaml``) and amend their own modifications and assumptions in the user-specific configuration file (``config/config.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
+"Private" refers to local, machine-specific settings or data meant for personal use, not to be shared. "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: version:
    :end-before: # docs
-
 
 .. csv-table::
    :header-rows: 1
@@ -30,7 +31,7 @@ Top-level configuration
 .. _run_cf:
 
 ``run``
-=======
+=============
 
 It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
 e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
@@ -89,9 +90,9 @@ For each wildcard, a **list of values** is provided. The rule
 ``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
-<https://docs.python.org/2/library/itertools.html#itertools.product>`_ function
+<https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
 that snakemake's `expand(...) function
-<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`_
+<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`__
 uses.
 
 An exemplary dependency graph (starting from the simplification rules) then looks like this:
@@ -128,7 +129,7 @@ An exemplary dependency graph (starting from the simplification rules) then look
 ``snapshots``
 =============
 
-Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`_
+Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -173,7 +174,7 @@ Switches for some rules and optional features.
    :file: configtables/co2_budget.csv
 
 .. note::
-    this parameter is over-ridden if ``CO2Lx`` or ``cb`` is set in
+    this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
     sector_opts.
 
 .. _electricity_cf:
@@ -196,7 +197,7 @@ Switches for some rules and optional features.
 ``atlite``
 ==========
 
-Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`_.
+Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -264,7 +265,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-dc:
-   :end-before:   solar:
+   :end-before:   offwind-float:
 
 .. csv-table::
    :header-rows: 1
@@ -272,9 +273,25 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :file: configtables/offwind-dc.csv
 
 .. note::
-   both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
+   Both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
    ``capacity_per_sqkm`` and ``correction_factor``.
 
+``offwind-float``
+---------------
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at:   offwind-float:
+   :end-before:   solar:
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/offwind-float.csv
+
+.. note::
+   ``offwind-ac``,  ``offwind-dc`` , ``offwind-float`` have the same assumption on
+   ``capacity_per_sqkm`` and ``correction_factor``.
 ``solar``
 ---------------
 
@@ -382,7 +399,7 @@ overwrite the existing values.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-after:   type:
+   :start-after: # docs-load
    :end-before: # docs
 
 .. csv-table::
@@ -426,7 +443,7 @@ overwrite the existing values.
    :widths: 22,7,22,33
    :file: configtables/biomass.csv
 
-The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`_, namely:
+The list of available biomass is given by the category in `ENSPRESO_BIOMASS <https://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/ENSPRESO/ENSPRESO_BIOMASS.xlsx>`__, namely:
 
 - Agricultural waste
 - Manure solid, liquid
@@ -533,9 +550,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/costs.csv
 
-.. note::
-   ``rooftop_share:`` are based on the potentials, assuming
-   (0.1 kW/m2 and 10 m2/person)
 
 .. _clustering_cf:
 
@@ -559,6 +573,21 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. tip::
    use ``min`` in ``p_nom_max:`` for more `
    conservative assumptions.
+
+.. _adjustments_cf:
+
+``adjustments``
+===============
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: adjustments:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/adjustments.csv
 
 .. _solving_cf:
 

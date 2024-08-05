@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
-Creates the network topology from a `ENTSO-E map extract.
-
-<https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA
-network.
+Creates the network topology from an `ENTSO-E map extract <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022) as a PyPSA network.
 
 Relevant Settings
 -----------------
 
 .. code:: yaml
-
-    snapshots:
 
     countries:
 
@@ -61,11 +56,23 @@ Outputs
     .. image:: img/base.png
         :scale: 33 %
 
+- ``resources/regions_onshore.geojson``:
+
+    .. image:: img/regions_onshore.png
+        :scale: 33 %
+
+- ``resources/regions_offshore.geojson``:
+
+    .. image:: img/regions_offshore.png
+        :scale: 33 %
+
 Description
 -----------
+Creates the network topology from an ENTSO-E map extract, and create Voronoi shapes for each bus representing both onshore and offshore regions.
 """
 
 import logging
+import warnings
 from itertools import product
 
 import geopandas as gpd
@@ -77,10 +84,13 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import configure_logging
-from scipy import spatial
+from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
+from packaging.version import Version, parse
 from scipy.sparse import csgraph
+from scipy.spatial import KDTree
 from shapely.geometry import LineString, Point
+
+PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +119,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     querycoords = np.vstack(
         [new_links[["x1", "y1", "x2", "y2"]], new_links[["x2", "y2", "x1", "y1"]]]
     )
-    tree = spatial.KDTree(treecoords)
+    tree = KDTree(treecoords)
     dist, ind = tree.query(querycoords, distance_upper_bound=distance_upper_bound)
     found_b = ind < len(links)
     found_i = np.arange(len(new_links) * 2)[found_b] % len(new_links)
@@ -138,7 +148,9 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
     )
 
     buses["carrier"] = buses.pop("dc").map({True: "DC", False: "AC"})
-    buses["under_construction"] = buses["under_construction"].fillna(False).astype(bool)
+    buses["under_construction"] = buses.under_construction.where(
+        lambda s: s.notnull(), False
+    ).astype(bool)
 
     # remove all buses outside of all countries including exclusive economic zones (offshore)
     europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
@@ -151,9 +163,7 @@ def _load_buses_from_eg(eg_buses, europe_shape, config_elec):
         buses.v_nom.isin(config_elec["voltages"]) | buses.v_nom.isnull()
     )
     logger.info(
-        "Removing buses with voltages {}".format(
-            pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])
-        )
+        f'Removing buses with voltages {pd.Index(buses.v_nom.unique()).dropna().difference(config_elec["voltages"])}'
     )
 
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
@@ -263,14 +273,15 @@ def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
         if links_tyndp.empty:
             return buses, links
 
-    tree = spatial.KDTree(buses[["x", "y"]])
+    tree_buses = buses.query("carrier=='AC'")
+    tree = KDTree(tree_buses[["x", "y"]])
     _, ind0 = tree.query(links_tyndp[["x1", "y1"]])
-    ind0_b = ind0 < len(buses)
-    links_tyndp.loc[ind0_b, "bus0"] = buses.index[ind0[ind0_b]]
+    ind0_b = ind0 < len(tree_buses)
+    links_tyndp.loc[ind0_b, "bus0"] = tree_buses.index[ind0[ind0_b]]
 
     _, ind1 = tree.query(links_tyndp[["x2", "y2"]])
-    ind1_b = ind1 < len(buses)
-    links_tyndp.loc[ind1_b, "bus1"] = buses.index[ind1[ind1_b]]
+    ind1_b = ind1 < len(tree_buses)
+    links_tyndp.loc[ind1_b, "bus1"] = tree_buses.index[ind1[ind1_b]]
 
     links_tyndp_located_b = (
         links_tyndp["bus0"].notnull() & links_tyndp["bus1"].notnull()
@@ -337,7 +348,7 @@ def _load_lines_from_eg(buses, eg_lines):
     )
 
     lines["length"] /= 1e3
-
+    lines["carrier"] = "AC"
     lines = _remove_dangling_branches(lines, buses)
 
     return lines
@@ -366,6 +377,25 @@ def _apply_parameter_corrections(n, parameter_corrections):
                     raise NotImplementedError()
                 inds = r.index.intersection(df.index)
                 df.loc[inds, attr] = r[inds].astype(df[attr].dtype)
+
+
+def _reconnect_crimea(lines):
+    logger.info("Reconnecting Crimea to the Ukrainian grid.")
+    lines_to_crimea = pd.DataFrame(
+        {
+            "bus0": ["3065", "3181", "3181"],
+            "bus1": ["3057", "3055", "3057"],
+            "v_nom": [300, 300, 300],
+            "num_parallel": [1, 1, 1],
+            "length": [140, 120, 140],
+            "carrier": ["AC", "AC", "AC"],
+            "underground": [False, False, False],
+            "under_construction": [False, False, False],
+        },
+        index=["Melitopol", "Liubymivka left", "Luibymivka right"],
+    )
+
+    return pd.concat([lines, lines_to_crimea])
 
 
 def _set_electrical_parameters_lines(lines, config):
@@ -452,19 +482,15 @@ def _remove_dangling_branches(branches, buses):
     )
 
 
-def _remove_unconnected_components(network):
+def _remove_unconnected_components(network, threshold=6):
     _, labels = csgraph.connected_components(network.adjacency_matrix(), directed=False)
     component = pd.Series(labels, index=network.buses.index)
 
     component_sizes = component.value_counts()
-    components_to_remove = component_sizes.iloc[1:]
+    components_to_remove = component_sizes.loc[component_sizes < threshold]
 
     logger.info(
-        "Removing {} unconnected network components with less than {} buses. In total {} buses.".format(
-            len(components_to_remove),
-            components_to_remove.max(),
-            components_to_remove.sum(),
-        )
+        f"Removing {len(components_to_remove)} unconnected network components with less than {components_to_remove.max()} buses. In total {components_to_remove.sum()} buses."
     )
 
     return network[component == component_sizes.index[0]]
@@ -509,12 +535,13 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
         )
         return pd.Series(key, index)
 
+    compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
     gb = buses.loc[substation_b].groupby(
         ["x", "y"], as_index=False, group_keys=False, sort=False
     )
-    bus_map_low = gb.apply(prefer_voltage, "min")
+    bus_map_low = gb.apply(prefer_voltage, "min", **compat_kws)
     lv_b = (bus_map_low == bus_map_low.index).reindex(buses.index, fill_value=False)
-    bus_map_high = gb.apply(prefer_voltage, "max")
+    bus_map_high = gb.apply(prefer_voltage, "max", **compat_kws)
     hv_b = (bus_map_high == bus_map_high.index).reindex(buses.index, fill_value=False)
 
     onshore_b = pd.Series(False, buses.index)
@@ -540,14 +567,15 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
     for b, df in product(("bus0", "bus1"), (n.lines, n.links)):
         has_connections_b |= ~df.groupby(b).under_construction.min()
 
+    buses["onshore_bus"] = onshore_b
     buses["substation_lv"] = (
         lv_b & onshore_b & (~buses["under_construction"]) & has_connections_b
     )
-    buses["substation_off"] = (offshore_b | (hv_b & onshore_b)) & (
+    buses["substation_off"] = ((hv_b & offshore_b) | (hv_b & onshore_b)) & (
         ~buses["under_construction"]
     )
 
-    c_nan_b = buses.country.isnull()
+    c_nan_b = buses.country.fillna("na") == "na"
     if c_nan_b.sum() > 0:
         c_tag = _get_country(buses.loc[c_nan_b])
         c_tag.loc[~c_tag.isin(countries)] = np.nan
@@ -644,7 +672,7 @@ def _set_links_underwater_fraction(n, offshore_shapes):
     if not hasattr(n.links, "geometry"):
         n.links["underwater_fraction"] = 0.0
     else:
-        offshore_shape = gpd.read_file(offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(offshore_shapes).union_all()
         links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
         n.links["underwater_fraction"] = (
             links.intersection(offshore_shape).length / links.length
@@ -680,6 +708,22 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     return n
 
 
+def _set_shapes(n, country_shapes, offshore_shapes):
+    # Write the geodataframes country_shapes and offshore_shapes to the network.shapes component
+    country_shapes = gpd.read_file(country_shapes).rename(columns={"name": "idx"})
+    country_shapes["type"] = "country"
+    offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
+    offshore_shapes["type"] = "offshore"
+    all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
+    n.madd(
+        "Shape",
+        all_shapes.index,
+        geometry=all_shapes.geometry,
+        idx=all_shapes.idx,
+        type=all_shapes["type"],
+    )
+
+
 def base_network(
     eg_buses,
     eg_converters,
@@ -705,6 +749,9 @@ def base_network(
     lines = _load_lines_from_eg(buses, eg_lines)
     transformers = _load_transformers_from_eg(buses, eg_transformers)
 
+    if config["lines"].get("reconnect_crimea", True) and "UA" in config["countries"]:
+        lines = _reconnect_crimea(lines)
+
     lines = _set_electrical_parameters_lines(lines, config)
     transformers = _set_electrical_parameters_transformers(transformers, config)
     links = _set_electrical_parameters_links(links, config, links_p_nom)
@@ -713,7 +760,8 @@ def base_network(
     n = pypsa.Network()
     n.name = "PyPSA-Eur"
 
-    n.set_snapshots(pd.date_range(freq="h", **config["snapshots"]))
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    n.set_snapshots(time)
     n.madd("Carrier", ["AC", "DC"])
 
     n.import_components_from_dataframe(buses, "Bus")
@@ -736,7 +784,116 @@ def base_network(
 
     n = _adjust_capacities_of_under_construction_branches(n, config)
 
+    _set_shapes(n, country_shapes, offshore_shapes)
+
     return n
+
+
+def voronoi(points, outline, crs=4326):
+    """
+    Create Voronoi polygons from a set of points within an outline.
+    """
+    pts = gpd.GeoSeries(
+        gpd.points_from_xy(points.x, points.y),
+        index=points.index,
+        crs=crs,
+    )
+    voronoi = pts.voronoi_polygons(extend_to=outline).clip(outline)
+
+    # can be removed with shapely 2.1 where order is preserved
+    # https://github.com/shapely/shapely/issues/2020
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        pts = gpd.GeoDataFrame(geometry=pts)
+        voronoi = gpd.GeoDataFrame(geometry=voronoi)
+        joined = gpd.sjoin_nearest(pts, voronoi, how="right")
+
+    return joined.dissolve(by="Bus").reindex(points.index).squeeze()
+
+
+def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
+    country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
+    offshore_shapes = gpd.read_file(offshore_shapes)
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
+        "geometry"
+    ]
+
+    onshore_regions = []
+    offshore_regions = []
+
+    for country in countries:
+        c_b = n.buses.country == country
+
+        onshore_shape = country_shapes[country]
+        onshore_locs = (
+            n.buses.loc[c_b & n.buses.onshore_bus]
+            .sort_values(
+                by="substation_lv", ascending=False
+            )  # preference for substations
+            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
+        )
+        onshore_regions.append(
+            gpd.GeoDataFrame(
+                {
+                    "name": onshore_locs.index,
+                    "x": onshore_locs["x"],
+                    "y": onshore_locs["y"],
+                    "geometry": voronoi(onshore_locs, onshore_shape),
+                    "country": country,
+                },
+                crs=n.crs,
+            )
+        )
+
+        if country not in offshore_shapes.index:
+            continue
+        offshore_shape = offshore_shapes[country]
+        offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
+        offshore_regions_c = gpd.GeoDataFrame(
+            {
+                "name": offshore_locs.index,
+                "x": offshore_locs["x"],
+                "y": offshore_locs["y"],
+                "geometry": voronoi(offshore_locs, offshore_shape),
+                "country": country,
+            },
+            crs=n.crs,
+        )
+        sel = offshore_regions_c.to_crs(3035).area > 10  # m2
+        offshore_regions_c = offshore_regions_c.loc[sel]
+        offshore_regions.append(offshore_regions_c)
+
+    shapes = pd.concat(onshore_regions, ignore_index=True).set_crs(n.crs)
+
+    return onshore_regions, offshore_regions, shapes, offshore_shapes
+
+
+def append_bus_shapes(n, shapes, type):
+    """
+    Append shapes to the network. If shapes with the same component and type
+    already exist, they will be removed.
+
+    Parameters:
+        n (pypsa.Network): The network to which the shapes will be appended.
+        shapes (geopandas.GeoDataFrame): The shapes to be appended.
+        **kwargs: Additional keyword arguments used in `n.madd`.
+
+    Returns:
+        None
+    """
+    remove = n.shapes.query("component == 'Bus' and type == @type").index
+    n.mremove("Shape", remove)
+
+    offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
+    shapes = shapes.rename(lambda x: int(x) + offset)
+    n.madd(
+        "Shape",
+        shapes.index,
+        geometry=shapes.geometry,
+        idx=shapes.name,
+        component="Bus",
+        type=type,
+    )
 
 
 if __name__ == "__main__":
@@ -745,6 +902,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     n = base_network(
         snakemake.input.eg_buses,
@@ -761,5 +919,22 @@ if __name__ == "__main__":
         snakemake.config,
     )
 
+    onshore_regions, offshore_regions, shapes, offshore_shapes = build_bus_shapes(
+        n,
+        snakemake.input.country_shapes,
+        snakemake.input.offshore_shapes,
+        snakemake.params.countries,
+    )
+
+    shapes.to_file(snakemake.output.regions_onshore)
+    append_bus_shapes(n, shapes, "onshore")
+
+    if offshore_regions:
+        shapes = pd.concat(offshore_regions, ignore_index=True)
+        shapes.to_file(snakemake.output.regions_offshore)
+        append_bus_shapes(n, shapes, "offshore")
+    else:
+        offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
+
     n.meta = snakemake.config
-    n.export_to_netcdf(snakemake.output[0])
+    n.export_to_netcdf(snakemake.output.base_network)

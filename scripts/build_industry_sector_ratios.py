@@ -1,13 +1,55 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Build specific energy consumption by carrier and industries.
+Build best case specific energy consumption by carrier and category.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    industry:
+        ammonia:
+..
+
+Inputs
+-------
+- ``resources/ammonia_production.csv``
+- ``data/bundle-sector/jrc-idees-2015``
+
+Outputs
+-------
+
+- ``resources/industry_sector_ratios.csv``
+
+Description
+-------
+
+This script uses the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en>` data to calculate an EU28 average specific energy consumption by carrier and industries.
+The industries are according to the rule `industrial_production_per_country <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_industrial_production_per_country>`.
+
+The following carriers are considered:
+- elec
+- coal
+- coke
+- biomass
+- methane
+- hydrogen
+- heat
+- naphtha
+- process emission
+- process emission from feedstock
+- (ammonia)
+
+If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry>` is set to true the ammonia demand is not converted to hydrogen and electricity but is considered as a separate carrier.
+
+The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
 """
 
 import pandas as pd
-from _helpers import mute_print
+from _helpers import mute_print, set_scenario_config
 
 # GWh/ktoe OR MWh/toe
 toe_to_MWh = 11.630
@@ -68,6 +110,7 @@ index = [
     "heat",
     "naphtha",
     "ammonia",
+    "methanol",
     "process emission",
     "process emission from feedstock",
 ]
@@ -303,7 +346,7 @@ def chemicals_industry():
     # There are Solids, Refinery gas, LPG, Diesel oil, Residual fuel oil,
     # Other liquids, Naphtha, Natural gas for feedstock.
     # Naphta represents 47%, methane 17%. LPG (18%) solids, refinery gas,
-    # diesel oil, residual fuel oils and other liquids are asimilated to Naphtha
+    # diesel oil, residual fuel oils and other liquids are assimilated to Naphtha
 
     s_fec = idees["fec"][13:22]
     assert s_fec.index[0] == subsector
@@ -313,7 +356,7 @@ def chemicals_industry():
     df.loc["methane", sector] += s_fec["Natural gas"]
 
     # LPG and other feedstock materials are assimilated to naphtha
-    # since they will be produced through Fischer-Tropsh process
+    # since they will be produced through Fischer-Tropsch process
     sel = [
         "Solids",
         "Refinery gas",
@@ -408,15 +451,15 @@ def chemicals_industry():
     df.loc["methane", sector] -= ammonia_total * params["MWh_CH4_per_tNH3_SMR"]
     df.loc["elec", sector] -= ammonia_total * params["MWh_elec_per_tNH3_SMR"]
 
-    # subtract chlorine demand
+    # subtract chlorine demand (in MtCl/a)
     chlorine_total = params["chlorine_production_today"]
-    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"]
-    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"]
+    df.loc["hydrogen", sector] -= chlorine_total * params["MWh_H2_per_tCl"] * 1e3
+    df.loc["elec", sector] -= chlorine_total * params["MWh_elec_per_tCl"] * 1e3
 
-    # subtract methanol demand
+    # subtract methanol demand (in MtMeOH/a)
     methanol_total = params["methanol_production_today"]
-    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"]
+    df.loc["methane", sector] -= methanol_total * params["MWh_CH4_per_tMeOH"] * 1e3
+    df.loc["elec", sector] -= methanol_total * params["MWh_elec_per_tMeOH"] * 1e3
 
     # MWh/t material
     df.loc[sources, sector] = df.loc[sources, sector] / s_out
@@ -456,8 +499,7 @@ def chemicals_industry():
 
     sector = "Methanol"
     df[sector] = 0.0
-    df.loc["methane", sector] = params["MWh_CH4_per_tMeOH"]
-    df.loc["elec", sector] = params["MWh_elec_per_tMeOH"]
+    df.loc["methanol", sector] = params["MWh_MeOH_per_tMeOH"]
 
     # Other chemicals
 
@@ -1464,6 +1506,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industry_sector_ratios")
+    set_scenario_config(snakemake)
 
     # TODO make params option
     year = 2015

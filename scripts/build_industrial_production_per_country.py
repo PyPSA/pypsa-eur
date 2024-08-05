@@ -1,24 +1,77 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Build industrial production per country.
+This rule builds the historical industrial production per country.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    countries:
+..
+
+Inputs
+-------
+- ``resources/ammonia_production.csv``
+- ``data/bundle-sector/jrc-idees-2015``
+- ``data/eurostat``
+
+Outputs
+-------
+
+- ``resources/industrial_production_per_country.csv``
+
+Description
+-------
+
+The industrial production is taken from the `JRC-IDEES <https://joint-research-centre.ec.europa.eu/potencia-policy-oriented-tool-energy-and-climate-change-impact-assessment/jrc-idees_en)>`.
+This dataset provides detailed information about the consumption of energy for various processes.
+If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the config["industry"]["reference_year"].
+
+The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html> dataset.
+After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.
+
+The following subcategories [kton/a] are considered:
+- Electric arc
+- Integrated steelworks
+- Other chemicals
+- Pharmaceutical products etc.
+- Cement
+- Ceramics & other NMM
+- Glass production
+- Pulp production
+- Paper production
+- Printing and media reproduction
+- Food, beverages and tobacco
+- Alumina production
+- Aluminium - primary production
+- Aluminium - secondary production
+- Other non-ferrous metals
+- Transport Equipment
+- Machinery Equipment
+- Textiles and leather
+- Wood and wood products
+- Other Industrial Sectors
+- Ammonia
+- HVC
+- Chlorine
+- Methanol
 """
 
 import logging
-from functools import partial
-
-logger = logging.getLogger(__name__)
-
 import multiprocessing as mp
+from functools import partial
 
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import mute_print
+from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
 
+logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 tj_to_ktoe = 0.0238845
@@ -99,33 +152,18 @@ fields = {
     "Other Industrial Sectors": "Physical output (index)",
 }
 
-eb_names = {
-    "NO": "Norway",
-    "AL": "Albania",
-    "BA": "Bosnia and Herzegovina",
-    "MK": "FYR of Macedonia",
-    "GE": "Georgia",
-    "IS": "Iceland",
-    "KO": "Kosovo",
-    "MD": "Moldova",
-    "ME": "Montenegro",
-    "RS": "Serbia",
-    "UA": "Ukraine",
-    "TR": "Turkey",
-}
-
 eb_sectors = {
-    "Iron & steel industry": "Iron and steel",
-    "Chemical and Petrochemical industry": "Chemicals Industry",
-    "Non-ferrous metal industry": "Non-metallic mineral products",
-    "Paper, Pulp and Print": "Pulp, paper and printing",
-    "Food and Tabacco": "Food, beverages and tobacco",
-    "Non-metallic Minerals (Glass, pottery & building mat. Industry)": "Non Ferrous Metals",
-    "Transport Equipment": "Transport Equipment",
+    "Iron & steel": "Iron and steel",
+    "Chemical & petrochemical": "Chemicals Industry",
+    "Non-ferrous metals": "Non-metallic mineral products",
+    "Paper, pulp & printing": "Pulp, paper and printing",
+    "Food, beverages & tobacco": "Food, beverages and tobacco",
+    "Non-metallic minerals": "Non Ferrous Metals",
+    "Transport equipment": "Transport Equipment",
     "Machinery": "Machinery Equipment",
-    "Textile and Leather": "Textiles and leather",
-    "Wood and Wood Products": "Wood and wood products",
-    "Non-specified (Industry)": "Other Industrial Sectors",
+    "Textile & leather": "Textiles and leather",
+    "Wood & wood products": "Wood and wood products",
+    "Not elsewhere specified (industry)": "Other Industrial Sectors",
 }
 
 # TODO: this should go in a csv in `data`
@@ -162,12 +200,15 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
         e_country = e_switzerland * tj_to_ktoe
     else:
         # estimate physical output, energy consumption in the sector and country
-        fn = f"{eurostat_dir}/{eb_names[country]}.XLSX"
-        with mute_print():
-            df = pd.read_excel(
-                fn, sheet_name="2016", index_col=2, header=0, skiprows=1
-            ).squeeze("columns")
-        e_country = df.loc[eb_sectors.keys(), "Total all products"].rename(eb_sectors)
+        fn = f"{eurostat_dir}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        df = pd.read_excel(
+            fn,
+            sheet_name=str(min(2021, year)),
+            index_col=2,
+            header=0,
+            skiprows=4,
+        )
+        e_country = df.loc[eb_sectors.keys(), "Total"].rename(eb_sectors)
 
     fn = f"{jrc_dir}/JRC-IDEES-2015_Industry_EU28.xlsx"
 
@@ -260,10 +301,15 @@ def separate_basic_chemicals(demand, year):
     demand["Basic chemicals"] -= demand["Ammonia"]
 
     # EE, HR and LT got negative demand through subtraction - poor data
-    demand["Basic chemicals"].clip(lower=0.0, inplace=True)
+    col = "Basic chemicals"
+    demand[col] = demand[col].clip(lower=0.0)
 
     # assume HVC, methanol, chlorine production proportional to non-ammonia basic chemicals
-    distribution_key = demand["Basic chemicals"] / demand["Basic chemicals"].sum()
+    distribution_key = (
+        demand["Basic chemicals"]
+        / params["basic_chemicals_without_NH3_production_today"]
+        / 1e3
+    )
     demand["HVC"] = params["HVC_production_today"] * 1e3 * distribution_key
     demand["Chlorine"] = params["chlorine_production_today"] * 1e3 * distribution_key
     demand["Methanol"] = params["methanol_production_today"] * 1e3 * distribution_key
@@ -276,8 +322,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
-
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     countries = snakemake.params.countries
 

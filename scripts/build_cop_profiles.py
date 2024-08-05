@@ -1,19 +1,41 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
 Build coefficient of performance (COP) time series for air- or ground-sourced
 heat pumps.
 
-The COP is a function of the temperature difference between source and
-sink.
+The COP is approximated as a quatratic function of the temperature difference between source and
+sink, based on Staffell et al. 2012.
 
-The quadratic regression used is based on Staffell et al. (2012)
-https://doi.org/10.1039/C2EE22653G.
+This rule is executed in ``build_sector.smk``.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+    heat_pump_sink_T:
+
+
+Inputs:
+-------
+- ``resources/<run_name>/temp_soil_total_elec_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
+- ``resources/<run_name>/temp_air_total_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
+
+Outputs:
+--------
+- ``resources/cop_soil_total_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
+- ``resources/cop_air_total_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
+
+
+References
+----------
+[1] Staffell et al., Energy & Environmental Science 11 (2012): A review of domestic heat pumps, https://doi.org/10.1039/C2EE22653G.
 """
 
 import xarray as xr
+from _helpers import set_scenario_config
 
 
 def coefficient_of_performance(delta_T, source="air"):
@@ -35,12 +57,13 @@ if __name__ == "__main__":
             clusters=48,
         )
 
-    for area in ["total", "urban", "rural"]:
-        for source in ["air", "soil"]:
-            source_T = xr.open_dataarray(snakemake.input[f"temp_{source}_{area}"])
+    set_scenario_config(snakemake)
 
-            delta_T = snakemake.params.heat_pump_sink_T - source_T
+    for source in ["air", "soil"]:
+        source_T = xr.open_dataarray(snakemake.input[f"temp_{source}_total"])
 
-            cop = coefficient_of_performance(delta_T, source)
+        delta_T = snakemake.params.heat_pump_sink_T - source_T
 
-            cop.to_netcdf(snakemake.output[f"cop_{source}_{area}"])
+        cop = coefficient_of_performance(delta_T, source)
+
+        cop.to_netcdf(snakemake.output[f"cop_{source}_total"])

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2023 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -25,17 +25,16 @@ full model, which allows the user to explore most of its functionalities on a
 local machine. The tutorial will cover examples on how to configure and
 customise the PyPSA-Eur model and run the ``snakemake`` workflow step by step
 from network creation to the solved network. The configuration for the tutorial
-is located at ``test/config.electricity.yaml``. It includes parts deviating from
+is located at ``config/test/config.electricity.yaml``. It includes parts deviating from
 the default config file ``config/config.default.yaml``. To run the tutorial with this
 configuration, execute
 
 .. code:: bash
     :class: full-width
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
-This configuration is set to download a reduced data set via the rules :mod:`retrieve_databundle`,
-:mod:`retrieve_natura_raster`, :mod:`retrieve_cutout`.
+This configuration is set to download a reduced cutout via the rule :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
 
 How to configure runs?
@@ -96,7 +95,7 @@ open-source solver GLPK.
    :start-at: solver:
    :end-before: plotting:
 
-Note, that ``test/config.electricity.yaml`` only includes changes relative to
+Note, that ``config/test/config.electricity.yaml`` only includes changes relative to
 the default configuration. There are many more configuration options, which are
 documented at :ref:`config`.
 
@@ -115,9 +114,9 @@ clustered down to 6 buses and every 24 hours aggregated to one snapshot. The com
 
 .. code:: bash
 
-    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_Co2L-24H.nc --configfile config/test/config.electricity.yaml
+    snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
-orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_Co2L-24H.nc``:
+orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``elec_s_6_ec_lcopt_.nc``:
 
 .. literalinclude:: ../rules/solve_electricity.smk
    :start-at: rule solve_network:
@@ -133,89 +132,88 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
         graph[bgcolor=white, margin=0];
         node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
         edge[penwidth=2, color=grey];
-        0[label = "solve_network", color = "0.21 0.6 0.85", style="rounded"];
-        1[label = "prepare_network\nll: copt\nopts: Co2L-24H", color = "0.02 0.6 0.85", style="rounded"];
-        2[label = "add_extra_components", color = "0.37 0.6 0.85", style="rounded"];
-        3[label = "cluster_network\nclusters: 6", color = "0.39 0.6 0.85", style="rounded"];
-        4[label = "simplify_network\nsimpl: ", color = "0.11 0.6 0.85", style="rounded"];
-        5[label = "add_electricity", color = "0.23 0.6 0.85", style="rounded"];
-        6[label = "build_renewable_profiles\ntechnology: onwind", color = "0.57 0.6 0.85", style="rounded"];
-        7[label = "base_network", color = "0.09 0.6 0.85", style="rounded"];
-        8[label = "build_shapes", color = "0.41 0.6 0.85", style="rounded"];
-        9[label = "retrieve_databundle", color = "0.28 0.6 0.85", style="rounded"];
-        10[label = "retrieve_natura_raster", color = "0.62 0.6 0.85", style="rounded"];
-        11[label = "build_bus_regions", color = "0.53 0.6 0.85", style="rounded"];
-        12[label = "retrieve_cutout\ncutout: europe-2013-era5", color = "0.05 0.6 0.85", style="rounded,dashed"];
-        13[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.57 0.6 0.85", style="rounded"];
-        14[label = "build_ship_raster", color = "0.64 0.6 0.85", style="rounded"];
-        15[label = "retrieve_ship_raster", color = "0.07 0.6 0.85", style="rounded,dashed"];
-        16[label = "retrieve_cutout\ncutout: europe-2013-sarah", color = "0.05 0.6 0.85", style="rounded,dashed"];
-        17[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.57 0.6 0.85", style="rounded"];
-        18[label = "build_renewable_profiles\ntechnology: solar", color = "0.57 0.6 0.85", style="rounded"];
-        19[label = "build_hydro_profile", color = "0.44 0.6 0.85", style="rounded"];
-        20[label = "retrieve_cost_data", color = "0.30 0.6 0.85", style="rounded"];
-        21[label = "build_powerplants", color = "0.16 0.6 0.85", style="rounded"];
-        22[label = "build_electricity_demand", color = "0.00 0.6 0.85", style="rounded"];
-        23[label = "retrieve_electricity_demand", color = "0.34 0.6 0.85", style="rounded,dashed"];
-        1 -> 0
-        2 -> 1
-        20 -> 1
-        3 -> 2
-        20 -> 2
-        4 -> 3
-        20 -> 3
-        5 -> 4
-        20 -> 4
-        11 -> 4
-        6 -> 5
-        13 -> 5
-        17 -> 5
-        18 -> 5
-        19 -> 5
-        7 -> 5
-        20 -> 5
-        11 -> 5
-        21 -> 5
-        9 -> 5
-        22 -> 5
-        8 -> 5
-        7 -> 6
-        9 -> 6
-        10 -> 6
-        8 -> 6
-        11 -> 6
-        12 -> 6
-        8 -> 7
-        9 -> 8
-        8 -> 11
-        7 -> 11
-        7 -> 13
-        9 -> 13
-        10 -> 13
-        14 -> 13
-        8 -> 13
-        11 -> 13
-        12 -> 13
-        15 -> 14
-        12 -> 14
-        16 -> 14
-        7 -> 17
-        9 -> 17
-        10 -> 17
-        14 -> 17
-        8 -> 17
-        11 -> 17
-        12 -> 17
-        7 -> 18
-        9 -> 18
-        10 -> 18
-        8 -> 18
-        11 -> 18
-        16 -> 18
-        8 -> 19
-        12 -> 19
-        7 -> 21
-        23 -> 22
+            0[label = "solve_network", color = "0.21 0.6 0.85", style="rounded"];
+            1[label = "prepare_network\nll: copt\nopts: ", color = "0.51 0.6 0.85", style="rounded"];
+            2[label = "add_extra_components", color = "0.43 0.6 0.85", style="rounded"];
+            3[label = "cluster_network\nclusters: 6", color = "0.17 0.6 0.85", style="rounded"];
+            4[label = "simplify_network\nsimpl: ", color = "0.49 0.6 0.85", style="rounded"];
+            5[label = "add_electricity", color = "0.26 0.6 0.85", style="rounded"];
+            6[label = "build_renewable_profiles\ntechnology: solar", color = "0.02 0.6 0.85", style="rounded"];
+            7[label = "base_network", color = "0.35 0.6 0.85", style="rounded"];
+            8[label = "build_shapes", color = "0.62 0.6 0.85", style="rounded"];
+            9[label = "retrieve_databundle", color = "0.24 0.6 0.85", style="rounded"];
+            10[label = "retrieve_cutout\ncutout: be-03-2013-era5", color = "0.36 0.6 0.85", style="rounded"];
+            11[label = "build_renewable_profiles\ntechnology: solar-hsat", color = "0.02 0.6 0.85", style="rounded"];
+            12[label = "build_renewable_profiles\ntechnology: onwind", color = "0.02 0.6 0.85", style="rounded"];
+            13[label = "build_renewable_profiles\ntechnology: offwind-ac", color = "0.02 0.6 0.85", style="rounded"];
+            14[label = "build_ship_raster", color = "0.08 0.6 0.85", style="rounded"];
+            15[label = "retrieve_ship_raster", color = "0.28 0.6 0.85", style="rounded"];
+            16[label = "build_renewable_profiles\ntechnology: offwind-dc", color = "0.02 0.6 0.85", style="rounded"];
+            17[label = "build_renewable_profiles\ntechnology: offwind-float", color = "0.02 0.6 0.85", style="rounded"];
+            18[label = "build_line_rating", color = "0.07 0.6 0.85", style="rounded"];
+            19[label = "retrieve_cost_data\nyear: 2030", color = "0.47 0.6 0.85", style="rounded"];
+            20[label = "build_powerplants", color = "0.11 0.6 0.85", style="rounded"];
+            21[label = "build_electricity_demand", color = "0.05 0.6 0.85", style="rounded"];
+            22[label = "retrieve_electricity_demand", color = "0.58 0.6 0.85", style="rounded"];
+            23[label = "retrieve_synthetic_electricity_demand", color = "0.11 0.6 0.85", style="rounded"];
+            1 -> 0
+            2 -> 1
+            19 -> 1
+            3 -> 2
+            19 -> 2
+            4 -> 3
+            19 -> 3
+            5 -> 4
+            19 -> 4
+            7 -> 4
+            6 -> 5
+            11 -> 5
+            12 -> 5
+            13 -> 5
+            16 -> 5
+            17 -> 5
+            7 -> 5
+            18 -> 5
+            19 -> 5
+            20 -> 5
+            21 -> 5
+            8 -> 5
+            7 -> 6
+            9 -> 6
+            8 -> 6
+            10 -> 6
+            8 -> 7
+            9 -> 8
+            7 -> 11
+            9 -> 11
+            8 -> 11
+            10 -> 11
+            7 -> 12
+            9 -> 12
+            8 -> 12
+            10 -> 12
+            7 -> 13
+            9 -> 13
+            14 -> 13
+            8 -> 13
+            10 -> 13
+            15 -> 14
+            10 -> 14
+            7 -> 16
+            9 -> 16
+            14 -> 16
+            8 -> 16
+            10 -> 16
+            7 -> 17
+            9 -> 17
+            14 -> 17
+            8 -> 17
+            10 -> 17
+            7 -> 18
+            10 -> 18
+            7 -> 20
+            22 -> 21
+            23 -> 21
     }
 
 |
@@ -225,26 +223,29 @@ In the terminal, this will show up as a list of jobs to be run:
 .. code:: bash
 
     Building DAG of jobs...
-    job                         count    min threads    max threads
-    ------------------------  -------  -------------  -------------
-    add_electricity                 1              1              1
-    add_extra_components            1              1              1
-    base_network                    1              1              1
-    build_bus_regions               1              1              1
-    build_hydro_profile             1              1              1
-    build_electricity_demand        1              1              1
-    build_powerplants               1              1              1
-    build_renewable_profiles        4              1              1
-    build_shapes                    1              1              1
-    build_ship_raster               1              1              1
-    cluster_network                 1              1              1
-    prepare_network                 1              1              1
-    retrieve_cost_data              1              1              1
-    retrieve_databundle             1              1              1
-    retrieve_natura_raster          1              1              1
-    simplify_network                1              1              1
-    solve_network                   1              1              1
-    total                          20              1              1
+    Job stats:
+    job                                      count
+    -------------------------------------  -------
+    add_electricity                              1
+    add_extra_components                         1
+    base_network                                 1
+    build_electricity_demand                     1
+    build_line_rating                            1
+    build_powerplants                            1
+    build_renewable_profiles                     6
+    build_shapes                                 1
+    build_ship_raster                            1
+    cluster_network                              1
+    prepare_network                              1
+    retrieve_cost_data                           1
+    retrieve_cutout                              1
+    retrieve_databundle                          1
+    retrieve_electricity_demand                  1
+    retrieve_ship_raster                         1
+    retrieve_synthetic_electricity_demand        1
+    simplify_network                             1
+    solve_network                                1
+    total                                       24
 
 
 ``snakemake`` then runs these jobs in the correct order.
@@ -253,16 +254,15 @@ A job (here ``simplify_network``) will display its attributes and normally some 
 
 .. code:: bash
 
-    [Mon Jan 1 00:00:00 2023]
     rule simplify_network:
-        input: networks/elec.nc, resources/costs.csv, resources/regions_onshore.geojson, resources/regions_offshore.geojson
-        output: networks/elec_s.nc, resources/regions_onshore_elec_s.geojson, resources/regions_offshore_elec_s.geojson, resources/busmap_elec_s.csv, resources/connection_costs_s.csv
-        log: logs/simplify_network/elec_s.log
+        input: resources/test/networks/elec.nc, resources/test/costs_2030.csv, resources/test/regions_onshore.geojson, resources/test/regions_offshore.geojson
+        output: resources/test/networks/elec_s.nc, resources/test/regions_onshore_elec_s.geojson, resources/test/regions_offshore_elec_s.geojson, resources/test/busmap_elec_s.csv
+        log: logs/test/simplify_network/elec_s.log
         jobid: 4
-        benchmark: benchmarks/simplify_network/elec_s
-        reason: Missing output files: resources/busmap_elec_s.csv, resources/regions_onshore_elec_s.geojson, networks/elec_s.nc, resources/regions_offshore_elec_s.geojson; Input files updated by another job: resources/regions_offshore.geojson, resources/regions_onshore.geojson, resources/costs.csv, networks/elec.nc
+        benchmark: benchmarks/test/simplify_network/elec_s
+        reason: Forced execution
         wildcards: simpl=
-        resources: tmpdir=/tmp, mem_mb=4000, mem_mib=3815
+        resources: tmpdir=<TBD>, mem_mb=12000, mem_mib=11445
 
 Once the whole worktree is finished, it should state so in the terminal.
 
@@ -280,7 +280,7 @@ For example, you can explore the evolution of the PyPSA networks by running
 #. ``snakemake resources/networks/elec.nc -call --configfile config/test/config.electricity.yaml``
 #. ``snakemake resources/networks/elec_s.nc -call --configfile config/test/config.electricity.yaml``
 #. ``snakemake resources/networks/elec_s_6.nc -call --configfile config/test/config.electricity.yaml``
-#. ``snakemake resources/networks/elec_s_6_ec_lcopt_Co2L-24H.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/elec_s_6_ec_lcopt_.nc -call --configfile config/test/config.electricity.yaml``
 
 To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
 you can use the collection rule ``solve_elec_networks``.
@@ -318,6 +318,6 @@ Jupyter Notebooks).
 
     import pypsa
 
-    n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_Co2L-24H.nc")
+    n = pypsa.Network("results/networks/elec_s_6_ec_lcopt_.nc")
 
-For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`_.
+For inspiration, read the `examples section in the PyPSA documentation <https://pypsa.readthedocs.io/en/latest/examples-basic.html>`__.
