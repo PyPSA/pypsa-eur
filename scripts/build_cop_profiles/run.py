@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import sys
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -11,8 +13,6 @@ from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
 from scripts.enums.HeatSystemType import HeatSystemType
-
-import sys
 
 sys.path.append("..")
 
