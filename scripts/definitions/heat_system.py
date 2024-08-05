@@ -212,6 +212,7 @@ class HeatSystem(Enum):
         """
         Generates the name for the heat pump costs based on the heat source and
         system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Parameters
         ----------
@@ -230,6 +231,7 @@ class HeatSystem(Enum):
         """
         Generates the name for the resistive heater costs based on the heat
         system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Returns
         -------
@@ -242,6 +244,7 @@ class HeatSystem(Enum):
     def gas_boiler_costs_name(self) -> str:
         """
         Generates the name for the gas boiler costs based on the heat system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Returns
         -------
@@ -254,6 +257,7 @@ class HeatSystem(Enum):
     def oil_boiler_costs_name(self) -> str:
         """
         Generates the name for the oil boiler costs based on the heat system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
 
         Returns
         -------

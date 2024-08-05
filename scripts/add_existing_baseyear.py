@@ -420,13 +420,13 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
 
 def add_heating_capacities_installed_before_baseyear(
-    n,
-    baseyear,
-    grouping_years,
+    n: pypsa.Network,
+    baseyear: int,
+    grouping_years: list,
     cop: dict,
     time_dep_hp_cop: bool,
-    costs,
-    default_lifetime,
+    costs: pd.DataFrame,
+    default_lifetime: int,
     existing_heating: pd.DataFrame,
 ):
     """
@@ -500,7 +500,7 @@ def add_heating_capacities_installed_before_baseyear(
                     )
                     .to_pandas()
                     .reindex(index=n.snapshots)
-                    if options["time_dep_hp_cop"]
+                    if time_dep_hp_cop
                     else costs.at[costs_name, "efficiency"]
                 )
 

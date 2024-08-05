@@ -1780,7 +1780,7 @@ def build_heat_demand(n):
         .unstack(level=1)
     )
 
-    sectors = ["residential", "services"]
+    sectors = [sector.value for sector in HeatSector]
     uses = ["water", "space"]
 
     heat_demand = {}
@@ -1808,10 +1808,21 @@ def build_heat_demand(n):
     return heat_demand
 
 
-def add_heat(n, costs, cop):
+def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
+    """
+    Add heat sector to the network.
+
+    Parameters:
+        n (pypsa.Network): The PyPSA network object.
+        costs (pd.DataFrame): DataFrame containing cost information.
+        cop (xr.DataArray): DataArray containing coefficient of performance (COP) values.
+
+    Returns:
+        None
+    """
     logger.info("Add heat sector")
 
-    sectors = ["residential", "services"]
+    sectors = [sector.value for sector in HeatSector]
 
     heat_demand = build_heat_demand(n)
 
@@ -3113,27 +3124,23 @@ def add_industry(n, costs):
     if options["oil_boilers"]:
         nodes = pop_layout.index
 
-        for name in [
-            "residential rural",
-            "services rural",
-            "residential urban decentral",
-            "services urban decentral",
-        ]:
-            n.madd(
-                "Link",
-                nodes + f" {name} oil boiler",
-                p_nom_extendable=True,
-                bus0=spatial.oil.nodes,
-                bus1=nodes + f" {name} heat",
-                bus2="co2 atmosphere",
-                carrier=f"{name} oil boiler",
-                efficiency=costs.at["decentral oil boiler", "efficiency"],
-                efficiency2=costs.at["oil", "CO2 intensity"],
-                capital_cost=costs.at["decentral oil boiler", "efficiency"]
-                * costs.at["decentral oil boiler", "fixed"]
-                * options["overdimension_individual_heating"],
-                lifetime=costs.at["decentral oil boiler", "lifetime"],
-            )
+        for heat_system in HeatSystem:
+            if not heat_system == HeatSystem.URBAN_CENTRAL:
+                n.madd(
+                    "Link",
+                    nodes + f" {heat_system} oil boiler",
+                    p_nom_extendable=True,
+                    bus0=spatial.oil.nodes,
+                    bus1=nodes + f" {heat_system} heat",
+                    bus2="co2 atmosphere",
+                    carrier=f"{heat_system} oil boiler",
+                    efficiency=costs.at["decentral oil boiler", "efficiency"],
+                    efficiency2=costs.at["oil", "CO2 intensity"],
+                    capital_cost=costs.at["decentral oil boiler", "efficiency"]
+                    * costs.at["decentral oil boiler", "fixed"]
+                    * options["overdimension_individual_heating"],
+                    lifetime=costs.at["decentral oil boiler", "lifetime"],
+                )
 
     n.madd(
         "Link",
