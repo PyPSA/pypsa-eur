@@ -2338,7 +2338,7 @@ def add_biomass(n, costs):
             bus=spatial.biomass.nodes,
             carrier="unsustainable solid biomass",
             e_nom=unsustainable_solid_biomass_potentials_spatial,
-            marginal_cost=14,  # mean of MINBIOWOO costs in ENS_BAU 2030
+            marginal_cost=costs.at["fuelwood", "fuel"],
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
             e_max_pu=e_max_pu.rename(
@@ -2361,7 +2361,7 @@ def add_biomass(n, costs):
             bus=spatial.biomass.bioliquids,
             carrier="unsustainable bioliquids",
             e_nom=unsustainable_liquid_biofuel_potentials_spatial,
-            marginal_cost=81.36,  # mean of MINBIOCRP11 costs in ENS_BAU 2030
+            marginal_cost=costs.at["biodiesel crops", "fuel"],
             e_initial=unsustainable_liquid_biofuel_potentials_spatial,
             e_nom_extendable=False,
             e_max_pu=e_max_pu.rename(
@@ -2379,7 +2379,8 @@ def add_biomass(n, costs):
             efficiency=1,
             efficiency2=-costs.at["solid biomass", "CO2 intensity"]
             + costs.at["BtL", "CO2 stored"],
-            p_nom=unsustainable_liquid_biofuel_potentials_spatial / 1e3,
+            p_nom=unsustainable_liquid_biofuel_potentials_spatial,
+            marginal_cost=costs.at["BtL", "VOM"],
         )
 
     n.madd(
