@@ -37,8 +37,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  simpl:
-  - ''
   ll:
   - vopt
   clusters:
@@ -186,6 +184,7 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-dc:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -202,6 +201,7 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-float:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -220,6 +220,7 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   solar:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -295,6 +296,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
+  length_factor: 1.25
   include_tyndp: true
   under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
 
@@ -312,6 +314,9 @@ load:
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
   supplement_synthetic: true
+  distribution_key:
+    gdp: 0.6
+    population: 0.4
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -753,16 +758,15 @@ clustering:
   focus_weights: false
   simplify_network:
     to_substations: false
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time
-    exclude_carriers: []
     remove_stubs: true
-    remove_stubs_across_borders: true
+    remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
-    feature: solar+onwind-time
-    exclude_carriers: []
-    consider_efficiency_classes: false
+    hac_features:
+    - wnd100m
+    - influx_direct
+  exclude_carriers: []
+  consider_efficiency_classes: false
   aggregation_strategies:
     generators:
       committable: any

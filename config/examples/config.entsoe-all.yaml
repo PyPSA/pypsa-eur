@@ -10,8 +10,6 @@ run:
   shared_cutouts: true
 
 scenario:
-  simpl:
-  - ''
   ll:
   - vopt
   clusters:

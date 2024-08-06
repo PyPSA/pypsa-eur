@@ -41,12 +41,12 @@ Inputs
 ------
 
 - ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``networks/base_s_{clusters}.nc``: confer :ref:`cluster`
 
 Outputs
 -------
 
-- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
+- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
 
 Description
 -----------
@@ -67,7 +67,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import load_costs, update_transmission_costs
+from add_electricity import load_costs, set_transmission_costs
 from pypsa.descriptors import expand_series
 
 idx = pd.IndexSlice
@@ -173,7 +173,7 @@ def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
         + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
     )
 
-    update_transmission_costs(n, costs)
+    set_transmission_costs(n, costs)
 
     if factor == "opt" or float(factor) > 1.0:
         n.lines["s_nom_min"] = lines_s_nom
@@ -306,7 +306,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_network",
-            simpl="",
             clusters="37",
             ll="v1.0",
             opts="Co2L-4H",
