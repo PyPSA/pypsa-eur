@@ -58,7 +58,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_jrc_idees:
         output:
-            directory("data/bundle/jrc-idees-2021"),
+            directory("data/jrc-idees-2021"),
         log:
             "logs/retrieve_jrc_idees.log",
         retries: 2
