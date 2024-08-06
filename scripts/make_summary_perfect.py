@@ -631,7 +631,7 @@ def calculate_co2_emissions(n, label, df):
     weightings = n.snapshot_weightings.generators.mul(
         n.investment_period_weightings["years"]
         .reindex(n.snapshots)
-        .fillna(method="bfill")
+        .bfill()
         .fillna(1.0),
         axis=0,
     )

@@ -215,6 +215,15 @@ rule build_temperature_profiles:
         "../scripts/build_temperature_profiles.py"
 
 
+# def output_cop(wildcards):
+#     return {
+#         f"cop_{source}_{sink}": resources(
+#             "cop_" + source + "_" + sink + "_" + "elec_s{simpl}_{clusters}.nc"
+#         )
+#         for sink, source in config["sector"]["heat_pump_sources"].items()
+#     }
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -232,22 +241,12 @@ rule build_cop_profiles:
         heat_pump_cop_approximation_central_heating=config_provider(
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
-        cop_air_decentral_heating=resources(
-            "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_soil_decentral_heating=resources(
-            "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_central_heating=resources(
-            "cop_air_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_soil_central_heating=resources(
-            "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -965,6 +964,8 @@ rule prepare_sector_network:
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
         RDIR=RDIR,
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_systems=config_provider("sector", "heat_systems"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1041,18 +1042,7 @@ rule prepare_sector_network:
         ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_decentral_heating=resources(
-            "cop_soil_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_decentral_heating=resources(
-            "cop_air_decentral_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_air_central_heating=resources(
-            "cop_air_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
-        cop_soil_central_heating=resources(
-            "cop_soil_central_heating_elec_s{simpl}_{clusters}.nc"
-        ),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)

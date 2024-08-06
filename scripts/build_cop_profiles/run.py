@@ -3,22 +3,29 @@
 #
 # SPDX-License-Identifier: MIT
 
+import sys
+
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import get_country_from_node_name, set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
+from scripts.definitions.heat_system_type import HeatSystemType
+
 
 def map_temperature_dict_to_onshore_regions(
-    temperature_dict: dict, onshore_regions: xr.DataArray, snapshots: xr.DataArray
+    supply_temperature_by_country: dict,
+    onshore_regions: xr.DataArray,
+    snapshots: xr.DataArray,
 ) -> xr.DataArray:
     """
     Map dictionary of temperatures to onshore regions.
 
     Parameters:
     ----------
-    temperature_dict : dictionary
+    supply_temperature_by_country : dictionary
         Dictionary with temperatures as values and country keys as keys. One key must be named "default"
     onshore_regions : xr.DataArray
         Names of onshore regions
@@ -32,9 +39,10 @@ def map_temperature_dict_to_onshore_regions(
         [
             [
                 (
-                    temperature_dict[get_country_from_node_name(node_name)]
-                    if get_country_from_node_name(node_name) in temperature_dict.keys()
-                    else temperature_dict["default"]
+                    supply_temperature_by_country[get_country_from_node_name(node_name)]
+                    if get_country_from_node_name(node_name)
+                    in supply_temperature_by_country.keys()
+                    else supply_temperature_by_country["default"]
                 )
                 for node_name in onshore_regions["name"].values
             ]
@@ -44,6 +52,47 @@ def map_temperature_dict_to_onshore_regions(
         dims=["time", "name"],
         coords={"time": snapshots["time"], "name": onshore_regions["name"]},
     )
+
+
+def get_cop(
+    heat_system_type: str,
+    heat_source: str,
+    source_inlet_temperature_celsius: xr.DataArray,
+    forward_temperature_by_node_and_time: xr.DataArray = None,
+    return_temperature_by_node_and_time: xr.DataArray = None,
+) -> xr.DataArray:
+    """
+    Calculate the coefficient of performance (COP) for a heating system.
+
+    Parameters
+    ----------
+    heat_system_type : str
+        The type of heating system.
+    heat_source : str
+        The heat source used in the heating system.
+    source_inlet_temperature_celsius : xr.DataArray
+        The inlet temperature of the heat source in Celsius.
+
+    Returns
+    -------
+    xr.DataArray
+        The calculated coefficient of performance (COP) for the heating system.
+    """
+    if HeatSystemType(heat_system_type).is_central:
+        return CentralHeatingCopApproximator(
+            forward_temperature_celsius=forward_temperature_by_node_and_time,
+            return_temperature_celsius=return_temperature_by_node_and_time,
+            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            source_outlet_temperature_celsius=source_inlet_temperature_celsius
+            - snakemake.params.heat_source_cooling_central_heating,
+        ).approximate_cop()
+
+    else:
+        return DecentralHeatingCopApproximator(
+            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
+            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+            source_type=heat_source,
+        ).approximate_cop()
 
 
 if __name__ == "__main__":
@@ -58,47 +107,46 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    for source_type in ["air", "soil"]:
-        # source inlet temperature (air/soil) is based on weather data
-        source_inlet_temperature_celsius: xr.DataArray = xr.open_dataarray(
-            snakemake.input[f"temp_{source_type}_total"]
+    # map forward and return temperatures specified on country-level to onshore regions
+    onshore_regions: xr.DataArray = source_inlet_temperature_celsius["name"]
+    forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
+        map_temperature_dict_to_onshore_regions(
+            temperature_dict=snakemake.params.forward_temperature_central_heating,
+            onshore_regions=onshore_regions,
+            snapshots=source_inlet_temperature_celsius["time"],
         )
-
-        # Approximate COP for decentral (individual) heating
-        cop_individual_heating: xr.DataArray = DecentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
-            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-            source_type=source_type,
-        ).approximate_cop()
-        cop_individual_heating.to_netcdf(
-            snakemake.output[f"cop_{source_type}_decentral_heating"]
+    )
+    return_temperature_central_heating_by_node_and_time: xr.DataArray = (
+        map_temperature_dict_to_onshore_regions(
+            temperature_dict=snakemake.params.return_temperature_central_heating,
+            onshore_regions=onshore_regions,
+            snapshots=source_inlet_temperature_celsius["time"],
         )
-
-        # map forward and return temperatures specified on country-level to onshore regions
-        onshore_regions: xr.DataArray = source_inlet_temperature_celsius["name"]
-        forward_temperature_central_heating: xr.DataArray = (
-            map_temperature_dict_to_onshore_regions(
-                temperature_dict=snakemake.params.forward_temperature_central_heating,
-                onshore_regions=onshore_regions,
-                snapshots=source_inlet_temperature_celsius["time"],
+    )
+    cop_all_system_types = []
+    for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
+        cop_this_system_type = []
+        for heat_source in heat_sources:
+            source_inlet_temperature_celsius = xr.open_dataarray(
+                snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
+            )
+            cop_da = get_cop(
+                heat_system_type=heat_system_type,
+                heat_source=heat_source,
+                source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+                forward_temperature_by_node_and_time=forward_temperature_central_heating_by_node_and_time,
+                return_temperature_by_node_and_time=return_temperature_central_heating_by_node_and_time,
+            )
+            cop_this_system_type.append(cop_da)
+        cop_all_system_types.append(
+            xr.concat(
+                cop_this_system_type, dim=pd.Index(heat_sources, name="heat_source")
             )
         )
-        return_temperature_central_heating: xr.DataArray = (
-            map_temperature_dict_to_onshore_regions(
-                temperature_dict=snakemake.params.return_temperature_central_heating,
-                onshore_regions=onshore_regions,
-                snapshots=source_inlet_temperature_celsius["time"],
-            )
-        )
 
-        # Approximate COP for central (district) heating
-        cop_central_heating: xr.DataArray = CentralHeatingCopApproximator(
-            forward_temperature_celsius=forward_temperature_central_heating,
-            return_temperature_celsius=return_temperature_central_heating,
-            source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-            source_outlet_temperature_celsius=source_inlet_temperature_celsius
-            - snakemake.params.heat_source_cooling_central_heating,
-        ).approximate_cop()
-        cop_central_heating.to_netcdf(
-            snakemake.output[f"cop_{source_type}_central_heating"]
-        )
+    cop_dataarray = xr.concat(
+        cop_all_system_types,
+        dim=pd.Index(snakemake.params.heat_pump_sources.keys(), name="heat_system"),
+    )
+
+    cop_dataarray.to_netcdf(snakemake.output.cop_profiles)
