@@ -23,7 +23,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -65,14 +64,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_jrc_idees.py"
 
-    rule retrieve_ammonia_demand:
-        output:
-            "data/bundle/myb1-2022-nitro-ert.xlsx",
-        log:
-            "logs/retrieve_ammonia_demand.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_ammonia_demand.py"
 
     rule retrieve_eurostat_household_data:
         output:
