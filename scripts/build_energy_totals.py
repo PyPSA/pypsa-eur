@@ -492,7 +492,6 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[2] == "Domestic"
     ct_totals["total domestic aviation passenger"] = df.iloc[2]
 
-    # TODO added Ukraine to intra EU flights
     assert df.index[6] == "International - Intra-EEAwUK"
     assert df.index[7] == "International - Extra-EEAwUK"
     ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
