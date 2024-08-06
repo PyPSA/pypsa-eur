@@ -2386,7 +2386,7 @@ def add_biomass(n, costs):
             location="EU",
             carrier="solid biomass import",
         )
-        
+
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
 
         # Create timeseries to force usage of unsustainable potentials
@@ -2469,7 +2469,7 @@ def add_biomass(n, costs):
             * costs.at["solid biomass", "CO2 intensity"],
             p_nom_extendable=True,
         )
-        
+
         n.madd(
             "Link",
             spatial.biomass.bioliquids,
