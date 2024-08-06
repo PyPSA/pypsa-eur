@@ -2387,6 +2387,30 @@ def add_biomass(n, costs):
             carrier="solid biomass import",
         )
 
+        n.madd(
+            "Store",
+            ["solid biomass import"],
+            bus=["EU solid biomass import"],
+            carrier="solid biomass import",
+            e_nom=biomass_import_max_amount,
+            marginal_cost=biomass_import_price,
+            e_initial=biomass_import_max_amount,
+        )
+
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" solid biomass import",
+            bus0=["EU solid biomass import"],
+            bus1=spatial.biomass.nodes,
+            bus2="co2 atmosphere",
+            carrier="solid biomass import",
+            efficiency=1.0,
+            efficiency2=biomass_import_upstream_emissions
+            * costs.at["solid biomass", "CO2 intensity"],
+            p_nom_extendable=True,
+        )
+
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
 
         # Create timeseries to force usage of unsustainable potentials
@@ -2444,30 +2468,6 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu.rename(
                 spatial.biomass.bioliquids[0] + " unsustainable"
             ).to_frame(),
-        )
-
-         n.madd(
-            "Store",
-            ["solid biomass import"],
-            bus=["EU solid biomass import"],
-            carrier="solid biomass import",
-            e_nom=biomass_import_max_amount,
-            marginal_cost=biomass_import_price,
-            e_initial=biomass_import_max_amount,
-        )
-
-        n.madd(
-            "Link",
-            spatial.biomass.nodes,
-            suffix=" solid biomass import",
-            bus0=["EU solid biomass import"],
-            bus1=spatial.biomass.nodes,
-            bus2="co2 atmosphere",
-            carrier="solid biomass import",
-            efficiency=1.0,
-            efficiency2=biomass_import_upstream_emissions
-            * costs.at["solid biomass", "CO2 intensity"],
-            p_nom_extendable=True,
         )
 
         n.madd(
