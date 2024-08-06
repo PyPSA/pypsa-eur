@@ -64,7 +64,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_jrc_idees.py"
 
-
     rule retrieve_eurostat_household_data:
         output:
             "data/eurostat/eurostat-household_energy_balances-february_2024.csv",

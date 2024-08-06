@@ -429,7 +429,9 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs=storage("https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"),
+        usgs=storage(
+            "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+        ),
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
