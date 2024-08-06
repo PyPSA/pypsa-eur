@@ -9,10 +9,15 @@ Release Notes
 
 Upcoming Release
 ================
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
 
-* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__.
+* split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
 
-* Update Ammonia production from USGS to 2022 `data <https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx>`__.
+* Add option to import solid biomass
+
+* Add option to produce electrobiofuels (flag ``electrobiofuels``) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
+
+* Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
 
@@ -45,7 +50,24 @@ Upcoming Release
 
 * Bugfix: Impose minimum value of zero for district heating progress between current and future market share in :mod:`build_district_heat_share`.
 
+* The ``{scope}`` wildcard was removed, since its outputs were not used.
+
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
+
+* Updated pre-built `weather data cutouts
+  <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
+  solar irradiation from the new SARAH-3 dataset while taking all other
+  variables from ERA5. Cutouts are now available for multiple years (2010, 2013,
+  2019, and 2023).
+
+* Added option ``solving: curtailment_mode``` which fixes the dispatch profiles
+  of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu``
+  and adds an auxiliary curtailment generator with negative sign (to absorb
+  excess power) at every AC bus. This can speed up the solving process as the
+  curtailment decision is aggregated into a single generator per region.
+
+* In :mod:`base_network`, replace own voronoi polygon calculation function with
+  Geopandas `gdf.voronoi_polygons` method.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
