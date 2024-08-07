@@ -410,18 +410,13 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
+    # check these numbers!
     forward_temperature:
-      default: 90
-      DK: 70
-      SE: 70
-      NO: 70
-      FI: 70
+      DE: 90 #C
+      DK: 60 #C
     return_temperature:
-      default: 50
-      DK: 40
-      SE: 40
-      NO: 40
-      FI: 40
+      DE: 50 #C
+      DK: 40 #C
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
