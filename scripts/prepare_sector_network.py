@@ -2414,7 +2414,7 @@ def add_biomass(n, costs):
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
 
         # Create timeseries to force usage of unsustainable potentials
-        e_max_pu = pd.Series(1, index=n.snapshots)
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
         e_max_pu.iloc[-1] = 0
 
         n.madd(
@@ -2427,10 +2427,11 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["biogas", "fuel"],
             e_initial=unsustainable_biogas_potentials_spatial,
             e_nom_extendable=False,
-            e_max_pu=e_max_pu.rename(
-                spatial.gas.biogas[0] + " unsustainable"
-            ).to_frame(),
+            e_max_pu=e_max_pu,
         )
+
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
+        e_max_pu.iloc[-1] = 0
 
         n.madd(
             "Store",
@@ -2442,9 +2443,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["fuelwood", "fuel"],
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
-            e_max_pu=e_max_pu.rename(
-                spatial.biomass.nodes[0] + " unsustainable"
-            ).to_frame(),
+            e_max_pu=e_max_pu,
         )
 
         n.madd(
@@ -2454,6 +2453,11 @@ def add_biomass(n, costs):
             carrier="unsustainable bioliquids",
             unit="MWh_LHV",
         )
+
+        e_max_pu = pd.DataFrame(
+            1, index=n.snapshots, columns=spatial.biomass.bioliquids
+        )
+        e_max_pu.iloc[-1] = 0
 
         n.madd(
             "Store",
@@ -2465,9 +2469,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["biodiesel crops", "fuel"],
             e_initial=unsustainable_liquid_biofuel_potentials_spatial,
             e_nom_extendable=False,
-            e_max_pu=e_max_pu.rename(
-                spatial.biomass.bioliquids[0] + " unsustainable"
-            ).to_frame(),
+            e_max_pu=e_max_pu,
         )
 
         n.madd(

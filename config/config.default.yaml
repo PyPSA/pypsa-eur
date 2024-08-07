@@ -739,7 +739,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: "d0c646ad4561e2a82729dfb8c96e0fb5b29423b7"
+  version: v0.9.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0

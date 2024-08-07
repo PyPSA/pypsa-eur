@@ -10,6 +10,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
+  substituted by the phase-in of sustainable biomass types using the config parameters
+  ``biomass: share_unsustainable_use_retained`` and ``biomass: share_sustainable_potential_available``.
+
 * split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
 
 * Add option to import solid biomass

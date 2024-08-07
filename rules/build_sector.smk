@@ -345,7 +345,7 @@ rule build_biomass_potentials:
         biomass_potentials=resources(
             "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-    threads: 1
+    threads: 8
     resources:
         mem_mb=1000,
     log:

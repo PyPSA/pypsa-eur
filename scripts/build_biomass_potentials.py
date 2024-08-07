@@ -278,6 +278,7 @@ def add_unsustainable_potentials(df):
         build_eurostat(
             countries=snakemake.config["countries"],
             input_eurostat=snakemake.input.eurostat,
+            nprocesses=int(snakemake.threads),
         )
         .xs(
             max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
