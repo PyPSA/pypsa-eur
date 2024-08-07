@@ -73,10 +73,10 @@ from functools import reduce
 from itertools import takewhile
 from operator import attrgetter
 
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import country_converter as coco
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
