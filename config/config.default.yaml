@@ -412,9 +412,11 @@ sector:
     district_heating_loss: 0.15
     # check these numbers!
     forward_temperature:
+      Default: 90
       DE: 90 #C
       DK: 60 #C
     return_temperature:
+      Default: 50
       DE: 50 #C
       DK: 40 #C
     heat_source_cooling: 6 #K
