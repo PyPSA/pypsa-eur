@@ -19,6 +19,14 @@ Upcoming Release
 
 * Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
 
+* split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
+
+* Add option to import solid biomass
+
+* Add option to produce electrobiofuels (flag ``electrobiofuels``) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
+
+* Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
+
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
 
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.

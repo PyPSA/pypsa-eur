@@ -355,7 +355,6 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
-    - Municipal waste
     not included:
     - Sugar from sugar beet
     - Rape seed
@@ -369,6 +368,8 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+    municipal solid waste:
+    - Municipal waste
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -397,6 +398,7 @@ sector:
   biomass: true
   industry: true
   agriculture: true
+  fossil_fuels: true
   district_heating:
     potential: 0.6
     progress:
@@ -596,7 +598,9 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  electrobiofuels: false
   biosng: false
+  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -618,6 +622,12 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
+  solid_biomass_import:
+    enable: false
+    price: 54 #EUR/MWh
+    max_amount: 1390 # TWh
+    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -1015,6 +1025,8 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
+    municipal solid waste: '#91ba41'
+    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1028,6 +1040,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'
