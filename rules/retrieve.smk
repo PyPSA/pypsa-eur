@@ -4,11 +4,7 @@
 
 import requests
 from datetime import datetime, timedelta
-<<<<<<< HEAD
-from shutil import unpack_archive
-=======
 from shutil import move, unpack_archive
->>>>>>> master
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -20,11 +16,6 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-<<<<<<< HEAD
-        "naturalearth/ne_10m_admin_0_countries.shp",
-=======
-        "eez/World_EEZ_v8_2014.shp",
->>>>>>> master
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
