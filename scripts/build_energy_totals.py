@@ -25,7 +25,7 @@ Inputs
 - `data/bundle/eea_UNFCCC_v23.csv`: CO2 emissions data from EEA.
 - `data/switzerland-new_format-all_years.csv`: Swiss energy data.
 - `data/gr-e-11.03.02.01.01-cc.csv`: Swiss transport data
-- `data/bundle/jrc-idees`: JRC IDEES data.
+- `data/jrc-idees`: JRC IDEES data.
 - `data/district_heat_share.csv`: District heating shares.
 - `data/eurostat/Balances-April2023`: Eurostat energy balances.
 - `data/eurostat/eurostat-household_energy_balances-february_2024.csv`: Eurostat household energy balances.
@@ -496,8 +496,6 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[7] == "International - Extra-EEAwUK"
     ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
 
-    # TODO freight changed from "Domestic and International - Intra-EU" -> split
-    # domestic and international (intra-EU and outside EU)
     assert df.index[9] == "Domestic"
     ct_totals["total domestic aviation freight"] = df.iloc[9]
 
