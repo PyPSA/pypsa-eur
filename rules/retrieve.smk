@@ -53,6 +53,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
+        conda:
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
 
@@ -62,6 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
+        conda:
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
 
