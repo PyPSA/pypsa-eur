@@ -16,7 +16,6 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "eez/World_EEZ_v8_2014.shp",
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
@@ -214,6 +213,41 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_eez:
+        params:
+            zip="data/eez/World_EEZ_v12_20231025_gpkg.zip",
+        output:
+            gpkg="data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg",
+        run:
+            import os
+            import requests
+            from uuid import uuid4
+
+            name = str(uuid4())[:8]
+            org = str(uuid4())[:8]
+
+            response = requests.post(
+                "https://www.marineregions.org/download_file.php",
+                params={"name": "World_EEZ_v12_20231025_gpkg.zip"},
+                data={
+                    "name": name,
+                    "organisation": org,
+                    "email": f"{name}@{org}.org",
+                    "country": "Germany",
+                    "user_category": "academia",
+                    "purpose_category": "Research",
+                    "agree": "1",
+                },
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
 
 if config["enable"]["retrieve"]:
 
