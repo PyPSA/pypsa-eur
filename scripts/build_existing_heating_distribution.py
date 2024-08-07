@@ -14,11 +14,11 @@ Inputs:
 - Existing heating generators: `data/existing_heating_raw.csv` per country
 - Population layout: `resources/{run_name}/pop_layout_s<simpl>_<clusters>.csv`. Output of `scripts/build_clustered_population_layout.py`
 - Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s<simpl>_<clusters>.csv`
-- District heating share: `resources/<run_name>/district_heat_share_elec_s<simpl>_<clusters>_<planning_horizons>.csv`
+- District heating share: `resources/<run_name>/district_heat_share_base_s<simpl>_<clusters>_<planning_horizons>.csv`
 
 Outputs:
 --------
-- Existing heat generation capacities distributed to nodes: `resources/{run_name}/existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv`
+- Existing heat generation capacities distributed to nodes: `resources/{run_name}/existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv`
 
 Relevant settings:
 ------------------
@@ -154,7 +154,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_existing_heating_distribution",
-            simpl="",
             clusters=48,
             planning_horizons=2050,
         )

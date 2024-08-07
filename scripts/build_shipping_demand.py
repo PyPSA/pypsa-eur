@@ -17,11 +17,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_shipping_demand",
-            simpl="",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_shipping_demand", clusters=48)
     set_scenario_config(snakemake)
 
     scope = gpd.read_file(snakemake.input.scope).geometry[0]

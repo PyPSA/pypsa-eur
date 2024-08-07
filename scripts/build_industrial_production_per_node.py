@@ -8,13 +8,13 @@ Build industrial production per model region.
 Inputs
 -------
 
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
 - ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
 
 Outputs
 -------
 
-- ``resources/industrial_production_per_node_elec_s{simpl}_{clusters}_{planning_horizons}.csv``
+- ``resources/industrial_production_per_node_base_s_{clusters}_{planning_horizons}.csv``
 
 Description
 -------
@@ -87,11 +87,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_industrial_production_per_node",
-            simpl="",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_industrial_production_per_node", clusters=48)
     set_scenario_config(snakemake)
 
     build_nodal_industrial_production()

@@ -25,7 +25,7 @@ custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/
 ,,,
 everywhere_powerplants,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with ``extendable_carriers`` to allow for building conventional powerplants irrespective of existing locations."
 ,,,
-conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
+conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants_s_{clusters}.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,,
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,

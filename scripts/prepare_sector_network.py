@@ -431,12 +431,20 @@ def create_network_topology(
     return topo
 
 
-# TODO merge issue with PyPSA-Eur
-def update_wind_solar_costs(n, costs):
+def update_wind_solar_costs(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    line_length_factor: int | float = 1,
+    landfall_lengths: dict = None,
+) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
     """
+
+    if landfall_lengths is None:
+        landfall_lengths = {}
+
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -448,22 +456,9 @@ def update_wind_solar_costs(n, costs):
     ]
 
     # for offshore wind, need to calculated connection costs
-
-    # assign clustered bus
-    # map initial network -> simplified network
-    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
-    busmap_s.index = busmap_s.index.astype(str)
-    busmap_s = busmap_s.astype(str)
-    # map simplified network -> clustered network
-    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
-    busmap.index = busmap.index.astype(str)
-    busmap = busmap.astype(str)
-    # map initial network -> clustered network
-    clustermaps = busmap_s.map(busmap)
-
-    # code adapted from pypsa-eur/scripts/add_electricity.py
     for connection in ["dc", "ac", "float"]:
         tech = "offwind-" + connection
+        landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
             continue
         profile = snakemake.input["profile_offwind-" + connection]
@@ -474,29 +469,21 @@ def update_wind_solar_costs(n, costs):
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
             underwater_fraction = ds["underwater_fraction"].to_pandas()
-            connection_cost = (
-                snakemake.params.length_factor
-                * ds["average_distance"].to_pandas()
-                * (
-                    underwater_fraction
-                    * costs.at[tech + "-connection-submarine", "fixed"]
-                    + (1.0 - underwater_fraction)
-                    * costs.at[tech + "-connection-underground", "fixed"]
-                )
+            if landfall_length == "centroid":
+                landfall_length = 0.0
+                onshore_fraction = 1.0 - underwater_fraction
+            elif isinstance(landfall_length, (int, float)):
+                onshore_fraction = 0.0
+            else:
+                raise ValueError("landfall_length must be 'centroid' or a number")
+            distance = ds["average_distance"].to_pandas()
+            submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
+            underground_cost = costs.at[tech + "-connection-underground", "fixed"]
+            connection_cost = line_length_factor * (
+                distance * underwater_fraction * submarine_cost
+                + distance * onshore_fraction * underground_cost
+                + landfall_length * underground_cost
             )
-
-            # convert to aggregated clusters with weighting
-            weight = ds["weight"].to_pandas()
-
-            # e.g. clusters == 37m means that VRE generators are left
-            # at clustering of simplified network, but that they are
-            # connected to 37-node network
-            genmap = (
-                busmap_s if snakemake.wildcards.clusters[-1:] == "m" else clustermaps
-            )
-            connection_cost = (connection_cost * weight).groupby(
-                genmap
-            ).sum() / weight.groupby(genmap).sum()
 
             capital_cost = (
                 costs.at["offwind", "fixed"]
@@ -589,10 +576,10 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n):
+def patch_electricity_network(n, costs, landfall_lengths):
     remove_elec_base_techs(n)
     remove_non_electric_buses(n)
-    update_wind_solar_costs(n, costs)
+    update_wind_solar_costs(n, costs, landfall_lengths)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
     n.buses["unit"] = "MWh_el"
@@ -1018,13 +1005,7 @@ def insert_electricity_distribution_grid(n, costs):
     # set existing solar to cost of utility cost rather the 50-50 rooftop-utility
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "fixed"]
-    if snakemake.wildcards.clusters[-1:] == "m":
-        simplified_pop_layout = pd.read_csv(
-            snakemake.input.simplified_pop_layout, index_col=0
-        )
-        pop_solar = simplified_pop_layout.total.rename(index=lambda x: x + " solar")
-    else:
-        pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
+    pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
 
     # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
     # i.e. 2 kW/person (population data is in thousands of people) so we get MW
@@ -4126,7 +4107,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            simpl="",
             opts="",
             clusters="37",
             ll="vopt",
@@ -4163,7 +4143,12 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    patch_electricity_network(n)
+    landfall_lengths = {
+        tech: settings["landfall_length"]
+        for tech, settings in snakemake.params.renewable.items()
+        if "landfall_length" in settings.keys()
+    }
+    patch_electricity_network(n, costs, landfall_lengths)
 
     spatial = define_spatial(pop_layout.index, options)
 

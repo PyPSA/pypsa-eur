@@ -44,7 +44,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_district_heat_share",
-            simpl="",
             clusters=60,
             planning_horizons="2050",
         )

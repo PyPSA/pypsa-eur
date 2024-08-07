@@ -14,7 +14,7 @@ Relevant Settings
 
     lines:
         cutout:
-        line_rating:
+        dynamic_line_rating:
 
 
 .. seealso::
@@ -50,19 +50,24 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
+import logging
 import re
 
 import atlite
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
+from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
+logger = logging.getLogger(__name__)
 
-def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
+
+def calculate_resistance(T, R_ref, T_ref: float | int = 293, alpha: float = 0.00403):
     """
     Calculates the resistance at other temperatures than the reference
     temperature.
@@ -84,7 +89,12 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     return R_ref * (1 + alpha * (T - T_ref))
 
 
-def calculate_line_rating(n, cutout):
+def calculate_line_rating(
+    n: pypsa.Network,
+    cutout: atlite.Cutout,
+    show_progress: bool = True,
+    dask_kwargs: dict = {},
+) -> xr.DataArray:
     """
     Calculates the maximal allowed power flow in each line for each time step
     considering the maximal temperature.
@@ -97,6 +107,7 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
+    logger.info("Calculating dynamic line rating.")
     relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
@@ -120,7 +131,16 @@ def calculate_line_rating(n, cutout):
         relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
-    Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
+    Imax = cutout.line_rating(
+        shapes,
+        R,
+        D=0.0218,
+        Ts=353,
+        epsilon=0.8,
+        alpha=0.8,
+        show_progress=show_progress,
+        dask_kwargs=dask_kwargs,
+    )
     line_factor = relevant_lines.eval("v_nom * n_bundle * num_parallel") / 1e3  # in mW
     return xr.DataArray(
         data=np.sqrt(3) * Imax * line_factor.values.reshape(-1, 1),
@@ -130,25 +150,74 @@ def calculate_line_rating(n, cutout):
     )
 
 
+def attach_line_rating(
+    n: pypsa.Network,
+    rating: pd.DataFrame,
+    s_max_pu: float,
+    correction_factor: float,
+    max_voltage_difference: float | bool,
+    max_line_rating: float | bool,
+) -> None:
+    logger.info("Attaching dynamic line rating to network.")
+    # TODO: Only considers overhead lines
+    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor
+    if max_voltage_difference:
+        x_pu = (
+            n.lines.type.map(n.line_types["x_per_length"])
+            * n.lines.length
+            / (n.lines.v_nom**2)
+        )
+        # need to clip here as cap values might be below 1
+        # -> would mean the line cannot be operated at actual given pessimistic ampacity
+        s_max_pu_cap = (
+            np.deg2rad(max_voltage_difference) / (x_pu * n.lines.s_nom)
+        ).clip(lower=1)
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(
+            lower=1, upper=s_max_pu_cap, axis=1
+        )
+    if max_line_rating:
+        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
+    n.lines_t.s_max_pu *= s_max_pu
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_line_rating",
-            network="elec",
-            simpl="",
-            clusters="5",
-            ll="v1.0",
-            opts="Co2L-4H",
-        )
+        snakemake = mock_snakemake("build_line_rating")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+
+    nprocesses = int(snakemake.threads)
+    show_progress = not snakemake.config["run"].get("disable_progressbar", True)
+    show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
+    if nprocesses > 1:
+        client = Client(n_workers=nprocesses, threads_per_worker=1)
+    else:
+        client = None
+    dask_kwargs = {"scheduler": client}
 
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
-    da = calculate_line_rating(n, cutout)
-    da.to_netcdf(snakemake.output[0])
+    da = calculate_line_rating(n, cutout, show_progress, dask_kwargs)
+    rating = da.to_pandas().transpose()
+
+    config = snakemake.params["dlr"]
+    s_max_pu = snakemake.params["s_max_pu"]
+    correction_factor = config["correction_factor"]
+    max_voltage_difference = config["max_voltage_difference"]
+    max_line_rating = config["max_line_rating"]
+
+    attach_line_rating(
+        n,
+        rating,
+        s_max_pu,
+        correction_factor,
+        max_voltage_difference,
+        max_line_rating,
+    )
+
+    n.export_to_netcdf(snakemake.output[0])

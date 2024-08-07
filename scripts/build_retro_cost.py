@@ -1049,7 +1049,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_retro_cost",
-            simpl="",
             clusters=48,
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",

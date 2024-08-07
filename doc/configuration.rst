@@ -87,7 +87,7 @@ facilitate running multiple scenarios through a single command
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
-``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
+``results/networks/base_s_{clusters}_elec_l{ll}_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
 <https://docs.python.org/2/library/itertools.html#itertools.product>`__ function

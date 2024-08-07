@@ -20,13 +20,13 @@ Relevant Settings
 
 Inputs:
 -------
-- ``resources/<run_name>/temp_soil_total_elec_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
-- ``resources/<run_name>/temp_air_total_elec_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
+- ``resources/<run_name>/temp_soil_total_base_s<simpl>_<clusters>.nc``: Soil temperature (total) time series.
+- ``resources/<run_name>/temp_air_total_base_s<simpl>_<clusters>.nc``: Ambient air temperature (total) time series.
 
 Outputs:
 --------
-- ``resources/cop_soil_total_elec_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
-- ``resources/cop_air_total_elec_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
+- ``resources/cop_soil_total_base_s<simpl>_<clusters>.nc``: COP (ground-sourced) time series (total).
+- ``resources/cop_air_total_base_s<simpl>_<clusters>.nc``: COP (air-sourced) time series (total).
 
 
 References
@@ -53,7 +53,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            simpl="",
             clusters=48,
         )
 

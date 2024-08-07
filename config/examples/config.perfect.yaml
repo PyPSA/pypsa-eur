@@ -10,8 +10,6 @@ foresight: perfect
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  simpl:
-  - ''
   ll:
   - v1.0
   clusters:
