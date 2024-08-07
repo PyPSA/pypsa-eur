@@ -31,7 +31,7 @@ The industrial production is taken from the `JRC-IDEES <https://joint-research-c
 This dataset provides detailed information about the consumption of energy for various processes.
 If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the config["industry"]["reference_year"].
 
-The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html> dataset.
+The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://pubdb.bfe.admin.ch/de/publication/download/11817> dataset.
 After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.
 
 The following subcategories [kton/a] are considered:
@@ -167,27 +167,19 @@ eb_sectors = {
 }
 
 
-# TODO: this should go in a csv in `data`
-# Annual energy consumption in Switzerland by sector in 2015 (in TJ)
-# From: Energieverbrauch in der Industrie und im Dienstleistungssektor, Der Bundesrat
-# http://www.bfe.admin.ch/themen/00526/00541/00543/index.html?lang=de&dossier_id=00775
-e_switzerland = pd.Series(
-    {
-        "Iron and steel": 7889.0,
-        "Chemical industry": 26871.0,
-        "Non-metallic mineral products": 15513.0 + 3820.0,
-        "Pulp, paper and printing": 12004.0,
-        "Food, beverages and tobacco": 17728.0,
-        "Non Ferrous Metals": 3037.0,
-        "Transport equipment": 14993.0,
-        "Machinery equipment": 4724.0,
-        "Textiles and leather": 1742.0,
-        "Wood and wood products": 0.0,
-        "Other industrial sectors": 10825.0,
-        "current electricity": 53760.0,
+ch_mapping = {
+    "Nahrung": "Food, beverages and tobacco",
+    "Textil / Leder": "Textiles and leather",
+    "Papier / Druck": "Pulp, paper and printing",
+    "Chemie / Pharma": "Chemical industry",
+    "Zement / Beton":  "Non-metallic mineral products",
+    "Andere NE-Mineralien": "Other non-ferrous metals",
+    "Metall / Eisen": "Iron and steel",
+    "NE-Metall": "Non Ferrous Metals",
+    "Metall / Geräte" : "Transport equipment",
+    "Maschinen": "Machinery equipment",
+    "Andere Industrien": "Other industrial sectors",  
     }
-)
-
 
 def find_physical_output(df):
     start = np.where(df.index.str.contains("Physical output", na=""))[0][0]
@@ -198,11 +190,14 @@ def find_physical_output(df):
 
 def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     if country == "CH":
-        e_country = e_switzerland * tj_to_ktoe
+        # data ranges between 2014-2023
+        e_country = pd.read_csv(snakemake.input.ch_industrial_production,
+                                index_col=0).dropna()
+        e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
+        e_country = e_country[str(min(2019, year))]
+        e_country  *= tj_to_ktoe
     else:
         ct_eurostat = country.replace("GB", "UK")
-        if ct_eurostat == "UK":
-            logger.info("Assume Eurostat data for GB from 2019.")
         # estimate physical output, energy consumption in the sector and country
         fn = f"{eurostat_dir}/{ct_eurostat}-Energy-balance-sheets-April-2023-edition.xlsb"
         df = pd.read_excel(
