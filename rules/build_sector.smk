@@ -215,15 +215,6 @@ rule build_temperature_profiles:
         "../scripts/build_temperature_profiles.py"
 
 
-# def output_cop(wildcards):
-#     return {
-#         f"cop_{source}_{sink}": resources(
-#             "cop_" + source + "_" + sink + "_" + "elec_s{simpl}_{clusters}.nc"
-#         )
-#         for sink, source in config["sector"]["heat_pump_sources"].items()
-#     }
-
-
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
