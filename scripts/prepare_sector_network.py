@@ -99,8 +99,8 @@ def define_spatial(nodes, options):
     else:
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.biogas_location = ["EU"]
-        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
-        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
+        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
 
     if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
         spatial.gas.industry = nodes + " gas for industry"
@@ -2383,7 +2383,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"] or options["co2_spatial"] or options.get("biomass_spatial", options["biomass_transport"]):
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -2403,7 +2403,7 @@ def add_biomass(n, costs):
     n.madd(
         "Bus",
         spatial.gas.biogas,
-        location=spatial.gas.demand_locations,
+        location=spatial.gas.biogas_locations,
         carrier="biogas",
         unit="MWh_LHV",
     )
@@ -4147,7 +4147,6 @@ if __name__ == "__main__":
             ll="vopt",
             sector_opts="none",
             planning_horizons="2020",
-            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)
