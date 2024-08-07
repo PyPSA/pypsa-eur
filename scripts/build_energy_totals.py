@@ -497,11 +497,12 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     ct_totals["total international aviation passenger"] = df.iloc[[6, 7]].sum()
 
     assert df.index[9] == "Domestic"
-    ct_totals["total domestic aviation freight"] = df.iloc[9]
-
     assert df.index[10] == "International - Intra-EEAwUK"
+    ct_totals["total domestic aviation freight"] = df.iloc[[9,10]].sum()
+
+    
     assert df.index[11] == "International - Extra-EEAwUK"
-    ct_totals["total international aviation freight"] = df.iloc[[10, 11]].sum()
+    ct_totals["total international aviation freight"] = df.iloc[11].sum()
 
     ct_totals["total domestic aviation"] = (
         ct_totals["total domestic aviation freight"]
