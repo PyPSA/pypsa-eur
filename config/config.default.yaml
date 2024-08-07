@@ -369,6 +369,23 @@ biomass:
     - Sludge
     municipal solid waste:
     - Municipal waste
+  share_unsustainable_use_retained:
+    2020: 1
+    2025: 0.66
+    2030: 0.33
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 0
+    2025: 0.33
+    2030: 0.66
+    2035: 1
+    2040: 1
+    2045: 1
+    2050: 1
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -737,7 +754,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.0
+  version: v0.9.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1055,6 +1072,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission
