@@ -170,6 +170,7 @@ def eurostat_per_country(input_eurostat: str, country: str) -> pd.DataFrame:
         sheet_name=None,
         skiprows=4,
         index_col=list(range(4)),
+        na_values=":"
     )
     sheet.pop("Cover")
     return pd.concat(sheet)
@@ -502,7 +503,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     
     assert df.index[11] == "International - Extra-EEAwUK"
-    ct_totals["total international aviation freight"] = df.iloc[11].sum()
+    ct_totals["total international aviation freight"] = df.iloc[11]
 
     ct_totals["total domestic aviation"] = (
         ct_totals["total domestic aviation freight"]
@@ -607,8 +608,6 @@ def fill_missing_years(fill_values: pd.Series) -> pd.Series:
     - Zero values in the original Series are replaced by the ffilled and bfilled
       value of their respective country group.
     """
-    # Replace zero values with NaN for correct filling
-    fill_values = fill_values.replace(0, pd.NA)
 
     # Forward fill and then backward fill within each country group
     fill_values = fill_values.groupby(level="country").ffill().bfill()
