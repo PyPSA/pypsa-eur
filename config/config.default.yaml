@@ -355,7 +355,6 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
-    - Municipal waste
     not included:
     - Sugar from sugar beet
     - Rape seed
@@ -369,6 +368,8 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+    municipal solid waste:
+    - Municipal waste
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -409,6 +410,22 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
+    forward_temperature: 90 #C
+    return_temperature: 50 #C
+    heat_source_cooling: 6 #K
+    heat_pump_cop_approximation:
+      refrigerant: ammonia
+      heat_exchanger_pinch_point_temperature_difference: 5 #K
+      isentropic_compressor_efficiency: 0.8
+      heat_loss: 0.0
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
@@ -491,7 +508,7 @@ sector:
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
-  heat_pump_sink_T: 55.
+  heat_pump_sink_T_individual_heating: 55.
   reduce_space_heat_exogenously: true
   reduce_space_heat_exogenously_factor:
     2020: 0.10  # this results in a space heat demand reduction of 10%
@@ -597,7 +614,9 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  electrobiofuels: false
   biosng: false
+  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -619,6 +638,12 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
+  solid_biomass_import:
+    enable: false
+    price: 54 #EUR/MWh
+    max_amount: 1390 # TWh
+    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -1016,6 +1041,8 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
+    municipal solid waste: '#91ba41'
+    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1029,6 +1056,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission
     lines: '#6c9459'
