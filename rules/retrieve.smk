@@ -4,6 +4,7 @@
 
 import requests
 from datetime import datetime, timedelta
+from shutil import move, unpack_archive
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -16,7 +17,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     datafiles = [
         "je-e-21.03.02.xls",
         "eez/World_EEZ_v8_2014.shp",
-        "naturalearth/ne_10m_admin_0_countries.shp",
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
@@ -213,6 +213,27 @@ if config["enable"]["retrieve"]:
             "data/LUISA_basemap_020321_50m.tif",
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    # Download directly from naciscdn.org which is a redirect from naturalearth.com
+    # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
+    # Use point-of-view (POV) variant of Germany so that Crimea is included.
+    rule retrieve_naturalearth_countries:
+        input:
+            storage(
+                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+            ),
+        params:
+            zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
+        output:
+            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
+        run:
+            move(input[0], params["zip"])
+            output_folder = Path(output["countries"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
 
 
 if config["enable"]["retrieve"]:
