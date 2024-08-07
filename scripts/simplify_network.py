@@ -298,7 +298,8 @@ def simplify_links(
     _, labels = connected_components(adjacency_matrix, directed=False)
     labels = pd.Series(labels, n.buses.index)
 
-    G = n.graph()
+    # TODO: I changed this because I got an error because the graph included lines and links in the function split_links which lead to an error later on
+    G = n.graph(branch_components=["Link"])
 
     def split_links(nodes):
         nodes = frozenset(nodes)

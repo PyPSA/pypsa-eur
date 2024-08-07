@@ -379,6 +379,23 @@ overwrite the existing values.
 
 .. _transformers_cf:
 
+``transmission projects``
+=============
+
+Allows to define additional transmission projects which will be added to the network, e.g. for the TYNDP 2020 dataset. The projects are read in from the respective csv files in the subfolder of ``data/transmission_projects/``. One can add new transmission projects like TYNDP 2024 in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` and add the project ``tyndp2024`` to the include section under ``transmission_projects`` in the ``config.yaml``. The csv files in the project folder should have the same columns as the csv files in the template folder ``data/transmission_projects/template``.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: transmission_projects:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/transmission_projects.csv
+
+.. _transformers_cf:
+
 ``transformers``
 ================
 

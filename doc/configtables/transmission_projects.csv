@@ -1,0 +1,8 @@
+,Unit,Values,Description
+enable,bool,"{true,false}",Whether to integrate this transmission projects or not.
+include,--,,"Name of the transmission projects. They should be unique and have to be provided in the `data/transmission_projects` folder."
+-- tyndp2020,bool,"{true,false}",Whether to integrate the TYNDP 2020 dataset.
+-- nep,bool,"{true,false}",Whether to integrate the German network development plan dataset.
+-- manual,bool,"{true,false}",Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.
+status,list or dict,,Status to include into the model as list or as dict with name of project and status to include.
+new_link_capacity,--,"{zero,keep}",Whether to set the new link capacity to the provided capacity or set it to zero.

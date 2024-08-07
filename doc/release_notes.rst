@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* More modular and flexible handling of transmission projects. One can now add new transmission projects in a subfolder of `data/transmission projects` similar to the files in the template folder. After adding the new files and updating the config, transmission projects will be included if they are not duplicates of existing lines or other projects.
 
 * The rule ``prepare_links_p_nom`` was removed since it was outdated and not used.
 
