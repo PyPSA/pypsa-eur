@@ -1252,9 +1252,9 @@ def rescale_idees_from_eurostat(
 
     main_cols = ["Total all products", "Electricity"]
     # read in the eurostat data for 2015
-    eurostat_2015 = eurostat.xs(2021, level="year")[main_cols]
+    eurostat_2021 = eurostat.xs(2021, level="year")[main_cols]
     # calculate the ratio of the two data sets
-    ratio = eurostat[main_cols] / eurostat_2015
+    ratio = eurostat[main_cols] / eurostat_2021
     ratio = ratio.droplevel([2, 5])
     cols_rename = {"Total all products": "total", "Electricity": "ele"}
     index_rename = {v: k for k, v in idees_rename.items()}
