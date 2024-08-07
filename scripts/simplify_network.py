@@ -223,30 +223,31 @@ def _adjust_costs_using_connection_costs(
     connection_overnight_cost = {}
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
-        costs = (
+        connection_capital_cost = (
             n.generators.loc[tech_b, "bus"]
             .map(connection_costs_to_bus[tech])
             .loc[lambda s: s > 0]
         )
-        overnight_cost = (
+        connection_overnight_cost = (
             n.generators.loc[tech_b, "bus"]
             .map(connection_overnight_cost_to_bus[tech])
             .loc[lambda s: s > 0]
         )
-        if not costs.empty:
-            n.generators.loc[costs.index, "capital_cost"] += costs
-            n.generators.loc[costs.index, "overnight_cost"] += overnight_cost
+        if not connection_capital_cost.empty:
+            n.generators.loc[connection_capital_cost.index, "capital_cost"] += connection_capital_cost
+            n.generators.loc[connection_overnight_cost.index, "connection_overnight_cost"] += connection_overnight_cost
+
             logger.info(
                 "Displacing {} generator(s) and adding connection costs to capital_costs: {} ".format(
                     tech,
                     ", ".join(
                         "{:.0f} Eur/MW/a for `{}`".format(d, b)
-                        for b, d in costs.items()
+                        for b, d in connection_capital_cost.items()
                     ),
                 )
             )
-            connection_costs[tech] = costs
-            connection_overnight_cost[tech] = overnight_cost
+            connection_costs[tech] = connection_capital_cost
+            connection_overnight_cost[tech] = connection_overnight_cost
 
 
 def _aggregate_and_move_components(
@@ -366,7 +367,7 @@ def simplify_links(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
     connection_overnight_cost_to_bus = pd.DataFrame(
-        0.0, index=n.buses.index, columns=list(connection_costs_per_link)
+        0.0, index=n.buses.index, columns=list(connection_overnight_cost_per_link)
     )
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:

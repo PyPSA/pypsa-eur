@@ -590,12 +590,41 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
+    generator_nodes = nodes
+    generator_carrier = carrier
+
+    if carrier in cf_industry["fuel_refining"]:
+
+        n.madd(
+            "Bus",
+            nodes + " primary",
+            location=location,
+            carrier=carrier + " primary",
+            unit=unit,
+        )
+
+        n.madd(
+            "Link",
+            nodes + " refining",
+            bus0=nodes + " primary",
+            bus1=nodes,
+            bus2="co2 atmosphere",
+            location=location,
+            carrier=carrier + " refining",
+            p_nom=1e6,
+            efficiency=1 - (cf_industry["fuel_refining"][carrier]["emissions"] / costs.at[carrier, "CO2 intensity"]),
+            efficiency2=cf_industry["fuel_refining"][carrier]["emissions"],
+        )
+
+        generator_nodes = nodes + " primary"
+        generator_carrier = carrier + " primary"
+
     n.madd(
         "Generator",
-        nodes,
-        bus=nodes,
+        generator_nodes,
+        bus=generator_nodes,
         p_nom_extendable=True,
-        carrier=carrier,
+        carrier=generator_carrier,
         marginal_cost=costs.at[carrier, "fuel"],
     )
 
@@ -3053,36 +3082,7 @@ def add_industry(n, costs):
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            spatial.oil.nodes,
-            suffix=" Store",
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
+    add_carrier_buses(n, "oil")
 
     if shipping_oil_share:
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
