@@ -2,21 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-if config["enable"].get("prepare_links_p_nom", False):
-
-    rule prepare_links_p_nom:
-        output:
-            "data/links_p_nom.csv",
-        log:
-            logs("prepare_links_p_nom.log"),
-        threads: 1
-        resources:
-            mem_mb=1500,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/prepare_links_p_nom.py"
-
 
 rule build_electricity_demand:
     params:

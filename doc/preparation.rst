@@ -41,11 +41,6 @@ Rule ``build_cutout``
 .. automodule:: build_cutout
 
 
-Rule ``prepare_links_p_nom``
-===============================
-
-.. automodule:: prepare_links_p_nom
-
 .. _base:
 
 Rule ``base_network``

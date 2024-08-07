@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* The rule ``prepare_links_p_nom`` was removed since it was outdated and not used.
+
 * split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
 
 * Add option to import solid biomass
