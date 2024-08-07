@@ -90,44 +90,42 @@ def define_spatial(nodes, options):
     # gas
 
     spatial.gas = SimpleNamespace()
+    # check if biogas potential should be spatially resolved
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
+        spatial.gas.biogas = nodes + " biogas"
+        spatial.gas.biogas_location = nodes
+        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
+        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+    else:
+        spatial.gas.biogas = ["EU biogas"]
+        spatial.gas.biogas_location = ["EU"]
+        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
+        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
+
+    if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
+        spatial.gas.industry = nodes + " gas for industry"
+        spatial.gas.industry_cc = nodes + " gas for industry CC"
+    else:
+        spatial.gas.industry = ["gas for industry"]
+        spatial.gas.industry_cc = ["gas for industry CC"]
 
     if options["gas_network"]:
         if ~options["regional_gas_demand"]:
             logger.warning(
-                "Gas network requires regionsl gas demand. Please check config['sector']['regional_gas_demand']"
+                "Gas network requires regional gas demand. Please check config['sector']['regional_gas_demand']"
             )
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.demand_locations = nodes
-        spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.industry = nodes + " gas for industry"
-        spatial.gas.industry_cc = nodes + " gas for industry CC"
-        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
-        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
-    elif options["regional_gas_demand"] and not options["gas_network"]:
+
+    elif options["regional_gas_demand"]:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
         spatial.gas.demand_locations = nodes
-        spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.industry = nodes + " gas for industry"
-        spatial.gas.industry_cc = nodes + " gas for industry CC"
-        spatial.gas.biogas_to_gas = nodes + " biogas to gas"
-        spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
         spatial.gas.demand_locations = ["EU"]
-        spatial.gas.biogas = ["EU biogas"]
-        spatial.gas.industry = ["gas for industry"]
-        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        if options.get("biomass_spatial", options["biomass_transport"]):
-            spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
-        else:
-            spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2network"]):
-            spatial.gas.industry_cc = nodes + " gas for industry CC"
-        else:
-            spatial.gas.industry_cc = ["gas for industry CC"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -2385,7 +2383,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"] or options["regional_gas_demand"]:
+    if options["gas_network"] or options["co2_spatial"] or options.get("biomass_spatial", options["biomass_transport"]):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
