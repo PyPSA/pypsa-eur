@@ -93,12 +93,12 @@ def define_spatial(nodes, options):
     # check if biogas potential should be spatially resolved
     if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.biogas_location = nodes
+        spatial.gas.biogas_locations = nodes
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
         spatial.gas.biogas = ["EU biogas"]
-        spatial.gas.biogas_location = ["EU"]
+        spatial.gas.biogas_locations = ["EU"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
         spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
 
