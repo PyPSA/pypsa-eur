@@ -90,29 +90,42 @@ def define_spatial(nodes, options):
     # gas
 
     spatial.gas = SimpleNamespace()
-
-    if options["gas_network"]:
-        spatial.gas.nodes = nodes + " gas"
-        spatial.gas.locations = nodes
+    # check if biogas potential should be spatially resolved
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.industry = nodes + " gas for industry"
-        spatial.gas.industry_cc = nodes + " gas for industry CC"
+        spatial.gas.biogas_locations = nodes
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
+        spatial.gas.biogas = ["EU biogas"]
+        spatial.gas.biogas_locations = ["EU"]
+        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
+        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
+
+    if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
+        spatial.gas.industry = nodes + " gas for industry"
+        spatial.gas.industry_cc = nodes + " gas for industry CC"
+    else:
+        spatial.gas.industry = ["gas for industry"]
+        spatial.gas.industry_cc = ["gas for industry CC"]
+
+    if options["gas_network"]:
+        if ~options["regional_gas_demand"]:
+            logger.warning(
+                "Gas network requires regional gas demand. Please check config['sector']['regional_gas_demand']"
+            )
+        spatial.gas.nodes = nodes + " gas"
+        spatial.gas.locations = nodes
+        spatial.gas.demand_locations = nodes
+
+    elif options["regional_gas_demand"]:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
-        spatial.gas.biogas = ["EU biogas"]
-        spatial.gas.industry = ["gas for industry"]
-        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        if options.get("biomass_spatial", options["biomass_transport"]):
-            spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
-        else:
-            spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2network"]):
-            spatial.gas.industry_cc = nodes + " gas for industry CC"
-        else:
-            spatial.gas.industry_cc = ["gas for industry CC"]
+        spatial.gas.demand_locations = nodes
+    else:
+        spatial.gas.nodes = ["EU gas"]
+        spatial.gas.locations = ["EU"]
+        spatial.gas.demand_locations = ["EU"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -2399,7 +2412,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"]:
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -2419,7 +2432,7 @@ def add_biomass(n, costs):
     n.madd(
         "Bus",
         spatial.gas.biogas,
-        location=spatial.gas.locations,
+        location=spatial.gas.biogas_locations,
         carrier="biogas",
         unit="MWh_LHV",
     )
@@ -2814,14 +2827,14 @@ def add_industry(n, costs):
     n.madd(
         "Bus",
         spatial.gas.industry,
-        location=spatial.gas.locations,
+        location=spatial.gas.demand_locations,
         carrier="gas for industry",
         unit="MWh_LHV",
     )
 
     gas_demand = industrial_demand.loc[nodes, "methane"] / nhours
 
-    if options["gas_network"]:
+    if options["gas_network"] or options["regional_gas_demand"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
     else:
         spatial_gas_demand = gas_demand.sum()
@@ -4130,10 +4143,10 @@ if __name__ == "__main__":
             # configfiles="test/config.overnight.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2050",
+            clusters="22",
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons="2020",
         )
 
     configure_logging(snakemake)
