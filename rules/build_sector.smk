@@ -217,13 +217,27 @@ rule build_temperature_profiles:
 
 rule build_cop_profiles:
     params:
-        heat_pump_sink_T=config_provider("sector", "heat_pump_sink_T"),
+        heat_pump_sink_T_decentral_heating=config_provider(
+            "sector", "heat_pump_sink_T_individual_heating"
+        ),
+        forward_temperature_central_heating=config_provider(
+            "sector", "district_heating", "forward_temperature"
+        ),
+        return_temperature_central_heating=config_provider(
+            "sector", "district_heating", "return_temperature"
+        ),
+        heat_source_cooling_central_heating=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
+        heat_pump_cop_approximation_central_heating=config_provider(
+            "sector", "district_heating", "heat_pump_cop_approximation"
+        ),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     output:
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -233,7 +247,7 @@ rule build_cop_profiles:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_cop_profiles.py"
+        "../scripts/build_cop_profiles/run.py"
 
 
 def solar_thermal_cutout(wildcards):
@@ -943,6 +957,8 @@ rule prepare_sector_network:
         emissions_scope=config_provider("energy", "emissions"),
         biomass=config_provider("biomass"),
         RDIR=RDIR,
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_systems=config_provider("sector", "heat_systems"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1019,8 +1035,7 @@ rule prepare_sector_network:
         ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
