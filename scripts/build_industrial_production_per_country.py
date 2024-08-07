@@ -202,13 +202,12 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     else:
         ct_eurostat = country.replace("GB", "UK")
         if ct_eurostat == "UK":
-            year = 2019
             logger.info("Assume Eurostat data for GB from 2019.")
         # estimate physical output, energy consumption in the sector and country
         fn = f"{eurostat_dir}/{ct_eurostat}-Energy-balance-sheets-April-2023-edition.xlsb"
         df = pd.read_excel(
             fn,
-            sheet_name=str(min(2021, year)),
+            sheet_name=str(min(2019, year)),
             index_col=2,
             header=0,
             skiprows=4,
@@ -292,7 +291,7 @@ def separate_basic_chemicals(demand, year):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
-    # ammonia data from 2017-2021
+    # ammonia data from 2018-2022
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
@@ -304,7 +303,7 @@ def separate_basic_chemicals(demand, year):
 
     year_to_use = min(max(year, 2018), 2022)
     if year_to_use != year:
-        logger.info(f"Using data from {year_to_use} for ammonia production.")
+        logger.info(f"Year {year} outside data range. Using data from {year_to_use} for ammonia production.")
     demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year_to_use)]
 
     demand["Basic chemicals"] -= demand["Ammonia"]
