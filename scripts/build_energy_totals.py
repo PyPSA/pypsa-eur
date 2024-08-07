@@ -170,7 +170,7 @@ def eurostat_per_country(input_eurostat: str, country: str) -> pd.DataFrame:
         sheet_name=None,
         skiprows=4,
         index_col=list(range(4)),
-        na_values=":"
+        na_values=":",
     )
     sheet.pop("Cover")
     return pd.concat(sheet)
@@ -499,9 +499,8 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[9] == "Domestic"
     assert df.index[10] == "International - Intra-EEAwUK"
-    ct_totals["total domestic aviation freight"] = df.iloc[[9,10]].sum()
+    ct_totals["total domestic aviation freight"] = df.iloc[[9, 10]].sum()
 
-    
     assert df.index[11] == "International - Extra-EEAwUK"
     ct_totals["total international aviation freight"] = df.iloc[11]
 

@@ -172,14 +172,15 @@ ch_mapping = {
     "Textil / Leder": "Textiles and leather",
     "Papier / Druck": "Pulp, paper and printing",
     "Chemie / Pharma": "Chemical industry",
-    "Zement / Beton":  "Non-metallic mineral products",
+    "Zement / Beton": "Non-metallic mineral products",
     "Andere NE-Mineralien": "Other non-ferrous metals",
     "Metall / Eisen": "Iron and steel",
     "NE-Metall": "Non Ferrous Metals",
-    "Metall / Geräte" : "Transport equipment",
+    "Metall / Geräte": "Transport equipment",
     "Maschinen": "Machinery equipment",
-    "Andere Industrien": "Other industrial sectors",  
-    }
+    "Andere Industrien": "Other industrial sectors",
+}
+
 
 def find_physical_output(df):
     start = np.where(df.index.str.contains("Physical output", na=""))[0][0]
@@ -191,11 +192,12 @@ def find_physical_output(df):
 def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     if country == "CH":
         # data ranges between 2014-2023
-        e_country = pd.read_csv(snakemake.input.ch_industrial_production,
-                                index_col=0).dropna()
+        e_country = pd.read_csv(
+            snakemake.input.ch_industrial_production, index_col=0
+        ).dropna()
         e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
         e_country = e_country[str(min(2019, year))]
-        e_country  *= tj_to_ktoe
+        e_country *= tj_to_ktoe
     else:
         ct_eurostat = country.replace("GB", "UK")
         # estimate physical output, energy consumption in the sector and country
@@ -298,7 +300,9 @@ def separate_basic_chemicals(demand, year):
 
     year_to_use = min(max(year, 2018), 2022)
     if year_to_use != year:
-        logger.info(f"Year {year} outside data range. Using data from {year_to_use} for ammonia production.")
+        logger.info(
+            f"Year {year} outside data range. Using data from {year_to_use} for ammonia production."
+        )
     demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year_to_use)]
 
     demand["Basic chemicals"] -= demand["Ammonia"]
