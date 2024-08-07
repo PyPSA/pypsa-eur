@@ -435,12 +435,16 @@ def update_wind_solar_costs(
     n: pypsa.Network,
     costs: pd.DataFrame,
     line_length_factor: int | float = 1,
-    landfall_length: int | float | str = 0,
+    landfall_lengths: dict = None,
 ) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
     """
+
+    if landfall_lengths is None:
+        landfall_lengths = {}
+
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -454,6 +458,7 @@ def update_wind_solar_costs(
     # for offshore wind, need to calculated connection costs
     for connection in ["dc", "ac", "float"]:
         tech = "offwind-" + connection
+        landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
             continue
         profile = snakemake.input["profile_offwind-" + connection]
@@ -571,10 +576,10 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n):
+def patch_electricity_network(n, costs, landfall_lengths):
     remove_elec_base_techs(n)
     remove_non_electric_buses(n)
-    update_wind_solar_costs(n, costs)
+    update_wind_solar_costs(n, costs, landfall_lengths)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
     n.buses["unit"] = "MWh_el"
@@ -4138,7 +4143,12 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    patch_electricity_network(n)
+    landfall_lengths = {
+        tech: settings["landfall_length"]
+        for tech, settings in snakemake.params.renewable.items()
+        if "landfall_length" in settings.keys()
+    }
+    patch_electricity_network(n, costs, landfall_lengths)
 
     spatial = define_spatial(pop_layout.index, options)
 

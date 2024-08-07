@@ -931,6 +931,7 @@ rule prepare_sector_network:
         costs=config_provider("costs"),
         sector=config_provider("sector"),
         industry=config_provider("industry"),
+        renewable=config_provider("renewable"),
         lines=config_provider("lines"),
         pypsa_eur=config_provider("pypsa_eur"),
         length_factor=config_provider("lines", "length_factor"),

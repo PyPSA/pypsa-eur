@@ -458,12 +458,18 @@ def attach_wind_and_solar(
     carriers: list | set,
     extendable_carriers: list | set,
     line_length_factor: float = 1.0,
-    landfall_length: int | float | str = 0,
+    landfall_lengths: dict = None,
 ) -> None:
     add_missing_carriers(n, carriers)
+
+    if landfall_lengths is None:
+        landfall_lengths = {}
+
     for car in carriers:
         if car == "hydro":
             continue
+
+        landfall_length = landfall_lengths.get(car, 0.0)
 
         with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
             if ds.indexes["bus"].empty:
@@ -972,6 +978,11 @@ if __name__ == "__main__":
 
     params = snakemake.params
     max_hours = params.electricity["max_hours"]
+    landfall_lengths = {
+        tech: settings["landfall_length"]
+        for tech, settings in params.renewable.items()
+        if "landfall_length" in settings.keys()
+    }
 
     n = pypsa.Network(snakemake.input.base_network)
 
@@ -1048,6 +1059,7 @@ if __name__ == "__main__":
         renewable_carriers,
         extendable_carriers,
         params.line_length_factor,
+        landfall_lengths,
     )
 
     if "hydro" in renewable_carriers:
