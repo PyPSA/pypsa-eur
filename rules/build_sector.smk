@@ -233,9 +233,11 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        snapshots=config_provider("snapshots"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
     resources:

@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
+
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
   substituted by the phase-in of sustainable biomass types using the config parameters
   ``biomass: share_unsustainable_use_retained`` and ``biomass: share_sustainable_potential_available``.
