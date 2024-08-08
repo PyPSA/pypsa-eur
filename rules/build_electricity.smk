@@ -355,13 +355,20 @@ rule build_line_rating:
         "../scripts/build_line_rating.py"
 
 
-rule add_transmission_projects:
+rule build_transmission_projects:
     params:
         transmission_projects=config_provider("transmission_projects"),
     input:
         base_network=resources("networks/base.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
+        transmission_projects=lambda w: [
+            "data/transmission_projects/" + name
+            for name, include in config_provider("transmission_projects", "include")(
+                w
+            ).items()
+            if include
+        ],
     output:
         new_lines=resources("transmission_project/new_lines.csv"),
         new_links=resources("transmission_project/new_links.csv"),
@@ -369,13 +376,16 @@ rule add_transmission_projects:
         adjust_links=resources("transmission_project/adjust_links.csv"),
         new_buses=resources("transmission_project/new_buses.csv"),
     log:
-        logs("add_transmission_project.log"),
+        logs("build_transmission_projects.log"),
     benchmark:
-        benchmarks("add_transmission_project")
+        benchmarks("build_transmission_projects")
+    resources:
+        mem_mb=2000,
+    threads: 1
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/add_transmission_projects.py"
+        "../scripts/build_transmission_projects.py"
 
 
 def input_profile_tech(w):

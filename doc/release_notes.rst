@@ -9,7 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
-* More modular and flexible handling of transmission projects. One can now add new transmission projects in a subfolder of `data/transmission projects` similar to the files in the template folder. After adding the new files and updating the config, transmission projects will be included if they are not duplicates of existing lines or other projects.
+* More modular and flexible handling of transmission projects. One can now add new transmission projects in a subfolder of `data/transmission projects` similar to the files in the template folder. After adding the new files and updating the config section `transmission_projects:`, transmission projects will be included if they are not duplicates of existing lines or other projects.
 
 * split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
 

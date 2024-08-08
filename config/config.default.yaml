@@ -282,7 +282,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-sarah3-era5
@@ -295,6 +295,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
@@ -303,12 +304,14 @@ transmission_projects:
     tyndp2020: true
     nep: true
     manual: true
+  skip: #type of lines csv which are not added from the transmission project folders
+  - upgraded_lines
   status: # status to include as list or as dict with name of project and status to include
   - confirmed
   - in_permitting
   - under_construction
     #- under_consideration
-  new_link_capacity: keep #keep or zero
+  new_link_capacity: zero #keep or zero
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:

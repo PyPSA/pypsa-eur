@@ -245,7 +245,6 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     )
     if type == "new":
         if len(found_i) != 0:
-            found = line_map.index
             logger.warning(
                 "Found new lines similar to existing lines:\n"
                 + str(line_map["existing_line"].to_dict())
@@ -309,7 +308,7 @@ def _get_upgraded_lines(branch_componnent, n, upgraded_lines, line_map):
     return lines_to_add
 
 
-def _get_project_files(plan="tyndp"):
+def _get_project_files(plan="tyndp", skip=[]):
     path = f"data/transmission_projects/{plan}/"
     lines = dict()
     if os.path.exists(path):
@@ -319,7 +318,9 @@ def _get_project_files(plan="tyndp"):
         files = []
     if files:
         for file in files:
-            if file.endswith(".csv"):
+            if file.endswith(".csv") and not any(
+                substring in file for substring in skip
+            ):
                 name = file.split(".")[0]
                 df = pd.read_csv(path + file, index_col=0)
                 df["geometry"] = df.apply(
@@ -364,13 +365,13 @@ def _is_similar(ds1, ds2, percentage=10):
 
 def _set_underwater_fraction(new_links, offshore_shapes):
     new_links_gds = gpd.GeoSeries(new_links.geometry)
-    new_links.loc[:, "underwater_fraction"] = (
+    new_links["underwater_fraction"] = (
         new_links_gds.intersection(offshore_shapes.union_all()).length
         / new_links_gds.length
     ).round(2)
 
 
-def _add_projects(
+def add_projects(
     n,
     new_lines_df,
     new_links_df,
@@ -381,11 +382,11 @@ def _add_projects(
     offshore_shapes,
     plan="tyndp",
     status=["confirmed", "under construction"],
+    skip=[],
 ):
-    lines_dict = _get_project_files(plan)
-    logging.info(f"Adding {len(lines_dict)} projects from {plan} to the network.")
+    lines_dict = _get_project_files(plan, skip=skip)
     for key, lines in lines_dict.items():
-        logging.info(f"Adding {key.replace('_', ' ')} to the network.")
+        logging.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
         lines = _remove_projects_outside_countries(lines, europe_shape)
         if isinstance(status, dict):
             status = status[plan]
@@ -409,7 +410,7 @@ def _add_projects(
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
-            n.import_components_from_dataframe(new_lines, "Line")
+            n.madd("Line", new_lines.index, **new_lines)
         elif "new_links" in key:
             new_links, new_buses_df = _connect_new_lines(
                 lines,
@@ -433,7 +434,7 @@ def _add_projects(
             _set_underwater_fraction(new_links, offshore_shapes)
             new_links_df = pd.concat([new_links_df, new_links])
             # add new links to network to be able to find added duplicates
-            n.import_components_from_dataframe(new_links, "Link")
+            n.madd("Link", new_links.index, **new_links)
         elif "upgraded_lines" in key:
             line_map = _find_closest_lines(
                 n.lines, lines, distance_upper_bound=0.30, type="upgraded"
@@ -472,7 +473,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("add_transmission_projects", run="TYNDP")
+        snakemake = mock_snakemake("build_transmission_projects", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -493,15 +494,14 @@ if __name__ == "__main__":
     )
 
     transmission_projects = snakemake.params.transmission_projects
-    for project, include in transmission_projects["include"].items():
-        if include:
-            (
-                new_lines_df,
-                new_links_df,
-                adjust_lines_df,
-                adjust_links_df,
-                new_buses_df,
-            ) = _add_projects(
+    projects = [
+        project
+        for project, include in transmission_projects["include"].items()
+        if include
+    ]
+    for project in projects:
+        new_lines_df, new_links_df, adjust_lines_df, adjust_links_df, new_buses_df = (
+            add_projects(
                 n,
                 new_lines_df,
                 new_links_df,
@@ -512,12 +512,16 @@ if __name__ == "__main__":
                 offshore_shapes,
                 plan=project,
                 status=transmission_projects["status"],
+                skip=transmission_projects["skip"],
             )
+        )
     if not new_lines_df.empty:
         line_type = "Al/St 240/40 4-bundle 380.0"
         # Add new line type for new lines
         new_lines_df.loc[:, "type"] = "Al/St 240/40 4-bundle 380.0"
-        new_lines_df.loc[:, "num_parallel"] = 2
+        new_lines_df.loc[:, "num_parallel"] = (
+            1  # later this will be improved by looking for MVA or MW of lines and calculating the number of parallel lines
+        )
         (
             new_lines_df["underground"].astype("bool").fillna(False, inplace=True)
             if "underground" in new_lines_df.columns
