@@ -26,7 +26,7 @@ Inputs
     .. image:: img/countries.png
         :scale: 33 %
 
-- ``data/bundle/eez/World_EEZ_v8_2014.shp``: World `exclusive economic zones <https://en.wikipedia.org/wiki/Exclusive_economic_zone>`_ (EEZ)
+- ``data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg   ``: World `exclusive economic zones <https://en.wikipedia.org/wiki/Exclusive_economic_zone>`_ (EEZ)
 
     .. image:: img/eez.png
         :scale: 33 %
@@ -73,22 +73,16 @@ from functools import reduce
 from itertools import takewhile
 from operator import attrgetter
 
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import pycountry as pyc
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
 logger = logging.getLogger(__name__)
 
-
-def _get_country(target, **keys):
-    assert len(keys) == 1
-    try:
-        return getattr(pyc.countries.get(**keys), target)
-    except (KeyError, AttributeError):
-        return np.nan
+cc = coco.CountryConverter()
 
 
 def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
@@ -135,22 +129,15 @@ def countries(naturalearth, country_list):
     return s
 
 
-def eez(country_shapes, eez, country_list):
+def eez(eez, country_list):
     df = gpd.read_file(eez)
-    df = df.loc[
-        df["ISO_3digit"].isin(
-            [_get_country("alpha_3", alpha_2=c) for c in country_list]
-        )
-    ]
-    df["name"] = df["ISO_3digit"].map(lambda c: _get_country("alpha_2", alpha_3=c))
+    iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")
+    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE == '200NM'").copy()
+    df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
         lambda s: _simplify_polys(s, filterremote=False)
     )
-    s = gpd.GeoSeries(
-        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3},
-        crs=df.crs,
-    )
-    s = s.to_frame("geometry")
+    s = s.to_frame("geometry").set_crs(df.crs)
     s.index.name = "name"
     return s
 
@@ -262,9 +249,7 @@ if __name__ == "__main__":
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
-    offshore_shapes = eez(
-        country_shapes, snakemake.input.eez, snakemake.params.countries
-    )
+    offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     europe_shape = gpd.GeoDataFrame(

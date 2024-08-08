@@ -53,7 +53,6 @@ extensions = [
 autodoc_mock_imports = [
     "atlite",
     "snakemake",
-    "pycountry",
     "rioxarray",
     "country_converter",
     "tabula",

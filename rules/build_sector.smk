@@ -347,7 +347,8 @@ rule build_biomass_potentials:
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
-        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        eurostat="data/eurostat/Balances-April2023",
+        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),
@@ -360,7 +361,7 @@ rule build_biomass_potentials:
         biomass_potentials=resources(
             "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-    threads: 1
+    threads: 8
     resources:
         mem_mb=1000,
     log:
@@ -956,6 +957,7 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
+        biomass=config_provider("biomass"),
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
