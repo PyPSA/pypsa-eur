@@ -4858,16 +4858,20 @@ def add_import_options(
     }
 
     import_costs = pd.read_csv(
-        snakemake.input.import_costs, delimiter=";", keep_default_na=False
-    )
+        snakemake.input.import_costs, index_col=0)
+    
+    
+    # import_costs = pd.read_csv(
+    #     snakemake.input.import_costs, delimiter=";", keep_default_na=False
+    # )
 
-    # temporary bugfix for Namibia
-    import_costs["exporter"] = import_costs.exporter.replace("", "NA")
+    # # temporary bugfix for Namibia
+    # import_costs["exporter"] = import_costs.exporter.replace("", "NA")
 
-    cols = ["esc", "exporter", "importer", "value"]
-    fields = ["Cost per MWh delivered", "Cost per t delivered"]
-    import_costs = import_costs.query("subcategory in @fields")[cols]
-    import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
+    # cols = ["esc", "exporter", "importer", "value"]
+    # fields = ["Cost per MWh delivered", "Cost per t delivered"]
+    # import_costs = import_costs.query("subcategory in @fields")[cols]
+    # import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
     for k, v in translate.items():
         import_nodes[k] = import_nodes[v]
