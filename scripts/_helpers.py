@@ -644,12 +644,12 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["H2_network"] = False
 
         if "nowasteheat" in opts:
-            config["sector"]["use_waste_heat"]["fischer_tropsch"] = False
-            config["sector"]["use_waste_heat"]["methanolisation"] = False
-            config["sector"]["use_waste_heat"]["haber_bosch"] = False
-            config["sector"]["use_waste_heat"]["methanation"] = False
-            config["sector"]["use_waste_heat"]["fuel_cell"] = False
-            config["sector"]["use_waste_heat"]["electrolysis"] = False
+            config["sector"]["use_fischer_tropsch_waste_heat"] = False
+            config["sector"]["use_methanolisation_waste_heat"] = False
+            config["sector"]["use_haber_bosch_waste_heat"] = False
+            config["sector"]["use_methanation_waste_heat"] = False
+            config["sector"]["use_fuel_cell_waste_heat"] = False
+            config["sector"]["use_electrolysis_waste_heat"] = False
 
         if "nodistrict" in opts:
             config["sector"]["district_heating"]["progress"] = 0.0
