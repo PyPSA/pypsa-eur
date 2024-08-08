@@ -298,7 +298,7 @@ def simplify_links(
     _, labels = connected_components(adjacency_matrix, directed=False)
     labels = pd.Series(labels, n.buses.index)
 
-    G = n.graph()
+    G = n.graph(branch_components=["Link", "Transformer"])
 
     def split_links(nodes):
         nodes = frozenset(nodes)
@@ -599,6 +599,7 @@ if __name__ == "__main__":
         "substation_off",
         "geometry",
         "underground",
+        "project_status",
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
