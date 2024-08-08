@@ -413,10 +413,10 @@ sector:
     # check these numbers!
     forward_temperature:
       default: 90
-      DK: 70 
-      SE: 70 
-      NO: 70 
-      FI: 70 
+      DK: 70
+      SE: 70
+      NO: 70
+      FI: 70
     return_temperature:
       default: 50
       DK: 40
