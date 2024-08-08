@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
+
 * Changed heat pump COP approximation for central heating to be based on `Jensen et al. (2018) <https://backend.orbit.dtu.dk/ws/portalfiles/portal/151965635/MAIN_Final.pdf>`__ and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
 
 * split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
