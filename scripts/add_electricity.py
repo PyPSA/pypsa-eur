@@ -84,6 +84,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 
 import logging
 from itertools import product
+from pathlib import Path
 from typing import Dict, List
 
 import geopandas as gpd
@@ -800,9 +801,9 @@ def attach_line_rating(
 
 
 def add_transmission_projects(n, transmission_projects):
+    logger.info(f"Adding transmission projects to network.")
     for path in transmission_projects:
         path = Path(path)
-        logger.info(f"Adding transmission projects from {path.parent.name}")
         df = pd.read_csv(path, index_col=0, dtype={"bus0": str, "bus1": str})
         if df.empty:
             continue
