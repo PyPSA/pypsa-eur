@@ -105,29 +105,42 @@ def define_spatial(nodes, options):
     # gas
 
     spatial.gas = SimpleNamespace()
-
-    if options["gas_network"]:
-        spatial.gas.nodes = nodes + " gas"
-        spatial.gas.locations = nodes
+    # check if biogas potential should be spatially resolved
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         spatial.gas.biogas = nodes + " biogas"
-        spatial.gas.industry = nodes + " gas for industry"
-        spatial.gas.industry_cc = nodes + " gas for industry CC"
+        spatial.gas.biogas_locations = nodes
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
         spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
     else:
+        spatial.gas.biogas = ["EU biogas"]
+        spatial.gas.biogas_locations = ["EU"]
+        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
+        spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
+
+    if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
+        spatial.gas.industry = nodes + " gas for industry"
+        spatial.gas.industry_cc = nodes + " gas for industry CC"
+    else:
+        spatial.gas.industry = ["gas for industry"]
+        spatial.gas.industry_cc = ["gas for industry CC"]
+
+    if options["gas_network"]:
+        if ~options["regional_gas_demand"]:
+            logger.warning(
+                "Gas network requires regional gas demand. Please check config['sector']['regional_gas_demand']"
+            )
+        spatial.gas.nodes = nodes + " gas"
+        spatial.gas.locations = nodes
+        spatial.gas.demand_locations = nodes
+
+    elif options["regional_gas_demand"]:
         spatial.gas.nodes = ["EU gas"]
         spatial.gas.locations = ["EU"]
-        spatial.gas.biogas = ["EU biogas"]
-        spatial.gas.industry = ["gas for industry"]
-        spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        if options.get("biomass_spatial", options["biomass_transport"]):
-            spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
-        else:
-            spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2network"]):
-            spatial.gas.industry_cc = nodes + " gas for industry CC"
-        else:
-            spatial.gas.industry_cc = ["gas for industry CC"]
+        spatial.gas.demand_locations = nodes
+    else:
+        spatial.gas.nodes = ["EU gas"]
+        spatial.gas.locations = ["EU"]
+        spatial.gas.demand_locations = ["EU"]
 
     spatial.gas.df = pd.DataFrame(vars(spatial.gas), index=nodes)
 
@@ -592,15 +605,43 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
-    if carrier in costs.index and costs.at[carrier, "fuel"] > 0:
+    generator_nodes = nodes
+    generator_carrier = carrier
+
+    if carrier in cf_industry["fuel_refining"]:
+
         n.madd(
-            "Generator",
-            nodes,
-            bus=nodes,
-            p_nom_extendable=True,
-            carrier=carrier,
-            marginal_cost=costs.at[carrier, "fuel"],
+            "Bus",
+            nodes + " primary",
+            location=location,
+            carrier=carrier + " primary",
+            unit=unit,
         )
+
+        n.madd(
+            "Link",
+            nodes + " refining",
+            bus0=nodes + " primary",
+            bus1=nodes,
+            bus2="co2 atmosphere",
+            location=location,
+            carrier=carrier + " refining",
+            p_nom=1e6,
+            efficiency=1 - (cf_industry["fuel_refining"][carrier]["emissions"] / costs.at[carrier, "CO2 intensity"]),
+            efficiency2=cf_industry["fuel_refining"][carrier]["emissions"],
+        )
+
+        generator_nodes = nodes + " primary"
+        generator_carrier = carrier + " primary"
+
+    n.madd(
+        "Generator",
+        generator_nodes,
+        bus=generator_nodes,
+        p_nom_extendable=True,
+        carrier=generator_carrier,
+        marginal_cost=costs.at[carrier, "fuel"],
+    )
 
 
 def remove_elec_base_techs(n):
@@ -2582,7 +2623,7 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"]:
+    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -2602,7 +2643,7 @@ def add_biomass(n, costs):
     n.madd(
         "Bus",
         spatial.gas.biogas,
-        location=spatial.gas.locations,
+        location=spatial.gas.biogas_locations,
         carrier="biogas",
         unit="MWh_LHV",
     )
@@ -3212,7 +3253,7 @@ def add_industry(n, costs):
     n.madd(
         "Bus",
         spatial.gas.industry,
-        location=spatial.gas.locations,
+        location=spatial.gas.demand_locations,
         carrier="gas for industry",
         unit="MWh_LHV",
     )
@@ -3222,7 +3263,7 @@ def add_industry(n, costs):
         / nhours
     )
 
-    if options["gas_network"]:
+    if options["gas_network"] or options["regional_gas_demand"]:
         spatial_gas_demand = gas_demand.rename(index=lambda x: x + " gas for industry")
     else:
         spatial_gas_demand = gas_demand.sum()
@@ -3473,36 +3514,7 @@ def add_industry(n, costs):
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            spatial.oil.nodes,
-            suffix=" Store",
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
+    add_carrier_buses(n, "oil")
 
     if shipping_oil_share:
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")

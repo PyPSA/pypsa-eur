@@ -10,9 +10,11 @@ Release Notes
 Upcoming Release
 ================
 
-* New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
+* Added additional config option `regional_gas_demand`, which spatially resolves gas demand in industry, but keeps the gas bus global.
 
-* New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
+* `biogas to gas` is now spatially resolved when either co2 or gas or solid biomass is spatially resolved. As a consequence `biogas to gas` and `biogas to gas CC` always have the same spatial resolution
+
+* Added `fuel_refining` option to the `industry` config. It allows to specify emissions from fuel processing (e.g. oil in petrochemical refinieries).
 
 * Added `overnight_cost` column to all components. These are the total upfront investments. The column is intended only for reporting and has no effect on the optimisation. For offshore wind, the `overnight_cost` column contains only investments into the wind park, the `connection_overnight_cost` is reported in a separate column.
 
