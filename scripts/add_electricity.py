@@ -323,7 +323,7 @@ def attach_load(
         # relative factors 0.6 and 0.4 have been determined from a linear
         # regression on the country to continent load data
         factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
-        if cntry in ["UA", "MD"]:
+        if cntry in ["UA", "MD"] and gdp_pop_non_nuts3 is not None:
             # overwrite factor because nuts3 provides no data for UA+MD
             gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
             gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
@@ -823,6 +823,11 @@ if __name__ == "__main__":
         Nyears,
     )
     ppl = load_powerplants(snakemake.input.powerplants)
+
+    if "gdp_pop_non_nuts3" in snakemake.input.keys():
+        gdp_pop_non_nuts3 = snakemake.input.gdp_pop_non_nuts3
+    else:
+        gdp_pop_non_nuts3 = None
 
     attach_load(
         n,

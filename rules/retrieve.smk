@@ -382,3 +382,100 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and {"UA", "MD"}.intersection(config["countries"]):
+
+    rule retrieve_gdp_uamd:
+        output:
+            gdp_non_nuts3="data/GDP_per_capita_PPP_1990_2015_v2.nc",
+            pop_non_nuts3="data/ppp_2013_1km_Aggregated.tif",
+        log:
+            "logs/retrieve_gdp_uamd.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_gdp_uamd.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity_network"]["base_network"] == "osm-prebuilt"
+):
+
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage("https://zenodo.org/records/12799202/files/buses.csv"),
+            converters=storage(
+                "https://zenodo.org/records/12799202/files/converters.csv"
+            ),
+            lines=storage("https://zenodo.org/records/12799202/files/lines.csv"),
+            links=storage("https://zenodo.org/records/12799202/files/links.csv"),
+            transformers=storage(
+                "https://zenodo.org/records/12799202/files/transformers.csv"
+            ),
+        output:
+            buses="data/osm/prebuilt/buses.csv",
+            converters="data/osm/prebuilt/converters.csv",
+            lines="data/osm/prebuilt/lines.csv",
+            links="data/osm/prebuilt/links.csv",
+            transformers="data/osm/prebuilt/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity_network"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm/raw/{country}/cables_way.json",
+            lines_way="data/osm/raw/{country}/lines_way.json",
+            links_relation="data/osm/raw/{country}/links_relation.json",
+            substations_way="data/osm/raw/{country}/substations_way.json",
+            substations_relation="data/osm/raw/{country}/substations_relation.json",
+        log:
+            "logs/retrieve_osm_data_{country}.log",
+        resources:
+            cores=2,
+            threads=1,
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity_network"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data_all:
+        input:
+            expand(
+                "data/osm/raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm/raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm/raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm/raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm/raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),

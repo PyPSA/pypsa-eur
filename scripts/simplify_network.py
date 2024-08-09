@@ -108,7 +108,7 @@ from scipy.sparse.csgraph import connected_components, dijkstra
 logger = logging.getLogger(__name__)
 
 
-def simplify_network_to_380(n):
+def simplify_network_to_380(n, linetype_380):
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
@@ -124,7 +124,7 @@ def simplify_network_to_380(n):
 
     n.buses["v_nom"] = 380.0
 
-    (linetype_380,) = n.lines.loc[n.lines.v_nom == 380.0, "type"].unique()
+    # TODO pypsa-eur: In the future, make this even more generic (voltage level)
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
@@ -536,7 +536,8 @@ if __name__ == "__main__":
     # remove integer outputs for compatibility with PyPSA v0.26.0
     n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
-    n, trafo_map = simplify_network_to_380(n)
+    linetype_380 = snakemake.config["lines"]["types"][380]
+    n, trafo_map = simplify_network_to_380(n, linetype_380)
 
     technology_costs = load_costs(
         snakemake.input.tech_costs,

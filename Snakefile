@@ -54,6 +54,7 @@ include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
+include: "rules/development.smk"
 
 
 if config["foresight"] == "overnight":
@@ -136,5 +137,4 @@ rule sync:
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
         rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
-        rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

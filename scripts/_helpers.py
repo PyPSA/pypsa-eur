@@ -370,6 +370,27 @@ def progress_retrieve(url, file, disable=False):
             urllib.request.urlretrieve(url, file, reporthook=update_to)
 
 
+def retrieve_file(url, destination):
+    """
+    Downloads a file from a specified URL to a local destination using custom
+    headers that mimic a Firefox browser request.
+
+    This function is useful for overcoming 'HTTP Error 403: Forbidden'
+    issues, which often occur when the server requires more typical
+    browser-like headers for access.
+    """
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    with open(destination, "wb") as f:
+        f.write(response.content)
+    logger.info(f"File downloaded and saved as {destination}")
+
+
 def mock_snakemake(
     rulename,
     root_dir=None,
