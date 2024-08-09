@@ -83,7 +83,7 @@ sector_sheets = {
     "Basic chemicals": "FC_IND_CPC_BC_E",
     "Other chemicals": "FC_IND_CPC_OC_E",
     "Pharmaceutical products etc.": "FC_IND_CPC_PH_E",
-    "Basic chemicals feedstock": "FC_IND_CPC_BC_E",
+    "Basic chemicals feedstock": "FC_IND_CPC_NE",
     "Cement": "FC_IND_NMM_CM_E",
     "Ceramics & other NMM": "FC_IND_NMM_CR_E",
     "Glass production": "FC_IND_NMM_GL_E",
