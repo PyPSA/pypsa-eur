@@ -227,14 +227,42 @@ def industrial_energy_demand(countries, year):
     return pd.concat(demand_l, keys=countries)
 
 
-def add_coke_ovens(demand, fn, year):
+def add_coke_ovens(demand, fn, year, factor=0.75):
+    """
+    Adds the energy consumption of coke ovens to the energy demand for
+    integrated steelworks.
+    
+    This function reads the energy consumption data for coke ovens from a
+    CSV file, processes it to match the structure of the `demand` DataFrame,
+    and then adds a specified share of  this energy consumption to the energy
+    demand for integrated steelworks.
+    
+    The `factor`  parameter controls what proportion of the coke ovens' energy
+    consumption should be attributed to the iron and steel production.
+    The default value of 75% is based on https://doi.org/10.1016/j.erss.2022.102565
+    
+    Parameters:
+    demand (pd.DataFrame): A pandas DataFrame containing energy demand data
+                           with a multi-level column index where one of the
+                           levels corresponds to "Integrated steelworks".
+    fn (str): The file path to the CSV file containing the coke ovens energy
+              consumption data.
+    year (int): The year for which the coke ovens data should be selected.
+    factor (float, optional): The proportion of coke ovens energy consumption to add to the 
+                              integrated steelworks demand. Defaults to 0.75.
+    
+    Returns:
+    pd.DataFrame: The updated `demand` DataFrame with the coke ovens energy
+    consumption added to the integrated steelworks energy demand.
+    """
+
     df = pd.read_csv(fn, index_col=[0,1]).xs(year, level=1)
     df = df.rename(columns={'Total all products':'Total'})[fuels.keys()]
     df = df.rename(columns=fuels).T.groupby(level=0).sum().T
     df["other"] = df["all"] - df.loc[:,df.columns != "all"].sum(axis=1)
     df = df.T.reindex_like(demand.xs("Integrated steelworks", axis=1, level=1)).fillna(0)
     sel = demand.columns.get_level_values(1)=="Integrated steelworks"
-    demand.loc[:,sel] += 0.75 * df.values
+    demand.loc[:,sel] += factor * df.values
     
     return demand
 
