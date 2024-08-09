@@ -22,11 +22,10 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
+from definitions.heat_sector import HeatSector
+from definitions.heat_system import HeatSystem
+from definitions.heat_system_type import HeatSystemType
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
-
-from scripts.definitions.heat_sector import HeatSector
-from scripts.definitions.heat_system import HeatSystem
-from scripts.definitions.heat_system_type import HeatSystemType
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()

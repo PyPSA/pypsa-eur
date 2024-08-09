@@ -785,3 +785,7 @@ def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
         time = time[~((time.month == 2) & (time.day == 29))]
 
     return time
+
+
+def get_country_from_node_name(node_name: str) -> str:
+    return node_name[:2]
