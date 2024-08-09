@@ -301,6 +301,7 @@ rule build_energy_totals:
         eurostat="data/eurostat/Balances-April2023",
         eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
     output:
+        transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
         transport_name=resources("transport_data.csv"),
@@ -666,6 +667,7 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
     input:
+        transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"

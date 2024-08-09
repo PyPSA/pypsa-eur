@@ -227,6 +227,18 @@ def industrial_energy_demand(countries, year):
     return pd.concat(demand_l, keys=countries)
 
 
+def add_coke_ovens(demand, fn, year):
+    df = pd.read_csv(fn, index_col=[0,1]).xs(year, level=1)
+    df = df.rename(columns={'Total all products':'Total'})[fuels.keys()]
+    df = df.rename(columns=fuels).T.groupby(level=0).sum().T
+    df["other"] = df["all"] - df.loc[:,df.columns != "all"].sum(axis=1)
+    df = df.T.reindex_like(demand.xs("Integrated steelworks", axis=1, level=1)).fillna(0)
+    sel = demand.columns.get_level_values(1)=="Integrated steelworks"
+    demand.loc[:,sel] += 0.75 * df.values
+    
+    return demand
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -252,7 +264,11 @@ if __name__ == "__main__":
 
     # for format compatibility
     demand = demand.stack(future_stack=True).unstack(level=[0, 2])
-
+    
+    # add energy consumption of coke ovens
+    demand = add_coke_ovens(demand, snakemake.input.transformation_output_coke,
+                            year)
+    
     # style and annotation
     demand.index.name = "TWh/a"
     demand.sort_index(axis=1, inplace=True)
