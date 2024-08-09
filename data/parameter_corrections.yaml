@@ -15,6 +15,7 @@ Link:
       "115000": 1200 # Caithness Moray HVDC
     index:
       "14804": 1400 # North-Sea link (NSN Link)
+      "8394": 1400 # North-Sea Link (NSN Link) continuation
       "14822": 700 # NO-DK Skagerrak 4
       "14827": 440 # NO-DK Skagerrak 3
       "14810": 500 # NO-DK Skagerrak 1-2
