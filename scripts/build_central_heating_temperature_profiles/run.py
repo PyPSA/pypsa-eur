@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: MIT
 
 """
+Approximate district heating forward and return temperature profiles based on ambient temperature.
+The method is based on a reference curve from Pieper et al. 2019, where for ambient temperatures below 0C, the highest possible forward temperature is assumed and vice versa for temperatures above 10C. Between these threshold levels, forward temperatures are linearly interpolated.
+
+By default, temperature levels are increased for non-Scandinavian countries.
+The default ratios between min. and max. forward temperatures is based on AGFW-Hauptbericht 2022.
+
 Relevant Settings
 -----------------
 
@@ -20,6 +26,11 @@ Inputs
 Outputs
 -------
 - `resources/<run_name>/central_heating_temperature_profiles.nc`: 
+
+References
+----------
+- Pieper, et al. (2019): "Assessment of a combination of three heat sources for heat pumps to supply district heating" (https://doi.org/10.1016/j.energy.2019.03.165).
+- AGFW (2022): "Hauptbericht 2022" (https://www.agfw.de/zahlen-und-statistiken/agfw-hauptbericht)
 """
 
 import sys
