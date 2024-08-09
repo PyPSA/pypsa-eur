@@ -217,20 +217,20 @@ rule build_temperature_profiles:
 rule build_central_heating_temperature_profiles:
     params:
         max_forward_temperature_central_heating=config_provider(
-            "sector", "district_heating", "max_forward_temperature"
+            "sector", "district_heating", "supply_temperature_approximation", "max_forward_temperature"
         ),
         min_forward_temperature_central_heating=config_provider(
-            "sector", "district_heating", "min_forward_temperature"
+            "sector", "district_heating", "supply_temperature_approximation", "min_forward_temperature"
         ),
         return_temperature_central_heating=config_provider(
-            "sector", "district_heating", "return_temperature"
+            "sector", "district_heating", "supply_temperature_approximation", "return_temperature"
         ),
         snapshots=config_provider("snapshots"),
         lower_threshold_ambient_temperature=config_provider(
-            "sector", "district_heating", "lower_threshold_ambient_temperature"
+            "sector", "district_heating", "supply_temperature_approximation", "lower_threshold_ambient_temperature"
         ),
         upper_threshold_ambient_temperature=config_provider(
-            "sector", "district_heating", "upper_threshold_ambient_temperature"
+            "sector", "district_heating", "supply_temperature_approximation", "upper_threshold_ambient_temperature"
         ),
     input:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
@@ -256,12 +256,6 @@ rule build_cop_profiles:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
         ),
-        # forward_temperature_central_heating=config_provider(
-        #     "sector", "district_heating", "forward_temperature"
-        # ),
-        # return_temperature_central_heating=config_provider(
-        #     "sector", "district_heating", "return_temperature"
-        # ),
         heat_source_cooling_central_heating=config_provider(
             "sector", "district_heating", "heat_source_cooling"
         ),
