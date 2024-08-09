@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Made central heating supply temperatures dynamic based on an adaptation of a reference curve from Pieper et al. (2019) (https://www.sciencedirect.com/science/article/pii/S0360544219305857?via%3Dihub).
+
 * Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
 
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
