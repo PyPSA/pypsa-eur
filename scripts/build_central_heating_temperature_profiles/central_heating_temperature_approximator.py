@@ -5,9 +5,11 @@
 
 import xarray as xr
 
+
 class CentralHeatingTemperatureApproximator:
     """
-    A class to approximate central heating temperatures based on ambient temperature.
+    A class to approximate central heating temperatures based on ambient
+    temperature.
 
     Attributes
     ----------
@@ -32,7 +34,7 @@ class CentralHeatingTemperatureApproximator:
         min_forward_temperature: float,
         fixed_return_temperature: float,
         lower_threshold_ambient_temperature: float = 0.0,
-        upper_threshold_ambient_temperature: float = 10.0
+        upper_threshold_ambient_temperature: float = 10.0,
     ) -> None:
         """
         Initialize the CentralHeatingTemperatureApproximator.
@@ -98,8 +100,14 @@ class CentralHeatingTemperatureApproximator:
             xr.where(
                 self.ambient_temperature >= self.upper_threshold_ambient_temperature,
                 self.min_forward_temperature,
-                self.min_forward_temperature + (self.max_forward_temperature - self.min_forward_temperature) * (self.upper_threshold_ambient_temperature - self.ambient_temperature) / (self.upper_threshold_ambient_temperature - self.lower_threshold_ambient_temperature)
-            )
+                self.min_forward_temperature
+                + (self.max_forward_temperature - self.min_forward_temperature)
+                * (self.upper_threshold_ambient_temperature - self.ambient_temperature)
+                / (
+                    self.upper_threshold_ambient_temperature
+                    - self.lower_threshold_ambient_temperature
+                ),
+            ),
         )
         return forward_temperature
 
@@ -153,8 +161,14 @@ class CentralHeatingTemperatureApproximator:
             xr.where(
                 self.ambient_temperature >= self.upper_threshold_ambient_temperature,
                 self.min_forward_temperature,
-                self.min_forward_temperature + (self.max_forward_temperature - self.min_forward_temperature) * (self.upper_threshold_ambient_temperature - self.ambient_temperature) / (self.upper_threshold_ambient_temperature - self.lower_threshold_ambient_temperature)
-            )
+                self.min_forward_temperature
+                + (self.max_forward_temperature - self.min_forward_temperature)
+                * (self.upper_threshold_ambient_temperature - self.ambient_temperature)
+                / (
+                    self.upper_threshold_ambient_temperature
+                    - self.lower_threshold_ambient_temperature
+                ),
+            ),
         )
         return forward_temperature
 

@@ -214,6 +214,7 @@ rule build_temperature_profiles:
     script:
         "../scripts/build_temperature_profiles.py"
 
+
 rule build_central_heating_temperature_profiles:
     params:
         max_forward_temperature_central_heating=config_provider(
@@ -236,8 +237,12 @@ rule build_central_heating_temperature_profiles:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
     output:
-        central_heating_forward_temperature_profiles=resources("central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"),
-        central_heating_return_temperature_profiles=resources("central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
     resources:
         mem_mb=20000,
     log:
@@ -248,7 +253,6 @@ rule build_central_heating_temperature_profiles:
         "../envs/environment.yaml"
     script:
         "../scripts/build_central_heating_temperature_profiles/run.py"
-
 
 
 rule build_cop_profiles:
@@ -265,8 +269,12 @@ rule build_cop_profiles:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         snapshots=config_provider("snapshots"),
     input:
-        central_heating_forward_temperature_profiles=resources("central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"),
-        central_heating_return_temperature_profiles=resources("central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
