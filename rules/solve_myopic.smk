@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+def get_attempt(wildcards, attempt):
+    return attempt
 
 rule build_existing_heating_distribution:
     params:
@@ -171,6 +173,8 @@ rule solve_sector_network_myopic:
     resources:
         mem_mb=config_provider("solving", "mem_mb"),
         runtime=config_provider("solving", "runtime", default="6h"),
+        attempt=get_attempt,
+    retries: 3
     benchmark:
         (
             RESULTS

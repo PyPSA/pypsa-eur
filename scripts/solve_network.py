@@ -1085,7 +1085,7 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, **kwargs):
+def solve_network(n, config, solving, attempt=1, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1104,6 +1104,9 @@ def solve_network(n, config, solving, **kwargs):
 
     if kwargs["solver_name"] == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
+
+    if attempt > 1:
+        kwargs["solver_options"]["NumericFocus"] = min(2, max(attempt - 1, 1))
 
     rolling_horizon = cf_solving.pop("rolling_horizon", False)
     skip_iterations = cf_solving.pop("skip_iterations", False)
@@ -1136,6 +1139,9 @@ def solve_network(n, config, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+    
+    if condition in ["infeasible", "suboptimal", "unbounded", "error"]:
+        raise RuntimeError(f"Solving status '{condition}'")
 
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
@@ -1157,13 +1163,14 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network",
-            configfiles="./config/config.default.yaml",
+            configfiles="./config/scenarios.yaml",
             simpl="",
-            opts="s",
-            clusters="20",
-            ll="",
-            sector_opts="",
-            planning_horizons="2050",
+            opts="",
+            clusters="37",
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons="2035",
+            run="no_import_le"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1193,6 +1200,7 @@ if __name__ == "__main__":
             n,
             config=snakemake.config,
             solving=snakemake.params.solving,
+            attempt=snakemake.resources.attempt,
             log_fn=snakemake.log.solver,
         )
 
