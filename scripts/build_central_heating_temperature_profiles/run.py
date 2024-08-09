@@ -18,7 +18,7 @@ Inputs
 
 Outputs
 -------
-- `resources/<run_name>/central_heating_temperature_profiles.nc`: 
+- `resources/<run_name>/central_heating_temperature_profiles.nc`:
 """
 
 import sys
@@ -28,7 +28,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from _helpers import get_country_from_node_name, set_scenario_config
-from central_heating_temperature_approximator import CentralHeatingTemperatureApproximator
+from central_heating_temperature_approximator import (
+    CentralHeatingTemperatureApproximator,
+)
+
 
 def map_temperature_dict_to_onshore_regions(
     supply_temperature_by_country: dict,
@@ -69,8 +72,6 @@ def map_temperature_dict_to_onshore_regions(
         dims=["time", "name"],
         coords={"time": snapshots, "name": regions_onshore},
     )
-
-
 
 
 if __name__ == "__main__":
@@ -116,8 +117,12 @@ if __name__ == "__main__":
         min_forward_temperature=min_forward_temperature_central_heating_by_node_and_time,
         fixed_return_temperature=return_temperature_central_heating_by_node_and_time,
         lower_threshold_ambient_temperature=snakemake.params.lower_threshold_ambient_temperature,
-        upper_threshold_ambient_temperature=snakemake.params.upper_threshold_ambient_temperature,    
+        upper_threshold_ambient_temperature=snakemake.params.upper_threshold_ambient_temperature,
     )
 
-    central_heating_temperature_approximator.forward_temperature.to_netcdf(snakemake.output.central_heating_forward_temperature_profiles)
-    central_heating_temperature_approximator.return_temperature.to_netcdf(snakemake.output.central_heating_return_temperature_profiles)
+    central_heating_temperature_approximator.forward_temperature.to_netcdf(
+        snakemake.output.central_heating_forward_temperature_profiles
+    )
+    central_heating_temperature_approximator.return_temperature.to_netcdf(
+        snakemake.output.central_heating_return_temperature_profiles
+    )

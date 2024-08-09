@@ -52,6 +52,7 @@ from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
 from scripts.definitions.heat_system_type import HeatSystemType
 
+
 def get_cop(
     heat_system_type: str,
     heat_source: str,
@@ -108,8 +109,12 @@ if __name__ == "__main__":
     # map forward and return temperatures specified on country-level to onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-    central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(snakemake.input.central_heating_forward_temperature_profiles)
-    central_heating_return_temperature: xr.DataArray = xr.open_dataarray(snakemake.input.central_heating_return_temperature_profiles)
+    central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_forward_temperature_profiles
+    )
+    central_heating_return_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_return_temperature_profiles
+    )
 
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
