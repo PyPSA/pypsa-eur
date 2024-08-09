@@ -16,7 +16,7 @@ Relevant Settings
 Inputs
 -------
 - ``resources/ammonia_production.csv``
-- ``data/bundle-sector/jrc-idees-2015``
+- ``data/bundle-sector/jrc-idees-2021``
 - ``data/eurostat``
 
 Outputs
@@ -31,7 +31,7 @@ The industrial production is taken from the `JRC-IDEES <https://joint-research-c
 This dataset provides detailed information about the consumption of energy for various processes.
 If the country is not part of the EU28, the energy consumption in the industrial sectors is taken from the `Eurostat <https://ec.europa.eu/eurostat/de/data/database>` dataset. The industrial production is calculated for the year specified in the config["industry"]["reference_year"].
 
-The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html> dataset.
+The ammonia production is provided by the rule `build_ammonia_production <https://pypsa-eur.readthedocs.io/en/latest/sector.html#module-build_ammonia_production>`. Since Switzerland is not part of the EU28 nor reported by eurostat, the energy consumption in the industrial sectors is taken from the `BFE <https://pubdb.bfe.admin.ch/de/publication/download/11817> dataset.
 After the industrial production is calculated, the basic chemicals are separated into ammonia, chlorine, methanol and HVC. The production of these chemicals is assumed to be proportional to the production of basic chemicals without ammonia.
 
 The following subcategories [kton/a] are considered:
@@ -50,11 +50,11 @@ The following subcategories [kton/a] are considered:
 - Aluminium - primary production
 - Aluminium - secondary production
 - Other non-ferrous metals
-- Transport Equipment
-- Machinery Equipment
+- Transport equipment
+- Machinery equipment
 - Textiles and leather
 - Wood and wood products
-- Other Industrial Sectors
+- Other industrial sectors
 - Ammonia
 - HVC
 - Chlorine
@@ -79,25 +79,25 @@ ktoe_to_twh = 0.01163
 
 sub_sheet_name_dict = {
     "Iron and steel": "ISI",
-    "Chemicals Industry": "CHI",
+    "Chemical industry": "CHI",
     "Non-metallic mineral products": "NMM",
     "Pulp, paper and printing": "PPA",
     "Food, beverages and tobacco": "FBT",
     "Non Ferrous Metals": "NFM",
-    "Transport Equipment": "TRE",
-    "Machinery Equipment": "MAE",
+    "Transport equipment": "TRE",
+    "Machinery equipment": "MAE",
     "Textiles and leather": "TEL",
     "Wood and wood products": "WWP",
-    "Other Industrial Sectors": "OIS",
+    "Other industrial sectors": "OIS",
 }
 
-eu28 = cc.EU28as("ISO2").ISO2.values
+eu27 = cc.EU27as("ISO2").ISO2.values
 
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 sect2sub = {
     "Iron and steel": ["Electric arc", "Integrated steelworks"],
-    "Chemicals Industry": [
+    "Chemical industry": [
         "Basic chemicals",
         "Other chemicals",
         "Pharmaceutical products etc.",
@@ -119,11 +119,11 @@ sect2sub = {
         "Aluminium - secondary production",
         "Other non-ferrous metals",
     ],
-    "Transport Equipment": ["Transport Equipment"],
-    "Machinery Equipment": ["Machinery Equipment"],
+    "Transport equipment": ["Transport equipment"],
+    "Machinery equipment": ["Machinery equipment"],
     "Textiles and leather": ["Textiles and leather"],
     "Wood and wood products": ["Wood and wood products"],
-    "Other Industrial Sectors": ["Other Industrial Sectors"],
+    "Other industrial sectors": ["Other industrial sectors"],
 }
 
 sub2sect = {v: k for k, vv in sect2sub.items() for v in vv}
@@ -145,47 +145,41 @@ fields = {
     "Aluminium - primary production": "Aluminium - primary production",
     "Aluminium - secondary production": "Aluminium - secondary production",
     "Other non-ferrous metals": "Other non-ferrous metals (kt lead eq.)",
-    "Transport Equipment": "Physical output (index)",
-    "Machinery Equipment": "Physical output (index)",
+    "Transport equipment": "Physical output (index)",
+    "Machinery equipment": "Physical output (index)",
     "Textiles and leather": "Physical output (index)",
     "Wood and wood products": "Physical output (index)",
-    "Other Industrial Sectors": "Physical output (index)",
+    "Other industrial sectors": "Physical output (index)",
 }
 
 eb_sectors = {
     "Iron & steel": "Iron and steel",
-    "Chemical & petrochemical": "Chemicals Industry",
+    "Chemical & petrochemical": "Chemical industry",
     "Non-ferrous metals": "Non-metallic mineral products",
     "Paper, pulp & printing": "Pulp, paper and printing",
     "Food, beverages & tobacco": "Food, beverages and tobacco",
     "Non-metallic minerals": "Non Ferrous Metals",
-    "Transport equipment": "Transport Equipment",
-    "Machinery": "Machinery Equipment",
+    "Transport equipment": "Transport equipment",
+    "Machinery": "Machinery equipment",
     "Textile & leather": "Textiles and leather",
     "Wood & wood products": "Wood and wood products",
-    "Not elsewhere specified (industry)": "Other Industrial Sectors",
+    "Not elsewhere specified (industry)": "Other industrial sectors",
 }
 
-# TODO: this should go in a csv in `data`
-# Annual energy consumption in Switzerland by sector in 2015 (in TJ)
-# From: Energieverbrauch in der Industrie und im Dienstleistungssektor, Der Bundesrat
-# http://www.bfe.admin.ch/themen/00526/00541/00543/index.html?lang=de&dossier_id=00775
-e_switzerland = pd.Series(
-    {
-        "Iron and steel": 7889.0,
-        "Chemicals Industry": 26871.0,
-        "Non-metallic mineral products": 15513.0 + 3820.0,
-        "Pulp, paper and printing": 12004.0,
-        "Food, beverages and tobacco": 17728.0,
-        "Non Ferrous Metals": 3037.0,
-        "Transport Equipment": 14993.0,
-        "Machinery Equipment": 4724.0,
-        "Textiles and leather": 1742.0,
-        "Wood and wood products": 0.0,
-        "Other Industrial Sectors": 10825.0,
-        "current electricity": 53760.0,
-    }
-)
+
+ch_mapping = {
+    "Nahrung": "Food, beverages and tobacco",
+    "Textil / Leder": "Textiles and leather",
+    "Papier / Druck": "Pulp, paper and printing",
+    "Chemie / Pharma": "Chemical industry",
+    "Zement / Beton": "Non-metallic mineral products",
+    "Andere NE-Mineralien": "Other non-ferrous metals",
+    "Metall / Eisen": "Iron and steel",
+    "NE-Metall": "Non Ferrous Metals",
+    "Metall / Geräte": "Transport equipment",
+    "Maschinen": "Machinery equipment",
+    "Andere Industrien": "Other industrial sectors",
+}
 
 
 def find_physical_output(df):
@@ -197,32 +191,39 @@ def find_physical_output(df):
 
 def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     if country == "CH":
-        e_country = e_switzerland * tj_to_ktoe
+        # data ranges between 2014-2023
+        e_country = pd.read_csv(
+            snakemake.input.ch_industrial_production, index_col=0
+        ).dropna()
+        e_country = e_country.rename(index=ch_mapping).groupby(level=0).sum()
+        e_country = e_country[str(min(2019, year))]
+        e_country *= tj_to_ktoe
     else:
+        ct_eurostat = country.replace("GB", "UK")
         # estimate physical output, energy consumption in the sector and country
-        fn = f"{eurostat_dir}/{country}-Energy-balance-sheets-April-2023-edition.xlsb"
+        fn = f"{eurostat_dir}/{ct_eurostat}-Energy-balance-sheets-April-2023-edition.xlsb"
         df = pd.read_excel(
             fn,
-            sheet_name=str(min(2021, year)),
+            sheet_name=str(min(2019, year)),
             index_col=2,
             header=0,
             skiprows=4,
         )
         e_country = df.loc[eb_sectors.keys(), "Total"].rename(eb_sectors)
 
-    fn = f"{jrc_dir}/JRC-IDEES-2015_Industry_EU28.xlsx"
+    fn = f"{jrc_dir}/EU27/JRC-IDEES-2021_Industry_EU27.xlsx"
 
     with mute_print():
         df = pd.read_excel(fn, sheet_name="Ind_Summary", index_col=0, header=0).squeeze(
             "columns"
         )
 
-    assert df.index[48] == "by sector"
+    assert df.index[49] == "by sector"
     year_i = df.columns.get_loc(year)
-    e_eu28 = df.iloc[49:76, year_i]
-    e_eu28.index = e_eu28.index.str.lstrip()
+    e_eu27 = df.iloc[50:77, year_i]
+    e_eu27.index = e_eu27.index.str.lstrip()
 
-    e_ratio = e_country / e_eu28
+    e_ratio = e_country / e_eu27
 
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
@@ -230,7 +231,7 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
 def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
-        fn = f"{jrc_dir}/JRC-IDEES-2015_Industry_{jrc_country}.xlsx"
+        fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_Industry_{jrc_country}.xlsx"
         sheet = sub_sheet_name_dict[sector]
         with mute_print():
             df = pd.read_excel(fn, sheet_name=sheet, index_col=0, header=0).squeeze(
@@ -245,10 +246,10 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
 
         return df
 
-    ct = "EU28" if country not in eu28 else country
+    ct = "EU27" if country not in eu27 else country
     demand = pd.concat([get_sector_data(s, ct) for s in sect2sub])
 
-    if country not in eu28:
+    if country not in eu27:
         demand *= get_energy_ratio(country, eurostat_dir, jrc_dir, year)
 
     demand.name = country
@@ -287,6 +288,7 @@ def separate_basic_chemicals(demand, year):
     """
     Separate basic chemicals into ammonia, chlorine, methanol and HVC.
     """
+    # ammonia data from 2018-2022
     ammonia = pd.read_csv(snakemake.input.ammonia_production, index_col=0)
 
     there = ammonia.index.intersection(demand.index)
@@ -296,7 +298,12 @@ def separate_basic_chemicals(demand, year):
 
     demand["Ammonia"] = 0.0
 
-    demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year)]
+    year_to_use = min(max(year, 2018), 2022)
+    if year_to_use != year:
+        logger.info(
+            f"Year {year} outside data range. Using data from {year_to_use} for ammonia production."
+        )
+    demand.loc[there, "Ammonia"] = ammonia.loc[there, str(year_to_use)]
 
     demand["Basic chemicals"] -= demand["Ammonia"]
 

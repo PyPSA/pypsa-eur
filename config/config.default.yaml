@@ -748,7 +748,7 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2015
+  reference_year: 2019
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
