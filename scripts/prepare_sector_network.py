@@ -153,24 +153,17 @@ def define_spatial(nodes, options):
 
     spatial.methanol = SimpleNamespace()
 
-    if options.get("methanol_spatial", False):
-        spatial.methanol.nodes = nodes + " methanol"
-        spatial.methanol.locations = nodes
+    spatial.methanol.nodes = ["EU methanol"]
+    spatial.methanol.locations = ["EU"]
+
+    if options["regional_methanol_demand"]:
         spatial.methanol.demand_locations = nodes
         spatial.methanol.industry = nodes + " industry methanol"
         spatial.methanol.shipping = nodes + " shipping methanol"
     else:
-        spatial.methanol.nodes = ["EU methanol"]
-        spatial.methanol.locations = ["EU"]
-
-        if options["regional_methanol_demand"]:
-            spatial.methanol.demand_locations = nodes
-            spatial.methanol.industry = nodes + " industry methanol"
-            spatial.methanol.shipping = nodes + " shipping methanol"
-        else:
-            spatial.methanol.demand_locations = ["EU"]
-            spatial.methanol.shipping = ["EU shipping methanol"]
-            spatial.methanol.industry = ["EU industry methanol"]
+        spatial.methanol.demand_locations = ["EU"]
+        spatial.methanol.shipping = ["EU shipping methanol"]
+        spatial.methanol.industry = ["EU industry methanol"]
 
     # oil
     spatial.oil = SimpleNamespace()
@@ -2609,23 +2602,6 @@ def add_methanol(n, costs):
         carrier="methanol",
         capital_cost=0.02,
     )
-
-    if options["methanol_transport"]:
-        methanol_transport = create_network_topology(
-            n, "methanol transport ", bidirectional=True
-        )
-        n.madd(
-            "Link",
-            methanol_transport.index,
-            bus0=methanol_transport.bus0 + " methanol",
-            bus1=methanol_transport.bus1 + " methanol",
-            p_nom_extendable=False,
-            p_nom=5e4,
-            length=methanol_transport.length.values,
-            marginal_cost=0.027
-            * methanol_transport.length.values,  # assuming 0.15€/ton-km and 0.183t/1000MWhMeOH
-            carrier="methanol transport",
-        )
 
     if n.buses.carrier.str.contains("biomass").any():
         if options["biomass_to_methanol"]:

@@ -590,10 +590,8 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
-  methanol: false # if industry is modelled, methanol is still added even if false
-  methanol_spatial: false # if true demand is also regional even if regional demand is set to false, since methanol is regionally resolved
   regional_methanol_demand: false
-  methanol_transport: false
+  methanol: false
   methanol_reforming: false
   methanol_reforming_cc: false
   methanol_to_kerosene: false
