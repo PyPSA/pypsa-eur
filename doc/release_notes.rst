@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Add technology options for methanol, like electricity production from methanol, biomass to methanol, methanol to kerosene, ...
 
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
   substituted by the phase-in of sustainable biomass types using the config parameters
