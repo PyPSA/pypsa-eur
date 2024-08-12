@@ -37,6 +37,10 @@ from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system import HeatSystem
+from scripts.definitions.heat_system_type import HeatSystemType
+
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
@@ -56,19 +60,27 @@ def define_spatial(nodes, options):
     # biomass
 
     spatial.biomass = SimpleNamespace()
+    spatial.msw = SimpleNamespace()
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
+        spatial.biomass.bioliquids = nodes + " bioliquids"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
         spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
+        spatial.msw.nodes = nodes + " municipal solid waste"
+        spatial.msw.locations = nodes
     else:
         spatial.biomass.nodes = ["EU solid biomass"]
+        spatial.biomass.bioliquids = ["EU unsustainable bioliquids"]
         spatial.biomass.locations = ["EU"]
         spatial.biomass.industry = ["solid biomass for industry"]
         spatial.biomass.industry_cc = ["solid biomass for industry CC"]
+        spatial.msw.nodes = ["EU municipal solid waste"]
+        spatial.msw.locations = ["EU"]
 
     spatial.biomass.df = pd.DataFrame(vars(spatial.biomass), index=nodes)
+    spatial.msw.df = pd.DataFrame(vars(spatial.msw), index=nodes)
 
     # co2
 
@@ -2102,7 +2114,7 @@ def build_heat_demand(n):
         .unstack(level=1)
     )
 
-    sectors = ["residential", "services"]
+    sectors = [sector.value for sector in HeatSector]
     uses = ["water", "space"]
 
     heat_demand = {}
@@ -2130,10 +2142,21 @@ def build_heat_demand(n):
     return heat_demand
 
 
-def add_heat(n, costs):
+def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
+    """
+    Add heat sector to the network.
+
+    Parameters:
+        n (pypsa.Network): The PyPSA network object.
+        costs (pd.DataFrame): DataFrame containing cost information.
+        cop (xr.DataArray): DataArray containing coefficient of performance (COP) values.
+
+    Returns:
+        None
+    """
     logger.info("Add heat sector")
 
-    sectors = ["residential", "services"]
+    sectors = [sector.value for sector in HeatSector]
 
     heat_demand = build_heat_demand(n)
 
@@ -2152,23 +2175,6 @@ def add_heat(n, costs):
         for sector in sectors:
             heat_demand[sector + " space"] = (1 - dE) * heat_demand[sector + " space"]
 
-    heat_systems = [
-        "residential rural",
-        "services rural",
-        "residential urban decentral",
-        "services urban decentral",
-        "urban central",
-    ]
-
-    cop = {
-        "air": xr.open_dataarray(snakemake.input.cop_air_total)
-        .to_pandas()
-        .reindex(index=n.snapshots),
-        "ground": xr.open_dataarray(snakemake.input.cop_soil_total)
-        .to_pandas()
-        .reindex(index=n.snapshots),
-    }
-
     if options["solar_thermal"]:
         solar_thermal = (
             xr.open_dataarray(snakemake.input.solar_thermal_total)
@@ -2178,31 +2184,34 @@ def add_heat(n, costs):
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    for name in heat_systems:
-        name_type = "central" if name == "urban central" else "decentral"
+    for (
+        heat_system
+    ) in (
+        HeatSystem
+    ):  # this loops through all heat systems defined in _entities.HeatSystem
 
-        if name == "urban central":
+        if heat_system == HeatSystem.URBAN_CENTRAL:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
 
-        n.add("Carrier", name + " heat")
+        n.add("Carrier", f"{heat_system} heat")
 
         n.madd(
             "Bus",
-            nodes + f" {name} heat",
+            nodes + f" {heat_system.value} heat",
             location=nodes,
-            carrier=name + " heat",
+            carrier=f"{heat_system.value} heat",
             unit="MWh_th",
         )
 
-        if name == "urban central" and options.get("central_heat_vent"):
+        if heat_system == HeatSystem.URBAN_CENTRAL and options.get("central_heat_vent"):
             n.madd(
                 "Generator",
-                nodes + f" {name} heat vent",
-                bus=nodes + f" {name} heat",
+                nodes + f" {heat_system} heat vent",
+                bus=nodes + f" {heat_system} heat",
                 location=nodes,
-                carrier=name + " heat vent",
+                carrier=f"{heat_system} heat vent",
                 p_nom_extendable=True,
                 p_max_pu=0,
                 p_min_pu=-1,
@@ -2210,30 +2219,24 @@ def add_heat(n, costs):
             )
 
         ## Add heat load
+        factor = heat_system.heat_demand_weighting(
+            urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
+        )
+        if not heat_system == HeatSystem.URBAN_CENTRAL:
+            heat_load = (
+                heat_demand[
+                    [
+                        heat_system.sector.value + " water",
+                        heat_system.sector.value + " space",
+                    ]
+                ]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            )
 
-        for sector in sectors:
-            # heat demand weighting
-            if "rural" in name:
-                factor = 1 - urban_fraction[nodes]
-            elif "urban central" in name:
-                factor = dist_fraction[nodes]
-            elif "urban decentral" in name:
-                factor = urban_fraction[nodes] - dist_fraction[nodes]
-            else:
-                raise NotImplementedError(
-                    f" {name} not in " f"heat systems: {heat_systems}"
-                )
-
-            if sector in name:
-                heat_load = (
-                    heat_demand[[sector + " water", sector + " space"]]
-                    .T.groupby(level=1)
-                    .sum()
-                    .T[nodes]
-                    .multiply(factor)
-                )
-
-        if name == "urban central":
+        if heat_system == HeatSystem.URBAN_CENTRAL:
             heat_load = (
                 heat_demand.T.groupby(level=1)
                 .sum()
@@ -2246,20 +2249,25 @@ def add_heat(n, costs):
         n.madd(
             "Load",
             nodes,
-            suffix=f" {name} heat",
-            bus=nodes + f" {name} heat",
-            carrier=name + " heat",
+            suffix=f" {heat_system} heat",
+            bus=nodes + f" {heat_system} heat",
+            carrier=f"{heat_system} heat",
             p_set=heat_load,
         )
 
         ## Add heat pumps
-
-        heat_pump_types = ["air"] if "urban" in name else ["ground", "air"]
-
-        for heat_pump_type in heat_pump_types:
-            costs_name = f"{name_type} {heat_pump_type}-sourced heat pump"
+        for heat_source in snakemake.params.heat_pump_sources[
+            heat_system.system_type.value
+        ]:
+            costs_name = heat_system.heat_pump_costs_name(heat_source)
             efficiency = (
-                cop[heat_pump_type][nodes]
+                cop.sel(
+                    heat_system=heat_system.system_type.value,
+                    heat_source=heat_source,
+                    name=nodes,
+                )
+                .to_pandas()
+                .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name, "efficiency"]
             )
@@ -2267,10 +2275,10 @@ def add_heat(n, costs):
             n.madd(
                 "Link",
                 nodes,
-                suffix=f" {name} {heat_pump_type} heat pump",
+                suffix=f" {heat_system} {heat_source} heat pump",
                 bus0=nodes,
-                bus1=nodes + f" {name} heat",
-                carrier=f"{name} {heat_pump_type} heat pump",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} {heat_source} heat pump",
                 efficiency=efficiency,
                 capital_cost=costs.at[costs_name, "efficiency"]
                 * costs.at[costs_name, "fixed"]
@@ -2280,59 +2288,65 @@ def add_heat(n, costs):
             )
 
         if options["tes"]:
-            n.add("Carrier", name + " water tanks")
+            n.add("Carrier", f"{heat_system} water tanks")
 
             n.madd(
                 "Bus",
-                nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks",
                 location=nodes,
-                carrier=name + " water tanks",
+                carrier=f"{heat_system} water tanks",
                 unit="MWh_th",
             )
 
             n.madd(
                 "Link",
-                nodes + f" {name} water tanks charger",
-                bus0=nodes + f" {name} heat",
-                bus1=nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water tanks",
                 efficiency=costs.at["water tank charger", "efficiency"],
-                carrier=name + " water tanks charger",
+                carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
             )
 
             n.madd(
                 "Link",
-                nodes + f" {name} water tanks discharger",
-                bus0=nodes + f" {name} water tanks",
-                bus1=nodes + f" {name} heat",
-                carrier=name + " water tanks discharger",
+                nodes + f" {heat_system} water tanks discharger",
+                bus0=nodes + f" {heat_system} water tanks",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} water tanks discharger",
                 efficiency=costs.at["water tank discharger", "efficiency"],
                 p_nom_extendable=True,
             )
 
-            tes_time_constant_days = options["tes_tau"][name_type]
+            tes_time_constant_days = options["tes_tau"][
+                heat_system.central_or_decentral
+            ]
 
             n.madd(
                 "Store",
-                nodes + f" {name} water tanks",
-                bus=nodes + f" {name} water tanks",
+                nodes + f" {heat_system} water tanks",
+                bus=nodes + f" {heat_system} water tanks",
                 e_cyclic=True,
                 e_nom_extendable=True,
-                carrier=name + " water tanks",
+                carrier=f"{heat_system} water tanks",
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                capital_cost=costs.at[name_type + " water tank storage", "fixed"],
-                lifetime=costs.at[name_type + " water tank storage", "lifetime"],
+                capital_cost=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "fixed"
+                ],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+                ],
             )
 
         if options["resistive_heaters"]:
-            key = f"{name_type} resistive heater"
+            key = f"{heat_system.central_or_decentral} resistive heater"
 
             n.madd(
                 "Link",
-                nodes + f" {name} resistive heater",
+                nodes + f" {heat_system} resistive heater",
                 bus0=nodes,
-                bus1=nodes + f" {name} heat",
-                carrier=name + " resistive heater",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} resistive heater",
                 efficiency=costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "efficiency"]
                 * costs.at[key, "fixed"]
@@ -2342,16 +2356,16 @@ def add_heat(n, costs):
             )
 
         if options["boilers"]:
-            key = f"{name_type} gas boiler"
+            key = f"{heat_system.central_or_decentral} gas boiler"
 
             n.madd(
                 "Link",
-                nodes + f" {name} gas boiler",
+                nodes + f" {heat_system} gas boiler",
                 p_nom_extendable=True,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
-                bus1=nodes + f" {name} heat",
+                bus1=nodes + f" {heat_system} heat",
                 bus2="co2 atmosphere",
-                carrier=name + " gas boiler",
+                carrier=f"{heat_system} gas boiler",
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=costs.at[key, "efficiency"]
@@ -2361,22 +2375,26 @@ def add_heat(n, costs):
             )
 
         if options["solar_thermal"]:
-            n.add("Carrier", name + " solar thermal")
+            n.add("Carrier", f"{heat_system} solar thermal")
 
             n.madd(
                 "Generator",
                 nodes,
-                suffix=f" {name} solar thermal collector",
-                bus=nodes + f" {name} heat",
-                carrier=name + " solar thermal",
+                suffix=f" {heat_system} solar thermal collector",
+                bus=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} solar thermal",
                 p_nom_extendable=True,
-                capital_cost=costs.at[name_type + " solar thermal", "fixed"]
+                capital_cost=costs.at[
+                    heat_system.central_or_decentral + " solar thermal", "fixed"
+                ]
                 * overdim_factor,
                 p_max_pu=solar_thermal[nodes],
-                lifetime=costs.at[name_type + " solar thermal", "lifetime"],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " solar thermal", "lifetime"
+                ],
             )
 
-        if options["chp"] and name == "urban central":
+        if options["chp"] and heat_system == HeatSystem.URBAN_CENTRAL:
             # add gas CHP; biomass CHP is added in biomass section
             n.madd(
                 "Link",
@@ -2433,16 +2451,20 @@ def add_heat(n, costs):
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
 
-        if options["chp"] and options["micro_chp"] and name != "urban central":
+        if (
+            options["chp"]
+            and options["micro_chp"]
+            and heat_system.value != "urban central"
+        ):
             n.madd(
                 "Link",
-                nodes + f" {name} micro gas CHP",
+                nodes + f" {heat_system} micro gas CHP",
                 p_nom_extendable=True,
                 bus0=spatial.gas.df.loc[nodes, "nodes"].values,
                 bus1=nodes,
-                bus2=nodes + f" {name} heat",
+                bus2=nodes + f" {heat_system} heat",
                 bus3="co2 atmosphere",
-                carrier=name + " micro gas CHP",
+                carrier=heat_system.value + " micro gas CHP",
                 efficiency=costs.at["micro CHP", "efficiency"],
                 efficiency2=costs.at["micro CHP", "efficiency-heat"],
                 efficiency3=costs.at["gas", "CO2 intensity"],
@@ -2478,7 +2500,7 @@ def add_heat(n, costs):
         ) / heat_demand.T.groupby(level=[1]).sum().T
 
         for name in n.loads[
-            n.loads.carrier.isin([x + " heat" for x in heat_systems])
+            n.loads.carrier.isin([x + " heat" for x in HeatSystem])
         ].index:
             node = n.buses.loc[name, "location"]
             ct = pop_layout.loc[node, "ct"]
@@ -2632,18 +2654,82 @@ def add_biomass(n, costs):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].rename(index=lambda x: x + " biogas")
     else:
         biogas_potentials_spatial = biomass_potentials["biogas"].sum()
+        unsustainable_biogas_potentials_spatial = biomass_potentials[
+            "unsustainable biogas"
+        ].sum()
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].rename(
             index=lambda x: x + " solid biomass"
         )
+        msw_biomass_potentials_spatial = biomass_potentials[
+            "municipal solid waste"
+        ].rename(index=lambda x: x + " municipal solid waste")
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].rename(index=lambda x: x + " solid biomass")
+
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
+        msw_biomass_potentials_spatial = biomass_potentials[
+            "municipal solid waste"
+        ].sum()
+        unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
+            "unsustainable solid biomass"
+        ].sum()
+
+    if options["regional_oil_demand"]:
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " bioliquids")
+    else:
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].sum()
 
     n.add("Carrier", "biogas")
     n.add("Carrier", "solid biomass")
+
+    if (
+        options["municipal_solid_waste"]
+        and not options["industry"]
+        and cf_industry["waste_to_energy"]
+        or cf_industry["waste_to_energy_cc"]
+    ):
+        logger.warning(
+            "Flag municipal_solid_waste can be only used with industry "
+            "sector waste to energy."
+            "Setting municipal_solid_waste=False."
+        )
+        options["municipal_solid_waste"] = False
+
+    if options["municipal_solid_waste"]:
+
+        n.add("Carrier", "municipal solid waste")
+
+        n.madd(
+            "Bus",
+            spatial.msw.nodes,
+            location=spatial.msw.locations,
+            carrier="municipal solid waste",
+        )
+
+        e_max_pu = pd.Series([1] * (len(n.snapshots) - 1) + [0], index=n.snapshots)
+        n.madd(
+            "Store",
+            spatial.msw.nodes,
+            bus=spatial.msw.nodes,
+            carrier="municipal solid waste",
+            e_nom=msw_biomass_potentials_spatial,
+            marginal_cost=0,  # costs.at["municipal solid waste", "fuel"],
+            e_max_pu=e_max_pu,
+            e_initial=msw_biomass_potentials_spatial,
+        )
 
     n.madd(
         "Bus",
@@ -2729,6 +2815,81 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
         )
 
+    if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
+
+        # Create timeseries to force usage of unsustainable potentials
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
+        e_max_pu.iloc[-1] = 0
+
+        n.madd(
+            "Store",
+            spatial.gas.biogas,
+            suffix=" unsustainable",
+            bus=spatial.gas.biogas,
+            carrier="unsustainable biogas",
+            e_nom=unsustainable_biogas_potentials_spatial,
+            marginal_cost=costs.at["biogas", "fuel"],
+            e_initial=unsustainable_biogas_potentials_spatial,
+            e_nom_extendable=False,
+            e_max_pu=e_max_pu,
+        )
+
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
+        e_max_pu.iloc[-1] = 0
+
+        n.madd(
+            "Store",
+            spatial.biomass.nodes,
+            suffix=" unsustainable",
+            bus=spatial.biomass.nodes,
+            carrier="unsustainable solid biomass",
+            e_nom=unsustainable_solid_biomass_potentials_spatial,
+            marginal_cost=costs.at["fuelwood", "fuel"],
+            e_initial=unsustainable_solid_biomass_potentials_spatial,
+            e_nom_extendable=False,
+            e_max_pu=e_max_pu,
+        )
+
+        n.madd(
+            "Bus",
+            spatial.biomass.bioliquids,
+            location=spatial.biomass.locations,
+            carrier="unsustainable bioliquids",
+            unit="MWh_LHV",
+        )
+
+        e_max_pu = pd.DataFrame(
+            1, index=n.snapshots, columns=spatial.biomass.bioliquids
+        )
+        e_max_pu.iloc[-1] = 0
+
+        n.madd(
+            "Store",
+            spatial.biomass.bioliquids,
+            suffix=" unsustainable",
+            bus=spatial.biomass.bioliquids,
+            carrier="unsustainable bioliquids",
+            e_nom=unsustainable_liquid_biofuel_potentials_spatial,
+            marginal_cost=costs.at["biodiesel crops", "fuel"],
+            e_initial=unsustainable_liquid_biofuel_potentials_spatial,
+            e_nom_extendable=False,
+            e_max_pu=e_max_pu,
+        )
+
+        n.madd(
+            "Link",
+            spatial.biomass.bioliquids,
+            bus0=spatial.biomass.bioliquids,
+            bus1=spatial.oil.nodes,
+            bus2="co2 atmosphere",
+            carrier="unsustainable bioliquids",
+            efficiency=1,
+            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
+            + costs.at["BtL", "CO2 stored"],
+            p_nom=unsustainable_liquid_biofuel_potentials_spatial,
+            marginal_cost=costs.at["BtL", "VOM"],
+        )
+
     n.madd(
         "Link",
         spatial.gas.biogas_to_gas,
@@ -2800,6 +2961,19 @@ def add_biomass(n, costs):
             carrier="solid biomass transport",
         )
 
+        if options["municipal_solid_waste"]:
+            n.madd(
+                "Link",
+                biomass_transport.index,
+                bus0=biomass_transport.bus0 + " municipal solid waste",
+                bus1=biomass_transport.bus1 + " municipal solid waste",
+                p_nom_extendable=False,
+                p_nom=5e4,
+                length=biomass_transport.length.values,
+                marginal_cost=biomass_transport.costs * biomass_transport.length.values,
+                carrier="municipal solid waste transport",
+            )
+
     elif options["biomass_spatial"]:
         # add artificial biomass generators at nodes which include transport costs
         transport_costs = pd.read_csv(
@@ -2828,6 +3002,26 @@ def add_biomass(n, costs):
             constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
+
+        if options["municipal_solid_waste"]:
+            # Add municipal solid waste
+            n.madd(
+                "Generator",
+                spatial.msw.nodes,
+                bus=spatial.msw.nodes,
+                carrier="municipal solid waste",
+                p_nom=10000,
+                marginal_cost=0  # costs.at["municipal solid waste", "fuel"]
+                + bus_transport_costs * average_distance,
+            )
+            n.add(
+                "GlobalConstraint",
+                "msw limit",
+                carrier_attribute="municipal solid waste",
+                sense="<=",
+                constant=biomass_potentials["municipal solid waste"].sum(),
+                type="operational_limit",
+            )
 
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
@@ -3420,27 +3614,23 @@ def add_industry(n, costs):
     if options["oil_boilers"]:
         nodes = pop_layout.index
 
-        for name in [
-            "residential rural",
-            "services rural",
-            "residential urban decentral",
-            "services urban decentral",
-        ]:
-            n.madd(
-                "Link",
-                nodes + f" {name} oil boiler",
-                p_nom_extendable=True,
-                bus0=spatial.oil.nodes,
-                bus1=nodes + f" {name} heat",
-                bus2="co2 atmosphere",
-                carrier=f"{name} oil boiler",
-                efficiency=costs.at["decentral oil boiler", "efficiency"],
-                efficiency2=costs.at["oil", "CO2 intensity"],
-                capital_cost=costs.at["decentral oil boiler", "efficiency"]
-                * costs.at["decentral oil boiler", "fixed"]
-                * options["overdimension_individual_heating"],
-                lifetime=costs.at["decentral oil boiler", "lifetime"],
-            )
+        for heat_system in HeatSystem:
+            if not heat_system == HeatSystem.URBAN_CENTRAL:
+                n.madd(
+                    "Link",
+                    nodes + f" {heat_system} oil boiler",
+                    p_nom_extendable=True,
+                    bus0=spatial.oil.nodes,
+                    bus1=nodes + f" {heat_system} heat",
+                    bus2="co2 atmosphere",
+                    carrier=f"{heat_system} oil boiler",
+                    efficiency=costs.at["decentral oil boiler", "efficiency"],
+                    efficiency2=costs.at["oil", "CO2 intensity"],
+                    capital_cost=costs.at["decentral oil boiler", "efficiency"]
+                    * costs.at["decentral oil boiler", "fixed"]
+                    * options["overdimension_individual_heating"],
+                    lifetime=costs.at["decentral oil boiler", "lifetime"],
+                )
 
     n.madd(
         "Link",
@@ -3534,6 +3724,17 @@ def add_industry(n, costs):
             / costs.at["oil", "CO2 intensity"],
             efficiency3=process_co2_per_naphtha,
         )
+
+        if options.get("biomass", True) and options["municipal_solid_waste"]:
+            n.madd(
+                "Link",
+                spatial.msw.locations,
+                bus0=spatial.msw.nodes,
+                bus1=non_sequestered_hvc_locations,
+                carrier="municipal solid waste",
+                p_nom_extendable=True,
+                efficiency=1.0,
+            )
 
         n.madd(
             "Link",
@@ -4427,13 +4628,14 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
+
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
             simpl="",
             opts="",
-            clusters="1",
+            clusters="37",
             ll="vopt",
             sector_opts="",
             planning_horizons="2050",
@@ -4492,7 +4694,7 @@ if __name__ == "__main__":
         add_land_transport(n, costs)
 
     if options["heating"]:
-        add_heat(n, costs)
+        add_heat(n=n, costs=costs, cop=xr.open_dataarray(snakemake.input.cop_profiles))
 
     if options["biomass"]:
         add_biomass(n, costs)
