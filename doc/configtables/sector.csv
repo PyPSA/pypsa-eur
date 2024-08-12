@@ -119,16 +119,16 @@ cc_fraction,--,float,The default fraction of CO2 captured with post-combustion c
 hydrogen_underground _storage,--,"{true, false}",Add options for storing hydrogen underground. Storage potential depends regionally.
 hydrogen_underground _storage_locations,,"{onshore, nearshore, offshore}","The location where hydrogen underground storage can be located. Onshore, nearshore, offshore means it must be located more than 50 km away from the sea, within 50 km of the sea, or within the sea itself respectively."
 ,,,
-methanol, --,"{true, false}", Add methanol as carrrier and add enables methnol technologies
+methanol, --,"{true, false}", Add methanol as carrrier and add enabled methnol technologies
 regional_methanol_demand,--,"{true, false}",Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.
 methanol_reforming,--,"{true, false}", Add methanol reforming
 methanol_reforming_cc,--,"{true, false}", Add methanol reforming with carbon capture
 methanol_to_kerosene,--,"{true, false}", Add methanol to kerosene
 methanol_to_olefins,--,"{true, false}", Add methanol to olefins
 methanol_to_power,--,--, Add different methanol to power technologies
--- ccgt,--,"{true, false}", Add combined cycle gas turbine (CCGT) technology using methanol
--- ccgt_cc,--,"{true, false}", Add combined cycle gas turbine (CCGT) technology using methanol with carbon capture
--- ocgt,--,"{true, false}", Add open cycle gas turbine (OCGT) technology using methanol
+-- ccgt,--,"{true, false}", Add combined cycle gas turbine (CCGT) using methanol
+-- ccgt_cc,--,"{true, false}", Add combined cycle gas turbine (CCGT) with carbon capture using methanol
+-- ocgt,--,"{true, false}", Add open cycle gas turbine (OCGT) using methanol
 -- allam,--,"{true, false}", Add Allam cycle gas power plants using methanol
 ,,,
 ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
