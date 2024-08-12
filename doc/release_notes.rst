@@ -11,14 +11,6 @@ Upcoming Release
 ================
 * Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
 
-* split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
-
-* Add option to import solid biomass
-
-* Add option to produce electrobiofuels (flag ``electrobiofuels``) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
-
-* Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
-
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
   substituted by the phase-in of sustainable biomass types using the config parameters
   ``biomass: share_unsustainable_use_retained`` and ``biomass: share_sustainable_potential_available``.
