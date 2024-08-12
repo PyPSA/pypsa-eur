@@ -590,8 +590,8 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
-  regional_methanol_demand: false
   methanol: false
+  regional_methanol_demand: false
   methanol_reforming: false
   methanol_reforming_cc: false
   methanol_to_kerosene: false
