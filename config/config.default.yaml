@@ -954,8 +954,15 @@ plotting:
     carriers:
     - electricity
     - heat
+    - co2
     carrier_groups:
       electricity: [AC, low_voltage]
+    metrics:
+    - energy_balance
+    - total_cost
+    scenario_comparison:
+    - ""
+    comparison_folder: "scenario_comparison"
 
   nice_names:
     OCGT: "Open-Cycle Gas"

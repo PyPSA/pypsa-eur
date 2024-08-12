@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: MIT
 
 import logging
-import re
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from _helpers import configure_logging
@@ -29,13 +29,17 @@ def rename_index(df):
     index = specific.where(duplicated, generic)
     df = df.set_axis(index)
     # rename columns and drop duplicates
-    columns = df.columns.str.split("_", expand=True)
-    columns = [
-        columns.get_level_values(level).unique()
-        for level in range(columns.nlevels)
-        if not columns.get_level_values(level).duplicated(keep=False).all()
+    opts = df.columns.get_level_values(-1).str.split("_", expand=True)
+    scenario = df.columns.get_level_values(0)
+    opts = [
+        opts.get_level_values(level).unique()
+        for level in range(opts.nlevels)
+        if not opts.get_level_values(level).duplicated(keep=False).all()
     ]
-    columns = pd.MultiIndex.from_arrays(columns)
+    opts = [""] if not opts else opts  # in case all opts are the same
+    if df.columns.nlevels > 1:
+        columns = pd.MultiIndex.from_product([scenario, opts])
+    # columns = pd.MultiIndex.from_arrays(columns)
     df.columns = columns.map("\n".join)
     return df
 
@@ -49,8 +53,9 @@ def get_carrier_colors(carriers, tech_colors):
     return carrier_colors
 
 
-def plot_static_comparison(df, ax, stacked=False):
+def plot_static_comparison(df, ax, stacked=False, tech_colors=None):
     factor, unit = conversion[output]
+    df = df.round(2)
     df = df[df != 0]
     df = df.dropna(axis=0, how="all").fillna(0)
     if df.empty:
@@ -77,12 +82,17 @@ def plot_static_comparison(df, ax, stacked=False):
     ax.grid(axis="x")
 
 
-def read_csv(input, output):
+def read_csv(input, output, num_run):
     try:
         # filter required csv to plot the wanted output
         files = list(filter(lambda x: output in x, input))
         # retrieves network labels from folder name
-        network_labels = [file.split("/")[-3] for file in files]
+        if num_run == 1:
+            network_labels = [file.split("/")[-3] for file in files]
+        else:
+            network_labels = [
+                (file.split("/")[-6], file.split("/")[-3]) for file in files
+            ]
         df = pd.concat(
             [
                 pd.read_csv(f, skiprows=2).set_index(["component", "carrier"])
@@ -90,10 +100,9 @@ def read_csv(input, output):
             ],
             axis=1,
             keys=network_labels,
+            names=["scenario", "opts", "to_drop"],
         )
-        # get plot label and drop from index
-        label = df.columns.get_level_values(1).unique()[0]
-        df.columns = df.columns.droplevel(1)
+        df.columns = df.columns.droplevel("to_drop")
     except Exception as e:
         print(f"Error reading csv file for {output}: {e}")
         df = pd.DataFrame()
@@ -113,12 +122,13 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
 
-    tech_colors = (
-        pd.Series(snakemake.params.plotting["tech_colors"])
-        .groupby(rename_techs)
-        .first()
-    )
+    plotting = snakemake.params.plotting
+    tech_colors = pd.Series(plotting["tech_colors"]).groupby(rename_techs).first()
     conversion = pd.Series(snakemake.params.statistics)
+
+    all_runs = snakemake.config["run"]["name"]
+    runs = plotting["statistics"].get("scenario_comparison", all_runs)
+    num_run = len(np.atleast_1d(runs))
 
     for output in snakemake.output.keys():
         if "touch" in output:
@@ -126,7 +136,7 @@ if __name__ == "__main__":
                 pass
                 continue
         fig, ax = plt.subplots()
-        df = read_csv(snakemake.input, output)
+        df = read_csv(snakemake.input, output, num_run)
         if df.empty:
             ax.text(
                 0.5,
@@ -141,6 +151,8 @@ if __name__ == "__main__":
             fig.savefig(snakemake.output[output])
             continue
 
-        plot_static_comparison(df, ax, stacked=STACKED.get(output, True))
+        plot_static_comparison(
+            df, ax, stacked=STACKED.get(output, True), tech_colors=tech_colors
+        )
 
         fig.savefig(snakemake.output[output], bbox_inches="tight")

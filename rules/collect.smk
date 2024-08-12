@@ -102,16 +102,40 @@ rule plot_statistics:
             expand(
                 RESULTS
                 + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
-                country=config["plotting"]["statistics"].get("countries", "all"),
-                carrier=config["plotting"]["statistics"].get("carriers", ["all"]),
+                country=config_provider("plotting", "statistics")(run).get(
+                    "countries", "all"
+                ),
+                carrier=config_provider("plotting", "statistics")(run).get(
+                    "carriers", "all"
+                ),
                 run=config["run"]["name"],
             ),
             expand(
                 RESULTS
                 + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
                 **config["scenario"],
-                country=config["plotting"]["statistics"].get("countries", "all"),
-                carrier=config["plotting"]["statistics"].get("carriers", ["all"]),
+                country=config_provider("plotting", "statistics")(run).get(
+                    "countries", "all"
+                ),
+                carrier=config_provider("plotting", "statistics")(run).get(
+                    "carriers", "all"
+                ),
+                run=config["run"]["name"],
+            ),
+            expand(
+                "results/statistics/"
+                + config_provider("plotting", "statistics")(run).get(
+                    "comparison_folder", "results/scenario_comparison"
+                )
+                + "/"
+                + "figures/country_{country}/.statistics_{carrier}_plots",
+                **config["scenario"],
+                country=config_provider("plotting", "statistics")(run).get(
+                    "countries", "all"
+                ),
+                carrier=config_provider("plotting", "statistics")(run).get(
+                    "carriers", "all"
+                ),
                 run=config["run"]["name"],
             ),
         ],
