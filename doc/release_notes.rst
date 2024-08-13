@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
 
 * Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
 
