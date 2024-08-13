@@ -4,10 +4,23 @@ heating,--,"{true, false}",Flag to include heating sector.
 biomass,--,"{true, false}",Flag to include biomass sector.
 industry,--,"{true, false}",Flag to include industry sector.
 agriculture,--,"{true, false}",Flag to include agriculture sector.
+fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels ( [""coal"", ""gas"", ""oil"", ""lignite""])"
 district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
--- potential,--,float,maximum fraction of urban demand which can be supplied by district heating. Ignored where below current fraction.
+-- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
+-- forward_temperature,°C,float,Forward temperature in district heating
+-- return_temperature,°C,float,Return temperature in district heating. Must be lower than forward temperature
+-- heat_source_cooling,K,float,Cooling of heat source for heat pumps
+-- heat_pump_cop_approximation,,,
+-- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
+-- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
+-- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
+-- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
+-- heat_pump_sources,--,,
+-- -- urban central,--,List of heat sources for heat pumps in urban central heating,
+-- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
+-- -- rural,--,List of heat sources for heat pumps in rural heating,
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
 ,,,
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
@@ -71,7 +84,7 @@ boilers,--,"{true, false}",Add option for transforming gas into heat using gas b
 resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
-overdimension_individual_heating,--,"float",Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
+overdimension_individual_heating,--,float,Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
@@ -138,6 +151,7 @@ biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass up
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,
 -- enable,--,"{true, false}",Add option to limit the maximum growth of a carrier
 -- factor,p.u.,float,The maximum growth factor of a carrier (e.g. 1.3 allows  30% larger than max historic growth)
@@ -153,3 +167,8 @@ enhanced_geothermal,,,
 -- max_boost,--,float,The maximum boost in power output under flexible operation
 -- var_cf,--,"{true, false}",Add option for variable capacity factor (see Ricks et al. 2024)
 -- sustainability_factor,--,float,Share of sourced heat that is replenished by the earth's core (see details in `build_egs_potentials.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_egs_potentials.py>`_)
+solid_biomass_import,,,
+-- enable,--,"{true, false}",Add option to include solid biomass imports
+-- price,currency/MWh,float,Price for importing solid biomass
+-- max_amount,Twh,float,Maximum solid biomass import potential
+-- upstream_emissions_factor,p.u.,float,Upstream emissions of solid biomass imports

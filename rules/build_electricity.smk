@@ -2,21 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-if config["enable"].get("prepare_links_p_nom", False):
-
-    rule prepare_links_p_nom:
-        output:
-            "data/links_p_nom.csv",
-        log:
-            logs("prepare_links_p_nom.log"),
-        threads: 1
-        resources:
-            mem_mb=1500,
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/prepare_links_p_nom.py"
-
 
 rule build_electricity_demand:
     params:
@@ -108,8 +93,8 @@ rule build_shapes:
     params:
         countries=config_provider("countries"),
     input:
-        naturalearth=ancient("data/bundle/naturalearth/ne_10m_admin_0_countries.shp"),
-        eez=ancient("data/bundle/eez/World_EEZ_v8_2014.shp"),
+        naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
+        eez=ancient("data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg"),
         nuts3=ancient("data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp"),
         nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
