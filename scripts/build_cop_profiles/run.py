@@ -93,8 +93,10 @@ def get_cop(
             source_type=heat_source,
         ).approximate_cop()
 
+
 def get_country_from_node_name(node_name: str) -> str:
     return node_name[:2]
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
