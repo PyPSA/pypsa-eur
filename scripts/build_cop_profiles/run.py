@@ -46,7 +46,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import get_country_from_node_name, set_scenario_config
+from _helpers import set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
@@ -134,6 +134,8 @@ def get_cop(
             source_type=heat_source,
         ).approximate_cop()
 
+def get_country_from_node_name(node_name: str) -> str:
+    return node_name[:2]
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
