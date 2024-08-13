@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
 
 * Made central heating supply temperatures dynamic based on an adaptation of a reference curve from Pieper et al. (2019) (https://www.sciencedirect.com/science/article/pii/S0360544219305857?via%3Dihub).
 

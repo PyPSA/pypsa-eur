@@ -56,8 +56,8 @@ For each bus, the following industry subcategories
 - Aluminium - primary production
 - Aluminium - secondary production
 - Other non-ferrous metals
-- Transport Equipment
-- Machinery Equipment
+- Transport equipment
+- Machinery equipment
 - Textiles and leather
 - Wood and wood products
 - Other Industrial Sectors
