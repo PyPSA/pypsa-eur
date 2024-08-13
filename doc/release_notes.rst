@@ -9,6 +9,9 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Add option to apply a gaussian kernel density smoothing to wind turbine power curves.
+
 * Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
 
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
