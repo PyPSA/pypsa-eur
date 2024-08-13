@@ -973,11 +973,18 @@ if __name__ == "__main__":
     ppl = load_powerplants(snakemake.input.powerplants)
 
 
+
+
+
     ################################################## PyPSA-Spain
     #
     # Generate electricity demand according to PyPSA-Spain customisation
     #
-    if params.customise_electricity_demand:
+
+    electricity_demand = snakemake.params.electricity_demand
+
+
+    if electricity_demand['enable']:
 
         print(f'##### [PyPSA-Spain]: Using attach_load_vPyPSA_Spain to attache regional electricity demand in ES..')
 
@@ -1003,6 +1010,7 @@ if __name__ == "__main__":
         )
             
     ##################################################
+
 
 
     update_transmission_costs(n, costs, params.length_factor)

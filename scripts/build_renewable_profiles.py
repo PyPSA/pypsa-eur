@@ -445,6 +445,8 @@ if __name__ == "__main__":
 
 
 
+
+
     ######################################## PyPSA-Spain : q2q transform
 
     ##### Allocate relevant variables    
@@ -452,7 +454,7 @@ if __name__ == "__main__":
     technology = snakemake.wildcards.technology
 
 
-    if q2q_transform['apply_q2q']:
+    if q2q_transform['enable']:
 
         ########## Retrieve the name of the file with the q2q transform
         q2q_filename = q2q_transform[technology]

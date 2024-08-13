@@ -320,9 +320,12 @@ if __name__ == "__main__":
 
 
     ######################################## PyPSA-Spain
-
+    #
+    # Add interconnections with PT and FR
+    #
 
     interconnections = snakemake.params.interconnections
+
 
     # Add interconnections
     if interconnections['enable']:
