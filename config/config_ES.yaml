@@ -25,6 +25,9 @@ pypsa_spain:
     offwind-float: ''
     solar: 'q2q_solar_v001.pkl'
     solar-hsat: ''
+  interconnections:
+    enable: true
+    ic_ES_file: 'data_ES/interconnections/interconnections.yaml'
 
 
 
@@ -42,8 +45,8 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "customise_electricity_demand"   #####
-  name: "false"   #####
+  prefix:    #####
+  name: "interconnections"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -64,7 +67,7 @@ scenario:
   ll:
   - v1.0   # vopt   #####
   clusters:
-  - 5   #####
+  - 8   #####
   opts:
   - ''
   sector_opts:
@@ -125,7 +128,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, onwind, offwind-float, OCGT, CCGT, biomass]   #####
+    Generator: [solar, onwind, offwind-float, CCGT, biomass]   #####
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
@@ -134,8 +137,8 @@ electricity:
   custom_powerplants: false
   everywhere_powerplants: []
 
-  conventional_carriers: [nuclear, OCGT, CCGT, biomass]   #####
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-float, hydro]   #####
+  conventional_carriers: [nuclear, CCGT, biomass]   #####
+  renewable_carriers: [solar, onwind, offwind-float, hydro]   #####
 
   estimate_renewable_capacities:
     enable: true

@@ -1,0 +1,230 @@
+
+################################################## ES - FR ##################################################
+
+
+########## Interconnection ES-FR0
+
+### SOURCE: https://www.ree.es/es/actividades/proyectos-singulares/nueva-interconexion-electrica-con-francia
+# 2800 MW
+# DC
+# 320 kV
+# 64.5 km (30 km ES, 26 km FR, 8.5 km túnel)
+# 700 mill. EUR
+# Enlaza los municipios de Santa Llogaia, cerca de Figueres (España), con Baixas, próximo a Perpiñán (Francia). Trazado soterrado en zanja de hormigón menos el túnel de 8,5 kilómetros que atraviesa los Pirineos (paralelo a la línea ferroviaria de alta velocidad). Tiene su entrada y salida en los términos municipales de La Jonquera (España) y Montesquieu des Albères (Francia).
+# En 2015 la capacidad se duplica (de 1400 MW a 2800 MW)
+
+ES FR0:
+
+  bus_name: ES FR0
+  bus_params:
+    x: 2.877482 
+    y: 42.426598
+    carrier: AC
+    v_nom: 380
+
+  link_name: ES FR0 ic
+  link_params:
+    bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
+    bus1: ES FR0
+    carrier: DC
+    p_nom: 2800 
+    p_nom_extendable: True
+    length: 34.25 # ES side
+    efficiency: 1  
+    # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
+    lifetime: 50 ### No afecta a cómo se calculan los costes
+    ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### underwater_fraction: 0 ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+
+  generator_name: ES FR0 gen
+  generator_params: 
+    carrier: biomass
+    bus: ES FR0
+    p_nom: 66.6
+    efficiency: 1   
+    capital_cost: 0
+    p_nom_max: inf
+    p_max_pu: 1
+    p_nom_extendable: True
+  generator_prices: data_ES/interconnections/ic_market_prices/mp_FR_2030.csv
+
+  load_name: ES FR0
+  load_params:
+    bus: ES FR0
+    # carrier: electricity ##### NO HAY QUE AÑADIR ESTE CARRIER, en add_electricity se comenta para que no se añada
+
+
+
+
+
+########## Interconnection ES-FR1
+
+### SOURCE: https://www.ree.es/es/actividades/proyectos-singulares/interconexion-electrica-submarina-con-francia
+# 5000 MW
+# DC
+# 400 km (300 km subterráneos)
+# 2.800 mill. EUR (https://www.levante-emv.com/economia/2024/02/13/pacto-espana-francia-impulsar-interconexiones-98140681.html)
+# La nueva interconexión entre la subestación de Gatika (cerca de Bilbao) y la subestación de Cubnezais (en la región francesa de Aquitania)
+# Operativa a partir de 2028
+
+
+ES FR1:
+
+  bus_name: ES FR1
+  bus_params:
+    x: -2.858534 
+    y: 43.364801
+    carrier: AC
+    v_nom: 380
+
+  link_name: ES FR1 ic
+  link_params:
+    bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
+    bus1: ES FR1
+    carrier: DC
+    p_nom: 2000 
+    p_nom_extendable: True
+    length: 200 # ES side
+    efficiency: 1  
+    # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
+    lifetime: 50 ### No afecta a cómo se calculan los costes
+    ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### underwater_fraction: 0 ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+
+  generator_name: ES FR1 gen
+  generator_params: 
+    carrier: biomass
+    bus: ES FR1
+    p_nom: 66.6
+    efficiency: 1   
+    capital_cost: 0
+    p_nom_max: inf
+    p_max_pu: 1
+    p_nom_extendable: True
+  generator_prices: data_ES/interconnections/ic_market_prices/mp_FR_2030.csv
+
+  load_name: ES FR1
+  load_params:
+    bus: ES FR1
+    # carrier: electricity
+
+
+
+
+########## Además, hay dos proyectos más a través de los Pirineos para 2030, en fase de diseño (por Navarra y Aragón)
+
+
+
+
+
+
+
+
+################################################## ES - PT ##################################################
+#
+# Hay varias líneas que conectan
+#	Aldeadávila de la Ribera (norte)
+#	Cedillo (centro)
+#	Brovales (centro-sur)
+#	Puebla de Guzmán (sur)
+#
+# Aquí se simplifica asumiendo 4000 MW, en dos interconexiones, una al norte y otra al sur, con 2000 MW cada una (actualmente se tiene una capacidad de exportación total de 3600 MW, y de importación de 2880 MW. El PNIEC asume exportación 4200 MW e importación 3500 MW).
+
+
+
+########## Interconnection ES-PT0
+
+
+
+ES PT0:
+
+  bus_name: ES PT0
+  bus_params:
+    x: -6.652149
+    y: 41.223112
+    carrier: AC
+    v_nom: 380
+
+  link_name: ES PT0 ic
+  link_params:
+    bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
+    bus1: ES PT0
+    carrier: DC
+    p_nom: 2000 
+    p_nom_extendable: True
+    length: 100 # random
+    efficiency: 1  
+    # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
+    lifetime: inf ### No afecta a cómo se calculan los costes
+    ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### underwater_fraction: 0 ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+
+  generator_name: ES PT0 gen
+  generator_params: 
+    carrier: biomass
+    bus: ES PT0
+    p_nom: 66.6
+    efficiency: 1   
+    capital_cost: 0
+    p_nom_max: inf
+    p_max_pu: 1
+    p_nom_extendable: True
+  generator_prices: data_ES/interconnections/ic_market_prices/mp_PT_2030.csv
+
+  load_name: ES PT0
+  load_params:
+    bus: ES PT0
+    # carrier: electricity
+
+
+
+
+
+ES PT1:
+
+  bus_name: ES PT1
+  bus_params:
+    x: -7.014351
+    y: 38.901836
+    carrier: AC
+    v_nom: 380
+
+  link_name: ES PT1 ic
+  link_params:
+    bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
+    bus1: ES PT1
+    carrier: DC
+    p_nom: 2000
+    p_nom_extendable: True
+    length: 100 # random
+    efficiency: 1  
+    # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
+    lifetime: inf ### No afecta a cómo se calculan los costes
+    ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### underwater_fraction: 0 ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+    ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
+
+  generator_name: ES PT1 gen
+  generator_params: 
+    carrier: biomass
+    bus: ES PT1
+    p_nom: 66.6
+    efficiency: 1   
+    capital_cost: 0
+    p_nom_max: inf
+    p_max_pu: 1
+    p_nom_extendable: True
+  generator_prices: data_ES/interconnections/ic_market_prices/mp_PT_2030.csv
+
+  load_name: ES PT1
+  load_params:
+    bus: ES PT1
+    # carrier: electricity
+
+
+
+
+

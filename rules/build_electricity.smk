@@ -536,6 +536,7 @@ rule add_extra_components:
         extendable_carriers=config_provider("electricity", "extendable_carriers"),
         max_hours=config_provider("electricity", "max_hours"),
         costs=config_provider("costs"),
+        interconnections=config_provider("pypsa_spain","interconnections"),   #####
     input:
         network=resources("networks/elec_s{simpl}_{clusters}.nc"),
         tech_costs=lambda w: resources(
