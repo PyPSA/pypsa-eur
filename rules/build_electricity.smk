@@ -406,7 +406,7 @@ rule add_electricity:
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         update_gdp_pop=config_provider("pypsa_spain", "update_gdp_pop"),   #####
-        customise_electricity_demand=config_provider("pypsa_spain", "electricity_demand", "customise_electricity_demand"),   #####
+        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
