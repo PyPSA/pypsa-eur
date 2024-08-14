@@ -607,6 +607,7 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  bioH2: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -1024,6 +1025,7 @@ plotting:
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

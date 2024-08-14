@@ -2543,6 +2543,25 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "efficiency"] * costs.at["BioSNG", "VOM"],
         )
 
+    if options["bioH2"]:
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" solid biomass to hydrogen CC",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.h2.nodes,
+            bus2=spatial.co2.nodes,
+            bus3="co2 atmosphere",
+            carrier="solid biomass to hydrogen",
+            efficiency=costs.at['solid biomass to hydrogen', 'efficiency'],
+            efficiency2=costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
+            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
+            p_nom_extendable=True,
+            capital_cost=costs.at['solid biomass to hydrogen', 'fixed'] * costs.at['solid biomass to hydrogen', 'efficiency']
+                         + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
+            marginal_cost=0.,
+            )
+
 
 def add_industry(n, costs):
     logger.info("Add industrial demand")
