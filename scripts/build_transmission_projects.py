@@ -225,7 +225,6 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    lines = lines[~lines["geometry"].isna()]
     treelines = lines.apply(get_branch_coords_from_buses, axis=1)
     querylines = pd.concat(
         [
