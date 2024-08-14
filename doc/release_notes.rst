@@ -10,6 +10,18 @@ Release Notes
 Upcoming Release
 ================
 
+* Add option to apply a gaussian kernel density smoothing to wind turbine power curves.
+
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
+
+* Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
+  substituted by the phase-in of sustainable biomass types using the config parameters
+  ``biomass: share_unsustainable_use_retained`` and ``biomass: share_sustainable_potential_available``.
+
+* The rule ``prepare_links_p_nom`` was removed since it was outdated and not used.
+
+* Changed heat pump COP approximation for central heating to be based on `Jensen et al. (2018) <https://backend.orbit.dtu.dk/ws/portalfiles/portal/151965635/MAIN_Final.pdf>`__ and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
+
 * split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
 
 * Add option to import solid biomass
