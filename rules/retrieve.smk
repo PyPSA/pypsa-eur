@@ -4,6 +4,7 @@
 
 import requests
 from datetime import datetime, timedelta
+from shutil import move, unpack_archive
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -15,15 +16,12 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "eez/World_EEZ_v8_2014.shp",
-        "naturalearth/ne_10m_admin_0_countries.shp",
         "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -57,6 +55,15 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
+
+    rule retrieve_jrc_idees:
+        output:
+            directory("data/jrc-idees-2021"),
+        log:
+            "logs/retrieve_jrc_idees.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_jrc_idees.py"
 
     rule retrieve_eurostat_household_data:
         output:
@@ -213,6 +220,64 @@ if config["enable"]["retrieve"]:
             "data/LUISA_basemap_020321_50m.tif",
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_eez:
+        params:
+            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
+        output:
+            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
+        run:
+            import os
+            import requests
+            from uuid import uuid4
+
+            name = str(uuid4())[:8]
+            org = str(uuid4())[:8]
+
+            response = requests.post(
+                "https://www.marineregions.org/download_file.php",
+                params={"name": "World_EEZ_v12_20231025_LR.zip"},
+                data={
+                    "name": name,
+                    "organisation": org,
+                    "email": f"{name}@{org}.org",
+                    "country": "Germany",
+                    "user_category": "academia",
+                    "purpose_category": "Research",
+                    "agree": "1",
+                },
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
+
+
+if config["enable"]["retrieve"]:
+
+    # Download directly from naciscdn.org which is a redirect from naturalearth.com
+    # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
+    # Use point-of-view (POV) variant of Germany so that Crimea is included.
+    rule retrieve_naturalearth_countries:
+        input:
+            storage(
+                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+            ),
+        params:
+            zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
+        output:
+            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
+        run:
+            move(input[0], params["zip"])
+            output_folder = Path(output["countries"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
 
 
 if config["enable"]["retrieve"]:

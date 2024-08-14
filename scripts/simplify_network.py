@@ -298,13 +298,24 @@ def simplify_links(
     _, labels = connected_components(adjacency_matrix, directed=False)
     labels = pd.Series(labels, n.buses.index)
 
-    G = n.graph()
+    # Only span graph over the DC link components
+    G = n.graph(branch_components=["Link"])
 
     def split_links(nodes):
         nodes = frozenset(nodes)
 
         seen = set()
-        supernodes = {m for m in nodes if len(G.adj[m]) > 2 or (set(G.adj[m]) - nodes)}
+
+        # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
+        # An example for the latter is if two different links are connected to the same AC bus.
+        supernodes = {
+            m
+            for m in nodes
+            if (
+                (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
+                or (n.buses.loc[m, "carrier"] == "AC")
+            )
+        }
 
         for u in supernodes:
             for m, ls in G.adj[u].items():
