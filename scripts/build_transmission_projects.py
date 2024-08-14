@@ -116,7 +116,7 @@ def connect_new_lines(
     bus_tree = spatial.KDTree(buses[["x", "y"]])
 
     for port in [0, 1]:
-        lines_port = lines.geometry.apply(
+        lines_port = lines["geometry"].apply(
             lambda x: pd.Series(
                 get_bus_coords_from_port(x, port=port), index=["x", "y"]
             )
@@ -225,12 +225,12 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    lines = lines[~lines.geometry.isna()]
+    lines = lines[~lines["geometry"].isna()]
     treelines = lines.apply(get_branch_coords_from_buses, axis=1)
     querylines = pd.concat(
         [
-            new_lines.geometry.apply(get_branch_coords_from_geometry),
-            new_lines.geometry.apply(get_branch_coords_from_geometry, reversed=True),
+            new_lines["geometry"].apply(get_branch_coords_from_geometry),
+            new_lines["geometry"].apply(get_branch_coords_from_geometry, reversed=True),
         ]
     )
     treelines = np.vstack(treelines)
@@ -338,7 +338,7 @@ def remove_projects_outside_countries(lines, europe_shape):
     Remove projects which are not in the considered countries.
     """
     europe_shape_prepped = shapely.prepared.prep(europe_shape.buffer(1))
-    is_within_covered_countries = lines.geometry.apply(
+    is_within_covered_countries = lines["geometry"].apply(
         lambda x: europe_shape_prepped.contains(x)
     )
 
@@ -366,7 +366,7 @@ def is_similar(ds1, ds2, percentage=10):
 
 
 def set_underwater_fraction(new_links, offshore_shapes):
-    new_links_gds = gpd.GeoSeries(new_links.geometry)
+    new_links_gds = gpd.GeoSeries(new_links["geometry"])
     new_links["underwater_fraction"] = (
         new_links_gds.intersection(offshore_shapes.union_all()).length
         / new_links_gds.length
@@ -469,7 +469,7 @@ def add_projects(
 def fill_length_from_geometry(line, line_factor=1.2):
     if not pd.isna(line.length):
         return line.length
-    length = gpd.GeoSeries(line.geometry, crs=4326).to_crs(3035).length.values[0]
+    length = gpd.GeoSeries(line["geometry"], crs=4326).to_crs(3035).length.values[0]
     length = length / 1000 * line_factor
     return round(length, 1)
 
