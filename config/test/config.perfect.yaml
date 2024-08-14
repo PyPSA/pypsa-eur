@@ -8,7 +8,7 @@ tutorial: true
 
 pypsa_spain:
   retrieve_Iberian_cutout: false
-  Voronoi_only_where_loads: false
+  loads_at_every_bus: false
   update_gdp_pop: false
   electricity_demand:
     enable: false

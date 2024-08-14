@@ -59,7 +59,6 @@ rule base_network:
         lines=config_provider("lines"),
         links=config_provider("links"),
         transformers=config_provider("transformers"),
-        Voronoi_only_where_loads=config_provider("pypsa_spain", "Voronoi_only_where_loads"), #####
     input:
         eg_buses="data/entsoegridkit/buses.csv",
         eg_lines="data/entsoegridkit/lines.csv",
