@@ -216,7 +216,7 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     Find the closest lines in the existing set of lines to a set of new lines.
 
     Parameters:
-    lines (pandas.DataFrame): DataFrame with column geometry containing the existing lines.
+    lines (pandas.DataFrame): DataFrame of the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
     distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
@@ -336,7 +336,7 @@ def remove_projects_outside_countries(lines, europe_shape):
     """
     Remove projects which are not in the considered countries.
     """
-    europe_shape_prepped = shapely.prepared.prep(europe_shape.buffer(1))
+    europe_shape_prepped = shapely.prepared.prep(europe_shape)
     is_within_covered_countries = lines["geometry"].apply(
         lambda x: europe_shape_prepped.contains(x)
     )

@@ -310,7 +310,7 @@ transmission_projects:
     manual: true
   skip: #type of lines csv which are not added from the transmission project folders
   - upgraded_lines
-  - upgraded links
+  - upgraded_links
   status: # status to include as list or as dict with name of project and status to include
   - confirmed
   - in_permitting
