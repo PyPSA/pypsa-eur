@@ -525,10 +525,8 @@ if __name__ == "__main__":
     if not new_lines_df.empty:
         line_type = "Al/St 240/40 4-bundle 380.0"
         # Add new line type for new lines
-        new_lines_df["type"] = "Al/St 240/40 4-bundle 380.0"
-        new_lines_df["num_parallel"] = (
-            1  # later this will be improved by looking for MVA or MW of lines and calculating the number of parallel lines
-        )
+        new_lines_df["type"] = new_lines_df["type"].fillna(line_type)
+        new_lines_df["num_parallel"] = new_lines_df["num_parallel"].fillna(2)
         if "underground" in new_lines_df.columns:
             new_lines_df["underground"] = (
                 new_lines_df["underground"].astype("bool").fillna(False)
@@ -542,10 +540,10 @@ if __name__ == "__main__":
         # get s_nom from line type
         new_lines_df["s_nom"] = (
             np.sqrt(3)
-            * n.line_types.loc[line_type].i_nom
+            * n.line_types.loc[new_lines_df["type"], "i_nom"].values
             * new_lines_df["v_nom"]
             * new_lines_df["num_parallel"]
-        )
+        ).round(2)
     if not new_links_df.empty:
         # Add carrier types of lines and links
         new_links_df["carrier"] = "DC"

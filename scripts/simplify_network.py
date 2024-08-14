@@ -124,7 +124,7 @@ def simplify_network_to_380(n):
 
     n.buses["v_nom"] = 380.0
 
-    (linetype_380,) = n.lines.loc[n.lines.v_nom == 380.0, "type"].unique()
+    linetype_380 = n.lines["type"].mode()[0]
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
@@ -534,7 +534,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", simpl="")
+        snakemake = mock_snakemake("simplify_network", simpl="", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
