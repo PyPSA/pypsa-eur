@@ -405,6 +405,7 @@ rule add_electricity:
         costs=config_provider("costs"),
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        loads_at_every_bus=config_provider("pypsa_spain", "loads_at_every_bus"),   #####
         update_gdp_pop=config_provider("pypsa_spain", "update_gdp_pop"),   #####
         electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
     input:

@@ -11,6 +11,7 @@ tutorial: false
 pypsa_spain:
   retrieve_Iberian_cutout: false
   Voronoi_only_where_loads: false
+  loads_at_every_bus: true
   update_gdp_pop: false
   electricity_demand:
     enable: false
@@ -26,7 +27,7 @@ pypsa_spain:
     solar: 'q2q_solar_v001.pkl'
     solar-hsat: ''
   interconnections:
-    enable: true
+    enable: false
     ic_ES_file: 'data_ES/interconnections/interconnections.yaml'
 
 
@@ -46,7 +47,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name: "interconnections"   #####
+  name: "loads_at_every_bus"   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml

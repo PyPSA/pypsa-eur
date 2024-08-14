@@ -297,7 +297,23 @@ def shapes_to_shapes(orig, dest):
 def attach_load(
     n, regions, load, nuts3_shapes, gdp_pop_non_nuts3, countries, scaling=1.0
 ):
-    substation_lv_i = n.buses.index[n.buses["substation_lv"]]
+
+
+    #################### PyPSA-Spain
+    #
+    # Select all the buses to deploy loads, not only substations..
+    #
+
+    if loads_at_every_bus:
+        substation_lv_i = n.buses.index   ##### PyPSA-Spain version
+
+    else:
+        substation_lv_i = n.buses.index[n.buses["substation_lv"]]   ##### PyPSA-Eur version
+    
+    ####################
+
+
+
     gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
 
@@ -325,7 +341,7 @@ def attach_load(
 
         ##### Use specific 'pop' and 'gdp' coefficients computed for ES
         # 'normed' makes the elements of a vector to sum 1
-        if params.update_gdp_pop and cntry=='ES':
+        if update_gdp_pop and cntry=='ES':
             print(f'##### [PyPSA-Spain]: Using updated "gdp" and "pop" coefficients for ES ..')
             ##### New                
             factors = normed(0.18 * normed(gdp_n) + 0.82 * normed(pop_n))   
@@ -382,8 +398,22 @@ def attach_load_vPyPSA_Spain(
     # - The regions are named through the NUTS ID, see columns in 'resources/electricity_demand.csv'
     """
 
-    ##### Filters 522 buses with substation_lv=True out of the 1109 buses in peninsular Spain
-    substation_lv_i = n.buses.index[n.buses["substation_lv"]]
+
+    #################### PyPSA-Spain
+    #
+    # Select all the buses to deploy loads, not only substations..
+    #
+
+    if loads_at_every_bus:
+        substation_lv_i = n.buses.index   ##### PyPSA-Spain version
+
+    else:
+        ##### Filters 522 buses with substation_lv=True out of the 1109 buses in peninsular Spain
+        substation_lv_i = n.buses.index[n.buses["substation_lv"]]   ##### PyPSA-Eur version
+    
+    ####################
+
+
     
     ##### Creates a gdf with index=name, and filters the 522 buses defined above
     # Columns are: x, y, country, geometry
@@ -441,7 +471,7 @@ def attach_load_vPyPSA_Spain(
             
             ##### Use specific 'pop' and 'gdp' coefficients computed for ES
             # 'normed' makes the elements of a vector to sum 1
-            if params.update_gdp_pop:
+            if update_gdp_pop:
                 print(f'##### [PyPSA-Spain]: Using updated "gdp" and "pop" coefficients for ES ..')
                 ##### New                
                 factors = normed(0.18 * normed(gdp_n) + 0.82 * normed(pop_n))   
@@ -981,6 +1011,8 @@ if __name__ == "__main__":
     # Generate electricity demand according to PyPSA-Spain customisation
     #
 
+    loads_at_every_bus = snakemake.params.loads_at_every_bus
+    update_gdp_pop = snakemake.params.update_gdp_pop
     electricity_demand = snakemake.params.electricity_demand
 
 
