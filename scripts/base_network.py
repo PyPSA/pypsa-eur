@@ -166,11 +166,13 @@ def _load_buses_from_eg(eg_buses, europe_shape, config):
     v_nom_max = max(config["lines"]["types"].keys())
 
     # Quick fix:
-    buses_with_v_nom_to_keep_b = (v_nom_min <= buses.v_nom) & (
-        buses.v_nom <= v_nom_max
-    ) | buses.v_nom.isnull()
+    buses_with_v_nom_to_keep_b = (
+        (v_nom_min <= buses.v_nom) & (buses.v_nom <= v_nom_max)
+        | (buses.v_nom.isnull())
+        | (buses.carrier == "DC")
+    )
 
-    logger.info(f"Removing buses outside of range {v_nom_min} - {v_nom_max} V")
+    logger.info(f"Removing buses outside of range AC {v_nom_min} - {v_nom_max} V")
     return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
 
 
@@ -536,7 +538,9 @@ def _set_electrical_parameters_converters(converters, config):
     converters["p_max_pu"] = p_max_pu
     converters["p_min_pu"] = -p_max_pu
 
-    converters["p_nom"] = 2000
+    # if column "p_nom" does not exist, set to 2000
+    if "p_nom" not in converters:
+        converters["p_nom"] = 2000
 
     # Converters are combined with links
     converters["under_construction"] = False

@@ -5,6 +5,7 @@
 
 import logging
 import os
+import string
 
 import geopandas as gpd
 import numpy as np
@@ -12,7 +13,7 @@ import pandas as pd
 from _benchmark import memory_logger
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import LineString, Point
-from shapely.ops import linemerge, split
+from shapely.ops import linemerge, nearest_points, split
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -451,62 +452,170 @@ def get_transformers(buses, lines):
     return df_transformers
 
 
-def get_converters(buses):
+# def get_converters(buses):
+#     """
+#     Function to create fake converter lines that connect buses of the same
+#     station_id of different polarities.
+#     """
+
+#     df_converters = []
+
+#     for g_name, g_value in buses.sort_values("voltage", ascending=True).groupby(
+#         by="station_id"
+#     ):
+#         # note: by construction there cannot be more that two buses with the same station_id and same voltage
+#         n_voltages = len(g_value)
+
+#         # A converter stations should have both AC and DC parts
+#         if g_value["dc"].any() & ~g_value["dc"].all():
+#             dc_voltage = g_value[g_value.dc]["voltage"].values
+
+#             for u in dc_voltage:
+#                 id_0 = g_value[g_value["dc"] & g_value["voltage"].isin([u])].index[0]
+
+#                 ac_voltages = g_value[~g_value.dc]["voltage"]
+#                 # A converter is added between a DC nodes and AC one with the closest voltage
+#                 id_1 = ac_voltages.sub(u).abs().idxmin()
+
+#                 geom_conv = LineString(
+#                     [g_value.geometry.loc[id_0], g_value.geometry.loc[id_1]]
+#                 )
+
+#                 # check if bus is a dclink boundary point, only then add converter
+#                 df_converters.append(
+#                     [
+#                         f"convert_{g_name}_{id_0}",  # "line_id"
+#                         g_value["bus_id"].loc[id_0],  # "bus0"
+#                         g_value["bus_id"].loc[id_1],  # "bus1"
+#                         False,  # "underground"
+#                         False,  # "under_construction"
+#                         g_value.country.loc[id_0],  # "country"
+#                         geom_conv,  # "geometry"
+#                     ]
+#                 )
+
+#     # name of the columns
+#     conv_columns = [
+#         "converter_id",
+#         "bus0",
+#         "bus1",
+#         "underground",
+#         "under_construction",
+#         "country",
+#         "geometry",
+#     ]
+
+#     df_converters = gpd.GeoDataFrame(df_converters, columns=conv_columns).reset_index()
+
+#     return df_converters
+
+
+def _find_closest_bus(row, buses, distance_crs, tol=5000):
     """
-    Function to create fake converter lines that connect buses of the same
-    station_id of different polarities.
+    Find the closest bus to a given bus based on geographical distance and
+    country.
+
+    Parameters:
+    - row: The bus_id of the bus to find the closest bus for.
+    - buses: A GeoDataFrame containing information about all the buses.
+    - distance_crs: The coordinate reference system to use for distance calculations.
+    - tol: The tolerance distance within which a bus is considered closest (default: 5000).
+    Returns:
+    - closest_bus_id: The bus_id of the closest bus, or None if no bus is found within the distance and same country.
     """
+    gdf_buses = buses.copy()
+    gdf_buses = gdf_buses.to_crs(distance_crs)
+    # Get the geometry of the bus with bus_id = link_bus_id
+    bus = gdf_buses[gdf_buses["bus_id"] == row]
+    bus_geom = bus.geometry.values[0]
 
-    df_converters = []
+    gdf_buses_filtered = gdf_buses[gdf_buses["dc"] == False]
 
-    for g_name, g_value in buses.sort_values("voltage", ascending=True).groupby(
-        by="station_id"
-    ):
-        # note: by construction there cannot be more that two buses with the same station_id and same voltage
-        n_voltages = len(g_value)
+    # Find the closest point in the filtered buses
+    nearest_geom = nearest_points(bus_geom, gdf_buses_filtered.union_all())[1]
 
-        # A converter stations should have both AC and DC parts
-        if g_value["dc"].any() & ~g_value["dc"].all():
-            dc_voltage = g_value[g_value.dc]["voltage"].values
+    # Get the bus_id of the closest bus
+    closest_bus = gdf_buses_filtered.loc[gdf_buses["geometry"] == nearest_geom]
 
-            for u in dc_voltage:
-                id_0 = g_value[g_value["dc"] & g_value["voltage"].isin([u])].index[0]
+    # check if closest_bus_id is within the distance
+    within_distance = (
+        closest_bus.to_crs(distance_crs).distance(bus.to_crs(distance_crs), align=False)
+    ).values[0] <= tol
 
-                ac_voltages = g_value[~g_value.dc]["voltage"]
-                # A converter is added between a DC nodes and AC one with the closest voltage
-                id_1 = ac_voltages.sub(u).abs().idxmin()
+    in_same_country = closest_bus.country.values[0] == bus.country.values[0]
 
-                geom_conv = LineString(
-                    [g_value.geometry.loc[id_0], g_value.geometry.loc[id_1]]
-                )
+    if within_distance and in_same_country:
+        closest_bus_id = closest_bus.bus_id.values[0]
+    else:
+        closest_bus_id = None
 
-                # check if bus is a dclink boundary point, only then add converter
-                df_converters.append(
-                    [
-                        f"convert_{g_name}_{id_0}",  # "line_id"
-                        g_value["bus_id"].loc[id_0],  # "bus0"
-                        g_value["bus_id"].loc[id_1],  # "bus1"
-                        False,  # "underground"
-                        False,  # "under_construction"
-                        g_value.country.loc[id_0],  # "country"
-                        geom_conv,  # "geometry"
-                    ]
-                )
+    return closest_bus_id
 
-    # name of the columns
+
+def _get_converters(buses, links, distance_crs, tol):
+    """
+    Get the converters for the given buses and links. Connecting link endings
+    to closest AC bus.
+
+    Parameters:
+    - buses (pandas.DataFrame): DataFrame containing information about buses.
+    - links (pandas.DataFrame): DataFrame containing information about links.
+    Returns:
+    - gdf_converters (geopandas.GeoDataFrame): GeoDataFrame containing information about converters.
+    """
+    converters = []
+    for idx, row in links.iterrows():
+        for conv in range(2):
+            link_end = row[f"bus{conv}"]
+            # HVDC Gotland is connected to 130 kV grid, closest HVAC bus is further away
+
+            closest_bus = _find_closest_bus(link_end, buses, distance_crs, tol=40000)
+
+            if closest_bus is None:
+                continue
+
+            converter_id = f"converter/{row['link_id']}_{conv}"
+            logger.info(
+                f"Added converter #{conv+1}/2 for link {row['link_id']}:{converter_id}."
+            )
+
+            # Create the converter
+            converters.append(
+                [
+                    converter_id,  # "line_id"
+                    link_end,  # "bus0"
+                    closest_bus,  # "bus1"
+                    row["p_nom"],  # "p_nom"
+                    False,  # "underground"
+                    False,  # "under_construction"
+                    buses[buses["bus_id"] == closest_bus].country.values[
+                        0
+                    ],  # "country"
+                    LineString(
+                        [
+                            buses[buses["bus_id"] == link_end].geometry.values[0],
+                            buses[buses["bus_id"] == closest_bus].geometry.values[0],
+                        ]
+                    ),  # "geometry"
+                ]
+            )
+
     conv_columns = [
         "converter_id",
         "bus0",
         "bus1",
+        "p_nom",
         "underground",
         "under_construction",
         "country",
         "geometry",
     ]
 
-    df_converters = gpd.GeoDataFrame(df_converters, columns=conv_columns).reset_index()
+    gdf_converters = gpd.GeoDataFrame(
+        converters, columns=conv_columns, crs=geo_crs
+    ).reset_index()
 
-    return df_converters
+    return gdf_converters
 
 
 def connect_stations_same_station_id(lines, buses):
@@ -669,6 +778,133 @@ def merge_stations_lines_by_station_id_and_voltage(
     return lines, links, buses
 
 
+def _split_linestring_by_point(linestring, points):
+    """
+    Function to split a linestring geometry by multiple inner points.
+
+    Parameters
+    ----------
+    lstring : LineString
+        Linestring of the line to be split
+    points : list
+        List of points to split the linestring
+
+    Return
+    ------
+    list_lines : list
+        List of linestring to split the line
+    """
+
+    list_linestrings = [linestring]
+
+    for p in points:
+        # execute split to all lines and store results
+        temp_list = [split(l, p) for l in list_linestrings]
+        # nest all geometries
+        list_linestrings = [lstring for tval in temp_list for lstring in tval.geoms]
+
+    return list_linestrings
+
+
+def fix_overpassing_lines(lines, buses, distance_crs, tol=1):
+    """
+    Fix overpassing lines by splitting them at nodes within a given tolerance,
+    to include the buses being overpassed.
+
+    Parameters:
+    - lines (GeoDataFrame): The lines to be fixed.
+    - buses (GeoDataFrame): The buses representing nodes.
+    - distance_crs (str): The coordinate reference system (CRS) for distance calculations.
+    - tol (float): The tolerance distance in meters for determining if a bus is within a line.
+    Returns:
+    - lines (GeoDataFrame): The fixed lines.
+    - buses (GeoDataFrame): The buses representing nodes.
+    """
+
+    lines_to_add = []  # list of lines to be added
+    lines_to_split = []  # list of lines that have been split
+
+    lines_epsgmod = lines.to_crs(distance_crs)
+    buses_epsgmod = buses.to_crs(distance_crs)
+
+    # set tqdm options for substation ids
+    tqdm_kwargs_substation_ids = dict(
+        ascii=False,
+        unit=" lines",
+        total=lines.shape[0],
+        desc="Verify lines overpassing nodes ",
+    )
+
+    for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
+        # bus indices being within tolerance from the line
+        bus_in_tol_epsg = buses_epsgmod[
+            buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
+        ]
+
+        # exclude endings of the lines
+        bus_in_tol_epsg = bus_in_tol_epsg[
+            (
+                (
+                    bus_in_tol_epsg.geometry.distance(
+                        lines_epsgmod.geometry.loc[l].boundary.geoms[0]
+                    )
+                    > tol
+                )
+                | (
+                    bus_in_tol_epsg.geometry.distance(
+                        lines_epsgmod.geometry.loc[l].boundary.geoms[1]
+                    )
+                    > tol
+                )
+            )
+        ]
+
+        if not bus_in_tol_epsg.empty:
+            # add index of line to split
+            lines_to_split.append(l)
+
+            buses_locs = buses.geometry.loc[bus_in_tol_epsg.index]
+
+            # get new line geometries
+            new_geometries = _split_linestring_by_point(lines.geometry[l], buses_locs)
+            n_geoms = len(new_geometries)
+
+            # create temporary copies of the line
+            df_append = gpd.GeoDataFrame([lines.loc[l]] * n_geoms)
+            # update geometries
+            df_append["geometry"] = new_geometries
+            # update name of the line if there are multiple line segments
+            df_append["line_id"] = [
+                str(df_append["line_id"].iloc[0])
+                + (f"-{letter}" if n_geoms > 1 else "")
+                for letter in string.ascii_lowercase[:n_geoms]
+            ]
+
+            lines_to_add.append(df_append)
+
+    if not lines_to_add:
+        return lines, buses
+
+    df_to_add = gpd.GeoDataFrame(pd.concat(lines_to_add, ignore_index=True))
+    df_to_add.set_crs(lines.crs, inplace=True)
+    df_to_add.set_index(lines.index[-1] + df_to_add.index, inplace=True)
+
+    # update length
+    df_to_add["length"] = df_to_add.to_crs(distance_crs).geometry.length
+
+    # update line endings
+    df_to_add = line_endings_to_bus_conversion(df_to_add)
+
+    # remove original lines
+    lines.drop(lines_to_split, inplace=True)
+
+    lines = df_to_add if lines.empty else pd.concat([lines, df_to_add])
+
+    lines = gpd.GeoDataFrame(lines.reset_index(drop=True), crs=lines.crs)
+
+    return lines, buses
+
+
 def build_network(
     inputs,
     outputs,
@@ -741,6 +977,11 @@ def build_network(
     lines = line_endings_to_bus_conversion(lines)
     links = line_endings_to_bus_conversion(links)
 
+    logger.info(
+        "Fixing lines overpassing nodes: Connecting nodes and splittling lines."
+    )
+    lines, buses = fix_overpassing_lines(lines, buses, distance_crs, tol=1)
+
     # METHOD to merge buses with same voltage and within tolerance
     tol = snakemake.config["electricity_network"]["osm_group_tolerance_buses"]
     logger.info(f"Aggregating close substations: Enabled with tolerance {tol} m")
@@ -759,7 +1000,7 @@ def build_network(
     transformers = get_transformers(buses, lines)
 
     # get converters: currently modelled as links connecting buses with different polarity
-    converters = get_converters(buses)
+    converters = _get_converters(buses, links, distance_crs, tol)
 
     logger.info("Saving outputs")
 
