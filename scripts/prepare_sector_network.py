@@ -2544,9 +2544,11 @@ def add_biomass(n, costs):
         )
 
     if options["bioH2"]:
+        name = (pd.Index(spatial.biomass.nodes) + " "
+                + pd.Index(spatial.h2.nodes.str.replace(" H2", "")))
         n.madd(
             "Link",
-            spatial.biomass.nodes,
+            name,
             suffix=" solid biomass to hydrogen CC",
             bus0=spatial.biomass.nodes,
             bus1=spatial.h2.nodes,
