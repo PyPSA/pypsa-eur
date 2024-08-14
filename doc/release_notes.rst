@@ -9,6 +9,9 @@ Release Notes
 
 .. Upcoming Release
 .. ================
+
+* Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen`), combined with carbon capture
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
