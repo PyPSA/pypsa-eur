@@ -306,12 +306,12 @@ def simplify_links(
 
         seen = set()
 
-         # Corsica substation
+        # Corsica substation
         node_corsica = find_closest_bus(
             n,
             x=9.44802,
             y=42.52842,
-            tol=2000    # Tolerance needed to only return the bus if the region is actually modelled
+            tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
         )
 
         # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
@@ -554,13 +554,18 @@ def find_closest_bus(n, x, y, tol=2000):
     """
     # Conversion factors
     meters_per_degree_lat = 111139  # Meters per degree of latitude
-    meters_per_degree_lon = 111139 * np.cos(np.radians(y))  # Meters per degree of longitude at the given latitude
+    meters_per_degree_lon = 111139 * np.cos(
+        np.radians(y)
+    )  # Meters per degree of longitude at the given latitude
 
     x0 = np.array(n.buses.x)
     y0 = np.array(n.buses.y)
 
     # Calculate distances in meters
-    dist = np.sqrt(((x - x0)*meters_per_degree_lon) ** 2 + ((y - y0)*meters_per_degree_lat) ** 2)
+    dist = np.sqrt(
+        ((x - x0) * meters_per_degree_lon) ** 2
+        + ((y - y0) * meters_per_degree_lat) ** 2
+    )
 
     # Find the closest bus within the tolerance
     min_dist = dist.min()
