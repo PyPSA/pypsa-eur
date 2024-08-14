@@ -132,7 +132,8 @@ def countries(naturalearth, country_list):
 def eez(eez, country_list):
     df = gpd.read_file(eez)
     iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")
-    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE == '200NM'").copy()
+    pol_type = ["200NM", "Overlapping claim"]
+    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()
     df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
         lambda s: _simplify_polys(s, filterremote=False)
