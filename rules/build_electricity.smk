@@ -358,6 +358,7 @@ rule build_line_rating:
 rule build_transmission_projects:
     params:
         transmission_projects=config_provider("transmission_projects"),
+        line_factor=config_provider("lines", "length_factor"),
     input:
         base_network=resources("networks/base.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -370,11 +371,11 @@ rule build_transmission_projects:
             if include
         ],
     output:
-        new_lines=resources("transmission_project/new_lines.csv"),
-        new_links=resources("transmission_project/new_links.csv"),
-        adjust_lines=resources("transmission_project/adjust_lines.csv"),
-        adjust_links=resources("transmission_project/adjust_links.csv"),
-        new_buses=resources("transmission_project/new_buses.csv"),
+        new_lines=resources("transmission_projects/new_lines.csv"),
+        new_links=resources("transmission_projects/new_links.csv"),
+        adjust_lines=resources("transmission_projects/adjust_lines.csv"),
+        adjust_links=resources("transmission_projects/adjust_links.csv"),
+        new_buses=resources("transmission_projects/new_buses.csv"),
     log:
         logs("build_transmission_projects.log"),
     benchmark:
@@ -461,11 +462,11 @@ rule add_electricity:
         ),
         transmission_projects=lambda w: (
             [
-                resources("transmission_project/new_buses.csv"),
-                resources("transmission_project/new_lines.csv"),
-                resources("transmission_project/new_links.csv"),
-                resources("transmission_project/adjust_lines.csv"),
-                resources("transmission_project/adjust_links.csv"),
+                resources("transmission_projects/new_buses.csv"),
+                resources("transmission_projects/new_lines.csv"),
+                resources("transmission_projects/new_links.csv"),
+                resources("transmission_projects/adjust_lines.csv"),
+                resources("transmission_projects/adjust_links.csv"),
             ]
             if config_provider("transmission_projects", "enable")(w)
             else []
