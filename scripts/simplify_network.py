@@ -108,7 +108,7 @@ from scipy.sparse.csgraph import connected_components, dijkstra
 logger = logging.getLogger(__name__)
 
 
-def simplify_network_to_380(n, linetype_380):
+def simplify_network_to_380(n):
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
@@ -124,7 +124,7 @@ def simplify_network_to_380(n, linetype_380):
 
     n.buses["v_nom"] = 380.0
 
-    # TODO pypsa-eur: In the future, make this even more generic (voltage level)
+    linetype_380 = n.lines["type"].mode()[0]
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
@@ -362,9 +362,7 @@ def simplify_links(
     added_supernodes.append(node_corsica)
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-        for b, buses, links in split_links(
-            labels.index[labels == lbl], added_supernodes
-        ):
+        for b, buses, links in split_links(labels.index[labels == lbl]):
             if len(buses) <= 2:
                 continue
 
@@ -586,7 +584,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", simpl="")
+        snakemake = mock_snakemake("simplify_network", simpl="", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -599,8 +597,7 @@ if __name__ == "__main__":
     # remove integer outputs for compatibility with PyPSA v0.26.0
     n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
-    linetype_380 = snakemake.config["lines"]["types"][380]
-    n, trafo_map = simplify_network_to_380(n, linetype_380)
+    n, trafo_map = simplify_network_to_380(n)
 
     technology_costs = load_costs(
         snakemake.input.tech_costs,
@@ -663,6 +660,7 @@ if __name__ == "__main__":
         "substation_off",
         "geometry",
         "underground",
+        "project_status",
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
