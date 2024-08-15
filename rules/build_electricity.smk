@@ -56,7 +56,6 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
-        links=config_provider("links"),
         transformers=config_provider("transformers"),
     input:
         eg_buses="data/entsoegridkit/buses.csv",
@@ -66,7 +65,6 @@ rule base_network:
         eg_transformers="data/entsoegridkit/transformers.csv",
         parameter_corrections="data/parameter_corrections.yaml",
         links_p_nom="data/links_p_nom.csv",
-        links_tyndp="data/links_tyndp.csv",
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
@@ -342,6 +340,40 @@ rule build_line_rating:
         "../scripts/build_line_rating.py"
 
 
+rule build_transmission_projects:
+    params:
+        transmission_projects=config_provider("transmission_projects"),
+        line_factor=config_provider("lines", "length_factor"),
+    input:
+        base_network=resources("networks/base.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+        transmission_projects=lambda w: [
+            "data/transmission_projects/" + name
+            for name, include in config_provider("transmission_projects", "include")(
+                w
+            ).items()
+            if include
+        ],
+    output:
+        new_lines=resources("transmission_projects/new_lines.csv"),
+        new_links=resources("transmission_projects/new_links.csv"),
+        adjust_lines=resources("transmission_projects/adjust_lines.csv"),
+        adjust_links=resources("transmission_projects/adjust_links.csv"),
+        new_buses=resources("transmission_projects/new_buses.csv"),
+    log:
+        logs("build_transmission_projects.log"),
+    benchmark:
+        benchmarks("build_transmission_projects")
+    resources:
+        mem_mb=2000,
+    threads: 1
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_transmission_projects.py"
+
+
 def input_profile_tech(w):
     return {
         f"profile_{tech}": resources(f"profile_{tech}.nc")
@@ -402,6 +434,7 @@ rule add_electricity:
         costs=config_provider("costs"),
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        transmission_projects=config_provider("transmission_projects"),
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -411,6 +444,17 @@ rule add_electricity:
             resources("networks/line_rating.nc")
             if config_provider("lines", "dynamic_line_rating", "activate")(w)
             else resources("networks/base.nc")
+        ),
+        transmission_projects=lambda w: (
+            [
+                resources("transmission_projects/new_buses.csv"),
+                resources("transmission_projects/new_lines.csv"),
+                resources("transmission_projects/new_links.csv"),
+                resources("transmission_projects/adjust_lines.csv"),
+                resources("transmission_projects/adjust_links.csv"),
+            ]
+            if config_provider("transmission_projects", "enable")(w)
+            else []
         ),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
