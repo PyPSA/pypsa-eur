@@ -133,7 +133,7 @@ def connect_new_lines(
             )
             new_buses = potential_new_buses[is_offshore]
             if not new_buses.empty:
-                new_port, new_buses = add_new_buses(n, new_buses, port)
+                new_port, new_buses = add_new_buses(n, new_buses)
                 new_buses["country"] = new_buses.apply(
                     lambda bus: find_country_for_bus(bus, offshore_shapes), axis=1
                 )
