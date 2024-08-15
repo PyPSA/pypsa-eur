@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Fixed PDF encoding in ``build_biomass_transport_costs`` with update of tabula-py and jpype1
 
 * Added additional config option `regional_gas_demand`, which spatially resolves gas demand in industry, but keeps the gas bus global.
 
