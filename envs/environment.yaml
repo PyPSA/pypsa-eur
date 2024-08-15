@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa>=0.28
+- pypsa>=0.29
 - linopy
 - dask
 
@@ -43,7 +43,7 @@ dependencies:
 - geopy
 - tqdm
 - pytz
-- tabula-py
+- jpype1
 - pyxlsb
 - graphviz
 - pre-commit
@@ -63,3 +63,4 @@ dependencies:
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
   - highspy
+  - tabula-py
