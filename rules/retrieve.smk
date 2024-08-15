@@ -85,7 +85,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
                 "https://zenodo.org/records/12791128/files/{cutout}.nc",
             ),
         output:
-            protected("cutouts/" + CDIR + "{cutout}.nc"),
+            "cutouts/" + CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
