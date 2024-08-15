@@ -301,29 +301,20 @@ def simplify_links(
     # Only span graph over the DC link components
     G = n.graph(branch_components=["Link"])
 
-    def split_links(nodes):
+    def split_links(nodes, added_supernodes=None):
         nodes = frozenset(nodes)
 
         seen = set()
 
-        # Corsica substation
-        node_corsica = find_closest_bus(
-            n,
-            x=9.44802,
-            y=42.52842,
-            tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
-        )
-
         # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
         # An example for the latter is if two different links are connected to the same AC bus.
-        # Manually keep Corsica substation as a supernode
         supernodes = {
             m
             for m in nodes
             if (
                 (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
                 or (n.buses.loc[m, "carrier"] == "AC")
-                or (m == node_corsica)
+                or (m in added_supernodes)
             )
         }
 
@@ -360,8 +351,20 @@ def simplify_links(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
 
+    node_corsica = find_closest_bus(
+        n,
+        x=9.44802,
+        y=42.52842,
+        tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
+    )
+
+    added_supernodes = []
+    added_supernodes.append(node_corsica)
+
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-        for b, buses, links in split_links(labels.index[labels == lbl]):
+        for b, buses, links in split_links(
+            labels.index[labels == lbl], added_supernodes
+        ):
             if len(buses) <= 2:
                 continue
 
@@ -421,6 +424,9 @@ def simplify_links(
             # n.add("Link", **params)
 
     logger.debug("Collecting all components using the busmap")
+
+    # Change carrier type of all added super_nodes to "AC"
+    n.buses.loc[added_supernodes, "carrier"] = "AC"
 
     _aggregate_and_move_components(
         n,
