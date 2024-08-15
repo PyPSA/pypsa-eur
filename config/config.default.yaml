@@ -308,13 +308,14 @@ transmission_projects:
     tyndp2020: true
     nep: true
     manual: true
-  skip: #type of lines csv which are not added from the transmission project folders
+  skip:
   - upgraded_lines
   - upgraded_links
-  status: # status to include as list or as dict with name of project and status to include
-  - confirmed
-  - in_permitting
+  status:
   - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
     #- under_consideration
   new_link_capacity: zero #keep or zero
 
