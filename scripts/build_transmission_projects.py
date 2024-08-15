@@ -5,8 +5,8 @@
 
 # coding: utf-8
 """
-Gets the transmission projects defined in the config file and adds them to the
-network. Projects are then later included in ` add_electricity.py`.
+Gets the transmission projects defined in the config file, concatenates and
+deduplicates them. Projects are later included in :mod:`add_electricity.py`.
 
 Relevant Settings
 -----------------
@@ -22,7 +22,6 @@ transmission_projects:
   - in_permitting
   - under_construction
     #- under_consideration
-  line_under_construction: keep
   link_under_construction: zero
 
 .. seealso::
@@ -31,20 +30,23 @@ transmission_projects:
 Inputs
 ------
 
-- ``networks/base_network.nc``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/martacki/gridkit>`_ toolkit dating back to March 2022.
-- ``data/"project_name"/``: confer :ref:`links`
+- ``networks/base_network.nc``:  Base network topology for the electricity grid. This is processed in :mod:`base_network.py`.
+- ``data/transmission_projects/"project_name"/``: Takes the transmission projects from the subfolder of data/transmission_projects. The subfolder name is the project name.
+- ``offshore_shapes.geojson``: Shapefile containing the offshore regions. Used to determine if a new bus should be added for a new line or link.
+- ``europe_shape.geojson``: Shapefile containing the shape of Europe. Used to determine if a project is within the considered countries.
 
 Outputs
 -------
 
-- ``project_lines.csv``
-
-Description
------------
-Gets the transmission projects from e.g. TYNDP or other network development plan and brings them in a network compaitbile formal which then can be imported in `add_electricity`.
+- ``transmission_projects/new_lines.csv``: New project lines to be added to the network. This includes new lines and upgraded lines.
+- ``transmission_projects/new_links.csv``: New project links to be added to the network. This includes new links and upgraded links.
+- ``transmission_projects/adjust_lines.csv``: For lines which are upgraded, the decommissioning year of the existing line is adjusted to the build year of the upgraded line.
+- ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
+- ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
 """
 import logging
 import os
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
@@ -59,7 +61,7 @@ from shapely.geometry import LineString, Point
 logger = logging.getLogger(__name__)
 
 
-def _add_new_buses(n, new_ports, port):
+def add_new_buses(n, new_ports):
     # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
     duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
     to_add = new_ports[~duplicated]
@@ -82,7 +84,7 @@ def _add_new_buses(n, new_ports, port):
     return new_ports, new_buses
 
 
-def _find_country_for_bus(bus, shapes):
+def find_country_for_bus(bus, shapes):
     """
     Find the country of a bus based on its coordinates and the provided
     shapefile.
@@ -94,7 +96,7 @@ def _find_country_for_bus(bus, shapes):
     return country.values[0]
 
 
-def _connect_new_lines(
+def connect_new_lines(
     lines,
     n,
     new_buses_df,
@@ -114,9 +116,9 @@ def _connect_new_lines(
     bus_tree = spatial.KDTree(buses[["x", "y"]])
 
     for port in [0, 1]:
-        lines_port = lines.geometry.apply(
+        lines_port = lines["geometry"].apply(
             lambda x: pd.Series(
-                _get_bus_coords_from_port(x, port=port), index=["x", "y"]
+                get_bus_coords_from_port(x, port=port), index=["x", "y"]
             )
         )
         distances, indices = bus_tree.query(lines_port)
@@ -131,9 +133,9 @@ def _connect_new_lines(
             )
             new_buses = potential_new_buses[is_offshore]
             if not new_buses.empty:
-                new_port, new_buses = _add_new_buses(n, new_buses, port)
-                new_buses.loc[:, "country"] = new_buses.apply(
-                    lambda bus: _find_country_for_bus(bus, offshore_shapes), axis=1
+                new_port, new_buses = add_new_buses(n, new_buses, port)
+                new_buses["country"] = new_buses.apply(
+                    lambda bus: find_country_for_bus(bus, offshore_shapes), axis=1
                 )
                 lines_port.loc[new_port.index, "match_distance"] = True
                 lines_port.loc[new_port.index, "neighbor"] = new_port.neighbor
@@ -148,14 +150,14 @@ def _connect_new_lines(
             lines.drop(lines_port[~lines_port.match_distance].index, inplace=True)
             lines_port = lines_port[lines_port.match_distance]
 
-        lines.loc[lines_port.index, f"bus{port}"] = lines_port.loc[:, "neighbor"]
+        lines.loc[lines_port.index, f"bus{port}"] = lines_port["neighbor"]
 
     lines = lines.assign(under_construction=True)
 
     return lines, new_buses_df
 
 
-def _get_branch_coords_from_geometry(linestring, reversed=False):
+def get_branch_coords_from_geometry(linestring, reversed=False):
     """
     Reduces a linestring to its start and end points. Used to simplify the
     linestring which can have more than two points.
@@ -174,7 +176,7 @@ def _get_branch_coords_from_geometry(linestring, reversed=False):
     return start_end_coords.flatten()
 
 
-def _get_branch_coords_from_buses(line):
+def get_branch_coords_from_buses(line):
     """
     Gets line string for branch component in an pypsa network.
 
@@ -191,7 +193,7 @@ def _get_branch_coords_from_buses(line):
     return np.array([start_coords, end_coords]).flatten()
 
 
-def _get_bus_coords_from_port(linestring, port=0):
+def get_bus_coords_from_port(linestring, port=0):
     """
     Extracts the coordinates of a specified port from a given linestring.
 
@@ -209,12 +211,12 @@ def _get_bus_coords_from_port(linestring, port=0):
     return coords
 
 
-def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
+def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
     Find the closest lines in the existing set of lines to a set of new lines.
 
     Parameters:
-    lines (pandas.DataFrame): DataFrame with column geometry containing the existing lines.
+    lines (pandas.DataFrame): DataFrame of the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
     distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
@@ -223,12 +225,11 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
 
     # get coordinates of start and end points of all lines, for new lines we need to check both directions
-    lines = lines[~lines.geometry.isna()]
-    treelines = lines.apply(_get_branch_coords_from_buses, axis=1)
+    treelines = lines.apply(get_branch_coords_from_buses, axis=1)
     querylines = pd.concat(
         [
-            new_lines.geometry.apply(_get_branch_coords_from_geometry),
-            new_lines.geometry.apply(_get_branch_coords_from_geometry, reversed=True),
+            new_lines["geometry"].apply(get_branch_coords_from_geometry),
+            new_lines["geometry"].apply(get_branch_coords_from_geometry, reversed=True),
         ]
     )
     treelines = np.vstack(treelines)
@@ -245,7 +246,6 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     )
     if type == "new":
         if len(found_i) != 0:
-            found = line_map.index
             logger.warning(
                 "Found new lines similar to existing lines:\n"
                 + str(line_map["existing_line"].to_dict())
@@ -266,28 +266,28 @@ def _find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     return line_map
 
 
-def _adjust_decommissioning(upgraded_lines, line_map):
+def adjust_decommissioning(upgraded_lines, line_map):
     """
     Adjust the decommissioning year of the existing lines to the built year of
     the upgraded lines.
     """
     to_update = pd.DataFrame(index=line_map)
-    to_update.loc[:, "build_year"] = (
+    to_update["build_year"] = (
         1990  # dummy build_year to make existing lines decommissioned when upgraded lines are built
     )
-    to_update.loc[:, "lifetime"] = (
+    to_update["lifetime"] = (
         upgraded_lines.rename(line_map)["build_year"] - 1990
     )  # set lifetime to the difference between build year of upgraded line and existing line
     return to_update
 
 
-def _get_upgraded_lines(branch_componnent, n, upgraded_lines, line_map):
+def get_upgraded_lines(branch_component, n, upgraded_lines, line_map):
     """
     Get upgraded lines by merging information of existing line and upgraded
     line.
     """
     # get first the information of the existing lines which will be upgraded
-    lines_to_add = n.df(branch_componnent).loc[line_map].copy()
+    lines_to_add = n.df(branch_component).loc[line_map].copy()
     # get columns of upgraded lines which are not in existing lines
     new_columns = upgraded_lines.columns.difference(lines_to_add.columns)
     # rename upgraded lines to match existing lines
@@ -301,41 +301,43 @@ def _get_upgraded_lines(branch_componnent, n, upgraded_lines, line_map):
     # only consider columns of original upgraded lines and bus0 and bus1
     lines_to_add = lines_to_add.loc[:, ["bus0", "bus1", *upgraded_lines.columns]]
     # set capacity of upgraded lines to capacity of existing lines
-    lines_to_add[nominal_attrs[branch_componnent]] = n.df(branch_componnent).loc[
-        line_map, nominal_attrs[branch_componnent]
+    lines_to_add[nominal_attrs[branch_component]] = n.df(branch_component).loc[
+        line_map, nominal_attrs[branch_component]
     ]
     # change index of new lines to avoid duplicates
     lines_to_add.index = lines_to_add.index.astype(str) + "_upgraded"
     return lines_to_add
 
 
-def _get_project_files(plan="tyndp"):
-    path = f"data/transmission_projects/{plan}/"
-    lines = dict()
-    if os.path.exists(path):
-        files = os.listdir(path)
-    else:
-        logger.warning(f"No projects found for {plan}")
-        files = []
-    if files:
-        for file in files:
-            if file.endswith(".csv"):
-                name = file.split(".")[0]
-                df = pd.read_csv(path + file, index_col=0)
-                df["geometry"] = df.apply(
-                    lambda x: LineString([[x.x0, x.y0], [x.x1, x.y1]]), axis=1
-                )
-                df.drop(columns=["x0", "y0", "x1", "y1"], inplace=True)
-                lines[name] = df
+def get_project_files(path, skip=[]):
+    path = Path(path)
+    lines = {}
+    files = [
+        p
+        for p in path.iterdir()
+        if p.is_file()
+        and p.suffix == ".csv"
+        and not any(substring in p.name for substring in skip)
+    ]
+    if not files:
+        logger.warning(f"No projects found for {path.parent.name}")
+        return lines
+    for file in files:
+        df = pd.read_csv(file, index_col=0)
+        df["geometry"] = df.apply(
+            lambda x: LineString([[x.x0, x.y0], [x.x1, x.y1]]), axis=1
+        )
+        df.drop(columns=["x0", "y0", "x1", "y1"], inplace=True)
+        lines[file.stem] = df
     return lines
 
 
-def _remove_projects_outside_countries(lines, europe_shape):
+def remove_projects_outside_countries(lines, europe_shape):
     """
     Remove projects which are not in the considered countries.
     """
-    europe_shape_prepped = shapely.prepared.prep(europe_shape.buffer(1))
-    is_within_covered_countries = lines.geometry.apply(
+    europe_shape_prepped = shapely.prepared.prep(europe_shape)
+    is_within_covered_countries = lines["geometry"].apply(
         lambda x: europe_shape_prepped.contains(x)
     )
 
@@ -349,7 +351,7 @@ def _remove_projects_outside_countries(lines, europe_shape):
     return lines
 
 
-def _is_similar(ds1, ds2, percentage=10):
+def is_similar(ds1, ds2, percentage=10):
     """
     Check if values in series ds2 are within a specified percentage of series
     ds1.
@@ -362,15 +364,15 @@ def _is_similar(ds1, ds2, percentage=10):
     return np.logical_and(ds2 >= lower_bound, ds2 <= upper_bound)
 
 
-def _set_underwater_fraction(new_links, offshore_shapes):
-    new_links_gds = gpd.GeoSeries(new_links.geometry)
-    new_links.loc[:, "underwater_fraction"] = (
+def set_underwater_fraction(new_links, offshore_shapes):
+    new_links_gds = gpd.GeoSeries(new_links["geometry"])
+    new_links["underwater_fraction"] = (
         new_links_gds.intersection(offshore_shapes.union_all()).length
         / new_links_gds.length
     ).round(2)
 
 
-def _add_projects(
+def add_projects(
     n,
     new_lines_df,
     new_links_df,
@@ -379,29 +381,30 @@ def _add_projects(
     new_buses_df,
     europe_shape,
     offshore_shapes,
-    plan="tyndp",
+    path,
+    plan,
     status=["confirmed", "under construction"],
+    skip=[],
 ):
-    lines_dict = _get_project_files(plan)
-    logging.info(f"Adding {len(lines_dict)} projects from {plan} to the network.")
+    lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():
-        logging.info(f"Adding {key.replace('_', ' ')} to the network.")
-        lines = _remove_projects_outside_countries(lines, europe_shape)
+        logging.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
+        lines = remove_projects_outside_countries(lines, europe_shape)
         if isinstance(status, dict):
             status = status[plan]
         lines = lines.loc[lines.project_status.isin(status)]
         if lines.empty:
             continue
-        if "new_lines" in key:
-            new_lines, new_buses_df = _connect_new_lines(
+        if key == "new_lines":
+            new_lines, new_buses_df = connect_new_lines(
                 lines, n, new_buses_df, bus_carrier="AC"
             )
-            duplicate_lines = _find_closest_lines(
+            duplicate_lines = find_closest_lines(
                 n.lines, new_lines, distance_upper_bound=0.10, type="new"
             )
             # TODO: think about using build_year instead of v_nom
             # ignore duplicates where v_nom is not within a tolerance of 10%
-            to_ignore = _is_similar(
+            to_ignore = is_similar(
                 new_lines.loc[duplicate_lines.index, "v_nom"],
                 duplicate_lines.map(n.lines["v_nom"]),
             )
@@ -409,9 +412,9 @@ def _add_projects(
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
-            n.import_components_from_dataframe(new_lines, "Line")
-        elif "new_links" in key:
-            new_links, new_buses_df = _connect_new_lines(
+            n.madd("Line", new_lines.index, **new_lines)
+        elif key == "new_links":
+            new_links, new_buses_df = connect_new_lines(
                 lines,
                 n,
                 new_buses_df,
@@ -419,43 +422,43 @@ def _add_projects(
                 distance_upper_bound=0.4,
                 bus_carrier=["AC", "DC"],
             )
-            duplicate_links = _find_closest_lines(
+            duplicate_links = find_closest_lines(
                 n.links, new_links, distance_upper_bound=0.10, type="new"
             )
             # TODO: think about using build_year instead of p_nom
             # ignore duplicates where p_nom is not within a tolerance of 10%
-            to_ignore = _is_similar(
+            to_ignore = is_similar(
                 new_links.loc[duplicate_links.index, "p_nom"],
                 duplicate_links.map(n.links["p_nom"]),
             )
             duplicate_links = duplicate_links[~to_ignore]
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
-            _set_underwater_fraction(new_links, offshore_shapes)
+            set_underwater_fraction(new_links, offshore_shapes)
             new_links_df = pd.concat([new_links_df, new_links])
             # add new links to network to be able to find added duplicates
-            n.import_components_from_dataframe(new_links, "Link")
-        elif "upgraded_lines" in key:
-            line_map = _find_closest_lines(
+            n.madd("Link", new_links.index, **new_links)
+        elif key == "upgraded_lines":
+            line_map = find_closest_lines(
                 n.lines, lines, distance_upper_bound=0.30, type="upgraded"
             )
             upgraded_lines = lines.loc[line_map.index]
-            lines_to_adjust = _adjust_decommissioning(upgraded_lines, line_map)
+            lines_to_adjust = adjust_decommissioning(upgraded_lines, line_map)
             adjust_lines_df = pd.concat([adjust_lines_df, lines_to_adjust])
-            upgraded_lines = _get_upgraded_lines("Line", n, upgraded_lines, line_map)
+            upgraded_lines = get_upgraded_lines("Line", n, upgraded_lines, line_map)
             new_lines_df = pd.concat([new_lines_df, upgraded_lines])
-        elif "upgraded_links" in key:
-            line_map = _find_closest_lines(
+        elif key == "upgraded_links":
+            line_map = find_closest_lines(
                 n.links.query("carrier=='DC'"),
                 lines,
                 distance_upper_bound=0.30,
                 type="upgraded",
             )
             upgraded_links = lines.loc[line_map.index]
-            links_to_adjust = _adjust_decommissioning(upgraded_links, line_map)
+            links_to_adjust = adjust_decommissioning(upgraded_links, line_map)
             adjust_links_df = pd.concat([adjust_links_df, links_to_adjust])
-            upgraded_links = _get_upgraded_lines("Link", n, upgraded_links, line_map)
+            upgraded_links = get_upgraded_lines("Link", n, upgraded_links, line_map)
             new_links_df = pd.concat([new_links_df, upgraded_links])
-            _set_underwater_fraction(new_links_df, offshore_shapes)
+            set_underwater_fraction(new_links_df, offshore_shapes)
         else:
             logger.warning(f"Unknown project type {key}")
             continue
@@ -463,7 +466,9 @@ def _add_projects(
 
 
 def fill_length_from_geometry(line, line_factor=1.2):
-    length = gpd.GeoSeries(line.geometry, crs=4326).to_crs(3035).length.values[0]
+    if not pd.isna(line.length):
+        return line.length
+    length = gpd.GeoSeries(line["geometry"], crs=4326).to_crs(3035).length.values[0]
     length = length / 1000 * line_factor
     return round(length, 1)
 
@@ -472,12 +477,11 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("add_transmission_projects", run="TYNDP")
+        snakemake = mock_snakemake("build_transmission_projects", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    config = snakemake.config
-    line_factor = config["lines"]["length_factor"]
+    line_factor = snakemake.params.line_factor
 
     n = pypsa.Network(snakemake.input.base_network)
 
@@ -493,15 +497,16 @@ if __name__ == "__main__":
     )
 
     transmission_projects = snakemake.params.transmission_projects
-    for project, include in transmission_projects["include"].items():
-        if include:
-            (
-                new_lines_df,
-                new_links_df,
-                adjust_lines_df,
-                adjust_links_df,
-                new_buses_df,
-            ) = _add_projects(
+    projects = [
+        project
+        for project, include in transmission_projects["include"].items()
+        if include
+    ]
+    paths = snakemake.input.transmission_projects
+    for project in projects:
+        path = list(filter(lambda path: project in path, paths))[0]
+        new_lines_df, new_links_df, adjust_lines_df, adjust_links_df, new_buses_df = (
+            add_projects(
                 n,
                 new_lines_df,
                 new_links_df,
@@ -510,49 +515,40 @@ if __name__ == "__main__":
                 new_buses_df,
                 europe_shape,
                 offshore_shapes,
+                path=path,
                 plan=project,
                 status=transmission_projects["status"],
+                skip=transmission_projects["skip"],
             )
+        )
     if not new_lines_df.empty:
         line_type = "Al/St 240/40 4-bundle 380.0"
         # Add new line type for new lines
-        new_lines_df.loc[:, "type"] = "Al/St 240/40 4-bundle 380.0"
-        new_lines_df.loc[:, "num_parallel"] = 2
-        (
-            new_lines_df["underground"].astype("bool").fillna(False, inplace=True)
-            if "underground" in new_lines_df.columns
-            else None
-        )
+        new_lines_df["type"] = new_lines_df["type"].fillna(line_type)
+        new_lines_df["num_parallel"] = new_lines_df["num_parallel"].fillna(2)
+        if "underground" in new_lines_df.columns:
+            new_lines_df["underground"] = (
+                new_lines_df["underground"].astype("bool").fillna(False)
+            )
         # Add carrier types of lines
-        new_lines_df.loc[:, "carrier"] = "AC"
+        new_lines_df["carrier"] = "AC"
         # Fill empty length values with length calculated from geometry
         new_lines_df["length"] = new_lines_df.apply(
-            lambda x: (
-                fill_length_from_geometry(x, line_factor)
-                if pd.isna(x.length)
-                else x.length
-            ),
-            axis=1,
+            fill_length_from_geometry, args=(line_factor,), axis=1
         )
         # get s_nom from line type
-        s_nom = (
+        new_lines_df["s_nom"] = (
             np.sqrt(3)
-            * n.line_types.loc[line_type].i_nom
+            * n.line_types.loc[new_lines_df["type"], "i_nom"].values
             * new_lines_df["v_nom"]
             * new_lines_df["num_parallel"]
-        )
-        new_lines_df["s_nom"] = s_nom
+        ).round(2)
     if not new_links_df.empty:
         # Add carrier types of lines and links
-        new_links_df.loc[:, "carrier"] = "DC"
+        new_links_df["carrier"] = "DC"
         # Fill empty length values with length calculated from geometry
         new_links_df["length"] = new_links_df.apply(
-            lambda x: (
-                fill_length_from_geometry(x, line_factor)
-                if pd.isna(x.length)
-                else x.length
-            ),
-            axis=1,
+            fill_length_from_geometry, args=(line_factor,), axis=1
         )
         # Whether to keep existing link capacity or set to zero
         not_upgraded = ~new_links_df.index.str.contains("upgraded")

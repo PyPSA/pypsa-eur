@@ -155,6 +155,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -174,6 +175,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -190,6 +192,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -206,6 +209,8 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      smooth: true
+      add_cutout_windspeed: true
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -281,7 +286,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-sarah3-era5
@@ -294,6 +299,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
@@ -302,12 +308,16 @@ transmission_projects:
     tyndp2020: true
     nep: true
     manual: true
-  status: # status to include as list or as dict with name of project and status to include
-  - confirmed
-  - in_permitting
+  skip:
+  - upgraded_lines
+  - upgraded_links
+  status:
   - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
     #- under_consideration
-  new_link_capacity: keep #keep or zero
+  new_link_capacity: zero #keep or zero
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
@@ -381,6 +391,23 @@ biomass:
     - Sludge
     municipal solid waste:
     - Municipal waste
+  share_unsustainable_use_retained:
+    2020: 1
+    2025: 0.66
+    2030: 0.33
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 0
+    2025: 0.33
+    2030: 0.66
+    2035: 1
+    2040: 1
+    2045: 1
+    2050: 1
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -743,13 +770,13 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2015
+  reference_year: 2019
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.0
+  version: v0.9.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1067,6 +1094,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
     # power transmission

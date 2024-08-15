@@ -13,9 +13,49 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
+from build_energy_totals import build_eurostat
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
+
+
+def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+    """
+    Calculate the unsustainable biomass potential for a given resource type or
+    regex.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    df_unsustainable : pd.DataFrame
+        The dataframe with unsustainable biomass potentials.
+    share_unsus : float
+        The share of unsustainable biomass potential retained.
+    resource_type : str or regex
+        The resource type to calculate the unsustainable potential for.
+
+    Returns
+    -------
+    pd.Series
+        The unsustainable biomass potential for the given resource type or regex.
+    """
+
+    if "|" in resource_type:
+        resource_potential = df_unsustainable.filter(regex=resource_type).sum(axis=1)
+    else:
+        resource_potential = df_unsustainable[resource_type]
+
+    return (
+        df.apply(
+            lambda c: c.sum()
+            / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
+            * resource_potential.loc[c.name[:2]],
+            axis=1,
+        )
+        .mul(share_unsus)
+        .clip(lower=0)
+    )
 
 
 def build_nuts_population_data(year=2013):
@@ -211,15 +251,104 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
+def add_unsustainable_potentials(df):
+    """
+    Add unsustainable biomass potentials to the given dataframe. The difference
+    between the data of JRC and Eurostat is assumed to be unsustainable
+    biomass.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    unsustainable_biomass : str
+        Path to the file with unsustainable biomass potentials.
+
+    Returns
+    -------
+    pd.DataFrame
+        The dataframe with added unsustainable biomass potentials.
+    """
+    if "GB" in snakemake.config["countries"]:
+        latest_year = 2019
+    else:
+        latest_year = 2021
+    idees_rename = {"GR": "EL", "GB": "UK"}
+    df_unsustainable = (
+        build_eurostat(
+            countries=snakemake.config["countries"],
+            input_eurostat=snakemake.input.eurostat,
+            nprocesses=int(snakemake.threads),
+        )
+        .xs(
+            max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
+            level=1,
+        )
+        .xs("Primary production", level=2)
+        .droplevel([1, 2, 3])
+    )
+
+    df_unsustainable.index = df_unsustainable.index.str.strip()
+    df_unsustainable = df_unsustainable.rename(
+        {v: k for k, v in idees_rename.items()}, axis=0
+    )
+
+    bio_carriers = [
+        "Primary solid biofuels",
+        "Biogases",
+        "Renewable municipal waste",
+        "Pure biogasoline",
+        "Blended biogasoline",
+        "Pure biodiesels",
+        "Blended biodiesels",
+        "Pure bio jet kerosene",
+        "Blended bio jet kerosene",
+        "Other liquid biofuels",
+    ]
+
+    df_unsustainable = df_unsustainable[bio_carriers]
+
+    # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
+    share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
+
+    df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
+
+    # Calculate unsustainable solid biomass
+    df_wo_ch["unsustainable solid biomass"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Primary solid biofuels"
+    )
+
+    # Calculate unsustainable biogas
+    df_wo_ch["unsustainable biogas"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Biogases"
+    )
+
+    # Calculate unsustainable bioliquids
+    df_wo_ch["unsustainable bioliquids"] = _calc_unsustainable_potential(
+        df_wo_ch,
+        df_unsustainable,
+        share_unsus,
+        resource_type="gasoline|diesel|kerosene|liquid",
+    )
+
+    share_sus = params.get("share_sustainable_potential_available").get(investment_year)
+    df *= share_sus
+
+    df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
+
+    return df
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
+
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
-            clusters="5",
-            planning_horizons=2050,
+            clusters="37",
+            planning_horizons=2020,
         )
 
     configure_logging(snakemake)
@@ -268,6 +397,8 @@ if __name__ == "__main__":
 
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.T.groupby(grouper).sum().T
+
+    df = add_unsustainable_potentials(df)
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
