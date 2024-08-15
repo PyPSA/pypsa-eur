@@ -362,7 +362,9 @@ def simplify_links(
     added_supernodes.append(node_corsica)
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-        for b, buses, links in split_links(labels.index[labels == lbl], added_supernodes):
+        for b, buses, links in split_links(
+            labels.index[labels == lbl], added_supernodes
+        ):
             if len(buses) <= 2:
                 continue
 
