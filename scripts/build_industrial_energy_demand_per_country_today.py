@@ -8,7 +8,7 @@ Build industrial energy demand per country.
 Inputs
 -------
 
-- ``data/bundle/jrc-idees-2015``
+- ``data/jrc-idees-2021``
 - ``industrial_production_per_country.csv``
 
 Outputs
@@ -34,9 +34,9 @@ For each country and each subcategory of
 - Glass production
 - HVC
 - Integrated steelworks
-- Machinery Equipment
+- Machinery equipment
 - Methanol
-- Other Industrial Sectors
+- Other industrial sectors
 - Other chemicals
 - Other non-ferrous metals
 - Paper production
@@ -44,7 +44,7 @@ For each country and each subcategory of
 - Printing and media reproduction
 - Pulp production
 - Textiles and leather
-- Transport Equipment
+- Transport equipment
 - Wood and wood products
 
 the output file contains the energy demand in TWh/a for the following carriers
@@ -74,53 +74,56 @@ ktoe_to_twh = 0.011630
 
 # name in JRC-IDEES Energy Balances
 sector_sheets = {
-    "Integrated steelworks": "cisb",
-    "Electric arc": "cise",
-    "Alumina production": "cnfa",
-    "Aluminium - primary production": "cnfp",
-    "Aluminium - secondary production": "cnfs",
-    "Other non-ferrous metals": "cnfo",
-    "Basic chemicals": "cbch",
-    "Other chemicals": "coch",
-    "Pharmaceutical products etc.": "cpha",
-    "Basic chemicals feedstock": "cpch",
-    "Cement": "ccem",
-    "Ceramics & other NMM": "ccer",
-    "Glass production": "cgla",
-    "Pulp production": "cpul",
-    "Paper production": "cpap",
-    "Printing and media reproduction": "cprp",
-    "Food, beverages and tobacco": "cfbt",
-    "Transport Equipment": "ctre",
-    "Machinery Equipment": "cmae",
-    "Textiles and leather": "ctel",
-    "Wood and wood products": "cwwp",
-    "Mining and quarrying": "cmiq",
-    "Construction": "ccon",
-    "Non-specified": "cnsi",
+    "Integrated steelworks": "FC_IND_IS_BF_E",
+    "Electric arc": "FC_IND_IS_EA_E",
+    "Alumina production": "FC_IND_NFM_AM_E",
+    "Aluminium - primary production": "FC_IND_NFM_PA_E",
+    "Aluminium - secondary production": "FC_IND_NFM_SA_E",
+    "Other non-ferrous metals": "FC_IND_NFM_OM_E",
+    "Basic chemicals": "FC_IND_CPC_BC_E",
+    "Other chemicals": "FC_IND_CPC_OC_E",
+    "Pharmaceutical products etc.": "FC_IND_CPC_PH_E",
+    "Basic chemicals feedstock": "FC_IND_CPC_NE",
+    "Cement": "FC_IND_NMM_CM_E",
+    "Ceramics & other NMM": "FC_IND_NMM_CR_E",
+    "Glass production": "FC_IND_NMM_GL_E",
+    "Pulp production": "FC_IND_PPP_PU_E",
+    "Paper production": "FC_IND_PPP_PA_E",
+    "Printing and media reproduction": "FC_IND_PPP_PR_E",
+    "Food, beverages and tobacco": "FC_IND_FBT_E",
+    "Transport equipment": "FC_IND_TE_E",
+    "Machinery equipment": "FC_IND_MAC_E",
+    "Textiles and leather": "FC_IND_TL_E",
+    "Wood and wood products": "FC_IND_WP_E",
+    "Mining and quarrying": "FC_IND_MQ_E",
+    "Construction": "FC_IND_CON_E",
+    "Non-specified": "FC_IND_NSP_E",
 }
 
 
 fuels = {
-    "All Products": "all",
-    "Solid Fuels": "solid",
-    "Total petroleum products (without biofuels)": "liquid",
-    "Gases": "gas",
+    "Total": "all",
+    "Solid fossil fuels": "solid",
+    "Peat and peat products": "solid",
+    "Oil shale and oil sands": "solid",
+    "Oil and petroleum products": "liquid",
+    "Manufactured gases": "gas",
+    "Natural gas": "gas",
     "Nuclear heat": "heat",
-    "Derived heat": "heat",
-    "Biomass and Renewable wastes": "biomass",
-    "Wastes (non-renewable)": "waste",
+    "Heat": "heat",
+    "Renewables and biofuels": "biomass",
+    "Non-renewable waste": "waste",
     "Electricity": "electricity",
 }
 
-eu28 = cc.EU28as("ISO2").ISO2.tolist()
+eu27 = cc.EU27as("ISO2").ISO2.tolist()
 
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
 def industrial_energy_demand_per_country(country, year, jrc_dir):
     jrc_country = jrc_names.get(country, country)
-    fn = f"{jrc_dir}/JRC-IDEES-2015_EnergyBalance_{jrc_country}.xlsx"
+    fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
 
     sheets = list(sector_sheets.values())
     df_dict = pd.read_excel(fn, sheet_name=sheets, index_col=0)
@@ -139,7 +142,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
     )
 
     sel = ["Mining and quarrying", "Construction", "Non-specified"]
-    df["Other Industrial Sectors"] = df[sel].sum(axis=1)
+    df["Other industrial sectors"] = df[sel].sum(axis=1)
     df["Basic chemicals"] += df["Basic chemicals feedstock"]
 
     df.drop(columns=sel + ["Basic chemicals feedstock"], index="all", inplace=True)
@@ -189,20 +192,20 @@ def separate_basic_chemicals(demand, production):
     return demand
 
 
-def add_non_eu28_industrial_energy_demand(countries, demand, production):
-    non_eu28 = countries.difference(eu28)
-    if non_eu28.empty:
+def add_non_eu27_industrial_energy_demand(countries, demand, production):
+    non_eu27 = countries.difference(eu27)
+    if non_eu27.empty:
         return demand
 
-    eu28_production = production.loc[countries.intersection(eu28)].sum()
-    eu28_energy = demand.groupby(level=1).sum()
-    eu28_averages = eu28_energy / eu28_production
+    eu27_production = production.loc[countries.intersection(eu27)].sum()
+    eu27_energy = demand.groupby(level=1).sum()
+    eu27_averages = eu27_energy / eu27_production
 
-    demand_non_eu28 = pd.concat(
-        {k: v * eu28_averages for k, v in production.loc[non_eu28].iterrows()}
+    demand_non_eu27 = pd.concat(
+        {k: v * eu27_averages for k, v in production.loc[non_eu27].iterrows()}
     )
 
-    return pd.concat([demand, demand_non_eu28])
+    return pd.concat([demand, demand_non_eu27])
 
 
 def industrial_energy_demand(countries, year):
@@ -224,6 +227,48 @@ def industrial_energy_demand(countries, year):
     return pd.concat(demand_l, keys=countries)
 
 
+def add_coke_ovens(demand, fn, year, factor=0.75):
+    """
+    Adds the energy consumption of coke ovens to the energy demand for
+    integrated steelworks.
+
+    This function reads the energy consumption data for coke ovens from a
+    CSV file, processes it to match the structure of the `demand` DataFrame,
+    and then adds a specified share of  this energy consumption to the energy
+    demand for integrated steelworks.
+
+    The `factor`  parameter controls what proportion of the coke ovens' energy
+    consumption should be attributed to the iron and steel production.
+    The default value of 75% is based on https://doi.org/10.1016/j.erss.2022.102565
+
+    Parameters:
+    demand (pd.DataFrame): A pandas DataFrame containing energy demand data
+                           with a multi-level column index where one of the
+                           levels corresponds to "Integrated steelworks".
+    fn (str): The file path to the CSV file containing the coke ovens energy
+              consumption data.
+    year (int): The year for which the coke ovens data should be selected.
+    factor (float, optional): The proportion of coke ovens energy consumption to add to the
+                              integrated steelworks demand. Defaults to 0.75.
+
+    Returns:
+    pd.DataFrame: The updated `demand` DataFrame with the coke ovens energy
+    consumption added to the integrated steelworks energy demand.
+    """
+
+    df = pd.read_csv(fn, index_col=[0, 1]).xs(year, level=1)
+    df = df.rename(columns={"Total all products": "Total"})[fuels.keys()]
+    df = df.rename(columns=fuels).T.groupby(level=0).sum().T
+    df["other"] = df["all"] - df.loc[:, df.columns != "all"].sum(axis=1)
+    df = df.T.reindex_like(demand.xs("Integrated steelworks", axis=1, level=1)).fillna(
+        0
+    )
+    sel = demand.columns.get_level_values(1) == "Integrated steelworks"
+    demand.loc[:, sel] += factor * df.values
+
+    return demand
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -232,10 +277,10 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
-    year = params.get("reference_year", 2015)
+    year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu28), year)
+    demand = industrial_energy_demand(countries.intersection(eu27), year)
 
     # output in MtMaterial/a
     production = (
@@ -245,10 +290,13 @@ if __name__ == "__main__":
 
     demand = separate_basic_chemicals(demand, production)
 
-    demand = add_non_eu28_industrial_energy_demand(countries, demand, production)
+    demand = add_non_eu27_industrial_energy_demand(countries, demand, production)
 
     # for format compatibility
     demand = demand.stack(future_stack=True).unstack(level=[0, 2])
+
+    # add energy consumption of coke ovens
+    demand = add_coke_ovens(demand, snakemake.input.transformation_output_coke, year)
 
     # style and annotation
     demand.index.name = "TWh/a"
