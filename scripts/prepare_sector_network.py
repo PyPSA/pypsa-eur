@@ -2561,6 +2561,8 @@ def add_biomass(n, costs):
             p_nom_extendable=True,
             capital_cost=costs.at['solid biomass to hydrogen', 'fixed'] * costs.at['solid biomass to hydrogen', 'efficiency']
                          + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
+            overnight_cost=costs.at['solid biomass to hydrogen', 'investment'] * costs.at['solid biomass to hydrogen', 'efficiency']
+                         + costs.at['biomass CHP capture', 'investment'] * costs.at['solid biomass', 'CO2 intensity'],
             marginal_cost=0.,
             )
 
