@@ -85,7 +85,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
                 "https://zenodo.org/records/12791128/files/{cutout}.nc",
             ),
         output:
-            protected("cutouts/" + CDIR + "{cutout}.nc"),
+            "cutouts/" + CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
@@ -226,9 +226,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_gpkg.zip",
+            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
         output:
-            gpkg="data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg",
+            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         run:
             import os
             import requests
@@ -239,7 +239,7 @@ if config["enable"]["retrieve"]:
 
             response = requests.post(
                 "https://www.marineregions.org/download_file.php",
-                params={"name": "World_EEZ_v12_20231025_gpkg.zip"},
+                params={"name": "World_EEZ_v12_20231025_LR.zip"},
                 data={
                     "name": name,
                     "organisation": org,
