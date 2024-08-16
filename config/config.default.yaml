@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 38
   - 128
   - 256
   opts:
@@ -448,8 +448,19 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    forward_temperature: 90 #C
-    return_temperature: 50 #C
+    # check these numbers!
+    forward_temperature:
+      default: 90
+      DK: 70
+      SE: 70
+      NO: 70
+      FI: 70
+    return_temperature:
+      default: 50
+      DK: 40
+      SE: 40
+      NO: 40
+      FI: 40
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -654,6 +665,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1112,6 +1124,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
