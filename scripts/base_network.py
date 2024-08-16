@@ -25,7 +25,6 @@ Relevant Settings
     links:
         p_max_pu:
         under_construction:
-        include_tyndp:
 
     transformers:
         x:
@@ -43,7 +42,6 @@ Inputs
 - ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/martacki/gridkit>`_ toolkit dating back to March 2022.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
-- ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
 - ``resources/country_shapes.geojson``: confer :ref:`shapes`
 - ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
 - ``resources/europe_shape.geojson``: confer :ref:`shapes`
@@ -72,6 +70,7 @@ Creates the network topology from an ENTSO-E map extract, and create Voronoi sha
 """
 
 import logging
+import warnings
 from itertools import product
 
 import geopandas as gpd
@@ -85,9 +84,9 @@ import shapely.wkt
 import yaml
 from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
-from scipy import spatial
 from scipy.sparse import csgraph
-from shapely.geometry import LineString, Point, Polygon
+from scipy.spatial import KDTree
+from shapely.geometry import LineString, Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -118,7 +117,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     querycoords = np.vstack(
         [new_links[["x1", "y1", "x2", "y2"]], new_links[["x2", "y2", "x1", "y1"]]]
     )
-    tree = spatial.KDTree(treecoords)
+    tree = KDTree(treecoords)
     dist, ind = tree.query(querycoords, distance_upper_bound=distance_upper_bound)
     found_b = ind < len(links)
     found_i = np.arange(len(new_links) * 2)[found_b] % len(new_links)
@@ -219,112 +218,6 @@ def _load_links_from_eg(buses, eg_links):
     links["carrier"] = "DC"
 
     return links
-
-
-def _add_links_from_tyndp(buses, links, links_tyndp, europe_shape):
-    links_tyndp = pd.read_csv(links_tyndp)
-
-    # remove all links from list which lie outside all of the desired countries
-    europe_shape = gpd.read_file(europe_shape).loc[0, "geometry"]
-    europe_shape_prepped = shapely.prepared.prep(europe_shape)
-    x1y1_in_europe_b = links_tyndp[["x1", "y1"]].apply(
-        lambda p: europe_shape_prepped.contains(Point(p)), axis=1
-    )
-    x2y2_in_europe_b = links_tyndp[["x2", "y2"]].apply(
-        lambda p: europe_shape_prepped.contains(Point(p)), axis=1
-    )
-    is_within_covered_countries_b = x1y1_in_europe_b & x2y2_in_europe_b
-
-    if not is_within_covered_countries_b.all():
-        logger.info(
-            "TYNDP links outside of the covered area (skipping): "
-            + ", ".join(links_tyndp.loc[~is_within_covered_countries_b, "Name"])
-        )
-
-        links_tyndp = links_tyndp.loc[is_within_covered_countries_b]
-        if links_tyndp.empty:
-            return buses, links
-
-    has_replaces_b = links_tyndp.replaces.notnull()
-    oids = dict(Bus=_get_oid(buses), Link=_get_oid(links))
-    keep_b = dict(
-        Bus=pd.Series(True, index=buses.index), Link=pd.Series(True, index=links.index)
-    )
-    for reps in links_tyndp.loc[has_replaces_b, "replaces"]:
-        for comps in reps.split(":"):
-            oids_to_remove = comps.split(".")
-            c = oids_to_remove.pop(0)
-            keep_b[c] &= ~oids[c].isin(oids_to_remove)
-    buses = buses.loc[keep_b["Bus"]]
-    links = links.loc[keep_b["Link"]]
-
-    links_tyndp["j"] = _find_closest_links(
-        links, links_tyndp, distance_upper_bound=0.20
-    )
-    # Corresponds approximately to 20km tolerances
-
-    if links_tyndp["j"].notnull().any():
-        logger.info(
-            "TYNDP links already in the dataset (skipping): "
-            + ", ".join(links_tyndp.loc[links_tyndp["j"].notnull(), "Name"])
-        )
-        links_tyndp = links_tyndp.loc[links_tyndp["j"].isnull()]
-        if links_tyndp.empty:
-            return buses, links
-
-    tree_buses = buses.query("carrier=='AC'")
-    tree = spatial.KDTree(tree_buses[["x", "y"]])
-    _, ind0 = tree.query(links_tyndp[["x1", "y1"]])
-    ind0_b = ind0 < len(tree_buses)
-    links_tyndp.loc[ind0_b, "bus0"] = tree_buses.index[ind0[ind0_b]]
-
-    _, ind1 = tree.query(links_tyndp[["x2", "y2"]])
-    ind1_b = ind1 < len(tree_buses)
-    links_tyndp.loc[ind1_b, "bus1"] = tree_buses.index[ind1[ind1_b]]
-
-    links_tyndp_located_b = (
-        links_tyndp["bus0"].notnull() & links_tyndp["bus1"].notnull()
-    )
-    if not links_tyndp_located_b.all():
-        logger.warning(
-            "Did not find connected buses for TYNDP links (skipping): "
-            + ", ".join(links_tyndp.loc[~links_tyndp_located_b, "Name"])
-        )
-        links_tyndp = links_tyndp.loc[links_tyndp_located_b]
-
-    logger.info("Adding the following TYNDP links: " + ", ".join(links_tyndp["Name"]))
-
-    links_tyndp = links_tyndp[["bus0", "bus1"]].assign(
-        carrier="DC",
-        p_nom=links_tyndp["Power (MW)"],
-        length=links_tyndp["Length (given) (km)"].fillna(
-            links_tyndp["Length (distance*1.2) (km)"]
-        ),
-        under_construction=True,
-        underground=False,
-        geometry=(
-            links_tyndp[["x1", "y1", "x2", "y2"]].apply(
-                lambda s: str(LineString([[s.x1, s.y1], [s.x2, s.y2]])), axis=1
-            )
-        ),
-        tags=(
-            '"name"=>"'
-            + links_tyndp["Name"]
-            + '", '
-            + '"ref"=>"'
-            + links_tyndp["Ref"]
-            + '", '
-            + '"status"=>"'
-            + links_tyndp["status"]
-            + '"'
-        ),
-    )
-
-    links_tyndp.index = "T" + links_tyndp.index.astype(str)
-
-    links = pd.concat([links, links_tyndp], sort=True)
-
-    return buses, links
 
 
 def _load_lines_from_eg(buses, eg_lines):
@@ -671,7 +564,7 @@ def _set_links_underwater_fraction(n, offshore_shapes):
     if not hasattr(n.links, "geometry"):
         n.links["underwater_fraction"] = 0.0
     else:
-        offshore_shape = gpd.read_file(offshore_shapes).unary_union
+        offshore_shape = gpd.read_file(offshore_shapes).union_all()
         links = gpd.GeoSeries(n.links.geometry.dropna().map(shapely.wkt.loads))
         n.links["underwater_fraction"] = (
             links.intersection(offshore_shape).length / links.length
@@ -730,7 +623,6 @@ def base_network(
     eg_lines,
     eg_links,
     links_p_nom,
-    links_tyndp,
     europe_shape,
     country_shapes,
     offshore_shapes,
@@ -740,8 +632,6 @@ def base_network(
     buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     links = _load_links_from_eg(buses, eg_links)
-    if config["links"].get("include_tyndp"):
-        buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
 
     converters = _load_converters_from_eg(buses, eg_converters)
 
@@ -788,59 +678,26 @@ def base_network(
     return n
 
 
-def voronoi_partition_pts(points, outline):
+def voronoi(points, outline, crs=4326):
     """
-    Compute the polygons of a voronoi partition of `points` within the polygon
-    `outline`. Taken from
-    https://github.com/FRESNA/vresutils/blob/master/vresutils/graph.py.
-
-    Attributes
-    ----------
-    points : Nx2 - ndarray[dtype=float]
-    outline : Polygon
-    Returns
-    -------
-    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    Create Voronoi polygons from a set of points within an outline.
     """
-    points = np.asarray(points)
+    pts = gpd.GeoSeries(
+        gpd.points_from_xy(points.x, points.y),
+        index=points.index,
+        crs=crs,
+    )
+    voronoi = pts.voronoi_polygons(extend_to=outline).clip(outline)
 
-    if len(points) == 1:
-        polygons = [outline]
-    else:
-        xmin, ymin = np.amin(points, axis=0)
-        xmax, ymax = np.amax(points, axis=0)
-        xspan = xmax - xmin
-        yspan = ymax - ymin
+    # can be removed with shapely 2.1 where order is preserved
+    # https://github.com/shapely/shapely/issues/2020
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        pts = gpd.GeoDataFrame(geometry=pts)
+        voronoi = gpd.GeoDataFrame(geometry=voronoi)
+        joined = gpd.sjoin_nearest(pts, voronoi, how="right")
 
-        # to avoid any network positions outside all Voronoi cells, append
-        # the corners of a rectangle framing these points
-        vor = spatial.Voronoi(
-            np.vstack(
-                (
-                    points,
-                    [
-                        [xmin - 3.0 * xspan, ymin - 3.0 * yspan],
-                        [xmin - 3.0 * xspan, ymax + 3.0 * yspan],
-                        [xmax + 3.0 * xspan, ymin - 3.0 * yspan],
-                        [xmax + 3.0 * xspan, ymax + 3.0 * yspan],
-                    ],
-                )
-            )
-        )
-
-        polygons = []
-        for i in range(len(points)):
-            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
-
-            if not poly.is_valid:
-                poly = poly.buffer(0)
-
-            with np.errstate(invalid="ignore"):
-                poly = poly.intersection(outline)
-
-            polygons.append(poly)
-
-    return polygons
+    return joined.dissolve(by="Bus").reindex(points.index).squeeze()
 
 
 def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
@@ -870,11 +727,10 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
                     "name": onshore_locs.index,
                     "x": onshore_locs["x"],
                     "y": onshore_locs["y"],
-                    "geometry": voronoi_partition_pts(
-                        onshore_locs.values, onshore_shape
-                    ),
+                    "geometry": voronoi(onshore_locs, onshore_shape),
                     "country": country,
-                }
+                },
+                crs=n.crs,
             )
         )
 
@@ -887,14 +743,16 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
                 "name": offshore_locs.index,
                 "x": offshore_locs["x"],
                 "y": offshore_locs["y"],
-                "geometry": voronoi_partition_pts(offshore_locs.values, offshore_shape),
+                "geometry": voronoi(offshore_locs, offshore_shape),
                 "country": country,
-            }
+            },
+            crs=n.crs,
         )
-        offshore_regions_c = offshore_regions_c.loc[offshore_regions_c.area > 1e-2]
+        sel = offshore_regions_c.to_crs(3035).area > 10  # m2
+        offshore_regions_c = offshore_regions_c.loc[sel]
         offshore_regions.append(offshore_regions_c)
 
-    shapes = pd.concat(onshore_regions, ignore_index=True)
+    shapes = pd.concat(onshore_regions, ignore_index=True).set_crs(n.crs)
 
     return onshore_regions, offshore_regions, shapes, offshore_shapes
 
@@ -942,7 +800,6 @@ if __name__ == "__main__":
         snakemake.input.eg_lines,
         snakemake.input.eg_links,
         snakemake.input.links_p_nom,
-        snakemake.input.links_tyndp,
         snakemake.input.europe_shape,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

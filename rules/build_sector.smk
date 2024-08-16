@@ -151,18 +151,18 @@ rule build_daily_heat_demand:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        pop_layout=resources("pop_layout_{scope}.nc"),
+        pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         cutout=heat_demand_cutout,
     output:
-        heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
+        heat_demand=resources("daily_heat_demand_total_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     threads: 8
     log:
-        logs("build_daily_heat_demand_{scope}_{simpl}_{clusters}.loc"),
+        logs("build_daily_heat_demand_total_{simpl}_{clusters}.loc"),
     benchmark:
-        benchmarks("build_daily_heat_demand/{scope}_s{simpl}_{clusters}")
+        benchmarks("build_daily_heat_demand/total_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -175,16 +175,16 @@ rule build_hourly_heat_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         heat_profile="data/heat_load_profile_BDEW.csv",
-        heat_demand=resources("daily_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
+        heat_demand=resources("daily_heat_demand_total_elec_s{simpl}_{clusters}.nc"),
     output:
-        heat_demand=resources("hourly_heat_demand_{scope}_elec_s{simpl}_{clusters}.nc"),
+        heat_demand=resources("hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=2000,
     threads: 8
     log:
-        logs("build_hourly_heat_demand_{scope}_{simpl}_{clusters}.loc"),
+        logs("build_hourly_heat_demand_total_{simpl}_{clusters}.loc"),
     benchmark:
-        benchmarks("build_hourly_heat_demand/{scope}_s{simpl}_{clusters}")
+        benchmarks("build_hourly_heat_demand/total_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -196,19 +196,19 @@ rule build_temperature_profiles:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        pop_layout=resources("pop_layout_{scope}.nc"),
+        pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         cutout=heat_demand_cutout,
     output:
-        temp_soil=resources("temp_soil_{scope}_elec_s{simpl}_{clusters}.nc"),
-        temp_air=resources("temp_air_{scope}_elec_s{simpl}_{clusters}.nc"),
+        temp_soil=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
+        temp_air=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     threads: 8
     log:
-        logs("build_temperature_profiles_{scope}_{simpl}_{clusters}.log"),
+        logs("build_temperature_profiles_total_{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_temperature_profiles/{scope}_s{simpl}_{clusters}")
+        benchmarks("build_temperature_profiles/total_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -217,21 +217,27 @@ rule build_temperature_profiles:
 
 rule build_cop_profiles:
     params:
-        heat_pump_sink_T=config_provider("sector", "heat_pump_sink_T"),
+        heat_pump_sink_T_decentral_heating=config_provider(
+            "sector", "heat_pump_sink_T_individual_heating"
+        ),
+        forward_temperature_central_heating=config_provider(
+            "sector", "district_heating", "forward_temperature"
+        ),
+        return_temperature_central_heating=config_provider(
+            "sector", "district_heating", "return_temperature"
+        ),
+        heat_source_cooling_central_heating=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
+        heat_pump_cop_approximation_central_heating=config_provider(
+            "sector", "district_heating", "heat_pump_cop_approximation"
+        ),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_rural=resources("temp_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_urban=resources("temp_soil_urban_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
     output:
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -241,7 +247,7 @@ rule build_cop_profiles:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_cop_profiles.py"
+        "../scripts/build_cop_profiles/run.py"
 
 
 def solar_thermal_cutout(wildcards):
@@ -263,18 +269,18 @@ rule build_solar_thermal_profiles:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         solar_thermal=config_provider("solar_thermal"),
     input:
-        pop_layout=resources("pop_layout_{scope}.nc"),
+        pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         cutout=solar_thermal_cutout,
     output:
-        solar_thermal=resources("solar_thermal_{scope}_elec_s{simpl}_{clusters}.nc"),
+        solar_thermal=resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc"),
     resources:
         mem_mb=20000,
     threads: 16
     log:
-        logs("build_solar_thermal_profiles_{scope}_s{simpl}_{clusters}.log"),
+        logs("build_solar_thermal_profiles_total_s{simpl}_{clusters}.log"),
     benchmark:
-        benchmarks("build_solar_thermal_profiles/{scope}_s{simpl}_{clusters}")
+        benchmarks("build_solar_thermal_profiles/total_s{simpl}_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -290,11 +296,12 @@ rule build_energy_totals:
         co2="data/bundle/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
         swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
-        idees="data/bundle/jrc-idees-2015",
+        idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/Balances-April2023",
         eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
     output:
+        transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
         transport_name=resources("transport_data.csv"),
@@ -339,7 +346,8 @@ rule build_biomass_potentials:
             "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
             keep_local=True,
         ),
-        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
+        eurostat="data/eurostat/Balances-April2023",
+        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),
@@ -352,7 +360,7 @@ rule build_biomass_potentials:
         biomass_potentials=resources(
             "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-    threads: 1
+    threads: 8
     resources:
         mem_mb=1000,
     log:
@@ -437,7 +445,9 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs="data/bundle/myb1-2017-nitro.xls",
+        usgs=storage(
+            "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+        ),
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
@@ -459,7 +469,7 @@ rule build_industry_sector_ratios:
         ammonia=config_provider("sector", "ammonia", default=False),
     input:
         ammonia_production=resources("ammonia_production.csv"),
-        idees="data/bundle/jrc-idees-2015",
+        idees="data/jrc-idees-2021",
     output:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
     threads: 1
@@ -508,8 +518,9 @@ rule build_industrial_production_per_country:
         industry=config_provider("industry"),
         countries=config_provider("countries"),
     input:
+        ch_industrial_production="data/ch_industrial_production_per_subsector.csv",
         ammonia_production=resources("ammonia_production.csv"),
-        jrc="data/bundle/jrc-idees-2015",
+        jrc="data/jrc-idees-2021",
         eurostat="data/eurostat/Balances-April2023",
     output:
         industrial_production_per_country=resources(
@@ -656,7 +667,8 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
     input:
-        jrc="data/bundle/jrc-idees-2015",
+        transformation_output_coke=resources("transformation_output_coke.csv"),
+        jrc="data/jrc-idees-2021",
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
         ),
@@ -902,6 +914,34 @@ def input_profile_offwind(w):
     }
 
 
+rule build_egs_potentials:
+    params:
+        snapshots=config_provider("snapshots"),
+        sector=config_provider("sector"),
+        costs=config_provider("costs"),
+    input:
+        egs_cost="data/egs_costs.json",
+        regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        air_temperature=(
+            resources("temp_air_total_elec_s{simpl}_{clusters}.nc")
+            if config_provider("sector", "enhanced_geothermal", "var_cf")
+            else []
+        ),
+    output:
+        egs_potentials=resources("egs_potentials_s{simpl}_{clusters}.csv"),
+        egs_overlap=resources("egs_overlap_s{simpl}_{clusters}.csv"),
+        egs_capacity_factors=resources("egs_capacity_factors_s{simpl}_{clusters}.csv"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_egs_potentials_s{simpl}_{clusters}.log"),
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_egs_potentials.py"
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -920,7 +960,10 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
+        biomass=config_provider("biomass"),
         RDIR=RDIR,
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_systems=config_provider("sector", "heat_systems"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -996,30 +1039,26 @@ rule prepare_sector_network:
             "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_rural=resources("temp_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_soil_urban=resources("temp_soil_urban_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        temp_air_rural=resources("temp_air_rural_elec_s{simpl}_{clusters}.nc"),
-        temp_air_urban=resources("temp_air_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_rural=resources("cop_soil_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_soil_urban=resources("cop_soil_urban_elec_s{simpl}_{clusters}.nc"),
-        cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_air_rural=resources("cop_air_rural_elec_s{simpl}_{clusters}.nc"),
-        cop_air_urban=resources("cop_air_urban_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
             else []
         ),
-        solar_thermal_urban=lambda w: (
-            resources("solar_thermal_urban_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "solar_thermal")(w)
+        egs_potentials=lambda w: (
+            resources("egs_potentials_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        solar_thermal_rural=lambda w: (
-            resources("solar_thermal_rural_elec_s{simpl}_{clusters}.nc")
-            if config_provider("sector", "solar_thermal")(w)
+        egs_overlap=lambda w: (
+            resources("egs_overlap_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        egs_capacity_factors=lambda w: (
+            resources("egs_capacity_factors_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
     output:

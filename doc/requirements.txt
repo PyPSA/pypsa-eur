@@ -17,7 +17,6 @@ tabula-py
 
 # cartopy
 scikit-learn
-pycountry
 pyyaml
 seaborn
 memory_profiler
