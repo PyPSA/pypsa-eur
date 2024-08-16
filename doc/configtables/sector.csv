@@ -9,8 +9,8 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
--- forward_temperature,°C,float,Forward temperature in district heating
--- return_temperature,°C,float,Return temperature in district heating. Must be lower than forward temperature
+-- forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Forward temperature in district heating
+-- return_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating. Must be lower than forward temperature
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
 -- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
@@ -151,6 +151,7 @@ biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass up
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+bioH2,--,"{true, false}",Add option for transforming solid biomass into hydrogen with carbon capture
 municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,
 -- enable,--,"{true, false}",Add option to limit the maximum growth of a carrier
