@@ -2830,8 +2830,11 @@ def add_biomass(n, costs):
         )
 
     if options["bioH2"]:
-        name = (pd.Index(spatial.biomass.nodes) + " "
-                + pd.Index(spatial.h2.nodes.str.replace(" H2", "")))
+        name = (
+            pd.Index(spatial.biomass.nodes)
+            + " "
+            + pd.Index(spatial.h2.nodes.str.replace(" H2", ""))
+        )
         n.madd(
             "Link",
             name,
@@ -2841,16 +2844,22 @@ def add_biomass(n, costs):
             bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
             carrier="solid biomass to hydrogen",
-            efficiency=costs.at['solid biomass to hydrogen', 'efficiency'],
-            efficiency2=costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
-            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
+            efficiency=costs.at["solid biomass to hydrogen", "efficiency"],
+            efficiency2=costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
             p_nom_extendable=True,
-            capital_cost=costs.at['solid biomass to hydrogen', 'fixed'] * costs.at['solid biomass to hydrogen', 'efficiency']
-                         + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
-            overnight_cost=costs.at['solid biomass to hydrogen', 'investment'] * costs.at['solid biomass to hydrogen', 'efficiency']
-                         + costs.at['biomass CHP capture', 'investment'] * costs.at['solid biomass', 'CO2 intensity'],
-            marginal_cost=0.,
-            )
+            capital_cost=costs.at["solid biomass to hydrogen", "fixed"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            overnight_cost=costs.at["solid biomass to hydrogen", "investment"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "investment"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            marginal_cost=0.0,
+        )
 
 
 def add_industry(n, costs):
