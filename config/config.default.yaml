@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 38
   - 128
   - 256
   opts:
@@ -665,6 +665,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1108,6 +1109,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

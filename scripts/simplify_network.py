@@ -301,7 +301,7 @@ def simplify_links(
     # Only span graph over the DC link components
     G = n.graph(branch_components=["Link"])
 
-    def split_links(nodes, added_supernodes=None):
+    def split_links(nodes, added_supernodes):
         nodes = frozenset(nodes)
 
         seen = set()
@@ -363,7 +363,9 @@ def simplify_links(
         added_supernodes.append(node_corsica)
 
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-        for b, buses, links in split_links(labels.index[labels == lbl]):
+        for b, buses, links in split_links(
+            labels.index[labels == lbl], added_supernodes
+        ):
             if len(buses) <= 2:
                 continue
 
