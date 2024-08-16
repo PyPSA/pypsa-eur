@@ -30,16 +30,15 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
+from definitions.heat_sector import HeatSector
+from definitions.heat_system import HeatSystem
+from definitions.heat_system_type import HeatSystemType
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
-
-from scripts.definitions.heat_sector import HeatSector
-from scripts.definitions.heat_system import HeatSystem
-from scripts.definitions.heat_system_type import HeatSystemType
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -2831,8 +2830,11 @@ def add_biomass(n, costs):
         )
 
     if options["bioH2"]:
-        name = (pd.Index(spatial.biomass.nodes) + " "
-                + pd.Index(spatial.h2.nodes.str.replace(" H2", "")))
+        name = (
+            pd.Index(spatial.biomass.nodes)
+            + " "
+            + pd.Index(spatial.h2.nodes.str.replace(" H2", ""))
+        )
         n.madd(
             "Link",
             name,
@@ -2842,16 +2844,22 @@ def add_biomass(n, costs):
             bus2=spatial.co2.nodes,
             bus3="co2 atmosphere",
             carrier="solid biomass to hydrogen",
-            efficiency=costs.at['solid biomass to hydrogen', 'efficiency'],
-            efficiency2=costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
-            efficiency3=-costs.at['solid biomass', 'CO2 intensity'] * options["cc_fraction"],
+            efficiency=costs.at["solid biomass to hydrogen", "efficiency"],
+            efficiency2=costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
             p_nom_extendable=True,
-            capital_cost=costs.at['solid biomass to hydrogen', 'fixed'] * costs.at['solid biomass to hydrogen', 'efficiency']
-                         + costs.at['biomass CHP capture', 'fixed'] * costs.at['solid biomass', 'CO2 intensity'],
-            overnight_cost=costs.at['solid biomass to hydrogen', 'investment'] * costs.at['solid biomass to hydrogen', 'efficiency']
-                         + costs.at['biomass CHP capture', 'investment'] * costs.at['solid biomass', 'CO2 intensity'],
-            marginal_cost=0.,
-            )
+            capital_cost=costs.at["solid biomass to hydrogen", "fixed"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            overnight_cost=costs.at["solid biomass to hydrogen", "investment"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "investment"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            marginal_cost=0.0,
+        )
 
 
 def add_industry(n, costs):
