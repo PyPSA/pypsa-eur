@@ -9,7 +9,7 @@ PyPSA-Spain: an Open Optimisation Model of the Spanish Energy System based on Py
 
 PyPSA-Spain is an extension of PyPSA-Eur focused on the Spanish energy system. More content will be posted soon... stay tuned!
 
-.. image:: imgs/base.png
+.. image:: img/base.png
     :width: 70%
     :align: center
 
