@@ -24,7 +24,7 @@ import tabula as tbl
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 system = platform.system()
-encoding = "cp1252" if system == "Windows" else None
+encoding = "cp1252" if system == "Windows" else "utf-8"
 
 
 def get_countries():
