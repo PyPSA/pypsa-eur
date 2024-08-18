@@ -14,7 +14,11 @@ PyPSA-Spain is an extension of PyPSA-Eur focused on the Spanish energy system. M
     :align: center
 
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Getting Started
+
+   introduction
+   configuration

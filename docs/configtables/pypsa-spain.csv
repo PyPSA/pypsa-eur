@@ -1,0 +1,20 @@
+,Unit,Values,Description
+retrieve_Iberian_cutout,bool,"{true, false}","Switch to ``true`` to download a cutout for the Iberian peninsula (2022)."
+loads_at_every_bus,bool,"{true, false}","Switch  to ``true`` to share electricy demand at every bus, not only those labelled with ``substation_lv``. This likely improves the spatial ditribution of the load."
+update_gdp_pop,bool,"{true, false}","Switch to ``true`` to use Gross Domestic Product (``gdp``) and population (``pop``) weights estimated specifically for Spain. If ``false``, standard values from PyPSA-Eur are utilised. These weights are used to distribute the load across the buses."
+electricity_demand,,,
+-- enable,bool,"{true, false}","Switch to ``true`` to customise the electricity demand."
+-- annual_value, TWh,int/float,"Annual demand."
+-- profiles,,,
+-- percentages,,,
+q2q_transform,,,
+-- enable,bool,"{true, false}","Switch to ``true`` to apply Q2Q transforms to the renewable profiles to improve their estimation."
+-- onwind,,,
+-- offwind-ac,,,
+-- offwind-dc,,,
+-- offwind-float
+-- solar,,,
+-- solar-hsat,,,
+interconnections:
+-- enable,bool,"{true, false}","Switch to ``true`` to include user-defined interconnections with Portugal and France."
+-- ic_ES_file,,,

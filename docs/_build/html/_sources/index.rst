@@ -1,17 +1,24 @@
-.. pypsa-spain documentation master file, created by
-   sphinx-quickstart on Fri Aug 16 19:25:14 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+..
+  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Spain Authors
 
-pypsa-spain documentation
-=========================
+  SPDX-License-Identifier: CC-BY-4.0
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+
+PyPSA-Spain: an Open Optimisation Model of the Spanish Energy System based on PyPSA-Eur
+=======================================================================================
+
+PyPSA-Spain is an extension of PyPSA-Eur focused on the Spanish energy system. More content will be posted soon... stay tuned!
+
+.. image:: img/base.png
+    :width: 70%
+    :align: center
+
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   :maxdepth: 1
+   :caption: Getting Started
 
+   introduction
+   configuration
