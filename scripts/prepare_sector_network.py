@@ -444,7 +444,7 @@ def update_wind_solar_costs(
 
     if landfall_lengths is None:
         landfall_lengths = {}
-
+    
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -579,7 +579,7 @@ def remove_non_electric_buses(n):
 def patch_electricity_network(n, costs, landfall_lengths):
     remove_elec_base_techs(n)
     remove_non_electric_buses(n)
-    update_wind_solar_costs(n, costs, landfall_lengths)
+    update_wind_solar_costs(n, costs, landfall_lengths=landfall_lengths)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
     n.buses["unit"] = "MWh_el"
