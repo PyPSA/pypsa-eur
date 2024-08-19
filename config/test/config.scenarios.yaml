@@ -14,7 +14,15 @@ pypsa_spain:
     enable: false
     annual_value: 230 # TWh
     profiles: 'data_ES/electricity_demand/electricity_demand_profiles_province_by_economicSector_2022.csv'
-    percentages: 'data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv' 
+    percentages: 'data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv'
+  update_elec_capacities:
+    enable: false
+    carriers_to_update:
+      onwind: 'data_ES/esios/esios_onwind_capacity_2022.csv'
+      solar: 'data_ES/esios/esios_solar_capacity_2022.csv'
+      nuclear: 'data_ES/esios/esios_nuclear_capacity_2022.csv'
+      CCGT: 'data_ES/esios/esios_CCGT_capacity_2022.csv'
+    method_increase: 'proportional' # 'additional' / 'proportional'
   q2q_transform:
     enable: false 
     onwind: 'data_ES/q2q/q2q_onwind_v002.pkl'
