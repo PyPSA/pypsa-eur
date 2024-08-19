@@ -118,11 +118,6 @@ rule base_network:
             if config_provider("electricity_network", "base_network")(w) == "gridkit"
             else []
         ),
-        links_tyndp=lambda w: (
-            "data/links_tyndp.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else []
-        ),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),

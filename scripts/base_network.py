@@ -829,11 +829,6 @@ def base_network(
     else:
         raise ValueError("base_network must be either 'gridkit' or 'osm'")
 
-    if config["links"].get("include_tyndp") & (
-        config["electricity_network"].get("base_network") == "gridkit"
-    ):
-        buses, links = _add_links_from_tyndp(buses, links, links_tyndp, europe_shape)
-
     if config["electricity_network"].get("base_network") == "gridkit":
         converters = _load_converters_from_eg(buses, eg_converters)
     elif "osm" in config["electricity_network"].get("base_network"):
