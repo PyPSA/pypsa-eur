@@ -440,6 +440,7 @@ rule add_electricity:
         loads_at_every_bus=config_provider("pypsa_spain", "loads_at_every_bus"),   #####
         update_gdp_pop=config_provider("pypsa_spain", "update_gdp_pop"),   #####
         electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
+        update_elec_capacities=config_provider("pypsa_spain", "update_elec_capacities"),   #####
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -476,6 +477,8 @@ rule add_electricity:
         ),
         load=resources("electricity_demand.csv"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
+        nuts2_ES='data_ES/nuts/NUTS2_ES.geojson',
+        dic_nuts='data_ES/dics/dic_nuts.yaml',
     output:
         resources("networks/elec.nc"),
     log:
