@@ -428,7 +428,7 @@ def prepare_network(
         n.snapshot_weightings[:] = 8760.0 / nhours
 
     if foresight == "myopic":
-        add_land_use_constraint(n, planning_horizons, config)
+        add_land_use_constraint(n)
 
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
@@ -1043,13 +1043,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            # configfiles="../config/test/config.perfect.yaml",
             opts="",
             clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            ll="vopt",
+            sector_opts="",
+            planning_horizons="2025",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
