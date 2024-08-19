@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 38
   - 128
   - 256
   opts:
@@ -87,41 +87,6 @@ co2_budget:
 electricity_network:
   base_network: gridkit             # Options: gridkit, osm-prebuilt, osm-raw (built from scratch using OSM data, takes longer)
   osm_group_tolerance_buses: 5000   # unit: meters, default 5000 - Buses within this distance are grouped together
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
-lines:
-  types: # Specify voltages (keys) and line types (values) for lines
-    220.: "Al/St 240/40 2-bundle 220.0"
-    300.: "Al/St 240/40 3-bundle 300.0"
-    380.: "Al/St 240/40 4-bundle 380.0"
-    500.: "Al/St 240/40 4-bundle 380.0"
-    750.: "Al/St 560/50 4-bundle 750.0"
-  s_max_pu: 0.7
-  s_nom_max: .inf
-  max_extension: 20000 #MW
-  length_factor: 1.25  # Note that 'osm-raw' and 'osm-prebuilt' already contain higher spatial resolution line routes and lengths
-  reconnect_crimea: true  # Only needed for 'gridkit' base_network, in OSM, the lines are already connected
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
-  dynamic_line_rating:
-    activate: false
-    cutout: europe-2013-sarah3-era5
-    correction_factor: 0.95
-    max_voltage_difference: false
-    max_line_rating: false
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
-links:
-  p_max_pu: 1.0
-  p_nom_max: .inf
-  max_extension: 30000 #MW
-  include_tyndp: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
-
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
-transformers:
-  x: 0.1
-  s_nom: 2000.
-  type: ''
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -310,6 +275,58 @@ conventional:
   nuclear:
     p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+lines:
+  types:
+    220.: "Al/St 240/40 2-bundle 220.0"
+    300.: "Al/St 240/40 3-bundle 300.0"
+    380.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
+  s_max_pu: 0.7
+  s_nom_max: .inf
+  max_extension: 20000 #MW
+  length_factor: 1.25
+  reconnect_crimea: true
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+  dynamic_line_rating:
+    activate: false
+    cutout: europe-2013-sarah3-era5
+    correction_factor: 0.95
+    max_voltage_difference: false
+    max_line_rating: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
+links:
+  p_max_pu: 1.0
+  p_nom_max: .inf
+  max_extension: 30000 #MW
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: true
+    nep: true
+    manual: true
+  skip:
+  - upgraded_lines
+  - upgraded_links
+  status:
+  - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
+    #- under_consideration
+  new_link_capacity: zero #keep or zero
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
+transformers:
+  x: 0.1
+  s_nom: 2000.
+  type: ''
+
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
   interpolate_limit: 3
@@ -433,8 +450,19 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    forward_temperature: 90 #C
-    return_temperature: 50 #C
+    # check these numbers!
+    forward_temperature:
+      default: 90
+      DK: 70
+      SE: 70
+      NO: 70
+      FI: 70
+    return_temperature:
+      default: 50
+      DK: 40
+      SE: 40
+      NO: 40
+      FI: 40
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -639,6 +667,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1082,6 +1111,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

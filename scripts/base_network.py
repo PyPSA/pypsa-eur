@@ -28,7 +28,6 @@ Relevant Settings
     links:
         p_max_pu:
         under_construction:
-        include_tyndp:
 
     transformers:
         x:
@@ -46,7 +45,6 @@ Inputs
 - ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/martacki/gridkit>`_ toolkit dating back to March 2022.
 - ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
 - ``data/links_p_nom.csv``: confer :ref:`links`
-- ``data/links_tyndp.csv``: List of projects in the `TYNDP 2018 <https://tyndp.entsoe.eu/tyndp2018/>`_ that are at least *in permitting* with fields for start- and endpoint (names and coordinates), length, capacity, construction status, and project reference ID.
 - ``resources/country_shapes.geojson``: confer :ref:`shapes`
 - ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
 - ``resources/europe_shape.geojson``: confer :ref:`shapes`
@@ -815,7 +813,6 @@ def base_network(
     eg_lines,
     eg_links,
     links_p_nom,
-    links_tyndp,
     europe_shape,
     country_shapes,
     offshore_shapes,
@@ -1081,7 +1078,6 @@ if __name__ == "__main__":
         snakemake.input.eg_lines,
         snakemake.input.eg_links,
         snakemake.input.links_p_nom,
-        snakemake.input.links_tyndp,
         snakemake.input.europe_shape,
         snakemake.input.country_shapes,
         snakemake.input.offshore_shapes,

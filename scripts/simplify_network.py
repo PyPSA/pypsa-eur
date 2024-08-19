@@ -124,7 +124,7 @@ def simplify_network_to_380(n, linetype_380):
 
     n.buses["v_nom"] = 380.0
 
-    # TODO pypsa-eur: In the future, make this even more generic (voltage level)
+    linetype_380 = n.lines["type"].mode()[0]
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
@@ -301,7 +301,7 @@ def simplify_links(
     # Only span graph over the DC link components
     G = n.graph(branch_components=["Link"])
 
-    def split_links(nodes, added_supernodes=None):
+    def split_links(nodes, added_supernodes):
         nodes = frozenset(nodes)
 
         seen = set()
@@ -587,7 +587,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", simpl="")
+        snakemake = mock_snakemake("simplify_network", simpl="", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -664,6 +664,7 @@ if __name__ == "__main__":
         "substation_off",
         "geometry",
         "underground",
+        "project_status",
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
