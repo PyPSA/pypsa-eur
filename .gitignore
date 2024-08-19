@@ -68,7 +68,7 @@ d1gam3xoknrgr2.cloudfront.net/
 
 *.xls
 
-*.geojson
+# *.geojson
 
 *.ipynb
 
