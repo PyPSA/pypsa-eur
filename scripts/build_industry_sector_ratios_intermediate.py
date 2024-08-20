@@ -79,8 +79,8 @@ with the following carriers are considered:
 Unit of the output file is MWh/t.
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from prepare_sector_network import get
 
 
