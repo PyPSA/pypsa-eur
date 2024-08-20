@@ -98,7 +98,7 @@ logger = logging.getLogger(__name__)
 
 def _get_oid(df):
     if "tags" in df.columns:
-        return df.tags.str.extract('"oid"=>"(\d+)"', expand=False)
+        return df.tags.str.extract(r'"oid"=>"(\d+)"', expand=False)
     else:
         return pd.Series(np.nan, df.index)
 
