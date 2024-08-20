@@ -43,6 +43,8 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+
+from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -287,15 +289,19 @@ def add_solar_potential_constraints(n, config):
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, limit_dict):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+        limit = pd.Series({f"co2_sequestration_limit-{period}":
+                           limit_dict.get(period, 200) for period in periods})
+        names = limit.index
     else:
+        limit = get(limit_dict,
+                    int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -515,8 +521,8 @@ def prepare_network(
             n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
-        limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        limit_dict = co2_sequestration_potential
+        add_co2_sequestration_limit(n, limit_dict=limit_dict)
 
     return n
 
@@ -1116,19 +1122,19 @@ def solve_network(n, config, solving, **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            # configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="37",
-            ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
+            clusters="38",
+            ll="vopt",
+            sector_opts="",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
@@ -1140,7 +1146,7 @@ if __name__ == "__main__":
     np.random.seed(solve_opts.get("seed", 123))
 
     n = pypsa.Network(snakemake.input.network)
-
+    
     n = prepare_network(
         n,
         solve_opts,
