@@ -43,7 +43,6 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-
 from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
@@ -296,12 +295,15 @@ def add_co2_sequestration_limit(n, limit_dict):
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        limit = pd.Series({f"co2_sequestration_limit-{period}":
-                           limit_dict.get(period, 200) for period in periods})
+        limit = pd.Series(
+            {
+                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
+                for period in periods
+            }
+        )
         names = limit.index
     else:
-        limit = get(limit_dict,
-                    int(snakemake.wildcards.planning_horizons))
+        limit = get(limit_dict, int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -1122,7 +1124,8 @@ def solve_network(n, config, solving, **kwargs):
 
     return n
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1146,7 +1149,7 @@ if __name__ == "__main__":
     np.random.seed(solve_opts.get("seed", 123))
 
     n = pypsa.Network(snakemake.input.network)
-    
+
     n = prepare_network(
         n,
         solve_opts,
