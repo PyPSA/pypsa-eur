@@ -481,22 +481,13 @@ def attach_wind_and_solar(
 
             supcar = car.split("-", 2)[0]
             if supcar == "offwind":
-                underwater_fraction = ds["underwater_fraction"].to_pandas()
-                if landfall_length == "centroid":
-                    landfall_length = 0.0
-                    onshore_fraction = 1.0 - underwater_fraction
-                elif isinstance(landfall_length, (int, float)):
-                    onshore_fraction = 0
-                else:
-                    raise ValueError("landfall_length must be 'centroid' or a number")
                 distance = ds["average_distance"].to_pandas()
                 submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
                 underground_cost = costs.at[
                     car + "-connection-underground", "capital_cost"
                 ]
                 connection_cost = line_length_factor * (
-                    distance * underwater_fraction * submarine_cost
-                    + distance * onshore_fraction * underground_cost
+                    distance * submarine_cost
                     + landfall_length * underground_cost
                 )
 

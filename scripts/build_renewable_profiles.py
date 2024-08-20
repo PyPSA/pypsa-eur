@@ -9,8 +9,7 @@ Calculates for each clustered region the (i) installable capacity (based on
 land-use from :mod:`determine_availability_matrix`), (ii) the available
 generation time series (based on weather data), and (iii) the average distance
 from the node for onshore wind, AC-connected offshore wind, DC-connected
-offshore wind and solar PV generators. In addition for offshore wind it
-calculates the fraction of the grid connection which is under water.
+offshore wind and solar PV generators.
 
 .. note:: Hydroelectric profiles are built in script :mod:`build_hydro_profiles`.
 
@@ -58,10 +57,8 @@ Outputs
     p_nom_max            bus         maximal installable capacity at the bus (in MW)
     -------------------  ----------  ---------------------------------------------------------
     average_distance     bus         average distance of units in the region to the
-                                     grid bus (in km)
-    -------------------  ----------  ---------------------------------------------------------
-    underwater_fraction  bus         fraction of the average connection distance which is
-                                     under water (only for offshore)
+                                     grid bus for onshore technologies and to the shoreline
+                                     for offshore technologies (in km)
     ===================  ==========  =========================================================
 
     - **profile**
@@ -79,12 +76,6 @@ Outputs
     - **average_distance**
 
     .. image:: img/distance_hist.png
-        :scale: 33 %
-        :align: center
-
-    - **underwater_fraction**
-
-    .. image:: img/underwater_hist.png
         :scale: 33 %
         :align: center
 
@@ -132,12 +123,10 @@ import time
 
 import atlite
 import geopandas as gpd
-import pandas as pd
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
+from build_shapes import _simplify_polys
 from dask.distributed import Client
-from pypsa.geo import haversine
-from shapely.geometry import LineString
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +136,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_renewable_profiles", clusters=100, technology="onwind"
+            "build_renewable_profiles", clusters=38, technology="offwind-ac"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -180,6 +169,9 @@ if __name__ == "__main__":
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
+
+    availability = xr.open_dataarray(snakemake.input.availability_matrix)
+
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
@@ -187,9 +179,16 @@ if __name__ == "__main__":
     )
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
+    if snakemake.wildcards.technology.startswith("offwind"):
+        # for offshore regions, the shortest distance to the shoreline is used
+        offshore_regions = availability.coords["bus"].values
+        regions = regions.loc[offshore_regions]
+        regions = regions.map(lambda g: _simplify_polys(g, minarea=0.5)).set_crs(regions.crs)
+    else:
+        # for onshore regions, the representative point of the region is used
+        regions = regions.representative_point()
+    regions = regions.geometry.to_crs(3035)
     buses = regions.index
-
-    availability = xr.open_dataarray(snakemake.input.availability_matrix)
 
     area = cutout.grid.to_crs(3035).area / 1e6
     area = xr.DataArray(
@@ -248,26 +247,18 @@ if __name__ == "__main__":
     logger.info(f"Calculate average distances for technology {technology}.")
     layoutmatrix = (layout * availability).stack(spatial=["y", "x"])
 
-    coords = cutout.grid[["x", "y"]]
-    bus_coords = (
-        regions.representative_point()
-        .apply(lambda p: dict(x=p.x, y=p.y))
-        .apply(pd.Series)
-    )
+    coords = cutout.grid.representative_point().to_crs(3035)
 
     average_distance = []
-    centre_of_mass = []
     for bus in buses:
         row = layoutmatrix.sel(bus=bus).data
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
-        distances = haversine(bus_coords.loc[bus], co)
+        distances = co.distance(regions[bus]).div(1e3) # km
         average_distance.append((distances * (row / row.sum())).sum())
-        centre_of_mass.append(co.values.T @ (row / row.sum()))
 
     average_distance = xr.DataArray(average_distance, [buses])
-    centre_of_mass = xr.DataArray(centre_of_mass, [buses, ("spatial", ["x", "y"])])
 
     ds = xr.merge(
         [
@@ -276,21 +267,6 @@ if __name__ == "__main__":
             average_distance.rename("average_distance"),
         ]
     )
-
-    if snakemake.wildcards.technology.startswith("offwind"):
-        logger.info(
-            f"Calculate underwater fraction of connections for technology {technology}."
-        )
-        offshore_shape = gpd.read_file(snakemake.input["offshore_shapes"]).union_all()
-        underwater_fraction = []
-        for bus in buses:
-            p = centre_of_mass.sel(bus=bus).data
-            line = LineString([p, bus_coords.loc[bus]])
-            frac = line.intersection(offshore_shape).length / line.length
-            underwater_fraction.append(frac)
-
-        ds["underwater_fraction"] = xr.DataArray(underwater_fraction, [buses])
-
     # select only buses with some capacity and minimal capacity factor
     mean_profile = ds["profile"].mean("time")
     if "year" in ds.indexes:

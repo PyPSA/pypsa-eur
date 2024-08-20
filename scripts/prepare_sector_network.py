@@ -468,20 +468,11 @@ def update_wind_solar_costs(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
-            underwater_fraction = ds["underwater_fraction"].to_pandas()
-            if landfall_length == "centroid":
-                landfall_length = 0.0
-                onshore_fraction = 1.0 - underwater_fraction
-            elif isinstance(landfall_length, (int, float)):
-                onshore_fraction = 0.0
-            else:
-                raise ValueError("landfall_length must be 'centroid' or a number")
             distance = ds["average_distance"].to_pandas()
             submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
             underground_cost = costs.at[tech + "-connection-underground", "fixed"]
             connection_cost = line_length_factor * (
-                distance * underwater_fraction * submarine_cost
-                + distance * onshore_fraction * underground_cost
+                distance * submarine_cost
                 + landfall_length * underground_cost
             )
 
