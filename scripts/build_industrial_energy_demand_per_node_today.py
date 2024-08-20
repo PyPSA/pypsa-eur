@@ -66,7 +66,7 @@ def build_nodal_industrial_energy_demand():
     )
 
     countries = keys.country.unique()
-    sectors = industrial_demand.columns.levels[1]
+    sectors = industrial_demand.columns.unique(1)
 
     for country, sector in product(countries, sectors):
         buses = keys.index[keys.country == country]
