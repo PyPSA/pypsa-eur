@@ -20,6 +20,10 @@ from _helpers import (
     set_scenario_config,
 )
 
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from functools import partial
+
 logger = logging.getLogger(__name__)
 
 transport_cols = {"light":['Powered two-wheelers', 'Passenger cars',
@@ -206,7 +210,167 @@ def build_registrations(nodal_transport_data):
         share_reg[transport_type] = new_reg.sum(axis=1).div(number.sum(axis=1))
    
     pd.concat(share_reg).to_csv(snakemake.output.car_registration)
+
+# Define the logistic function
+def logistic_function(t, L, k, t0, max_increase_per_year):
+    L = min(1, max_increase_per_year*25)
+    return L / (1 + np.exp(-k * (t - t0)))
+
+
+# Function to apply the fitting and projection
+def fit_and_project(country_data, max_increase_per_year, transport_type):
+    # Get the historical data for the chosen country
+    historical_data = country_data.astype(float).ffill().bfill()
     
+    # Convert the index and values to numpy arrays
+    years = historical_data.index.to_numpy().astype(float)
+    values = historical_data.to_numpy().astype(float)
+    
+    # Provide initial guesses and bounds based on transport_type and country
+    if historical_data.max()>0.05:
+        t0_i = 2035
+    else:
+        t0_i = 2040
+    initial_guesses = [0.8, 0.2, t0_i]
+    bounds = ([0.7, 0.001, t0_i],
+              [1, 8, 2050])
+    
+    # Use partial to fix max_increase_per_year while fitting the other parameters
+    logistic_function_partial = partial(logistic_function,
+                                        max_increase_per_year=max_increase_per_year)
+    
+    # Fit the logistic function to the historical data
+    popt, pcov = curve_fit(logistic_function_partial, years, values,
+                           p0=initial_guesses, bounds=bounds,
+                           maxfev=10000)
+        
+    # Extract the parameters
+    L, k, t0 = popt
+    
+    # Project the future values up to 2050
+    future_years = np.arange(2000, 2051).astype(float)
+    projected_values = logistic_function(future_years, L, k, t0, max_increase_per_year)
+    
+    # Apply the restriction iteratively
+    restricted_values = [projected_values[0]]
+    for i in range(1, len(projected_values)):
+        next_value = restricted_values[-1] + min(max_increase_per_year,
+                                                 projected_values[i] - restricted_values[-1])
+        restricted_values.append(next_value)
+    
+    return pd.Series(np.array(restricted_values), index=future_years)
+
+
+def ct_to_nodal(df, pop_layout):
+        # convert to nodal share
+        df = df.reindex(pop_layout.ct,axis=1)
+        df.columns = pop_layout.index
+        return df
+        
+def build_projected_ev_share(energy_totals):
+    transport_data = pd.read_csv(snakemake.input.transport_data,
+                                 index_col=[0, 1])
+    projected_share = {}
+    share = {}
+    for transport_type in ["light", "heavy"]:
+        columns_e = [f"electricity {light_col}" for light_col in transport_cols[transport_type]]
+        electrified = energy_totals.reindex(columns=columns_e).sum(axis=1)
+        columns_t = [f"total {light_col}" for light_col in transport_cols[transport_type]]
+        total = energy_totals.reindex(columns=columns_t).sum(axis=1)
+        share[transport_type] = (electrified/total).unstack().T.drop(2022)
+        
+        cols = transport_cols[transport_type]
+        number = transport_data[[f"Number {car_type}" for car_type in cols]]
+        new_reg = transport_data[[f"New registration {car_type}" for car_type in cols]]
+        car_reg = new_reg.sum(axis=1).div(number.sum(axis=1)).xs(2021, level=1)
+        
+        projected_share[transport_type] = share[transport_type].apply(lambda x:
+                                                                      fit_and_project(x, car_reg.loc[x.name], transport_type))
+        
+        # convert to nodal share
+        share[transport_type] = ct_to_nodal(share[transport_type], pop_layout)
+        projected_share[transport_type] = ct_to_nodal(projected_share[transport_type], pop_layout)
+
+    pd.concat(projected_share,axis=1).to_csv(snakemake.output.projected_ev_share)
+    pd.concat(share,axis=1).to_csv(snakemake.output.historical_ev_share)   
+    
+        # for country in share.columns:
+        
+        #     # Get the historical data for the chosen country
+        #     historical_data = share[country].astype(float).ffill().bfill()
+            
+        #     # Convert the index and values to numpy arrays
+        #     years = historical_data.index.to_numpy().astype(float)
+        #     values = historical_data.to_numpy().astype(float)
+            
+        #     max_increase_per_year = car_reg.loc[country]
+            
+
+        #     if historical_data.max()>0.05:
+        #         t0_i = 2035
+        #     else:
+        #         t0_i = 2040
+        #     initial_guesses = [0.8, 0.2, t0_i]
+        #     bounds = ([0.7, 0.001, t0_i],
+        #               [1, 8, 2050])
+
+        #     logistic_function_partial = partial(logistic_function,
+        #                                         max_increase_per_year=max_increase_per_year)
+            
+        #     # Fit the logistic function to the historical data
+        #     popt, pcov = curve_fit(logistic_function_partial, years, values,
+        #                            p0=initial_guesses, bounds=bounds,
+        #                            maxfev=10000)
+            
+        #     # Extract the parameters
+        #     L, k, t0 = popt
+            
+        #     # Project the future values up to 2050
+        #     future_years = np.arange(2000, 2051).astype(float)
+        #     projected_values = logistic_function(future_years, L, k, t0, max_increase_per_year)
+            
+        #     # Initialize the restricted projected values with the first value from the fitted logistic function
+        #     restricted_values = [projected_values[0]]
+            
+        #     # Apply the restriction iteratively
+        #     for i in range(1, len(projected_values)):
+        #         next_value = restricted_values[-1] + min(max_increase_per_year,
+        #                                                  projected_values[i] - restricted_values[-1])
+        #         restricted_values.append(next_value)
+            
+        #     # Convert the restricted_values list to a numpy array
+        #     restricted_values = np.array(restricted_values)
+            
+        #     # all new cars electrified
+        #     all_elec = [min(max_increase_per_year*t, 1) for t in range(1, 27)]
+            
+        #     # Plot the historical and projected data
+        #     plt.figure(figsize=(10, 6))
+        #     plt.plot(years, values, 'o', label='Historical Data')
+        #     plt.plot(future_years, projected_values, '-', label='Projected S-curve')
+        #     plt.plot(future_years[25:], all_elec, '-', label='All new cars electric')
+        #     if country=="DE" and transport_type=="light":
+        #         plt.scatter(y=0.029, x=2024, color='r', label='Actual 2024 Value (2.9%)')
+        #     if country=="AT" and transport_type=="light":
+        #         plt.scatter(y=0.021, x=2022, color='r', label='Actual 2022 Value (2.1%)')
+        #     if country=="BE" and transport_type=="light":
+        #         plt.scatter(y=0.015, x=2022, color='r', label='Actual 2022 Value (1.5%)')
+        #     if country=="FR" and transport_type=="light":
+        #         plt.scatter(y=0.015, x=2022, color='r', label='Actual 2022 Value (1.5%)')
+        #     if country=="IT" and transport_type=="light":
+        #         plt.scatter(y=0.004, x=2022, color='r', label='Actual 2022 Value 0.4%)')
+        #     if country=="ES" and transport_type=="light":
+        #         plt.scatter(y=0.004, x=2022, color='r', label='Actual 2022 Value 0.4%)')
+        #     if country=="PL" and transport_type=="light":
+        #         plt.scatter(y=0.002, x=2022, color='r', label='Actual 2022 Value 0.2%)')
+        #     plt.plot(future_years, restricted_values, '--', label=f'Restricted S-curve (max {round(max_increase_per_year*100)}% increase/year)')
+        #     plt.xlabel('Year')
+        #     plt.ylabel('Share of Electrified Transport')
+        #     plt.title(f'Share of Electrified Transport for {country} {transport_type} (Historical and Projected)')
+        #     plt.legend()
+        #     plt.grid(True)
+        #     plt.savefig(f"/home/lisa/Documents/endogenous_transport/graphics/logistic-curve-fit/{country}-{transport_type}--L{L}-k{k}-t0{t0}.png",
+        #                 bbox_inches="tight")
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -226,6 +390,10 @@ if __name__ == "__main__":
 
     pop_weighted_energy_totals = pd.read_csv(
         snakemake.input.pop_weighted_energy_totals, index_col=0
+    )
+    
+    energy_totals = pd.read_csv(
+        snakemake.input.energy_totals, index_col=[0,1]
     )
 
     options = snakemake.params.sector
@@ -259,5 +427,7 @@ if __name__ == "__main__":
     transport_demand.to_csv(snakemake.output.transport_demand)
     avail_profile.to_csv(snakemake.output.avail_profile)
     dsm_profile.to_csv(snakemake.output.dsm_profile)
+    
+    build_projected_ev_share(energy_totals)
     
     build_registrations(nodal_transport_data)

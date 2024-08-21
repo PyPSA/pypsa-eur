@@ -783,6 +783,7 @@ rule build_transport_demand:
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
         ),
+        energy_totals=resources("energy_totals.csv"),
         transport_data=resources("transport_data.csv"),
         traffic_data_KFZ="data/bundle-sector/emobility/KFZ__count",
         traffic_data_Pkw="data/bundle-sector/emobility/Pkw__count",
@@ -794,6 +795,8 @@ rule build_transport_demand:
         avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
         car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
+        projected_ev_share=resources("projected_ev_share_s{simpl}_{clusters}.csv"),
+        historical_ev_share=resources("historical_ev_share_s{simpl}_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=2000,

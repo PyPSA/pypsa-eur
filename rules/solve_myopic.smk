@@ -27,6 +27,8 @@ rule add_existing_baseyear:
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
+        historical_ev_share=resources("historical_ev_share_s{simpl}_{clusters}.csv"),
+        projected_ev_share=resources("projected_ev_share_s{simpl}_{clusters}.csv"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -82,6 +84,7 @@ rule add_brownfield:
         costs=resources("costs_{planning_horizons}.csv"),
         cop_soil_total=resources("cop_soil_total_elec_s{simpl}_{clusters}.nc"),
         cop_air_total=resources("cop_air_total_elec_s{simpl}_{clusters}.nc"),
+        projected_ev_share=resources("projected_ev_share_s{simpl}_{clusters}.csv"),
     output:
         RESULTS
         + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
