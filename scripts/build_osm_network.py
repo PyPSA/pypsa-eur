@@ -39,6 +39,7 @@ LINKS_COLUMNS = [
     "voltage",
     "p_nom",
     "length",
+    "underground",
     "under_construction",
     "geometry",
 ]
@@ -484,6 +485,7 @@ def _get_converters(buses, links, distance_crs):
                 converter_id,  # "line_id"
                 link_end,  # "bus0"
                 closest_bus,  # "bus1"
+                row["voltage"],  # "voltage"
                 row["p_nom"],  # "p_nom"
                 False,  # "underground"
                 False,  # "under_construction"
@@ -498,6 +500,7 @@ def _get_converters(buses, links, distance_crs):
         "converter_id",
         "bus0",
         "bus1",
+        "voltage",
         "p_nom",
         "underground",
         "under_construction",
@@ -802,7 +805,7 @@ def build_network(inputs, outputs):
     lines, buses = fix_overpassing_lines(lines, buses, DISTANCE_CRS, tol=1)
 
     # Merge buses with same voltage and within tolerance
-    logger.info(f"Aggregating close substations: Enabled with tolerance {BUS_TOL} m")
+    logger.info(f"Aggregating close substations with a tolerance of {BUS_TOL} m")
 
     lines, links, buses = merge_stations_lines_by_station_id_and_voltage(
         lines, links, buses, DISTANCE_CRS, BUS_TOL
@@ -834,6 +837,8 @@ def build_network(inputs, outputs):
     lines["voltage"] = lines["voltage"] / 1000
     if not links.empty:
         links["voltage"] = links["voltage"] / 1000
+    if not converters.empty:
+        converters["voltage"] = converters["voltage"] / 1000
     transformers["voltage_bus0"], transformers["voltage_bus1"] = (
         transformers["voltage_bus0"] / 1000,
         transformers["voltage_bus1"] / 1000,

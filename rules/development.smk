@@ -8,11 +8,11 @@ if config["electricity"]["base_network"] == "osm-raw":
         input:
             base_network=resources("networks/base.nc"),
         output:
-            buses=resources("osm/release/buses.csv"),
-            converters=resources("osm/release/converters.csv"),
-            lines=resources("osm/release/lines.csv"),
-            links=resources("osm/release/links.csv"),
-            transformers=resources("osm/release/transformers.csv"),
+            buses=resources("osm-raw/release/buses.csv"),
+            converters=resources("osm-raw/release/converters.csv"),
+            lines=resources("osm-raw/release/lines.csv"),
+            links=resources("osm-raw/release/links.csv"),
+            transformers=resources("osm-raw/release/transformers.csv"),
         log:
             logs("prepare_osm_network_release.log"),
         benchmark:

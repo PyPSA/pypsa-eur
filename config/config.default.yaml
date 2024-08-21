@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 38
+  - 41
   - 128
   - 256
   opts:

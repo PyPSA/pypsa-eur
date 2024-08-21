@@ -58,6 +58,7 @@ CONVERTERS_COLUMNS = [
     "converter_id",
     "bus0",
     "bus1",
+    "voltage",
     "geometry",
 ]
 

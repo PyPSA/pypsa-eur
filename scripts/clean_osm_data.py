@@ -1295,6 +1295,7 @@ def _finalise_links(df_links):
     df_links["bus0"] = None
     df_links["bus1"] = None
     df_links["length"] = None
+    df_links["underground"] = True
     df_links["under_construction"] = False
     df_links["dc"] = True
 
@@ -1307,6 +1308,7 @@ def _finalise_links(df_links):
             "bus0",
             "bus1",
             "length",
+            "underground",
             "under_construction",
             "dc",
             "country",
