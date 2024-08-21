@@ -1055,14 +1055,14 @@ def extra_functionality(n, snapshots):
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
-    if snakemake.params.custom_extra_functionality:
-        source_path = snakemake.params.custom_extra_functionality
+    if n.snakemake.params.custom_extra_functionality:
+        source_path = n.snakemake.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
         custom_extra_functionality = getattr(module, module_name)
-        custom_extra_functionality(n, snapshots, snakemake)
+        custom_extra_functionality(n, snapshots, n.snakemake)
 
 
 def solve_network(n, config, solving, **kwargs):
@@ -1093,6 +1093,10 @@ def solve_network(n, config, solving, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
+    if "snakemake" in kwargs:
+        n.snakemake = kwargs.pop("snakemake")
+    else:
+        n.snakemake=snakemake
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
