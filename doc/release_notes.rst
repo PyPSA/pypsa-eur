@@ -9,6 +9,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Add investment period dependent CO2 sequestration potentials
 
 * Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
 
