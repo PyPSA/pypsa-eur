@@ -454,6 +454,7 @@ def prepare_network(
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
+
         n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.index
         if not np.isscalar(load_shedding):
@@ -986,6 +987,63 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def add_endogenous_transport_constraints(n, snapshots):
+    """
+    Add constraints to relate number of EVs to EV charger, V2G and DSM.
+    """
+    # get index TODO only extendable
+    link_ext = n.links[n.links.p_nom_extendable]
+    ev_i = link_ext[link_ext.carrier.str.contains("land transport EV")].index
+    bev_i = link_ext[link_ext.carrier.str.contains("BEV charger")].index
+    v2g_i = link_ext[link_ext.carrier.str.contains("V2G")].index
+    bev_dsm_i = n.stores[
+        (n.stores.carrier.str.contains("Li ion") & n.stores.e_nom_extendable)
+    ].index
+    
+    if ev_i.empty:
+        return
+    # factor
+    f = (
+        n.links.loc[ev_i, "p_nom"]
+        .rename(n.links.bus0)
+        .div(n.links.loc[bev_i, "p_nom"].rename(n.links.bus1))
+    )
+
+    # variables
+    link_p_nom = n.model.variables.Link_p_nom
+
+    # constraint for BEV charger
+    lhs = link_p_nom.loc[ev_i] - (link_p_nom.loc[bev_i] * f.values)
+    n.model.add_constraints(lhs == 0, name="p_nom-EV-BEV")
+    
+    ev_light = link_ext[link_ext.carrier=="land transport EV light"].index
+    if not v2g_i.empty:
+        
+        # constraint for V2G
+        lhs = link_p_nom.loc[ev_light] - (link_p_nom.loc[v2g_i] * f[f.index.str.contains("light")].values)
+        n.model.add_constraints(lhs >= 0, name="p_nom-EV-V2G")
+
+    if not bev_dsm_i.empty:
+        # factor
+        f = (
+            n.links.loc[ev_light, "p_nom"]
+            .rename(n.links.bus0)
+            .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.stores.bus))
+        )
+
+        store_e_nom = n.model.variables.Store_e_nom
+
+        # constraint for DSM
+        lhs = link_p_nom.loc[ev_light] - (store_e_nom.loc[bev_dsm_i] * f.values)
+        n.model.add_constraints(lhs >= 0, name="e_nom-EV-DSM")
+
+    # TODO as a test remove p_nom
+    # links_i = n.links[(n.links.carrier.str.contains("transport"))
+    #                   & (n.links.p_nom_extendable)].index
+    # n.links.loc[links_i.union(v2g_i), "p_nom"] = 0
+    # n.stores.loc[bev_dsm_i, "e_nom"] = 0
+    
+    
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -1027,6 +1085,9 @@ def extra_functionality(n, snapshots):
         add_retrofit_gas_boiler_constraint(n, snapshots)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
+    
+    if n.config["sector"]["endogenous_transport"]:
+        add_endogenous_transport_constraints(n, snapshots)
 
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
@@ -1106,14 +1167,14 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            # configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            sector_opts="",
+            planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

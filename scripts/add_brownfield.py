@@ -38,7 +38,8 @@ def add_brownfield(n, n_p, year):
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
-        n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
+        n_p.mremove(c.name, c.df.index[(c.df.lifetime == np.inf) &
+                                       ~c.df.index.str.contains("existing")])
 
         # remove assets whose build_year + lifetime <= year
         n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
@@ -224,6 +225,44 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def adjust_transport(n, ref_year=2024):
+    registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
+    for transport_type in ["light", "heavy"]:
+        filter_links = (~n.links.p_nom_extendable & (n.links.lifetime==np.inf)
+                        & (n.links.carrier == f"land transport oil {transport_type}"))
+        links_i = n.links[filter_links].index
+        
+        factor = options["car_reg_factor"]
+        reg = registrations.loc[transport_type].iloc[:,0] * factor
+        
+        unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
+        previous_year = n_p.links.build_year.max()
+        already_reduced =  (1-(reg*(previous_year-ref_year))).clip(lower=0)
+        changed = (unchanged_fleet/already_reduced.replace(0,1)).rename(index= lambda x: x + f" land transport oil {transport_type}-existing")
+        n.links.loc[links_i, "p_nom"] = (n.links.loc[links_i, "p_nom"] * changed).fillna(0)
+        
+        # final = {}
+        # for year in [2025, 2030, 2040, 2050]:
+        #     unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
+        #     already_reduced =  (1-(reg*(previous_year-ref_year))).clip(lower=0)
+        #     changed = (unchanged_fleet/already_reduced.replace(0,1)).rename(index= lambda x: x + f" land transport oil {transport_type}-existing")
+        #     final[year] = (n.links.loc[links_i, "p_nom"] * changed).fillna(0)
+        #     previous_year = year
+                
+            
+        
+    # remove very small capacity
+    logger.info("Removing small land transport capacities")
+    carriers = ['land transport EV heavy', 'land transport fuel cell heavy',
+           'land transport oil heavy', 'land transport EV light',
+           'land transport fuel cell light', 'land transport oil light']
+    
+    land_links = n.links[n.links.carrier.isin(carriers)]
+    to_drop = land_links[(land_links.p_nom<1) & (~land_links.p_nom_extendable)]
+    
+    n.mremove("Link", to_drop.index)
+    
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -234,7 +273,7 @@ if __name__ == "__main__":
             clusters="37",
             opts="",
             ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
+            sector_opts="",
             planning_horizons=2030,
         )
 
@@ -246,6 +285,8 @@ if __name__ == "__main__":
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
     year = int(snakemake.wildcards.planning_horizons)
+    
+    options = snakemake.params.sector
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -258,6 +299,9 @@ if __name__ == "__main__":
     add_brownfield(n, n_p, year)
 
     disable_grid_expansion_if_limit_hit(n)
+    
+    if options["endogenous_transport"]:
+        adjust_transport(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

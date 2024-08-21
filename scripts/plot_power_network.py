@@ -62,6 +62,34 @@ def load_projection(plotting_params):
     return proj_func(**proj_kwargs)
 
 
+
+def plot_carrier(n,  path, carrier="land transport demand heavy"):
+    a = (n.statistics.energy_balance(aggregate_bus=False)
+         .xs(carrier, level="bus_carrier"))
+    assign_location(n)
+    a.rename(n.buses.location, level=1, inplace=True)
+    a = a.groupby([a.index.get_level_values(1), a.index.get_level_values(2)]).sum()
+    
+    b = round(a.div(-a.xs(carrier, level=1))*100)
+    b = b[b>0]
+    
+    tech_colors = snakemake.params.plotting["tech_colors"]
+    
+    fig, ax = plt.subplots(subplot_kw={"projection": proj})
+    fig.set_size_inches(7, 6)
+
+    n.plot(
+        title=f"share of {carrier}",
+        bus_sizes=b/7e1,
+        bus_colors=tech_colors,
+        ax=ax,
+        line_widths=0,
+        link_widths=0,
+        **map_opts,
+    )
+    
+    fig.savefig(path, bbox_inches="tight")
+    
 def plot_map(
     n,
     components=["links", "stores", "storage_units", "generators"],
@@ -242,25 +270,28 @@ def plot_map(
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "plot_power_network",
+            # configfiles="config/config (copy).yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="4380H-T-H-B-I-A-dist1",
+            planning_horizons=2030,
+            sector_opts="",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-
+    
+   
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     map_opts = snakemake.params.plotting["map"]
@@ -269,5 +300,12 @@ if __name__ == "__main__":
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
 
     proj = load_projection(snakemake.params.plotting)
+    plot_carrier(n, snakemake.output.map_transport_heavy, 
+                 carrier="land transport demand heavy")
+    plot_carrier(n, snakemake.output.map_transport_light, 
+                 carrier="land transport demand light")
+
 
     plot_map(n)
+    
+    

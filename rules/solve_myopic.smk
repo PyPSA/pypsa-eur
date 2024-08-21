@@ -15,6 +15,7 @@ rule add_existing_baseyear:
         powerplants=resources("powerplants.csv"),
         busmap_s=resources("busmap_elec_s{simpl}.csv"),
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
+        car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         costs=lambda w: resources(
             "costs_{}.csv".format(
@@ -61,6 +62,7 @@ def input_profile_tech_brownfield(w):
 
 rule add_brownfield:
     params:
+        sector=config_provider("sector"),
         H2_retrofit=config_provider("sector", "H2_retrofit"),
         H2_retrofit_capacity_per_CH4=config_provider(
             "sector", "H2_retrofit_capacity_per_CH4"
@@ -71,6 +73,7 @@ rule add_brownfield:
         carriers=config_provider("electricity", "renewable_carriers"),
     input:
         unpack(input_profile_tech_brownfield),
+        car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
         simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
         cluster_busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         network=RESULTS

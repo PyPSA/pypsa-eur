@@ -33,9 +33,20 @@ def build_nodal_transport_data(fn, pop_layout, year):
     transport_data = pd.read_csv(fn, index_col=[0, 1])
     transport_data = transport_data.xs(year, level="year")
 
-    # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
+    
+    eff_cols = transport_data.columns.str.contains("efficiency")
+    car_cols = transport_data.columns[~eff_cols]
+    nodal_transport_data[car_cols] = (
+       nodal_transport_data[car_cols].mul(pop_layout["fraction"], axis=0)
+    )
+    # fill missing fuel efficiency [kWh/100 km] with average data
+    for col in nodal_transport_data.columns[eff_cols]:
+        nodal_transport_data.loc[
+            nodal_transport_data[col] == 0.0,
+            col,
+        ] = transport_data[col].mean()
     
     return nodal_transport_data
 
@@ -204,7 +215,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transport_demand",
             simpl="",
-            clusters=128,
+            clusters=37,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

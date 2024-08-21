@@ -1586,7 +1586,7 @@ def add_EVs(
         bus1=nodes + f" land transport {transport_type}",
         carrier=suffix[1:],
         efficiency=efficiency,
-        p_min_pu=profile,
+        # p_min_pu=profile,
         p_max_pu=profile,
         p_nom=p_nom,
         p_nom_extendable=False,
@@ -1644,10 +1644,12 @@ def add_EVs(
             lifetime=15,
         )
 
-def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
+def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
+                       car_efficiency, suffix,
+                       transport_type="light"
+                       ):
 
-    car_efficiency = options["transport_fuel_cell_efficiency"]
-
+   
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
         car_efficiency,
@@ -1658,67 +1660,66 @@ def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
         options["ICE_upper_degree_factor"],
     )
 
-    profile = fuel_cell_share * p_set.div(efficiency)
+    p_nom = fuel_cell_share * p_set.div(efficiency).max()
 
-    n.madd(
-        "Load",
-        spatial.nodes,
-        suffix=" land transport fuel cell",
-        bus=spatial.h2.nodes,
-        carrier="land transport fuel cell",
-        p_set=profile,
-    )
-
-
-def add_ice_cars(n, p_set, ice_share, temperature):
-
-    add_carrier_buses(n, "oil")
-
-    car_efficiency = options["transport_ice_efficiency"]
-
-    # temperature corrected efficiency
-    efficiency = get_temp_efficency(
-        car_efficiency,
-        temperature,
-        options["transport_heating_deadband_lower"],
-        options["transport_heating_deadband_upper"],
-        options["ICE_lower_degree_factor"],
-        options["ICE_upper_degree_factor"],
-    )
-
-    profile = ice_share * p_set.div(efficiency).rename(
-        columns=lambda x: x + " land transport oil"
-    )
-
-    if not options["regional_oil_demand"]:
-        profile = profile.sum(axis=1).to_frame(name="EU land transport oil")
-
-    n.madd(
-        "Bus",
-        spatial.oil.land_transport,
-        location=spatial.oil.demand_locations,
-        carrier="land transport oil",
-        unit="land transport",
-    )
-
-    n.madd(
-        "Load",
-        spatial.oil.land_transport,
-        bus=spatial.oil.land_transport,
-        carrier="land transport oil",
-        p_set=profile,
-    )
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
 
     n.madd(
         "Link",
-        spatial.oil.land_transport,
-        bus0=spatial.oil.nodes,
-        bus1=spatial.oil.land_transport,
-        bus2="co2 atmosphere",
-        carrier="land transport oil",
-        efficiency2=costs.at["oil", "CO2 intensity"],
-        p_nom_extendable=True,
+        nodes,
+        suffix=suffix,
+        bus0=spatial.h2.nodes,
+        bus1=nodes + f" land transport {transport_type}",
+        carrier=suffix[1:],
+        efficiency=efficiency,
+        p_nom_extendable=False,
+        p_nom=p_nom,
+        p_min_pu=profile,
+        p_max_pu=profile,
+        lifetime=1,
     )
+
+
+def add_ice_cars(n, nodes, p_set, ice_share, temperature,
+                           car_efficiency, suffix,
+                           transport_type="light"
+                           ):
+
+    add_carrier_buses(n, "oil")
+
+    # temperature corrected efficiency
+    efficiency = get_temp_efficency(
+        car_efficiency,
+        temperature,
+        options["transport_heating_deadband_lower"],
+        options["transport_heating_deadband_upper"],
+        options["ICE_lower_degree_factor"],
+        options["ICE_upper_degree_factor"],
+    )
+
+    p_nom = ice_share * p_set.div(efficiency).max()
+
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=suffix,
+        bus0=spatial.oil.nodes,
+        bus1=nodes + f" land transport {transport_type}",
+        bus2=["co2 atmosphere"],
+        carrier=suffix[1:],
+        efficiency=efficiency,
+        efficiency2=costs.at["oil", "CO2 intensity"],
+        p_nom_extendable=False,
+        p_nom=p_nom,
+        p_min_pu=profile,
+        p_max_pu=profile,
+        lifetime=1,
+    )
+
+
+
 
 car_keys = {"fuel_cell": ['FCV Bus city',
                       'FCV Coach',
@@ -1756,7 +1757,7 @@ def add_land_transport(n, costs):
     
     nodes = spatial.nodes
 
-    # read in transport demand in units MWh
+    # read in transport demand in units 100 km
     transport = pd.read_csv(
         snakemake.input.transport_demand, index_col=0, header=[0,1], 
         parse_dates=True
@@ -1811,7 +1812,7 @@ def add_land_transport(n, costs):
             location=nodes,
             suffix=f" land transport {transport_type}",
             carrier=f"land transport demand {transport_type}",
-            unit="MWh",
+            unit="100 km",
         )
     
         p_set = transport[transport_type]
@@ -1851,12 +1852,140 @@ def add_land_transport(n, costs):
                 transport_type=transport_type
             )
 
-    if shares["fuel_cell"] > 0:
-        add_fuel_cell_cars(n, p_set, shares["fuel_cell"], temperature)
+        # fuel cell vehicles
+        if shares.loc["fuel_cell", transport_type] > 0:
+            
+            car_efficiency = car_efficiencies.loc["fuel_cell", transport_type]
+            add_fuel_cell_cars(n, nodes, transport[transport_type],
+                               shares.loc["fuel_cell", transport_type],
+                               temperature,
+                               car_efficiency,
+                               suffix=f" land transport fuel cell {transport_type}",
+                               transport_type=transport_type)
+        
+        # internal combustion cars
+        if shares.loc["ice", transport_type]>0:
+            
+            car_efficiency = car_efficiencies.loc["ice", transport_type]
+            add_ice_cars(n, nodes, transport[transport_type],
+                         shares.loc["ice", transport_type],
+                         temperature, car_efficiency,
+                         suffix=f" land transport oil {transport_type}",
+                         transport_type=transport_type
+                         )
+            
+    if endogenous:
+        adjust_endogenous_transport(n, engine_types, transport_types)
 
-    if shares["ice"] > 0:
-        add_ice_cars(n, p_set, shares["ice"], temperature)
 
+def adjust_endogenous_transport(n, engine_types, transport_types):
+
+    logger.info("Assume endogenous land transport")
+    carrier = [
+        "land transport EV light",
+        "land transport EV heavy",
+        "land transport oil light",
+        "land transport oil heavy",
+        "land transport fuel cell light",
+        "land transport fuel cell heavy",
+        "BEV charger light",
+        "BEV charger heavy",
+        "V2G",
+    ]
+
+    links_i = n.links[n.links.carrier.isin(carrier)].index
+    n.links.loc[links_i, "p_nom_extendable"] = True
+    n.links.loc[links_i, "lifetime"] = 15
+
+    store_carrier = ["battery storage", "Li ion"]
+    store_i = n.stores[n.stores.carrier.isin(store_carrier)].index
+    n.stores.loc[store_i, "e_nom_extendable"] = True
+
+    # costs todo
+    # assume here for all of Europe
+    # average driving distance
+    # passenger cars EU28 JRC 2015 11 360 km /year and car = 113.6 100km /year
+    light_100km_per_vehicle = 113.6
+    # mean of buses and heavy duty freight
+    heavy_100km_per_vehicle = (396.783 + 172.843)/2
+       
+    car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
+    # EV --------------------------
+    cost_EV = (costs.loc["Battery electric (passenger cars)", "fixed"]
+               / light_100km_per_vehicle / car_efficiencies.loc["electric", "light"])
+    
+    cost_Etruck = (costs.loc[car_keys["electric"], "fixed"].mean()
+                   / heavy_100km_per_vehicle /
+                   car_efficiencies.loc["electric", "heavy"])
+    # FCE ----------------------------
+    cost_FCE = (costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]
+                / light_100km_per_vehicle
+                / car_efficiencies.loc["fuel_cell", "light"])
+    cost_FCtruck = (costs.loc[car_keys["fuel_cell"], "fixed"].mean()
+                    / heavy_100km_per_vehicle
+                    / car_efficiencies.loc["fuel_cell", "heavy"])
+
+    # ICE ---------------------------------------------------------
+    cost_ICE = (costs.at["Liquid fuels ICE (passenger cars)", "fixed"]
+                / light_100km_per_vehicle
+                / car_efficiencies.loc["ice", "light"])
+    cost_ICtruck = (costs.loc[car_keys["ice"], "fixed"].mean()
+                    / heavy_100km_per_vehicle
+                    / car_efficiencies.loc["ice", "heavy"])
+    # cost in unit input depending on car type
+    costs_car_type = {
+        "land transport EV light": cost_EV,
+        "land transport EV heavy": cost_Etruck,
+        'land transport fuel cell light': cost_FCE,
+        'land transport fuel cell heavy': cost_FCtruck,
+        'land transport oil light': cost_ICE,
+        'land transport oil heavy': cost_ICtruck,
+            
+    }
+
+    # add dummy generator only needed for solving with glpk with higher solver tolerance
+    # n.add("Carrier", "dummy transport", color="#dd2e23", nice_name="Dummy transport")
+    buses_i = n.buses[n.buses.carrier.str.contains("land transport demand")].index
+    n.madd(
+        "Generator",
+        buses_i,
+        " load",
+        bus=buses_i,
+        carrier="load",
+        sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+        marginal_cost=1e2,  # Eur/kWh
+        p_nom=1e9,  # kW
+    )
+
+    n.madd(
+        "Generator",
+        buses_i,
+        " load negative",
+        bus=buses_i,
+        carrier="load",
+        marginal_cost=-1e2,
+        sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+        p_nom=1e9,
+        p_max_pu=0,
+        p_min_pu=-1,
+        #sign=-1,
+    )
+
+    for car_type, cost in costs_car_type.items():
+        car_i = n.links[n.links.carrier == car_type].index
+        n.links.loc[car_i, "capital_cost"] = cost
+        # if car_type == 'land transport EV heavy' :
+        #     VOM = (costs.loc[car_keys["electric"], "VOM"].mean()
+        #            *100/ car_efficiencies.loc["electric", "heavy"])
+        #     n.links.loc[car_i, "marginal_cost"] = VOM
+        # elif car_type =='land transport fuel cell heavy':
+        #     VOM = (costs.loc[car_keys["fuel_cell"], "VOM"].mean()
+        #            *100/ car_efficiencies.loc["fuel_cell", "heavy"])
+        #     n.links.loc[car_i, "marginal_cost"] = VOM
+        # elif car_type =='land transport oil heavy':
+        #     VOM = (costs.loc[car_keys["ice"], "VOM"].mean()
+        #            *100/ car_efficiencies.loc["ice", "heavy"])
+        #     n.links.loc[car_i, "marginal_cost"] = VOM
 
 def build_heat_demand(n):
     heat_demand_shape = (
@@ -2880,6 +3009,11 @@ def add_industry(n, costs):
     )
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / nhours
+    
+    if "shipping" in options["vary_demand"].keys():
+        factor = get(options["vary_demand"]["shipping"], investment_year)
+        logger.info(f"Vary shipping demand by factor {factor} in {investment_year}")
+        p_set *= factor
 
     if shipping_hydrogen_share:
         oil_efficiency = options.get(
@@ -4037,6 +4171,41 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             )
 
 
+def adjust_transport_temporal_agg(n):
+
+    engine_types = {
+        "fuel_cell": "land transport fuel cell",
+        "electric": "land transport EV",
+        "ice": "land transport oil",
+    }
+
+    
+    for transport_type in ["light", "heavy"]:
+        p_set = n.loads_t.p_set.loc[:, n.loads.carrier == f"land transport demand {transport_type}"]
+        for engine, carrier in engine_types.items():
+            
+            share = get(options[f"land_transport_{engine}_share"][transport_type],
+                        investment_year)
+    
+            if share == 0: continue
+                
+            links_i = n.links[n.links.carrier == carrier + f" {transport_type}"].index
+            efficiency = n.links_t.efficiency.loc[:, links_i]
+
+            p_set.columns = efficiency.columns
+            p_nom = share * p_set.div(efficiency).max()
+            profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    
+            n.links.loc[links_i, "p_nom"] = p_nom
+            # TODO just for testing
+            # if engine == "electric": 
+            #     n.links_t.p_max_pu[links_i] = 1
+            #     n.links_t.p_min_pu[links_i] = 0
+            # else:
+            n.links_t.p_max_pu[links_i] = profile
+            if links_i.difference(n.links_t.p_min_pu.columns).empty:
+                n.links_t.p_min_pu[links_i] = profile
+            
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -4048,7 +4217,7 @@ if __name__ == "__main__":
             simpl="",
             opts="",
             clusters="37",
-            ll="vopt",
+            ll="v1.0",
             sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2050",
         )
@@ -4140,6 +4309,13 @@ if __name__ == "__main__":
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings
     )
+    
+    adjust_transport_temporal_agg(n)
+    
+    if options["no_pmaxpu"]:
+        link_i = n.links[n.links.carrier.str.contains("land transport")].index
+        common_i = n.links_t.p_max_pu.columns.intersection(link_i)
+        n.links_t.p_max_pu.loc[:, common_i] = 1
 
     co2_budget = snakemake.params.co2_budget
     if isinstance(co2_budget, str) and co2_budget.startswith("cb"):
@@ -4184,7 +4360,15 @@ if __name__ == "__main__":
 
     for k, v in options["transmission_efficiency"].items():
         lossy_bidirectional_links(n, k, v)
-
+    
+    for parameter in options["vary"].keys():
+        for carrier in options["vary"][parameter].keys():
+            link_i = n.links[n.links.carrier==carrier].index
+            if link_i.empty: continue
+            factor = options["vary"][parameter][carrier]
+            logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+            n.links.loc[link_i, parameter] *= factor
+            
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
     if snakemake.config["solving"]["options"]["transmission_losses"]:

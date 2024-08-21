@@ -22,7 +22,9 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs, get
+
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -594,6 +596,61 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+
+def add_existing_land_transport(baseyear, options, ref_year=2024):
+    transport_types = ["light", "heavy"]
+    registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
+    for transport_type in transport_types:
+        
+        factor = options["car_reg_factor"]
+        reg = registrations.loc[transport_type].iloc[:,0] * factor
+        
+        share = get(options["land_transport_ice_share"][transport_type], baseyear)
+        ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index
+        p_nom = n.links.loc[ice_i, "p_nom"] / share
+        efficiency = n.links_t.efficiency[ice_i]
+        p_min_pu = n.links_t.p_min_pu[ice_i]
+        
+        unchanged_fleet = 1-(reg*(baseyear-ref_year))
+        
+        df = n.links.loc[ice_i]
+       
+        df["build_year"] = 0
+        df["lifetime"] = np.inf
+        df["p_nom"] = p_nom.mul(unchanged_fleet.values)
+        df["p_nom_extendable"] = False
+        df.rename(
+            index=lambda x: x.replace(f"-{baseyear}", "-existing"), inplace=True
+        )
+        p_min_pu = p_min_pu.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+        p_max_pu = get_as_dense(n, "Link", "p_max_pu")[ice_i]
+        p_max_pu = p_max_pu.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+        eff = efficiency.rename(
+            columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+
+        n.madd(
+            "Link",
+            df.index,
+            bus0=df.bus0,
+            bus1=df.bus1,
+            bus2=df.bus2,
+            carrier=df.carrier,
+            efficiency=eff,
+            capital_cost=df.capital_cost,
+            marginal_cost=df.marginal_cost,
+            efficiency2=df.efficiency2,
+            p_nom_extendable=False,
+            p_nom=df.p_nom,
+            p_min_pu=p_min_pu,
+            p_max_pu=p_max_pu,
+            build_year=df.build_year,
+            lifetime=df.lifetime,
+        )
+        
+        n.links.loc[ice_i, "p_nom"] = 0
+        
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -601,13 +658,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/config.yaml",
+            # configfiles="config/config.yaml",
             simpl="",
-            clusters="20",
-            ll="v1.5",
+            clusters="37",
+            ll="v1.0",
             opts="",
-            sector_opts="none",
-            planning_horizons=2030,
+            sector_opts="",
+            planning_horizons=2025,
         )
 
     configure_logging(snakemake)
@@ -666,7 +723,10 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
-
+        
+    if options["endogenous_transport"]:
+        add_existing_land_transport(baseyear, options)
+        
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
     sanitize_carriers(n, snakemake.config)

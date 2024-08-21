@@ -862,6 +862,7 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
+
 rule time_aggregation:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
