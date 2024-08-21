@@ -3,26 +3,14 @@
 #
 # SPDX-License-Identifier: MIT
 """
-This script is used to clean OpenStreetMap (OSM) data for the PyPSA-Eur
-project.
+This script is used to clean OpenStreetMap (OSM) data for creating a PyPSA-Eur
+ready network.
 
 The script performs various cleaning operations on the OSM data, including:
 - Cleaning voltage, circuits, cables, wires, and frequency columns
 - Splitting semicolon-separated cells into new rows
 - Distributing values to circuits based on the number of splits
 - Adding line endings to substations based on line data
-
-The cleaned data is then written to an output file.
-
-Usage:
-    python clean_osm_data.py <output_file>
-
-Arguments:
-    output_file (str): The path to the output file where the cleaned data will
-    be written.
-
-Example:
-    python clean_osm_data.py cleaned_data.csv
 """
 
 import json
@@ -1001,16 +989,13 @@ def _clean_lines(df_lines, list_voltages):
 
     # Clean those values where multiple circuit values are present, divided by
     # semicolon
-    bool_cables = (
-        (df_lines["circuits"].apply(lambda x: len(x.split(";")) > 1))
-        & (
-            df_lines.apply(
-                lambda row: len(row["circuits"].split(";")) == row["split_elements"],
-                axis=1,
-            )
-        )
-        & (df_lines["cleaned"] == False)
+    has_multiple_circuits = df_lines["circuits"].apply(lambda x: len(x.split(";")) > 1)
+    circuits_match_split_elements = df_lines.apply(
+        lambda row: len(row["circuits"].split(";")) == row["split_elements"],
+        axis=1,
     )
+    is_not_cleaned = df_lines["cleaned"] == False
+    bool_cables = has_multiple_circuits & circuits_match_split_elements & is_not_cleaned
 
     df_lines.loc[bool_cables, "circuits"] = df_lines.loc[bool_cables].apply(
         lambda row: str(row["circuits"].split(";")[int(row["id"].split("-")[-1]) - 1]),
@@ -1023,16 +1008,13 @@ def _clean_lines(df_lines, list_voltages):
 
     # Clean those values where multiple cables values are present, divided by
     # semicolon
-    bool_cables = (
-        (df_lines["cables"].apply(lambda x: len(x.split(";")) > 1))
-        & (
-            df_lines.apply(
-                lambda row: len(row["cables"].split(";")) == row["split_elements"],
-                axis=1,
-            )
-        )
-        & (df_lines["cleaned"] == False)
+    has_multiple_cables = df_lines["cables"].apply(lambda x: len(x.split(";")) > 1)
+    cables_match_split_elements = df_lines.apply(
+        lambda row: len(row["cables"].split(";")) == row["split_elements"],
+        axis=1,
     )
+    is_not_cleaned = df_lines["cleaned"] == False
+    bool_cables = has_multiple_cables & cables_match_split_elements & is_not_cleaned
 
     df_lines.loc[bool_cables, "circuits"] = df_lines.loc[bool_cables].apply(
         lambda row: str(
@@ -1713,8 +1695,6 @@ if __name__ == "__main__":
     min_voltage_ac = 200000  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
-    lines_to_drop = [""]
-
     logger.info("---")
     logger.info("SUBSTATIONS")
     # Input
@@ -1732,11 +1712,9 @@ if __name__ == "__main__":
     df_substations["frequency"] = _clean_frequency(df_substations["frequency"])
     df_substations = _clean_substations(df_substations, list_voltages)
     df_substations = _create_substations_geometry(df_substations)
+
     # Merge touching polygons
     df_substations = _merge_touching_polygons(df_substations)
-    # df_substations["polygon"] = df_substations["polygon"].apply(
-    #     lambda x: x.convex_hull
-    # )
     df_substations = _create_substations_centroid(df_substations)
     df_substations = _finalise_substations(df_substations)
 
@@ -1777,12 +1755,6 @@ if __name__ == "__main__":
 
     df_lines = _create_lines_geometry(df_lines)
     df_lines = _finalise_lines(df_lines)
-
-    # Dropping specific lines, manually
-    if lines_to_drop in df_lines["line_id"].values:
-        df_lines.drop(
-            df_lines[df_lines["line_id"].isin(lines_to_drop)].index, inplace=True
-        )
 
     # Create GeoDataFrame
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
@@ -1838,10 +1810,6 @@ if __name__ == "__main__":
         df_substations.drop(columns=["polygon"]), geometry="geometry", crs=crs
     )
 
-    # Export GeoDataFrames to GeoJSON in specified output paths
-    parentfolder = os.path.dirname(snakemake.output.substations)
-    if not os.path.exists(parentfolder):
-        os.makedirs(parentfolder)
     output_substations_polygon = snakemake.output["substations_polygon"]
     output_substations = snakemake.output["substations"]
     output_lines = snakemake.output["lines"]

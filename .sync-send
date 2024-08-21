@@ -9,6 +9,3 @@ config/test
 envs
 matplotlibrc
 Snakefile
-data/eez/
-data/naturalearth/
-resources/europe-nuts2-gridkit/

@@ -84,12 +84,10 @@ co2_budget:
   2045: 0.032
   2050: 0.000
 
-electricity_network:
-  base_network: gridkit             # Options: gridkit, osm-prebuilt, osm-raw (built from scratch using OSM data, takes longer)
-  osm_group_tolerance_buses: 5000   # unit: meters, default 5000 - Buses within this distance are grouped together
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
+  voltages: [200., 300., 380., 500., 750.]
+  base_network: entsoegridkit
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -278,6 +276,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"

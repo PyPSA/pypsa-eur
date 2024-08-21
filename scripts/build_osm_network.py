@@ -10,7 +10,6 @@ import string
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _benchmark import memory_logger
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import LineString, Point
 from shapely.ops import linemerge, nearest_points, split
@@ -18,45 +17,39 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
-# list of recognised nan values (NA and na excluded as may be confused with Namibia 2-letter country code)
-NA_VALUES = ["NULL", "", "N/A", "NAN", "NaN", "nan", "Nan", "n/a", "null"]
 
-
-def read_csv_nafix(file, **kwargs):
-    "Function to open a csv as pandas file and standardize the na value"
-    if "keep_default_na" not in kwargs:
-        kwargs["keep_default_na"] = False
-    if "na_values" not in kwargs:
-        kwargs["na_values"] = NA_VALUES
-
-    if os.stat(file).st_size > 0:
-        return pd.read_csv(file, **kwargs)
-    else:
-        return pd.DataFrame()
-
-
-def save_to_geojson(df, fn):
-    """
-    Save a (Geo)DataFrame to a GeoJSON file.
-
-    Parameters:
-    - df: The (Geo)DataFrame to be saved.
-    - fn: The filename (including the path) of the output GeoJSON file.
-
-    Returns:
-    None
-    """
-    if os.path.exists(fn):
-        os.unlink(fn)  # remove file if it exists
-
-    # save file if the (Geo)DataFrame is non-empty
-    if df.empty:
-        # create empty file to avoid issues with snakemake
-        with open(fn, "w") as fp:
-            pass
-    else:
-        # save file
-        df.to_file(fn, driver="GeoJSON")
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
+BUS_TOL = (
+    5000  # unit: meters, default 5000 - Buses within this distance are grouped together
+)
+LINES_COLUMNS = [
+    "bus0",
+    "bus1",
+    "voltage",
+    "circuits",
+    "length",
+    "underground",
+    "under_construction",
+    "geometry",
+]
+LINKS_COLUMNS = [
+    "bus0",
+    "bus1",
+    "voltage",
+    "p_nom",
+    "length",
+    "under_construction",
+    "geometry",
+]
+TRANSFORMERS_COLUMNS = [
+    "bus0",
+    "bus1",
+    "voltage_bus0",
+    "voltage_bus1",
+    "country",
+    "geometry",
+]
 
 
 def read_geojson(fn, cols=[], dtype=None, crs="EPSG:4326"):
@@ -86,35 +79,6 @@ def read_geojson(fn, cols=[], dtype=None, crs="EPSG:4326"):
             for k, v in dtype.items():
                 df[k] = df[k].astype(v)
         return df
-
-
-def to_csv_nafix(df, path, **kwargs):
-    """
-    Write a pandas DataFrame to a CSV file with NA values replaced.
-
-    Parameters:
-    - df: pandas DataFrame
-        The DataFrame to be written to the CSV file.
-    - path: str
-        The file path where the CSV file will be saved.
-    - **kwargs: keyword arguments
-        Additional arguments to be passed to the `to_csv` function of pandas.
-
-    Returns:
-    - None
-
-    If the DataFrame is not empty or does not have empty columns, it will be
-    written to the CSV file with NA values replaced by the first value in the
-    `NA_VALUES` list. If the DataFrame is empty or has empty columns, an empty
-    file will be created at the specified path.
-    """
-    if "na_rep" in kwargs:
-        del kwargs["na_rep"]
-    if not df.empty or not df.columns.empty:
-        return df.to_csv(path, **kwargs, na_rep=NA_VALUES[0])
-    else:
-        with open(path, "w") as fp:
-            pass
 
 
 def line_endings_to_bus_conversion(lines):
@@ -252,19 +216,13 @@ def set_lines_ids(lines, buses, distance_crs):
         distance_bus0 = busesepsg.geometry.loc[bus0_id].distance(
             row.geometry.boundary.geoms[0]
         )
-        if distance_bus0 > 0.0:
+
+        if distance_bus0 > 0:
             # the line does not start in the node, thus modify the linestring
-            lines.loc[i, "geometry"] = linemerge(
-                [
-                    LineString(
-                        [
-                            buses.geometry.loc[bus0_id],
-                            lines.geometry.loc[i].boundary.geoms[0],
-                        ]
-                    ),
-                    lines.geometry.loc[i],
-                ]
-            )
+            line_start_point = lines.geometry.loc[i].boundary.geoms[0]
+            new_segment = LineString([buses.geometry.loc[bus0_id], line_start_point])
+            modified_line = linemerge([new_segment, lines.geometry.loc[i]])
+            lines.loc[i, "geometry"] = modified_line
 
         # find the closest node of the bus1 of the line
         bus1_id = buses_sel.geometry.distance(row.geometry.boundary.geoms[1]).idxmin()
@@ -274,19 +232,13 @@ def set_lines_ids(lines, buses, distance_crs):
         distance_bus1 = busesepsg.geometry.loc[bus1_id].distance(
             row.geometry.boundary.geoms[1]
         )
-        if distance_bus1 > 0.0:
-            # the line does not end in the node, thus modify the linestring
-            lines.loc[i, "geometry"] = linemerge(
-                [
-                    lines.geometry.loc[i],
-                    LineString(
-                        [
-                            lines.geometry.loc[i].boundary.geoms[1],
-                            buses.geometry.loc[bus1_id],
-                        ]
-                    ),
-                ]
-            )
+
+        if distance_bus1 > 0:
+            # the line does not start in the node, thus modify the linestring
+            line_end_point = lines.geometry.loc[i].boundary.geoms[1]
+            new_segment = LineString([line_end_point, buses.geometry.loc[bus1_id]])
+            modified_line = linemerge([lines.geometry.loc[i], new_segment])
+            lines.loc[i, "geometry"] = modified_line
 
     return lines, buses
 
@@ -322,27 +274,23 @@ def merge_stations_same_station_id(
             lon_bus = np.round(station_point_x + v_it * delta_lon, precision)
             lat_bus = np.round(station_point_y + v_it * delta_lat, precision)
 
+            bus_data = [
+                n_buses,  # "bus_id"
+                g_name,  # "station_id"
+                v_name[0],  # "voltage"
+                bus_row["dc"].all(),  # "dc"
+                "|".join(bus_row["symbol"].unique()),  # "symbol"
+                bus_row["under_construction"].any(),  # "under_construction"
+                "|".join(bus_row["tag_substation"].unique()),  # "tag_substation"
+                bus_row["tag_area"].sum(),  # "tag_area"
+                lon_bus,  # "lon"
+                lat_bus,  # "lat"
+                bus_row["country"].iloc[0],  # "country"
+                Point(lon_bus, lat_bus),  # "geometry"
+            ]
+
             # add the bus
-            buses_clean.append(
-                [
-                    n_buses,  # "bus_id"
-                    g_name,  # "station_id"
-                    v_name[0],  # "voltage"
-                    bus_row["dc"].all(),  # "dc"
-                    "|".join(bus_row["symbol"].unique()),  # "symbol"
-                    bus_row["under_construction"].any(),  # "under_construction"
-                    "|".join(bus_row["tag_substation"].unique()),  # "tag_substation"
-                    bus_row["tag_area"].sum(),  # "tag_area"
-                    lon_bus,  # "lon"
-                    lat_bus,  # "lat"
-                    bus_row["country"].iloc[0],  # "country",
-                    # is_dclink_boundary_point,  # check if new bus was formed of at least one DC link boundary point
-                    Point(
-                        lon_bus,
-                        lat_bus,
-                    ),  # "geometry"
-                ]
-            )
+            buses_clean.append(bus_data)
 
             # increase counters
             v_it += 1
@@ -404,8 +352,8 @@ def get_transformers(buses, lines):
     df_transformers = []
 
     # Transformers should be added between AC buses only
-    # TODO pypsa-eur: Fix this! instead of tilde use !=
     buses_ac = buses[buses["dc"] != True]
+
     for g_name, g_value in buses_ac.sort_values("voltage", ascending=True).groupby(
         by="station_id"
     ):
@@ -413,26 +361,26 @@ def get_transformers(buses, lines):
         n_voltages = len(g_value)
 
         if n_voltages > 1:
-            for id in range(0, n_voltages - 1):
+            for id in range(n_voltages - 1):
                 # when g_value has more than one node, it means that there are multiple voltages for the same bus
-                geom_trans = LineString(
+                transformer_geometry = LineString(
                     [g_value.geometry.iloc[id], g_value.geometry.iloc[id + 1]]
                 )
 
-                df_transformers.append(
-                    [
-                        f"transf_{g_name}_{id}",  # "line_id"
-                        g_value["bus_id"].iloc[id],  # "bus0"
-                        g_value["bus_id"].iloc[id + 1],  # "bus1"
-                        g_value.voltage.iloc[id],  # "voltage_bus0"
-                        g_value.voltage.iloc[id + 1],  # "voltage_bus0"
-                        g_value.country.iloc[id],  # "country"
-                        geom_trans,  # "geometry"
-                    ]
-                )
-    # TODO pypsa-eur: fix bug in pypsa-earth, where the id column is wrongly named "line_id" instead of "transformer_id
+                transformer_data = [
+                    f"transf_{g_name}_{id}",  # "line_id"
+                    g_value["bus_id"].iloc[id],  # "bus0"
+                    g_value["bus_id"].iloc[id + 1],  # "bus1"
+                    g_value.voltage.iloc[id],  # "voltage_bus0"
+                    g_value.voltage.iloc[id + 1],  # "voltage_bus0"
+                    g_value.country.iloc[id],  # "country"
+                    transformer_geometry,  # "geometry"
+                ]
+
+                df_transformers.append(transformer_data)
+
     # name of the columns
-    trasf_columns = [
+    transformers_columns = [
         "transformer_id",
         "bus0",
         "bus1",
@@ -442,72 +390,18 @@ def get_transformers(buses, lines):
         "geometry",
     ]
 
-    df_transformers = gpd.GeoDataFrame(df_transformers, columns=trasf_columns)
+    df_transformers = gpd.GeoDataFrame(df_transformers, columns=transformers_columns)
     if not df_transformers.empty:
         init_index = 0 if lines.empty else lines.index[-1] + 1
         df_transformers.set_index(init_index + df_transformers.index, inplace=True)
     # update line endings
     df_transformers = line_endings_to_bus_conversion(df_transformers)
+    df_transformers.drop(columns=["bounds", "bus_0_coors", "bus_1_coors"], inplace=True)
 
-    return df_transformers
+    gdf_transformers = gpd.GeoDataFrame(df_transformers)
+    gdf_transformers.crs = GEO_CRS
 
-
-# def get_converters(buses):
-#     """
-#     Function to create fake converter lines that connect buses of the same
-#     station_id of different polarities.
-#     """
-
-#     df_converters = []
-
-#     for g_name, g_value in buses.sort_values("voltage", ascending=True).groupby(
-#         by="station_id"
-#     ):
-#         # note: by construction there cannot be more that two buses with the same station_id and same voltage
-#         n_voltages = len(g_value)
-
-#         # A converter stations should have both AC and DC parts
-#         if g_value["dc"].any() & ~g_value["dc"].all():
-#             dc_voltage = g_value[g_value.dc]["voltage"].values
-
-#             for u in dc_voltage:
-#                 id_0 = g_value[g_value["dc"] & g_value["voltage"].isin([u])].index[0]
-
-#                 ac_voltages = g_value[~g_value.dc]["voltage"]
-#                 # A converter is added between a DC nodes and AC one with the closest voltage
-#                 id_1 = ac_voltages.sub(u).abs().idxmin()
-
-#                 geom_conv = LineString(
-#                     [g_value.geometry.loc[id_0], g_value.geometry.loc[id_1]]
-#                 )
-
-#                 # check if bus is a dclink boundary point, only then add converter
-#                 df_converters.append(
-#                     [
-#                         f"convert_{g_name}_{id_0}",  # "line_id"
-#                         g_value["bus_id"].loc[id_0],  # "bus0"
-#                         g_value["bus_id"].loc[id_1],  # "bus1"
-#                         False,  # "underground"
-#                         False,  # "under_construction"
-#                         g_value.country.loc[id_0],  # "country"
-#                         geom_conv,  # "geometry"
-#                     ]
-#                 )
-
-#     # name of the columns
-#     conv_columns = [
-#         "converter_id",
-#         "bus0",
-#         "bus1",
-#         "underground",
-#         "under_construction",
-#         "country",
-#         "geometry",
-#     ]
-
-#     df_converters = gpd.GeoDataFrame(df_converters, columns=conv_columns).reset_index()
-
-#     return df_converters
+    return gdf_transformers
 
 
 def _find_closest_bus(row, buses, distance_crs, tol=5000):
@@ -552,7 +446,7 @@ def _find_closest_bus(row, buses, distance_crs, tol=5000):
     return closest_bus_id
 
 
-def _get_converters(buses, links, distance_crs, tol):
+def _get_converters(buses, links, distance_crs):
     """
     Get the converters for the given buses and links. Connecting link endings
     to closest AC bus.
@@ -575,30 +469,30 @@ def _get_converters(buses, links, distance_crs, tol):
                 continue
 
             converter_id = f"converter/{row['link_id']}_{conv}"
+            converter_geometry = LineString(
+                [
+                    buses[buses["bus_id"] == link_end].geometry.values[0],
+                    buses[buses["bus_id"] == closest_bus].geometry.values[0],
+                ]
+            )
+
             logger.info(
                 f"Added converter #{conv+1}/2 for link {row['link_id']}:{converter_id}."
             )
 
+            converter_data = [
+                converter_id,  # "line_id"
+                link_end,  # "bus0"
+                closest_bus,  # "bus1"
+                row["p_nom"],  # "p_nom"
+                False,  # "underground"
+                False,  # "under_construction"
+                buses[buses["bus_id"] == closest_bus].country.values[0],  # "country"
+                converter_geometry,  # "geometry"
+            ]
+
             # Create the converter
-            converters.append(
-                [
-                    converter_id,  # "line_id"
-                    link_end,  # "bus0"
-                    closest_bus,  # "bus1"
-                    row["p_nom"],  # "p_nom"
-                    False,  # "underground"
-                    False,  # "under_construction"
-                    buses[buses["bus_id"] == closest_bus].country.values[
-                        0
-                    ],  # "country"
-                    LineString(
-                        [
-                            buses[buses["bus_id"] == link_end].geometry.values[0],
-                            buses[buses["bus_id"] == closest_bus].geometry.values[0],
-                        ]
-                    ),  # "geometry"
-                ]
-            )
+            converters.append(converter_data)
 
     conv_columns = [
         "converter_id",
@@ -612,7 +506,7 @@ def _get_converters(buses, links, distance_crs, tol):
     ]
 
     gdf_converters = gpd.GeoDataFrame(
-        converters, columns=conv_columns, crs=geo_crs
+        converters, columns=conv_columns, crs=GEO_CRS
     ).reset_index()
 
     return gdf_converters
@@ -634,39 +528,37 @@ def connect_stations_same_station_id(lines, buses):
 
         if len(buses_station_id) > 1:
             for b_it in range(1, len(buses_station_id)):
-                add_lines.append(
+                line_geometry = LineString(
                     [
-                        f"link{buses_station_id}_{b_it}",  # "line_id"
-                        buses_station_id.index[0],  # "bus0"
-                        buses_station_id.index[b_it],  # "bus1"
-                        400000,  # "voltage"
-                        1,  # "circuits"
-                        0.0,  # "length"
-                        False,  # "underground"
-                        False,  # "under_construction"
-                        "transmission",  # "tag_type"
-                        ac_freq,  # "tag_frequency"
-                        buses_station_id.country.iloc[0],  # "country"
-                        LineString(
-                            [
-                                buses_station_id.geometry.iloc[0],
-                                buses_station_id.geometry.iloc[b_it],
-                            ]
-                        ),  # "geometry"
-                        LineString(
-                            [
-                                buses_station_id.geometry.iloc[0],
-                                buses_station_id.geometry.iloc[b_it],
-                            ]
-                        ).bounds,  # "bounds"
-                        buses_station_id.geometry.iloc[0],  # "bus_0_coors"
-                        buses_station_id.geometry.iloc[b_it],  # "bus_1_coors"
-                        buses_station_id.lon.iloc[0],  # "bus0_lon"
-                        buses_station_id.lat.iloc[0],  # "bus0_lat"
-                        buses_station_id.lon.iloc[b_it],  # "bus1_lon"
-                        buses_station_id.lat.iloc[b_it],  # "bus1_lat"
+                        buses_station_id.geometry.iloc[0],
+                        buses_station_id.geometry.iloc[b_it],
                     ]
                 )
+                line_bounds = line_geometry.bounds
+
+                line_data = [
+                    f"link{buses_station_id}_{b_it}",  # "line_id"
+                    buses_station_id.index[0],  # "bus0"
+                    buses_station_id.index[b_it],  # "bus1"
+                    400000,  # "voltage"
+                    1,  # "circuits"
+                    0.0,  # "length"
+                    False,  # "underground"
+                    False,  # "under_construction"
+                    "transmission",  # "tag_type"
+                    ac_freq,  # "tag_frequency"
+                    buses_station_id.country.iloc[0],  # "country"
+                    line_geometry,  # "geometry"
+                    line_bounds,  # "bounds"
+                    buses_station_id.geometry.iloc[0],  # "bus_0_coors"
+                    buses_station_id.geometry.iloc[b_it],  # "bus_1_coors"
+                    buses_station_id.lon.iloc[0],  # "bus0_lon"
+                    buses_station_id.lat.iloc[0],  # "bus0_lat"
+                    buses_station_id.lon.iloc[b_it],  # "bus1_lon"
+                    buses_station_id.lat.iloc[b_it],  # "bus1_lat"
+                ]
+
+                add_lines.append(line_data)
 
     # name of the columns
     add_lines_columns = [
@@ -733,12 +625,10 @@ def merge_stations_lines_by_station_id_and_voltage(
 
     logger.info(" - Setting substation ids with tolerance of %.2f m" % (tol))
 
-    # TODO pypsa-eur: Add this fix to pypsa-earth: Buses should not be clustered geographically if they are different
     # bus types (AC != DC)
     buses_ac = buses[buses["dc"] == False].reset_index()
     buses_dc = buses[buses["dc"] == True].reset_index()
 
-    # set substation ids
     # set_substations_ids(buses, distance_crs, tol=tol)
     set_substations_ids(buses_ac, distance_crs, tol=tol)
     set_substations_ids(buses_dc, distance_crs, tol=tol)
@@ -772,8 +662,6 @@ def merge_stations_lines_by_station_id_and_voltage(
     # reset index
     lines.reset_index(drop=True, inplace=True)
     links.reset_index(drop=True, inplace=True)
-    # if len(links) > 0:
-    #     links.reset_index(drop=True, inplace=True)
 
     return lines, links, buses
 
@@ -841,23 +729,16 @@ def fix_overpassing_lines(lines, buses, distance_crs, tol=1):
             buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
         ]
 
+        # Get boundary points
+        endpoint0 = lines_epsgmod.geometry.loc[l].boundary.geoms[0]
+        endpoint1 = lines_epsgmod.geometry.loc[l].boundary.geoms[1]
+
+        # Calculate distances
+        dist_to_ep0 = bus_in_tol_epsg.geometry.distance(endpoint0)
+        dist_to_ep1 = bus_in_tol_epsg.geometry.distance(endpoint1)
+
         # exclude endings of the lines
-        bus_in_tol_epsg = bus_in_tol_epsg[
-            (
-                (
-                    bus_in_tol_epsg.geometry.distance(
-                        lines_epsgmod.geometry.loc[l].boundary.geoms[0]
-                    )
-                    > tol
-                )
-                | (
-                    bus_in_tol_epsg.geometry.distance(
-                        lines_epsgmod.geometry.loc[l].boundary.geoms[1]
-                    )
-                    > tol
-                )
-            )
-        ]
+        bus_in_tol_epsg = bus_in_tol_epsg[(dist_to_ep0 > tol) | (dist_to_ep1 > tol)]
 
         if not bus_in_tol_epsg.empty:
             # add index of line to split
@@ -905,74 +786,12 @@ def fix_overpassing_lines(lines, buses, distance_crs, tol=1):
     return lines, buses
 
 
-def build_network(
-    inputs,
-    outputs,
-    geo_crs,
-    distance_crs,
-):
-    osm_clean_columns = {
-        "substation": {
-            "bus_id": "object",
-            "station_id": "float",
-            "voltage": "float",
-            "dc": "bool",
-            "symbol": "object",
-            "under_construction": "bool",
-            "tag_substation": "str",
-            "tag_area": "str",
-            "lon": "float",
-            "lat": "float",
-            "country": "str",
-            "geometry": "object",
-            "tag_source": "str",
-        },
-        "line": {
-            "line_id": "object",
-            "bus0": "object",
-            "bus1": "object",
-            "voltage": "float",
-            "circuits": "float",
-            "length": "float",
-            "underground": "bool",
-            "under_construction": "bool",
-            "tag_type": "str",
-            "tag_frequency": "float",
-            "dc": "bool",
-            "country": "object",
-            "geometry": "object",
-        },
-        "link": {
-            "link_id": "object",
-            "bus0": "object",
-            "bus1": "object",
-            "voltage": "float",
-            "length": "float",
-            "under_construction": "bool",
-            "dc": "bool",
-            "country": "object",
-            "geometry": "object",
-        },
-    }
+def build_network(inputs, outputs):
 
     logger.info("Reading input data.")
-    buses = read_geojson(
-        inputs["substations"],
-        osm_clean_columns["substation"].keys(),
-        dtype=osm_clean_columns["substation"],
-    )
-
-    lines = read_geojson(
-        inputs["lines"],
-        osm_clean_columns["line"].keys(),
-        dtype=osm_clean_columns["line"],
-    )
-
-    links = read_geojson(
-        inputs["links"],
-        osm_clean_columns["link"].keys(),
-        dtype=osm_clean_columns["link"],
-    )
+    buses = gpd.read_file(inputs["substations"])
+    lines = gpd.read_file(inputs["lines"])
+    links = gpd.read_file(inputs["links"])
 
     lines = line_endings_to_bus_conversion(lines)
     links = line_endings_to_bus_conversion(links)
@@ -980,14 +799,13 @@ def build_network(
     logger.info(
         "Fixing lines overpassing nodes: Connecting nodes and splittling lines."
     )
-    lines, buses = fix_overpassing_lines(lines, buses, distance_crs, tol=1)
+    lines, buses = fix_overpassing_lines(lines, buses, DISTANCE_CRS, tol=1)
 
-    # METHOD to merge buses with same voltage and within tolerance
-    tol = snakemake.config["electricity_network"]["osm_group_tolerance_buses"]
-    logger.info(f"Aggregating close substations: Enabled with tolerance {tol} m")
+    # Merge buses with same voltage and within tolerance
+    logger.info(f"Aggregating close substations: Enabled with tolerance {BUS_TOL} m")
 
     lines, links, buses = merge_stations_lines_by_station_id_and_voltage(
-        lines, links, buses, distance_crs, tol=tol
+        lines, links, buses, DISTANCE_CRS, BUS_TOL
     )
 
     # Recalculate lengths of lines
@@ -995,18 +813,10 @@ def build_network(
     lines["length"] = lines.to_crs(utm).length
     links["length"] = links.to_crs(utm).length
 
-    # TODO pypsa-eur: check if needed for updated links scripts
-    # get transformers: modelled as lines connecting buses with different voltage
     transformers = get_transformers(buses, lines)
-
-    # get converters: currently modelled as links connecting buses with different polarity
-    converters = _get_converters(buses, links, distance_crs, tol)
+    converters = _get_converters(buses, links, DISTANCE_CRS)
 
     logger.info("Saving outputs")
-
-    # create clean directory if not already exist
-    if not os.path.exists(outputs["lines"]):
-        os.makedirs(os.path.dirname(outputs["lines"]), exist_ok=True)
 
     ### Convert output to pypsa-eur friendly format
     # Rename "substation" in buses["symbol"] to "Substation"
@@ -1037,230 +847,29 @@ def build_network(
     buses = buses.replace({True: "t", False: "f"})
 
     # Change column orders
-    cols_lines = [
-        "bus0",
-        "bus1",
-        "voltage",
-        "circuits",
-        "length",
-        "underground",
-        "under_construction",
-        "geometry",
-    ]
-
-    lines = lines[cols_lines]
-
-    cols_links = [
-        "bus0",
-        "bus1",
-        "voltage",
-        "p_nom",
-        "length",
-        "under_construction",
-        "geometry",
-    ]
-
+    lines = lines[LINES_COLUMNS]
     if not links.empty:
-        links = links[cols_links]
-
-    cols_transformers = [
-        "bus0",
-        "bus1",
-        "voltage_bus0",
-        "voltage_bus1",
-        "country",
-        "geometry",
-    ]
-
-    transformers = transformers[cols_transformers]
-
-    if links.empty:  # create empty dataframe with cols_links as columns
-        links = pd.DataFrame(columns=["link_id"] + cols_links)
+        links = links[LINKS_COLUMNS]
+    else:
+        links = pd.DataFrame(columns=["link_id"] + LINKS_COLUMNS)
         links.set_index("link_id", inplace=True)
+    transformers = transformers[TRANSFORMERS_COLUMNS]
 
-    to_csv_nafix(lines, outputs["lines"], quotechar="'")  # Generate CSV
-    to_csv_nafix(links, outputs["links"], quotechar="'")  # Generate CSV
-    to_csv_nafix(converters, outputs["converters"], quotechar="'")  # Generate CSV
-    to_csv_nafix(transformers, outputs["transformers"], quotechar="'")  # Generate CSV
+    # Export to csv for base_network
+    buses.to_csv(outputs["substations"], quotechar="'")
+    lines.to_csv(outputs["lines"], quotechar="'")
+    links.to_csv(outputs["links"], quotechar="'")
+    converters.to_csv(outputs["converters"], quotechar="'")
+    transformers.to_csv(outputs["transformers"], quotechar="'")
 
     # Export to GeoJSON for quick validations
-    save_to_geojson(
-        gpd.GeoDataFrame(lines),
-        outputs["lines_geojson"],
-    )
-    save_to_geojson(
-        gpd.GeoDataFrame(links),
-        outputs["links_geojson"],
-    )
-    save_to_geojson(
-        gpd.GeoDataFrame(converters, geometry="geometry", crs=geo_crs),
-        outputs["converters_geojson"],
-    )
-    save_to_geojson(
-        gpd.GeoDataFrame(transformers, geometry="geometry", crs=geo_crs),
-        outputs["transformers_geojson"],
-    )
-
-    # create clean directory if not already exist
-    if not os.path.exists(outputs["substations"]):
-        os.makedirs(os.path.dirname(outputs["substations"]), exist_ok=True)
-    # Generate CSV
-    to_csv_nafix(buses, outputs["substations"], quotechar="'")
-    save_to_geojson(
-        gpd.GeoDataFrame(buses, geometry="geometry", crs=geo_crs),
-        outputs["substations_geojson"],
-    )
+    buses.to_file(outputs["substations_geojson"])
+    lines.to_file(outputs["lines_geojson"])
+    links.to_file(outputs["links_geojson"])
+    converters.to_file(outputs["converters_geojson"])
+    transformers.to_file(outputs["transformers_geojson"])
 
     return None
-
-
-# Function to check if two lines are connected
-def are_lines_connected(line1, line2):
-    """
-    Check if two lines are connected.
-
-    Parameters:
-    line1 (dict): A dictionary representing the first line.
-    line2 (dict): A dictionary representing the second line.
-
-    Returns:
-    tuple: A tuple of boolean values indicating the connection status between
-    the lines.
-
-    The tuple contains four elements:
-    - True if the first line's bus_0_coors is almost equal to the second line's
-      bus_0_coors, False otherwise.
-    - True if the first line's bus_0_coors is almost equal to the second line's
-      bus_1_coors, False otherwise.
-    - True if the first line's bus_1_coors is almost equal to the second line's
-      bus_0_coors, False otherwise.
-    - True if the first line's bus_1_coors is almost equal to the second line's
-      bus_1_coors, False otherwise.
-    """
-    return (
-        are_almost_equal(line1["bus_0_coors"], line2["bus_0_coors"]),
-        are_almost_equal(line1["bus_0_coors"], line2["bus_1_coors"]),
-        are_almost_equal(line1["bus_1_coors"], line2["bus_0_coors"]),
-        are_almost_equal(line1["bus_1_coors"], line2["bus_1_coors"]),
-    )
-
-
-def _dfs(adj_matrix, visited, current_vertex, path):
-    """
-    Perform a depth-first search (DFS) on a graph represented by an adjacency
-    matrix.
-
-    Parameters:
-    - adj_matrix (list of lists): The adjacency matrix representing the graph.
-    - visited (list of bool): A list to keep track of visited vertices.
-    - current_vertex (int): The current vertex being visited.
-    - path (list): The path of vertices visited so far.
-
-    Returns:
-    - path (list): The path of vertices visited during the DFS.
-    """
-    visited[current_vertex] = True
-    path.append(current_vertex)
-    for neighbor in range(len(adj_matrix)):
-        if adj_matrix[current_vertex][neighbor] == 1 and not visited[neighbor]:
-            _dfs(adj_matrix, visited, neighbor, path)
-    return path
-
-
-# Returns all connected paths as a vector
-def find_paths(adj_matrix):
-    """
-    Find all paths in a graph represented by an adjacency matrix.
-
-    Parameters:
-    - adj_matrix (list of lists): The adjacency matrix representing the graph.
-
-    Returns:
-    - paths (list of lists): A list of lists, where each inner list represents
-      a path in the graph.
-    """
-    visited = [False] * len(adj_matrix)
-    paths = []
-    for vertex in range(len(adj_matrix)):
-        if not visited[vertex]:
-            path = _dfs(adj_matrix, visited, vertex, [])
-            if path:
-                paths.append(path)
-    return paths
-
-
-def are_almost_equal(point1, point2, tolerance=1e-6):
-    """
-    Check if two Shapely points are almost equal with a given tolerance.
-
-    Args:
-    point1 (Point): First Shapely point.
-    point2 (Point): Second Shapely point.
-    tolerance (float): Tolerance for coordinate deviation.
-
-    Returns:
-    bool: True if the points are almost equal, False otherwise.
-    """
-    return abs(point1.x - point2.x) < tolerance and abs(point1.y - point2.y) < tolerance
-
-
-def merge_linestrings(gdf):
-    """
-    Merge LineStrings in a GeoDataFrame wherever the endpoints match.
-
-    Parameters:
-    gdf (GeoDataFrame): A GeoDataFrame containing LineString geometries.
-
-    Returns:
-    GeoDataFrame: A GeoDataFrame with merged LineString geometries.
-    """
-    gdf = gdf.copy()
-    if len(gdf) == 1:
-        return gdf
-
-    lines = list(gdf.geometry)
-    merged_lines = []
-    while lines:
-        line = lines.pop(0)
-        merged_line = line
-        i = 0
-        while i < len(lines):
-            if are_almost_equal(
-                Point(merged_line.coords[-1]), Point(lines[i].coords[0])
-            ):
-                merged_line = LineString(
-                    list(merged_line.coords) + list(lines.pop(i).coords[1:])
-                )
-                i = 0  # Restart the scan after merging
-            elif are_almost_equal(
-                Point(merged_line.coords[0]), Point(lines[i].coords[-1])
-            ):
-                merged_line = LineString(
-                    list(lines.pop(i).coords)[:-1] + list(merged_line.coords)
-                )
-                i = 0  # Restart the scan after merging
-            elif are_almost_equal(
-                Point(merged_line.coords[-1]), Point(lines[i].coords[-1])
-            ):
-                merged_line = LineString(
-                    list(merged_line.coords) + list(lines.pop(i).coords[::-1])[1:]
-                )
-                i = 0  # Restart the scan after merging
-            elif are_almost_equal(
-                Point(merged_line.coords[0]), Point(lines[i].coords[0])
-            ):
-                merged_line = LineString(
-                    list(lines.pop(i).coords[::-1])[:-1] + list(merged_line.coords)
-                )
-                i = 0  # Restart the scan after merging
-            else:
-                i += 1
-        merged_lines.append(merged_line)
-        no_coordinates = [len(merged_lines[i].coords) for i in range(len(merged_lines))]
-        max_index = np.argmax(no_coordinates)
-        merged_lines = [merged_lines[max_index]]
-
-    return gpd.GeoDataFrame(geometry=merged_lines, crs=gdf.crs)
 
 
 if __name__ == "__main__":
@@ -1273,20 +882,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    # load default crs
-    geo_crs = "EPSG:4326"
-    distance_crs = "EPSG:3035"
-
     countries = snakemake.config["countries"]
 
-    with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=30.0
-    ) as mem:
-        build_network(
-            snakemake.input,
-            snakemake.output,
-            geo_crs,
-            distance_crs,
-        )
-
-    logger.info(f"Maximum memory usage: {mem.mem_usage}")
+    build_network(snakemake.input, snakemake.output)

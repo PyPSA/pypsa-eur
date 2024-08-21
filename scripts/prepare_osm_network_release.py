@@ -13,6 +13,55 @@ from _helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 
+BUSES_COLUMNS = [
+    "bus_id",
+    "voltage",
+    "dc",
+    "symbol",
+    "under_construction",
+    "x",
+    "y",
+    "country",
+    "geometry",
+]
+LINES_COLUMNS = [
+    "line_id",
+    "bus0",
+    "bus1",
+    "voltage",
+    "circuits",
+    "length",
+    "underground",
+    "under_construction",
+    "geometry",
+]
+LINKS_COLUMNS = [
+    "link_id",
+    "bus0",
+    "bus1",
+    "voltage",
+    "p_nom",
+    "length",
+    "underground",
+    "under_construction",
+    "geometry",
+]
+TRANSFORMERS_COLUMNS = [
+    "transformer_id",
+    "bus0",
+    "bus1",
+    "voltage_bus0",
+    "voltage_bus1",
+    "geometry",
+]
+CONVERTERS_COLUMNS = [
+    "converter_id",
+    "bus0",
+    "bus1",
+    "geometry",
+]
+
+
 def export_clean_csv(df, columns, output_file):
     """
     Export a cleaned DataFrame to a CSV file.
@@ -37,9 +86,6 @@ def export_clean_csv(df, columns, output_file):
     if "converter_id" in columns:
         rename_dict["Link"] = "converter_id"
 
-    # Create the directory if it doesn't exist
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
     df.reset_index().rename(columns=rename_dict).loc[:, columns].replace(
         {True: "t", False: "f"}
     ).to_csv(output_file, index=False, quotechar="'")
@@ -56,58 +102,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    buses_columns = [
-        "bus_id",
-        "voltage",
-        "dc",
-        "symbol",
-        "under_construction",
-        "x",
-        "y",
-        "country",
-        "geometry",
-    ]
-
-    lines_columns = [
-        "line_id",
-        "bus0",
-        "bus1",
-        "voltage",
-        "circuits",
-        "length",
-        "underground",
-        "under_construction",
-        "geometry",
-    ]
-
-    links_columns = [
-        "link_id",
-        "bus0",
-        "bus1",
-        "voltage",
-        "p_nom",
-        "length",
-        "underground",
-        "under_construction",
-        "geometry",
-    ]
-
-    transformers_columns = [
-        "transformer_id",
-        "bus0",
-        "bus1",
-        "voltage_bus0",
-        "voltage_bus1",
-        "geometry",
-    ]
-
-    converters_columns = [
-        "converter_id",
-        "bus0",
-        "bus1",
-        "geometry",
-    ]
-
     network = pypsa.Network(snakemake.input.base_network)
 
     network.buses["dc"] = network.buses.pop("carrier").map({"DC": "t", "AC": "f"})
@@ -116,18 +110,18 @@ if __name__ == "__main__":
 
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
-    export_clean_csv(network.buses, buses_columns, snakemake.output.buses)
+    export_clean_csv(network.buses, BUSES_COLUMNS, snakemake.output.buses)
 
     logger.info(
         f"Exporting {len(network.transformers)} transformers to %s",
         snakemake.output.transformers,
     )
     export_clean_csv(
-        network.transformers, transformers_columns, snakemake.output.transformers
+        network.transformers, TRANSFORMERS_COLUMNS, snakemake.output.transformers
     )
 
     logger.info(f"Exporting {len(network.lines)} lines to %s", snakemake.output.lines)
-    export_clean_csv(network.lines, lines_columns, snakemake.output.lines)
+    export_clean_csv(network.lines, LINES_COLUMNS, snakemake.output.lines)
 
     # Boolean that specifies if link element is a converter
     is_converter = network.links.index.str.startswith("conv") == True
@@ -137,7 +131,7 @@ if __name__ == "__main__":
         snakemake.output.links,
     )
     export_clean_csv(
-        network.links[~is_converter], links_columns, snakemake.output.links
+        network.links[~is_converter], LINKS_COLUMNS, snakemake.output.links
     )
 
     logger.info(
@@ -145,7 +139,7 @@ if __name__ == "__main__":
         snakemake.output.converters,
     )
     export_clean_csv(
-        network.links[is_converter], converters_columns, snakemake.output.converters
+        network.links[is_converter], CONVERTERS_COLUMNS, snakemake.output.converters
     )
 
     logger.info("Export of OSM network for release complete.")

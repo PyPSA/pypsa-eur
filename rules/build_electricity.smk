@@ -50,6 +50,19 @@ rule build_powerplants:
         "../scripts/build_powerplants.py"
 
 
+def input_base_network(w):
+    base_network = config_provider("electricity", "base_network")(w)
+    components = {"buses", "lines", "links", "converters", "transformers"}
+    if base_network == "osm-raw":
+        inputs = {c: resources(f"osm/pre-base/{c}.csv") for c in components}
+    else:
+        inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
+    if base_network == "entsoegridkit":
+        inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
+        inputs["links_p_nom"] = "data/links_p_nom.csv"
+    return inputs
+
+
 rule base_network:
     params:
         countries=config_provider("countries"),
@@ -58,66 +71,7 @@ rule base_network:
         lines=config_provider("lines"),
         transformers=config_provider("transformers"),
     input:
-        eg_buses=lambda w: (
-            "data/entsoegridkit/buses.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else (
-                "data/osm/prebuilt/buses.csv"
-                if config_provider("electricity_network", "base_network")(w)
-                == "osm-prebuilt"
-                else resources("osm/pre-base/buses.csv")
-            )
-        ),
-        eg_lines=lambda w: (
-            "data/entsoegridkit/lines.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else (
-                "data/osm/prebuilt/lines.csv"
-                if config_provider("electricity_network", "base_network")(w)
-                == "osm-prebuilt"
-                else resources("osm/pre-base/lines.csv")
-            )
-        ),
-        eg_links=lambda w: (
-            "data/entsoegridkit/links.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else (
-                "data/osm/prebuilt/links.csv"
-                if config_provider("electricity_network", "base_network")(w)
-                == "osm-prebuilt"
-                else resources("osm/pre-base/links.csv")
-            )
-        ),
-        eg_converters=lambda w: (
-            "data/entsoegridkit/converters.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else (
-                "data/osm/prebuilt/converters.csv"
-                if config_provider("electricity_network", "base_network")(w)
-                == "osm-prebuilt"
-                else resources("osm/pre-base/converters.csv")
-            )
-        ),
-        eg_transformers=lambda w: (
-            "data/entsoegridkit/transformers.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else (
-                "data/osm/prebuilt/transformers.csv"
-                if config_provider("electricity_network", "base_network")(w)
-                == "osm-prebuilt"
-                else resources("osm/pre-base/transformers.csv")
-            )
-        ),
-        parameter_corrections=lambda w: (
-            "data/parameter_corrections.yaml"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else []
-        ),
-        links_p_nom=lambda w: (
-            "data/links_p_nom.csv"
-            if config_provider("electricity_network", "base_network")(w) == "gridkit"
-            else []
-        ),
+        unpack(input_base_network),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
@@ -684,28 +638,28 @@ rule prepare_network:
         "../scripts/prepare_network.py"
 
 
-if config["electricity_network"]["base_network"] == "osm-raw":
+if config["electricity"]["base_network"] == "osm-raw":
 
     rule clean_osm_data:
         input:
             cables_way=expand(
-                "data/osm/raw/{country}/cables_way.json",
+                "data/osm-raw/{country}/cables_way.json",
                 country=config_provider("countries"),
             ),
             lines_way=expand(
-                "data/osm/raw/{country}/lines_way.json",
+                "data/osm-raw/{country}/lines_way.json",
                 country=config_provider("countries"),
             ),
             links_relation=expand(
-                "data/osm/raw/{country}/links_relation.json",
+                "data/osm-raw/{country}/links_relation.json",
                 country=config_provider("countries"),
             ),
             substations_way=expand(
-                "data/osm/raw/{country}/substations_way.json",
+                "data/osm-raw/{country}/substations_way.json",
                 country=config_provider("countries"),
             ),
             substations_relation=expand(
-                "data/osm/raw/{country}/substations_relation.json",
+                "data/osm-raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
             offshore_shapes=resources("offshore_shapes.geojson"),
@@ -717,11 +671,18 @@ if config["electricity_network"]["base_network"] == "osm-raw":
             links=resources("osm/clean/links.geojson"),
         log:
             logs("clean_osm_data.log"),
+        benchmark:
+            benchmarks("clean_osm_data")
+        threads: 1
+        resources:
+            mem_mb=4000,
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/clean_osm_data.py"
 
 
-if config["electricity_network"]["base_network"] == "osm-raw":
+if config["electricity"]["base_network"] == "osm-raw":
 
     rule build_osm_network:
         input:
@@ -744,5 +705,10 @@ if config["electricity_network"]["base_network"] == "osm-raw":
             logs("build_osm_network.log"),
         benchmark:
             benchmarks("build_osm_network")
+        threads: 1
+        resources:
+            mem_mb=4000,
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/build_osm_network.py"
