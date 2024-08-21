@@ -86,7 +86,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [200., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
   base_network: entsoegridkit
   gaslimit_enable: false
   gaslimit: false
