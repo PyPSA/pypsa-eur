@@ -1578,6 +1578,15 @@ def add_EVs(
 
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
 
+    if options["logistic_curve"]:
+        projected_ev = pd.read_csv(snakemake.input.projected_ev_share, index_col=[0],
+                               header=[0,1])
+        p_nom_e = p_nom / electric_share
+        max_p_nom_ev = projected_ev.loc[int(snakemake.wildcards.planning_horizons),transport_type]
+        p_nom_max = p_nom_e * max_p_nom_ev
+    else:
+        p_nom_max = np.inf
+        
     n.madd(
         "Link",
         nodes,
@@ -1589,6 +1598,7 @@ def add_EVs(
         # p_min_pu=profile,
         p_max_pu=profile,
         p_nom=p_nom,
+        p_nom_max=p_nom_max,
         p_nom_extendable=False,
         lifetime=15,
     )
@@ -1661,6 +1671,15 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
     )
 
     p_nom = fuel_cell_share * p_set.div(efficiency).max()
+    
+    if options["logistic_curve"]:
+        projected_ev = pd.read_csv(snakemake.input.projected_ev_share, index_col=[0],
+                               header=[0,1])
+        p_nom_e = p_nom / fuel_cell_share
+        max_p_nom_fcev = projected_ev.loc[int(snakemake.wildcards.planning_horizons),transport_type]
+        p_nom_max = p_nom_e * max_p_nom_fcev
+    else:
+        p_nom_max = np.inf
 
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
 
@@ -1674,6 +1693,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
         efficiency=efficiency,
         p_nom_extendable=False,
         p_nom=p_nom,
+        p_nom_max=p_nom_max,
         p_min_pu=profile,
         p_max_pu=profile,
         lifetime=1,
@@ -4218,8 +4238,8 @@ if __name__ == "__main__":
             opts="",
             clusters="37",
             ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
-            planning_horizons="2050",
+            sector_opts="",
+            planning_horizons="2040",
         )
 
     configure_logging(snakemake)

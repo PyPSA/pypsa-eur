@@ -998,6 +998,7 @@ rule prepare_sector_network:
         transport_data=resources("transport_data_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
+        projected_ev_share=resources("projected_ev_share_s{simpl}_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
         biomass_potentials=lambda w: (
