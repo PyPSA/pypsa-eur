@@ -91,7 +91,11 @@ def define_spatial(nodes, options):
 
     spatial.gas = SimpleNamespace()
     # check if biogas potential should be spatially resolved
-    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
+    if (
+        options["gas_network"]
+        or options.get("co2_spatial", options["co2network"])
+        or options.get("biomass_spatial", options["biomass_transport"])
+    ):
         spatial.gas.biogas = nodes + " biogas"
         spatial.gas.biogas_locations = nodes
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
@@ -102,7 +106,9 @@ def define_spatial(nodes, options):
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
         spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
 
-    if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
+    if options.get("regional_gas_demand", options["gas_network"]) or options.get(
+        "co2_spatial", options["co2network"]
+    ):
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
     else:
@@ -612,7 +618,11 @@ def add_carrier_buses(n, carrier, nodes=None):
             location=location,
             carrier=carrier + " refining",
             p_nom=1e6,
-            efficiency=1 - (cf_industry["fuel_refining"][carrier]["emissions"] / costs.at[carrier, "CO2 intensity"]),
+            efficiency=1
+            - (
+                cf_industry["fuel_refining"][carrier]["emissions"]
+                / costs.at[carrier, "CO2 intensity"]
+            ),
             efficiency2=cf_industry["fuel_refining"][carrier]["emissions"],
         )
 
@@ -2412,7 +2422,11 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
+    if (
+        options["gas_network"]
+        or options.get("co2_spatial", options["co2network"])
+        or options.get("biomass_spatial", options["biomass_transport"])
+    ):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
