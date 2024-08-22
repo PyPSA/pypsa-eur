@@ -64,7 +64,8 @@ def load_projection(plotting_params):
 
 
 def plot_carrier(n,  path, carrier="land transport demand heavy"):
-    a = (n.statistics.energy_balance(aggregate_bus=False)
+    grouper = n.statistics.groupers.get_bus_and_carrier_and_bus_carrier
+    a = (n.statistics.energy_balance(groupby=grouper)
          .xs(carrier, level="bus_carrier"))
     assign_location(n)
     a.rename(n.buses.location, level=1, inplace=True)
