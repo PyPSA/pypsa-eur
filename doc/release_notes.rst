@@ -74,6 +74,8 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
+* Added new major feature to create the base_network from OpenStreetMap (OSM) data (PR https://github.com/PyPSA/pypsa-eur/pull/1079). Note that a heuristics based cleaning process is used for lines and links where electrical parameters are incomplete, missing, or ambiguous. Through ``electricity["base_network"]``, the base network can be set to "entsoegridkit" (original default setting, deprecated soon), "osm-prebuilt" (which downloads the latest prebuilt snapshot based on OSM data from Zenodo), or "osm-raw" which retrieves (once) and cleans the raw OSM data and subsequently builds the network. Note that this process may take a few minutes.
+
 * Updated pre-built `weather data cutouts
   <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
   solar irradiation from the new SARAH-3 dataset while taking all other

@@ -47,6 +47,7 @@ dependencies:
 - pyxlsb
 - graphviz
 - pre-commit
+- geojson
 
   # Keep in conda environment when calling ipython
 - ipython

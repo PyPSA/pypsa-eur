@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 38
+  - 41
   - 128
   - 256
   opts:
@@ -74,7 +74,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -87,7 +86,8 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: entsoegridkit
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -276,6 +276,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
