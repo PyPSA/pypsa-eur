@@ -36,7 +36,7 @@ Inputs
 - ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
 - ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
+- ``data/custom_busmap_elec_s{simpl}_{clusters}_{base_network}.csv``: optional input
 
 Outputs
 -------

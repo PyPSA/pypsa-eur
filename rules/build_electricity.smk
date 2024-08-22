@@ -530,6 +530,17 @@ rule simplify_network:
         "../scripts/simplify_network.py"
 
 
+# Optional input when using custom busmaps - Needs to be tailored to selected base_network
+def input_cluster_network(w):
+    if config_provider("enable", "custom_busmap", default=False)(w):
+        base_network = config_provider("electricity", "base_network")(w)
+        custom_busmap = f"data/custom_busmap_elec_s{w.simpl}_{w.clusters}_{base_network}.csv"
+        return {
+            "custom_busmap": custom_busmap
+        }
+    return {"custom_busmap": []}
+
+
 rule cluster_network:
     params:
         cluster_network=config_provider("clustering", "cluster_network"),
@@ -546,15 +557,11 @@ rule cluster_network:
         length_factor=config_provider("lines", "length_factor"),
         costs=config_provider("costs"),
     input:
+        unpack(input_cluster_network),
         network=resources("networks/elec_s{simpl}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
-        custom_busmap=lambda w: (
-            "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
-            if config_provider("enable", "custom_busmap", default=False)(w)
-            else []
-        ),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
