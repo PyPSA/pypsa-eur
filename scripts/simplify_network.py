@@ -132,8 +132,8 @@ def simplify_network_to_380(n, linetype_380):
 
     trafo_map = pd.Series(n.transformers.bus1.values, n.transformers.bus0.values)
     trafo_map = trafo_map[~trafo_map.index.duplicated(keep="first")]
-    several_trafo_b = trafo_map.isin(trafo_map.index)
-    trafo_map[several_trafo_b] = trafo_map[several_trafo_b].map(trafo_map)
+    while (several_trafo_b := trafo_map.isin(trafo_map.index)).any():
+        trafo_map[several_trafo_b] = trafo_map[several_trafo_b].map(trafo_map)
     missing_buses_i = n.buses.index.difference(trafo_map.index)
     missing = pd.Series(missing_buses_i, missing_buses_i)
     trafo_map = pd.concat([trafo_map, missing])
@@ -632,7 +632,7 @@ if __name__ == "__main__":
             aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
-
+'
     if params.simplify_network["to_substations"]:
         n, substation_map = aggregate_to_substations(n, params.aggregation_strategies)
         busmaps.append(substation_map)
@@ -696,3 +696,4 @@ if __name__ == "__main__":
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
+'
