@@ -454,8 +454,8 @@ def prepare_network(
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
-
-        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        if "load" not in n.carriers.index:
+            n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
         buses_i = n.buses.index
         if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
