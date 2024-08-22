@@ -489,6 +489,10 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # assign clustered bus
     chp["bus"] = chp["bus"].astype(int)
     chp["cluster_bus"] = chp.bus.map(clustermaps)
+    if snakemake.params.add_district_heating_subnodes:
+        chp.loc[chp.subnode.notna(), "cluster_bus"] = chp.loc[
+            chp.subnode.notna(), "subnode"
+        ]
 
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
@@ -589,7 +593,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     p_nom.index,
                     suffix=f" urban central {generator} CHP-{grouping_year}",
                     bus0=bus0,
-                    bus1=p_nom.index,
+                    bus1=p_nom.index.str.split().str[:2].str.join(" "),
                     bus2=p_nom.index + " urban central heat",
                     bus3="co2 atmosphere",
                     carrier=f"urban central {generator} CHP",
@@ -609,8 +613,10 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     "Link",
                     p_nom.index,
                     suffix=f" urban {key}-{grouping_year}",
-                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                    bus1=p_nom.index,
+                    bus0=spatial.biomass.df.loc[
+                        p_nom.index.str.split().str[:2].str.join(" ")
+                    ]["nodes"].values,
+                    bus1=p_nom.index.str.split().str[:2].str.join(" "),
                     bus2=p_nom.index + " urban central heat",
                     carrier=generator,
                     p_nom=p_nom,
@@ -647,7 +653,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 p_nom.index,
                 suffix=f" urban central {generator} CHP-{grouping_year}",
                 bus0=bus0,
-                bus1=p_nom.index,
+                bus1=p_nom.index.str.split().str[:2].str.join(" "),
                 bus2=p_nom.index + " urban central heat",
                 bus3="co2 atmosphere",
                 carrier=f"urban central {generator} CHP",
@@ -667,8 +673,10 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 "Link",
                 p_nom.index,
                 suffix=f" urban {key}-{grouping_year}",
-                bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                bus1=p_nom.index,
+                bus0=spatial.biomass.df.loc[
+                    p_nom.index.str.split().str[:2].str.join(" ")
+                ]["nodes"].values,
+                bus1=p_nom.index.str.split().str[:2].str.join(" "),
                 bus2=p_nom.index + " urban central heat",
                 carrier=generator,
                 p_nom=p_nom / costs.at[key, "efficiency"],
@@ -727,7 +735,7 @@ def add_heating_capacities_installed_before_baseyear(
         cop = {"air": ashp_cop, "ground": gshp_cop}
 
         if time_dep_hp_cop:
-            efficiency = cop[heat_pump_type][nodes]
+            efficiency = cop[heat_pump_type][nodes].T.drop_duplicates().T
         else:
             efficiency = costs.at[costs_name, "efficiency"]
 
