@@ -53,8 +53,6 @@ TRANSFORMERS_COLUMNS = [
 ]
 
 
-
-
 def line_endings_to_bus_conversion(lines):
     """
     Converts line endings to bus connections.
