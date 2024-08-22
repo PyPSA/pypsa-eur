@@ -632,7 +632,7 @@ if __name__ == "__main__":
             aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
-'
+
     if params.simplify_network["to_substations"]:
         n, substation_map = aggregate_to_substations(n, params.aggregation_strategies)
         busmaps.append(substation_map)
@@ -696,4 +696,3 @@ if __name__ == "__main__":
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
-'
