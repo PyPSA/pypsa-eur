@@ -776,7 +776,7 @@ def base_network(
     n.import_components_from_dataframe(converters, "Link")
 
     _set_lines_s_nom_from_linetypes(n)
-    if config["electricity"].get("base_network") == "gridkit":
+    if config["electricity"].get("base_network") == "entsoegridkit":
         _apply_parameter_corrections(n, parameter_corrections)
 
     n = _remove_unconnected_components(n)

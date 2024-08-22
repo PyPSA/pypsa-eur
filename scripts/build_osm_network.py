@@ -53,33 +53,6 @@ TRANSFORMERS_COLUMNS = [
 ]
 
 
-def read_geojson(fn, cols=[], dtype=None, crs="EPSG:4326"):
-    """
-    Function to read a geojson file fn. When the file is empty, then an empty
-    GeoDataFrame is returned having columns cols, the specified crs and the
-    columns specified by the dtype dictionary it not none.
-
-    Parameters:
-    ------------
-    fn : str
-        Path to the file to read
-    cols : list
-        List of columns of the GeoDataFrame
-    dtype : dict
-        Dictionary of the type of the object by column
-    crs : str
-        CRS of the GeoDataFrame
-    """
-    # if the file is non-zero, read the geodataframe and return it
-    if os.path.getsize(fn) > 0:
-        return gpd.read_file(fn)
-    else:
-        # else return an empty GeoDataFrame
-        df = gpd.GeoDataFrame(columns=cols, geometry=[], crs=crs)
-        if isinstance(dtype, dict):
-            for k, v in dtype.items():
-                df[k] = df[k].astype(v)
-        return df
 
 
 def line_endings_to_bus_conversion(lines):

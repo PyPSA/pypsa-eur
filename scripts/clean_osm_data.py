@@ -1655,32 +1655,6 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
 
 
 # Function to bridge gaps between all lines
-def _bridge_lines(lines):
-    bridged_lines = []
-    for i in range(len(lines) - 1):
-        bridged_lines.append(lines[i])
-
-        # Get the endpoints of the current line and the startpoints of the next line
-        end_points = [lines[i].coords[-1], lines[i].coords[0]]
-        start_points = [lines[i + 1].coords[0], lines[i + 1].coords[-1]]
-
-        # Find the closest pair of points between the two LineStrings
-        min_distance = float("inf")
-        closest_pair = None
-
-        for end_point in end_points:
-            for start_point in start_points:
-                distance = LineString([end_point, start_point]).length
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_pair = (end_point, start_point)
-
-        # Create a bridge between the closest points
-        bridge = LineString(closest_pair)
-        bridged_lines.append(bridge)
-
-    bridged_lines.append(lines[-1])
-    return bridged_lines
 
 
 if __name__ == "__main__":
