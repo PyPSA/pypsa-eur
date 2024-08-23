@@ -1932,26 +1932,26 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
     car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
     # EV --------------------------
     cost_EV = (costs.loc["Battery electric (passenger cars)", "fixed"]
-               / light_100km_per_vehicle / car_efficiencies.loc["electric", "light"])
+               / light_100km_per_vehicle * car_efficiencies.loc["electric", "light"])
     
     cost_Etruck = (costs.loc[car_keys["electric"], "fixed"].mean()
-                   / heavy_100km_per_vehicle /
+                   / heavy_100km_per_vehicle *
                    car_efficiencies.loc["electric", "heavy"])
     # FCE ----------------------------
     cost_FCE = (costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]
                 / light_100km_per_vehicle
-                / car_efficiencies.loc["fuel_cell", "light"])
+                * car_efficiencies.loc["fuel_cell", "light"])
     cost_FCtruck = (costs.loc[car_keys["fuel_cell"], "fixed"].mean()
                     / heavy_100km_per_vehicle
-                    / car_efficiencies.loc["fuel_cell", "heavy"])
+                    * car_efficiencies.loc["fuel_cell", "heavy"])
 
     # ICE ---------------------------------------------------------
     cost_ICE = (costs.at["Liquid fuels ICE (passenger cars)", "fixed"]
                 / light_100km_per_vehicle
-                / car_efficiencies.loc["ice", "light"])
+                * car_efficiencies.loc["ice", "light"])
     cost_ICtruck = (costs.loc[car_keys["ice"], "fixed"].mean()
                     / heavy_100km_per_vehicle
-                    / car_efficiencies.loc["ice", "heavy"])
+                    * car_efficiencies.loc["ice", "heavy"])
     # cost in unit input depending on car type
     costs_car_type = {
         "land transport EV light": cost_EV,
