@@ -20,16 +20,17 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: test_scenarios_nobevdsm
+  prefix: new_costs_nobevdsm
   name:
     - base
     - logistic
   #  - high-demand
   #  - low-demand
-    - slow-transition
-    - fast-transition
+  #  - slow-transition
+  #  - fast-transition
+    - super-slow-transition
     - slow-transition-logistic
-  #  - fast-transition-logistic
+    - fast-transition-logistic
   scenarios:
     enable: true
     file: config/scenarios.yaml

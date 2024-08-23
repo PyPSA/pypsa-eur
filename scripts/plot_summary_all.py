@@ -263,29 +263,6 @@ def plot_balances(balances_df, drop=None):
             fig.savefig(snakemake.output.balances[:-19] + "co2-stacked-area.svg",
                         bbox_inches="tight")
             
-            # carriers = ["land transport",
-            #             "heat",
-            #             "power",
-            #             "heat CC",
-            #             "DAC",
-            #             "industry"
-            #             ]
-            # for carrier in carriers:
-            #     df_selected = co2_b.loc[carrier].unstack().T
-            #     for scenario in df_selected.columns:
-            #         plt.scatter(
-            #             df_selected.index,  # x-axis
-            #             [scenario] * len(df_selected),  # y-axis, repeating the scenario name
-            #             s=df_selected[scenario] * 10,  # bubble size proportional to the values
-            #             alpha=0.6,
-            #             label=scenario,
-            #             marker='o'  # Ensuring circular markers
-            #         )
-            #     plt.title(carrier)
-            #     plt.yticks(ticks=df_selected.columns, labels=df_selected.columns)
-            #     plt.xlabel('')
-            #     plt.ylabel('Scenario')
-            #     plt.show()
                 
             for carrier in co2_b.index:
                 co2_b.loc[carrier].unstack().T.plot(title=carrier)
@@ -294,36 +271,36 @@ def plot_balances(balances_df, drop=None):
                 plt.savefig(snakemake.output.balances[:-19] + f"co2-{carrier}.svg",
                             bbox_inches="tight")
         
-        import seaborn as sns
-        scenario1 = [scenarios[0]]
-        diff = (co2_b.stack()-co2_b.stack()[scenario1].values)
-        bool_index = abs(diff.groupby(level=0).sum().sum(axis=1))>20
-        # Calculate the global min and max for the colormap
-        global_min = diff.min().min()
-        global_max = diff.max().max()
-            
-        fig, axes = plt.subplots(
-            nrows=len(scenarios)-1, ncols=1, 
-            figsize=(8, 12), sharex=True)
-        i = 0
-        for scenario in scenarios:
-            if scenario in scenario1: continue
-                    
-            diff = co2_b[scenario] - co2_b[scenario1].values
-            
-            heatmap_data = diff.loc[bool_index]
-
-            plt.figure(figsize=(12, 8))
-            sns.heatmap(heatmap_data, cmap='coolwarm',
-                        annot=True, fmt=".0f", linewidths=.5,
-                        center=0, ax=axes[i],
-                        vmin=global_min, vmax=global_max
-                        )
-            axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
-            axes[i].set_xlabel('')
-            i += 1
-        fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.svg",
-                    bbox_inches="tight")
+            import seaborn as sns
+            scenario1 = [scenarios[0]]
+            diff = (co2_b.stack()-co2_b.stack()[scenario1].values)
+            bool_index = abs(diff.groupby(level=0).sum().sum(axis=1))>20
+            # Calculate the global min and max for the colormap
+            global_min = diff.min().min()
+            global_max = diff.max().max()
+                
+            fig, axes = plt.subplots(
+                nrows=len(scenarios)-1, ncols=1, 
+                figsize=(8, 12), sharex=True)
+            i = 0
+            for scenario in scenarios:
+                if scenario in scenario1: continue
+                        
+                diff = co2_b[scenario] - co2_b[scenario1].values
+                
+                heatmap_data = diff.loc[bool_index]
+    
+                plt.figure(figsize=(12, 8))
+                sns.heatmap(heatmap_data, cmap='coolwarm',
+                            annot=True, fmt=".0f", linewidths=.5,
+                            center=0, ax=axes[i],
+                            vmin=global_min, vmax=global_max
+                            )
+                axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
+                axes[i].set_xlabel('')
+                i += 1
+            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.svg",
+                        bbox_inches="tight")
 
             
      
