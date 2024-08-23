@@ -1572,7 +1572,7 @@ def add_EVs(
 
     cyclic_eff = p_set.div(p_shifted)
 
-    efficiency *= cyclic_eff
+    # efficiency *= cyclic_eff
 
     p_nom = electric_share * p_set.div(efficiency).max()
 
@@ -1595,7 +1595,7 @@ def add_EVs(
         bus1=nodes + f" land transport {transport_type}",
         carrier=suffix[1:],
         efficiency=efficiency,
-        # p_min_pu=profile,
+        p_min_pu=profile,
         p_max_pu=profile,
         p_nom=p_nom,
         p_nom_max=p_nom_max,
@@ -4233,7 +4233,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            # configfiles="test/config.overnight.yaml",
+            configfiles="test/config.myopic.yaml",
             simpl="",
             opts="",
             clusters="37",

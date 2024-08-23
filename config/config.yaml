@@ -29,7 +29,7 @@ run:
     - slow-transition
     - fast-transition
     - slow-transition-logistic
-    - fast-transition-logistic
+  #  - fast-transition-logistic
   scenarios:
     enable: true
     file: config/scenarios.yaml
