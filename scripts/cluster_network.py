@@ -36,7 +36,7 @@ Inputs
 - ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
 - ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
 - ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
+- ``data/custom_busmap_elec_s{simpl}_{clusters}_{base_network}.csv``: optional input
 
 Outputs
 -------
@@ -511,9 +511,7 @@ if __name__ == "__main__":
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
-        clustering = pypsa.clustering.spatial.Clustering(
-            n, busmap, linemap
-        )
+        clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 

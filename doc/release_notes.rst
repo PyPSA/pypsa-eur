@@ -91,6 +91,8 @@ Upcoming Release
 * In :mod:`base_network`, replace own voronoi polygon calculation function with
   Geopandas `gdf.voronoi_polygons` method.
 
+*  Move custom busmaps to ```data/busmaps/elec_s{simpl}_{clusters}_{base_network}.csv``` (if enabled). This allows for different busmaps depending on the base network and scenario.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
