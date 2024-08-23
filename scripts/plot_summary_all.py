@@ -295,21 +295,13 @@ def plot_balances(balances_df, drop=None):
                             bbox_inches="tight")
         
         import seaborn as sns
-        scenario1 = ["base"]
-        diff = abs((co2_b.stack()-co2_b.stack()[scenario1].values)
-        bool_index = diff.groupby(level=0).sum().sum(axis=1))>20
+        scenario1 = [scenarios[0]]
+        diff = (co2_b.stack()-co2_b.stack()[scenario1].values)
+        bool_index = abs(diff.groupby(level=0).sum().sum(axis=1))>20
         # Calculate the global min and max for the colormap
         global_min = diff.min().min()
         global_max = diff.max().max()
-        
-        for scenario in scenarios:
-            if scenario in scenario1:
-                continue
-            diff = co2_b[scenario] - co2_b[scenario1].values
-            heatmap_data = diff.loc[bool_index]
-            global_min = min(global_min, heatmap_data.min().min())
-            global_max = max(global_max, heatmap_data.max().max())
-        
+            
         fig, axes = plt.subplots(
             nrows=len(scenarios)-1, ncols=1, 
             figsize=(8, 12), sharex=True)
