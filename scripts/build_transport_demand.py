@@ -203,11 +203,14 @@ def bev_dsm_profile(snapshots, nodes, options):
 
 def build_registrations(nodal_transport_data):
     share_reg = {}
+    share_evs = {}
     for transport_type in ["light", "heavy"]:
         cols = transport_cols[transport_type]
         number = nodal_transport_data[[f"Number {car_type}" for car_type in cols]]
         new_reg = nodal_transport_data[[f"New registration {car_type}" for car_type in cols]]
+        new_ev = nodal_transport_data.reindex(columns=[f"New registration {car_type} electric" for car_type in cols])
         share_reg[transport_type] = new_reg.sum(axis=1).div(number.sum(axis=1))
+        share_evs[transport_type] = new_ev.sum(axis=1).div(new_reg.sum(axis=1))
    
     pd.concat(share_reg).to_csv(snakemake.output.car_registration)
 
