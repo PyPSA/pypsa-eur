@@ -26,6 +26,9 @@ def plot_costs(cost_df, drop=None):
     # plot transport
     df_filtered = df[df.index.str.contains("land transport")].droplevel([1, 2, 3], axis=1)
     
+    # Reshape the dataframe using stack to move the planning horizon into the rows
+    df_stacked = df_filtered.stack(level=1)
+    
     planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
     scenarios = df_filtered.columns.get_level_values(0).unique()
     
@@ -62,9 +65,11 @@ def plot_costs(cost_df, drop=None):
             
         
         ax.grid(axis="x")
+        
+        fig.savefig(snakemake.output.costs.split(".svg")[0]+"-transport.svg",
+                    bbox_inches="tight")
 
-    # Reshape the dataframe using stack to move the planning horizon into the rows
-    df_stacked = df_filtered.stack(level=1)
+
 
     # Sum across the index to get the total costs for each scenario and planning horizon
     df_summed = df_stacked.groupby(level=[0, 1]).sum()
@@ -153,7 +158,7 @@ def plot_costs(cost_df, drop=None):
     
     plt.tight_layout()
     
-    fig.savefig(snakemake.output.costs.split(".svg")[0]+"-total.svg",
+    fig.savefig(snakemake.output.costs,
                 bbox_inches="tight")
     
     
@@ -161,7 +166,7 @@ def plot_costs(cost_df, drop=None):
     plt.ylabel("System Cost [EUR billion per year]")
     plt.xlabel("planning horizon")
     plt.legend(bbox_to_anchor=(1,1))
-    fig.savefig(snakemake.output.costs.split(".svg")[0]+"-total.svg",
+    plt.savefig(snakemake.output.costs.split(".svg")[0]+"-total.svg",
                 bbox_inches="tight")
     
 
