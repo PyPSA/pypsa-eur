@@ -263,8 +263,9 @@ rule plot_summary_all:
     #     RDIR=RDIR,
     output:
         costs="results/" + config["run"]["prefix"] + "/graphs/costs.svg",
-        energy="results/" + config["run"]["prefix"] + "/graphs/energy.svg",
         balances="results/" + config["run"]["prefix"] + "/graphs/balances-energy.svg",
+        costs_csv="results/" + config["run"]["prefix"] + "/csvs_all/costs.csv",
+        balances_csv="results/" + config["run"]["prefix"] + "/csvs_all/balances-energy.csv",
     threads: 2
     resources:
         mem_mb=10000,

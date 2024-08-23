@@ -32,6 +32,7 @@ def plot_costs(cost_df, drop=None):
     planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
     scenarios = df_filtered.columns.get_level_values(0).unique()
     
+    
     fig, axes = plt.subplots(
     nrows=1, ncols=len(planning_horizons), 
     figsize=(12, 8), 
@@ -43,6 +44,8 @@ def plot_costs(cost_df, drop=None):
     
     for ax, year in zip(axes, planning_horizons):
         subset = df_filtered.xs(year, level='planning_horizon', axis=1) 
+        # convert to million
+        subset /= 1e6
         
         subset.T.plot(
             kind="bar",
@@ -61,7 +64,7 @@ def plot_costs(cost_df, drop=None):
         ax.set_xticks(range(len(scenarios)))
         
         if ax == axes[0]:
-            ax.set_ylabel("System Cost [EUR billion per year]")
+            ax.set_ylabel("System Cost [EUR million per year]")
             
         
         ax.grid(axis="x")
@@ -198,6 +201,140 @@ def plot_balances(balances_df, drop=None):
             )
             for i in df.index
         ]
+        
+        if k =="co2":
+            
+            grouper = {
+                "CCGT": "power",
+                "OCGT": "power",
+                "lignite": "power",
+                "coal": "power",
+                'oil': "power",
+                'nuclear': "power",
+                "agriculture machinery oil": "agriculture",
+                'coal for industry': "industry",
+                'gas for industry': "industry",
+                'gas for industry CC': "industry CC",
+                'industry methanol': "industry",
+                'process emissions': "industry",
+                'naphtha for industry': "industry",
+                'process emissions CC': "industry CC",
+                "solid biomass for industry CC": "industry CC",
+                "co2": "co2 atmosphere",
+                'kerosene for aviation': "aviation",
+                'shipping methanol': "shipping",
+                'shipping oil': "shipping",
+                'urban central gas CHP': "heat",
+                'urban central gas boiler': "heat",
+                'urban decentral gas boiler': "heat",
+                'urban central gas CHP CC': "heat CC",
+                'urban central solid biomass CHP CC': "heat CC",
+                'urban decentral oil boiler': "heat",
+                'rural gas boiler': "heat",
+                'rural oil boiler': "heat",
+                "land transport oil light": "land transport",
+                "land transport oil heavy": "land transport",
+                }
+            
+            co2_b = df.rename(index=grouper).groupby(level=0).sum()
+            co2_b = co2_b.droplevel([1,2,3], axis=1)
+            co2_b.loc["co2 atmosphere"] = abs(co2_b.loc["co2 atmosphere"])*-1
+            
+            scenarios = df.columns.get_level_values(0).unique()
+            
+            fig, axes = plt.subplots(
+                nrows=len(scenarios), ncols=1, 
+            figsize=(8, 12), 
+            sharey=True,
+            sharex=True
+            )
+            
+            
+            for ax, scenario in zip(axes, scenarios):
+                co2_b[scenario].T.plot(kind="area", stacked=True,
+                                       title=scenario,
+                                       ax=ax, legend=False)
+                
+                ax.set_xlabel("")
+                ax.set_ylabel("")
+            axes[2].set_ylabel("CO2 [MtCO2/a]")
+            axes[2].legend(bbox_to_anchor=(1,1))
+            
+            fig.savefig(snakemake.output.balances[:-19] + "co2-stacked-area.svg",
+                        bbox_inches="tight")
+            
+            # carriers = ["land transport",
+            #             "heat",
+            #             "power",
+            #             "heat CC",
+            #             "DAC",
+            #             "industry"
+            #             ]
+            # for carrier in carriers:
+            #     df_selected = co2_b.loc[carrier].unstack().T
+            #     for scenario in df_selected.columns:
+            #         plt.scatter(
+            #             df_selected.index,  # x-axis
+            #             [scenario] * len(df_selected),  # y-axis, repeating the scenario name
+            #             s=df_selected[scenario] * 10,  # bubble size proportional to the values
+            #             alpha=0.6,
+            #             label=scenario,
+            #             marker='o'  # Ensuring circular markers
+            #         )
+            #     plt.title(carrier)
+            #     plt.yticks(ticks=df_selected.columns, labels=df_selected.columns)
+            #     plt.xlabel('')
+            #     plt.ylabel('Scenario')
+            #     plt.show()
+                
+            for carrier in co2_b.index:
+                co2_b.loc[carrier].unstack().T.plot(title=carrier)
+                plt.ylabel("CO2 [MtCO2/a]")
+                plt.xlabel("")
+                plt.savefig(snakemake.output.balances[:-19] + f"co2-{carrier}.svg",
+                            bbox_inches="tight")
+        
+        import seaborn as sns
+        scenario1 = ["base"]
+        diff = abs((co2_b.stack()-co2_b.stack()[scenario1].values)
+        bool_index = diff.groupby(level=0).sum().sum(axis=1))>20
+        # Calculate the global min and max for the colormap
+        global_min = diff.min().min()
+        global_max = diff.max().max()
+        
+        for scenario in scenarios:
+            if scenario in scenario1:
+                continue
+            diff = co2_b[scenario] - co2_b[scenario1].values
+            heatmap_data = diff.loc[bool_index]
+            global_min = min(global_min, heatmap_data.min().min())
+            global_max = max(global_max, heatmap_data.max().max())
+        
+        fig, axes = plt.subplots(
+            nrows=len(scenarios)-1, ncols=1, 
+            figsize=(8, 12), sharex=True)
+        i = 0
+        for scenario in scenarios:
+            if scenario in scenario1: continue
+                    
+            diff = co2_b[scenario] - co2_b[scenario1].values
+            
+            heatmap_data = diff.loc[bool_index]
+
+            plt.figure(figsize=(12, 8))
+            sns.heatmap(heatmap_data, cmap='coolwarm',
+                        annot=True, fmt=".0f", linewidths=.5,
+                        center=0, ax=axes[i],
+                        vmin=global_min, vmax=global_max
+                        )
+            axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
+            axes[i].set_xlabel('')
+            i += 1
+        fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.svg",
+                    bbox_inches="tight")
+
+            
+     
 
         df = df.groupby(df.index.map(rename_techs)).sum()
 
@@ -206,6 +343,8 @@ def plot_balances(balances_df, drop=None):
         ]
 
         units = "MtCO2/a" if v[0] in co2_carriers else "TWh/a"
+        
+                        
         logger.debug(
             f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}"
         )
@@ -219,7 +358,11 @@ def plot_balances(balances_df, drop=None):
 
         if df.empty:
             continue
-
+        
+        
+            
+            
+            
         new_index = preferred_order.intersection(df.index).append(
             df.index.difference(preferred_order)
         )
@@ -344,6 +487,9 @@ if __name__ == "__main__":
             
     costs = pd.concat(costs, axis=1)
     balances = pd.concat(balances, axis=1)
+    
+    costs.to_csv(snakemake.output.costs_csv)
+    balances.to_csv(snakemake.output.balances_csv)
       
     plot_costs(costs, drop=True)
 
