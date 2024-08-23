@@ -67,6 +67,10 @@ def get_rdir(run):
     return RDIR
 
 
+def get_prefix(run):
+    prefix = run.get("prefix", "")
+    return f"{prefix}"
+
 def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
     """
     Dynamically provide paths based on shared resources and filename.
