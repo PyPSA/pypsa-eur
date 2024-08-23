@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "test_scenarios_2"
+  prefix: test_scenarios_nobevdsm
   name:
     - base
     - logistic
@@ -28,6 +28,8 @@ run:
   #  - low-demand
     - slow-transition
     - fast-transition
+    - slow-transition-logistic
+    - fast-transition-logistic
   scenarios:
     enable: true
     file: config/scenarios.yaml
@@ -438,7 +440,7 @@ sector:
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  bev_dsm: true
+  bev_dsm: false
   bev_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
@@ -996,7 +998,7 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  costs_max: 1000
+  costs_max: 1200
   costs_threshold: 1
   energy_max: 20000
   energy_min: -20000
