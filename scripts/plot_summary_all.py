@@ -11,7 +11,7 @@ import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from plot_summary import rename_techs, preferred_order
+from plot_summary import preferred_order, rename_techs
 
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
@@ -19,9 +19,7 @@ plt.style.use("ggplot")
 
 def plot_costs(cost_df, drop=None):
 
-
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
-    
 
     # convert to billions
     df = df / 1e9
@@ -44,53 +42,54 @@ def plot_costs(cost_df, drop=None):
     )
 
     # new_columns = df.sum().sort_values().index
-    if drop!=None:
-        df = df.droplevel([1,2,3], axis=1)
-            
-    planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
-    scenarios = df.columns.get_level_values(0).unique()
-    
-    fig, axes = plt.subplots(
-    nrows=1, ncols=len(planning_horizons), 
-    figsize=(12, 8), 
-    sharey=True  # This ensures that all subplots share the same y-axis
+    if drop != None:
+        df = df.droplevel([1, 2, 3], axis=1)
+
+    planning_horizons = (
+        df.columns.get_level_values("planning_horizon").unique().sort_values()
     )
-    
+    scenarios = df.columns.get_level_values(0).unique()
+
+    fig, axes = plt.subplots(
+        nrows=1,
+        ncols=len(planning_horizons),
+        figsize=(12, 8),
+        sharey=True,  # This ensures that all subplots share the same y-axis
+    )
+
     if len(planning_horizons) == 1:
         axes = [axes]
-    
+
     for ax, year in zip(axes, planning_horizons):
-        subset = df.xs(year, level='planning_horizon', axis=1) 
-        
+        subset = df.xs(year, level="planning_horizon", axis=1)
+
         subset.T[new_index].plot(
             kind="bar",
             ax=ax,
             stacked=True,
             legend=False,
-            color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index]
+            color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index],
         )
-    
+
         # Set title and x-label
         ax.set_title(year)
-        
+
         ax.set_xlabel("")
-        
+
         # Set x-ticks as scenario names (level=0)
         ax.set_xticks(range(len(scenarios)))
-        
+
         if ax == axes[0]:
             ax.set_ylabel("System Cost [EUR billion per year]")
-            
-        
+
         ax.grid(axis="x")
-        
-        ax.set_ylim([0, snakemake.config['plotting']["costs_max"]])
-    
+
+        ax.set_ylim([0, snakemake.config["plotting"]["costs_max"]])
 
     handles, labels = ax.get_legend_handles_labels()
     handles.reverse()
     labels.reverse()
-        
+
     axes[-1].legend(
         handles,
         labels,
@@ -99,24 +98,22 @@ def plot_costs(cost_df, drop=None):
         bbox_to_anchor=[1, 1],
         frameon=False,
     )
-    
+
     plt.tight_layout()
-    
-    fig.savefig(snakemake.output.costs,
-                bbox_inches="tight")
-    
-    
+
+    fig.savefig(snakemake.output.costs, bbox_inches="tight")
+
     df.sum().unstack().T.plot()
     plt.ylabel("System Cost [EUR billion per year]")
     plt.xlabel("planning horizon")
-    plt.legend(bbox_to_anchor=(1,1))
-    plt.savefig(snakemake.output.costs.split(".svg")[0]+"-total.svg",
-                bbox_inches="tight")
-    
+    plt.legend(bbox_to_anchor=(1, 1))
+    plt.savefig(
+        snakemake.output.costs.split(".svg")[0] + "-total.svg", bbox_inches="tight"
+    )
 
 
 def plot_balances(balances_df, drop=None):
-    
+
     co2_carriers = ["co2", "co2 stored", "process emissions"]
     balances = {i.replace(" ", "_"): [i] for i in balances_df.index.levels[0]}
     balances["energy"] = [
@@ -167,53 +164,56 @@ def plot_balances(balances_df, drop=None):
         new_index = preferred_order.intersection(df.index).append(
             df.index.difference(preferred_order)
         )
-        
-        if drop!=None:
-            df = df.droplevel([1,2,3], axis=1)
 
-        
-        planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
-        scenarios = df.columns.get_level_values(0).unique()
-        
-        fig, axes = plt.subplots(
-        nrows=1, ncols=len(planning_horizons), 
-        figsize=(12, 8), 
-        sharey=True  # This ensures that all subplots share the same y-axis
+        if drop != None:
+            df = df.droplevel([1, 2, 3], axis=1)
+
+        planning_horizons = (
+            df.columns.get_level_values("planning_horizon").unique().sort_values()
         )
-        
+        scenarios = df.columns.get_level_values(0).unique()
+
+        fig, axes = plt.subplots(
+            nrows=1,
+            ncols=len(planning_horizons),
+            figsize=(12, 8),
+            sharey=True,  # This ensures that all subplots share the same y-axis
+        )
+
         if len(planning_horizons) == 1:
             axes = [axes]
-        
+
         for ax, year in zip(axes, planning_horizons):
-            subset = df.xs(year, level='planning_horizon', axis=1) 
-            
+            subset = df.xs(year, level="planning_horizon", axis=1)
+
             subset.T[new_index].plot(
                 kind="bar",
                 ax=ax,
                 stacked=True,
                 legend=False,
-                color=[snakemake.config["plotting"]["tech_colors"][i] for i in new_index]
+                color=[
+                    snakemake.config["plotting"]["tech_colors"][i] for i in new_index
+                ],
             )
-        
+
             # Set title and x-label
             ax.set_title(year)
-            
+
             # Set x-ticks as scenario names (level=0)
             ax.set_xticks(range(len(scenarios)))
-            
+
             if ax == axes[0]:
                 if v[0] in co2_carriers:
                     ax.set_ylabel("CO2 [MtCO2/a]")
                 else:
                     ax.set_ylabel("Energy [TWh/a]")
-            
+
             ax.grid(axis="x")
-        
 
         handles, labels = ax.get_legend_handles_labels()
         handles.reverse()
         labels.reverse()
-        
+
         axes[-1].legend(
             handles,
             labels,
@@ -222,45 +222,48 @@ def plot_balances(balances_df, drop=None):
             bbox_to_anchor=[1, 1],
             frameon=False,
         )
-        
-        plt.tight_layout()
-        
-        fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
-   
 
-#%%
+        plt.tight_layout()
+
+        fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
+
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
+
         snakemake = mock_snakemake("plot_summary_all")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    
+
     n_header = 4
-    
+
     prefix = snakemake.config["run"]["prefix"]
     path = snakemake.output[0].split("graphs")[0]
     scenarios = snakemake.config["run"]["name"]
-    
+
     costs = {}
     balances = {}
     for scenario in scenarios:
         try:
-            costs[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/costs.csv",
-                                          index_col=list(range(3)),
-                                          header=list(range(n_header)))
-            balances[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/supply_energy.csv",
-                                          index_col=list(range(3)),
-                                          header=list(range(n_header)))
+            costs[scenario] = pd.read_csv(
+                f"{path}/{scenario}/csvs/costs.csv",
+                index_col=list(range(3)),
+                header=list(range(n_header)),
+            )
+            balances[scenario] = pd.read_csv(
+                f"{path}/{scenario}/csvs/supply_energy.csv",
+                index_col=list(range(3)),
+                header=list(range(n_header)),
+            )
         except FileNotFoundError:
             logger.info(f"{scenario} not solved yet.")
-            
+
     costs = pd.concat(costs, axis=1)
     balances = pd.concat(balances, axis=1)
-      
+
     plot_costs(costs, drop=True)
 
     plot_balances(balances, drop=True)
-
-

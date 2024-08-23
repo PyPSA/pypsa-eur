@@ -246,6 +246,7 @@ rule plot_summary:
     script:
         "../scripts/plot_summary.py"
 
+
 rule plot_summary_all:
     output:
         costs="results/" + config["run"]["prefix"] + "/graphs/costs.svg",
@@ -259,6 +260,7 @@ rule plot_summary_all:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary_all.py"
+
 
 STATISTICS_BARPLOTS = [
     "capacity_factor",
