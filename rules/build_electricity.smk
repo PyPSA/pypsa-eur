@@ -534,7 +534,7 @@ rule simplify_network:
 def input_cluster_network(w):
     if config_provider("enable", "custom_busmap", default=False)(w):
         base_network = config_provider("electricity", "base_network")(w)
-        custom_busmap = f"data/custom_busmap_elec_s{w.simpl}_{w.clusters}_{base_network}.csv"
+        custom_busmap = f"data/busmaps/elec_s{w.simpl}_{w.clusters}_{base_network}.csv"
         return {
             "custom_busmap": custom_busmap
         }
