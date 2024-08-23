@@ -562,6 +562,12 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
         assert len(df[df.index.str.contains(car_type)]) == 1
         ct_totals[f"New registration {car_type}"] = df[df.index.str.contains(car_type)].sum()
     
+    # share of electric cars in new registration
+    assert all(df.index[[9, 15,22]] == "Battery electric vehicles")
+    ct_totals["New registration Passenger cars electric"] = df.iloc[9] 
+    ct_totals["New registration Motor coaches, buses and trolley buses electric"] = df.iloc[15] 
+    ct_totals["New registration Light commercial vehicles electric"] = df.iloc[22] 
+    
     # vehicle-km driven (mio km)
     start = "Vehicle-km driven (mio km)"
     end = "Stock of vehicles - total (vehicles)"
