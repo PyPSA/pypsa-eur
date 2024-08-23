@@ -246,6 +246,19 @@ rule plot_summary:
     script:
         "../scripts/plot_summary.py"
 
+rule plot_summary_all:
+    output:
+        costs="results/" + config["run"]["prefix"] + "/graphs/costs.svg",
+        balances="results/" + config["run"]["prefix"] + "/graphs/balances-energy.svg",
+    threads: 2
+    resources:
+        mem_mb=10000,
+    log:
+        "results/" + config["run"]["prefix"] + "/logs/plot_summary_all.log",
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/plot_summary_all.py"
 
 STATISTICS_BARPLOTS = [
     "capacity_factor",
