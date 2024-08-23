@@ -512,7 +512,7 @@ if __name__ == "__main__":
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(
-            n, busmap, linemap, linemap, pd.Series(dtype="O")
+            n, busmap, linemap
         )
     else:
         Nyears = n.snapshot_weightings.objective.sum() / 8760
