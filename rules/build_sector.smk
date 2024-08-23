@@ -93,10 +93,7 @@ rule build_gas_network:
 
 rule build_gas_input_locations:
     input:
-        gem=storage(
-            "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
-            keep_local=True,
-        ),
+        gem="data/bundle/Europe-Gas-Tracker-2023-03-v3.xlsx",
         entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -335,10 +332,7 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=storage(
-            "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
-            keep_local=True,
-        ),
+        enspreso_biomass="data/ENSPRESO_BIOMASS.xlsx",
         nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",  # https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/#nuts21
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
@@ -367,10 +361,7 @@ rule build_biomass_potentials:
 
 rule build_biomass_transport_costs:
     input:
-        transport_cost_data=storage(
-            "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-            keep_local=True,
-        ),
+        transport_cost_data="data/biomass potentials in europe_web rev.pdf",
     output:
         biomass_transport_costs=resources("biomass_transport_costs.csv"),
     threads: 1
@@ -392,10 +383,7 @@ rule build_sequestration_potentials:
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential=storage(
-            "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-            keep_local=True,
-        ),
+        sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
     output:
@@ -565,10 +553,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        hotmaps_industrial_database=storage(
-            "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
-            keep_local=True,
-        ),
+        hotmaps_industrial_database="data/Industrial_Database.csv",
     output:
         industrial_distribution_key=resources(
             "industrial_distribution_key_elec_s{simpl}_{clusters}.csv"

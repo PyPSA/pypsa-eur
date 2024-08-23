@@ -169,24 +169,24 @@ if config["enable"]["retrieve"]:
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+# if config["enable"]["retrieve"]:
 
-    rule retrieve_ship_raster:
-        input:
-            storage(
-                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
-                keep_local=True,
-            ),
-        output:
-            "data/shipdensity_global.zip",
-        log:
-            "logs/retrieve_ship_raster.log",
-        resources:
-            mem_mb=5000,
-        retries: 2
-        run:
-            move(input[0], output[0])
-            validate_checksum(output[0], input[0])
+    # rule retrieve_ship_raster:
+    #     input:
+    #         storage(
+    #             "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
+    #             keep_local=True,
+    #         ),
+    #     output:
+    #         "data/shipdensity_global.zip",
+    #     log:
+    #         "logs/retrieve_ship_raster.log",
+    #     resources:
+    #         mem_mb=5000,
+    #     retries: 2
+    #     run:
+    #         move(input[0], output[0])
+    #         validate_checksum(output[0], input[0])
 
 
 if config["enable"]["retrieve"]:
