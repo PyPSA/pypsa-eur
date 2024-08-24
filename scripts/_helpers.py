@@ -662,6 +662,14 @@ def update_config_from_wildcards(config, w, inplace=True):
         if "nodistrict" in opts:
             config["sector"]["district_heating"]["progress"] = 0.0
 
+        if "nosteelrelocation" in opts:
+            logger.info("Disabling steel industry relocation and flexibility.")
+            config["sector"]["relocation_steel"] = False
+            config["sector"]["flexibility_steel"] = False
+
+        if "nobiogascc" in opts:
+            config["sector"]["biogas_upgrading_cc"] = False
+
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True

@@ -66,7 +66,7 @@ def get_market_values(n):
     )
 
     to_drop = list(n.buses.index[n.buses.index.str.len() == 2]) + ["", "EU", "process"]
-    mv = mv.drop(to_drop, errors='ignore').unstack().dropna(how="all", axis=1)
+    mv = mv.drop(to_drop, errors="ignore").unstack().dropna(how="all", axis=1)
 
     return mv
 

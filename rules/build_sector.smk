@@ -1032,12 +1032,18 @@ rule prepare_sector_network:
         busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
         simplified_pop_layout=resources("pop_layout_elec_s{simpl}.csv"),
-        industrial_production=resources("industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        industrial_production=resources(
+            "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         industrial_demand=resources(
             "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
-        industrial_demand_today=resources("industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"),
-        industry_sector_ratios=resources("industry_sector_ratios_{planning_horizons}.csv"),
+        industrial_demand_today=resources(
+            "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"
+        ),
+        industry_sector_ratios=resources(
+            "industry_sector_ratios_{planning_horizons}.csv"
+        ),
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"
         ),
@@ -1075,7 +1081,7 @@ rule prepare_sector_network:
         country_centroids=storage(
             "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
             keep_local=True,
-        )
+        ),
     output:
         RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

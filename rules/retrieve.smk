@@ -356,6 +356,7 @@ if config["enable"]["retrieve"]:
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
+
 if config["enable"]["retrieve"]:
     # Some logic to find the correct file URL
     # Sometimes files are released delayed or ahead of schedule, check which file is currently available
@@ -407,6 +408,8 @@ if config["enable"]["retrieve"]:
                 )
                 print(f"Adding layer {i + 1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+
+
 
 if config["enable"]["retrieve"]:
 

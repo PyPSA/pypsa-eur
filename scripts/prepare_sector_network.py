@@ -21,8 +21,6 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from geopy.extra.rate_limiter import RateLimiter
-from geopy.geocoders import Nominatim
 from _helpers import (
     configure_logging,
     set_scenario_config,
@@ -36,6 +34,8 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -569,7 +569,11 @@ def add_carrier_buses(n, carrier, nodes=None):
     )
 
     fossils = ["coal", "gas", "oil", "lignite"]
-    if options.get("fossil_fuels", True) and carrier in fossils and costs.at[carrier, "fuel"] > 0:
+    if (
+        options.get("fossil_fuels", True)
+        and carrier in fossils
+        and costs.at[carrier, "fuel"] > 0
+    ):
 
         n.madd(
             "Generator",
@@ -2944,7 +2948,6 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "VOM"] * costs.at["BtL", "efficiency"],
         )
 
-
     if options.get("biomass_to_liquid_cc"):
 
         # Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
@@ -4066,7 +4069,10 @@ def add_industry(n, costs):
         )
     else:
         p_set = (
-            -industrial_demand.loc[(nodes, sectors_b), "process emission"].sum(axis=1).sum() / nhours
+            -industrial_demand.loc[(nodes, sectors_b), "process emission"]
+            .sum(axis=1)
+            .sum()
+            / nhours
         )
 
     n.madd(
@@ -4241,8 +4247,14 @@ def add_waste_heat(n):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
-            total_energy_input = (cf_industry["MWh_H2_per_tNH3_electrolysis"] + cf_industry["MWh_elec_per_tNH3_electrolysis"]) /  cf_industry["MWh_NH3_per_tNH3"]
-            electricity_input = cf_industry["MWh_elec_per_tNH3_electrolysis"] /  cf_industry["MWh_NH3_per_tNH3"]
+            total_energy_input = (
+                cf_industry["MWh_H2_per_tNH3_electrolysis"]
+                + cf_industry["MWh_elec_per_tNH3_electrolysis"]
+            ) / cf_industry["MWh_NH3_per_tNH3"]
+            electricity_input = (
+                cf_industry["MWh_elec_per_tNH3_electrolysis"]
+                / cf_industry["MWh_NH3_per_tNH3"]
+            )
             n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
                 0.15 * total_energy_input / electricity_input
             )
@@ -4463,7 +4475,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
     import_links = import_links.drop_duplicates(keep="first")
-    duplicated = import_links.index.duplicated(keep='first')
+    duplicated = import_links.index.duplicated(keep="first")
     import_links = import_links.loc[~duplicated]
 
     hvdc_cost = (
@@ -4678,7 +4690,9 @@ def add_import_options(
         "shipping-meoh": ("methanolisation", "carbondioxide-input"),
     }
 
-    import_costs = pd.read_csv(snakemake.input.import_costs, delimiter=";", keep_default_na=False)
+    import_costs = pd.read_csv(
+        snakemake.input.import_costs, delimiter=";", keep_default_na=False
+    )
 
     # temporary bugfix for Namibia
     import_costs["exporter"] = import_costs.exporter.replace("", "NA")

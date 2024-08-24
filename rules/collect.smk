@@ -110,9 +110,9 @@ rule plot_resources:
         ),
         expand(
             RESOURCES + "graphics/salt-caverns-{clusters}-nearshore.pdf",
-            **config["scenario"]
+            **config["scenario"],
         ),
         expand(
             RESOURCES + "graphics/biomass-potentials-{clusters}-biogas.pdf",
-            **config["scenario"]
+            **config["scenario"],
         ),

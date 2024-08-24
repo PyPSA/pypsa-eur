@@ -529,14 +529,6 @@ sector:
   shipping_ammonia_efficiency: 0.40
   shipping_lng_efficiency: 0.44
   shipping_lh2_efficiency: 0.44
-  shipping_endogenous:
-    enable: false
-    fuels:
-    - oil
-    - methanol
-    - LH2
-    - LNG
-    - ammonia
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
@@ -659,7 +651,6 @@ sector:
   biomass_to_methanol_cc: false
   biosng: false
   biosng_cc: false
-  biomass_upgrading_cc: false
   electrobiofuels: false
   endogenous_steel: false
   endogenous_hvc: false

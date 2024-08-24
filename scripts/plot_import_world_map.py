@@ -19,11 +19,10 @@ import pandas as pd
 import xarray as xr
 from _helpers import configure_logging
 from atlite.gis import ExclusionContainer, shape_availability
+from pypsa.plot import add_legend_patches
 from rasterio.features import geometry_mask
 from rasterio.plot import show
 from shapely.geometry import box
-
-from pypsa.plot import add_legend_patches
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +46,7 @@ NICE_NAMES = {
     "shipping-steel": "steel",
 }
 
+
 def rename(s):
     if "solar" in s:
         return "solar"
@@ -54,13 +54,18 @@ def rename(s):
         return "wind"
     if "storage" in s or "inverter" in s:
         return "storage"
-    if "transport" in s or "shipping fuel"  in s or "dry bulk" in s or "pipeline" in s:
+    if "transport" in s or "shipping fuel" in s or "dry bulk" in s or "pipeline" in s:
         return "transport"
     if "evaporation" in s or "liquefaction" in s or "compress" in s:
         return "evaporation/liquefaction"
     if "direct air capture" in s or "heat pump" in s:
         return "direct air capture"
-    if s in ["Haber-Bosch (exp)", "Fischer-Tropsch (exp)", "methanolisation (exp)", "methanation (exp)"]:
+    if s in [
+        "Haber-Bosch (exp)",
+        "Fischer-Tropsch (exp)",
+        "methanolisation (exp)",
+        "methanation (exp)",
+    ]:
         return "hydrogen conversion"
     if "iron ore" in s:
         return "iron ore"
@@ -73,7 +78,9 @@ def rename(s):
 
 def get_cost_composition(df, country, escs, production):
     query_str = "category == 'cost' and exporter == @country and esc in @escs"
-    composition = df.query(query_str).groupby(["esc", "subcategory", "importer"]).value.min()
+    composition = (
+        df.query(query_str).groupby(["esc", "subcategory", "importer"]).value.min()
+    )
     composition *= EUR_2015_TO_2020
 
     minimal = {}
@@ -84,7 +91,7 @@ def get_cost_composition(df, country, escs, production):
 
     composition = composition.groupby(rename).sum().div(production)
 
-    composition = composition.where(composition > 0.01).dropna(how='all')
+    composition = composition.where(composition > 0.01).dropna(how="all")
 
     sort_by = composition.sum().sort_values(ascending=True).index
     selection = pd.Index(COLORS.keys()).intersection(composition.index)
@@ -110,11 +117,11 @@ def add_land_eligibility_example(ax, shape, glc_fn, wdpa_fn):
         [shape.geometry.values[0]],
         transform=transform,
         invert=False,
-        out_shape=band.shape
+        out_shape=band.shape,
     )
     masked_band = np.where(mask, ~band, np.nan)
 
-    shape.plot(ax=ax, color="none", edgecolor='k', linewidth=1)
+    shape.plot(ax=ax, color="none", edgecolor="k", linewidth=1)
     show(masked_band, transform=transform, cmap="Purples", ax=ax)
     ax.set_axis_off()
 
@@ -144,7 +151,7 @@ if __name__ == "__main__":
 
     config = snakemake.config
 
-    plt.style.use(['bmh', snakemake.input.rc])
+    plt.style.use(["bmh", snakemake.input.rc])
 
     tech_colors = config["plotting"]["tech_colors"]
 
@@ -165,12 +172,14 @@ if __name__ == "__main__":
     # load capacity factor time series
 
     ds = xr.open_dataset(profile_fn)
-    profile = ds.sel(exporter='MA', importer='EUE').p_max_pu.to_pandas().T
+    profile = ds.sel(exporter="MA", importer="EUE").p_max_pu.to_pandas().T
     profile.rename(columns={"onwind": "wind", "solar-utility": "solar"}, inplace=True)
 
     # download world country shapes, version clipped to Europe, and GADM in AR
 
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres')).set_index("iso_a3")
+    world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres")).set_index(
+        "iso_a3"
+    )
     world.drop("ATA", inplace=True)
 
     eu_countries = cc.convert(config["countries"], src="iso2", to="iso3")
@@ -189,32 +198,36 @@ if __name__ == "__main__":
     # bugfix for Namibia
     df["exporter"] = df.exporter.replace("", "NA")
 
-    import_costs = df.query("subcategory == 'Cost per MWh delivered' and esc == 'shipping-meoh'").groupby("exporter").value.min()
+    import_costs = (
+        df.query("subcategory == 'Cost per MWh delivered' and esc == 'shipping-meoh'")
+        .groupby("exporter")
+        .value.min()
+    )
     import_costs *= EUR_2015_TO_2020
-    import_costs.index = cc.convert(import_costs.index.str.split("-").str[0], src='iso2', to='iso3')
+    import_costs.index = cc.convert(
+        import_costs.index.str.split("-").str[0], src="iso2", to="iso3"
+    )
 
     import_costs.drop("RUS", inplace=True, errors="ignore")
 
     composition_arg = get_cost_composition(
         df,
         "AR",
-        ["shipping-lh2", "shipping-ftfuel", "shipping-meoh", "shipping-lch4", "shipping-lnh3"],
-        500e6
+        [
+            "shipping-lh2",
+            "shipping-ftfuel",
+            "shipping-meoh",
+            "shipping-lch4",
+            "shipping-lnh3",
+        ],
+        500e6,
     )
 
     composition_sau = get_cost_composition(
-        df,
-        "SA",
-        ["pipeline-h2", "shipping-lh2"],
-        500e6
+        df, "SA", ["pipeline-h2", "shipping-lh2"], 500e6
     )
 
-    composition_aus = get_cost_composition(
-        df,
-        "AU",
-        ["shipping-steel"],
-        100e6
-    )
+    composition_aus = get_cost_composition(df, "AU", ["shipping-steel"], 100e6)
 
     # add to legend
 
@@ -226,7 +239,7 @@ if __name__ == "__main__":
 
     crs = ccrs.EqualEarth()
 
-    fig, ax = plt.subplots(figsize=(14,14), subplot_kw={"projection": crs})
+    fig, ax = plt.subplots(figsize=(14, 14), subplot_kw={"projection": crs})
 
     # main axis: choropleth layer
 
@@ -235,11 +248,18 @@ if __name__ == "__main__":
         linewidth=1,
         edgecolor="black",
         ax=ax,
-        cmap='Greens_r',
+        cmap="Greens_r",
         legend=True,
         vmin=110,
         vmax=150,
-        legend_kwds=dict(label="Cost for methanol fuel delivered to Europe [€/MWh]", orientation="horizontal", extend='max', shrink=.6, aspect=30, pad=.01),
+        legend_kwds=dict(
+            label="Cost for methanol fuel delivered to Europe [€/MWh]",
+            orientation="horizontal",
+            extend="max",
+            shrink=0.6,
+            aspect=30,
+            pad=0.01,
+        ),
         missing_kwds=dict(color="#eee", label="not considered"),
     )
 
@@ -247,14 +267,14 @@ if __name__ == "__main__":
         linewidth=1,
         edgecolor="black",
         ax=ax,
-        color='#cbc7f0',
+        color="#cbc7f0",
     )
 
     add_legend_patches(
         ax,
         ["#eee", "#cbc7f0"],
         ["country not considered for export", "country in European model scope"],
-        legend_kw = dict(
+        legend_kw=dict(
             bbox_to_anchor=(1, 0),
             frameon=False,
         ),
@@ -263,10 +283,17 @@ if __name__ == "__main__":
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    ax.set_facecolor('none')
-    fig.set_facecolor('none')
+    ax.set_facecolor("none")
+    fig.set_facecolor("none")
 
-    ax.text(0.93, 0.01, "Projection:\nEqual Earth", transform=ax.transAxes, fontsize=9, color="grey")
+    ax.text(
+        0.93,
+        0.01,
+        "Projection:\nEqual Earth",
+        transform=ax.transAxes,
+        fontsize=9,
+        color="grey",
+    )
 
     plt.tight_layout()
 
@@ -279,25 +306,19 @@ if __name__ == "__main__":
     week_profile.plot(
         ax=ax_prof,
         linewidth=1,
-        color=['gold', "royalblue"],
-        ylim=(0,1),
+        color=["gold", "royalblue"],
+        ylim=(0, 1),
         clip_on=False,
     )
 
-    ax_prof.legend(
-        title="",
-        loc=(0,1),
-        fontsize=8,
-        ncol=2,
-        columnspacing=0.8
-    )
+    ax_prof.legend(title="", loc=(0, 1), fontsize=8, ncol=2, columnspacing=0.8)
     ax_prof.set_xlabel("Day of March 2013", fontsize=8)
     ax_prof.set_ylabel("profile [p.u.]", fontsize=8)
-    ax_prof.tick_params(axis='both', labelsize=8)
+    ax_prof.tick_params(axis="both", labelsize=8)
 
     ax_prof.xaxis.set_major_locator(mdates.DayLocator())
     ax_prof.xaxis.set_major_formatter(mdates.DateFormatter("%d"))
-    xticks = week_profile.resample('D').mean().index
+    xticks = week_profile.resample("D").mean().index
     ax_prof.set_xticks(xticks)
     ax_prof.set_xticklabels(xticks.day)
 
@@ -308,17 +329,17 @@ if __name__ == "__main__":
         label.set_fontsize(8)
 
     ax.annotate(
-        '', 
+        "",
         xy=(0.45, 0.75),
         xytext=(0.485, 0.72),
-        xycoords='axes fraction',
+        xycoords="axes fraction",
         arrowprops=dict(
-        edgecolor=ARROW_COLOR,
-        facecolor=ARROW_COLOR,
-        linewidth=1.5,
-        arrowstyle='-|>',
-        connectionstyle="arc3,rad=0.2"
-        )
+            edgecolor=ARROW_COLOR,
+            facecolor=ARROW_COLOR,
+            linewidth=1.5,
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=0.2",
+        ),
     )
 
     # inset: Argentina e-fuel import costs
@@ -331,7 +352,7 @@ if __name__ == "__main__":
     handles.reverse()
     labels.reverse()
 
-    ax_arg.legend(handles, labels, title="", ncol=1, fontsize=9, loc=(1,0))
+    ax_arg.legend(handles, labels, title="", ncol=1, fontsize=9, loc=(1, 0))
 
     ax_arg.set_title("Import costs from\nArgentina to Europe", fontsize=9)
 
@@ -345,17 +366,17 @@ if __name__ == "__main__":
         spine.set_visible(False)
 
     ax.annotate(
-        '', 
+        "",
         xy=(0.25, 0.15),
         xytext=(0.33, 0.2),
-        xycoords='axes fraction',
+        xycoords="axes fraction",
         arrowprops=dict(
             edgecolor=ARROW_COLOR,
             facecolor=ARROW_COLOR,
             linewidth=1.5,
-            arrowstyle='-|>',
-            connectionstyle="arc3,rad=-0.2"
-        )
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=-0.2",
+        ),
     )
 
     # inset: Saudi Arabia hydrogen pipeline versus ship imports
@@ -376,17 +397,17 @@ if __name__ == "__main__":
         spine.set_visible(False)
 
     ax.annotate(
-        '', 
+        "",
         xy=(0.655, 0.55),
         xytext=(0.62, 0.65),
-        xycoords='axes fraction',
+        xycoords="axes fraction",
         arrowprops=dict(
             edgecolor=ARROW_COLOR,
             facecolor=ARROW_COLOR,
             linewidth=1.5,
-            arrowstyle='-|>',
-            connectionstyle="arc3,rad=0.2"
-        )
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=0.2",
+        ),
     )
 
     # inset: Australia steel imports
@@ -405,43 +426,44 @@ if __name__ == "__main__":
     for spine in ax_aus.spines.values():
         spine.set_visible(False)
 
-
     ax.annotate(
-        '', 
+        "",
         xy=(0.77, 0.35),
         xytext=(0.815, 0.31),
-        xycoords='axes fraction',
+        xycoords="axes fraction",
         arrowprops=dict(
             edgecolor=ARROW_COLOR,
             facecolor=ARROW_COLOR,
             linewidth=1.5,
-            arrowstyle='-|>',
-            connectionstyle="arc3,rad=0.2"
-        )
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=0.2",
+        ),
     )
 
     # inset: land eligibility of Buenos Aires
 
     ax_land = ax.inset_axes([0.315, 0.08, 0.29, 0.29])
 
-    shape.to_crs(crs.proj4_init).plot(ax=ax, color="none", edgecolor=ARROW_COLOR, linestyle=":", linewidth=1)
+    shape.to_crs(crs.proj4_init).plot(
+        ax=ax, color="none", edgecolor=ARROW_COLOR, linestyle=":", linewidth=1
+    )
 
     add_land_eligibility_example(ax_land, shape, glc_fn, wdpa_fn)
 
     ax_land.set_title("wind exclusion\nzones (purple)", fontsize=9)
 
     ax.annotate(
-        '', 
+        "",
         xy=(0.41, 0.22),
         xytext=(0.35, 0.17),
-        xycoords='axes fraction',
+        xycoords="axes fraction",
         arrowprops=dict(
             edgecolor=ARROW_COLOR,
             facecolor=ARROW_COLOR,
             linewidth=1.5,
-            arrowstyle='-|>',
-            connectionstyle="arc3,rad=0.2"
-        )
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=0.2",
+        ),
     )
 
     for fn in snakemake.output:
