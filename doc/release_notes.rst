@@ -9,10 +9,19 @@ Release Notes
 
 Upcoming Release
 ================
+* Add investment period dependent CO2 sequestration potentials
+
+* Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
+
+* Fixed PDF encoding in ``build_biomass_transport_costs`` with update of tabula-py and jpype1
+
+* More modular and flexible handling of transmission projects. One can now add new transmission projects in a subfolder of `data/transmission projects` similar to the files in the template folder. After adding the new files and updating the config section `transmission_projects:`, transmission projects will be included if they are not duplicates of existing lines or other projects.
 
 * Add option to apply a gaussian kernel density smoothing to wind turbine power curves.
 
 * Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
+
+* Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
 
 * Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
   substituted by the phase-in of sustainable biomass types using the config parameters
@@ -65,6 +74,8 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
+* Added new major feature to create the base_network from OpenStreetMap (OSM) data (PR https://github.com/PyPSA/pypsa-eur/pull/1079). Note that a heuristics based cleaning process is used for lines and links where electrical parameters are incomplete, missing, or ambiguous. Through ``electricity["base_network"]``, the base network can be set to "entsoegridkit" (original default setting, deprecated soon), "osm-prebuilt" (which downloads the latest prebuilt snapshot based on OSM data from Zenodo), or "osm-raw" which retrieves (once) and cleans the raw OSM data and subsequently builds the network. Note that this process may take a few minutes.
+
 * Updated pre-built `weather data cutouts
   <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
   solar irradiation from the new SARAH-3 dataset while taking all other
@@ -79,6 +90,8 @@ Upcoming Release
 
 * In :mod:`base_network`, replace own voronoi polygon calculation function with
   Geopandas `gdf.voronoi_polygons` method.
+
+*  Move custom busmaps to ```data/busmaps/elec_s{simpl}_{clusters}_{base_network}.csv``` (if enabled). This allows for different busmaps depending on the base network and scenario.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

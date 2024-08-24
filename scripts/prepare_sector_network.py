@@ -36,6 +36,9 @@ from build_energy_totals import (
 from build_transport_demand import transport_degree_factor
 from geopy.extra.rate_limiter import RateLimiter
 from geopy.geocoders import Nominatim
+from definitions.heat_sector import HeatSector
+from definitions.heat_system import HeatSystem
+from definitions.heat_system_type import HeatSystemType
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -48,10 +51,6 @@ cc = coco.CountryConverter()
 
 geolocator = Nominatim(user_agent=str(uuid.uuid4()), timeout=10)
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=2)
-
-from scripts.definitions.heat_sector import HeatSector
-from scripts.definitions.heat_system import HeatSystem
-from scripts.definitions.heat_system_type import HeatSystemType
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -3102,6 +3101,38 @@ def add_biomass(n, costs):
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["BioSNG", "CO2 stored"],
             marginal_cost=costs.at["BioSNG", "VOM"] * costs.at["BioSNG", "efficiency"],
+        )
+
+    if options["bioH2"]:
+        name = (
+            pd.Index(spatial.biomass.nodes)
+            + " "
+            + pd.Index(spatial.h2.nodes.str.replace(" H2", ""))
+        )
+        n.madd(
+            "Link",
+            name,
+            suffix=" solid biomass to hydrogen CC",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.h2.nodes,
+            bus2=spatial.co2.nodes,
+            bus3="co2 atmosphere",
+            carrier="solid biomass to hydrogen",
+            efficiency=costs.at["solid biomass to hydrogen", "efficiency"],
+            efficiency2=costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            p_nom_extendable=True,
+            capital_cost=costs.at["solid biomass to hydrogen", "fixed"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            overnight_cost=costs.at["solid biomass to hydrogen", "investment"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "investment"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            marginal_cost=0.0,
         )
 
 

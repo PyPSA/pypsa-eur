@@ -242,7 +242,7 @@ def build_eurostat(
     temp.index = pd.MultiIndex.from_frame(
         temp.index.to_frame().fillna("International aviation")
     )
-    df = pd.concat([temp, df.loc[~int_avia]])
+    df = pd.concat([temp, df.loc[~int_avia]]).sort_index()
 
     # Fill in missing data on "Domestic aviation" for each country.
     for country in countries:
@@ -651,8 +651,8 @@ def build_energy_totals(
     """
 
     eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
-    eurostat_countries = eurostat.index.levels[0]
-    eurostat_years = eurostat.index.levels[1]
+    eurostat_countries = eurostat.index.unique(0)
+    eurostat_years = eurostat.index.unique(1)
 
     to_drop = ["passenger cars", "passenger car efficiency"]
     new_index = pd.MultiIndex.from_product(
@@ -1153,13 +1153,14 @@ def build_transport_data(
     ----------
     - Swiss transport data: `BFS <https://www.bfs.admin.ch/bfs/en/home/statistics/mobility-transport/transport-infrastructure-vehicles/vehicles/road-vehicles-stock-level-motorisation.html>`_
     """
+    years = np.arange(2000, 2022)
 
     # first collect number of cars
     transport_data = pd.DataFrame(idees["passenger cars"])
 
     countries_without_ch = set(countries) - {"CH"}
     new_index = pd.MultiIndex.from_product(
-        [countries_without_ch, transport_data.index.levels[1]],
+        [countries_without_ch, transport_data.index.unique(1)],
         names=["country", "year"],
     )
 
@@ -1167,7 +1168,7 @@ def build_transport_data(
 
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
-        swiss_cars = pd.read_csv(fn, index_col=0).loc[2000:2015, ["passenger cars"]]
+        swiss_cars = pd.read_csv(fn, index_col=0).loc[years, ["passenger cars"]]
 
         swiss_cars.index = pd.MultiIndex.from_product(
             [["CH"], swiss_cars.index], names=["country", "year"]
@@ -1175,10 +1176,8 @@ def build_transport_data(
 
         transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
 
-    transport_data.rename(columns={"passenger cars": "number cars"}, inplace=True)
-
+    transport_data = transport_data.rename(columns={"passenger cars": "number cars"})
     # clean up dataframe
-    years = np.arange(2000, 2022)
     transport_data = transport_data[
         transport_data.index.get_level_values(1).isin(years)
     ]
@@ -1188,11 +1187,10 @@ def build_transport_data(
         logger.info(
             f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
         )
-
         cars_pp = transport_data["number cars"] / population
 
         fill_values = {
-            year: cars_pp.mean() * population for year in transport_data.index.levels[1]
+            year: cars_pp.mean() * population for year in transport_data.index.unique(1)
         }
         fill_values = pd.DataFrame(fill_values).stack()
         fill_values = pd.DataFrame(fill_values, columns=["number cars"])

@@ -55,6 +55,7 @@ include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
 include: "rules/plot.smk"
+include: "rules/development.smk"
 
 
 if config["foresight"] == "overnight":

@@ -108,7 +108,7 @@ from scipy.sparse.csgraph import connected_components, dijkstra
 logger = logging.getLogger(__name__)
 
 
-def simplify_network_to_380(n):
+def simplify_network_to_380(n, linetype_380):
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
@@ -124,7 +124,7 @@ def simplify_network_to_380(n):
 
     n.buses["v_nom"] = 380.0
 
-    (linetype_380,) = n.lines.loc[n.lines.v_nom == 380.0, "type"].unique()
+    linetype_380 = n.lines["type"].mode()[0]
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
@@ -132,8 +132,8 @@ def simplify_network_to_380(n):
 
     trafo_map = pd.Series(n.transformers.bus1.values, n.transformers.bus0.values)
     trafo_map = trafo_map[~trafo_map.index.duplicated(keep="first")]
-    several_trafo_b = trafo_map.isin(trafo_map.index)
-    trafo_map[several_trafo_b] = trafo_map[several_trafo_b].map(trafo_map)
+    while (several_trafo_b := trafo_map.isin(trafo_map.index)).any():
+        trafo_map[several_trafo_b] = trafo_map[several_trafo_b].map(trafo_map)
     missing_buses_i = n.buses.index.difference(trafo_map.index)
     missing = pd.Series(missing_buses_i, missing_buses_i)
     trafo_map = pd.concat([trafo_map, missing])
@@ -301,18 +301,10 @@ def simplify_links(
     # Only span graph over the DC link components
     G = n.graph(branch_components=["Link"])
 
-    def split_links(nodes):
+    def split_links(nodes, added_supernodes):
         nodes = frozenset(nodes)
 
         seen = set()
-
-        # Corsica substation
-        node_corsica = find_closest_bus(
-            n,
-            x=9.44802,
-            y=42.52842,
-            tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
-        )
 
         # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
         # An example for the latter is if two different links are connected to the same AC bus.
@@ -322,7 +314,7 @@ def simplify_links(
             if (
                 (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
                 or (n.buses.loc[m, "carrier"] == "AC")
-                or (m == node_corsica)
+                or (m in added_supernodes)
             )
         }
 
@@ -359,8 +351,21 @@ def simplify_links(
         0.0, index=n.buses.index, columns=list(connection_costs_per_link)
     )
 
+    node_corsica = find_closest_bus(
+        n,
+        x=9.44802,
+        y=42.52842,
+        tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
+    )
+
+    added_supernodes = []
+    if node_corsica is not None:
+        added_supernodes.append(node_corsica)
+
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
-        for b, buses, links in split_links(labels.index[labels == lbl]):
+        for b, buses, links in split_links(
+            labels.index[labels == lbl], added_supernodes
+        ):
             if len(buses) <= 2:
                 continue
 
@@ -420,6 +425,9 @@ def simplify_links(
             # n.add("Link", **params)
 
     logger.debug("Collecting all components using the busmap")
+
+    # Change carrier type of all added super_nodes to "AC"
+    n.buses.loc[added_supernodes, "carrier"] = "AC"
 
     _aggregate_and_move_components(
         n,
@@ -579,7 +587,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", simpl="")
+        snakemake = mock_snakemake("simplify_network", simpl="", run="all")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -592,7 +600,8 @@ if __name__ == "__main__":
     # remove integer outputs for compatibility with PyPSA v0.26.0
     n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
-    n, trafo_map = simplify_network_to_380(n)
+    linetype_380 = snakemake.config["lines"]["types"][380]
+    n, trafo_map = simplify_network_to_380(n, linetype_380)
 
     technology_costs = load_costs(
         snakemake.input.tech_costs,
@@ -655,6 +664,7 @@ if __name__ == "__main__":
         "substation_off",
         "geometry",
         "underground",
+        "project_status",
     ]
     n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
