@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -17,20 +17,27 @@ assuming as an approximation energy content of wood pellets
 @author: bw0928
 """
 
+import platform
+
 import pandas as pd
 import tabula as tbl
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
+system = platform.system()
+encoding = "cp1252" if system == "Windows" else None
 
 
 def get_countries():
-    pandas_options = dict(skiprows=range(6), header=None, index_col=0)
+    pandas_options = dict(
+        skiprows=range(6), header=None, index_col=0, encoding=encoding
+    )
 
     return tbl.read_pdf(
         str(snakemake.input.transport_cost_data),
         pages="145",
         multiple_tables=False,
         pandas_options=pandas_options,
+        encoding=encoding,
     )[0].index
 
 
@@ -41,6 +48,7 @@ def get_cost_per_tkm(page, countries):
         sep=" |,",
         engine="python",
         index_col=False,
+        encoding=encoding,
     )
 
     sc = tbl.read_pdf(
@@ -48,6 +56,7 @@ def get_cost_per_tkm(page, countries):
         pages=page,
         multiple_tables=False,
         pandas_options=pandas_options,
+        encoding=encoding,
     )[0]
     sc.index = countries
     sc.columns = sc.columns.str.replace("€", "EUR")
@@ -80,4 +89,9 @@ def build_biomass_transport_costs():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake("build_biomass_transport_costs")
+
     build_biomass_transport_costs()

@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
-Creates map of optimised hydrogen networ, storage and selected other infrastructure.
+Creates map of optimised gas network, storage and selected other
+infrastructure.
 """
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging
-from plot_power_network import assign_location
+from _helpers import configure_logging, set_scenario_config
+from plot_power_network import assign_location, load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+
+logger = logging.getLogger(__name__)
 
 
 def plot_ch4_map(n):
@@ -48,7 +48,7 @@ def plot_ch4_map(n):
     # make a fake MultiIndex so that area is correct for legend
     fossil_gas.index = pd.MultiIndex.from_product([fossil_gas.index, ["fossil gas"]])
 
-    methanation_i = n.links[n.links.carrier.isin(["helmeth", "Sabatier"])].index
+    methanation_i = n.links.query("carrier == 'Sabatier'").index
     methanation = (
         abs(
             n.links_t.p1.loc[:, methanation_i].mul(
@@ -97,7 +97,7 @@ def plot_ch4_map(n):
     link_widths_orig = n.links.p_nom / linewidth_factor
     link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.0
 
-    max_usage = n.links_t.p0.abs().max(axis=0)
+    max_usage = n.links_t.p0[n.links.index].abs().max(axis=0)
     link_widths_used = max_usage / linewidth_factor
     link_widths_used[max_usage < line_lower_threshold] = 0.0
 
@@ -121,7 +121,7 @@ def plot_ch4_map(n):
         "biogas": "seagreen",
     }
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": ccrs.EqualEarth()})
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     n.plot(
         bus_sizes=bus_sizes,
@@ -220,8 +220,7 @@ def plot_ch4_map(n):
         legend_kw=legend_kw,
     )
 
-    for fn in snakemake.output:
-        plt.savefig(fn, bbox_inches="tight")
+    fig.savefig(snakemake.output.map, bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -232,15 +231,13 @@ if __name__ == "__main__":
             "plot_gas_network",
             simpl="",
             opts="",
-            clusters="5",
-            ll="v1.5",
-            sector_opts="CO2L0-1H-T-H-B-I-A-solar+p3-dist1",
-            planning_horizons="2030",
+            clusters="37",
+            ll="v1.0",
+            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)
-
-    plt.style.use(snakemake.input.rc)
+    set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -250,5 +247,7 @@ if __name__ == "__main__":
 
     if map_opts["boundaries"] is None:
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
+
+    proj = load_projection(snakemake.params.plotting)
 
     plot_ch4_map(n)

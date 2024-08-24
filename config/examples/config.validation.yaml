@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
 run:
@@ -68,9 +68,6 @@ conventional:
     p_max_pu: "data/nuclear_p_max_pu.csv"
   biomass:
     p_max_pu: 0.65
-
-load:
-  power_statistics: false
 
 lines:
   s_max_pu: 0.23

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2017-2023 The PyPSA-Eur Authors
+SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
@@ -61,14 +61,14 @@ The dataset consists of:
 
 - A grid model based on a modified [GridKit](https://github.com/bdw/GridKit)
   extraction of the [ENTSO-E Transmission System
-  Map](https://www.entsoe.eu/data/map/). The grid model contains 6763 lines
+  Map](https://www.entsoe.eu/data/map/). The grid model contains 7072 lines
   (alternating current lines at and above 220kV voltage level and all high
-  voltage direct current lines) and 3642 substations.
+  voltage direct current lines) and 3803 substations.
 - The open power plant database
-  [powerplantmatching](https://github.com/FRESNA/powerplantmatching).
+  [powerplantmatching](https://github.com/PyPSA/powerplantmatching).
 - Electrical demand time series from the
   [OPSD project](https://open-power-system-data.org/).
-- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/FRESNA/atlite).
+- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/PyPSA/atlite).
 - Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [atlite library](https://github.com/PyPSA/atlite).
 
 A sector-coupled extension adds demand
@@ -80,7 +80,7 @@ all greenhouse gas emitters except waste management and land use.
 This diagram gives an overview of the sectors and the links between
 them:
 
-![sector diagram](graphics/multisector_figure.png)
+![sector diagram](doc/img/multisector_figure.png)
 
 Each of these sectors is built up on the transmission network nodes
 from [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur):
@@ -103,6 +103,6 @@ We strongly welcome anyone interested in contributing to this project. If you ha
 # Licence
 
 The code in PyPSA-Eur is released as free software under the
-[MIT License](https://opensource.org/licenses/MIT), see `LICENSE.txt`.
+[MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.rst`](doc/licenses.rst).
 However, different licenses and terms of use may apply to the various
 input data.

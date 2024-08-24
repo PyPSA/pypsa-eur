@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
@@ -86,14 +86,16 @@ The rule :mod:`simplify_network` does up to four things:
 """
 
 import logging
-from functools import partial, reduce
+from functools import reduce
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
-from _helpers import configure_logging, update_p_nom_max
+from _helpers import configure_logging, set_scenario_config, update_p_nom_max
 from add_electricity import load_costs
+from base_network import append_bus_shapes
 from cluster_network import cluster_regions, clustering_for_n_clusters
 from pypsa.clustering.spatial import (
     aggregateoneport,
@@ -152,22 +154,20 @@ def _prepare_connection_costs_per_link(n, costs, renewable_carriers, length_fact
     if n.links.empty:
         return {}
 
-    connection_costs_per_link = {}
-
-    for tech in renewable_carriers:
-        if tech.startswith("offwind"):
-            connection_costs_per_link[tech] = (
-                n.links.length
-                * length_factor
-                * (
-                    n.links.underwater_fraction
-                    * costs.at[tech + "-connection-submarine", "capital_cost"]
-                    + (1.0 - n.links.underwater_fraction)
-                    * costs.at[tech + "-connection-underground", "capital_cost"]
-                )
+    return {
+        tech: (
+            n.links.length
+            * length_factor
+            * (
+                n.links.underwater_fraction
+                * costs.at[tech + "-connection-submarine", "capital_cost"]
+                + (1.0 - n.links.underwater_fraction)
+                * costs.at[tech + "-connection-underground", "capital_cost"]
             )
-
-    return connection_costs_per_link
+        )
+        for tech in renewable_carriers
+        if tech.startswith("offwind")
+    }
 
 
 def _compute_connection_costs_to_bus(
@@ -209,7 +209,7 @@ def _compute_connection_costs_to_bus(
     return connection_costs_to_bus
 
 
-def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output):
+def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus):
     connection_costs = {}
     for tech in connection_costs_to_bus:
         tech_b = n.generators.carrier == tech
@@ -230,14 +230,12 @@ def _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, out
                 )
             )
             connection_costs[tech] = costs
-    pd.DataFrame(connection_costs).to_csv(output.connection_costs)
 
 
 def _aggregate_and_move_components(
     n,
     busmap,
     connection_costs_to_bus,
-    output,
     aggregate_one_ports={"Load", "StorageUnit"},
     aggregation_strategies=dict(),
     exclude_carriers=None,
@@ -250,7 +248,7 @@ def _aggregate_and_move_components(
             if not df.empty:
                 import_series_from_dataframe(n, df, c, attr)
 
-    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus, output)
+    _adjust_capital_costs_using_connection_costs(n, connection_costs_to_bus)
 
     generator_strategies = aggregation_strategies["generators"]
 
@@ -283,7 +281,6 @@ def simplify_links(
     length_factor,
     p_max_pu,
     exclude_carriers,
-    output,
     aggregation_strategies=dict(),
 ):
     ## Complex multi-node links are folded into end-points
@@ -301,13 +298,33 @@ def simplify_links(
     _, labels = connected_components(adjacency_matrix, directed=False)
     labels = pd.Series(labels, n.buses.index)
 
-    G = n.graph()
+    # Only span graph over the DC link components
+    G = n.graph(branch_components=["Link"])
 
     def split_links(nodes):
         nodes = frozenset(nodes)
 
         seen = set()
-        supernodes = {m for m in nodes if len(G.adj[m]) > 2 or (set(G.adj[m]) - nodes)}
+
+        # Corsica substation
+        node_corsica = find_closest_bus(
+            n,
+            x=9.44802,
+            y=42.52842,
+            tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
+        )
+
+        # Supernodes are endpoints of links, identified by having lass then two neighbours or being an AC Bus
+        # An example for the latter is if two different links are connected to the same AC bus.
+        supernodes = {
+            m
+            for m in nodes
+            if (
+                (len(G.adj[m]) < 2 or (set(G.adj[m]) - nodes))
+                or (n.buses.loc[m, "carrier"] == "AC")
+                or (m == node_corsica)
+            )
+        }
 
         for u in supernodes:
             for m, ls in G.adj[u].items():
@@ -408,7 +425,6 @@ def simplify_links(
         n,
         busmap,
         connection_costs_to_bus,
-        output,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=exclude_carriers,
     )
@@ -421,7 +437,6 @@ def remove_stubs(
     renewable_carriers,
     length_factor,
     simplify_network,
-    output,
     aggregation_strategies=dict(),
 ):
     logger.info("Removing stubs")
@@ -438,7 +453,6 @@ def remove_stubs(
         n,
         busmap,
         connection_costs_to_bus,
-        output,
         aggregation_strategies=aggregation_strategies,
         exclude_carriers=simplify_network["exclude_carriers"],
     )
@@ -470,9 +484,9 @@ def aggregate_to_substations(n, aggregation_strategies=dict(), buses_i=None):
         dijkstra(adj, directed=False, indices=bus_indexer), buses_i, n.buses.index
     )
 
-    dist[
-        buses_i
-    ] = np.inf  # bus in buses_i should not be assigned to different bus in buses_i
+    dist[buses_i] = (
+        np.inf
+    )  # bus in buses_i should not be assigned to different bus in buses_i
 
     for c in n.buses.country.unique():
         incountry_b = n.buses.country == c
@@ -525,18 +539,58 @@ def cluster(
     return clustering.network, clustering.busmap
 
 
+def find_closest_bus(n, x, y, tol=2000):
+    """
+    Find the index of the closest bus to the given coordinates within a specified tolerance.
+    Parameters:
+        n (pypsa.Network): The network object.
+        x (float): The x-coordinate (longitude) of the target location.
+        y (float): The y-coordinate (latitude) of the target location.
+        tol (float): The distance tolerance in meters. Default is 2000 meters.
+
+    Returns:
+        int: The index of the closest bus to the target location within the tolerance.
+             Returns None if no bus is within the tolerance.
+    """
+    # Conversion factors
+    meters_per_degree_lat = 111139  # Meters per degree of latitude
+    meters_per_degree_lon = 111139 * np.cos(
+        np.radians(y)
+    )  # Meters per degree of longitude at the given latitude
+
+    x0 = np.array(n.buses.x)
+    y0 = np.array(n.buses.y)
+
+    # Calculate distances in meters
+    dist = np.sqrt(
+        ((x - x0) * meters_per_degree_lon) ** 2
+        + ((y - y0) * meters_per_degree_lat) ** 2
+    )
+
+    # Find the closest bus within the tolerance
+    min_dist = dist.min()
+    if min_dist <= tol:
+        return n.buses.index[dist.argmin()]
+    else:
+        return None
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("simplify_network", simpl="")
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     params = snakemake.params
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
     n = pypsa.Network(snakemake.input.network)
     Nyears = n.snapshot_weightings.objective.sum() / 8760
+
+    # remove integer outputs for compatibility with PyPSA v0.26.0
+    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
 
     n, trafo_map = simplify_network_to_380(n)
 
@@ -554,7 +608,6 @@ if __name__ == "__main__":
         params.length_factor,
         params.p_max_pu,
         params.simplify_network["exclude_carriers"],
-        snakemake.output,
         params.aggregation_strategies,
     )
 
@@ -567,7 +620,6 @@ if __name__ == "__main__":
             params.renewable_carriers,
             params.length_factor,
             params.simplify_network,
-            snakemake.output,
             aggregation_strategies=params.aggregation_strategies,
         )
         busmaps.append(stub_map)
@@ -592,7 +644,23 @@ if __name__ == "__main__":
             )
             busmaps.append(busmap_hac)
 
+    # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
+    # and are lost when clustering (for example with the simpl wildcard), we remove them for consistency:
+    remove = [
+        "symbol",
+        "tags",
+        "under_construction",
+        "onshore_bus",
+        "substation_lv",
+        "substation_off",
+        "geometry",
+        "underground",
+    ]
+    n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
+    n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
+
     if snakemake.wildcards.simpl:
+        shapes = n.shapes
         n, cluster_map = cluster(
             n,
             int(snakemake.wildcards.simpl),
@@ -602,28 +670,19 @@ if __name__ == "__main__":
             params.simplify_network["feature"],
             params.aggregation_strategies,
         )
+        n.shapes = shapes
         busmaps.append(cluster_map)
 
-    # some entries in n.buses are not updated in previous functions, therefore can be wrong. as they are not needed
-    # and are lost when clustering (for example with the simpl wildcard), we remove them for consistency:
-    remove = [
-        "symbol",
-        "tags",
-        "under_construction",
-        "substation_lv",
-        "substation_off",
-        "geometry",
-        "underground",
-    ]
-    n.buses.drop(remove, axis=1, inplace=True, errors="ignore")
-    n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
-
     update_p_nom_max(n)
-
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output.network)
 
     busmap_s = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     busmap_s.to_csv(snakemake.output.busmap)
 
-    cluster_regions(busmaps, snakemake.input, snakemake.output)
+    for which in ["regions_onshore", "regions_offshore"]:
+        regions = gpd.read_file(snakemake.input[which])
+        clustered_regions = cluster_regions(busmaps, regions)
+        clustered_regions.to_file(snakemake.output[which])
+        append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
+
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output.network)

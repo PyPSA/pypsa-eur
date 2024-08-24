@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,8 +7,55 @@ Compute biogas and solid biomass potentials for each clustered model region
 using data from JRC ENSPRESO.
 """
 
+import logging
+
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
+from build_energy_totals import build_eurostat
+
+logger = logging.getLogger(__name__)
+AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
+
+
+def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_type):
+    """
+    Calculate the unsustainable biomass potential for a given resource type or
+    regex.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    df_unsustainable : pd.DataFrame
+        The dataframe with unsustainable biomass potentials.
+    share_unsus : float
+        The share of unsustainable biomass potential retained.
+    resource_type : str or regex
+        The resource type to calculate the unsustainable potential for.
+
+    Returns
+    -------
+    pd.Series
+        The unsustainable biomass potential for the given resource type or regex.
+    """
+
+    if "|" in resource_type:
+        resource_potential = df_unsustainable.filter(regex=resource_type).sum(axis=1)
+    else:
+        resource_potential = df_unsustainable[resource_type]
+
+    return (
+        df.apply(
+            lambda c: c.sum()
+            / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
+            * resource_potential.loc[c.name[:2]],
+            axis=1,
+        )
+        .mul(share_unsus)
+        .clip(lower=0)
+    )
 
 
 def build_nuts_population_data(year=2013):
@@ -126,14 +173,14 @@ def disaggregate_nuts0(bio):
     pop = build_nuts_population_data()
 
     # get population in nuts2
-    pop_nuts2 = pop.loc[pop.index.str.len() == 4]
+    pop_nuts2 = pop.loc[pop.index.str.len() == 4].copy()
     by_country = pop_nuts2.total.groupby(pop_nuts2.ct).sum()
     pop_nuts2["fraction"] = pop_nuts2.total / pop_nuts2.ct.map(by_country)
 
     # distribute nuts0 data to nuts2 by population
     bio_nodal = bio.loc[pop_nuts2.ct]
     bio_nodal.index = pop_nuts2.index
-    bio_nodal = bio_nodal.mul(pop_nuts2.fraction, axis=0)
+    bio_nodal = bio_nodal.mul(pop_nuts2.fraction, axis=0).astype(float)
 
     # update inplace
     bio.update(bio_nodal)
@@ -204,17 +251,137 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
+def add_unsustainable_potentials(df):
+    """
+    Add unsustainable biomass potentials to the given dataframe. The difference
+    between the data of JRC and Eurostat is assumed to be unsustainable
+    biomass.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe with sustainable biomass potentials.
+    unsustainable_biomass : str
+        Path to the file with unsustainable biomass potentials.
+
+    Returns
+    -------
+    pd.DataFrame
+        The dataframe with added unsustainable biomass potentials.
+    """
+    if "GB" in snakemake.config["countries"]:
+        latest_year = 2019
+    else:
+        latest_year = 2021
+    idees_rename = {"GR": "EL", "GB": "UK"}
+    df_unsustainable = (
+        build_eurostat(
+            countries=snakemake.config["countries"],
+            input_eurostat=snakemake.input.eurostat,
+            nprocesses=int(snakemake.threads),
+        )
+        .xs(
+            max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
+            level=1,
+        )
+        .xs("Primary production", level=2)
+        .droplevel([1, 2, 3])
+    )
+
+    df_unsustainable.index = df_unsustainable.index.str.strip()
+    df_unsustainable = df_unsustainable.rename(
+        {v: k for k, v in idees_rename.items()}, axis=0
+    )
+
+    bio_carriers = [
+        "Primary solid biofuels",
+        "Biogases",
+        "Renewable municipal waste",
+        "Pure biogasoline",
+        "Blended biogasoline",
+        "Pure biodiesels",
+        "Blended biodiesels",
+        "Pure bio jet kerosene",
+        "Blended bio jet kerosene",
+        "Other liquid biofuels",
+    ]
+
+    df_unsustainable = df_unsustainable[bio_carriers]
+
+    # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
+    share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
+
+    df_wo_ch = df.drop(df.filter(regex="CH\d", axis=0).index)
+
+    # Calculate unsustainable solid biomass
+    df_wo_ch["unsustainable solid biomass"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Primary solid biofuels"
+    )
+
+    # Calculate unsustainable biogas
+    df_wo_ch["unsustainable biogas"] = _calc_unsustainable_potential(
+        df_wo_ch, df_unsustainable, share_unsus, "Biogases"
+    )
+
+    # Calculate unsustainable bioliquids
+    df_wo_ch["unsustainable bioliquids"] = _calc_unsustainable_potential(
+        df_wo_ch,
+        df_unsustainable,
+        share_unsus,
+        resource_type="gasoline|diesel|kerosene|liquid",
+    )
+
+    share_sus = params.get("share_sustainable_potential_available").get(investment_year)
+    df *= share_sus
+
+    df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
+
+    return df
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
+
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_biomass_potentials", simpl="", clusters="5")
+        snakemake = mock_snakemake(
+            "build_biomass_potentials",
+            simpl="",
+            clusters="37",
+            planning_horizons=2020,
+        )
 
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+
+    overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass
-    year = params["year"]
+    investment_year = int(snakemake.wildcards.planning_horizons)
+    year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 
-    enspreso = enspreso_biomass_potentials(year, scenario)
+    if year > 2050:
+        logger.info("No biomass potentials for years after 2050, using 2050.")
+        max_year = max(AVAILABLE_BIOMASS_YEARS)
+        enspreso = enspreso_biomass_potentials(max_year, scenario)
+
+    elif year not in AVAILABLE_BIOMASS_YEARS:
+        before = int(np.floor(year / 10) * 10)
+        after = int(np.ceil(year / 10) * 10)
+        logger.info(
+            f"No biomass potentials for {year}, interpolating linearly between {before} and {after}."
+        )
+
+        enspreso_before = enspreso_biomass_potentials(before, scenario)
+        enspreso_after = enspreso_biomass_potentials(after, scenario)
+
+        fraction = (year - before) / (after - before)
+
+        enspreso = enspreso_before + fraction * (enspreso_after - enspreso_before)
+
+    else:
+        logger.info(f"Using biomass potentials for {year}.")
+        enspreso = enspreso_biomass_potentials(year, scenario)
 
     enspreso = disaggregate_nuts0(enspreso)
 
@@ -229,7 +396,9 @@ if __name__ == "__main__":
     df.to_csv(snakemake.output.biomass_potentials_all)
 
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
-    df = df.groupby(grouper, axis=1).sum()
+    df = df.T.groupby(grouper).sum().T
+
+    df = add_unsustainable_potentials(df)
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"

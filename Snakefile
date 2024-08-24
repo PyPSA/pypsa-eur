@@ -1,36 +1,36 @@
-# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 
+from pathlib import Path
+import yaml
 from os.path import normpath, exists
 from shutil import copyfile, move, rmtree
-
-from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
-
-HTTP = HTTPRemoteProvider()
-
 from snakemake.utils import min_version
 
-min_version("7.7")
+min_version("8.11")
+
+from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
 
 
-if not exists("config/config.yaml") and exists("config/config.default.yaml"):
-    copyfile("config/config.default.yaml", "config/config.yaml")
+copy_default_files(workflow)
 
 
+configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
 
-COSTS = f"data/costs_{config['costs']['year']}.csv"
-ATLITE_NPROCESSES = config["atlite"].get("nprocesses", 4)
+run = config["run"]
+scenarios = get_scenarios(run)
+RDIR = get_rdir(run)
 
-run = config.get("run", {})
-RDIR = run["name"] + "/" if run.get("name") else ""
-CDIR = RDIR if not run.get("shared_cutouts") else ""
+shared_resources = run["shared_resources"]["policy"]
+exclude_from_shared = run["shared_resources"]["exclude"]
+logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
-LOGS = "logs/" + RDIR
-BENCHMARKS = "benchmarks/" + RDIR
-RESOURCES = "resources/" + RDIR if not run.get("shared_resources") else "resources/"
+CDIR = "" if run["shared_cutouts"] else RDIR
 RESULTS = "results/" + RDIR
 
 
@@ -41,9 +41,9 @@ localrules:
 wildcard_constraints:
     simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
-    ll="(v|c)([0-9\.]+|opt)",
-    opts="[-+a-zA-Z0-9\.]*",
-    sector_opts="[-+a-zA-Z0-9\.\s]*",
+    ll=r"(v|c)([0-9\.]+|opt)",
+    opts=r"[-+a-zA-Z0-9\.]*",
+    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
 
 
 include: "rules/common.smk"
@@ -67,26 +67,53 @@ if config["foresight"] == "myopic":
     include: "rules/solve_myopic.smk"
 
 
+if config["foresight"] == "perfect":
+
+    include: "rules/solve_perfect.smk"
+
+
+rule all:
+    input:
+        expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+    default_target: True
+
+
+rule create_scenarios:
+    output:
+        config["run"]["scenarios"]["file"],
+    conda:
+        "envs/retrieve.yaml"
+    script:
+        "config/create_scenarios.py"
+
+
 rule purge:
-    message:
-        "Purging generated resources, results and docs. Downloads are kept."
     run:
-        rmtree("resources/", ignore_errors=True)
-        rmtree("results/", ignore_errors=True)
-        rmtree("doc/_build", ignore_errors=True)
+        import builtins
+
+        do_purge = builtins.input(
+            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+        )
+        if do_purge == "y":
+            rmtree("resources/", ignore_errors=True)
+            rmtree("results/", ignore_errors=True)
+            rmtree("doc/_build", ignore_errors=True)
+            print("Purging generated resources, results and docs. Downloads are kept.")
+        else:
+            raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
 rule dag:
     message:
         "Creating DAG of workflow."
     output:
-        dot=RESOURCES + "dag.dot",
-        pdf=RESOURCES + "dag.pdf",
-        png=RESOURCES + "dag.png",
+        dot=resources("dag.dot"),
+        pdf=resources("dag.pdf"),
+        png=resources("dag.png"),
     conda:
         "envs/environment.yaml"
     shell:
-        """
+        r"""
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}
@@ -108,6 +135,7 @@ rule sync:
     shell:
         """
         rsync -uvarh --ignore-missing-args --files-from=.sync-send . {params.cluster}
+        rsync -uvarh --no-g {params.cluster}/resources . || echo "No resources directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/results . || echo "No results directory, skipping rsync"
         rsync -uvarh --no-g {params.cluster}/logs . || echo "No logs directory, skipping rsync"
         """

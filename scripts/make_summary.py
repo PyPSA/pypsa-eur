@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,18 +8,16 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 import sys
 
 import numpy as np
 import pandas as pd
 import pypsa
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
-
+logger = logging.getLogger(__name__)
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 
@@ -33,10 +31,7 @@ def assign_locations(n):
         ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
         for i in ifind.unique():
             names = ifind.index[ifind == i]
-            if i == -1:
-                c.df.loc[names, "location"] = ""
-            else:
-                c.df.loc[names, "location"] = names.str[:i]
+            c.df.loc[names, "location"] = "" if i == -1 else names.str[:i]
 
 
 def calculate_nodal_cfs(n, label, nodal_cfs):
@@ -397,7 +392,7 @@ def calculate_supply_energy(n, label, supply_energy):
 
         for c in n.iterate_components(n.branch_components):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
+                items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
                 if len(items) == 0:
                     continue
@@ -416,6 +411,85 @@ def calculate_supply_energy(n, label, supply_energy):
                 supply_energy.loc[s.index, label] = s
 
     return supply_energy
+
+
+def calculate_nodal_supply_energy(n, label, nodal_supply_energy):
+    """
+    Calculate the total energy supply/consumption of each component at the
+    buses aggregated by carrier and node.
+    """
+
+    bus_carriers = n.buses.carrier.unique()
+
+    for i in bus_carriers:
+        bus_map = n.buses.carrier == i
+        bus_map.at[""] = False
+
+        for c in n.iterate_components(n.one_port_components):
+            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+
+            if len(items) == 0:
+                continue
+
+            s = (
+                pd.concat(
+                    [
+                        (
+                            c.pnl.p[items]
+                            .multiply(n.snapshot_weightings.generators, axis=0)
+                            .sum()
+                            .multiply(c.df.loc[items, "sign"])
+                        ),
+                        c.df.loc[items][["bus", "carrier"]],
+                    ],
+                    axis=1,
+                )
+                .groupby(by=["bus", "carrier"])
+                .sum()[0]
+            )
+            s = pd.concat([s], keys=[c.list_name])
+            s = pd.concat([s], keys=[i])
+
+            nodal_supply_energy = nodal_supply_energy.reindex(
+                s.index.union(nodal_supply_energy.index)
+            )
+            nodal_supply_energy.loc[s.index, label] = s
+
+        for c in n.iterate_components(n.branch_components):
+            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
+                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
+
+                if (len(items) == 0) or c.pnl["p" + end].empty:
+                    continue
+
+                s = (
+                    pd.concat(
+                        [
+                            (
+                                (-1)
+                                * c.pnl["p" + end][items]
+                                .multiply(n.snapshot_weightings.generators, axis=0)
+                                .sum()
+                            ),
+                            c.df.loc[items][["bus0", "carrier"]],
+                        ],
+                        axis=1,
+                    )
+                    .groupby(by=["bus0", "carrier"])
+                    .sum()[0]
+                )
+
+                s.index = s.index.map(lambda x: (x[0], x[1] + end))
+                s = pd.concat([s], keys=[c.list_name])
+                s = pd.concat([s], keys=[i])
+
+                nodal_supply_energy = nodal_supply_energy.reindex(
+                    s.index.union(nodal_supply_energy.index)
+                )
+
+                nodal_supply_energy.loc[s.index, label] = s
+
+    return nodal_supply_energy
 
 
 def calculate_metrics(n, label, metrics):
@@ -449,6 +523,10 @@ def calculate_metrics(n, label, metrics):
     if "CO2Limit" in n.global_constraints.index:
         metrics.at["co2_shadow", label] = n.global_constraints.at["CO2Limit", "mu"]
 
+    if "co2_sequestration_limit" in n.global_constraints.index:
+        metrics.at["co2_storage_shadow", label] = n.global_constraints.at[
+            "co2_sequestration_limit", "mu"
+        ]
     return metrics
 
 
@@ -493,7 +571,7 @@ def calculate_weighted_prices(n, label, weighted_prices):
         "H2": ["Sabatier", "H2 Fuel Cell"],
     }
 
-    for carrier in link_loads:
+    for carrier, value in link_loads.items():
         if carrier == "electricity":
             suffix = ""
         elif carrier[:5] == "space":
@@ -508,26 +586,16 @@ def calculate_weighted_prices(n, label, weighted_prices):
 
         if carrier in ["H2", "gas"]:
             load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
-        elif carrier[:5] == "space":
-            load = heat_demand_df[buses.str[:2]].rename(
-                columns=lambda i: str(i) + suffix
-            )
         else:
-            load = (
-                n.loads_t.p_set[buses.intersection(n.loads_t.p_set.columns)]
-                .reindex(columns=buses)
-                .fillna(0.0)
-            )
+            load = n.loads_t.p_set[buses.intersection(n.loads.index)]
 
-        for tech in link_loads[carrier]:
+        for tech in value:
             names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
 
-            if names.empty:
-                continue
-
-            load += (
-                n.links_t.p0[names].groupby(n.links.loc[names, "bus0"], axis=1).sum()
-            )
+            if not names.empty:
+                load += (
+                    n.links_t.p0[names].T.groupby(n.links.loc[names, "bus0"]).sum().T
+                )
 
         # Add H2 Store when charging
         # if carrier == "H2":
@@ -566,14 +634,16 @@ def calculate_market_values(n, label, market_values):
 
         dispatch = (
             n.generators_t.p[gens]
-            .groupby(n.generators.loc[gens, "bus"], axis=1)
+            .T.groupby(n.generators.loc[gens, "bus"])
             .sum()
-            .reindex(columns=buses, fill_value=0.0)
+            .T.reindex(columns=buses, fill_value=0.0)
         )
-
         revenue = dispatch * n.buses_t.marginal_price[buses]
 
-        market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+        if total_dispatch := dispatch.sum().sum():
+            market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+        else:
+            market_values.at[tech, label] = np.nan
 
     ## Now do market value of links ##
 
@@ -589,14 +659,17 @@ def calculate_market_values(n, label, market_values):
 
             dispatch = (
                 n.links_t["p" + i][links]
-                .groupby(n.links.loc[links, "bus" + i], axis=1)
+                .T.groupby(n.links.loc[links, "bus" + i])
                 .sum()
-                .reindex(columns=buses, fill_value=0.0)
+                .T.reindex(columns=buses, fill_value=0.0)
             )
 
             revenue = dispatch * n.buses_t.marginal_price[buses]
 
-            market_values.at[tech, label] = revenue.sum().sum() / dispatch.sum().sum()
+            if total_dispatch := dispatch.sum().sum():
+                market_values.at[tech, label] = revenue.sum().sum() / total_dispatch
+            else:
+                market_values.at[tech, label] = np.nan
 
     return market_values
 
@@ -643,6 +716,7 @@ def make_summaries(networks_dict):
         "energy",
         "supply",
         "supply_energy",
+        "nodal_supply_energy",
         "prices",
         "weighted_prices",
         "price_statistics",
@@ -651,14 +725,11 @@ def make_summaries(networks_dict):
     ]
 
     columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "ll", "opt", "planning_horizon"]
+        networks_dict.keys(),
+        names=["cluster", "ll", "opt", "planning_horizon"],
     )
 
-    df = {}
-
-    for output in outputs:
-        df[output] = pd.DataFrame(columns=columns, dtype=float)
-
+    df = {output: pd.DataFrame(columns=columns, dtype=float) for output in outputs}
     for label, filename in networks_dict.items():
         logger.info(f"Make summary for scenario {label}, using {filename}")
 
@@ -686,7 +757,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("make_summary")
 
-    logging.basicConfig(level=snakemake.config["logging"]["level"])
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     s = snakemake.input.networks[0]
     base_dir = s[: s.find("results/") + 8]
@@ -703,7 +775,8 @@ if __name__ == "__main__":
         for planning_horizon in snakemake.params.scenario["planning_horizons"]
     }
 
-    Nyears = len(pd.date_range(freq="h", **snakemake.params.snapshots)) / 8760
+    time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
+    Nyears = len(time) / 8760
 
     costs_db = prepare_costs(
         snakemake.input.costs,

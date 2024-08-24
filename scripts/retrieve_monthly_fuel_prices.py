@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,12 +7,11 @@ Retrieve monthly fuel prices from Destatis.
 """
 
 import logging
-
-logger = logging.getLogger(__name__)
-
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve
+from _helpers import configure_logging, progress_retrieve, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -23,6 +22,7 @@ if __name__ == "__main__":
     else:
         rootpath = "."
     configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     url = "https://www.destatis.de/EN/Themes/Economy/Prices/Publications/Downloads-Energy-Price-Trends/energy-price-trends-xlsx-5619002.xlsx?__blob=publicationFile"
 
