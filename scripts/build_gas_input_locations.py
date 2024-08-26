@@ -105,10 +105,6 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     remove_country = ["RU", "UA", "TR", "BY"]  # noqa: F841
     sto = sto.query("country_code not in @remove_country").copy()
 
-    sto = read_scigrid_gas(sto_fn)
-    remove_country = ["RU", "UA", "TR", "BY"]
-    sto = sto.query("country_code != @remove_country")
-
     # production sites inside the model scope
     prod = build_gem_prod_data(gem_fn)
 
