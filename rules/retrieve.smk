@@ -373,6 +373,7 @@ if config["enable"]["retrieve"]:
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_co2_prices:

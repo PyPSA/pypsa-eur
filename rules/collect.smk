@@ -105,9 +105,7 @@ rule plot_resources:
         resources("graphics/industrial-sites.pdf"),
         resources("graphics/powerplants.pdf"),
         resources("graphics/salt-caverns.pdf"),
-        expand(
-            resources("graphics/power-network-{clusters}.pdf"), **config["scenario"]
-        ),
+        expand(resources("graphics/power-network-{clusters}.pdf"), **config["scenario"]),
         expand(
             resources("graphics/salt-caverns-{clusters}-nearshore.pdf"),
             **config["scenario"],

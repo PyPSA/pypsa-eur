@@ -219,9 +219,13 @@ rule plot_choropleth_demand:
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        industrial_demand=resources("industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv"),
+        industrial_demand=resources(
+            "industrial_energy_demand_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         shipping_demand=resources("shipping_demand_s{simpl}_{clusters}.csv"),
-        nodal_energy_totals=resources("pop_weighted_energy_totals_s{simpl}_{clusters}.csv"),
+        nodal_energy_totals=resources(
+            "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+        ),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         rc="matplotlibrc",
     output:
@@ -370,9 +374,7 @@ rule plot_all_resources:
             resources("graphics/salt-caverns-s{simpl}-{clusters}-onshore.pdf"),
             **config["scenario"],
         ),
-        expand(
-            resources("graphics/power-network-{clusters}.pdf"), **config["scenario"]
-        ),
+        expand(resources("graphics/power-network-{clusters}.pdf"), **config["scenario"]),
         expand(
             resources("graphics/biomass-potentials-s{simpl}-{clusters}-biogas.pdf"),
             **config["scenario"],
