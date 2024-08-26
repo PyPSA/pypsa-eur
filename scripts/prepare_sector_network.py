@@ -3243,7 +3243,9 @@ def add_industry(n, costs):
                 carrier="HBI",
             )
 
-        electricity_input = costs.at["direct iron reduction furnace", "electricity-input"]
+        electricity_input = costs.at[
+            "direct iron reduction furnace", "electricity-input"
+        ]
 
         hydrogen_input = costs.at["direct iron reduction furnace", "hydrogen-input"]
 
@@ -3266,7 +3268,8 @@ def add_industry(n, costs):
             nodes,
             suffix=" DRI",
             carrier="DRI",
-            capital_cost=costs.at["direct iron reduction furnace", "fixed"] / electricity_input,
+            capital_cost=costs.at["direct iron reduction furnace", "fixed"]
+            / electricity_input,
             marginal_cost=marginal_cost,
             p_nom_max=p_nom if no_relocation else np.inf,
             p_nom_extendable=True,
@@ -3280,18 +3283,14 @@ def add_industry(n, costs):
 
         electricity_input = costs.at["electric arc furnace", "electricity-input"]
 
-        p_nom = (
-            industrial_production[sector]
-            * electricity_input
-            / nhours
-        )
+        p_nom = industrial_production[sector] * electricity_input / nhours
 
         n.madd(
             "Link",
             nodes,
             suffix=" EAF",
             carrier="EAF",
-            capital_cost=costs.at["electric arc furnace", "fixed"]  / electricity_input,
+            capital_cost=costs.at["electric arc furnace", "fixed"] / electricity_input,
             p_nom_max=p_nom if no_relocation else np.inf,
             p_nom_extendable=True,
             p_min_pu=1 if no_flexibility else 0,
@@ -3299,7 +3298,8 @@ def add_industry(n, costs):
             bus1="EU steel",
             bus2="EU HBI",
             efficiency=1 / electricity_input,
-            efficiency2=-costs.at["electric arc furnace", "hbi-input"] / electricity_input,
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input,
         )
 
     n.madd(
