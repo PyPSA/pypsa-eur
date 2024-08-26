@@ -26,7 +26,7 @@ from pypsa.plot import add_legend_circles, add_legend_patches
 cc = coco.CountryConverter()
 
 # for EU: https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_aind__custom_9900786/default/table?lang=en
-EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
+# EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
 
 NICE_NAMES = {
     "pipeline-h2": r"H$_2$ (pipeline)",
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     h2_cost = n.generators.filter(regex="import (pipeline-h2|shipping-lh2)", axis=0)
     regions["marginal_cost"] = (
         h2_cost.groupby(h2_cost.bus.map(n.buses.location)).marginal_cost.min()
-        * EUR_2015_TO_2020
+        # * EUR_2015_TO_2020
     )
 
     # patch network
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     )
 
     ic["esc"] = ic.esc.map(NICE_NAMES)
-    ic["value"] *= EUR_2015_TO_2020
+    # ic["value"] *= EUR_2015_TO_2020
 
     fig, ax = plt.subplots(subplot_kw={"projection": crs}, figsize=(10.5, 14))
 

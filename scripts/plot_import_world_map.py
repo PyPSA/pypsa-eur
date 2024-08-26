@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 # for EU: https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_aind__custom_9900786/default/table?lang=en
-EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
+# EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
 
 AREA_CRS = "ESRI:54009"
 
@@ -81,7 +81,7 @@ def get_cost_composition(df, country, escs, production):
     composition = (
         df.query(query_str).groupby(["esc", "subcategory", "importer"]).value.min()
     )
-    composition *= EUR_2015_TO_2020
+    # composition *= EUR_2015_TO_2020
 
     minimal = {}
     for name, group in composition.groupby("esc"):
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         .groupby("exporter")
         .value.min()
     )
-    import_costs *= EUR_2015_TO_2020
+    # import_costs *= EUR_2015_TO_2020
     import_costs.index = cc.convert(
         import_costs.index.str.split("-").str[0], src="iso2", to="iso3"
     )
