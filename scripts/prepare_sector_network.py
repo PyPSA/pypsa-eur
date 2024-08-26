@@ -155,7 +155,7 @@ def define_spatial(nodes, options):
     spatial.methanol.nodes = ["EU methanol"]
     spatial.methanol.locations = ["EU"]
 
-    if options["regional_methanol_demand"]:
+    if options["methanol"]["regional_methanol_demand"]:
         spatial.methanol.demand_locations = nodes
         spatial.methanol.industry = nodes + " industry methanol"
         spatial.methanol.shipping = nodes + " shipping methanol"
@@ -779,14 +779,9 @@ def add_allam(n, costs):
 
 def add_biomass_to_methanol(n, costs):
 
-    if len(spatial.biomass.nodes) <= 1 and len(spatial.methanol.nodes) > 1:
-        link_names = nodes + " " + spatial.biomass.nodes
-    else:
-        link_names = spatial.biomass.nodes
-
     n.madd(
         "Link",
-        link_names,
+        spatial.biomass.nodes,
         suffix=" biomass-to-methanol",
         bus0=spatial.biomass.nodes,
         bus1=spatial.methanol.nodes,
@@ -806,14 +801,9 @@ def add_biomass_to_methanol(n, costs):
 
 def add_biomass_to_methanol_cc(n, costs):
 
-    if len(spatial.biomass.nodes) <= 1 and len(spatial.methanol.nodes) > 1:
-        link_names = nodes + " " + spatial.biomass.nodes
-    else:
-        link_names = spatial.biomass.nodes
-
     n.madd(
         "Link",
-        link_names,
+        spatial.biomass.nodes,
         suffix=" biomass-to-methanol CC",
         bus0=spatial.biomass.nodes,
         bus1=spatial.methanol.nodes,
@@ -869,7 +859,7 @@ def add_methanol_to_power(n, costs, types={}):
         logger.info("Adding methanol CCGT power plants.")
 
         # efficiency * EUR/MW * (annuity + FOM)
-        capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+        capital_cost = costs.at["CCGT", "efficiency"] * costs.at["CCGT", "fixed"]
 
         n.madd(
             "Link",
@@ -882,9 +872,9 @@ def add_methanol_to_power(n, costs, types={}):
             p_nom_extendable=True,
             capital_cost=capital_cost,
             marginal_cost=2,
-            efficiency=0.58,
+            efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
-            lifetime=25,
+            lifetime=costs.at["CCGT", "lifetime"],
         )
 
     if types["ccgt_cc"]:
@@ -895,7 +885,7 @@ def add_methanol_to_power(n, costs, types={}):
         # TODO consider efficiency changes / energy inputs for CC
 
         # efficiency * EUR/MW * (annuity + FOM)
-        capital_cost = 0.58 * 916e3 * (calculate_annuity(25, 0.07) + 0.035)
+        capital_cost = costs.at["CCGT", "efficiency"] * costs.at["CCGT", "fixed"]
 
         capital_cost_cc = (
             capital_cost
@@ -915,12 +905,12 @@ def add_methanol_to_power(n, costs, types={}):
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
             marginal_cost=2,
-            efficiency=0.58,
+            efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
             efficiency3=(1 - costs.at["cement capture", "capture_rate"])
             * costs.at["methanolisation", "carbondioxide-input"],
-            lifetime=25,
+            lifetime=costs.at["CCGT", "lifetime"],
         )
 
     if types["ocgt"]:
@@ -935,15 +925,11 @@ def add_methanol_to_power(n, costs, types={}):
             bus2="co2 atmosphere",
             carrier="OCGT methanol",
             p_nom_extendable=True,
-            capital_cost=0.35
-            * 458e3
-            * (
-                calculate_annuity(25, 0.07) + 0.035
-            ),  # efficiency * EUR/MW * (annuity + FOM)
+            capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"],
             marginal_cost=2,
-            efficiency=0.35,
+            efficiency=costs.at["OCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
-            lifetime=25,
+            lifetime=costs.at["OCGT", "lifetime"],
         )
 
 
@@ -978,7 +964,7 @@ def add_methanol_to_olefins(n, costs):
 
     n.madd(
         "Link",
-        spatial.methanol.locations,
+        nodes,
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
@@ -1000,7 +986,6 @@ def add_methanol_to_olefins(n, costs):
 def add_methanol_to_kerosene(n, costs):
     nodes = pop_layout.index
     nhours = n.snapshot_weightings.generators.sum()
-    nyears = nhours / 8760
 
     demand_factor = options["aviation_demand_factor"]
 
@@ -1022,7 +1007,7 @@ def add_methanol_to_kerosene(n, costs):
 
     n.madd(
         "Link",
-        spatial.methanol.locations,
+        spatial.h2.locations,
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=capital_cost,
@@ -1041,15 +1026,13 @@ def add_methanol_to_kerosene(n, costs):
 def add_methanol_reforming(n, costs):
     logger.info("Adding methanol steam reforming.")
 
-    nodes = pop_layout.index
-
     tech = "Methanol steam reforming"
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
     n.madd(
         "Link",
-        spatial.methanol.locations,
+        spatial.h2.locations,
         suffix=f" {tech}",
         bus0=spatial.methanol.nodes,
         bus1=spatial.h2.nodes,
@@ -1065,8 +1048,6 @@ def add_methanol_reforming(n, costs):
 
 def add_methanol_reforming_cc(n, costs):
     logger.info("Adding methanol steam reforming with carbon capture.")
-
-    nodes = pop_layout.index
 
     tech = "Methanol steam reforming"
 
@@ -1084,7 +1065,7 @@ def add_methanol_reforming_cc(n, costs):
 
     n.madd(
         "Link",
-        nodes,
+        spatial.h2.locations,
         suffix=f" {tech} CC",
         bus0=spatial.methanol.nodes,
         bus1=spatial.h2.nodes,
@@ -2579,43 +2560,28 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
 
 
 def add_methanol(n, costs):
+
+    methanol_options = options["methanol"]
+    if not any(methanol_options.values()):
+        return
+
     logger.info("Add methanol")
-
-    n.add("Carrier", "methanol")
-
-    n.madd(
-        "Bus",
-        spatial.methanol.nodes,
-        location=spatial.methanol.locations,
-        carrier="methanol",
-        unit="MWh_LHV",
-    )
-
-    n.madd(
-        "Store",
-        spatial.methanol.nodes,
-        suffix=" Store",
-        bus=spatial.methanol.nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="methanol",
-        capital_cost=0.02,
-    )
+    add_carrier_buses(n, "methanol")
 
     if n.buses.carrier.str.contains("biomass").any():
-        if options["biomass_to_methanol"]:
+        if methanol_options["biomass_to_methanol"]:
             add_biomass_to_methanol(n, costs)
 
-        if options["biomass_to_methanol"]:
+        if methanol_options["biomass_to_methanol"]:
             add_biomass_to_methanol_cc(n, costs)
 
-    if options["methanol_to_power"]:
-        add_methanol_to_power(n, costs, types=options["methanol_to_power"])
+    if methanol_options["methanol_to_power"]:
+        add_methanol_to_power(n, costs, types=methanol_options["methanol_to_power"])
 
-    if options["methanol_reforming"]:
+    if methanol_options["methanol_reforming"]:
         add_methanol_reforming(n, costs)
 
-    if options["methanol_reforming_cc"]:
+    if methanol_options["methanol_reforming_cc"]:
         add_methanol_reforming_cc(n, costs)
 
 
@@ -3398,7 +3364,7 @@ def add_industry(n, costs):
         / nhours
     )
 
-    if not options["regional_methanol_demand"]:
+    if not options["methanol"]["regional_methanol_demand"]:
         p_set_methanol = p_set_methanol.sum()
 
     n.madd(
@@ -3521,7 +3487,7 @@ def add_industry(n, costs):
             * efficiency
         )
 
-        if not options["regional_methanol_demand"]:
+        if not options["methanol"]["regional_methanol_demand"]:
             p_set_methanol_shipping = p_set_methanol_shipping.sum()
 
         n.madd(
@@ -3819,7 +3785,7 @@ def add_industry(n, costs):
             efficiency3=process_co2_per_naphtha,
         )
 
-    if options["methanol_to_olefins"]:
+    if options["methanol"]["methanol_to_olefins"]:
         add_methanol_to_olefins(n, costs)
 
     # aviation
@@ -3866,7 +3832,7 @@ def add_industry(n, costs):
         efficiency2=costs.at["oil", "CO2 intensity"],
     )
 
-    if options["methanol_to_kerosene"]:
+    if options["methanol"]["methanol_to_kerosene"]:
         add_methanol_to_kerosene(n, costs)
 
     # TODO simplify bus expression
