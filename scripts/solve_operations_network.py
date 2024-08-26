@@ -52,9 +52,9 @@ if __name__ == "__main__":
     n = solve_network(
         n,
         config=snakemake.config,
+        params=snakemake.params,
         solving=snakemake.params.solving,
         log_fn=snakemake.log.solver,
-        snakemake=snakemake,
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
