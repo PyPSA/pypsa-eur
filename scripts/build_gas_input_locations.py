@@ -36,7 +36,7 @@ def build_gem_lng_data(fn):
         "Gran Canaria LNG Terminal",
     ]
 
-    status_list = ["Operating", "Construction"] # noqa: F841
+    status_list = ["Operating", "Construction"]  # noqa: F841
 
     df = df.query(
         "Status in @status_list \
