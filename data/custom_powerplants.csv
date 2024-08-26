@@ -1,187 +1,187 @@
 ,Name,Fueltype,Technology,Set,Country,Capacity,Efficiency,DateIn,DateRetrofit,DateOut,lat,lon,Duration,Volume_Mm3,DamHeight_m,StorageCapacity_MWh,EIC,projectID,Status
-0,Almaraz,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,39.807,-5.6986,,,,,,G100000500240,operating
-1,Almaraz,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,39.807,-5.6986,,,,,,G100000500239,operating
-2,Asco,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,41.1993,0.5694,,,,,,G100000500243,operating
-3,Asco,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,41.1993,0.5694,,,,,,G100000500242,operating
-4,Belleville,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.5103,2.87501,,,,,,G100000500060,operating
-5,Belleville,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.5103,2.87501,,,,,,G100000500061,operating
-6,Beznau,Nuclear,Steam Turbine,PP,Switzerland,0.0,,2045.0,,,47.552,8.2281,,,,,,G100000500505,operating
-7,Beznau,Nuclear,Steam Turbine,PP,Switzerland,0.0,,2045.0,,,47.552,8.2281,,,,,,G100000500504,operating
-8,Blayais,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500296,operating
-9,Blayais,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500295,operating
-10,Blayais,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500294,operating
-11,Blayais,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500293,operating
-12,Bohunice,Nuclear,Steam Turbine,PP,Slovakia,1200.0,,2045.0,,,48.4968,17.6907,,,,,,G100000501269,pre-construction
-13,Bohunice,Nuclear,Steam Turbine,PP,Slovakia,0.0,,2045.0,,,48.4968,17.6907,,,,,,G100000500460,operating
-14,Bohunice,Nuclear,Steam Turbine,PP,Slovakia,0.0,,2045.0,,,48.4968,17.6907,,,,,,G100000500459,operating
-15,Borssele,Nuclear,Steam Turbine,PP,Netherlands,0.0,,2045.0,,2033.0,51.4312,3.7174,,,,,,G100000500496,operating
-16,Borssele,Nuclear,Steam Turbine,PP,Netherlands,1650.0,,2035.0,,,51.4312,3.7174,,,,,,G100000501226,pre-construction
-17,Borssele,Nuclear,Steam Turbine,PP,Netherlands,1650.0,,2035.0,,,51.4312,3.7174,,,,,,G100000501225,pre-construction
-18,Bradwell,Nuclear,Steam Turbine,PP,United Kingdom,1150.0,,2030.0,,,51.7428,0.9047,,,,,,G100000500710,pre-construction
-19,Bradwell,Nuclear,Steam Turbine,PP,United Kingdom,1150.0,,2045.0,,,51.7428,0.9047,,,,,,G100000500716,pre-construction
-20,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500309,operating
-21,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500303,operating
-22,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000501176,announced
-23,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500310,operating
-24,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500304,operating
-25,Bugey,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000501177,announced
-26,Cattenom,Nuclear,Steam Turbine,PP,France,1362.0,,1991.0,,,49.416,6.2169,,,,,,G100000500068,operating
-27,Cattenom,Nuclear,Steam Turbine,PP,France,1362.0,,1992.0,,,49.416,6.2169,,,,,,G100000500069,operating
-28,Cattenom,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.416,6.2169,,,,,,G100000500066,operating
-29,Cattenom,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.416,6.2169,,,,,,G100000500067,operating
-30,Cernavoda,Nuclear,Steam Turbine,PP,Romania,720.0,,2031.0,,,44.32401,28.0561,,,,,,G100000500674,pre-construction
-31,Cernavoda,Nuclear,Steam Turbine,PP,Romania,720.0,,2032.0,,,44.3229,28.0573,,,,,,G100000500675,pre-construction
-32,Cernavoda,Nuclear,Steam Turbine,PP,Romania,706.0,,1996.0,,,44.3205,28.0598,,,,,,G100000500375,operating
-33,Cernavoda,Nuclear,Steam Turbine,PP,Romania,705.0,,2007.0,,,44.3218,28.0586,,,,,,G100000500377,operating
-34,Chinon,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500289,operating
-35,Chinon,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500292,operating
-36,Chinon,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500291,operating
-37,Chinon,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500290,operating
-38,Chooz,Nuclear,Steam Turbine,PP,France,1560.0,,2000.0,,,50.0901,4.7872,,,,,,G100000500011,operating
-39,Chooz,Nuclear,Steam Turbine,PP,France,1560.0,,2000.0,,,50.0901,4.7872,,,,,,G100000500010,operating
-40,Civaux,Nuclear,Steam Turbine,PP,France,1561.0,,2002.0,,,46.4555,0.6582,,,,,,G100000500008,operating
-41,Civaux,Nuclear,Steam Turbine,PP,France,1561.0,,2002.0,,,46.4555,0.6582,,,,,,G100000500009,operating
-42,Cofrentes,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,39.2134,-1.0509,,,,,,G100000500149,operating
-43,Cruas,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500279,operating
-44,Cruas,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100001017698,operating
-45,Cruas,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500281,operating
-46,Cruas,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500282,operating
-47,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009049,announced
-48,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009048,announced
-49,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009047,announced
-50,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009046,announced
-51,Dampierre,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500308,operating
-52,Dampierre,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500307,operating
-53,Dampierre,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500306,operating
-54,Dampierre,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500305,operating
-55,Doel,Nuclear,Steam Turbine,PP,Belgium,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500499,operating
-56,Doel,Nuclear,Steam Turbine,PP,Belgium,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500500,operating
-57,Doel,Nuclear,Steam Turbine,PP,Belgium,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500234,operating
-58,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500876,pre-construction
-59,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500875,pre-construction
-60,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500874,pre-construction
-61,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500872,pre-construction
-62,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500873,pre-construction
-63,Doicesti,Nuclear,Steam Turbine,PP,Romania,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500871,pre-construction
-64,Flamanville,Nuclear,Steam Turbine,PP,France,1650.0,,2024.0,,,49.5366,-1.8823,,,,,,G100000500007,construction
-65,Flamanville,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.5366,-1.8823,,,,,,G100000500051,operating
-66,Flamanville,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.5366,-1.8823,,,,,,G100000500050,operating
-67,Forsmark,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500246,operating
-68,Forsmark,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500146,operating
-69,Forsmark,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500128,operating
-70,Goesgen,Nuclear,Steam Turbine,PP,Switzerland,0.0,,2045.0,,,47.3656,7.96801,,,,,,G100000500203,operating
-71,Golfech,Nuclear,Steam Turbine,PP,France,1363.0,,1991.0,,,44.106,0.8443,,,,,,G100000500062,operating
-72,Golfech,Nuclear,Steam Turbine,PP,France,1363.0,,1994.0,,,44.106,0.8443,,,,,,G100000500063,operating
-73,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500301,operating
-74,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500299,operating
-75,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000501179,announced
-76,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500298,operating
-77,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000501178,announced
-78,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500297,operating
-79,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500300,operating
-80,Gravelines,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500302,operating
-81,Hartlepool,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.6341,-1.1801,,,,,,G100000501025,operating
-82,Hartlepool,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.6341,-1.1801,,,,,,G100000501026,operating
-83,Heysham,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.0295,-2.9149,,,,,,G100000501028,operating
-84,Heysham,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.0295,-2.9149,,,,,,G100000501027,operating
-85,Heysham,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.03101,-2.9112,,,,,,G100000501030,operating
-86,Heysham,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.03101,-2.9112,,,,,,G100000501029,operating
-87,Hinkley Point,Nuclear,Steam Turbine,PP,United Kingdom,1720.0,,2030.0,,,51.2063,-3.1423,,,,,,G100000501036,construction
-88,Hinkley Point,Nuclear,Steam Turbine,PP,United Kingdom,1720.0,,2029.0,,,51.2063,-3.1423,,,,,,G100000501035,construction
-89,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501235,announced
-90,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501236,announced
-91,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501244,announced
-92,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501243,announced
-93,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501242,announced
-94,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501241,announced
-95,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501237,announced
-96,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501240,announced
-97,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501239,announced
-98,Katowice,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501238,announced
-99,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009044,announced
-100,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009045,announced
-101,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009041,announced
-102,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009042,announced
-103,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009043,announced
-104,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009040,announced
-111,Kozloduy,Nuclear,Steam Turbine,PP,Bulgaria,1000.0,,2033.0,,,43.7497,23.7685,,,,,,G100000500717,pre-construction
-112,Kozloduy,Nuclear,Steam Turbine,PP,Bulgaria,0.0,,2045.0,,,43.7497,23.7685,,,,,,G100000500192,operating
-113,Kozloduy,Nuclear,Steam Turbine,PP,Bulgaria,1000.0,,2036.0,,,43.7497,23.7685,,,,,,G100000500718,pre-construction
-114,Kozloduy,Nuclear,Steam Turbine,PP,Bulgaria,1040.0,,1993.0,,,43.7497,23.7685,,,,,,G100000500191,operating
-115,Krsko,Nuclear,Steam Turbine,PP,Slovenia,0.0,,2045.0,,,45.9389,15.51601,,,,,,G100000500381,announced
-116,Krsko,Nuclear,Steam Turbine,PP,Slovenia,0.0,,2045.0,,2043.0,45.9389,15.51601,,,,,,G100000500380,operating
-117,Leibstadt,Nuclear,Steam Turbine,PP,Switzerland,0.0,,2045.0,,,47.6012,8.1845,,,,,,G100000500087,operating
-118,Loviisa,Nuclear,Steam Turbine,PP,Finland,0.0,,2045.0,,2050.0,60.3708,26.3468,,,,,,G100000500449,operating
-119,Loviisa,Nuclear,Steam Turbine,PP,Finland,0.0,,2045.0,,2050.0,60.3708,26.3468,,,,,,G100000500448,operating
-120,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,Poland,1250.0,,2037.0,,,54.8036,17.7881,,,,,,G100000500840,pre-construction
-121,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,Poland,1250.0,,2035.0,,,54.8036,17.7881,,,,,,G100000500839,pre-construction
-122,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,Poland,1250.0,,2032.0,,,54.8036,17.7881,,,,,,G100000500838,pre-construction
-123,Mochovce,Nuclear,Steam Turbine,PP,Slovakia,500.0,,2000.0,,,48.2572,18.4553,,,,,,G100000500462,operating
-124,Mochovce,Nuclear,Steam Turbine,PP,Slovakia,471.0,,2023.0,,,48.2572,18.4553,,,,,,G100000500490,operating
-125,Mochovce,Nuclear,Steam Turbine,PP,Slovakia,500.0,,1998.0,,,48.2572,18.4553,,,,,,G100000500461,operating
-126,Mochovce,Nuclear,Steam Turbine,PP,Slovakia,471.0,,2025.0,,,48.2572,18.4553,,,,,,G100000500491,construction
-127,Moorside Clean Energy Hub,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.4296,-3.5109,,,,,,G100000501316,announced
-128,Moorside Clean Energy Hub,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,54.4296,-3.5109,,,,,,G100000501317,announced
-129,Nogent,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,48.5171,3.5181,,,,,,G100000500065,operating
-130,Nogent,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,48.5171,3.5181,,,,,,G100000500064,operating
-131,Nowa Huta,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009053,announced
-132,Nowa Huta,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009051,announced
-133,Nowa Huta,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009052,announced
-134,Nowa Huta,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009050,announced
-135,Olkiluoto,Nuclear,Steam Turbine,PP,Finland,0.0,,2045.0,,,61.2371,21.4433,,,,,,G100000500356,operating
-136,Olkiluoto,Nuclear,Steam Turbine,PP,Finland,0.0,,2045.0,,,61.2371,21.4433,,,,,,G100000500355,operating
-137,Olkiluoto,Nuclear,Steam Turbine,PP,Finland,1720.0,,2022.0,,,61.2356,21.4372,,,,,,G100000500006,operating
-138,Oskarshamn,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,57.4166,16.67301,,,,,,G100000500041,operating
-139,Ostroleka,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009064,announced
-140,Ostroleka,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009062,announced
-141,Ostroleka,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009063,announced
-142,Ostroleka,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009065,announced
-143,Paks,Nuclear,Steam Turbine,PP,Hungary,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500455,operating
-144,Paks,Nuclear,Steam Turbine,PP,Hungary,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500456,operating
-145,Paks,Nuclear,Steam Turbine,PP,Hungary,1265.0,,2032.0,,,46.57763,18.8532,,,,,,G100000500624,pre-construction
-146,Paks,Nuclear,Steam Turbine,PP,Hungary,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500457,operating
-147,Paks,Nuclear,Steam Turbine,PP,Hungary,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500454,operating
-148,Paks,Nuclear,Steam Turbine,PP,Hungary,1265.0,,2032.0,,,46.57763,18.8532,,,,,,G100000500623,pre-construction
-149,Paluel,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500053,operating
-150,Paluel,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500055,operating
-151,Paluel,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500054,operating
-152,Paluel,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500052,operating
-153,Patnow,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,51.1465,18.6072,,,,,,G100000501245,announced
-154,Patnow,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,51.1465,18.6072,,,,,,G100001009038,announced
-155,Penly,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,49.9764,1.2107,,,,,,G100000500056,operating
-156,Penly,Nuclear,Steam Turbine,PP,France,1382.0,,1992.0,,,49.9764,1.2107,,,,,,G100000500057,operating
-157,Penly,Nuclear,Steam Turbine,PP,France,1650.0,,2035.0,,,49.9764,1.2107,,,,,,G100000501185,pre-construction
-158,Penly,Nuclear,Steam Turbine,PP,France,1650.0,,2045.0,,,49.9764,1.2107,,,,,,G100000501186,pre-construction
-159,Ringhals,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,57.2574,12.1087,,,,,,G100000500186,operating
-160,Ringhals,Nuclear,Steam Turbine,PP,Sweden,0.0,,2045.0,,,57.2574,12.1087,,,,,,G100000500129,operating
-165,Saint Laurent,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7197,1.5783,,,,,,G100000500284,operating
-166,Saint Laurent,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,47.7197,1.5783,,,,,,G100000500283,operating
-167,Sizewell,Nuclear,Steam Turbine,PP,United Kingdom,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100000500708,pre-construction
-168,Sizewell,Nuclear,Steam Turbine,PP,United Kingdom,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100001017733,pre-construction
-169,Sizewell,Nuclear,Steam Turbine,PP,United Kingdom,1250.0,,1995.0,,,52.2145,1.6206,,,,,,G100000501045,operating
-170,Sizewell,Nuclear,Steam Turbine,PP,United Kingdom,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100000500709,pre-construction
-171,Sizewell,Nuclear,Steam Turbine,PP,United Kingdom,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100001017734,pre-construction
-175,St Alban,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.4043,4.7554,,,,,,G100000500059,operating
-176,St Alban,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,45.4043,4.7554,,,,,,G100000500058,operating
-177,Stawy Monowskie,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009058,announced
-178,Stawy Monowskie,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009060,announced
-179,Stawy Monowskie,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009061,announced
-180,Stawy Monowskie,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009059,announced
-181,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009057,announced
-182,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009056,announced
-183,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009055,announced
-184,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009054,announced
-185,Tihange,Nuclear,Steam Turbine,PP,Belgium,0.0,,2045.0,,,50.5334,5.2714,,,,,,G100000500205,operating
-186,Tihange,Nuclear,Steam Turbine,PP,Belgium,0.0,,2045.0,,,50.5334,5.2714,,,,,,G100000500257,operating
-187,Torness,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,55.9679,-2.4086,,,,,,G100000500435,operating
-188,Torness,Nuclear,Steam Turbine,PP,United Kingdom,0.0,,2045.0,,,55.9679,-2.4086,,,,,,G100000500434,operating
-189,Tricastin,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500288,operating
-190,Tricastin,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500285,operating
-191,Tricastin,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500286,operating
-192,Tricastin,Nuclear,Steam Turbine,PP,France,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500287,operating
-193,Trillo,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,40.7016,-2.6227,,,,,,G100000500202,operating
-194,Vandellos,Nuclear,Steam Turbine,PP,Spain,0.0,,2045.0,,,40.9511,0.8662,,,,,,G100000500241,operating
-195,Wloclawek,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009068,announced
-196,Wloclawek,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009066,announced
-197,Wloclawek,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009067,announced
-198,Wloclawek,Nuclear,Steam Turbine,PP,Poland,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009069,announced
+0,Almaraz,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,39.807,-5.6986,,,,,,G100000500240,operating
+1,Almaraz,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,39.807,-5.6986,,,,,,G100000500239,operating
+2,Asco,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,41.1993,0.5694,,,,,,G100000500243,operating
+3,Asco,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,41.1993,0.5694,,,,,,G100000500242,operating
+4,Belleville,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.5103,2.87501,,,,,,G100000500060,operating
+5,Belleville,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.5103,2.87501,,,,,,G100000500061,operating
+6,Beznau,Nuclear,Steam Turbine,PP,CH,0.0,,2045.0,,,47.552,8.2281,,,,,,G100000500505,operating
+7,Beznau,Nuclear,Steam Turbine,PP,CH,0.0,,2045.0,,,47.552,8.2281,,,,,,G100000500504,operating
+8,Blayais,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500296,operating
+9,Blayais,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500295,operating
+10,Blayais,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500294,operating
+11,Blayais,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.256,-0.6932,,,,,,G100000500293,operating
+12,Bohunice,Nuclear,Steam Turbine,PP,SK,1200.0,,2045.0,,,48.4968,17.6907,,,,,,G100000501269,pre-construction
+13,Bohunice,Nuclear,Steam Turbine,PP,SK,0.0,,2045.0,,,48.4968,17.6907,,,,,,G100000500460,operating
+14,Bohunice,Nuclear,Steam Turbine,PP,SK,0.0,,2045.0,,,48.4968,17.6907,,,,,,G100000500459,operating
+15,Borssele,Nuclear,Steam Turbine,PP,NL,0.0,,2045.0,,2033.0,51.4312,3.7174,,,,,,G100000500496,operating
+16,Borssele,Nuclear,Steam Turbine,PP,NL,1650.0,,2035.0,,,51.4312,3.7174,,,,,,G100000501226,pre-construction
+17,Borssele,Nuclear,Steam Turbine,PP,NL,1650.0,,2035.0,,,51.4312,3.7174,,,,,,G100000501225,pre-construction
+18,Bradwell,Nuclear,Steam Turbine,PP,GB,1150.0,,2030.0,,,51.7428,0.9047,,,,,,G100000500710,pre-construction
+19,Bradwell,Nuclear,Steam Turbine,PP,GB,1150.0,,2045.0,,,51.7428,0.9047,,,,,,G100000500716,pre-construction
+20,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500309,operating
+21,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500303,operating
+22,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000501176,announced
+23,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500310,operating
+24,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000500304,operating
+25,Bugey,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.7973,5.2706,,,,,,G100000501177,announced
+26,Cattenom,Nuclear,Steam Turbine,PP,FR,1362.0,,1991.0,,,49.416,6.2169,,,,,,G100000500068,operating
+27,Cattenom,Nuclear,Steam Turbine,PP,FR,1362.0,,1992.0,,,49.416,6.2169,,,,,,G100000500069,operating
+28,Cattenom,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.416,6.2169,,,,,,G100000500066,operating
+29,Cattenom,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.416,6.2169,,,,,,G100000500067,operating
+30,Cernavoda,Nuclear,Steam Turbine,PP,RO,720.0,,2031.0,,,44.32401,28.0561,,,,,,G100000500674,pre-construction
+31,Cernavoda,Nuclear,Steam Turbine,PP,RO,720.0,,2032.0,,,44.3229,28.0573,,,,,,G100000500675,pre-construction
+32,Cernavoda,Nuclear,Steam Turbine,PP,RO,706.0,,1996.0,,,44.3205,28.0598,,,,,,G100000500375,operating
+33,Cernavoda,Nuclear,Steam Turbine,PP,RO,705.0,,2007.0,,,44.3218,28.0586,,,,,,G100000500377,operating
+34,Chinon,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500289,operating
+35,Chinon,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500292,operating
+36,Chinon,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500291,operating
+37,Chinon,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.2254,0.1656,,,,,,G100000500290,operating
+38,Chooz,Nuclear,Steam Turbine,PP,FR,1560.0,,2000.0,,,50.0901,4.7872,,,,,,G100000500011,operating
+39,Chooz,Nuclear,Steam Turbine,PP,FR,1560.0,,2000.0,,,50.0901,4.7872,,,,,,G100000500010,operating
+40,Civaux,Nuclear,Steam Turbine,PP,FR,1561.0,,2002.0,,,46.4555,0.6582,,,,,,G100000500008,operating
+41,Civaux,Nuclear,Steam Turbine,PP,FR,1561.0,,2002.0,,,46.4555,0.6582,,,,,,G100000500009,operating
+42,Cofrentes,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,39.2134,-1.0509,,,,,,G100000500149,operating
+43,Cruas,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500279,operating
+44,Cruas,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100001017698,operating
+45,Cruas,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500281,operating
+46,Cruas,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.6325,4.7546,,,,,,G100000500282,operating
+47,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009049,announced
+48,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009048,announced
+49,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009047,announced
+50,Dabrowa Gornicza,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.3869042,19.336934,,,,,,G100001009046,announced
+51,Dampierre,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500308,operating
+52,Dampierre,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500307,operating
+53,Dampierre,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500306,operating
+54,Dampierre,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7321,2.5185,,,,,,G100000500305,operating
+55,Doel,Nuclear,Steam Turbine,PP,BE,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500499,operating
+56,Doel,Nuclear,Steam Turbine,PP,BE,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500500,operating
+57,Doel,Nuclear,Steam Turbine,PP,BE,0.0,,2045.0,,,51.3254,4.2597,,,,,,G100000500234,operating
+58,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500876,pre-construction
+59,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500875,pre-construction
+60,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500874,pre-construction
+61,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500872,pre-construction
+62,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500873,pre-construction
+63,Doicesti,Nuclear,Steam Turbine,PP,RO,77.0,,2030.0,,,44.9967,25.3672,,,,,,G100000500871,pre-construction
+64,Flamanville,Nuclear,Steam Turbine,PP,FR,1650.0,,2024.0,,,49.5366,-1.8823,,,,,,G100000500007,construction
+65,Flamanville,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.5366,-1.8823,,,,,,G100000500051,operating
+66,Flamanville,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.5366,-1.8823,,,,,,G100000500050,operating
+67,Forsmark,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500246,operating
+68,Forsmark,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500146,operating
+69,Forsmark,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,60.4028,18.1744,,,,,,G100000500128,operating
+70,Goesgen,Nuclear,Steam Turbine,PP,CH,0.0,,2045.0,,,47.3656,7.96801,,,,,,G100000500203,operating
+71,Golfech,Nuclear,Steam Turbine,PP,FR,1363.0,,1991.0,,,44.106,0.8443,,,,,,G100000500062,operating
+72,Golfech,Nuclear,Steam Turbine,PP,FR,1363.0,,1994.0,,,44.106,0.8443,,,,,,G100000500063,operating
+73,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500301,operating
+74,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500299,operating
+75,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000501179,announced
+76,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500298,operating
+77,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000501178,announced
+78,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500297,operating
+79,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500300,operating
+80,Gravelines,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,51.0141,2.1332,,,,,,G100000500302,operating
+81,Hartlepool,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.6341,-1.1801,,,,,,G100000501025,operating
+82,Hartlepool,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.6341,-1.1801,,,,,,G100000501026,operating
+83,Heysham,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.0295,-2.9149,,,,,,G100000501028,operating
+84,Heysham,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.0295,-2.9149,,,,,,G100000501027,operating
+85,Heysham,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.03101,-2.9112,,,,,,G100000501030,operating
+86,Heysham,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.03101,-2.9112,,,,,,G100000501029,operating
+87,Hinkley Point,Nuclear,Steam Turbine,PP,GB,1720.0,,2030.0,,,51.2063,-3.1423,,,,,,G100000501036,construction
+88,Hinkley Point,Nuclear,Steam Turbine,PP,GB,1720.0,,2029.0,,,51.2063,-3.1423,,,,,,G100000501035,construction
+89,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501235,announced
+90,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501236,announced
+91,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501244,announced
+92,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501243,announced
+93,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501242,announced
+94,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501241,announced
+95,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501237,announced
+96,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501240,announced
+97,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501239,announced
+98,Katowice,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.2649,19.0238,,,,,,G100000501238,announced
+99,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009044,announced
+100,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009045,announced
+101,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009041,announced
+102,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009042,announced
+103,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009043,announced
+104,Kghm Nuscale Voygr Modular,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.3210375,17.2786248,,,,,,G100001009040,announced
+111,Kozloduy,Nuclear,Steam Turbine,PP,BG,1000.0,,2033.0,,,43.7497,23.7685,,,,,,G100000500717,pre-construction
+112,Kozloduy,Nuclear,Steam Turbine,PP,BG,0.0,,2045.0,,,43.7497,23.7685,,,,,,G100000500192,operating
+113,Kozloduy,Nuclear,Steam Turbine,PP,BG,1000.0,,2036.0,,,43.7497,23.7685,,,,,,G100000500718,pre-construction
+114,Kozloduy,Nuclear,Steam Turbine,PP,BG,1040.0,,1993.0,,,43.7497,23.7685,,,,,,G100000500191,operating
+115,Krsko,Nuclear,Steam Turbine,PP,SI,0.0,,2045.0,,,45.9389,15.51601,,,,,,G100000500381,announced
+116,Krsko,Nuclear,Steam Turbine,PP,SI,0.0,,2045.0,,2043.0,45.9389,15.51601,,,,,,G100000500380,operating
+117,Leibstadt,Nuclear,Steam Turbine,PP,CH,0.0,,2045.0,,,47.6012,8.1845,,,,,,G100000500087,operating
+118,Loviisa,Nuclear,Steam Turbine,PP,FI,0.0,,2045.0,,2050.0,60.3708,26.3468,,,,,,G100000500449,operating
+119,Loviisa,Nuclear,Steam Turbine,PP,FI,0.0,,2045.0,,2050.0,60.3708,26.3468,,,,,,G100000500448,operating
+120,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,PL,1250.0,,2037.0,,,54.8036,17.7881,,,,,,G100000500840,pre-construction
+121,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,PL,1250.0,,2035.0,,,54.8036,17.7881,,,,,,G100000500839,pre-construction
+122,Lubiatowo Kopalino,Nuclear,Steam Turbine,PP,PL,1250.0,,2032.0,,,54.8036,17.7881,,,,,,G100000500838,pre-construction
+123,Mochovce,Nuclear,Steam Turbine,PP,SK,500.0,,2000.0,,,48.2572,18.4553,,,,,,G100000500462,operating
+124,Mochovce,Nuclear,Steam Turbine,PP,SK,471.0,,2023.0,,,48.2572,18.4553,,,,,,G100000500490,operating
+125,Mochovce,Nuclear,Steam Turbine,PP,SK,500.0,,1998.0,,,48.2572,18.4553,,,,,,G100000500461,operating
+126,Mochovce,Nuclear,Steam Turbine,PP,SK,471.0,,2025.0,,,48.2572,18.4553,,,,,,G100000500491,construction
+127,Moorside Clean Energy Hub,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.4296,-3.5109,,,,,,G100000501316,announced
+128,Moorside Clean Energy Hub,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,54.4296,-3.5109,,,,,,G100000501317,announced
+129,Nogent,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,48.5171,3.5181,,,,,,G100000500065,operating
+130,Nogent,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,48.5171,3.5181,,,,,,G100000500064,operating
+131,Nowa Huta,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009053,announced
+132,Nowa Huta,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009051,announced
+133,Nowa Huta,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009052,announced
+134,Nowa Huta,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.0656753,20.0365823,,,,,,G100001009050,announced
+135,Olkiluoto,Nuclear,Steam Turbine,PP,FI,0.0,,2045.0,,,61.2371,21.4433,,,,,,G100000500356,operating
+136,Olkiluoto,Nuclear,Steam Turbine,PP,FI,0.0,,2045.0,,,61.2371,21.4433,,,,,,G100000500355,operating
+137,Olkiluoto,Nuclear,Steam Turbine,PP,FI,1720.0,,2022.0,,,61.2356,21.4372,,,,,,G100000500006,operating
+138,Oskarshamn,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,57.4166,16.67301,,,,,,G100000500041,operating
+139,Ostroleka,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009064,announced
+140,Ostroleka,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009062,announced
+141,Ostroleka,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009063,announced
+142,Ostroleka,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,53.0674009,21.5610332,,,,,,G100001009065,announced
+143,Paks,Nuclear,Steam Turbine,PP,HU,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500455,operating
+144,Paks,Nuclear,Steam Turbine,PP,HU,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500456,operating
+145,Paks,Nuclear,Steam Turbine,PP,HU,1265.0,,2032.0,,,46.57763,18.8532,,,,,,G100000500624,pre-construction
+146,Paks,Nuclear,Steam Turbine,PP,HU,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500457,operating
+147,Paks,Nuclear,Steam Turbine,PP,HU,0.0,,2045.0,,,46.57763,18.8532,,,,,,G100000500454,operating
+148,Paks,Nuclear,Steam Turbine,PP,HU,1265.0,,2032.0,,,46.57763,18.8532,,,,,,G100000500623,pre-construction
+149,Paluel,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500053,operating
+150,Paluel,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500055,operating
+151,Paluel,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500054,operating
+152,Paluel,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.8582,0.6354,,,,,,G100000500052,operating
+153,Patnow,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,51.1465,18.6072,,,,,,G100000501245,announced
+154,Patnow,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,51.1465,18.6072,,,,,,G100001009038,announced
+155,Penly,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,49.9764,1.2107,,,,,,G100000500056,operating
+156,Penly,Nuclear,Steam Turbine,PP,FR,1382.0,,1992.0,,,49.9764,1.2107,,,,,,G100000500057,operating
+157,Penly,Nuclear,Steam Turbine,PP,FR,1650.0,,2035.0,,,49.9764,1.2107,,,,,,G100000501185,pre-construction
+158,Penly,Nuclear,Steam Turbine,PP,FR,1650.0,,2045.0,,,49.9764,1.2107,,,,,,G100000501186,pre-construction
+159,Ringhals,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,57.2574,12.1087,,,,,,G100000500186,operating
+160,Ringhals,Nuclear,Steam Turbine,PP,SE,0.0,,2045.0,,,57.2574,12.1087,,,,,,G100000500129,operating
+165,Saint Laurent,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7197,1.5783,,,,,,G100000500284,operating
+166,Saint Laurent,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,47.7197,1.5783,,,,,,G100000500283,operating
+167,Sizewell,Nuclear,Steam Turbine,PP,GB,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100000500708,pre-construction
+168,Sizewell,Nuclear,Steam Turbine,PP,GB,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100001017733,pre-construction
+169,Sizewell,Nuclear,Steam Turbine,PP,GB,1250.0,,1995.0,,,52.2145,1.6206,,,,,,G100000501045,operating
+170,Sizewell,Nuclear,Steam Turbine,PP,GB,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100000500709,pre-construction
+171,Sizewell,Nuclear,Steam Turbine,PP,GB,1600.0,,2045.0,,,52.2199,1.6203,,,,,,G100001017734,pre-construction
+175,St Alban,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.4043,4.7554,,,,,,G100000500059,operating
+176,St Alban,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,45.4043,4.7554,,,,,,G100000500058,operating
+177,Stawy Monowskie,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009058,announced
+178,Stawy Monowskie,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009060,announced
+179,Stawy Monowskie,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009061,announced
+180,Stawy Monowskie,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.024621,19.3339713,,,,,,G100001009059,announced
+181,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009057,announced
+182,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009056,announced
+183,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009055,announced
+184,Tarnobrzeg Special Economic Zone,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,50.5243466,21.6254433,,,,,,G100001009054,announced
+185,Tihange,Nuclear,Steam Turbine,PP,BE,0.0,,2045.0,,,50.5334,5.2714,,,,,,G100000500205,operating
+186,Tihange,Nuclear,Steam Turbine,PP,BE,0.0,,2045.0,,,50.5334,5.2714,,,,,,G100000500257,operating
+187,Torness,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,55.9679,-2.4086,,,,,,G100000500435,operating
+188,Torness,Nuclear,Steam Turbine,PP,GB,0.0,,2045.0,,,55.9679,-2.4086,,,,,,G100000500434,operating
+189,Tricastin,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500288,operating
+190,Tricastin,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500285,operating
+191,Tricastin,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500286,operating
+192,Tricastin,Nuclear,Steam Turbine,PP,FR,0.0,,2045.0,,,44.3311,4.7311,,,,,,G100000500287,operating
+193,Trillo,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,40.7016,-2.6227,,,,,,G100000500202,operating
+194,Vandellos,Nuclear,Steam Turbine,PP,ES,0.0,,2045.0,,,40.9511,0.8662,,,,,,G100000500241,operating
+195,Wloclawek,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009068,announced
+196,Wloclawek,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009066,announced
+197,Wloclawek,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009067,announced
+198,Wloclawek,Nuclear,Steam Turbine,PP,PL,0.0,,2045.0,,,52.6718091,19.0537634,,,,,,G100001009069,announced
