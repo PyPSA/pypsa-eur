@@ -124,7 +124,6 @@ def simplify_network_to_380(n, linetype_380):
 
     n.buses["v_nom"] = 380.0
 
-    linetype_380 = n.lines["type"].mode()[0]
     n.lines["type"] = linetype_380
     n.lines["v_nom"] = 380
     n.lines["i_nom"] = n.line_types.i_nom[linetype_380]
