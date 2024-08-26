@@ -14,6 +14,8 @@ Upcoming Release
   plants based on `IAEA 2021-2023 reported country averages
   <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
 
+* Update GEM Europe Gas Tracker to May 2024 version.
+
 * Add investment period dependent CO2 sequestration potentials
 
 * Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
