@@ -1055,8 +1055,8 @@ def extra_functionality(n, snapshots):
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
-    if n.snakemake.params.custom_extra_functionality:
-        source_path = n.snakemake.params.custom_extra_functionality
+    if params.custom_extra_functionality:
+        source_path = params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
