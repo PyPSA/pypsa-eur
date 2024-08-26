@@ -991,7 +991,7 @@ def add_energy_import_limit(n, sns):
     p_links = n.model["Link-p"].loc[sns, import_links]
 
     # using energy content of iron as proxy: 2.1 MWh/t
-    energy_weightings = np.where(import_gens.str.contains("steel"), 2.1, 1.0)
+    energy_weightings = np.where(import_gens.str.contains("(steel|HBI)"), 2.1, 1.0)
     energy_weightings = pd.Series(energy_weightings, index=import_gens)
 
     lhs = (p_gens * weightings * energy_weightings).sum() + (p_links * weightings).sum()
