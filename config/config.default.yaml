@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 38
   - 128
   - 256
   opts:
@@ -74,7 +74,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -87,7 +86,8 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: entsoegridkit
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -276,6 +276,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -448,8 +449,19 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    forward_temperature: 90 #C
-    return_temperature: 50 #C
+    # check these numbers!
+    forward_temperature:
+      default: 90
+      DK: 70
+      SE: 70
+      NO: 70
+      FI: 70
+    return_temperature:
+      default: 50
+      DK: 40
+      SE: 40
+      NO: 40
+      FI: 40
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -600,7 +612,14 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 200
+  co2_sequestration_potential:
+    2020: 0
+    2025: 0
+    2030: 50
+    2035: 100
+    2040: 200
+    2045: 200
+    2050: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -666,6 +685,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1109,6 +1129,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

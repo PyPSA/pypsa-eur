@@ -254,7 +254,7 @@ def prepare_building_stock_data():
         index = pd.MultiIndex.from_product([[ct], averaged_data.index.to_list()])
         averaged_data.index = index
         averaged_data["estimated"] = 1
-        if ct not in area_tot.index.levels[0]:
+        if ct not in area_tot.index.unique(0):
             area_tot = pd.concat([area_tot, averaged_data], sort=True)
         else:
             area_tot.loc[averaged_data.index] = averaged_data

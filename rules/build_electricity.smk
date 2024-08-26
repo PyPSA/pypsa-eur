@@ -50,6 +50,19 @@ rule build_powerplants:
         "../scripts/build_powerplants.py"
 
 
+def input_base_network(w):
+    base_network = config_provider("electricity", "base_network")(w)
+    components = {"buses", "lines", "links", "converters", "transformers"}
+    if base_network == "osm-raw":
+        inputs = {c: resources(f"osm-raw/build/{c}.csv") for c in components}
+    else:
+        inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
+    if base_network == "entsoegridkit":
+        inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
+        inputs["links_p_nom"] = "data/links_p_nom.csv"
+    return inputs
+
+
 rule base_network:
     params:
         countries=config_provider("countries"),
@@ -58,13 +71,7 @@ rule base_network:
         lines=config_provider("lines"),
         transformers=config_provider("transformers"),
     input:
-        eg_buses="data/entsoegridkit/buses.csv",
-        eg_lines="data/entsoegridkit/lines.csv",
-        eg_links="data/entsoegridkit/links.csv",
-        eg_converters="data/entsoegridkit/converters.csv",
-        eg_transformers="data/entsoegridkit/transformers.csv",
-        parameter_corrections="data/parameter_corrections.yaml",
-        links_p_nom="data/links_p_nom.csv",
+        unpack(input_base_network),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
@@ -523,6 +530,15 @@ rule simplify_network:
         "../scripts/simplify_network.py"
 
 
+# Optional input when using custom busmaps - Needs to be tailored to selected base_network
+def input_cluster_network(w):
+    if config_provider("enable", "custom_busmap", default=False)(w):
+        base_network = config_provider("electricity", "base_network")(w)
+        custom_busmap = f"data/busmaps/elec_s{w.simpl}_{w.clusters}_{base_network}.csv"
+        return {"custom_busmap": custom_busmap}
+    return {"custom_busmap": []}
+
+
 rule cluster_network:
     params:
         cluster_network=config_provider("clustering", "cluster_network"),
@@ -539,15 +555,11 @@ rule cluster_network:
         length_factor=config_provider("lines", "length_factor"),
         costs=config_provider("costs"),
     input:
+        unpack(input_cluster_network),
         network=resources("networks/elec_s{simpl}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}.geojson"),
         busmap=ancient(resources("busmap_elec_s{simpl}.csv")),
-        custom_busmap=lambda w: (
-            "data/custom_busmap_elec_s{simpl}_{clusters}.csv"
-            if config_provider("enable", "custom_busmap", default=False)(w)
-            else []
-        ),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
@@ -629,3 +641,79 @@ rule prepare_network:
         "../envs/environment.yaml"
     script:
         "../scripts/prepare_network.py"
+
+
+if config["electricity"]["base_network"] == "osm-raw":
+
+    rule clean_osm_data:
+        input:
+            cables_way=expand(
+                "data/osm-raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            lines_way=expand(
+                "data/osm-raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            links_relation=expand(
+                "data/osm-raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            substations_way=expand(
+                "data/osm-raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            substations_relation=expand(
+                "data/osm-raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),
+            offshore_shapes=resources("offshore_shapes.geojson"),
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            substations=resources("osm-raw/clean/substations.geojson"),
+            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
+            lines=resources("osm-raw/clean/lines.geojson"),
+            links=resources("osm-raw/clean/links.geojson"),
+        log:
+            logs("clean_osm_data.log"),
+        benchmark:
+            benchmarks("clean_osm_data")
+        threads: 1
+        resources:
+            mem_mb=4000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/clean_osm_data.py"
+
+
+if config["electricity"]["base_network"] == "osm-raw":
+
+    rule build_osm_network:
+        input:
+            substations=resources("osm-raw/clean/substations.geojson"),
+            lines=resources("osm-raw/clean/lines.geojson"),
+            links=resources("osm-raw/clean/links.geojson"),
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            lines=resources("osm-raw/build/lines.csv"),
+            links=resources("osm-raw/build/links.csv"),
+            converters=resources("osm-raw/build/converters.csv"),
+            transformers=resources("osm-raw/build/transformers.csv"),
+            substations=resources("osm-raw/build/buses.csv"),
+            lines_geojson=resources("osm-raw/build/geojson/lines.geojson"),
+            links_geojson=resources("osm-raw/build/geojson/links.geojson"),
+            converters_geojson=resources("osm-raw/build/geojson/converters.geojson"),
+            transformers_geojson=resources("osm-raw/build/geojson/transformers.geojson"),
+            substations_geojson=resources("osm-raw/build/geojson/buses.geojson"),
+        log:
+            logs("build_osm_network.log"),
+        benchmark:
+            benchmarks("build_osm_network")
+        threads: 1
+        resources:
+            mem_mb=4000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_osm_network.py"
