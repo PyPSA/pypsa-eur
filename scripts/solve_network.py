@@ -1093,10 +1093,7 @@ def solve_network(n, config, solving, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
-    if "snakemake" in kwargs:
-        n.snakemake = kwargs.pop("snakemake")
-    else:
-        n.snakemake = snakemake
+    n.params = params
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
