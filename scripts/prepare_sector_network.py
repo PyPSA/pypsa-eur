@@ -4685,6 +4685,7 @@ def add_import_options(
         "shipping-ftfuel",
         "shipping-lnh3",
         "shipping-steel",
+        "shipping-hbi",
     ],
     endogenous_hvdc=False,
 ):
@@ -4717,6 +4718,7 @@ def add_import_options(
         "shipping-ftfuel": " oil",
         "shipping-meoh": " methanol",
         "shipping-steel": " steel",
+        "shipping-hbi": " HBI",
     }
 
     co2_intensity = {
@@ -4871,6 +4873,7 @@ def add_import_options(
 
     copperplated_carbonfree_options = {
         "shipping-steel",
+        "shipping-HBI",
         "shipping-lnh3",
     }
 
@@ -5449,6 +5452,7 @@ if __name__ == "__main__":
         FT=["shipping-ftfuel"],
         MeOH=["shipping-meoh"],
         St=["shipping-steel"],
+        HBI=["shipping-HBI"],
     )
     for o in opts:
         if not o.startswith("imp"):
