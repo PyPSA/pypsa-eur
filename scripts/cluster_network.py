@@ -410,6 +410,7 @@ def clustering_for_n_clusters(
         generator_strategies=generator_strategies,
         one_port_strategies=one_port_strategies,
         scale_link_capital_costs=False,
+        custom_line_groupers=["build_year"],
     )
 
     if not n.links.empty:

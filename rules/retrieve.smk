@@ -22,7 +22,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -56,6 +55,15 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
+
+    rule retrieve_jrc_idees:
+        output:
+            directory("data/jrc-idees-2021"),
+        log:
+            "logs/retrieve_jrc_idees.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_jrc_idees.py"
 
     rule retrieve_eurostat_household_data:
         output:
@@ -218,9 +226,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_gpkg.zip",
+            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
         output:
-            gpkg="data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg",
+            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         run:
             import os
             import requests
@@ -231,7 +239,7 @@ if config["enable"]["retrieve"]:
 
             response = requests.post(
                 "https://www.marineregions.org/download_file.php",
-                params={"name": "World_EEZ_v12_20231025_gpkg.zip"},
+                params={"name": "World_EEZ_v12_20231025_LR.zip"},
                 data={
                     "name": name,
                     "organisation": org,
