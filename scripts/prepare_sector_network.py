@@ -3192,6 +3192,14 @@ def add_industry(n, costs):
         )
 
         n.add(
+            "Bus",
+            "EU HBI",
+            location="EU",
+            carrier="HBI",
+            unit="t",
+        )
+
+        n.add(
             "Load",
             "EU steel",
             bus="EU steel",
@@ -3209,48 +3217,72 @@ def add_industry(n, costs):
                 carrier="steel",
             )
 
-        electricity_input = (
-            costs.at["direct iron reduction furnace", "electricity-input"]
-            * costs.at["electric arc furnace", "hbi-input"]
-            + costs.at["electric arc furnace", "electricity-input"]
-        )
+            n.add(
+                "Store",
+                "EU HBI Store",
+                bus="EU HBI",
+                e_nom_extendable=True,
+                e_cyclic=True,
+                carrier="HBI",
+            )
 
-        hydrogen_input = (
-            costs.at["direct iron reduction furnace", "hydrogen-input"]
-            * costs.at["electric arc furnace", "hbi-input"]
-        )
+        electricity_input = costs.at["direct iron reduction furnace", "electricity-input"]
+
+        hydrogen_input = costs.at["direct iron reduction furnace", "hydrogen-input"]
 
         # so that for each region supply matches consumption
-        p_nom = industrial_production[sector] * electricity_input / nhours
+        p_nom = (
+            industrial_production[sector]
+            * costs.at["electric arc furnace", "hbi-input"]
+            * electricity_input
+            / nhours
+        )
 
         marginal_cost = (
             costs.at["iron ore DRI-ready", "commodity"]
             * costs.at["direct iron reduction furnace", "ore-input"]
-            * costs.at["electric arc furnace", "hbi-input"]
             / electricity_input
         )
-
-        capital_cost = (
-            costs.at["direct iron reduction furnace", "fixed"]
-            * costs.at["electric arc furnace", "hbi-input"]
-            + costs.at["electric arc furnace", "fixed"]
-        ) / electricity_input
 
         n.madd(
             "Link",
             nodes,
-            suffix=f" {sector}",
-            carrier=sector,
-            capital_cost=capital_cost,
+            suffix=" DRI",
+            carrier="DRI",
+            capital_cost=costs.at["direct iron reduction furnace", "fixed"] / electricity_input,
             marginal_cost=marginal_cost,
             p_nom_max=p_nom if no_relocation else np.inf,
             p_nom_extendable=True,
             p_min_pu=1 if no_flexibility else 0,
             bus0=nodes,
-            bus1="EU steel",
+            bus1="EU HBI",
             bus2=nodes + " H2",
             efficiency=1 / electricity_input,
             efficiency2=-hydrogen_input / electricity_input,
+        )
+
+        electricity_input = costs.at["electric arc furnace", "electricity-input"]
+
+        p_nom = (
+            industrial_production[sector]
+            * electricity_input
+            / nhours
+        )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" EAF",
+            carrier="EAF",
+            capital_cost=costs.at["electric arc furnace", "fixed"]  / electricity_input,
+            p_nom_max=p_nom if no_relocation else np.inf,
+            p_nom_extendable=True,
+            p_min_pu=1 if no_flexibility else 0,
+            bus0=nodes,
+            bus1="EU steel",
+            bus2="EU HBI",
+            efficiency=1 / electricity_input,
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"] / electricity_input,
         )
 
     n.madd(
