@@ -9,6 +9,11 @@ Release Notes
 
 Upcoming Release
 ================
+
+* Updated country-specific Energy Availability Factors (EAFs) for nuclear power
+  plants based on `IAEA 2021-2023 reported country averages
+  <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
+
 * Add investment period dependent CO2 sequestration potentials
 
 * Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
