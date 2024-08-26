@@ -34,11 +34,11 @@ from build_energy_totals import (
     build_eurostat_co2,
 )
 from build_transport_demand import transport_degree_factor
-from geopy.extra.rate_limiter import RateLimiter
-from geopy.geocoders import Nominatim
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from definitions.heat_system_type import HeatSystemType
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
