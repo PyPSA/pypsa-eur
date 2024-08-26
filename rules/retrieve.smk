@@ -281,6 +281,23 @@ if config["enable"]["retrieve"]:
 
 
 if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_europe_gas_tracker:
+        output:
+            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+        run:
+            import requests
+
+            response = requests.get(
+                "https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
     # Some logic to find the correct file URL
     # Sometimes files are released delayed or ahead of schedule, check which file is currently available
 

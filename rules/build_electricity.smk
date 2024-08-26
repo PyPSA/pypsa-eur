@@ -373,7 +373,7 @@ rule build_transmission_projects:
     benchmark:
         benchmarks("build_transmission_projects")
     resources:
-        mem_mb=2000,
+        mem_mb=4000,
     threads: 1
     conda:
         "../envs/environment.yaml"
