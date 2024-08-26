@@ -4819,6 +4819,9 @@ def add_import_options(
                 1.2 * 7018.0 if tech == "shipping-lh2" else 0.0
             )  # €/MW/a, +20% compared to LNG
 
+            # pipeline imports require high minimum loading
+            p_min_pu = 0.9 if "pipeline" in tech else 0
+
             n.madd(
                 "Generator",
                 import_nodes_tech.index + f"{suffix} import {tech}",
@@ -4827,6 +4830,7 @@ def add_import_options(
                 marginal_cost=import_nodes_tech.marginal_cost.values,
                 p_nom_extendable=True,
                 capital_cost=capital_cost,
+                p_min_pu=p_min_pu,
                 p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
                 .clip(upper=upper_p_nom_max)
                 .values,
