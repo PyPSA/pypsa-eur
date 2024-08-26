@@ -98,21 +98,21 @@ rule validate_elec_networks:
 
 rule plot_resources:
     input:
-        RESOURCES + "graphics/power-network-unclustered.pdf",
-        RESOURCES + "graphics/gas-network-unclustered.pdf",
-        RESOURCES + "graphics/wind-energy-density.pdf",
-        RESOURCES + "graphics/weather-map-irradiation.pdf",
-        RESOURCES + "graphics/industrial-sites.pdf",
-        RESOURCES + "graphics/powerplants.pdf",
-        RESOURCES + "graphics/salt-caverns.pdf",
+        resources("graphics/power-network-unclustered.pdf"),
+        resources("graphics/gas-network-unclustered.pdf"),
+        resources("graphics/wind-energy-density.pdf"),
+        resources("graphics/weather-map-irradiation.pdf"),
+        resources("graphics/industrial-sites.pdf"),
+        resources("graphics/powerplants.pdf"),
+        resources("graphics/salt-caverns.pdf"),
         expand(
-            RESOURCES + "graphics/power-network-{clusters}.pdf", **config["scenario"]
+            resources("graphics/power-network-{clusters}.pdf"), **config["scenario"]
         ),
         expand(
-            RESOURCES + "graphics/salt-caverns-{clusters}-nearshore.pdf",
+            resources("graphics/salt-caverns-{clusters}-nearshore.pdf"),
             **config["scenario"],
         ),
         expand(
-            RESOURCES + "graphics/biomass-potentials-{clusters}-biogas.pdf",
+            resources("graphics/biomass-potentials-{clusters}-biogas.pdf"),
             **config["scenario"],
         ),
