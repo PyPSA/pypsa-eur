@@ -425,6 +425,30 @@ def plot_balances(balances_df, drop=None):
             fig.savefig(snakemake.output.balances[:-19] + f"share-{k}.svg", bbox_inches="tight")
             
 
+def plot_prices(prices, drop=True):
+    if drop:
+        prices = prices.droplevel([1,2,3], axis=1)
+    
+    for carrier in prices.index: #["co2", "AC", "low voltage", "H2"]:
+        fig, axes = plt.subplots()
+        if carrier in ["co2", "process emissions"]:
+            label = "CO$_2$ price [Eur/t]"
+            sign = -1
+        else:
+            label = "price [Eur/MWh]"
+            sign = 1
+        (prices.loc[carrier].unstack().T*sign).plot(ax=axes, title=carrier)
+        axes.set_ylabel(label)
+        axes.set_xlabel("")
+        axes.set_xlim(left=0)
+        axes.grid(axis="x")
+        axes.legend(
+            ncol=1,
+            # loc="lower right",
+            frameon=False,
+            )
+        fig.savefig(snakemake.output.balances[:-19] + f"prices-{carrier}.svg",
+                    bbox_inches="tight")
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -443,6 +467,7 @@ if __name__ == "__main__":
     
     costs = {}
     balances = {}
+    prices = {}
     for scenario in scenarios:
         try:
             costs[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/costs.csv",
@@ -451,17 +476,24 @@ if __name__ == "__main__":
             balances[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/supply_energy.csv",
                                           index_col=list(range(3)),
                                           header=list(range(n_header)))
+            prices[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/prices.csv",
+                                                      index_col=[0],
+                                                      header=list(range(n_header)))
         except FileNotFoundError:
             logger.info(f"{scenario} not solved yet.")
             
     costs = pd.concat(costs, axis=1)
     balances = pd.concat(balances, axis=1)
+    prices = pd.concat(prices, axis=1)
     
     costs.to_csv(snakemake.output.costs_csv)
     balances.to_csv(snakemake.output.balances_csv)
+    prices.to_csv(snakemake.output.prices_csv)
       
     plot_costs(costs, drop=True)
 
     plot_balances(balances, drop=True)
+    
+    plot_prices(prices, drop=True)
 
 

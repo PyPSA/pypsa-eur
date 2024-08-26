@@ -266,6 +266,7 @@ rule plot_summary_all:
         balances="results/" + config["run"]["prefix"] + "/graphs/balances-energy.svg",
         costs_csv="results/" + config["run"]["prefix"] + "/csvs_all/costs.csv",
         balances_csv="results/" + config["run"]["prefix"] + "/csvs_all/balances-energy.csv",
+        prices_csv="results/" + config["run"]["prefix"] + "/csvs_all/prices.csv",
     threads: 2
     resources:
         mem_mb=10000,
