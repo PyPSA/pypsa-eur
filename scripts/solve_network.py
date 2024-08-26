@@ -1062,7 +1062,7 @@ def extra_functionality(n, snapshots):
         module_name = os.path.splitext(os.path.basename(source_path))[0]
         module = importlib.import_module(module_name)
         custom_extra_functionality = getattr(module, module_name)
-        custom_extra_functionality(n, snapshots, n.snakemake)
+        custom_extra_functionality(n, snapshots)
 
 
 def solve_network(n, config, solving, **kwargs):
