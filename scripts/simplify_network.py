@@ -669,7 +669,7 @@ if __name__ == "__main__":
     n.lines.drop(remove, axis=1, errors="ignore", inplace=True)
 
     if snakemake.wildcards.simpl:
-        shapes = n.shapes
+        # shapes = n.shapes
         n, cluster_map = cluster(
             n,
             int(snakemake.wildcards.simpl),
@@ -679,7 +679,7 @@ if __name__ == "__main__":
             params.simplify_network["feature"],
             params.aggregation_strategies,
         )
-        n.shapes = shapes
+        # n.shapes = shapes
         busmaps.append(cluster_map)
 
     update_p_nom_max(n)
@@ -691,7 +691,7 @@ if __name__ == "__main__":
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions(busmaps, regions)
         clustered_regions.to_file(snakemake.output[which])
-        append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
+        # append_bus_shapes(n, clustered_regions, type=which.split("_")[1])
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
