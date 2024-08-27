@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 38
   - 128
   - 256
   opts:
@@ -74,7 +74,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.701
@@ -87,7 +86,8 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: entsoegridkit
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -155,6 +155,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -174,6 +175,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -190,6 +192,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: true
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -206,6 +209,8 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      smooth: true
+      add_cutout_windspeed: true
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -271,6 +276,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -281,7 +287,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-sarah3-era5
@@ -294,8 +300,25 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: true
+    nep: true
+    manual: true
+  skip:
+  - upgraded_lines
+  - upgraded_links
+  status:
+  - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
+    #- under_consideration
+  new_link_capacity: zero #keep or zero
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
@@ -596,7 +619,14 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 200
+  co2_sequestration_potential:
+    2020: 0
+    2025: 0
+    2030: 50
+    2035: 100
+    2040: 200
+    2045: 200
+    2050: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -649,6 +679,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1092,6 +1123,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'

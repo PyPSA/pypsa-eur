@@ -93,10 +93,7 @@ rule build_gas_network:
 
 rule build_gas_input_locations:
     input:
-        gem=storage(
-            "https://globalenergymonitor.org/wp-content/uploads/2023/07/Europe-Gas-Tracker-2023-03-v3.xlsx",
-            keep_local=True,
-        ),
+        gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         entry="data/gas_network/scigrid-gas/data/IGGIELGN_BorderPoints.geojson",
         storage="data/gas_network/scigrid-gas/data/IGGIELGN_Storages.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),

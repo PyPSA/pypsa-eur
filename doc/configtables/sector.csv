@@ -112,7 +112,7 @@ regional_co2 _sequestration_potential,,,
 -- min_size,Gt ,float,Any sites with lower potential than this value will be excluded
 -- max_size,Gt ,float,The maximum sequestration potential for any one site.
 -- years_of_storage,years,float,The years until potential exhausted at optimised annual rate
-co2_sequestration_potential,MtCO2/a,float,The potential of sequestering CO2 in Europe per year
+co2_sequestration_potential,--,Dictionary with planning horizons as keys.,The potential of sequestering CO2 in Europe per year and investment period
 co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
 co2_sequestration_lifetime,years,int,The lifetime of a CO2 sequestration site
 co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
@@ -155,6 +155,7 @@ biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass up
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+bioH2,--,"{true, false}",Add option for transforming solid biomass into hydrogen with carbon capture
 municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,
 -- enable,--,"{true, false}",Add option to limit the maximum growth of a carrier

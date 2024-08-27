@@ -85,7 +85,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
                 "https://zenodo.org/records/12791128/files/{cutout}.nc",
             ),
         output:
-            protected("cutouts/" + CDIR + "{cutout}.nc"),
+            "cutouts/" + CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
@@ -226,9 +226,9 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_gpkg.zip",
+            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
         output:
-            gpkg="data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg",
+            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         run:
             import os
             import requests
@@ -239,7 +239,7 @@ if config["enable"]["retrieve"]:
 
             response = requests.post(
                 "https://www.marineregions.org/download_file.php",
-                params={"name": "World_EEZ_v12_20231025_gpkg.zip"},
+                params={"name": "World_EEZ_v12_20231025_LR.zip"},
                 data={
                     "name": name,
                     "organisation": org,
@@ -278,6 +278,23 @@ if config["enable"]["retrieve"]:
             output_folder = Path(output["countries"]).parent
             unpack_archive(params["zip"], output_folder)
             os.remove(params["zip"])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_europe_gas_tracker:
+        output:
+            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+        run:
+            import requests
+
+            response = requests.get(
+                "https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
@@ -390,3 +407,85 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-prebuilt"
+):
+
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage("https://zenodo.org/records/13358976/files/buses.csv"),
+            converters=storage(
+                "https://zenodo.org/records/13358976/files/converters.csv"
+            ),
+            lines=storage("https://zenodo.org/records/13358976/files/lines.csv"),
+            links=storage("https://zenodo.org/records/13358976/files/links.csv"),
+            transformers=storage(
+                "https://zenodo.org/records/13358976/files/transformers.csv"
+            ),
+        output:
+            buses="data/osm-prebuilt/buses.csv",
+            converters="data/osm-prebuilt/converters.csv",
+            lines="data/osm-prebuilt/lines.csv",
+            links="data/osm-prebuilt/links.csv",
+            transformers="data/osm-prebuilt/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+                validate_checksum(output[key], input[key])
+
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm-raw/{country}/cables_way.json",
+            lines_way="data/osm-raw/{country}/lines_way.json",
+            links_relation="data/osm-raw/{country}/links_relation.json",
+            substations_way="data/osm-raw/{country}/substations_way.json",
+            substations_relation="data/osm-raw/{country}/substations_relation.json",
+        log:
+            "logs/retrieve_osm_data_{country}.log",
+        threads: 1
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data_all:
+        input:
+            expand(
+                "data/osm-raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),

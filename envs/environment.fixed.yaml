@@ -335,7 +335,7 @@ dependencies:
 - pyomo=6.6.1
 - pyparsing=3.1.2
 - pyproj=3.6.1
-- pypsa=0.28.0
+- pypsa=0.29.0
 - pyqt=5.15.9
 - pyqt5-sip=12.12.2
 - pyscipopt=5.0.1
@@ -391,7 +391,7 @@ dependencies:
 - stack_data=0.6.2
 - statsmodels=0.14.2
 - stopit=1.1.2
-- tabula-py=2.7.0
+- jpype1=1.5.0
 - tabulate=0.9.0
 - tbb=2021.11.0
 - tblib=3.0.0
@@ -466,3 +466,4 @@ dependencies:
   - snakemake-executor-plugin-slurm-jobstep==0.2.1
   - snakemake-storage-plugin-http==0.2.3
   - tsam==2.3.1
+  - tabula-py=2.9.3

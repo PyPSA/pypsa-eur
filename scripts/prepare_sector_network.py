@@ -539,7 +539,24 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
     # preliminary value for non-gas carriers to avoid zeros
-    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
+    if carrier == "gas":
+        capital_cost = costs.at["gas storage", "fixed"]
+    elif carrier == "oil":
+        # based on https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
+        mwh_per_m3 = 44.9 * 724 * 0.278 * 1e-3  # MJ/kg * kg/m3 * kWh/MJ * MWh/kWh
+        capital_cost = (
+            costs.at["General liquid hydrocarbon storage (product)", "fixed"]
+            / mwh_per_m3
+        )
+    elif carrier == "methanol":
+        # based on https://www.engineeringtoolbox.com/fossil-fuels-energy-content-d_1298.html
+        mwh_per_m3 = 5.54 * 791 * 1e-3  # kWh/kg * kg/m3 * MWh/kWh
+        capital_cost = (
+            costs.at["General liquid hydrocarbon storage (product)", "fixed"]
+            / mwh_per_m3
+        )
+    else:
+        capital_cost = 0.1
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
@@ -2829,6 +2846,38 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "VOM"] * costs.at["BioSNG", "efficiency"],
         )
 
+    if options["bioH2"]:
+        name = (
+            pd.Index(spatial.biomass.nodes)
+            + " "
+            + pd.Index(spatial.h2.nodes.str.replace(" H2", ""))
+        )
+        n.madd(
+            "Link",
+            name,
+            suffix=" solid biomass to hydrogen CC",
+            bus0=spatial.biomass.nodes,
+            bus1=spatial.h2.nodes,
+            bus2=spatial.co2.nodes,
+            bus3="co2 atmosphere",
+            carrier="solid biomass to hydrogen",
+            efficiency=costs.at["solid biomass to hydrogen", "efficiency"],
+            efficiency2=costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            efficiency3=-costs.at["solid biomass", "CO2 intensity"]
+            * options["cc_fraction"],
+            p_nom_extendable=True,
+            capital_cost=costs.at["solid biomass to hydrogen", "fixed"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            overnight_cost=costs.at["solid biomass to hydrogen", "investment"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "investment"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            marginal_cost=0.0,
+        )
+
 
 def add_industry(n, costs):
     logger.info("Add industrial demand")
@@ -2967,24 +3016,7 @@ def add_industry(n, costs):
 
     # methanol for industry
 
-    n.madd(
-        "Bus",
-        spatial.methanol.nodes,
-        carrier="methanol",
-        location=spatial.methanol.locations,
-        unit="MWh_LHV",
-    )
-
-    n.madd(
-        "Store",
-        spatial.methanol.nodes,
-        suffix=" Store",
-        bus=spatial.methanol.nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="methanol",
-        capital_cost=0.02,
-    )
+    add_carrier_buses(n, "methanol")
 
     n.madd(
         "Bus",
@@ -3155,38 +3187,10 @@ def add_industry(n, costs):
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            spatial.oil.nodes,
-            suffix=" Store",
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if options.get("fossil_fuels", True) and "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
-
     if shipping_oil_share:
+
+        add_carrier_buses(n, "oil")
+
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
 
         if not options["regional_oil_demand"]:
