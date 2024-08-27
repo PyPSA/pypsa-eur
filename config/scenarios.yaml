@@ -1,0 +1,119 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+# This file is used to define the scenarios that are run by snakemake. Each entry on the first level is a scenario. Each scenario can contain configuration overrides with respect to the config/config.yaml settings.
+#
+# Example
+#
+# custom-scenario: # name of the scenario
+#   electricity:
+#       renewable_carriers: [wind, solar] # override the list of renewable carriers
+
+
+
+no-logistic:
+  sector:
+    logistic_curve: false
+
+base:
+  sector:
+    logistic_curve: true
+
+high-demand:
+  sector:
+    vary_demand:
+      land transport demand heavy:
+        2020: 1.0
+        2025: 1.3 # compared to 2015 from Eurostat
+        2030: 1.4
+        2035: 1.5
+        2040: 1.6
+        2045: 1.7
+        2050: 1.8
+      land transport demand light:
+        2020: 1.0
+        2025: 1.3 # compared to 2015 from Eurostat
+        2030: 1.4
+        2035: 1.5
+        2040: 1.6
+        2045: 1.7
+        2050: 1.8
+
+low-demand:
+  sector:
+    vary_demand:
+      land transport demand heavy:
+        2020: 1.0
+        2025: 1.0 # compared to 2015 from Eurostat
+        2030: 1.0
+        2035: 1.0
+        2040: 1.0
+        2045: 1.0
+        2050: 1.0
+      land transport demand light:
+        2020: 0.9
+        2025: 0.9 # compared to 2015 from Eurostat
+        2030: 0.9
+        2035: 0.9
+        2040: 0.9
+        2045: 0.9
+        2050: 0.9
+
+
+high-elec-eff:
+  sector:
+    transport_electric_efficiency:
+      light: 80
+      # assume 40 kWh/100 km = 0.04 MWh/100 km
+      heavy: 40
+
+high-h2-eff:
+  sector:
+    transport_fuel_cell_efficiency:
+      light: 50
+      heavy: 10
+
+high-electrolysis:
+  sector:
+    vary:
+      capital_cost:
+        H2 Electrolysis: 1.7
+
+low-electrolysis:
+  sector:
+    vary:
+      capital_cost:
+        H2 Electrolysis: 0.6
+
+
+super-slow-transition:
+  sector:
+    car_reg_factor: 0.05
+    logistic_curve: true
+
+slow-transition:
+  sector:
+    car_reg_factor: 0.5
+    logistic_curve: true
+
+fast-transition:
+  sector:
+    car_reg_factor: 1.5
+    logistic_curve: true
+
+super-fast-transition:
+  sector:
+    car_reg_factor: 3
+    logistic_curve: true
+
+slow-transition-no-logistic:
+  sector:
+    car_reg_factor: 0.5
+    logistic_curve: false
+
+fast-transition-no-logistic:
+  sector:
+    car_reg_factor: 1.5
+    logistic_curve: false
