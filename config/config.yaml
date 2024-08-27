@@ -445,7 +445,9 @@ sector:
   bev_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
-  bev_charge_rate: 0.011
+  bev_charge_rate:
+    light: 0.011
+    heavy: 0.05
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
   logistic_curve: true
