@@ -15,7 +15,46 @@ from plot_summary import rename_techs, preferred_order
 
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
+plt.rcParams['axes.facecolor'] = 'white'  # Background of the plot
+plt.rcParams['figure.facecolor'] = 'white'  # Background of the figure
 
+plt.rcParams['grid.color'] = 'gray'  # Gridline color
+plt.rcParams['grid.linestyle'] = '-'  # Solid gridline
+plt.rcParams['grid.alpha'] = 0.7  # Gridline transparency
+plt.rcParams['grid.linewidth'] = 0.8  # Gridline width
+
+
+grouper = {
+    "CCGT": "power",
+    "OCGT": "power",
+    "lignite": "power",
+    "coal": "power",
+    'oil': "power",
+    'nuclear': "power",
+    "agriculture machinery oil": "agriculture",
+    'coal for industry': "industry",
+    'gas for industry': "industry",
+    'gas for industry CC': "industry CC",
+    'industry methanol': "industry",
+    'process emissions': "industry",
+    'naphtha for industry': "industry",
+    'process emissions CC': "industry CC",
+    "solid biomass for industry CC": "industry CC",
+    "co2": "co2 atmosphere",
+    'kerosene for aviation': "aviation",
+    'shipping methanol': "shipping",
+    'shipping oil': "shipping",
+    'urban central gas CHP': "heat",
+    'urban central gas boiler': "heat",
+    'urban decentral gas boiler': "heat",
+    'urban central gas CHP CC': "heat CC",
+    'urban central solid biomass CHP CC': "heat CC",
+    'urban decentral oil boiler': "heat",
+    'rural gas boiler': "heat",
+    'rural oil boiler': "heat",
+    "land transport oil light": "land transport",
+    "land transport oil heavy": "land transport",
+    }
 
 def plot_costs(cost_df, drop=None):
 
@@ -69,16 +108,10 @@ def plot_costs(cost_df, drop=None):
         
         ax.grid(axis="x")
         
-        fig.savefig(snakemake.output.costs.split(".svg")[0]+"-transport.svg",
+        fig.savefig(snakemake.output.costs.split(".pdf")[0]+"-transport.pdf",
                     bbox_inches="tight")
 
 
-
-    # Sum across the index to get the total costs for each scenario and planning horizon
-    df_summed = df_stacked.groupby(level=[0, 1]).sum()
-
-    # Unstack to make planning_horizon the columns and the scenarios the rows
-    df_summed = df_summed.unstack(level=0)
 
     # convert to billions
     df = df / 1e9
@@ -169,7 +202,7 @@ def plot_costs(cost_df, drop=None):
     plt.ylabel("System Cost [EUR billion per year]")
     plt.xlabel("planning horizon")
     plt.legend(bbox_to_anchor=(1,1))
-    plt.savefig(snakemake.output.costs.split(".svg")[0]+"-total.svg",
+    plt.savefig(snakemake.output.costs.split(".pdf")[0]+"-total.pdf",
                 bbox_inches="tight")
     
 
@@ -204,38 +237,6 @@ def plot_balances(balances_df, drop=None):
         
         if k =="co2":
             
-            grouper = {
-                "CCGT": "power",
-                "OCGT": "power",
-                "lignite": "power",
-                "coal": "power",
-                'oil': "power",
-                'nuclear': "power",
-                "agriculture machinery oil": "agriculture",
-                'coal for industry': "industry",
-                'gas for industry': "industry",
-                'gas for industry CC': "industry CC",
-                'industry methanol': "industry",
-                'process emissions': "industry",
-                'naphtha for industry': "industry",
-                'process emissions CC': "industry CC",
-                "solid biomass for industry CC": "industry CC",
-                "co2": "co2 atmosphere",
-                'kerosene for aviation': "aviation",
-                'shipping methanol': "shipping",
-                'shipping oil': "shipping",
-                'urban central gas CHP': "heat",
-                'urban central gas boiler': "heat",
-                'urban decentral gas boiler': "heat",
-                'urban central gas CHP CC': "heat CC",
-                'urban central solid biomass CHP CC': "heat CC",
-                'urban decentral oil boiler': "heat",
-                'rural gas boiler': "heat",
-                'rural oil boiler': "heat",
-                "land transport oil light": "land transport",
-                "land transport oil heavy": "land transport",
-                }
-            
             co2_b = df.rename(index=grouper).groupby(level=0).sum()
             co2_b = co2_b.droplevel([1,2,3], axis=1)
             co2_b.loc["co2 atmosphere"] = abs(co2_b.loc["co2 atmosphere"])*-1
@@ -260,7 +261,7 @@ def plot_balances(balances_df, drop=None):
             axes[2].set_ylabel("CO2 [MtCO2/a]")
             axes[2].legend(bbox_to_anchor=(1,1))
             
-            fig.savefig(snakemake.output.balances[:-19] + "co2-stacked-area.svg",
+            fig.savefig(snakemake.output.balances[:-19] + "co2-stacked-area.pdf",
                         bbox_inches="tight")
             
                 
@@ -268,7 +269,7 @@ def plot_balances(balances_df, drop=None):
                 co2_b.loc[carrier].unstack().T.plot(title=carrier)
                 plt.ylabel("CO2 [MtCO2/a]")
                 plt.xlabel("")
-                plt.savefig(snakemake.output.balances[:-19] + f"co2-{carrier}.svg",
+                plt.savefig(snakemake.output.balances[:-19] + f"co2-{carrier}.pdf",
                             bbox_inches="tight")
         
             import seaborn as sns
@@ -294,12 +295,13 @@ def plot_balances(balances_df, drop=None):
                 sns.heatmap(heatmap_data, cmap='coolwarm',
                             annot=True, fmt=".0f", linewidths=.5,
                             center=0, ax=axes[i],
-                            vmin=global_min, vmax=global_max
+                            vmin=global_min, vmax=global_max,
+                            cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
                             )
                 axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
                 axes[i].set_xlabel('')
                 i += 1
-            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.svg",
+            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.pdf",
                         bbox_inches="tight")
 
             
@@ -393,10 +395,29 @@ def plot_balances(balances_df, drop=None):
         
         plt.tight_layout()
         
-        fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
+        fig.savefig(snakemake.output.balances[:-10] + k + ".pdf", bbox_inches="tight")
    
         if k in [ 'land_transport_demand_heavy',  'land_transport_demand_light']:
             share = abs(df.div(df.loc[v].values, axis=1).drop(v)*100)
+            
+            years = share.columns.levels[1]
+            fig, axes = plt.subplots(nrows=len(years), ncols=1,
+                                     sharey=True, sharex=True,
+                                     figsize=(5,8))
+            for i, year in enumerate(years):
+                share.xs(year, level=1, axis=1).T.plot(kind="bar",
+                                                       stacked=True,
+                                                       color=[snakemake.config["plotting"]["tech_colors"][i] for i in share.index],
+                                                       title=year,
+                                                       ax=axes[i],
+                                                       legend=False)
+                axes[i].set_ylabel("share [%]")
+                for container in axes[i].containers:
+                    labels = [f'{round(v.get_height())}%' if int(v.get_height()) != 0 else '' for v in container]
+                    axes[i].bar_label(container, labels=labels,
+                                      label_type='center')  # You can also use 'edge' or 'center'
+                fig.savefig(snakemake.output.balances[:-19] + f"share-bar-{k}.pdf", bbox_inches="tight")
+                
             
             line_styles = ["-", "--", ":", "-."]
 
@@ -415,14 +436,16 @@ def plot_balances(balances_df, drop=None):
                                                legend=False,
                                                style=line_styles)
                 axes[i].set_xlabel("")
+                axes[i].grid(axis="x")
             axes[0].set_ylabel("share [%]")
+            
             axes[1].legend(
                 ncol=1,
                 loc="upper left",
                 frameon=False,
                 )
             
-            fig.savefig(snakemake.output.balances[:-19] + f"share-{k}.svg", bbox_inches="tight")
+            fig.savefig(snakemake.output.balances[:-19] + f"share-{k}.pdf", bbox_inches="tight")
             
 
 def plot_prices(prices, drop=True):
@@ -447,7 +470,7 @@ def plot_prices(prices, drop=True):
             # loc="lower right",
             frameon=False,
             )
-        fig.savefig(snakemake.output.balances[:-19] + f"prices-{carrier}.svg",
+        fig.savefig(snakemake.output.balances[:-19] + f"prices-{carrier}.pdf",
                     bbox_inches="tight")
 #%%
 if __name__ == "__main__":

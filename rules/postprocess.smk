@@ -262,8 +262,8 @@ rule plot_summary_all:
     #     sector=config_provider("sector"),
     #     RDIR=RDIR,
     output:
-        costs="results/" + config["run"]["prefix"] + "/graphs/costs.svg",
-        balances="results/" + config["run"]["prefix"] + "/graphs/balances-energy.svg",
+        costs="results/" + config["run"]["prefix"] + "/graphs/costs.pdf",
+        balances="results/" + config["run"]["prefix"] + "/graphs/balances-energy.pdf",
         costs_csv="results/" + config["run"]["prefix"] + "/csvs_all/costs.csv",
         balances_csv="results/" + config["run"]["prefix"] + "/csvs_all/balances-energy.csv",
         prices_csv="results/" + config["run"]["prefix"] + "/csvs_all/prices.csv",
