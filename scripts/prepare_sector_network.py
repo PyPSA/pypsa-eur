@@ -30,10 +30,10 @@ from build_energy_totals import (
     build_eurostat_co2,
     car_types
 )
+from prepare_network import maybe_adjust_costs_and_potentials
 from build_transport_demand import transport_degree_factor, transport_cols
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
-from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
@@ -1572,7 +1572,7 @@ def add_EVs(
 
     cyclic_eff = p_set.div(p_shifted)
 
-    # efficiency *= cyclic_eff
+    efficiency *= cyclic_eff
 
     p_nom = electric_share * p_set.div(efficiency).max()
 
@@ -1603,7 +1603,7 @@ def add_EVs(
         lifetime=15,
     )
     
-    p_nom = (number_cars * options.get("bev_charge_rate", 0.011)
+    p_nom = (number_cars * options["bev_charge_rate"][transport_type]
              * electric_share)
 
     n.madd(
@@ -1771,6 +1771,23 @@ def get_car_efficiencies(engine_types, transport_types):
     return car_efficiencies
 
 
+def get_shares(engine_types, transport_types, endogenous):
+    shares = {}
+    for engine in engine_types:
+        for transport_type in transport_types:
+            shares[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
+                                 investment_year)
+            if not endogenous:
+                logger.info(f"{engine} {transport_type} share: {shares[engine, transport_type]*100}%")
+    shares = pd.Series(shares)
+    if not endogenous:
+        check_land_transport_shares(shares)
+    else:
+        logger.info("Endogenous optimisation of land transport sector")
+        # todo make this nicer
+        shares.loc[:,:] = 1/3
+    return shares
+
 def add_land_transport(n, costs):
 
     logger.info("Add land transport")
@@ -1799,23 +1816,11 @@ def add_land_transport(n, costs):
     engine_types = ["fuel_cell", "electric", "ice"]
     transport_types = transport.columns.levels[0]
     endogenous = options["endogenous_transport"]
-    shares = {}
-    for engine in engine_types:
-        for transport_type in transport_types:
-            shares[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
-                                 investment_year)
-            if not endogenous:
-                logger.info(f"{engine} {transport_type} share: {shares[engine, transport_type]*100}%")
-    
+    shares = get_shares(engine_types, transport_types, endogenous)
+        
+        
     car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
-    shares = pd.Series(shares)
-    if not endogenous:
-        check_land_transport_shares(shares)
-    else:
-        logger.info("Endogenous optimisation of land transport sector")
-        # todo make this nicer
-        shares.loc[:,:] = 1/3
-    
+
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
     
@@ -1877,22 +1882,22 @@ def add_land_transport(n, costs):
             
             car_efficiency = car_efficiencies.loc["fuel_cell", transport_type]
             add_fuel_cell_cars(n, nodes, transport[transport_type],
-                               shares.loc["fuel_cell", transport_type],
-                               temperature,
-                               car_efficiency,
-                               suffix=f" land transport fuel cell {transport_type}",
-                               transport_type=transport_type)
+                                shares.loc["fuel_cell", transport_type],
+                                temperature,
+                                car_efficiency,
+                                suffix=f" land transport fuel cell {transport_type}",
+                                transport_type=transport_type)
         
         # internal combustion cars
         if shares.loc["ice", transport_type]>0:
             
             car_efficiency = car_efficiencies.loc["ice", transport_type]
             add_ice_cars(n, nodes, transport[transport_type],
-                         shares.loc["ice", transport_type],
-                         temperature, car_efficiency,
-                         suffix=f" land transport oil {transport_type}",
-                         transport_type=transport_type
-                         )
+                          shares.loc["ice", transport_type],
+                          temperature, car_efficiency,
+                          suffix=f" land transport oil {transport_type}",
+                          transport_type=transport_type
+                          )
             
     if endogenous:
         adjust_endogenous_transport(n, engine_types, transport_types)
@@ -1996,16 +2001,14 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
         n.links.loc[car_i, "capital_cost"] = cost
         # if car_type == 'land transport EV heavy' :
         #     VOM = (costs.loc[car_keys["electric"], "VOM"].mean()
-        #            *100/ car_efficiencies.loc["electric", "heavy"])
-        #     n.links.loc[car_i, "marginal_cost"] = VOM
+        #             *100 * car_efficiencies.loc["electric", "heavy"])
         # elif car_type =='land transport fuel cell heavy':
         #     VOM = (costs.loc[car_keys["fuel_cell"], "VOM"].mean()
-        #            *100/ car_efficiencies.loc["fuel_cell", "heavy"])
-        #     n.links.loc[car_i, "marginal_cost"] = VOM
+        #             *100* car_efficiencies.loc["fuel_cell", "heavy"])
         # elif car_type =='land transport oil heavy':
         #     VOM = (costs.loc[car_keys["ice"], "VOM"].mean()
-        #            *100/ car_efficiencies.loc["ice", "heavy"])
-        #     n.links.loc[car_i, "marginal_cost"] = VOM
+        #             *100* car_efficiencies.loc["ice", "heavy"])
+        # n.links.loc[car_i, "marginal_cost"] = VOM
 
 def build_heat_demand(n):
     heat_demand_shape = (
@@ -4198,18 +4201,22 @@ def adjust_transport_temporal_agg(n):
         "electric": "land transport EV",
         "ice": "land transport oil",
     }
-
     
-    for transport_type in ["light", "heavy"]:
+    endogenous = options["endogenous_transport"]
+    
+    transport_types = ["light", "heavy"]
+    
+    shares = get_shares(engine_types.keys(), transport_types, endogenous)
+    
+    for transport_type in transport_types:
         p_set = n.loads_t.p_set.loc[:, n.loads.carrier == f"land transport demand {transport_type}"]
         for engine, carrier in engine_types.items():
             
-            share = get(options[f"land_transport_{engine}_share"][transport_type],
-                        investment_year)
+            share = shares[engine][transport_type]
     
-            if share == 0: continue
-                
+            
             links_i = n.links[n.links.carrier == carrier + f" {transport_type}"].index
+            if links_i.empty: continue
             efficiency = n.links_t.efficiency.loc[:, links_i]
 
             p_set.columns = efficiency.columns
@@ -4233,13 +4240,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="test/config.myopic.yaml",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.overnight.yaml",
             simpl="",
             opts="",
             clusters="37",
             ll="v1.0",
             sector_opts="",
-            planning_horizons="2040",
+            planning_horizons="2025",
         )
 
     configure_logging(snakemake)
