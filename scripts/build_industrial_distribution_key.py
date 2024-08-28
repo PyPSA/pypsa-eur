@@ -186,7 +186,8 @@ def prepare_ammonia_database(regions):
 
 def prepare_cement_supplement(regions):
     """
-    Load supplementary cement plants from non-EU-(NO-CH) and map onto bus regions.
+    Load supplementary cement plants from non-EU-(NO-CH) and map onto bus
+    regions.
     """
 
     df = pd.read_csv(snakemake.input.cement_supplement, index_col=0)
