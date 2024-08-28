@@ -226,14 +226,19 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
         facilities = gem.query("country == @country")
 
         if process == "EAF":
-            status_list = ["construction", "operating", "operating pre-retirement", "retired"]
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
             capacities = facilities.loc[
                 facilities["Capacity operating status"].isin(status_list)
                 & (
                     facilities["Retired Date"].isna()
                     | facilities["Retired Date"].gt(2025)
                 ),
-                "Nominal EAF steel capacity (ttpa)"
+                "Nominal EAF steel capacity (ttpa)",
             ].dropna()
         elif process == "DRI + EAF":
             status_list = [
@@ -243,10 +248,12 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
                 "retired",
                 "announced",
             ]
-            sel = ["Nominal BOF steel capacity (ttpa)", "Nominal OHF steel capacity (ttpa)", "Nominal iron capacity (ttpa)"]
-            status_filter = facilities["Capacity operating status"].isin(
-                status_list
-            )
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+                "Nominal iron capacity (ttpa)",
+            ]
+            status_filter = facilities["Capacity operating status"].isin(status_list)
             retirement_filter = facilities["Retired Date"].isna() | facilities[
                 "Retired Date"
             ].gt(2030)
@@ -254,20 +261,34 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
                 facilities["Start date"].isna()
                 & ~facilities["Capacity operating status"].eq("announced")
             ) | facilities["Start date"].le(2030)
-            capacities = facilities.loc[
-                status_filter & retirement_filter & start_filter, sel
-            ].sum(axis=1).dropna()
+            capacities = (
+                facilities.loc[status_filter & retirement_filter & start_filter, sel]
+                .sum(axis=1)
+                .dropna()
+            )
         elif process == "Integrated steelworks":
-            status_list = ["construction", "operating", "operating pre-retirement", "retired"]
-            sel = ["Nominal BOF steel capacity (ttpa)",  "Nominal OHF steel capacity (ttpa)"]
-            capacities = facilities.loc[
-                facilities["Capacity operating status"].isin(status_list)
-                & (
-                    facilities["Retired Date"].isna()
-                    | facilities["Retired Date"].gt(2025)
-                ),
-                sel
-            ].sum(axis=1).dropna()
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+            ]
+            capacities = (
+                facilities.loc[
+                    facilities["Capacity operating status"].isin(status_list)
+                    & (
+                        facilities["Retired Date"].isna()
+                        | facilities["Retired Date"].gt(2025)
+                    ),
+                    sel,
+                ]
+                .sum(axis=1)
+                .dropna()
+            )
         else:
             raise ValueError(f"Unknown process {process}")
 
@@ -295,13 +316,11 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
                 # assume 50% of the minimum production for missing values
-                production = production.fillna(
-                    0.5 * facilities["Ammonia [kt/a]"].min()
-                )
+                production = production.fillna(0.5 * facilities["Ammonia [kt/a]"].min())
                 key = production / production.sum()
             key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
         else:
-            key = 0.
+            key = 0.0
 
         keys.loc[regions_ct, "Ammonia"] = key
 

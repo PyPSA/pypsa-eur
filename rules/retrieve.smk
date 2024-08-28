@@ -296,6 +296,7 @@ if config["enable"]["retrieve"]:
                 f.write(response.content)
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_gem_steel_plant_tracker:
@@ -310,6 +311,7 @@ if config["enable"]["retrieve"]:
             )
             with open(output[0], "wb") as f:
                 f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
