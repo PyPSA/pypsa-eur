@@ -10,6 +10,18 @@ Release Notes
 Upcoming Release
 ================
 
+* Added data on the locations and capacities of ammonia plants in Europe.
+  This data is used as a spatial distribution key for the ammonia demand.
+  The data manually collected with sources noted in ``data/ammonia_plants.csv``.
+
+* Included data from the `Global Steel Plant Tracker
+  <https://globalenergymonitor.org/projects/global-steel-plant-tracker/>`__
+  provided by Global Energy Monitor. The data includes among other attributes
+  the locations, ages, operating status, relining dates, manufacturing process
+  and capacities of steel plants in Europe. This data is used as a spatial
+  distribution key for the steel production, which is now separated by process
+  type (EAF, DRI + EAF, integrated).
+
 * Updated country-specific Energy Availability Factors (EAFs) for nuclear power
   plants based on `IAEA 2021-2023 reported country averages
   <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
