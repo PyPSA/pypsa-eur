@@ -14,6 +14,13 @@ Upcoming Release
   This data is used as a spatial distribution key for the ammonia demand.
   The data manually collected with sources noted in ``data/ammonia_plants.csv``.
 
+* Added data on the locations and capacities of cement plants in Europe that are
+  not included in the Hotmaps industrial database. The data sourced from the
+  `USGS 2019 Minerals Yearbooks
+  <https://www.usgs.gov/centers/national-minerals-information-center/international-minerals-statistics-and-information>`__
+  of specific countries is used as a spatial distribution key for the cement
+  demand. The data is stored in ``data/cement-plants-noneu.csv``.
+
 * Included data from the `Global Steel Plant Tracker
   <https://globalenergymonitor.org/projects/global-steel-plant-tracker/>`__
   provided by Global Energy Monitor. The data includes among other attributes

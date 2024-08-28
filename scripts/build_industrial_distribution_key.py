@@ -184,7 +184,25 @@ def prepare_ammonia_database(regions):
     return gdf
 
 
-def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
+def prepare_cement_supplement(regions):
+    """
+    Load supplementary cement plants from non-EU-(NO-CH) and map onto bus regions.
+    """
+
+    df = pd.read_csv(snakemake.input.cement_supplement, index_col=0)
+
+    geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
+
+    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf["country"] = gdf.bus.str[:2]
+
+    return gdf
+
+
+def build_nodal_distribution_key(hotmaps, gem, ammonia, cement, regions, countries):
     """
     Build nodal distribution keys for each sector.
     """
@@ -212,6 +230,14 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries):
                 # assume 20% quantile for missing values
                 emissions = emissions.fillna(emissions.quantile(0.2))
                 key = emissions / emissions.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        elif sector == "Cement" and country in cement.country.unique():
+            facilities = cement.query("country == @country")
+            production = facilities["Cement [kt/a]"]
+            if production.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                key = production / production.sum()
             key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
         else:
             key = keys.loc[regions_ct, "population"]
@@ -349,6 +375,10 @@ if __name__ == "__main__":
 
     ammonia = prepare_ammonia_database(regions)
 
-    keys = build_nodal_distribution_key(hotmaps, gem, ammonia, regions, countries)
+    cement = prepare_cement_supplement(regions)
+
+    keys = build_nodal_distribution_key(
+        hotmaps, gem, ammonia, cement, regions, countries
+    )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
