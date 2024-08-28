@@ -3,8 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-import xarray as xr
 import pandas as pd
+import xarray as xr
 
 
 class CentralHeatingTemperatureApproximator:
@@ -65,7 +65,7 @@ class CentralHeatingTemperatureApproximator:
         self.lower_threshold_ambient_temperature = lower_threshold_ambient_temperature
         self.upper_threshold_ambient_temperature = upper_threshold_ambient_temperature
         self.rolling_window_ambient_temperature = rolling_window_ambient_temperature
-    
+
     def ambient_temperature_rolling_mean(self) -> xr.DataArray:
         """
         Property to get ambient temperature.
@@ -76,8 +76,13 @@ class CentralHeatingTemperatureApproximator:
             Rolling mean of ambient temperature input.
         """
         # bfill to avoid NAs in the beginning
-        return self._ambient_temperature.rolling(time=self.rolling_window_ambient_temperature).mean(skip_na=True).bfill(dim="time")
-    
+        return (
+            self._ambient_temperature.rolling(
+                time=self.rolling_window_ambient_temperature
+            )
+            .mean(skip_na=True)
+            .bfill(dim="time")
+        )
 
     @property
     def forward_temperature(self) -> xr.DataArray:
@@ -114,14 +119,19 @@ class CentralHeatingTemperatureApproximator:
         """
 
         forward_temperature = xr.where(
-            self.ambient_temperature_rolling_mean() <= self.lower_threshold_ambient_temperature,
+            self.ambient_temperature_rolling_mean()
+            <= self.lower_threshold_ambient_temperature,
             self.max_forward_temperature,
             xr.where(
-                self.ambient_temperature_rolling_mean() >= self.upper_threshold_ambient_temperature,
+                self.ambient_temperature_rolling_mean()
+                >= self.upper_threshold_ambient_temperature,
                 self.min_forward_temperature,
                 self.min_forward_temperature
                 + (self.max_forward_temperature - self.min_forward_temperature)
-                * (self.upper_threshold_ambient_temperature - self.ambient_temperature_rolling_mean())
+                * (
+                    self.upper_threshold_ambient_temperature
+                    - self.ambient_temperature_rolling_mean()
+                )
                 / (
                     self.upper_threshold_ambient_temperature
                     - self.lower_threshold_ambient_temperature
@@ -175,14 +185,19 @@ class CentralHeatingTemperatureApproximator:
             Dynamic forward temperatures.
         """
         forward_temperature = xr.where(
-            self.ambient_temperature_rolling_mean() <= self.lower_threshold_ambient_temperature,
+            self.ambient_temperature_rolling_mean()
+            <= self.lower_threshold_ambient_temperature,
             self.max_forward_temperature,
             xr.where(
-                self.ambient_temperature_rolling_mean() >= self.upper_threshold_ambient_temperature,
+                self.ambient_temperature_rolling_mean()
+                >= self.upper_threshold_ambient_temperature,
                 self.min_forward_temperature,
                 self.min_forward_temperature
                 + (self.max_forward_temperature - self.min_forward_temperature)
-                * (self.upper_threshold_ambient_temperature - self.ambient_temperature_rolling_mean())
+                * (
+                    self.upper_threshold_ambient_temperature
+                    - self.ambient_temperature_rolling_mean()
+                )
                 / (
                     self.upper_threshold_ambient_temperature
                     - self.lower_threshold_ambient_temperature

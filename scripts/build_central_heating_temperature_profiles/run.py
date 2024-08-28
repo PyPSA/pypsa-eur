@@ -47,9 +47,9 @@ from central_heating_temperature_approximator import (
 )
 
 
-
 def get_country_from_node_name(node_name: str) -> str:
     return node_name[:2]
+
 
 def map_temperature_dict_to_onshore_regions(
     supply_temperature_by_country: dict,
