@@ -468,6 +468,7 @@ sector:
         FI: 40
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia

@@ -245,6 +245,12 @@ rule build_central_heating_temperature_profiles:
             "supply_temperature_approximation",
             "upper_threshold_ambient_temperature",
         ),
+        rolling_window_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "rolling_window_ambient_temperature",
+        ),
     input:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),

@@ -41,11 +41,15 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import get_country_from_node_name, set_scenario_config
+from _helpers import set_scenario_config
 from central_heating_temperature_approximator import (
     CentralHeatingTemperatureApproximator,
 )
 
+
+
+def get_country_from_node_name(node_name: str) -> str:
+    return node_name[:2]
 
 def map_temperature_dict_to_onshore_regions(
     supply_temperature_by_country: dict,
@@ -132,6 +136,7 @@ if __name__ == "__main__":
         fixed_return_temperature=return_temperature_central_heating_by_node_and_time,
         lower_threshold_ambient_temperature=snakemake.params.lower_threshold_ambient_temperature,
         upper_threshold_ambient_temperature=snakemake.params.upper_threshold_ambient_temperature,
+        rolling_window_ambient_temperature=snakemake.params.rolling_window_ambient_temperature,
     )
 
     central_heating_temperature_approximator.forward_temperature.to_netcdf(
