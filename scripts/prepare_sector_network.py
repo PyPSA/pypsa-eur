@@ -1531,6 +1531,41 @@ def get_temp_efficency(
 
     return car_efficiency * temp_eff
 
+def get_vehicle_cost():
+    # EV --------------------------
+    cost_EV = costs.loc["Battery electric (passenger cars)", "fixed"]
+    
+    cost_Etruck = costs.loc[car_keys["electric"], "fixed"].mean()
+
+    # FCE ----------------------------
+    cost_FCE = costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]
+
+    cost_FCtruck = costs.loc[car_keys["fuel_cell"], "fixed"].mean()
+                   
+
+    # ICE ---------------------------------------------------------
+    cost_ICE = costs.at["Liquid fuels ICE (passenger cars)", "fixed"]
+               
+    cost_ICtruck = costs.loc[car_keys["ice"], "fixed"].mean()
+                   
+    # cost in unit input depending on car type
+    costs_car_type = {
+        "land transport EV light": cost_EV,
+        "land transport EV heavy": cost_Etruck,
+        'land transport fuel cell light': cost_FCE,
+        'land transport fuel cell heavy': cost_FCtruck,
+        'land transport oil light': cost_ICE,
+        'land transport oil heavy': cost_ICtruck,          
+    }
+    
+    return costs_car_type
+
+def get_capital_cost_vehicle(n_cars, p_nom, endogenous, carrier):
+    if endogenous:
+        vehicle_cost = get_vehicle_cost()[carrier]
+        return vehicle_cost*n_cars/p_nom
+    else:
+        return 0
 
 def add_EVs(
     n,
@@ -1543,7 +1578,8 @@ def add_EVs(
     temperature,
     car_efficiency,
     suffix,
-    transport_type="light"
+    transport_type="light",
+    endogenous=False
 ):
 
     if not "Li ion" in n.carriers.index:
@@ -1577,6 +1613,11 @@ def add_EVs(
     p_nom = electric_share * p_set.div(efficiency).max()
 
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    
+    capital_cost = get_capital_cost_vehicle(electric_share * number_cars,
+                                            p_nom,
+                                            endogenous,
+                                            carrier=suffix[1:])
 
     if options["logistic_curve"]:
         projected_ev = pd.read_csv(snakemake.input.projected_ev_share, index_col=[0],
@@ -1600,6 +1641,7 @@ def add_EVs(
         p_nom=p_nom,
         p_nom_max=p_nom_max,
         p_nom_extendable=False,
+        capital_cost=capital_cost,
         lifetime=15,
     )
     
@@ -1654,9 +1696,10 @@ def add_EVs(
             lifetime=15,
         )
 
-def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
+def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, number_cars, 
+                       temperature,
                        car_efficiency, suffix,
-                       transport_type="light"
+                       transport_type="light", endogenous=False
                        ):
 
    
@@ -1671,6 +1714,11 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
     )
 
     p_nom = fuel_cell_share * p_set.div(efficiency).max()
+    
+    capital_cost = get_capital_cost_vehicle(fuel_cell_share * number_cars,
+                                            p_nom,
+                                            endogenous,
+                                            carrier=suffix[1:])
     
     if options["logistic_curve"]:
         projected_ev = pd.read_csv(snakemake.input.projected_ev_share, index_col=[0],
@@ -1690,6 +1738,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
         bus0=spatial.h2.nodes,
         bus1=nodes + f" land transport {transport_type}",
         carrier=suffix[1:],
+        capital_cost=capital_cost,
         efficiency=efficiency,
         p_nom_extendable=False,
         p_nom=p_nom,
@@ -1700,9 +1749,10 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
     )
 
 
-def add_ice_cars(n, nodes, p_set, ice_share, temperature,
+def add_ice_cars(n, nodes, p_set, ice_share, number_cars, temperature,
                            car_efficiency, suffix,
-                           transport_type="light"
+                           transport_type="light",
+                           endogenous=False
                            ):
 
     add_carrier_buses(n, "oil")
@@ -1718,6 +1768,11 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature,
     )
 
     p_nom = ice_share * p_set.div(efficiency).max()
+    
+    capital_cost = get_capital_cost_vehicle(ice_share * number_cars,
+                                            p_nom,
+                                            endogenous,
+                                            carrier=suffix[1:])
 
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
 
@@ -1729,6 +1784,7 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature,
         bus1=nodes + f" land transport {transport_type}",
         bus2=["co2 atmosphere"],
         carrier=suffix[1:],
+        capital_cost=capital_cost,
         efficiency=efficiency,
         efficiency2=costs.at["oil", "CO2 intensity"],
         p_nom_extendable=False,
@@ -1874,7 +1930,8 @@ def add_land_transport(n, costs):
                 temperature,
                 car_efficiency,
                 suffix=f" land transport EV {transport_type}",
-                transport_type=transport_type
+                transport_type=transport_type,
+                endogenous=endogenous,
             )
 
         # fuel cell vehicles
@@ -1883,10 +1940,13 @@ def add_land_transport(n, costs):
             car_efficiency = car_efficiencies.loc["fuel_cell", transport_type]
             add_fuel_cell_cars(n, nodes, transport[transport_type],
                                 shares.loc["fuel_cell", transport_type],
+                                number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
                                 temperature,
                                 car_efficiency,
                                 suffix=f" land transport fuel cell {transport_type}",
-                                transport_type=transport_type)
+                                transport_type=transport_type,
+                                endogenous=endogenous,
+                                )
         
         # internal combustion cars
         if shares.loc["ice", transport_type]>0:
@@ -1894,9 +1954,11 @@ def add_land_transport(n, costs):
             car_efficiency = car_efficiencies.loc["ice", transport_type]
             add_ice_cars(n, nodes, transport[transport_type],
                           shares.loc["ice", transport_type],
+                          number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
                           temperature, car_efficiency,
                           suffix=f" land transport oil {transport_type}",
-                          transport_type=transport_type
+                          transport_type=transport_type,
+                          endogenous=endogenous,
                           )
             
     if endogenous:
@@ -1925,48 +1987,7 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
     store_carrier = ["battery storage", "Li ion"]
     store_i = n.stores[n.stores.carrier.isin(store_carrier)].index
     n.stores.loc[store_i, "e_nom_extendable"] = True
-
-    # costs todo
-    # assume here for all of Europe
-    # average driving distance
-    # passenger cars EU28 JRC 2015 11 360 km /year and car = 113.6 100km /year
-    light_100km_per_vehicle = 113.6
-    # mean of buses and heavy duty freight
-    heavy_100km_per_vehicle = (396.783 + 172.843)/2
        
-    car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
-    # EV --------------------------
-    cost_EV = (costs.loc["Battery electric (passenger cars)", "fixed"]
-               / light_100km_per_vehicle * car_efficiencies.loc["electric", "light"])
-    
-    cost_Etruck = (costs.loc[car_keys["electric"], "fixed"].mean()
-                   / heavy_100km_per_vehicle *
-                   car_efficiencies.loc["electric", "heavy"])
-    # FCE ----------------------------
-    cost_FCE = (costs.loc["Hydrogen fuel cell (passenger cars)", "fixed"]
-                / light_100km_per_vehicle
-                * car_efficiencies.loc["fuel_cell", "light"])
-    cost_FCtruck = (costs.loc[car_keys["fuel_cell"], "fixed"].mean()
-                    / heavy_100km_per_vehicle
-                    * car_efficiencies.loc["fuel_cell", "heavy"])
-
-    # ICE ---------------------------------------------------------
-    cost_ICE = (costs.at["Liquid fuels ICE (passenger cars)", "fixed"]
-                / light_100km_per_vehicle
-                * car_efficiencies.loc["ice", "light"])
-    cost_ICtruck = (costs.loc[car_keys["ice"], "fixed"].mean()
-                    / heavy_100km_per_vehicle
-                    * car_efficiencies.loc["ice", "heavy"])
-    # cost in unit input depending on car type
-    costs_car_type = {
-        "land transport EV light": cost_EV,
-        "land transport EV heavy": cost_Etruck,
-        'land transport fuel cell light': cost_FCE,
-        'land transport fuel cell heavy': cost_FCtruck,
-        'land transport oil light': cost_ICE,
-        'land transport oil heavy': cost_ICtruck,
-            
-    }
 
     # add dummy generator only needed for solving with glpk with higher solver tolerance
     # n.add("Carrier", "dummy transport", color="#dd2e23", nice_name="Dummy transport")
@@ -1995,20 +2016,22 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
         p_min_pu=-1,
         #sign=-1,
     )
-
-    for car_type, cost in costs_car_type.items():
-        car_i = n.links[n.links.carrier == car_type].index
-        n.links.loc[car_i, "capital_cost"] = cost
-        # if car_type == 'land transport EV heavy' :
-        #     VOM = (costs.loc[car_keys["electric"], "VOM"].mean()
-        #             *100 * car_efficiencies.loc["electric", "heavy"])
-        # elif car_type =='land transport fuel cell heavy':
-        #     VOM = (costs.loc[car_keys["fuel_cell"], "VOM"].mean()
-        #             *100* car_efficiencies.loc["fuel_cell", "heavy"])
-        # elif car_type =='land transport oil heavy':
-        #     VOM = (costs.loc[car_keys["ice"], "VOM"].mean()
-        #             *100* car_efficiencies.loc["ice", "heavy"])
-        # n.links.loc[car_i, "marginal_cost"] = VOM
+    
+    car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
+    
+    map_carrier = {
+        "electric": "land transport EV",
+        "fuel_cell": "fuel cell",
+        "ice": "oil"
+        }
+    
+    # TODO missing assumptions for light duty
+    # for car_type in ["electric", "fuel_cell", "ice"]:
+    #     VOM = (costs.loc[car_keys[car_type], "VOM"].mean()
+    #             *100 * car_efficiencies.loc[car_type, "heavy"])
+    #     carrier = f"land transport {map_carrier[car_type]} heavy"
+    #     car_i = n.links[n.links.carrier==carrier].index
+    #     n.links.loc[car_i, "marginal_cost"] = VOM
 
 def build_heat_demand(n):
     heat_demand_shape = (
