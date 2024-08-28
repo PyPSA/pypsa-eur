@@ -84,7 +84,7 @@ def plot_costs(cost_df, drop=None):
     for ax, year in zip(axes, planning_horizons):
         subset = df_filtered.xs(year, level='planning_horizon', axis=1) 
         # convert to million
-        subset /= 1e6
+        subset /= 1e9
         
         subset.T.plot(
             kind="bar",
@@ -103,7 +103,7 @@ def plot_costs(cost_df, drop=None):
         ax.set_xticks(range(len(scenarios)))
         
         if ax == axes[0]:
-            ax.set_ylabel("System Cost [EUR million per year]")
+            ax.set_ylabel("System Cost [EUR billion per year]")
             
         
         ax.grid(axis="x")
@@ -176,7 +176,7 @@ def plot_costs(cost_df, drop=None):
         
         ax.grid(axis="x")
         
-        ax.set_ylim([0, snakemake.config['plotting']["costs_max"]])
+        ax.set_ylim([0, 1.1*df.sum().max()])
     
 
     handles, labels = ax.get_legend_handles_labels()
@@ -477,7 +477,8 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_summary_all")
+        snakemake = mock_snakemake("plot_summary_all",
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
