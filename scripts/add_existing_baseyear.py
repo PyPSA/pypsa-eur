@@ -600,14 +600,20 @@ def add_heating_capacities_installed_before_baseyear(
 def add_existing_land_transport(baseyear, options, ref_year=2024):
     transport_types = ["light", "heavy"]
     registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
+    historical_ev_share = pd.read_csv(snakemake.input.historical_ev_share,
+                                      index_col=[0], header=[0,1])
    
     for transport_type in transport_types:
         
         factor = options["car_reg_factor"]
         reg = registrations.loc[transport_type].iloc[:,0] * factor
+        today_ev = historical_ev_share.iloc[-1].loc[transport_type]
         
-        # share = 1/3  # TODO make this nicer
-        share = get(options["land_transport_ice_share"][transport_type], baseyear)
+        if options["endogenous_transport"]:
+            share = 1/3  # TODO make this nicer
+        else:
+            share = get(options["land_transport_ice_share"][transport_type], baseyear)
+        
         ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index
         p_nom = n.links.loc[ice_i, "p_nom"] / share
 
@@ -615,7 +621,7 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         efficiency = n.links_t.efficiency[ice_i]
         p_min_pu = n.links_t.p_min_pu[ice_i]
         
-        unchanged_fleet = 1-(reg*(baseyear-ref_year))
+        unchanged_fleet = 1-(reg*(baseyear-ref_year))-today_ev
         
         df = n.links.loc[ice_i]
        
