@@ -155,29 +155,35 @@ def country_cover(country_shapes, eez_shapes=None):
 
 def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     df = gpd.read_file(nuts3)
-    df = df.loc[df["STAT_LEVL_"] == 3]
     df["geometry"] = df["geometry"].map(_simplify_polys)
     df = df.rename(columns={"NUTS_ID": "id"})[["id", "geometry"]].set_index("id")
 
     pop = pd.read_table(nuts3pop, na_values=[":"], delimiter=" ?\t", engine="python")
     pop = (
         pop.set_index(
-            pd.MultiIndex.from_tuples(pop.pop("unit,geo\\time").str.split(","))
+            pd.MultiIndex.from_tuples(
+                pop.pop("freq,unit,geo\\TIME_PERIOD").str.split(",")
+            )
         )
-        .loc["THS"]
+        # Index THS on level 1
+        .xs("THS", level=1)
         .map(lambda x: pd.to_numeric(x, errors="coerce"))
         .bfill(axis=1)
-    )["2014"]
+        .droplevel(0)
+    )["2021"]
 
     gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
     gdp = (
         gdp.set_index(
-            pd.MultiIndex.from_tuples(gdp.pop("unit,geo\\time").str.split(","))
+            pd.MultiIndex.from_tuples(
+                gdp.pop("freq,unit,geo\\TIME_PERIOD").str.split(",")
+            )
         )
-        .loc["EUR_HAB"]
+        .xs("EUR_HAB", level=1)
         .map(lambda x: pd.to_numeric(x, errors="coerce"))
         .bfill(axis=1)
-    )["2014"]
+        .droplevel(0)
+    )["2021"]
 
     cantons = pd.read_csv(ch_cantons)
     cantons = cantons.set_index(cantons["HASC"].str[3:])["NUTS"]
@@ -188,10 +194,12 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     swiss_pop = pd.to_numeric(swiss.loc["Residents in 1000", "CH040":])
     pop = pd.concat([pop, swiss_pop])
+    pop = pop.loc[~pop.index.duplicated(keep="last")]
     swiss_gdp = pd.to_numeric(
         swiss.loc["Gross domestic product per capita in Swiss francs", "CH040":]
     )
     gdp = pd.concat([gdp, swiss_gdp])
+    gdp = gdp.loc[~gdp.index.duplicated(keep="last")]
 
     df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
 

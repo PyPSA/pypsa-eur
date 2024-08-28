@@ -16,9 +16,6 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
-        "nama_10r_3popgdp.tsv.gz",
-        "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
@@ -151,6 +148,60 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_electricity_demand.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_popgdp_data:
+        input:
+            popgdp=storage(
+                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp/?format=TSV&compressed=true&i"
+            ),
+        output:
+            popgdp="data/nuts3/nama_10r_3popgdp.tsv",
+        params:
+            zip_file="data/nuts3/nama_10r_3popgdp.tsv.gz",
+        run:
+            move(input.popgdp, params.zip_file)
+            shell(f"gunzip -c {params.zip_file} > {output.popgdp}")
+            os.remove(params.zip_file)
+
+    rule retrieve_gdp_data:
+        input:
+            gdp=storage(
+                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3gdp/?format=TSV&compressed=true&i"
+            ),
+        output:
+            gdp="data/nuts3/nama_10r_3gdp.tsv",
+        params:
+            zip_file="data/nuts3/nama_10r_3gdp.tsv.gz",
+        run:
+            move(input.gdp, params.zip_file)
+            shell(f"gunzip -c {params.zip_file} > {output.gdp}")
+            os.remove(params.zip_file)
+
+    rule retrieve_shapes_data:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-03m.geojson.zip"
+            ),
+        output:
+            shapes="data/nuts3/NUTS_RG_03M_2021_3035_LEVL_3.geojson",
+        params:
+            zip_file="data/nuts3/ref-nuts-2021-03m.geojson.zip",
+        run:
+            move(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                zip_ref.extract(
+                    "NUTS_RG_03M_2021_3035_LEVL_3.geojson",
+                    Path(output.shapes).parent,
+                )
+            extracted_file = (
+                Path(output.shapes).parent / "NUTS_RG_03M_2021_3035_LEVL_3.geojson"
+            )
+            extracted_file.rename(output.shapes)
+            os.remove(params.zip_file)
+
 
 
 if config["enable"]["retrieve"]:
