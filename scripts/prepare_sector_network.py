@@ -4385,14 +4385,15 @@ if __name__ == "__main__":
             f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."
         )
         n.mremove("Line", idx)
-    
+
     for c in options["vary"].keys():
         if c not in n.components.keys():
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in options["vary"][c].keys():
-            ind_i = n.df(c)[n.df(c).carrier==carrier].index
-            if ind_i.empty: continue
+            ind_i = n.df(c)[n.df(c).carrier == carrier].index
+            if ind_i.empty:
+                continue
             for parameter in options["vary"][c][carrier].keys():
                 factor = get(options["vary"][c][carrier][parameter], investment_year)
                 logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
