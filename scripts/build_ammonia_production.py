@@ -55,7 +55,6 @@ if __name__ == "__main__":
     ammonia = ammonia.rename(columns=lambda x: str(x))[years]
     ammonia.replace("--", np.nan, inplace=True)
     ammonia = ammonia.astype(float)
-    
 
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14

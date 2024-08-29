@@ -783,7 +783,7 @@ def add_heating_capacities_installed_before_baseyear(
                     overnight_cost=costs.at[costs_name, "efficiency"]
                     * costs.at[costs_name, "investment"],
                     p_nom=existing_heating.loc[
-                       nodes, (heat_system.value, f"{heat_source} heat pump")
+                        nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
                     * ratio
                     / costs.at[costs_name, "efficiency"],
@@ -807,7 +807,7 @@ def add_heating_capacities_installed_before_baseyear(
                     * costs.at[heat_system.resistive_heater_costs_name, "fixed"]
                 ),
                 overnight_cost=(
-                    costs.at[heat_system.resistive_heater_costs_name,  "efficiency"]
+                    costs.at[heat_system.resistive_heater_costs_name, "efficiency"]
                     * costs.at[heat_system.resistive_heater_costs_name, "investment"]
                 ),
                 p_nom=(
@@ -876,15 +876,15 @@ def add_heating_capacities_installed_before_baseyear(
                 nodes,
                 suffix=f" {heat_system} biomass boiler-{grouping_year}",
                 bus0=spatial.biomass.df.loc[nodes, "nodes"].values,
-                bus1=nodes + " " + heat_system.value  + " heat",
-                carrier=heat_system.value  + " biomass boiler",
+                bus1=nodes + " " + heat_system.value + " heat",
+                carrier=heat_system.value + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"],
                 overnight_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "investment"],
                 p_nom=(
-                    existing_heating.loc[nodes, (heat_system.value , "biomass boiler")]
+                    existing_heating.loc[nodes, (heat_system.value, "biomass boiler")]
                     * ratio
                     / costs.at["biomass boiler", "efficiency"]
                 ),

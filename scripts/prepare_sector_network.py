@@ -102,7 +102,11 @@ def define_spatial(nodes, options):
 
     spatial.gas = SimpleNamespace()
     # check if biogas potential should be spatially resolved
-    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
+    if (
+        options["gas_network"]
+        or options.get("co2_spatial", options["co2network"])
+        or options.get("biomass_spatial", options["biomass_transport"])
+    ):
         spatial.gas.biogas = nodes + " biogas"
         spatial.gas.biogas_locations = nodes
         spatial.gas.biogas_to_gas = nodes + " biogas to gas"
@@ -113,7 +117,9 @@ def define_spatial(nodes, options):
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
         spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
 
-    if options.get("regional_gas_demand", options["gas_network"]) or options.get("co2_spatial", options["co2network"]):
+    if options.get("regional_gas_demand", options["gas_network"]) or options.get(
+        "co2_spatial", options["co2network"]
+    ):
         spatial.gas.industry = nodes + " gas for industry"
         spatial.gas.industry_cc = nodes + " gas for industry CC"
     else:
@@ -625,8 +631,6 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
-
-
     fossils = ["coal", "gas", "oil", "lignite"]
     if options.get("fossil_fuels", True) and carrier in fossils:
         generator_nodes = nodes
@@ -651,14 +655,17 @@ def add_carrier_buses(n, carrier, nodes=None):
                 location=location,
                 carrier=carrier + " refining",
                 p_nom=1e6,
-                efficiency=1 - (cf_industry["fuel_refining"][carrier]["emissions"] / costs.at[carrier, "CO2 intensity"]),
+                efficiency=1
+                - (
+                    cf_industry["fuel_refining"][carrier]["emissions"]
+                    / costs.at[carrier, "CO2 intensity"]
+                ),
                 efficiency2=cf_industry["fuel_refining"][carrier]["emissions"],
             )
 
             generator_nodes = nodes + " primary"
             generator_carrier = carrier + " primary"
-        
-        
+
         n.madd(
             "Generator",
             generator_nodes,
@@ -2185,7 +2192,8 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     heat_system.central_or_decentral + " water tank storage", "fixed"
                 ],
                 overnight_cost=costs.at[
-                    heat_system.central_or_decentral  + " water tank storage", "investment"
+                    heat_system.central_or_decentral + " water tank storage",
+                    "investment",
                 ],
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
@@ -2248,7 +2256,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     heat_system.central_or_decentral + " solar thermal", "fixed"
                 ]
                 * overdim_factor,
-                overnight_cost=costs.at[heat_system.central_or_decentral + " solar thermal", "investment"]
+                overnight_cost=costs.at[
+                    heat_system.central_or_decentral + " solar thermal", "investment"
+                ]
                 * overdim_factor,
                 p_max_pu=solar_thermal[nodes],
                 lifetime=costs.at[
@@ -2462,7 +2472,11 @@ def add_biomass(n, costs):
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
-    if options["gas_network"] or options.get("co2_spatial", options["co2network"]) or options.get("biomass_spatial", options["biomass_transport"]):
+    if (
+        options["gas_network"]
+        or options.get("co2_spatial", options["co2network"])
+        or options.get("biomass_spatial", options["biomass_transport"])
+    ):
         biogas_potentials_spatial = biomass_potentials["biogas"].rename(
             index=lambda x: x + " biogas"
         )
@@ -2878,7 +2892,7 @@ def add_biomass(n, costs):
             * costs.at[key + " CC", "efficiency"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["solid biomass", "CO2 intensity"],
-            overnight_cost=costs.at[key + " CC", "investment"] 
+            overnight_cost=costs.at[key + " CC", "investment"]
             * costs.at[key + " CC", "efficiency"]
             + costs.at["biomass CHP capture", "investment"]
             * costs.at["solid biomass", "CO2 intensity"],
@@ -2940,7 +2954,8 @@ def add_biomass(n, costs):
             + costs.at["BtL", "CO2 stored"],
             p_nom_extendable=True,
             capital_cost=costs.at["BtL", "fixed"] * costs.at["BtL", "efficiency"],
-            overnight_cost=costs.at["BtL", "investment"] * costs.at["BtL", "efficiency"],
+            overnight_cost=costs.at["BtL", "investment"]
+            * costs.at["BtL", "efficiency"],
             marginal_cost=costs.at["BtL", "VOM"] * costs.at["BtL", "efficiency"],
         )
 
@@ -3000,7 +3015,7 @@ def add_biomass(n, costs):
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "fixed"]
             * costs.at["Fischer-Tropsch", "efficiency"],
-            overnight_cost=costs.at["BtL", "investment"] * costs.at["BtL", "efficiency"] 
+            overnight_cost=costs.at["BtL", "investment"] * costs.at["BtL", "efficiency"]
             + efuel_scale_factor
             * costs.at["Fischer-Tropsch", "investment"]
             * costs.at["Fischer-Tropsch", "efficiency"],
@@ -3026,7 +3041,8 @@ def add_biomass(n, costs):
             + costs.at["BioSNG", "CO2 stored"],
             p_nom_extendable=True,
             capital_cost=costs.at["BioSNG", "fixed"] * costs.at["BioSNG", "efficiency"],
-            overnight_cost=costs.at["BioSNG", "investment"] * costs.at["BioSNG", "efficiency"],
+            overnight_cost=costs.at["BioSNG", "investment"]
+            * costs.at["BioSNG", "efficiency"],
             marginal_cost=costs.at["BioSNG", "VOM"] * costs.at["BioSNG", "efficiency"],
         )
 
@@ -3052,7 +3068,8 @@ def add_biomass(n, costs):
             capital_cost=costs.at["BioSNG", "fixed"] * costs.at["BioSNG", "efficiency"]
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["BioSNG", "CO2 stored"],
-            overnight_cost=costs.at["BioSNG", "investment"] * costs.at["BioSNG", "efficiency"]
+            overnight_cost=costs.at["BioSNG", "investment"]
+            * costs.at["BioSNG", "efficiency"]
             + costs.at["biomass CHP capture", "investment"]
             * costs.at["BioSNG", "CO2 stored"],
             marginal_cost=costs.at["BioSNG", "VOM"] * costs.at["BioSNG", "efficiency"],

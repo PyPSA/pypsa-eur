@@ -49,9 +49,11 @@ The unit of the specific energy consumption is MWh/t material and tCO2/t materia
 """
 
 import logging
+
 import country_converter as coco
 import pandas as pd
 from _helpers import mute_print, set_scenario_config
+
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
@@ -98,6 +100,7 @@ eff_elec_steam = 0.99  # following DEA data for electric boiler steam
 eff_bio_steam = 0.89  # following DEA data for solid biomass boiler steam
 eff_h2_steam = 1  # following DEA data for direct firing gas
 eff_elec_steam = 0.99  # following DEA data for electric boiler steam
+
 
 def load_idees_data(sector, country="EU27"):
     suffixes = {"out": "", "fec": "_fec", "ued": "_ued", "emi": "_emi"}
