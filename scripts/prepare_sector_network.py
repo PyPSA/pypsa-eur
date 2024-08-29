@@ -4411,13 +4411,18 @@ if __name__ == "__main__":
     for k, v in options["transmission_efficiency"].items():
         lossy_bidirectional_links(n, k, v)
     
-    for parameter in options["vary"].keys():
-        for carrier in options["vary"][parameter].keys():
-            link_i = n.links[n.links.carrier==carrier].index
-            if link_i.empty: continue
-            factor = options["vary"][parameter][carrier]
-            logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
-            n.links.loc[link_i, parameter] *= factor
+    for c in options["vary"].keys():
+        if c not in n.components.keys():
+            logger.warning(f"{c} needs to be a PyPSA Component")
+            continue
+        for carrier in options["vary"][c].keys():
+            ind_i = n.df(c)[n.df(c).carrier==carrier].index
+            if ind_i.empty: continue
+            for parameter in options["vary"][c][carrier].keys():
+                factor = get(options["vary"][c][carrier][parameter], investment_year)
+                logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+                n.df(c).loc[ind_i, parameter] *= factor
+                
             
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
