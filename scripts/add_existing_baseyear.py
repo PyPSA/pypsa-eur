@@ -602,10 +602,10 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
     registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
     historical_ev_share = pd.read_csv(snakemake.input.historical_ev_share,
                                       index_col=[0], header=[0,1])
+    factor = get(options["car_reg_factor"], baseyear)
    
     for transport_type in transport_types:
         
-        factor = options["car_reg_factor"]
         reg = registrations.loc[transport_type].iloc[:,0] * factor
         today_ev = historical_ev_share.iloc[-1].loc[transport_type]
         

@@ -19,6 +19,7 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_existing_baseyear import add_build_year_to_new_assets
+from prepare_sector_network import get
 from pypsa.clustering.spatial import normed_or_uniform
 
 logger = logging.getLogger(__name__)
@@ -232,7 +233,7 @@ def adjust_transport(n, ref_year=2024):
                         & (n.links.carrier == f"land transport oil {transport_type}"))
         links_i = n.links[filter_links].index
         
-        factor = options["car_reg_factor"]
+        factor = get(options["car_reg_factor"], year)
         reg = registrations.loc[transport_type].iloc[:,0] * factor
         
         unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
