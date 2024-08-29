@@ -30,6 +30,12 @@ grouper = {
     "lignite": "power",
     "coal": "power",
     'oil': "power",
+    'offshore wind (AC)': "power",
+    'offshore wind (DC)': "power",
+    'offshore wind (Float)':"power",
+    'onshore wind': "power",
+    'solar PV': "power",
+    'uranium': "power",
     'nuclear': "power",
     "agriculture machinery oil": "agriculture",
     'coal for industry': "industry",
@@ -38,6 +44,7 @@ grouper = {
     'industry methanol': "industry",
     'process emissions': "industry",
     'naphtha for industry': "industry",
+    'solid biomass for industry': "industry",
     'process emissions CC': "industry CC",
     "solid biomass for industry CC": "industry CC",
     "co2": "co2 atmosphere",
@@ -47,6 +54,13 @@ grouper = {
     'urban central gas CHP': "heat",
     'urban central gas boiler': "heat",
     'urban decentral gas boiler': "heat",
+    'resistive heater': "heat",
+    'biomass boiler': "heat",
+    'hot water storage': "heat",
+    'air heat pump': "heat",
+    'ground heat pump': "heat",
+    'oil boiler': "heat",
+    'gas boiler': "heat",
     'urban central gas CHP CC': "heat CC",
     'urban central solid biomass CHP CC': "heat CC",
     'urban decentral oil boiler': "heat",
@@ -54,6 +68,32 @@ grouper = {
     'rural oil boiler': "heat",
     "land transport oil light": "land transport",
     "land transport oil heavy": "land transport",
+    'BEV charger heavy': "land transport",
+    'BEV charger light': "land transport",
+    'CHP': 'heat',
+    'H2': "H2",
+    'H2 Electrolysis':"H2",
+    'H2 Fuel Cell':"H2",
+    'H2 pipeline':"H2",
+    'SMR':"H2",
+    'SMR CC':"H2",
+    'battery storage': "power",
+    'solar rooftop':"power",
+    'solar thermal':"power",
+    'solar-hsat':"power",
+    'transmission lines': "power",
+    'electricity distribution grid': "power",
+    'hydroelectricity': "power",
+    'land transport EV heavy': "land transport",
+    'land transport EV light': "land transport",
+    'land transport fuel cell': "land transport",
+    'land transport oil': "land transport",
+    'methanolisation': "methanol",
+    'biogas': "biomass",
+    'solid biomass': "biomass",
+    'co2 sequestered':'CO2 sequestration',
+    'methanation': "gas",
+    
     }
 
 def plot_costs(cost_df, drop=None):
@@ -117,6 +157,8 @@ def plot_costs(cost_df, drop=None):
     df = df / 1e9
 
     df = df.groupby(df.index.map(rename_techs)).sum()
+    
+    df_grouped = df.rename(index=grouper).groupby(level=0).sum()
 
     to_drop = df.index[df.max(axis=1) < snakemake.config["plotting"]["costs_threshold"]]
 
@@ -301,7 +343,7 @@ def plot_balances(balances_df, drop=None):
                 axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
                 axes[i].set_xlabel('')
                 i += 1
-            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.pdf",
+            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap-demand-vary.pdf",
                         bbox_inches="tight")
 
             
@@ -478,7 +520,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport.yaml",)
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
