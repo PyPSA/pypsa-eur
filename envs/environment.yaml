@@ -11,14 +11,13 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa>=0.28
+- pypsa>=0.29
 - linopy
 - dask
 
   # Dependencies of the workflow itself
 - xlrd
 - openpyxl!=3.1.1
-- pycountry
 - seaborn
 - snakemake-minimal>=8.14
 - memory_profiler
@@ -48,6 +47,7 @@ dependencies:
 - pyxlsb
 - graphviz
 - pre-commit
+- geojson
 
   # Keep in conda environment when calling ipython
 - ipython

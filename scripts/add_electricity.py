@@ -84,6 +84,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 
 import logging
 from itertools import product
+from pathlib import Path
 from typing import Dict, List
 
 import geopandas as gpd
@@ -843,6 +844,25 @@ def attach_line_rating(
     n.lines_t.s_max_pu *= s_max_pu
 
 
+def add_transmission_projects(n, transmission_projects):
+    logger.info(f"Adding transmission projects to network.")
+    for path in transmission_projects:
+        path = Path(path)
+        df = pd.read_csv(path, index_col=0, dtype={"bus0": str, "bus1": str})
+        if df.empty:
+            continue
+        if "new_buses" in path.name:
+            n.madd("Bus", df.index, **df)
+        elif "new_lines" in path.name:
+            n.madd("Line", df.index, **df)
+        elif "new_links" in path.name:
+            n.madd("Link", df.index, **df)
+        elif "adjust_lines":
+            n.lines.update(df)
+        elif "adjust_links":
+            n.links.update(df)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -855,6 +875,9 @@ if __name__ == "__main__":
     params = snakemake.params
 
     n = pypsa.Network(snakemake.input.base_network)
+
+    if params["transmission_projects"]["enable"]:
+        add_transmission_projects(n, snakemake.input.transmission_projects)
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
@@ -897,7 +920,7 @@ if __name__ == "__main__":
         fuel_price = pd.read_csv(
             snakemake.input.fuel_price, index_col=0, header=0, parse_dates=True
         )
-        fuel_price = fuel_price.reindex(n.snapshots).fillna(method="ffill")
+        fuel_price = fuel_price.reindex(n.snapshots).ffill()
     else:
         fuel_price = None
 

@@ -23,6 +23,44 @@ Upcoming Release
 
 * Renamed the carrier of batteries in BEVs from `battery storage` to `EV storage` and the corresponding bus carrier from `Li ion` to `EV storage`. This is to avoid confusion with stationary battery storage. (
 
+* Updated country-specific Energy Availability Factors (EAFs) for nuclear power
+  plants based on `IAEA 2021-2023 reported country averages
+  <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
+
+* Update GEM Europe Gas Tracker to May 2024 version.
+
+* Add investment period dependent CO2 sequestration potentials
+
+* Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
+
+* Fixed PDF encoding in ``build_biomass_transport_costs`` with update of tabula-py and jpype1
+
+* More modular and flexible handling of transmission projects. One can now add new transmission projects in a subfolder of `data/transmission projects` similar to the files in the template folder. After adding the new files and updating the config section `transmission_projects:`, transmission projects will be included if they are not duplicates of existing lines or other projects.
+
+* Add option to apply a gaussian kernel density smoothing to wind turbine power curves.
+
+* Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
+
+* Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
+
+* Added unsustainable biomass potentials for solid, gaseous, and liquid biomass. The potentials can be phased-out and/or
+  substituted by the phase-in of sustainable biomass types using the config parameters
+  ``biomass: share_unsustainable_use_retained`` and ``biomass: share_sustainable_potential_available``.
+
+* The rule ``prepare_links_p_nom`` was removed since it was outdated and not used.
+
+* Changed heat pump COP approximation for central heating to be based on `Jensen et al. (2018) <https://backend.orbit.dtu.dk/ws/portalfiles/portal/151965635/MAIN_Final.pdf>`__ and a default forward temperature of 90C. This is more realistic for district heating than the previously used approximation method.
+
+* split solid biomass potentials into solid biomass and municipal solid waste. Add option to use municipal solid waste. This option is only activated in combination with the flag ``waste_to_energy``
+
+* Add option to import solid biomass
+
+* Add option to produce electrobiofuels (flag ``electrobiofuels``) from solid biomass and hydrogen, as a combination of BtL and Fischer-Tropsch to make more use of the biogenic carbon
+
+* Add flag ``sector: fossil_fuels`` in config to remove the option of importing fossil fuels
+
+* Renamed the carrier of batteries in BEVs from `battery storage` to `EV battery` and the corresponding bus carrier from `Li ion` to `EV battery`. This is to avoid confusion with stationary battery storage.
+
 * Changed default assumptions about waste heat usage from PtX and fuel cells in district heating.
   The default value for the link efficiency scaling factor was changed from 100% to 25%.
   It can be set to other values in the configuration ``sector: use_TECHNOLOGY_waste_heat``.
@@ -56,6 +94,8 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
+* Added new major feature to create the base_network from OpenStreetMap (OSM) data (PR https://github.com/PyPSA/pypsa-eur/pull/1079). Note that a heuristics based cleaning process is used for lines and links where electrical parameters are incomplete, missing, or ambiguous. Through ``electricity["base_network"]``, the base network can be set to "entsoegridkit" (now deprecated), "osm-prebuilt" (default, downloads the latest prebuilt snapshot based on OSM data from Zenodo), or "osm-raw" which retrieves (once) and cleans the raw OSM data and subsequently builds the network. Note that this process may take a few minutes.
+
 * Updated pre-built `weather data cutouts
   <https://zenodo.org/records/12791128>`__. These are now merged cutouts with
   solar irradiation from the new SARAH-3 dataset while taking all other
@@ -70,6 +110,8 @@ Upcoming Release
 
 * In :mod:`base_network`, replace own voronoi polygon calculation function with
   Geopandas `gdf.voronoi_polygons` method.
+
+*  Move custom busmaps to ```data/busmaps/elec_s{simpl}_{clusters}_{base_network}.csv``` (if enabled). This allows for different busmaps depending on the base network and scenario.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

@@ -254,7 +254,7 @@ def prepare_building_stock_data():
         index = pd.MultiIndex.from_product([[ct], averaged_data.index.to_list()])
         averaged_data.index = index
         averaged_data["estimated"] = 1
-        if ct not in area_tot.index.levels[0]:
+        if ct not in area_tot.index.unique(0):
             area_tot = pd.concat([area_tot, averaged_data], sort=True)
         else:
             area_tot.loc[averaged_data.index] = averaged_data
@@ -890,7 +890,7 @@ def calculate_gain_utilisation_factor(heat_transfer_perm2, Q_ht, Q_gain):
     Calculates gain utilisation factor nu.
     """
     # time constant of the building tau [h] = c_m [Wh/(m^2K)] * 1 /(H_tr_e+H_tb*H_ve) [m^2 K /W]
-    tau = c_m / heat_transfer_perm2.T.groupby(axis=1).sum().T
+    tau = c_m / heat_transfer_perm2.groupby().sum()
     alpha = alpha_H_0 + (tau / tau_H_0)
     # heat balance ratio
     gamma = (1 / Q_ht).mul(Q_gain.sum(axis=1), axis=0)
