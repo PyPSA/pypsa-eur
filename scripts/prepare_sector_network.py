@@ -610,6 +610,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         )
     else:
         capital_cost = 0.1
+        overnight_cost = np.nan
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 

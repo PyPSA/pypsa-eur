@@ -878,18 +878,18 @@ def add_heating_capacities_installed_before_baseyear(
                 bus0=spatial.biomass.df.loc[nodes, "nodes"].values,
                 bus1=nodes + " " + heat_system.value  + " heat",
                 carrier=heat_system.value  + " biomass boiler",
-                efficiency=costs.at[heat_system.biomass_boiler_costs_name, "efficiency"],
-                capital_cost=costs.at[heat_system.biomass_boiler_costs_name, "efficiency"]
-                * costs.at[heat_system.biomass_boiler_costs_name, "fixed"],
-                overnight_cost=costs.at[heat_system.biomass_boiler_costs_name, "efficiency"]
-                * costs.at[heat_system.biomass_boiler_costs_name, "investment"],
+                efficiency=costs.at["biomass boiler", "efficiency"],
+                capital_cost=costs.at["biomass boiler", "efficiency"]
+                * costs.at["biomass boiler", "fixed"],
+                overnight_cost=costs.at["biomass boiler", "efficiency"]
+                * costs.at["biomass boiler", "investment"],
                 p_nom=(
                     existing_heating.loc[nodes, (heat_system.value , "biomass boiler")]
                     * ratio
-                    / costs.at[heat_system.biomass_boiler_costs_name, "efficiency"]
+                    / costs.at["biomass boiler", "efficiency"]
                 ),
                 build_year=int(grouping_year),
-                lifetime=costs.at[heat_system.biomass_boiler_costs_name, "lifetime"],
+                lifetime=costs.at["biomass boiler", "lifetime"],
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
