@@ -98,9 +98,10 @@ rule build_shapes:
     input:
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3="data/nuts3/NUTS_RG_03M_2021_3035_LEVL_3.geojson",
-        nuts3pop="data/nuts3/nama_10r_3popgdp.tsv",
-        nuts3gdp="data/nuts3/nama_10r_3gdp.tsv",
+        nuts3="data/nuts3/NUTS_RG_03M_2016_3035_LEVL_3.geojson",
+        nuts3pop="data/nuts3/nama_10r_3popgdp_linear.csv.gz",
+        nuts3gdp="data/nuts3/nama_10r_3gdp_linear.csv.gz",
+        nuts3gdp_uk="data/nuts3/gvaireferencetables.xls",
         ch_cantons=ancient("data/ch_cantons.csv"),
         ch_popgdp=ancient("data/bundle/je-e-21.03.02.xls"),
     output:

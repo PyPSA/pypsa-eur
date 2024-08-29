@@ -5,6 +5,7 @@
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -155,49 +156,51 @@ if config["enable"]["retrieve"]:
     rule retrieve_popgdp_data:
         input:
             popgdp=storage(
-                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp/?format=TSV&compressed=true&i"
+                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp/?format=SDMX-CSV&compressed=true&i"
             ),
         output:
-            popgdp="data/nuts3/nama_10r_3popgdp.tsv",
-        params:
-            zip_file="data/nuts3/nama_10r_3popgdp.tsv.gz",
+            popgdp="data/nuts3/nama_10r_3popgdp_linear.csv.gz",
         run:
-            move(input.popgdp, params.zip_file)
-            shell(f"gunzip -c {params.zip_file} > {output.popgdp}")
-            os.remove(params.zip_file)
+            move(input.popgdp, output.popgdp)
+
+    rule retrieve_popgdp_uk_data:
+        input:
+            popgdp_uk=storage(
+                "https://www.ons.gov.uk/file?uri=/economy/grossvalueaddedgva/datasets/regionalgrossvalueaddedincomeapproach/current/gvaireferencetables.xls"
+            ),
+        output:
+            popgdp_uk="data/nuts3/gvaireferencetables.xls",
+        run:
+            move(input.popgdp_uk, output.popgdp_uk)
 
     rule retrieve_gdp_data:
         input:
             gdp=storage(
-                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3gdp/?format=TSV&compressed=true&i"
+                "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3gdp/?format=SDMX-CSV&compressed=true&i"
             ),
         output:
-            gdp="data/nuts3/nama_10r_3gdp.tsv",
-        params:
-            zip_file="data/nuts3/nama_10r_3gdp.tsv.gz",
+            gdp="data/nuts3/nama_10r_3gdp_linear.csv.gz",
         run:
-            move(input.gdp, params.zip_file)
-            shell(f"gunzip -c {params.zip_file} > {output.gdp}")
-            os.remove(params.zip_file)
+            move(input.gdp, output.gdp)
 
     rule retrieve_shapes_data:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-03m.geojson.zip"
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2016-03m.geojson.zip"
             ),
         output:
-            shapes="data/nuts3/NUTS_RG_03M_2021_3035_LEVL_3.geojson",
+            shapes="data/nuts3/NUTS_RG_03M_2016_3035_LEVL_3.geojson",
         params:
-            zip_file="data/nuts3/ref-nuts-2021-03m.geojson.zip",
+            zip_file="data/nuts3/ref-nuts-2016-03m.geojson.zip",
         run:
             move(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
                 zip_ref.extract(
-                    "NUTS_RG_03M_2021_3035_LEVL_3.geojson",
+                    "NUTS_RG_03M_2016_3035_LEVL_3.geojson",
                     Path(output.shapes).parent,
                 )
             extracted_file = (
-                Path(output.shapes).parent / "NUTS_RG_03M_2021_3035_LEVL_3.geojson"
+                Path(output.shapes).parent / "NUTS_RG_03M_2016_3035_LEVL_3.geojson"
             )
             extracted_file.rename(output.shapes)
             os.remove(params.zip_file)

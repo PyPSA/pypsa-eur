@@ -158,48 +158,29 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     df["geometry"] = df["geometry"].map(_simplify_polys)
     df = df.rename(columns={"NUTS_ID": "id"})[["id", "geometry"]].set_index("id")
 
-    pop = pd.read_table(nuts3pop, na_values=[":"], delimiter=" ?\t", engine="python")
-    pop = (
-        pop.set_index(
-            pd.MultiIndex.from_tuples(
-                pop.pop("freq,unit,geo\\TIME_PERIOD").str.split(",")
-            )
-        )
-        # Index THS on level 1
-        .xs("THS", level=1)
-        .map(lambda x: pd.to_numeric(x, errors="coerce"))
-        .bfill(axis=1)
-        .droplevel(0)
-    )["2021"]
+    pop = pd.read_csv(nuts3pop)
+    pop = pop.query("TIME_PERIOD == 2016 and geo.str.len() == 5").set_index("geo")[
+        "OBS_VALUE"
+    ]
 
-    gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
-    gdp = (
-        gdp.set_index(
-            pd.MultiIndex.from_tuples(
-                gdp.pop("freq,unit,geo\\TIME_PERIOD").str.split(",")
-            )
-        )
-        .xs("EUR_HAB", level=1)
-        .map(lambda x: pd.to_numeric(x, errors="coerce"))
-        .bfill(axis=1)
-        .droplevel(0)
-    )["2021"]
+    gdp = pd.read_csv(nuts3gdp)
+    gdp = gdp.query(
+        "TIME_PERIOD == 2016 and geo.str.len() == 5 and unit=='EUR_HAB'"
+    ).set_index("geo")["OBS_VALUE"]
 
-    cantons = pd.read_csv(ch_cantons)
-    cantons = cantons.set_index(cantons["HASC"].str[3:])["NUTS"]
-    cantons = cantons.str.pad(5, side="right", fillchar="0")
-
-    swiss = pd.read_excel(ch_popgdp, skiprows=3, index_col=0)
-    swiss.columns = swiss.columns.to_series().map(cantons)
-
-    swiss_pop = pd.to_numeric(swiss.loc["Residents in 1000", "CH040":])
-    pop = pd.concat([pop, swiss_pop])
-    pop = pop.loc[~pop.index.duplicated(keep="last")]
-    swiss_gdp = pd.to_numeric(
-        swiss.loc["Gross domestic product per capita in Swiss francs", "CH040":]
+    uk_data = pd.read_excel(
+        snakemake.input.nuts3gdp_uk,
+        sheet_name=["Table 1", "Table 2"],
+        skiprows=1,
+        index_col="NUTS code",
     )
-    gdp = pd.concat([gdp, swiss_gdp])
-    gdp = gdp.loc[~gdp.index.duplicated(keep="last")]
+
+    gva_uk = uk_data["Table 1"].query("`NUTS level` == 'NUTS3'")[2016] * 1e3
+    gdp = pd.concat([gdp, gva_uk])
+
+    gvapc_uk = uk_data["Table 2"].query("`NUTS level` == 'NUTS3'")[2016]
+    pop_uk = gva_uk * 1e6 / gvapc_uk
+    pop = pd.concat([pop, pop_uk])
 
     df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
 
@@ -249,7 +230,12 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
+        import os
+
         from _helpers import mock_snakemake
+
+        # Change directory to current tscript
+        os.chdir(os.path.dirname(__file__))
 
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
