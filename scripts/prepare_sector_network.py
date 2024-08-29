@@ -976,10 +976,6 @@ def insert_electricity_distribution_grid(n, costs):
     # TODO pop_layout?
     # TODO options?
 
-    logger.info(
-        f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}"
-    )
-
     nodes = pop_layout.index
 
     n.madd(
