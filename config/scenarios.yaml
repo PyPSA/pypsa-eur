@@ -13,107 +13,76 @@
 
 
 
-no-logistic:
+fast:
   sector:
     logistic_curve: false
 
 base:
   sector:
+    car_reg_factor: 0.5
+    logistic_curve: false
+
+base-t:
+  sector:
+    car_reg_factor:
+      2025: 0.5
+      2030: 0.5
+      2035: 0.8
+      2040: 1.0
+      2050: 1.0
+    logistic_curve: false
+
+slow:
+  sector:
     logistic_curve: true
 
 high-demand:
   sector:
+    car_reg_factor: 0.5
+    logistic_curve: false
     vary_demand:
       land transport demand heavy:
-        2020: 1.0
-        2025: 1.3 # compared to 2015 from Eurostat
-        2030: 1.4
-        2035: 1.5
-        2040: 1.6
-        2045: 1.7
-        2050: 1.8
+        2020: 1.05
+        2025: 1.05 # compared to 2019 from Eurostat
+        2030: 1.1
+        2035: 1.15
+        2040: 1.2
+        2045: 1.25
+        2050: 1.3
       land transport demand light:
-        2020: 1.0
-        2025: 1.3 # compared to 2015 from Eurostat
-        2030: 1.4
-        2035: 1.5
-        2040: 1.6
-        2045: 1.7
-        2050: 1.8
+        2020: 1.1
+        2025: 1.05 # compared to 2019 from Eurostat
+        2030: 1.1
+        2035: 1.15
+        2040: 1.2
+        2045: 1.25
+        2050: 1.3
 
 low-demand:
   sector:
+    car_reg_factor: 0.5
+    logistic_curve: false
     vary_demand:
       land transport demand heavy:
         2020: 1.0
-        2025: 1.0 # compared to 2015 from Eurostat
-        2030: 1.0
-        2035: 1.0
-        2040: 1.0
-        2045: 1.0
-        2050: 1.0
-      land transport demand light:
-        2020: 0.9
-        2025: 0.9 # compared to 2015 from Eurostat
+        2025: 0.95 # compared to 2019 from Eurostat
         2030: 0.9
-        2035: 0.9
-        2040: 0.9
-        2045: 0.9
-        2050: 0.9
+        2035: 0.85
+        2040: 0.8
+        2045: 0.75
+        2050: 0.7
+      land transport demand light:
+        2020: 1.0
+        2025: 0.95 # compared to 2019 from Eurostat
+        2030: 0.9
+        2035: 0.85
+        2040: 0.8
+        2045: 0.75
+        2050: 0.7
 
-
-high-elec-eff:
-  sector:
-    transport_electric_efficiency:
-      light: 80
-      # assume 40 kWh/100 km = 0.04 MWh/100 km
-      heavy: 40
-
-high-h2-eff:
-  sector:
-    transport_fuel_cell_efficiency:
-      light: 50
-      heavy: 10
-
-high-electrolysis:
+high-elec-efficiency:
   sector:
     vary:
-      capital_cost:
-        H2 Electrolysis: 1.7
-
-low-electrolysis:
-  sector:
-    vary:
-      capital_cost:
-        H2 Electrolysis: 0.6
-
-
-super-slow-transition:
-  sector:
-    car_reg_factor: 0.05
-    logistic_curve: true
-
-slow-transition:
-  sector:
-    car_reg_factor: 0.5
-    logistic_curve: true
-
-fast-transition:
-  sector:
-    car_reg_factor: 1.5
-    logistic_curve: true
-
-super-fast-transition:
-  sector:
-    car_reg_factor: 3
-    logistic_curve: true
-
-slow-transition-no-logistic:
-  sector:
-    car_reg_factor: 0.5
-    logistic_curve: false
-
-fast-transition-no-logistic:
-  sector:
-    car_reg_factor: 1.5
-    logistic_curve: false
+      Link:
+        land transport EV light:
+          efficiency: 1.25  # this should be roughly 150 kWh/100km
