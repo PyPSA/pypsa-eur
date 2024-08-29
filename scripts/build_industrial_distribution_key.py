@@ -203,7 +203,27 @@ def prepare_cement_supplement(regions):
     return gdf
 
 
-def build_nodal_distribution_key(hotmaps, gem, ammonia, cement, regions, countries):
+def prepare_refineries_supplement(regions):
+    """
+    Load supplementary refineries from non-EU-(NO-CH) and map onto bus regions.
+    """
+
+    df = pd.read_csv(snakemake.input.refineries_supplement, index_col=0)
+
+    geometry = gpd.points_from_xy(df.Longitude, df.Latitude)
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
+
+    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf["country"] = gdf.bus.str[:2]
+
+    return gdf
+
+
+def build_nodal_distribution_key(
+    hotmaps, gem, ammonia, cement, refineries, regions, countries
+):
     """
     Build nodal distribution keys for each sector.
     """
@@ -235,6 +255,14 @@ def build_nodal_distribution_key(hotmaps, gem, ammonia, cement, regions, countri
         elif sector == "Cement" and country in cement.country.unique():
             facilities = cement.query("country == @country")
             production = facilities["Cement [kt/a]"]
+            if production.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                key = production / production.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        elif sector == "Refineries" and country in refineries.country.unique():
+            facilities = refineries.query("country == @country")
+            production = facilities["Capacity [bbl/day]"]
             if production.sum() == 0:
                 key = pd.Series(1 / len(facilities), facilities.index)
             else:
@@ -378,8 +406,10 @@ if __name__ == "__main__":
 
     cement = prepare_cement_supplement(regions)
 
+    refineries = prepare_refineries_supplement(regions)
+
     keys = build_nodal_distribution_key(
-        hotmaps, gem, ammonia, cement, regions, countries
+        hotmaps, gem, ammonia, cement, refineries, regions, countries
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)

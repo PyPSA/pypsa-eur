@@ -582,6 +582,7 @@ rule build_industrial_distribution_key:
         gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
+        refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources(
             "industrial_distribution_key_elec_s{simpl}_{clusters}.csv"

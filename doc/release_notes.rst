@@ -21,6 +21,12 @@ Upcoming Release
   of specific countries is used as a spatial distribution key for the cement
   demand. The data is stored in ``data/cement-plants-noneu.csv``.
 
+* Added data on the locations and capacities of refineries in Europe that are
+  not included in the Hotmaps industrial database. The data is mostly sourced
+  from the `Wikipedia list of oil refineries
+  <https://en.wikipedia.org/wiki/List_of_oil_refineries>`__. The data is stored
+  in ``data/refineries-noneu.csv``.
+
 * Included data from the `Global Steel Plant Tracker
   <https://globalenergymonitor.org/projects/global-steel-plant-tracker/>`__
   provided by Global Energy Monitor. The data includes among other attributes
