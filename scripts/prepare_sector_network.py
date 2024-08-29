@@ -976,8 +976,6 @@ def insert_electricity_distribution_grid(n, costs):
     # TODO pop_layout?
     # TODO options?
 
-    cost_factor = options["electricity_distribution_grid_cost_factor"]
-
     logger.info(
         f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}"
     )
@@ -1002,7 +1000,7 @@ def insert_electricity_distribution_grid(n, costs):
         carrier="electricity distribution grid",
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
-        capital_cost=costs.at["electricity distribution grid", "fixed"] * cost_factor,
+        capital_cost=costs.at["electricity distribution grid", "fixed"],
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
@@ -4387,6 +4385,18 @@ if __name__ == "__main__":
             f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."
         )
         n.mremove("Line", idx)
+    
+    for c in options["vary"].keys():
+        if c not in n.components.keys():
+            logger.warning(f"{c} needs to be a PyPSA Component")
+            continue
+        for carrier in options["vary"][c].keys():
+            ind_i = n.df(c)[n.df(c).carrier==carrier].index
+            if ind_i.empty: continue
+            for parameter in options["vary"][c][carrier].keys():
+                factor = get(options["vary"][c][carrier][parameter], investment_year)
+                logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+                n.df(c).loc[ind_i, parameter] *= factor
 
     first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year

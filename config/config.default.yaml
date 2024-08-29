@@ -644,7 +644,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -701,6 +700,11 @@ sector:
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
+  vary:
+    Link:
+      electricity distribution grid:
+        capital_cost: 1.0
+
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
