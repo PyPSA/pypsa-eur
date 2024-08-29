@@ -2345,7 +2345,12 @@ def add_biomass(n, costs):
             carrier="municipal solid waste",
         )
 
-        e_max_pu = pd.Series([1] * (len(n.snapshots) - 1) + [0], index=n.snapshots)
+        e_max_pu = np.array(
+            len(spatial.msw.nodes) * [[1] * (len(n.snapshots) - 1) + [0]]
+        ).T
+        e_max_pu = pd.DataFrame(
+            e_max_pu, index=n.snapshots, columns=spatial.msw.nodes
+        ).astype(float)
         n.madd(
             "Store",
             spatial.msw.nodes,
