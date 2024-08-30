@@ -212,16 +212,71 @@ rule build_temperature_profiles:
         "../scripts/build_temperature_profiles.py"
 
 
+rule build_central_heating_temperature_profiles:
+    params:
+        max_forward_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "max_forward_temperature",
+        ),
+        min_forward_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "min_forward_temperature",
+        ),
+        return_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "return_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+        lower_threshold_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "lower_threshold_ambient_temperature",
+        ),
+        upper_threshold_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "upper_threshold_ambient_temperature",
+        ),
+        rolling_window_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "rolling_window_ambient_temperature",
+        ),
+    input:
+        temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_central_heating_temperature_profiles_s{simpl}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_central_heating_temperature_profiles/s{simpl}_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_central_heating_temperature_profiles/run.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
-        ),
-        forward_temperature_central_heating=config_provider(
-            "sector", "district_heating", "forward_temperature"
-        ),
-        return_temperature_central_heating=config_provider(
-            "sector", "district_heating", "return_temperature"
         ),
         heat_source_cooling_central_heating=config_provider(
             "sector", "district_heating", "heat_source_cooling"
@@ -232,6 +287,12 @@ rule build_cop_profiles:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         snapshots=config_provider("snapshots"),
     input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
