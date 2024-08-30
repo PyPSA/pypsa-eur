@@ -322,6 +322,23 @@ if config["enable"]["retrieve"]:
 
 
 if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_steel_plant_tracker:
+        output:
+            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        run:
+            import requests
+
+            response = requests.get(
+                "https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
     # Some logic to find the correct file URL
     # Sometimes files are released delayed or ahead of schedule, check which file is currently available
 
