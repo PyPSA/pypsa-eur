@@ -190,7 +190,9 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
 
-    df["country"] = df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR", KV="XK"))
+    df["country"] = (
+        df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR", KV="XK"))
+    )
 
     excludenuts = pd.Index(
         (
