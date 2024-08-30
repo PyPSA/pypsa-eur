@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix for passing function arguments in rule :mod:`solve_operations_network`.
+
 * Represent Kosovo (XK) as separate country.
 
 * Added data on the locations and capacities of ammonia plants in Europe.
