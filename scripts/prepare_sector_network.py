@@ -786,11 +786,11 @@ def add_allam(n, costs):
         carrier="allam",
         p_nom_extendable=True,
         # TODO: add costs to technology-data
-        capital_cost=0.6 * 1.5e6 * 0.1,  # efficiency * EUR/MW * annuity
-        marginal_cost=2,
-        efficiency=0.6,
+        capital_cost=costs.at["allam", "fixed"] * costs.at["allam", "efficiency"],
+        marginal_cost=costs.at["allam", "VOM"] * costs.at["allam", "efficiency"],
+        efficiency=costs.at["allam", "efficiency"],
         efficiency2=costs.at["gas", "CO2 intensity"],
-        lifetime=30.0,
+        lifetime=costs.at["allam", "lifetime"],
     )
 
 
@@ -862,11 +862,9 @@ def add_methanol_to_power(n, costs, types={}):
             bus3="co2 atmosphere",
             carrier="allam methanol",
             p_nom_extendable=True,
-            capital_cost=0.59
-            * 1.832e6
-            * calculate_annuity(25, 0.07),  # efficiency * EUR/MW * annuity
-            marginal_cost=2,
-            efficiency=0.59,
+            capital_cost=costs.at["allam", "fixed"] * costs.at["allam", "efficiency"],
+            marginal_cost=costs.at["allam", "VOM"] * costs.at["allam", "efficiency"],
+            efficiency=costs.at["allam", "efficiency"],
             efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
             efficiency3=0.02 * costs.at["methanolisation", "carbondioxide-input"],
             lifetime=25,
@@ -921,7 +919,7 @@ def add_methanol_to_power(n, costs, types={}):
             carrier="CCGT methanol CC",
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
-            marginal_cost=2,
+            marginal_cost=costs.at["CCGT", "VOM"] * costs.at["CCGT", "VOM"],
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
@@ -943,7 +941,7 @@ def add_methanol_to_power(n, costs, types={}):
             carrier="OCGT methanol",
             p_nom_extendable=True,
             capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"],
-            marginal_cost=2,
+            marginal_cost=costs.at["OCGT", "VOM"] * costs.at["OCGT", "efficiency"],
             efficiency=costs.at["OCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=costs.at["OCGT", "lifetime"],
