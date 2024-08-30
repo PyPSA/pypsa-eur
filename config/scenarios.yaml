@@ -34,7 +34,13 @@ base-t:
 
 slow:
   sector:
-    logistic_curve: true
+    car_reg_factor:
+      2025: 0.2
+      2030: 0.3
+      2035: 0.3
+      2040: 0.3
+      2050: 0.5
+    logistic_curve: false
 
 high-demand:
   sector:
@@ -82,7 +88,23 @@ low-demand:
 
 high-elec-efficiency:
   sector:
+    car_reg_factor: 0.5
+    logistic_curve: false
+    transport_electric_efficiency:
+      # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
+      # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
+      # 15 kWh/100 km = 0.015 MWh/100km => 1MWh = 66.66 * 100km
+      # 1/0.188 -> 1 MWh = 53.19 * 100 km
+      light: 66.66
+
+
+logistic:
+  sector:
+    logistic_curve: true
+
+high-DAC:
+  sector:
     vary:
       Link:
-        land transport EV light:
-          efficiency: 1.25  # this should be roughly 150 kWh/100km
+        DAC:
+          capital_cost: 1.5
