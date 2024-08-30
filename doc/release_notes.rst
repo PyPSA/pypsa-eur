@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Represent Kosovo (XK) as separate country.
+
 * Added data on the locations and capacities of ammonia plants in Europe.
   This data is used as a spatial distribution key for the ammonia demand.
   The data manually collected with sources noted in ``data/ammonia_plants.csv``.

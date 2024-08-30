@@ -507,7 +507,8 @@ def generate_periodic_profiles(dt_index, nodes, weekly_profile, localize=None):
     week_df = pd.DataFrame(index=dt_index, columns=nodes)
 
     for node in nodes:
-        timezone = pytz.timezone(pytz.country_timezones[node[:2]][0])
+        ct = node[:2] if node[:2] != "XK" else "RS"
+        timezone = pytz.timezone(pytz.country_timezones[ct][0])
         tz_dt_index = dt_index.tz_convert(timezone)
         week_df[node] = [24 * dt.weekday() + dt.hour for dt in tz_dt_index]
         week_df[node] = week_df[node].map(weekly_profile)
