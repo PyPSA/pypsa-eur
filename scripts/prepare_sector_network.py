@@ -2707,6 +2707,8 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu,
         )
 
+        add_carrier_buses(n, "oil")
+
         n.madd(
             "Link",
             spatial.biomass.bioliquids,
@@ -2836,7 +2838,7 @@ def add_biomass(n, costs):
             "biomass limit",
             carrier_attribute="solid biomass",
             sense="<=",
-            constant=biomass_potentials["solid biomass"].sum(),
+            constant=biomass_potentials.filter(like="solid biomass").sum().sum(),
             type="operational_limit",
         )
 
@@ -4501,7 +4503,7 @@ if __name__ == "__main__":
             "prepare_sector_network",
             simpl="",
             opts="",
-            clusters="37",
+            clusters="38",
             ll="vopt",
             sector_opts="",
             planning_horizons="2050",

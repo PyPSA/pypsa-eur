@@ -251,7 +251,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     return bio_regions
 
 
-def add_unsustainable_potentials(df):
+def add_unsustainable_potentials(df, foresight="overnight"):
     """
     Add unsustainable biomass potentials to the given dataframe. The difference
     between the data of JRC and Eurostat is assumed to be unsustainable
@@ -269,6 +269,15 @@ def add_unsustainable_potentials(df):
     pd.DataFrame
         The dataframe with added unsustainable biomass potentials.
     """
+    if foresight == "overnight":
+        df[
+            [
+                "unsustainable solid biomass",
+                "unsustainable biogas",
+                "unsustainable bioliquids",
+            ]
+        ] = 0
+        return df
     if "GB" in snakemake.config["countries"]:
         latest_year = 2019
     else:
@@ -347,8 +356,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
-            clusters="37",
-            planning_horizons=2020,
+            clusters="38",
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)
@@ -398,7 +407,7 @@ if __name__ == "__main__":
     grouper = {v: k for k, vv in params["classes"].items() for v in vv}
     df = df.T.groupby(grouper).sum().T
 
-    df = add_unsustainable_potentials(df)
+    df = add_unsustainable_potentials(df, foresight=snakemake.params.foresight)
 
     df *= 1e6  # TWh/a to MWh/a
     df.index.name = "MWh/a"
