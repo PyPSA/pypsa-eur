@@ -9,23 +9,22 @@ Build mapping between cutout grid cells and population (total, urban, rural).
 import logging
 
 import atlite
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-import country_converter as coco
 from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
-coco.logging.getLogger().setLevel(coco.logging.CRITICAL)  
+coco.logging.getLogger().setLevel(coco.logging.CRITICAL)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-
 
         snakemake = mock_snakemake(
             "build_population_layouts",

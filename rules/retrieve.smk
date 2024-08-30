@@ -258,6 +258,7 @@ if config["enable"]["retrieve"]:
             os.remove(params["zip"])
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_worldbank_urban_population:
@@ -279,6 +280,7 @@ if config["enable"]["retrieve"]:
             output_folder = Path(params["zip"]).parent
             unpack_archive(params["zip"], output_folder)
             os.remove(params["zip"])
+
 
 
 if config["enable"]["retrieve"]:
