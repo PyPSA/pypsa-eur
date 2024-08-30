@@ -575,7 +575,7 @@ def add_carrier_buses(n, carrier, nodes=None):
 
         suffix = ""
 
-        if carrier == 'oil' and cf_industry["oil_refining_emissions"] > 0:
+        if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
 
             n.madd(
                 "Bus",
@@ -594,7 +594,11 @@ def add_carrier_buses(n, carrier, nodes=None):
                 location=location,
                 carrier=carrier + " refining",
                 p_nom=1e6,
-                efficiency=1 - (cf_industry["oil_refining_emissions"] / costs.at[carrier, "CO2 intensity"]),
+                efficiency=1
+                - (
+                    cf_industry["oil_refining_emissions"]
+                    / costs.at[carrier, "CO2 intensity"]
+                ),
                 efficiency2=cf_industry["oil_refining_emissions"],
             )
 
