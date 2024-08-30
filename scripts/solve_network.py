@@ -43,6 +43,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -287,15 +288,22 @@ def add_solar_potential_constraints(n, config):
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, limit_dict):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+        limit = pd.Series(
+            {
+                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
+                for period in periods
+            }
+        )
+        names = limit.index
     else:
+        limit = get(limit_dict, int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -500,8 +508,8 @@ def prepare_network(
             n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
-        limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        limit_dict = co2_sequestration_potential
+        add_co2_sequestration_limit(n, limit_dict=limit_dict)
 
     return n
 
