@@ -281,7 +281,7 @@ def co2_emissions_year(
 
     eurostat = build_eurostat(input_eurostat, countries)
 
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
+    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
     eurostat_co2 = build_eurostat_co2(eurostat, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
@@ -2324,8 +2324,7 @@ def add_biomass(n, costs):
     if (
         options["municipal_solid_waste"]
         and not options["industry"]
-        and cf_industry["waste_to_energy"]
-        or cf_industry["waste_to_energy_cc"]
+        and (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"])
     ):
         logger.warning(
             "Flag municipal_solid_waste can be only used with industry "
@@ -2595,13 +2594,15 @@ def add_biomass(n, costs):
         if options["municipal_solid_waste"]:
             n.madd(
                 "Link",
-                biomass_transport.index,
-                bus0=biomass_transport.bus0 + " municipal solid waste",
-                bus1=biomass_transport.bus1 + " municipal solid waste",
+                biomass_transport.index + " municipal solid waste",
+                bus0=biomass_transport.bus0.values + " municipal solid waste",
+                bus1=biomass_transport.bus1.values + " municipal solid waste",
                 p_nom_extendable=False,
                 p_nom=5e4,
                 length=biomass_transport.length.values,
-                marginal_cost=biomass_transport.costs * biomass_transport.length.values,
+                marginal_cost=(
+                    biomass_transport.costs * biomass_transport.length
+                ).values,
                 carrier="municipal solid waste transport",
             )
 
