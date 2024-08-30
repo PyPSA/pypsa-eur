@@ -249,6 +249,25 @@ def plot_costs(cost_df, drop=None):
     
 
 
+def split_positive_negative(df):
+    """
+    Splits each row in a DataFrame into two rows: one containing only positive values and the other only negative values.
+    Both rows retain the same index as the original row.
+    
+    Args:
+    df (pd.DataFrame): The input DataFrame with numeric values.
+    
+    Returns:
+    pd.DataFrame: A DataFrame with rows split into positive and negative values.
+    """
+    positive_df = df.clip(lower=0)
+    negative_df = df.clip(upper=0)
+    
+    # Append negative_df after positive_df, retaining the same index
+    result_df = pd.concat([positive_df, negative_df])
+    
+    return result_df.sort_index()
+
 def plot_balances(balances_df, drop=None):
     
     co2_carriers = ["co2", "co2 stored", "process emissions"]
@@ -281,7 +300,9 @@ def plot_balances(balances_df, drop=None):
             
             co2_b = df.rename(index=grouper).groupby(level=0).sum()
             co2_b = co2_b.droplevel([1,2,3], axis=1)
-            co2_b.loc["co2 atmosphere"] = abs(co2_b.loc["co2 atmosphere"])*-1
+            co2_b = split_positive_negative(co2_b)
+            co2_b = co2_b[abs(co2_b.sum(axis=1))>2]
+            #co2_b.loc["co2 atmosphere"] = abs(co2_b.loc["co2 atmosphere"])*-1
             
             scenarios = df.columns.get_level_values(0).unique()
             
