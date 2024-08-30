@@ -2447,7 +2447,7 @@ def add_biomass(n, costs):
         )
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
-
+        add_carrier_buses(n, "oil")
         # Create timeseries to force usage of unsustainable potentials
         e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
         e_max_pu.iloc[-1] = 0
@@ -2731,6 +2731,7 @@ def add_biomass(n, costs):
 
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
+        add_carrier_buses(n, "oil")
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2774,7 +2775,7 @@ def add_biomass(n, costs):
     # Combination of efuels and biomass to liquid, both based on Fischer-Tropsch.
     # Experimental version - use with caution
     if options["electrobiofuels"]:
-
+        add_carrier_buses(n, "oil")
         efuel_scale_factor = costs.at["BtL", "C stored"]
         name = (
             pd.Index(spatial.biomass.nodes)
@@ -2886,6 +2887,10 @@ def add_biomass(n, costs):
 
 def add_industry(n, costs):
     logger.info("Add industrial demand")
+    # add oil buses for shipping, aviation and naptha for industry
+    add_carrier_buses(n, "oil")
+    # add methanol buses for industry
+    add_carrier_buses(n, "methanol")
 
     nodes = pop_layout.index
     nhours = n.snapshot_weightings.generators.sum()
@@ -3020,8 +3025,6 @@ def add_industry(n, costs):
     )
 
     # methanol for industry
-
-    add_carrier_buses(n, "methanol")
 
     n.madd(
         "Bus",
@@ -3193,8 +3196,6 @@ def add_industry(n, costs):
         )
 
     if shipping_oil_share:
-
-        add_carrier_buses(n, "oil")
 
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
 
