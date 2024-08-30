@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
-coco.logging.getLogger().setLevel(coco.logging.CRITICAL)
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -32,6 +30,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    coco.logging.getLogger().setLevel(coco.logging.CRITICAL)
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 
