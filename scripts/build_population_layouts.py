@@ -51,6 +51,8 @@ if __name__ == "__main__":
         ).squeeze()
         / 100.0
     )
+    if "XK" in countries:
+        urban_fraction["XK"] = urban_fraction["RS"]
 
     # fill missing Balkans values
     missing = ["AL", "ME", "MK"]

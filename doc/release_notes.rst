@@ -10,6 +10,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Represent Kosovo (XK) as separate country.
+
 * Updated country-specific Energy Availability Factors (EAFs) for nuclear power
   plants based on `IAEA 2021-2023 reported country averages
   <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
