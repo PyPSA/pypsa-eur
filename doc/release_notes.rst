@@ -11,7 +11,6 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-
 PyPSA-Eur 0.11.0 (25th May 2024)
 ================================
 
@@ -140,6 +139,9 @@ PyPSA-Eur 0.11.0 (25th May 2024)
   * Added option for various power-to-X processes to specify their share of waste
     heat that can be used in district heating. The default was changed from 100%
     to 25%. (https://github.com/PyPSA/pypsa-eur/pull/1141)
+
+* Added option to specify emissions fuel processing (e.g. oil in petrochemical
+  refinieries) with setting ``industry: oil_refining_emissions:``.
 
 * Added Enhanced Geothermal Systems for generation of electricity and district heat.
   Cost and available capacity assumptions based on `Aghahosseini et al. (2020)

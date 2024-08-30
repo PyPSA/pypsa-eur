@@ -573,14 +573,47 @@ def add_carrier_buses(n, carrier, nodes=None):
     fossils = ["coal", "gas", "oil", "lignite"]
     if options.get("fossil_fuels", True) and carrier in fossils:
 
-        n.madd(
-            "Generator",
-            nodes,
-            bus=nodes,
-            p_nom_extendable=True,
-            carrier=carrier,
-            marginal_cost=costs.at[carrier, "fuel"],
-        )
+        suffix = ""
+
+        if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
+
+            n.madd(
+                "Bus",
+                nodes + " primary",
+                location=location,
+                carrier=carrier + " primary",
+                unit=unit,
+            )
+
+            n.madd(
+                "Link",
+                nodes + " refining",
+                bus0=nodes + " primary",
+                bus1=nodes,
+                bus2="co2 atmosphere",
+                location=location,
+                carrier=carrier + " refining",
+                p_nom=1e6,
+                efficiency=1
+                - (
+                    cf_industry["oil_refining_emissions"]
+                    / costs.at[carrier, "CO2 intensity"]
+                ),
+                efficiency2=cf_industry["oil_refining_emissions"],
+            )
+
+            suffix = " primary"
+
+        else:
+
+            n.madd(
+                "Generator",
+                nodes + suffix,
+                bus=nodes + suffix,
+                p_nom_extendable=True,
+                carrier=carrier + suffix,
+                marginal_cost=costs.at[carrier, "fuel"],
+            )
 
 
 # TODO: PyPSA-Eur merge issue
