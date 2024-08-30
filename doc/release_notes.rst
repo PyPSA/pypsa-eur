@@ -1,3 +1,4 @@
+
 ..
   SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
@@ -11,6 +12,46 @@ Upcoming Release
 ================
 * Add technology options for methanol, like electricity production from methanol, biomass to methanol, methanol to kerosene, ...
 
+* Bugfix for passing function arguments in rule :mod:`solve_operations_network`.
+
+* Represent Kosovo (XK) as separate country.
+
+* Added data on the locations and capacities of ammonia plants in Europe.
+  This data is used as a spatial distribution key for the ammonia demand.
+  The data manually collected with sources noted in ``data/ammonia_plants.csv``.
+
+* Added data on the locations and capacities of cement plants in Europe that are
+  not included in the Hotmaps industrial database. The data sourced from the
+  `USGS 2019 Minerals Yearbooks
+  <https://www.usgs.gov/centers/national-minerals-information-center/international-minerals-statistics-and-information>`__
+  of specific countries is used as a spatial distribution key for the cement
+  demand. The data is stored in ``data/cement-plants-noneu.csv``.
+
+* Added data on the locations and capacities of refineries in Europe that are
+  not included in the Hotmaps industrial database. The data is mostly sourced
+  from the `Wikipedia list of oil refineries
+  <https://en.wikipedia.org/wiki/List_of_oil_refineries>`__. The data is stored
+  in ``data/refineries-noneu.csv``.
+
+* Included data from the `Global Steel Plant Tracker
+  <https://globalenergymonitor.org/projects/global-steel-plant-tracker/>`__
+  provided by Global Energy Monitor. The data includes among other attributes
+  the locations, ages, operating status, relining dates, manufacturing process
+  and capacities of steel plants in Europe. This data is used as a spatial
+  distribution key for the steel production, which is now separated by process
+  type (EAF, DRI + EAF, integrated).
+
+* Retrieve share of urban population from `World Bank API
+  <https://data.worldbank.org/indicator/SP.URB.TOTL.IN.ZS>`__. The data
+  originates from the United Nations Population Division. Previously, a file
+  ``data/urban_percent.csv`` with an undocumented source was used.
+
+* Updated country-specific Energy Availability Factors (EAFs) for nuclear power
+  plants based on `IAEA 2021-2023 reported country averages
+  <https://pris.iaea.org/PRIS/WorldStatistics/ThreeYrsEnergyAvailabilityFactor.aspx>`__.
+
+* Update GEM Europe Gas Tracker to May 2024 version.
+
 * Add investment period dependent CO2 sequestration potentials
 
 * Add option to produce hydrogen from solid biomass (flag ``solid biomass to hydrogen``), combined with carbon capture
@@ -22,6 +63,8 @@ Upcoming Release
 * Add option to apply a gaussian kernel density smoothing to wind turbine power curves.
 
 * Update JRC-IDEES-2015 to `JRC-IDEES-2021 <https://publications.jrc.ec.europa.eu/repository/handle/JRC137809>`__. The reference year is changed from 2015 to 2019.
+
+* Made central heating supply temperatures dynamic based on an adaptation of a reference curve from Pieper et al. (2019) (https://www.sciencedirect.com/science/article/pii/S0360544219305857?via%3Dihub).
 
 * Added option to use country-specific district heating forward and return temperatures. Defaults to lower temperatures in Scandinavia.
 
@@ -76,7 +119,7 @@ Upcoming Release
 
 * Enable parallelism in :mod:`determine_availability_matrix_MD_UA.py` and remove plots. This requires the use of temporary files.
 
-* Added new major feature to create the base_network from OpenStreetMap (OSM) data (PR https://github.com/PyPSA/pypsa-eur/pull/1079). Note that a heuristics based cleaning process is used for lines and links where electrical parameters are incomplete, missing, or ambiguous. Through ``electricity["base_network"]``, the base network can be set to "entsoegridkit" (original default setting, deprecated soon), "osm-prebuilt" (which downloads the latest prebuilt snapshot based on OSM data from Zenodo), or "osm-raw" which retrieves (once) and cleans the raw OSM data and subsequently builds the network. Note that this process may take a few minutes.
+* Added new major feature to create the base_network from OpenStreetMap (OSM) data (PR https://github.com/PyPSA/pypsa-eur/pull/1079). Note that a heuristics based cleaning process is used for lines and links where electrical parameters are incomplete, missing, or ambiguous. Through ``electricity["base_network"]``, the base network can be set to "entsoegridkit" (now deprecated), "osm-prebuilt" (default, downloads the latest prebuilt snapshot based on OSM data from Zenodo), or "osm-raw" which retrieves (once) and cleans the raw OSM data and subsequently builds the network. Note that this process may take a few minutes.
 
 * Updated pre-built `weather data cutouts
   <https://zenodo.org/records/12791128>`__. These are now merged cutouts with

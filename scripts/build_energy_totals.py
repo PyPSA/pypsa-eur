@@ -1065,9 +1065,11 @@ def build_eurostat_co2(eurostat: pd.DataFrame, year: int = 1990) -> pd.Series:
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
 
     # emissions in tCO2_equiv per MWh_th
-    specific_emissions["Solid fuels"] = 0.36  # Approximates coal
-    specific_emissions["Oil (total)"] = 0.285  # Average of distillate and residue
-    specific_emissions["Gas"] = 0.2  # For natural gas
+    specific_emissions["Solid fossil fuels"] = 0.36  # Approximates coal
+    specific_emissions["Oil and petroleum products"] = (
+        0.285  # Average of distillate and residue
+    )
+    specific_emissions["Natural gas"] = 0.2  # For natural gas
 
     return eurostat_year.multiply(specific_emissions).sum(axis=1)
 
@@ -1099,7 +1101,9 @@ def build_co2_totals(
 
     co2 = eea_co2.reindex(countries)
 
-    for ct in pd.Index(countries).intersection(["BA", "RS", "AL", "ME", "MK"]):
+    for ct in pd.Index(countries).intersection(
+        ["BA", "RS", "XK", "AL", "ME", "MK", "UA", "MD"]
+    ):
         mappings = {
             "electricity": (ct, "+", "Electricity & heat generation", np.nan),
             "residential non-elec": (ct, "+", "+", "Residential"),
@@ -1451,10 +1455,10 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     for nrg_name, (code, siec) in nrg_type.items():
 
         # Select energy balance type, rename columns and countries to match IDEES data,
-        # convert TJ to TWh, and drop XK data already since included in RS data
+        # convert TJ to TWh
         col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
         idx_to_rename = {v: k for k, v in idees_rename.items()}
-        drop_geo = ["EU27_2020", "EA20", "XK"]
+        drop_geo = ["EU27_2020", "EA20"]
         nrg_data = eurostat_households.query(
             "nrg_bal == @code and siec == @siec and geo not in @drop_geo and OBS_VALUE > 0"
         ).copy()

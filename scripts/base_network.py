@@ -1008,12 +1008,12 @@ if __name__ == "__main__":
     )
 
     shapes.to_file(snakemake.output.regions_onshore)
-    append_bus_shapes(n, shapes, "onshore")
+    # append_bus_shapes(n, shapes, "onshore")
 
     if offshore_regions:
         shapes = pd.concat(offshore_regions, ignore_index=True)
         shapes.to_file(snakemake.output.regions_offshore)
-        append_bus_shapes(n, shapes, "offshore")
+        # append_bus_shapes(n, shapes, "offshore")
     else:
         offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
 
