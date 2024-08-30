@@ -1,3 +1,4 @@
+
 ..
   SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
 
@@ -11,6 +12,11 @@ Upcoming Release
 ================
 
 * Represent Kosovo (XK) as separate country.
+
+* Retrieve share of urban population from `World Bank API
+  <https://data.worldbank.org/indicator/SP.URB.TOTL.IN.ZS>`__. The data
+  originates from the United Nations Population Division. Previously, a file
+  ``data/urban_percent.csv`` with an undocumented source was used.
 
 * Updated country-specific Energy Availability Factors (EAFs) for nuclear power
   plants based on `IAEA 2021-2023 reported country averages
