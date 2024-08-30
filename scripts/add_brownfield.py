@@ -236,8 +236,8 @@ def adjust_transport(n, ref_year=2024):
         factor = get(options["car_reg_factor"], year)
         reg = registrations.loc[transport_type].iloc[:,0] * factor
         
-        unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
         previous_year = n_p.links.build_year.max()
+        unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
         already_reduced =  (1-(reg*(previous_year-ref_year))).clip(lower=0)
         changed = (unchanged_fleet/already_reduced.replace(0,1)).rename(index= lambda x: x + f" land transport oil {transport_type}-existing")
         n.links.loc[links_i, "p_nom"] = (n.links.loc[links_i, "p_nom"] * changed).fillna(0)
