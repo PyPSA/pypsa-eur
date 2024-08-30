@@ -258,6 +258,28 @@ if config["enable"]["retrieve"]:
             os.remove(params["zip"])
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_worldbank_urban_population:
+        params:
+            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip",
+        output:
+            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        run:
+            import os
+            import requests
+
+            response = requests.get(
+                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params={"name": "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip"},
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
 
 if config["enable"]["retrieve"]:
 
