@@ -3356,26 +3356,6 @@ def add_industry(n, costs):
     )
 
     # methanol for industry
-    # add methanol nodes if not already added
-    if "methanol" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.methanol.nodes,
-            carrier="methanol",
-            location=spatial.methanol.locations,
-            unit="MWh_LHV",
-        )
-
-        n.madd(
-            "Store",
-            spatial.methanol.nodes,
-            suffix=" Store",
-            bus=spatial.methanol.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="methanol",
-            capital_cost=0.02,
-        )
 
     n.madd(
         "Bus",
