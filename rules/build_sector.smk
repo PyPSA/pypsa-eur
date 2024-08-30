@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/urban_percent.csv",
+        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
@@ -636,10 +636,14 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        hotmaps_industrial_database=storage(
+        hotmaps=storage(
             "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
             keep_local=True,
         ),
+        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        ammonia="data/ammonia_plants.csv",
+        cement_supplement="data/cement-plants-noneu.csv",
+        refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources(
             "industrial_distribution_key_elec_s{simpl}_{clusters}.csv"
