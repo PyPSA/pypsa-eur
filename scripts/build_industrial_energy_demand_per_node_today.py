@@ -33,10 +33,10 @@ from _helpers import set_scenario_config
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
-    "Electric arc": "Iron and steel",
-    "Integrated steelworks": "Iron and steel",
-    "DRI + Electric arc": "Iron and steel",
-    "Ammonia": "Chemical industry",
+    "Electric arc": "EAF",
+    "Integrated steelworks": "Integrated steelworks",
+    "DRI + Electric arc": "DRI + EAF",
+    "Ammonia": "Ammonia",
     "Basic chemicals (without ammonia)": "Chemical industry",
     "Other chemicals": "Chemical industry",
     "Pharmaceutical products etc.": "Chemical industry",
