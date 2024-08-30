@@ -56,8 +56,6 @@ if __name__ == "__main__":
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14
 
-    ammonia.ffill(axis=1, inplace=True)
-
     ammonia.index.name = "ktonNH3/a"
 
     ammonia.to_csv(snakemake.output.ammonia_production)
