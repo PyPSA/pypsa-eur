@@ -3191,10 +3191,10 @@ def add_industry(n, costs):
                 "MWh_MeOH_per_tCO2"
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
+    # add oil for shipping, aviation and naptha for industry
+    add_carrier_buses(n, "oil")
 
     if shipping_oil_share:
-
-        add_carrier_buses(n, "oil")
 
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
 
