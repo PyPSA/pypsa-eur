@@ -11,6 +11,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Added option to specify emissions fuel processing (e.g. oil in petrochemical
+  refinieries) with setting ``industry: oil_refining_emissions:``.
+
 * Bugfix for passing function arguments in rule :mod:`solve_operations_network`.
 
 * Represent Kosovo (XK) as separate country.
