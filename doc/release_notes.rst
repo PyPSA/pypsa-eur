@@ -11,8 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-PyPSA-Eur 0.11.0 (25th May 2024)
-================================
+PyPSA-Eur 0.12.0 (30th August 2024)
+===================================
 
 **Data Updates and Extensions**
 
