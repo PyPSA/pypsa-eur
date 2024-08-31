@@ -16,7 +16,7 @@ using the ``retrieve*`` rules (:ref:`data`).
 Having downloaded the necessary data,
 
 - :mod:`build_shapes` generates GeoJSON files with shapes of the countries, exclusive economic zones and `NUTS3 <https://en.wikipedia.org/wiki/Nomenclature_of_Territorial_Units_for_Statistics>`__ areas.
-- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__ for cutout ``europe-2013-era5`` and SARAH for cutout ``europe-2013-sarah``.
+- :mod:`build_cutout` prepares smaller weather data portions from `ERA5 <https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5>`__ for cutout ``europe-2013-sarah3-era5`` and SARAH for cutout ``europe-2013-sarah``.
 
 With these and the externally extracted ENTSO-E online map topology
 (``data/entsoegridkit``), it can build a base PyPSA network with the following rules:
@@ -25,7 +25,7 @@ With these and the externally extracted ENTSO-E online map topology
 
 Then the process continues by calculating conventional power plant capacities, potentials, and per-unit availability time series for variable renewable energy carriers and hydro power plants with the following rules:
 
-- :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/FRESNA/powerplantmatching>`__ allocating these to the closest substation for each powerplant,
+- :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`__ allocating these to the closest substation for each powerplant,
 - :mod:`build_ship_raster` for building shipping traffic density,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
@@ -41,10 +41,16 @@ Rule ``build_cutout``
 .. automodule:: build_cutout
 
 
-Rule ``prepare_links_p_nom``
-===============================
+Rule ``clean_osm_data``
+=============================
 
-.. automodule:: prepare_links_p_nom
+.. automodule:: clean_osm_data
+
+
+Rule ``build_osm_network``
+=============================
+
+.. automodule:: build_osm_network
 
 .. _base:
 
@@ -53,6 +59,12 @@ Rule ``base_network``
 
 .. automodule:: base_network
 
+
+Rule ``build_transmission_projects``
+====================================
+
+.. automodule:: build_transmission_projects
+
 .. _shapes:
 
 Rule ``build_shapes``
@@ -60,6 +72,10 @@ Rule ``build_shapes``
 
 .. automodule:: build_shapes
 
+Rule ``build_gdp_pop_non_nuts3``
+=============================
+
+.. automodule:: build_gdp_pop_non_nuts3
 
 .. _powerplants:
 

@@ -6,8 +6,80 @@
 Build specific energy consumption by carrier and industries and by country,
 that interpolates between the current average energy consumption (from
 2015-2020) and the ideal future best-in-class consumption.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    industry:
+        sector_ratios_fraction_future:
+        ammonia:
+
+Inputs
+------
+
+- ``resources/industry_sector_ratios.csv``
+- ``resources/industrial_energy_demand_per_country_today.csv``
+- ``resources/industrial_production_per_country.csv``
+
+Outputs
+-------
+
+- ``resources/industry_sector_ratios_{planning_horizons}.csv``
+
+Description
+-------
+
+The config["industry"]["sector_ratios_fraction_future"] parameter determines the progress towards the future best-in-class consumption.
+For each bus, the following industry subcategories
+
+- Electric arc
+- DRI + Electric arc
+- Integrated steelworks
+- HVC
+- HVC (mechanical recycling)
+- HVC (chemical recycling)
+- Ammonia
+- Chlorine
+- Methanol
+- Other chemicals
+- Pharmaceutical products etc.
+- Cement
+- Ceramics & other NMM
+- Glass production
+- Pulp production
+- Paper production
+- Printing and media reproduction
+- Food, beverages and tobacco
+- Alumina production
+- Aluminium - primary production
+- Aluminium - secondary production
+- Other non-ferrous metals
+- Transport equipment
+- Machinery equipment
+- Textiles and leather
+- Wood and wood products
+- Other Industrial Sectors
+
+with the following carriers are considered:
+
+- elec
+- coal
+- coke
+- biomass
+- methane
+- hydrogen
+- heat
+- naphtha
+- process emission
+- process emission from feedstock
+- (ammonia)
+
+Unit of the output file is MWh/t.
 """
 
+import numpy as np
 import pandas as pd
 from prepare_sector_network import get
 
@@ -33,7 +105,7 @@ def build_industry_sector_ratios_intermediate():
         snakemake.input.industry_sector_ratios, index_col=0
     )
 
-    today_sector_ratios = demand.div(production, axis=1)
+    today_sector_ratios = demand.div(production, axis=1).replace([np.inf, -np.inf], 0)
 
     today_sector_ratios.dropna(how="all", axis=1, inplace=True)
 
@@ -58,11 +130,12 @@ def build_industry_sector_ratios_intermediate():
         ]
         today_sector_ratios_ct.loc[:, ~missing_mask] = today_sector_ratios_ct.loc[
             :, ~missing_mask
-        ].fillna(0)
+        ].fillna(future_sector_ratios)
         intermediate_sector_ratios[ct] = (
             today_sector_ratios_ct * (1 - fraction_future)
             + future_sector_ratios * fraction_future
         )
+
     intermediate_sector_ratios = pd.concat(intermediate_sector_ratios, axis=1)
 
     intermediate_sector_ratios.to_csv(snakemake.output.industry_sector_ratios)

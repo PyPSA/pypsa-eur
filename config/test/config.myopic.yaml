@@ -44,6 +44,9 @@ electricity:
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
+  estimate_renewable_capacities:
+    enable: false
+
 atlite:
   default_cutout: be-03-2013-era5
   cutouts:

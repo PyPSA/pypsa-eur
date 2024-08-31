@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def build_nodal_transport_data(fn, pop_layout, year):
     # get numbers of car and fuel efficiency per country
     transport_data = pd.read_csv(fn, index_col=[0, 1])
-    transport_data = transport_data.xs(min(2015, year), level="year")
+    transport_data = transport_data.xs(year, level="year")
 
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
@@ -73,14 +73,15 @@ def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
     # divide out the heating/cooling demand from ICE totals
     ice_correction = (transport_shape * (1 + dd_ICE)).sum() / transport_shape.sum()
 
+    # unit TWh
     energy_totals_transport = (
         pop_weighted_energy_totals["total road"]
         + pop_weighted_energy_totals["total rail"]
         - pop_weighted_energy_totals["electricity rail"]
     )
 
-    # convert average fuel efficiency from kW/100 km -> MW/100km
-    eff = nodal_transport_data["average fuel efficiency"] / 1e3
+    # average fuel efficiency in MWh/100 km
+    eff = nodal_transport_data["average fuel efficiency"]
 
     return (transport_shape.multiply(energy_totals_transport) * 1e6 * nyears).divide(
         eff * ice_correction
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transport_demand",
             simpl="",
-            clusters=37,
+            clusters=128,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -1,5 +1,6 @@
 ,Unit,Values,Description
-voltages,kV,"Any subset of {220., 300., 380.}",Voltage levels to consider
+voltages,kV,"Any subset of {200., 220., 300., 380., 500., 750.}",Voltage levels to consider
+base_network, --, "Any value in {'entsoegridkit', 'osm-prebuilt', 'osm-raw}", "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer."
 gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
 co2limit_enable,bool,true or false,Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks..
@@ -29,7 +30,7 @@ conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite
 ,,,
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,
--- enable,,bool,Activate routine to estimate renewable capacities
+-- enable,,bool,Activate routine to estimate renewable capacities in rule :mod:`add_electricity`. This option should not be used in combination with pathway planning ``foresight: myopic`` or ``foresight: perfect`` as renewable capacities are added differently in :mod:`add_existing_baseyear`.
 -- from_opsd,--,bool,Add renewable capacities from `OPSD database <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_. The value is depreciated but still can be used.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."

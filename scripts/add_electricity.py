@@ -51,7 +51,6 @@ Inputs
     .. image:: img/hydrocapacities.png
         :scale: 34 %
 
-- ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
 - ``resources/electricity_demand.csv`` Hourly per-country electricity demand profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
@@ -84,6 +83,7 @@ It further adds extendable ``generators`` with **zero** capacity for
 
 import logging
 from itertools import product
+from pathlib import Path
 from typing import Dict, List
 
 import geopandas as gpd
@@ -287,26 +287,26 @@ def shapes_to_shapes(orig, dest):
     transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
 
     for i, j in product(range(len(dest)), range(len(orig))):
-        if orig_prepped[j].intersects(dest[i]):
-            area = orig[j].intersection(dest[i]).area
-            transfer[i, j] = area / dest[i].area
+        if orig_prepped[j].intersects(dest.iloc[i]):
+            area = orig.iloc[j].intersection(dest.iloc[i]).area
+            transfer[i, j] = area / dest.iloc[i].area
 
     return transfer
 
 
-def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.0):
+def attach_load(
+    n, regions, load, nuts3_shapes, gdp_pop_non_nuts3, countries, scaling=1.0
+):
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
-    regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
+    gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
-
-    ua_md_gdp = pd.read_csv(ua_md_gdp, dtype={"name": "str"}).set_index("name")
 
     logger.info(f"Load data scaled by factor {scaling}.")
     opsd_load *= scaling
 
     nuts3 = gpd.read_file(nuts3_shapes).set_index("index")
 
-    def upsample(cntry, group):
+    def upsample(cntry, group, gdp_pop_non_nuts3):
         load = opsd_load[cntry]
 
         if len(group) == 1:
@@ -325,7 +325,15 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
         factors = normed(0.6 * normed(gdp_n) + 0.4 * normed(pop_n))
         if cntry in ["UA", "MD"]:
             # overwrite factor because nuts3 provides no data for UA+MD
-            factors = normed(ua_md_gdp.loc[group.index, "GDP_PPP"].squeeze())
+            gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3).set_index("Bus")
+            gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
+                (gdp_pop_non_nuts3.country == cntry)
+                & (gdp_pop_non_nuts3.index.isin(substation_lv_i))
+            ]
+            factors = normed(
+                0.6 * normed(gdp_pop_non_nuts3["gdp"])
+                + 0.4 * normed(gdp_pop_non_nuts3["pop"])
+            )
         return pd.DataFrame(
             factors.values * load.values[:, np.newaxis],
             index=load.index,
@@ -334,8 +342,8 @@ def attach_load(n, regions, load, nuts3_shapes, ua_md_gdp, countries, scaling=1.
 
     load = pd.concat(
         [
-            upsample(cntry, group)
-            for cntry, group in regions.geometry.groupby(regions.country)
+            upsample(cntry, group, gdp_pop_non_nuts3)
+            for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country)
         ],
         axis=1,
     )
@@ -448,8 +456,6 @@ def attach_conventional_generators(
     fuel_price=None,
 ):
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
-    add_missing_carriers(n, carriers)
-    add_co2_emissions(n, costs, carriers)
 
     # Replace carrier "natural gas" with the respective technology (OCGT or
     # CCGT) to align with PyPSA names of "carriers" and avoid filtering "natural
@@ -464,6 +470,11 @@ def attach_conventional_generators(
         .rename(index=lambda s: f"C{str(s)}")
     )
     ppl["efficiency"] = ppl.efficiency.fillna(ppl.efficiency_r)
+
+    # reduce carriers to those in power plant dataset
+    carriers = list(set(carriers) & set(ppl.carrier.unique()))
+    add_missing_carriers(n, carriers)
+    add_co2_emissions(n, costs, carriers)
 
     if unit_commitment is not None:
         committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")
@@ -788,6 +799,25 @@ def attach_line_rating(
     n.lines_t.s_max_pu *= s_max_pu
 
 
+def add_transmission_projects(n, transmission_projects):
+    logger.info(f"Adding transmission projects to network.")
+    for path in transmission_projects:
+        path = Path(path)
+        df = pd.read_csv(path, index_col=0, dtype={"bus0": str, "bus1": str})
+        if df.empty:
+            continue
+        if "new_buses" in path.name:
+            n.madd("Bus", df.index, **df)
+        elif "new_lines" in path.name:
+            n.madd("Line", df.index, **df)
+        elif "new_links" in path.name:
+            n.madd("Link", df.index, **df)
+        elif "adjust_lines":
+            n.lines.update(df)
+        elif "adjust_links":
+            n.links.update(df)
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -799,6 +829,9 @@ if __name__ == "__main__":
     params = snakemake.params
 
     n = pypsa.Network(snakemake.input.base_network)
+
+    if params["transmission_projects"]["enable"]:
+        add_transmission_projects(n, snakemake.input.transmission_projects)
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
@@ -818,7 +851,7 @@ if __name__ == "__main__":
         snakemake.input.regions,
         snakemake.input.load,
         snakemake.input.nuts3_shapes,
-        snakemake.input.ua_md_gdp,
+        snakemake.input.get("gdp_pop_non_nuts3"),
         params.countries,
         params.scaling_factor,
     )
@@ -841,7 +874,7 @@ if __name__ == "__main__":
         fuel_price = pd.read_csv(
             snakemake.input.fuel_price, index_col=0, header=0, parse_dates=True
         )
-        fuel_price = fuel_price.reindex(n.snapshots).fillna(method="ffill")
+        fuel_price = fuel_price.reindex(n.snapshots).ffill()
     else:
         fuel_price = None
 
@@ -881,15 +914,22 @@ if __name__ == "__main__":
 
     estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
     if estimate_renewable_caps["enable"]:
-        tech_map = estimate_renewable_caps["technology_mapping"]
-        expansion_limit = estimate_renewable_caps["expansion_limit"]
-        year = estimate_renewable_caps["year"]
+        if params.foresight != "overnight":
+            logger.info(
+                "Skipping renewable capacity estimation because they are added later "
+                "in rule `add_existing_baseyear` with foresight mode 'myopic'."
+            )
+        else:
+            tech_map = estimate_renewable_caps["technology_mapping"]
+            expansion_limit = estimate_renewable_caps["expansion_limit"]
+            year = estimate_renewable_caps["year"]
 
-        if estimate_renewable_caps["from_opsd"]:
-            attach_OPSD_renewables(n, tech_map)
-        estimate_renewable_capacities(
-            n, year, tech_map, expansion_limit, params.countries
-        )
+            if estimate_renewable_caps["from_opsd"]:
+                attach_OPSD_renewables(n, tech_map)
+
+            estimate_renewable_capacities(
+                n, year, tech_map, expansion_limit, params.countries
+            )
 
     update_p_nom_max(n)
 

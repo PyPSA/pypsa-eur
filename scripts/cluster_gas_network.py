@@ -41,9 +41,9 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
     for i in [0, 1]:
         gdf = gpd.GeoDataFrame(geometry=df[f"point{i}"], crs="EPSG:4326")
 
-        bus_mapping = gpd.sjoin(
-            gdf, bus_regions, how="left", predicate="within"
-        ).index_right
+        bus_mapping = gpd.sjoin(gdf, bus_regions, how="left", predicate="within")[
+            "name"
+        ]
         bus_mapping = bus_mapping.groupby(bus_mapping.index).first()
 
         df[f"bus{i}"] = bus_mapping
@@ -57,6 +57,9 @@ def build_clustered_gas_network(df, bus_regions, length_factor=1.25):
 
     # drop pipes within the same region
     df = df.loc[df.bus1 != df.bus0]
+
+    if df.empty:
+        return df
 
     # recalculate lengths as center to center * length factor
     df["length"] = df.apply(

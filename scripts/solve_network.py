@@ -44,6 +44,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from prepare_sector_network import get
 from pypsa.clustering.spatial import align_strategies, flatten_multiindex
 from pypsa.descriptors import Dict, get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
@@ -136,8 +137,6 @@ def _add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
 
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
@@ -161,7 +160,7 @@ def _add_land_use_constraint(n):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def _add_land_use_constraint_m(n, planning_horizons, config):
@@ -178,8 +177,6 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
         "offwind-ac",
         "offwind-dc",
     ]:
-        extendable_i = (n.generators.carrier == carrier) & n.generators.p_nom_extendable
-        n.generators.loc[extendable_i, "p_nom_min"] = 0
 
         existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
         ind = list(
@@ -215,7 +212,7 @@ def _add_land_use_constraint_m(n, planning_horizons, config):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_solar_potential_constraints(n, config):
@@ -295,15 +292,22 @@ def add_solar_potential_constraints(n, config):
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, limit_dict):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+        limit = pd.Series(
+            {
+                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
+                for period in periods
+            }
+        )
+        names = limit.index
     else:
+        limit = get(limit_dict, int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -479,6 +483,22 @@ def prepare_network(
             p_nom=1e9,  # kW
         )
 
+    if solve_opts.get("curtailment_mode"):
+        n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
+        n.generators_t.p_min_pu = n.generators_t.p_max_pu
+        buses_i = n.buses.query("carrier == 'AC'").index
+        n.madd(
+            "Generator",
+            buses_i,
+            suffix=" curtailment",
+            bus=buses_i,
+            p_min_pu=-1,
+            p_max_pu=0,
+            marginal_cost=-0.1,
+            carrier="curtailment",
+            p_nom=1e6,
+        )
+
     if solve_opts.get("noisy_costs"):
         for t in n.iterate_components():
             # if 'capital_cost' in t.df:
@@ -507,8 +527,8 @@ def prepare_network(
             n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
-        limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        limit_dict = co2_sequestration_potential
+        add_co2_sequestration_limit(n, limit_dict=limit_dict)
 
     return n
 
@@ -951,6 +971,25 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_flexible_egs_constraint(n):
+    """
+    Upper bounds the charging capacity of the geothermal reservoir according to
+    the well capacity.
+    """
+    well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
+    storage_index = n.storage_units.loc[
+        n.storage_units.carrier == "geothermal heat"
+    ].index
+
+    p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
+    p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
+
+    n.model.add_constraints(
+        p_nom_lhs <= p_nom_rhs,
+        name="upper_bound_charging_capacity_of_geothermal_reservoir",
+    )
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1016,8 +1055,11 @@ def extra_functionality(n, snapshots):
     else:
         add_co2_atmosphere_constraint(n, snapshots)
 
-    if snakemake.params.custom_extra_functionality:
-        source_path = snakemake.params.custom_extra_functionality
+    if config["sector"]["enhanced_geothermal"]["enable"]:
+        add_flexible_egs_constraint(n)
+
+    if n.params.custom_extra_functionality:
+        source_path = n.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
@@ -1319,7 +1361,7 @@ def disaggregate_build_years(n, indices, planning_horizon):
     logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
 
 
-def solve_network(n, config, solving, build_year_agg, **kwargs):
+def solve_network(n, config, params, solving, build_year_agg, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1347,6 +1389,7 @@ def solve_network(n, config, solving, build_year_agg, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
+    n.params = params
 
     build_year_agg_enabled = build_year_agg["enable"] and (
         config["foresight"] == "myopic"
@@ -1390,19 +1433,20 @@ def solve_network(n, config, solving, build_year_agg, **kwargs):
     return n
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
+            "solve_sector_network_perfect",
             configfiles="../config/test/config.perfect.yaml",
             simpl="",
             opts="",
-            clusters="37",
+            clusters="5",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            sector_opts="",
+            # planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1429,6 +1473,7 @@ if __name__ == "__main__":
         n = solve_network(
             n,
             config=snakemake.config,
+            params=snakemake.params,
             solving=snakemake.params.solving,
             build_year_agg=snakemake.params.get("build_year_agg", {"enable": False}),
             log_fn=snakemake.log.solver,
