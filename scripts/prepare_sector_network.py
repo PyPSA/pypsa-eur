@@ -1906,7 +1906,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
 
-        if heat_system == HeatSystem.URBAN_CENTRAL:
+        if (heat_system == HeatSystem.URBAN_CENTRAL) and not options[
+            "central_heat_everywhere"
+        ]:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
