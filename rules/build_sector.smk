@@ -305,6 +305,7 @@ rule build_energy_totals:
         co2_name=resources("co2_totals.csv"),
         transport_name=resources("transport_data.csv"),
         district_heat_share=resources("district_heat_share.csv"),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
     threads: 16
     resources:
         mem_mb=10000,
@@ -1037,6 +1038,7 @@ rule prepare_sector_network:
         district_heat_share=resources(
             "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),

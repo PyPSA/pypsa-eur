@@ -546,6 +546,14 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
             )
 
+            if "residential" in heat_system.value:
+                efficiency = nodes.str[:2].map(heating_efficiencies["gas residential space efficiency"])
+            elif "services" in heat_system.value:
+                efficiency = nodes.str[:2].map(heating_efficiencies["gas services space efficiency"])
+            else:
+                #default used for urban central, since no info on district heating boilers
+                efficiency = costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
+
             n.madd(
                 "Link",
                 nodes,
@@ -554,7 +562,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system.value + " gas boiler",
-                efficiency=costs.at[heat_system.gas_boiler_costs_name, "efficiency"],
+                efficiency=efficiency,
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
                     costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
@@ -569,6 +577,14 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.gas_boiler_costs_name, "lifetime"],
             )
 
+            if "residential" in heat_system.value:
+                efficiency = nodes.str[:2].map(heating_efficiencies["oil residential space efficiency"])
+            elif "services" in heat_system.value:
+                efficiency = nodes.str[:2].map(heating_efficiencies["oil services space efficiency"])
+            else:
+                #default used for urban central, since no info on district heating boilers
+                efficiency = costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
+
             n.madd(
                 "Link",
                 nodes,
@@ -577,7 +593,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system.value + " oil boiler",
-                efficiency=costs.at[heat_system.oil_boiler_costs_name, "efficiency"],
+                efficiency=efficiency,
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
                 * costs.at[heat_system.oil_boiler_costs_name, "fixed"],
@@ -659,6 +675,11 @@ if __name__ == "__main__":
     )
 
     if options["heating"]:
+
+        #one could use baseyear here instead (but dangerous if no data)
+        heating_efficiencies = (
+            pd.read_csv(snakemake.input.heating_efficiencies, index_col=[0,1])
+        ).swaplevel().loc[int(snakemake.config["energy"]["energy_totals_year"])]
 
         add_heating_capacities_installed_before_baseyear(
             n=n,
