@@ -56,8 +56,8 @@ For each bus, the following industry subcategories
 - Aluminium - primary production
 - Aluminium - secondary production
 - Other non-ferrous metals
-- Transport Equipment
-- Machinery Equipment
+- Transport equipment
+- Machinery equipment
 - Textiles and leather
 - Wood and wood products
 - Other Industrial Sectors
@@ -79,6 +79,7 @@ with the following carriers are considered:
 Unit of the output file is MWh/t.
 """
 
+import numpy as np
 import pandas as pd
 from prepare_sector_network import get
 
@@ -104,7 +105,7 @@ def build_industry_sector_ratios_intermediate():
         snakemake.input.industry_sector_ratios, index_col=0
     )
 
-    today_sector_ratios = demand.div(production, axis=1)
+    today_sector_ratios = demand.div(production, axis=1).replace([np.inf, -np.inf], 0)
 
     today_sector_ratios.dropna(how="all", axis=1, inplace=True)
 

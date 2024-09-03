@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 0.12.0
 tutorial: false
 
 logging:
@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 37
+  - 39
   - 128
   - 256
   opts:
@@ -56,7 +56,7 @@ scenario:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -67,14 +67,12 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
-  prepare_links_p_nom: false
   retrieve_databundle: true
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
   custom_busmap: false
   drop_leap_day: true
-
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -88,7 +86,8 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: osm-prebuilt
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -156,6 +155,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -175,6 +175,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -191,6 +192,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -207,6 +209,8 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      smooth: false
+      add_cutout_windspeed: true
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -272,6 +276,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -282,7 +287,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: europe-2013-sarah3-era5
@@ -295,8 +300,25 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: true
+    nep: true
+    manual: true
+  skip:
+  - upgraded_lines
+  - upgraded_links
+  status:
+  - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
+    #- under_consideration
+  new_link_capacity: zero #keep or zero
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
@@ -355,7 +377,6 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
-    - Municipal waste
     not included:
     - Sugar from sugar beet
     - Rape seed
@@ -369,6 +390,25 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+    municipal solid waste:
+    - Municipal waste
+  share_unsustainable_use_retained:
+    2020: 1
+    2025: 0.66
+    2030: 0.33
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 0
+    2025: 0.33
+    2030: 0.66
+    2035: 1
+    2040: 1
+    2045: 1
+    2050: 1
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -397,6 +437,7 @@ sector:
   biomass: true
   industry: true
   agriculture: true
+  fossil_fuels: true
   district_heating:
     potential: 0.6
     progress:
@@ -408,6 +449,40 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
+    supply_temperature_approximation:
+      max_forward_temperature:
+        default: 90
+        DK: 70
+        SE: 70
+        NO: 70
+      min_forward_temperature:
+        default: 68
+        DK: 54
+        SE: 54
+        NO: 54
+      return_temperature:
+        default: 50
+        DK: 40
+        SE: 40
+        NO: 40
+        FI: 40
+      lower_threshold_ambient_temperature: 0
+      upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
+    heat_source_cooling: 6 #K
+    heat_pump_cop_approximation:
+      refrigerant: ammonia
+      heat_exchanger_pinch_point_temperature_difference: 5 #K
+      isentropic_compressor_efficiency: 0.8
+      heat_loss: 0.0
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
@@ -491,7 +566,7 @@ sector:
   land_transport_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
-  heat_pump_sink_T: 55.
+  heat_pump_sink_T_individual_heating: 55.
   reduce_space_heat_exogenously: true
   reduce_space_heat_exogenously_factor:
     2020: 0.10  # this results in a space heat demand reduction of 10%
@@ -546,7 +621,14 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 200
+  co2_sequestration_potential:
+    2020: 0
+    2025: 0
+    2030: 50
+    2035: 100
+    2040: 200
+    2045: 200
+    2050: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -598,7 +680,10 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  electrobiofuels: false
   biosng: false
+  bioH2: false
+  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -620,6 +705,12 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
+  solid_biomass_import:
+    enable: false
+    price: 54 #EUR/MWh
+    max_amount: 1390 # TWh
+    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -711,16 +802,14 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2015
-  fuel_refining:
-    oil:
-      emissions: 0.013
+  reference_year: 2019
+  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.0
+  version: v0.9.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1010,7 +1099,7 @@ plotting:
     # oil
     oil: '#c9c9c9'
     oil primary: '#d2d2d2'
-    oil refining: '#e6e6e6'
+    oil refining: '#a6a6a6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -1039,6 +1128,8 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
+    municipal solid waste: '#91ba41'
+    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1053,7 +1144,10 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable bioliquids: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
