@@ -665,16 +665,14 @@ def add_carrier_buses(n, carrier, nodes=None):
 
             suffix = " primary"
 
-        else:
-
-            n.madd(
-                "Generator",
-                nodes + suffix,
-                bus=nodes + suffix,
-                p_nom_extendable=True,
-                carrier=carrier + suffix,
-                marginal_cost=costs.at[carrier, "fuel"],
-            )
+        n.madd(
+            "Generator",
+            nodes + suffix,
+            bus=nodes + suffix,
+            p_nom_extendable=True,
+            carrier=carrier + suffix,
+            marginal_cost=costs.at[carrier, "fuel"],
+        )
 
 
 # TODO: PyPSA-Eur merge issue
