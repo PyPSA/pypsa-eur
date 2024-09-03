@@ -1099,7 +1099,7 @@ plotting:
     # oil
     oil: '#c9c9c9'
     oil primary: '#d2d2d2'
-    oil refining: '#e6e6e6'
+    oil refining: '#a6a6a6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
