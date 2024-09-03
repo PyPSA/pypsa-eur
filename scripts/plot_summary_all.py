@@ -338,7 +338,7 @@ def plot_balances(balances_df, drop=None):
             import seaborn as sns
             scenario1 = [scenarios[0]]
             diff = (co2_b.stack()-co2_b.stack()[scenario1].values)
-            bool_index = abs(diff.groupby(level=0).sum().sum(axis=1))>20
+            bool_index = (abs(diff)>2).any(axis=1).groupby(level=0).any()
             # Calculate the global min and max for the colormap
             global_min = diff.min().min()
             global_max = diff.max().max()
@@ -359,11 +359,20 @@ def plot_balances(balances_df, drop=None):
                             annot=True, fmt=".0f", linewidths=.5,
                             center=0, ax=axes[i],
                             vmin=global_min, vmax=global_max,
-                            cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
+                            cbar=False,
+                            #cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
                             )
                 axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
                 axes[i].set_xlabel('')
                 i += 1
+            
+            cbar_ax = fig.add_axes([0.92, 0.3, 0.02, 0.4])  # Position of the colorbar [left, bottom, width, height]
+            norm = plt.Normalize(vmin=global_min, vmax=global_max)
+            sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=norm)
+            sm.set_array([])  # Only needed for matplotlib < 3.1
+            cbar = fig.colorbar(sm, cbar_ax, orientation='vertical')
+            cbar.set_label('Difference in CO$_2$ emissions [MtCO$_2$/a]')
+
             fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap-demand-vary.pdf",
                         bbox_inches="tight")
 
@@ -535,6 +544,270 @@ def plot_prices(prices, drop=True):
             )
         fig.savefig(snakemake.output.balances[:-19] + f"prices-{carrier}.pdf",
                     bbox_inches="tight")
+        
+def plot_capacities(capacities, drop=True):
+    if drop:
+        capacities = capacities.droplevel([1,2,3], axis=1)
+    carriers = {"electrolysis": ["H2 Electrolysis"],
+                "DAC": ["DAC"],
+                "renewables": ['offwind-ac', 'offwind-dc', "offwind-float", 
+                               "onwind", "solar", "solar rooftop", "solar-hsat"],
+                "electric heating": ['urban decentral air heat pump',
+                                     'urban central resistive heater',
+                                     'urban central air heat pump',
+                                     'urban decentral resistive heater',
+                                     'rural ground heat pump',
+                                     'rural air heat pump']
+                }
+    for carrier in carriers:
+        df = capacities.droplevel(0).loc[carriers[carrier]]
+        
+        planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
+        scenarios = df.columns.get_level_values(0).unique()
+        
+        
+        fig, axes = plt.subplots(
+        nrows=1, ncols=len(planning_horizons), 
+        figsize=(12, 8), 
+        sharey=True  # This ensures that all subplots share the same y-axis
+        )
+        
+        if len(planning_horizons) == 1:
+            axes = [axes]
+        
+        for ax, year in zip(axes, planning_horizons):
+            subset = df.xs(year, level='planning_horizon', axis=1)/1e3 
+            subset = subset.rename(index=rename_techs).groupby(level=0).sum()
+            
+            subset.T.plot(
+                kind="bar",
+                ax=ax,
+                stacked=True,
+                legend=False,
+                color=[snakemake.config["plotting"]["tech_colors"][i] for i in subset.index]
+            )
+        
+            # Set title and x-label
+            ax.set_title(year)
+            
+            ax.set_xlabel("")
+            
+            # Set x-ticks as scenario names (level=0)
+            ax.set_xticks(range(len(scenarios)))
+            
+            if ax == axes[0]:
+                ax.set_ylabel("Installed capacity [GW]")
+                
+            
+            ax.grid(axis="x")
+
+def plot_comparison(drop=True):
+    LHV_H2 = 33.33 # kWh/kg
+    wished_scenarios = ["fast", "slow", "low-demand", "high-demand"]
+    res = capacities.droplevel(0).loc[carriers["renewables"]] 
+    electrolysis = capacities.droplevel(0).loc["H2 Electrolysis"]
+    dac = balances.loc["co2"].droplevel(0).loc["DAC2"].droplevel([1,2,3])
+    cost_df = costs.droplevel([0,1]).droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
+    
+    heat_balance = balances.loc[["rural heat", "urban decentral heat"]].droplevel([1]).groupby(level=1).sum().droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
+    
+    planning_horizons = res.columns.get_level_values('planning_horizon').unique().sort_values()
+    
+    nrows = 4
+    ncols = len(planning_horizons[1:])
+    #%%
+    fig, axes = plt.subplots(
+    nrows=nrows, ncols=ncols, 
+    figsize=(12, 8), 
+    sharex=True  
+    )
+    
+    plt.subplots_adjust(
+        left=0.1,  # Left margin
+        right=0.9,  # Right margin
+        top=0.9,  # Top margin
+        bottom=0.1,  # Bottom margin
+        hspace=0.7,  # Height (vertical) spacing between subplots
+        wspace=0.3  # Width (horizontal) spacing between subplots
+    )
+    
+    if len(planning_horizons[1:]) == 1:
+        axes = [axes]
+        
+    # Manually set the y-axis sharing row-wise
+    for i in range(nrows):
+        for j in range(1, ncols):
+            axes[i, j].sharey(axes[i, 0])  # Share y-axis of each column with the first column in each row
+    
+        
+    for i, year in  enumerate(planning_horizons[1:]):
+        
+        # res capacities ------------------------------------------------------
+        caps = (res - res["base"])[wished_scenarios].xs(year, level=1, axis=1).T/1e3
+        for tech in ["offwind", "solar"]:
+            offwind_i = caps.columns[caps.columns.str.contains(tech)]
+            offshore = caps.loc[:,caps.columns.str.contains(tech)].sum(axis=1)
+            caps.drop(offwind_i, axis=1, inplace=True)
+            caps[tech]= offshore
+        caps.rename(columns=rename_techs, inplace=True)
+        # if i==0:
+        #     legend=True
+        # else:
+        #     legend=False
+        legend=False
+        bars = caps.plot(kind="bar", stacked=True,
+                  color = [snakemake.config["plotting"]["tech_colors"][i] for i in caps.T.index],
+                  legend=legend, title=year, ax=axes[0, i])
+        
+        percent_change = res.sum().div(res["base"].sum())[wished_scenarios].xs(year, level=1)
+        percent_change_labels = [f"{(p-1)*100:.0f}%" for p in percent_change]
+        
+        # Add text annotations on each bar
+        j = 0
+        for bar, label in zip(bars.patches, percent_change_labels):
+            height = caps.sum(axis=1)[j]
+            # Position the text slightly above the top of the bar
+            axes[0, i].text(
+                bar.get_x() + bar.get_width() / 2, 
+                height + (0.02 * height),  # Adjust the vertical position
+                label,
+                ha='center', va='bottom',
+                fontsize=10, color='black'
+            )
+            j += 1
+            
+        # electrified heating -----------------------------------------------
+        heat_techs = ["ground heat pump", "air heat pump", "resistive heater"]
+        heat_df = heat_balance.loc[heat_techs]/1e6
+        to_plot = (heat_df - heat_df["base"]).xs(year, axis=1, level=1)[wished_scenarios]
+        to_plot.T.plot(kind="bar", stacked=True, ax=axes[1,i],
+                     color=[snakemake.config["plotting"]["tech_colors"][tech] for tech in to_plot.index],
+                     legend=legend)
+        
+        
+        # electrolysis capacities
+        # res capacities ------------------------------------------------------
+        caps = electrolysis.loc[wished_scenarios].xs(year, level=1)/1e3
+        produced = balances_df.loc["H2"].droplevel(0).droplevel([1,2,3], axis=1).loc["H2 Electrolysis1"]
+        # convert to million tonnes
+        produced /= LHV_H2*1e6
+        produced = produced.unstack().T
+        bars = produced.loc[year, wished_scenarios].plot(kind="bar", legend=False,
+                                        ax=axes[2,i],
+                                        color=snakemake.config["plotting"]["tech_colors"]["H2"])
+        if year == "2030":
+            y_value =  20
+            axes[2,i].axhline(y=y_value, ls="--",
+                              color="black")
+            # Add the text label near the line
+            axes[2, i].text(
+                x=-0.2,  # Position the text at the center of the x-axis (adjust as needed)
+                y=y_value,  # Align the text vertically with the line
+                s="RePowerEU",  # The text to display
+                color="black",  # Text color
+                ha='left',  # Horizontal alignment
+                va='bottom',  # Vertical alignment, place text above the line
+                fontsize=10  # Adjust the font size as needed
+            )
+        y_value =  produced.loc[year, "base"]
+        axes[2,i].axhline(y=y_value, 
+                          color="black")
+        # Add the text label near the line
+        axes[2, i].text(
+            x=0.5,  # Position the text at the center of the x-axis (adjust as needed)
+            y=y_value,  # Align the text vertically with the line
+            s=f"Base: {y_value:.0f} Mt H$_2$",  # The text to display
+            color="black",  # Text color
+            ha='center',  # Horizontal alignment
+            va='bottom',  # Vertical alignment, place text above the line
+            fontsize=10  # Adjust the font size as needed
+        )
+        
+       
+        caps_labels = [f"{c:.0f} GW" for c in caps]
+        
+        # Add text annotations on each bar
+        for bar, label in zip(bars.patches, caps_labels):
+            height = bar.get_height()
+            # Position the text slightly above the top of the bar
+            axes[2, i].text(
+                bar.get_x() + bar.get_width() / 2, 
+                height + (0.02 * height),  # Adjust the vertical position
+                label,
+                ha='center', va='bottom',
+                fontsize=10, color='black'
+            )
+        
+        # # captured CO2 from DAC -----------------------------------------------
+        # captured = (dac.unstack()[year].T[["fast", "slow"]]*-1)/1e6
+        # captured.plot(kind="bar", legend=False, ax=axes[2, i ],
+        #               color=snakemake.config["plotting"]["tech_colors"]["co2"])
+        # y_value = ((dac.unstack()[year]).T["base"]/1e6*-1)
+        # axes[2,i].axhline(y=y_value, 
+        #                   color="black")
+        # # Add the text label near the line
+        # axes[2, i].text(
+        #     x=0.5,  # Position the text at the center of the x-axis (adjust as needed)
+        #     y=y_value,  # Align the text vertically with the line
+        #     s=f"Base: {y_value:.0f} Mt CO$_2$",  # The text to display
+        #     color="black",  # Text color
+        #     ha='center',  # Horizontal alignment
+        #     va='bottom',  # Vertical alignment, place text above the line
+        #     fontsize=10  # Adjust the font size as needed
+        # )
+        
+        # total system costs ------------------------------------------------
+        diff = (cost_df-cost_df["base"])[wished_scenarios].xs(year, level=1, axis=1)
+        diff = diff.rename(index=rename_techs).groupby(level=0).sum()/1e9
+        diff = diff[(abs(diff)>1).any(axis=1)]
+        # diff.T.plot(kind="bar", stacked=True, ax=axes[2,i],
+        #           color = [snakemake.config["plotting"]["tech_colors"][i] for i in diff.index],
+        #           legend=False
+        #           )
+        # diff.sum().rename("net").plot(ax=axes[2,i], legend=False)
+        bars = diff.sum().plot(kind="bar", legend=False, ax=axes[3,i], color="gray")
+        
+        # Calculate the percentage increase/decrease
+        percent_change = cost_df.sum().div(cost_df["base"].sum()).unstack()[year].loc[wished_scenarios]
+        percent_change_labels = [f"{(p-1)*100:.0f}%" for p in percent_change]
+        
+        # Add text annotations on each bar
+        for bar, label in zip(bars.patches, percent_change_labels):
+            height = bar.get_height()
+            # Position the text slightly above the top of the bar
+            axes[3, i].text(
+                bar.get_x() + bar.get_width() / 2, 
+                height + (0.02 * height),  # Adjust the vertical position
+                label,
+                ha='center', va='bottom',
+                fontsize=10, color='black'
+            )
+        
+    
+    # Add row subtitles
+    row_titles = [
+        "Renewable Capacities Difference",
+        "Electrified Individual Heating Difference",
+        "Hydrogen Production from Electrolysis",
+        "Total System Costs Difference"
+    ]
+    
+    for i, title in enumerate(row_titles):
+        fig.text(
+            0.5,  # Centered on the x-axis
+            0.95 - (i * 0.23),  # y-coordinate adjusts for each row, depending on spacing
+            title,
+            ha='center', va='bottom',
+            fontsize=14, # fontweight='bold'
+        )
+    
+    axes[0, 0].set_ylabel("GW")
+    axes[0, 2].legend(ncols=1, bbox_to_anchor=(1.5,1), loc="upper right")
+    axes[1, 0].set_ylabel("TWh")
+    axes[1, 2].legend(ncols=1, bbox_to_anchor=(1.6,1), loc="upper right")
+    axes[2, 0].set_ylabel("Mt$_{H2}$")
+    axes[3, 0].set_ylabel("billion Euro/a")
+        
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -555,6 +828,7 @@ if __name__ == "__main__":
     costs = {}
     balances = {}
     prices = {}
+    capacities = {}
     for scenario in scenarios:
         try:
             costs[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/costs.csv",
@@ -566,12 +840,16 @@ if __name__ == "__main__":
             prices[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/prices.csv",
                                                       index_col=[0],
                                                       header=list(range(n_header)))
+            capacities[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/capacities.csv",
+                                                      index_col=[0,1],
+                                                      header=list(range(n_header)))
         except FileNotFoundError:
             logger.info(f"{scenario} not solved yet.")
             
     costs = pd.concat(costs, axis=1)
     balances = pd.concat(balances, axis=1)
     prices = pd.concat(prices, axis=1)
+    capacities = pd.concat(capacities, axis=1)
     
     costs.to_csv(snakemake.output.costs_csv)
     balances.to_csv(snakemake.output.balances_csv)
