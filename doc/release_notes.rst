@@ -110,7 +110,7 @@ PyPSA-Eur 0.12.0 (30th August 2024)
     share_unsustainable_use_retained`` and ``biomass:
     share_sustainable_potential_available``.
     (https://github.com/PyPSA/pypsa-eur/pull/1139)
-  
+
   * Added energy penalty for BECC applications.
     (https://github.com/PyPSA/pypsa-eur/pull/1130)
 
@@ -268,7 +268,7 @@ PyPSA-Eur 0.12.0 (30th August 2024)
   :mod:`prepare_sector_network`. (https://github.com/PyPSA/pypsa-eur/pull/1106)
 
 * Fixed PDF encoding in ``build_biomass_transport_costs``.
-  (https://github.com/PyPSA/pypsa-eur/pull/1219) 
+  (https://github.com/PyPSA/pypsa-eur/pull/1219)
 
 * Dropped ``pycountry`` dependency in favour of ``country_converter``.
   (https://github.com/PyPSA/pypsa-eur/pull/1188)
