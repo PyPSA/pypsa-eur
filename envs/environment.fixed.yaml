@@ -1,6 +1,6 @@
 name: pypsa-eur-20240812
 channels:
-  - http://conda.anaconda.org/gurobi
-  - conda-forge
-  - defaults
+- http://conda.anaconda.org/gurobi
+- conda-forge
+- defaults
 prefix: /home/fneum/miniconda3/envs/pypsa-eur-20240812

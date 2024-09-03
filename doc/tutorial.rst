@@ -224,7 +224,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
             7 -> 24
             26 -> 25
             27 -> 25
-    }  
+    }
 
 |
 
