@@ -2839,9 +2839,27 @@ def add_biomass(n, costs):
             "biomass limit",
             carrier_attribute="solid biomass",
             sense="<=",
-            constant=biomass_potentials.filter(like="solid biomass").sum().sum(),
+            constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
+        if biomass_potentials["unsustainable solid biomass"].sum() > 0:
+            n.madd(
+                "Generator",
+                spatial.biomass.nodes,
+                bus=spatial.biomass.nodes,
+                carrier="unsustainable solid biomass",
+                p_nom=10000,
+                marginal_cost=costs.at["fuelwood", "fuel"]
+                + bus_transport_costs * average_distance,
+            )
+            n.add(
+                "GlobalConstraint",
+                "unsustainable biomass limit",
+                carrier_attribute="unsustainable solid biomass",
+                sense="<=",
+                constant=biomass_potentials["unsustainable solid biomass"].sum(),
+                type="operational_limit",
+            )
 
         if options["municipal_solid_waste"]:
             # Add municipal solid waste
@@ -4508,7 +4526,7 @@ if __name__ == "__main__":
             clusters="38",
             ll="vopt",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)
