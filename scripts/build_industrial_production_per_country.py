@@ -345,5 +345,7 @@ if __name__ == "__main__":
 
     separate_basic_chemicals(demand, year)
 
+    demand.fillna(0.0, inplace=True)
+
     fn = snakemake.output.industrial_production_per_country
     demand.to_csv(fn, float_format="%.2f")

@@ -1102,7 +1102,7 @@ def build_co2_totals(
     co2 = eea_co2.reindex(countries)
 
     for ct in pd.Index(countries).intersection(
-        ["BA", "RS", "AL", "ME", "MK", "UA", "MD"]
+        ["BA", "RS", "XK", "AL", "ME", "MK", "UA", "MD"]
     ):
         mappings = {
             "electricity": (ct, "+", "Electricity & heat generation", np.nan),
@@ -1455,10 +1455,10 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     for nrg_name, (code, siec) in nrg_type.items():
 
         # Select energy balance type, rename columns and countries to match IDEES data,
-        # convert TJ to TWh, and drop XK data already since included in RS data
+        # convert TJ to TWh
         col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
         idx_to_rename = {v: k for k, v in idees_rename.items()}
-        drop_geo = ["EU27_2020", "EA20", "XK"]
+        drop_geo = ["EU27_2020", "EA20"]
         nrg_data = eurostat_households.query(
             "nrg_bal == @code and siec == @siec and geo not in @drop_geo and OBS_VALUE > 0"
         ).copy()
