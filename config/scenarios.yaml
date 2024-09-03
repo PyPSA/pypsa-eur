@@ -19,7 +19,12 @@ fast:
 
 base:
   sector:
-    car_reg_factor: 0.5
+    car_reg_factor:
+      2025: 0.2
+      2030: 0.3
+      2035: 1.0
+      2040: 1.0
+      2050: 1.0
     logistic_curve: false
 
 base-t:
@@ -36,7 +41,7 @@ slow:
   sector:
     car_reg_factor:
       2025: 0.2
-      2030: 0.3
+      2030: 0.2
       2035: 0.3
       2040: 0.3
       2050: 0.5
