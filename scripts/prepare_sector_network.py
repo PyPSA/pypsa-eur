@@ -2639,6 +2639,7 @@ def add_biomass(n, costs):
             n.madd(
                 "Generator",
                 spatial.biomass.nodes,
+                suffix=" unsustainable",
                 bus=spatial.biomass.nodes,
                 carrier="unsustainable solid biomass",
                 p_nom=10000,
