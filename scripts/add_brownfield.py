@@ -93,8 +93,10 @@ def add_brownfield(n, n_p, year):
             (n.links.carrier == "H2 pipeline retrofitted")
             & (n.links.build_year != year)
         ].index
-        h2_retrofitted = n.links[(n.links.carrier=="H2 pipeline retrofitted") & 
-                                 (n.links.build_year == year)].index
+        h2_retrofitted = n.links[
+            (n.links.carrier == "H2 pipeline retrofitted")
+            & (n.links.build_year == year)
+        ].index
 
         # today's pipe capacity
         pipe_capacity = n.links.loc[h2_retrofitted, "p_nom_max"]
@@ -110,8 +112,8 @@ def add_brownfield(n, n_p, year):
         ).fillna(0)
         n.links.loc[h2_retrofitted, "p_nom_max"] = remaining_capacity
 
-        #reduce gas network capacity
-        gas_pipes_i = n.links[n.links.carrier=="gas pipeline"].index
+        # reduce gas network capacity
+        gas_pipes_i = n.links[n.links.carrier == "gas pipeline"].index
         if not gas_pipes_i.empty:
             # subtract the already retrofitted from today's gas grid capacity
             pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
@@ -119,9 +121,11 @@ def add_brownfield(n, n_p, year):
             to = "gas pipeline"
             CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
             already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
-            remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(
-            index=pipe_capacity.index
-            ).fillna(0)
+            remaining_capacity = (
+                pipe_capacity
+                - CH4_per_H2
+                * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
+            )
             n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
 
 
