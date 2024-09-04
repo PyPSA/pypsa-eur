@@ -13,7 +13,7 @@ Upcoming Release
 
 **New Features**
 
-* Add an experimental feature to aggregate components by build-year before optimisation, leading to a substantial reduction in memory footprint for said optimisations.
+* Add an experimental feature to aggregate components by build-year before optimisation, leading to a substantial reduction in memory footprint for myopic foresight optimisations. This aggregation can lead to minor changes in results, and the feature should be tested in the intended context before being used.
 
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================
