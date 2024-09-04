@@ -15,32 +15,17 @@
 
 fast:
   sector:
-    logistic_curve: false
+    car_reg_factor: 1
 
 base:
   sector:
-    car_reg_factor:
-      2025: 0.2
-      2030: 0.3
-      2035: 1.0
-      2040: 1.0
-      2050: 1.0
     logistic_curve: false
 
-base-t:
-  sector:
-    car_reg_factor:
-      2025: 0.5
-      2030: 0.5
-      2035: 0.8
-      2040: 1.0
-      2050: 1.0
-    logistic_curve: false
 
 slow:
   sector:
     car_reg_factor:
-      2025: 0.2
+      2025: 0.16  # same level as in 2023
       2030: 0.2
       2035: 0.3
       2040: 0.3
@@ -49,8 +34,6 @@ slow:
 
 high-demand:
   sector:
-    car_reg_factor: 0.5
-    logistic_curve: false
     vary_demand:
       land transport demand heavy:
         2020: 1.05
@@ -71,8 +54,6 @@ high-demand:
 
 low-demand:
   sector:
-    car_reg_factor: 0.5
-    logistic_curve: false
     vary_demand:
       land transport demand heavy:
         2020: 1.0
@@ -93,8 +74,6 @@ low-demand:
 
 high-elec-efficiency:
   sector:
-    car_reg_factor: 0.5
-    logistic_curve: false
     transport_electric_efficiency:
       # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
       # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
