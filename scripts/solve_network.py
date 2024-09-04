@@ -227,66 +227,44 @@ def add_solar_potential_constraints(n, config):
     """
     land_use_factors = {
         "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
-        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
+        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"]
     }
-    rename = {"Generator-ext": "Generator"}
 
     solar_carriers = ["solar", "solar-hsat"]
-    solar = n.generators[
-        n.generators.carrier.isin(solar_carriers) & n.generators.p_nom_extendable
-    ].index
+    solar = n.generators.loc[n.generators.carrier == "solar"]
+    all_solar = n.generators.loc[n.generators.carrier.isin(solar_carriers)]
 
-    solar_today = n.generators[
-        (n.generators.carrier == "solar") & (n.generators.p_nom_extendable)
-    ].index
-    solar_hsat = n.generators[(n.generators.carrier == "solar-hsat")].index
+    # Separate extendable and non-extendable generators
+    solar_ext = solar.loc[solar.p_nom_extendable]
+    solar_non_ext = solar.loc[~solar.p_nom_extendable]
+    all_solar_ext = all_solar.loc[all_solar.p_nom_extendable]
+    all_solar_non_ext = all_solar.loc[~all_solar.p_nom_extendable]
 
-    if solar.empty:
+    if all_solar_ext.empty:
         return
 
-    land_use = pd.DataFrame(1, index=solar, columns=["land_use_factor"])
+    land_use = pd.Series(1, index=all_solar.index, name="land_use_factor")
     for carrier, factor in land_use_factors.items():
-        land_use = land_use.apply(
-            lambda x: (x * factor) if carrier in x.name else x, axis=1
-        )
+        land_use.loc[all_solar.carrier == carrier] *= factor
 
     if "m" in snakemake.wildcards.clusters:
-        location = pd.Series(
-            [" ".join(i.split(" ")[:2]) for i in n.generators.index],
-            index=n.generators.index,
-        )
-        ggrouper = pd.Series(
-            n.generators.loc[solar].index.rename("bus").map(location),
-            index=n.generators.loc[solar].index,
-        ).to_xarray()
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].index.rename("bus").map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].index.rename("bus").map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
-
+        location = n.generators.index.to_series().str.split(" ").str[:2].str.join(" ")
+        ggrouper = all_solar.bus.map(location)
     else:
-        location = pd.Series(n.buses.index, index=n.buses.index)
-        ggrouper = n.generators.loc[solar].bus
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].bus.map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].bus.map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
+        location = n.buses.index.to_series()
+        ggrouper = all_solar.bus
 
+    rhs = pd.concat([solar_non_ext.p_nom, solar_ext.p_nom_max]).groupby(ggrouper).sum()
+
+    rename = {"Generator-ext": "Generator"}
     lhs = (
-        (n.model["Generator-p_nom"].rename(rename).loc[solar] * land_use.squeeze())
-        .groupby(ggrouper)
-        .sum()
-    )
+        n.model["Generator-p_nom"].rename(rename).loc[all_solar_ext.index]
+        * land_use.loc[all_solar_ext.index]
+    ).groupby(ggrouper.loc[all_solar_ext.index]).sum() + (
+        all_solar_non_ext.p_nom * land_use.loc[all_solar_non_ext.index]
+    ).groupby(
+        ggrouper.loc[all_solar_non_ext.index]
+    ).sum()
 
     logger.info("Adding solar potential constraint.")
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
