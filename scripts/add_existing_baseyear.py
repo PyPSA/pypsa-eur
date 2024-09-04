@@ -660,7 +660,32 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         )
         
         n.links.loc[ice_i, "p_nom"] = 0
-        
+
+def fix_boiler_profiles(n):
+
+    logger.info("Forcing boiler profiles")
+
+    decentral_boilers = n.links.index[
+        n.links.carrier.str.contains("boiler")
+        & ~n.links.carrier.str.contains("urban central")
+        # & ~n.links.p_nom_extendable
+    ]
+
+    if decentral_boilers.empty:
+        return
+
+    boiler_loads = n.links.loc[decentral_boilers, "bus1"]
+    boiler_loads = boiler_loads[boiler_loads.isin(n.loads_t.p_set.columns)]
+    decentral_boilers = boiler_loads.index
+    boiler_profiles_pu = n.loads_t.p_set[boiler_loads].div(
+        n.loads_t.p_set[boiler_loads].max(), axis=1
+    )
+    boiler_profiles_pu.columns = decentral_boilers
+
+    for attr in ["p_min_pu", "p_max_pu"]:
+        n.links_t[attr] = pd.concat([n.links_t[attr], boiler_profiles_pu], axis=1)
+        logger.info(f"new boiler profiles:\n{n.links_t[attr][decentral_boilers]}")
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -736,6 +761,8 @@ if __name__ == "__main__":
         
     if options["endogenous_transport"]:
         add_existing_land_transport(baseyear, options)
+    
+    fix_boiler_profiles(n)
         
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
