@@ -301,7 +301,7 @@ def plot_balances(balances_df, drop=None):
             co2_b = df.rename(index=grouper).groupby(level=0).sum()
             co2_b = co2_b.droplevel([1,2,3], axis=1)
             co2_b = split_positive_negative(co2_b)
-            co2_b = co2_b[abs(co2_b.sum(axis=1))>2]
+            co2_b = co2_b[abs(co2_b.sum(axis=1))>5]
             #co2_b.loc["co2 atmosphere"] = abs(co2_b.loc["co2 atmosphere"])*-1
             
             scenarios = df.columns.get_level_values(0).unique()
@@ -601,13 +601,16 @@ def plot_capacities(capacities, drop=True):
             
             ax.grid(axis="x")
 
-def plot_comparison(drop=True):
+def plot_comparison(balances_df, capacities, drop=True):
     LHV_H2 = 33.33 # kWh/kg
+    renewables = ['offwind-ac', 'offwind-dc', "offwind-float", 
+                   "onwind", "solar", "solar rooftop", "solar-hsat"]
     wished_scenarios = ["fast", "slow", "low-demand", "high-demand"]
-    res = capacities.droplevel(0).loc[carriers["renewables"]] 
-    electrolysis = capacities.droplevel(0).loc["H2 Electrolysis"]
+    res = capacities.droplevel(0).loc[renewables].droplevel([1,2,3], axis=1)
+    electrolysis = capacities.droplevel(0).loc["H2 Electrolysis"].droplevel([1,2,3])
     dac = balances.loc["co2"].droplevel(0).loc["DAC2"].droplevel([1,2,3])
     cost_df = costs.droplevel([0,1]).droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
+    wished_scenarios = cost_df.columns.levels[0].intersection(wished_scenarios)
     
     heat_balance = balances.loc[["rural heat", "urban decentral heat"]].droplevel([1]).groupby(level=1).sum().droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
     
@@ -615,7 +618,7 @@ def plot_comparison(drop=True):
     
     nrows = 4
     ncols = len(planning_horizons[1:])
-    #%%
+    
     fig, axes = plt.subplots(
     nrows=nrows, ncols=ncols, 
     figsize=(12, 8), 
@@ -677,12 +680,36 @@ def plot_comparison(drop=True):
             j += 1
             
         # electrified heating -----------------------------------------------
+        # EU target is 13 million heat pumps sold per year by 2027
+        typical_generation = 15 # MWh/a
         heat_techs = ["ground heat pump", "air heat pump", "resistive heater"]
         heat_df = heat_balance.loc[heat_techs]/1e6
+        number_pumps = (heat_df/typical_generation).xs(year, axis=1, level=1)
+        diff_number = number_pumps[wished_scenarios].sub(number_pumps["base"], axis=0)
         to_plot = (heat_df - heat_df["base"]).xs(year, axis=1, level=1)[wished_scenarios]
-        to_plot.T.plot(kind="bar", stacked=True, ax=axes[1,i],
-                     color=[snakemake.config["plotting"]["tech_colors"][tech] for tech in to_plot.index],
-                     legend=legend)
+        # to_plot.T.plot(kind="bar", stacked=True, ax=axes[1,i],
+        #              color=[snakemake.config["plotting"]["tech_colors"][tech] for tech in to_plot.index],
+        #              legend=legend)
+        bars = diff_number.T.plot(kind="bar", stacked=True, ax=axes[1,i],
+                          color=[snakemake.config["plotting"]["tech_colors"][tech] for tech in number_pumps.index],
+                          legend=legend
+                          )
+        
+        percent_change_labels = [f"{p:.0f} TWh" for p in to_plot.sum()]
+        
+        # Add text annotations on each bar
+        j = 0
+        for bar, label in zip(bars.patches, percent_change_labels):
+            height = diff_number.sum()[j] #bar.get_height()
+            # Position the text slightly above the top of the bar
+            axes[1, i].text(
+                bar.get_x() + bar.get_width() / 2, 
+                height + (0.02 * height),  # Adjust the vertical position
+                label,
+                ha='center', va='bottom',
+                fontsize=10, color='black'
+            )
+            j += 1
         
         
         # electrolysis capacities
@@ -802,11 +829,14 @@ def plot_comparison(drop=True):
         )
     
     axes[0, 0].set_ylabel("GW")
-    axes[0, 2].legend(ncols=1, bbox_to_anchor=(1.5,1), loc="upper right")
-    axes[1, 0].set_ylabel("TWh")
-    axes[1, 2].legend(ncols=1, bbox_to_anchor=(1.6,1), loc="upper right")
+    axes[0, ncols-1].legend(ncols=1, bbox_to_anchor=(1.5,1), loc="upper right")
+    axes[1, 0].set_ylabel("million heat pumps")
+    axes[1, ncols-1].legend(ncols=1, bbox_to_anchor=(1.6,1), loc="upper right")
     axes[2, 0].set_ylabel("Mt$_{H2}$")
     axes[3, 0].set_ylabel("billion Euro/a")
+    
+    fig.savefig(snakemake.output.balances[:-19] + "comparison.pdf",
+                bbox_inches="tight")
         
 #%%
 if __name__ == "__main__":
