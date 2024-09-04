@@ -1116,6 +1116,9 @@ strategies = dict(
     # Apparently "control" doesn't really matter; follow
     # pypsa.clustering.spatial by setting to ""
     control=lambda x: "",
+    # The "reversed" attribute is sometimes 0, sometimes NaN, which is
+    # the only reason for having an aggregation strategy.
+    reversed=lambda x: x.any(),
     # The remaining attributes are outputs, and allow the aggregation of solved networks.
     p_nom_opt="sum",
     e_nom_opt="sum",
@@ -1190,7 +1193,9 @@ def aggregate_build_years(n, exclude_carriers):
             # attr_{min,max} = attr; this is for the aggregated
             # extendable component to have the correct minimum and
             # maximum bounds for nominal capacity.
-            non_extendable = c.df[~c.df[f"{attr}_extendable"]].index
+            non_extendable = c.df[~c.df[f"{attr}_extendable"]].index.intersection(
+                idx_to_agg
+            )
             c.df.loc[non_extendable, f"{attr}_min"] = c.df.loc[non_extendable, attr]
             c.df.loc[non_extendable, f"{attr}_max"] = c.df.loc[non_extendable, attr]
 
@@ -1357,6 +1362,10 @@ def disaggregate_build_years(n, indices, planning_horizon):
                     axis=1,
                     inplace=True,
                 )
+
+    # Fix problem with boolean values in "reversed" column
+    if "reversed" in n.links.columns:
+        n.links.reversed = n.links.reversed.astype(float)
 
     logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
 
