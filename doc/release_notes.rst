@@ -10,6 +10,11 @@ Release Notes
 
 .. Upcoming Release
 .. ================
+
+* Created a separate namespace for biogas and split it form the gas namespace
+
+* Existing Bioenergy plants from powerplantmatching are now split into biogas and solid biomass power plants. This heuristically assumes that all bioenergy power plants with a capacity smaller than 2 MW consume biogas, all bigger plants consume solid biomass. Should be further refined in the future.
+
 * Added additional config option `regional_gas_demand`, which spatially resolves gas demand in industry, but keeps the gas bus global.
 
 * `biogas to gas` is now spatially resolved when either co2 or gas or solid biomass is spatially resolved. As a consequence `biogas to gas` and `biogas to gas CC` always have the same spatial resolution

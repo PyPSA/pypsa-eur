@@ -204,6 +204,10 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     )
     df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
 
+    # split biogas and solid biomass
+    biogas_i = biomass_i.intersection(df_agg.loc[df_agg.Capacity < 2].index)
+    df_agg.loc[biogas_i, "Fueltype"] = "biogas"
+
     # assign clustered bus
     busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
     busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
@@ -259,7 +263,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         values="lifetime",
         aggfunc="mean",  # currently taken mean for clustering lifetimes
     )
-
+    # A dictionary that translates carriers into keys for the spatial data structure
     carrier = {
         "OCGT": "gas",
         "CCGT": "gas",
@@ -268,6 +272,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
         "lignite": "lignite",
         "nuclear": "uranium",
         "solid biomass": "biomass",
+        "biogas": "biogas",
     }
 
     for grouping_year, generator in df.index:
@@ -390,7 +395,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             if not new_build.empty:
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
-                if generator != "solid biomass":
+                if generator not in ["solid biomass", "biogas"]:
                     # missing lifetimes are filled with mean lifetime
                     # if mean cannot be built, lifetime is taken from costs.csv
                     if isinstance(lifetime_assets, pd.Series):
@@ -427,26 +432,36 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         ),
                     )
                 else:
-                    # for the power only biomass plants, technology parameters of CHP plants are used
-                    key = "central solid biomass CHP"
+                    if generator == "solid biomass":
+                        bus0=spatial.biomass.df.loc[new_capacity.index, "nodes"].values
+                    elif generator == "biogas":
+                        bus0=spatial.biogas.df.loc[new_capacity.index, "nodes"].values
+                    else:
+                        logger.error(f"Generator {generator} not recognized.")
+
+                    # We assume the electrical efficiency of a CHP for the biomass and biogas power plants
+                    # The EOP from technology data seems to be somewhat too efficient
+
+                    key = "central solid biomass CHP" 
 
                     n.madd(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
-                        bus0=spatial.biomass.df.loc[new_capacity.index, "nodes"].values,
+                        bus0=bus0,
                         bus1=new_capacity.index,
                         carrier=generator,
                         p_nom=new_capacity / costs.at[key, "efficiency"],
                         capital_cost=costs.at[key, "fixed"]
                         * costs.at[key, "efficiency"],
-                        overnight_cost=costs.at[key, "fixed"]
+                        overnight_cost=costs.at[key, "investment"]
                         * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
                         efficiency=costs.at[key, "efficiency"],
                         build_year=grouping_year,
                         lifetime=lifetime_assets.loc[new_capacity.index],
                     )
+
         # check if existing capacities are larger than technical potential
         existing_large = n.generators[
             n.generators["p_nom_min"] > n.generators["p_nom_max"]
@@ -459,6 +474,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
                 existing_large, "p_nom_min"
             ]
+        
 
 
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
