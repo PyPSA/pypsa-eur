@@ -2465,20 +2465,37 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu,
         )
 
-        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
-        e_max_pu.iloc[-1] = 0
+        n.madd(
+            "Bus",
+            spatial.biomass.nodes,
+            suffix=" unsustainable",
+            location=spatial.biomass.locations,
+            carrier="unsustainable solid biomass",
+            unit="MWh_LHV",
+        )
 
         n.madd(
             "Store",
             spatial.biomass.nodes,
             suffix=" unsustainable",
-            bus=spatial.biomass.nodes,
+            bus=spatial.biomass.nodes + " unsustainable",
             carrier="unsustainable solid biomass",
             e_nom=unsustainable_solid_biomass_potentials_spatial,
             marginal_cost=costs.at["fuelwood", "fuel"],
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
             e_max_pu=e_max_pu,
+        )
+
+        n.madd(
+            "Link",
+            spatial.biomass.nodes,
+            suffix=" unsustainable",
+            bus0=spatial.biomass.nodes + " unsustainable",
+            bus1=spatial.biomass.nodes,
+            carrier="unsustainable solid biomass",
+            efficiency=1,
+            p_nom=unsustainable_solid_biomass_potentials_spatial,
         )
 
         n.madd(
@@ -2631,7 +2648,7 @@ def add_biomass(n, costs):
             "GlobalConstraint",
             "biomass limit",
             carrier_attribute="solid biomass",
-            sense="<=",
+            sense="==",
             constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
@@ -2640,7 +2657,7 @@ def add_biomass(n, costs):
                 "Generator",
                 spatial.biomass.nodes,
                 suffix=" unsustainable",
-                bus=spatial.biomass.nodes,
+                bus=spatial.biomass.nodes + " unsustainable",
                 carrier="unsustainable solid biomass",
                 p_nom=10000,
                 marginal_cost=costs.at["fuelwood", "fuel"]
@@ -2650,7 +2667,7 @@ def add_biomass(n, costs):
                 "GlobalConstraint",
                 "unsustainable biomass limit",
                 carrier_attribute="unsustainable solid biomass",
-                sense="<=",
+                sense="==",
                 constant=biomass_potentials["unsustainable solid biomass"].sum(),
                 type="operational_limit",
             )
@@ -4261,7 +4278,12 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
 if __name__ == "__main__":
     if "snakemake" not in globals():
 
+        import os
+
         from _helpers import mock_snakemake
+
+        # Change directory to this script
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
