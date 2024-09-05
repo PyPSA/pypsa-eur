@@ -98,7 +98,8 @@ def add_brownfield(n, n_p, year):
             & (n.links.build_year == year)
         ].index
 
-        # today's pipe capacity
+        # pipe capacity always set in prepare_sector_network to todays gas grid capacity * H2_per_CH4
+        # and is therefore constant up to this point
         pipe_capacity = n.links.loc[h2_retrofitted, "p_nom_max"]
         # already retrofitted capacity from gas -> H2
         already_retrofitted = (
@@ -127,6 +128,7 @@ def add_brownfield(n, n_p, year):
                 * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
             )
             n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
+            n.links.loc[gas_pipes_i, "p_nom_max"] = remaining_capacity
 
 
 def disable_grid_expansion_if_limit_hit(n):
