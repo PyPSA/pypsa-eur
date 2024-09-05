@@ -331,9 +331,7 @@ def add_carbon_constraint(n, snapshots):
 
         # stores
         bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[
-            bus_carrier.isin(emissions.index) & 
-            ~n.stores.e_cyclic]
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -359,9 +357,7 @@ def add_carbon_budget_constraint(n, snapshots):
 
         # stores
         bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[
-            bus_carrier.isin(emissions.index) & 
-            ~n.stores.e_cyclic]
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -1005,9 +1001,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
         # stores
         bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores[
-            bus_carrier.isin(emissions.index) & 
-            ~n.stores.e_cyclic]
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
