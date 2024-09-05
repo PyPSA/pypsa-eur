@@ -2670,6 +2670,9 @@ def add_biomass(n, costs):
             unit="MWh_LHV",
         )
 
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
+        e_max_pu.iloc[-1] = 0
+
         n.madd(
             "Store",
             spatial.biomass.nodes,
@@ -2852,7 +2855,7 @@ def add_biomass(n, costs):
             "GlobalConstraint",
             "biomass limit",
             carrier_attribute="solid biomass",
-            sense="==",
+            sense="<=",
             constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
@@ -2867,6 +2870,11 @@ def add_biomass(n, costs):
                 marginal_cost=costs.at["fuelwood", "fuel"]
                 + bus_transport_costs * average_distance,
             )
+            # Set last snapshot of e_max_pu for unsustainable solid biomass to 1 to make operational limit work
+            unsus_stores_idx = n.stores.loc[
+                n.stores.carrier == "unsustainable solid biomass"
+            ].index
+            n.stores_t.e_max_pu.loc[n.snapshots[-1], unsus_stores_idx] = 1
             n.add(
                 "GlobalConstraint",
                 "unsustainable biomass limit",
