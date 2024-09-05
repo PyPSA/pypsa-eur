@@ -590,7 +590,7 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
-  overdimension_heat_generators: 
+  overdimension_heat_generators:
     decentral: 1.1  #to cover demand peaks bigger than data
     central: 1.0
   chp: true
