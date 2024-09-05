@@ -3278,7 +3278,7 @@ def add_industry(n, costs):
                     efficiency2=costs.at["oil", "CO2 intensity"],
                     capital_cost=costs.at["decentral oil boiler", "efficiency"]
                     * costs.at["decentral oil boiler", "fixed"]
-                    * overdim_factor,
+                    * options["overdimension_heat_generators"][heat_system.central_or_decentral],
                     lifetime=costs.at["decentral oil boiler", "lifetime"],
                 )
 
