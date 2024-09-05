@@ -4286,12 +4286,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
 if __name__ == "__main__":
     if "snakemake" not in globals():
 
-        import os
-
         from _helpers import mock_snakemake
-
-        # Change directory to this script
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
