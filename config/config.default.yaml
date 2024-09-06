@@ -451,21 +451,18 @@ sector:
     district_heating_loss: 0.15
     supply_temperature_approximation:
       max_forward_temperature:
-        default: 90
-        DK: 70
-        SE: 70
-        NO: 70
+        FR: 110
+        DK: 75
+        DE: 109
+        CZ: 130
+        FI: 115
+        PL: 130
+        SE: 102
+        IT: 90
       min_forward_temperature:
-        default: 68
-        DK: 54
-        SE: 54
-        NO: 54
+        DE: 82
       return_temperature:
-        default: 50
-        DK: 40
-        SE: 40
-        NO: 40
-        FI: 40
+        DE: 58
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
