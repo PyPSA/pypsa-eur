@@ -588,7 +588,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    are only relevant if ``hac`` were chosen in ``algorithm``.
 
 .. note::
-   Build-year aggregation is an experimental feature which significantly reduces the memory-footprint of myopic foresight optimisations. In myopic foresight, there will be one copy of each component for every planning horizon; only the component for the "current" planning horizon will be extendable for each optimisation. By turning on build-year aggregation, these copies are merged into a single component right before the network is solved, and disaggregated again right after the network is solved. This feature should be tested to see if results are acceptable in any given context. The ```exclude_carriers`` should include ``DC``, and you should set the option ``central_heat_everywhere: true`` under the ``sector:`` configuration.  
+   Build-year aggregation is an experimental feature which significantly reduces the memory-footprint of myopic foresight optimisations. In myopic foresight, there will be one copy of each component for every planning horizon; only the component for the "current" planning horizon will be extendable for each optimisation. By turning on build-year aggregation, these copies are merged into a single component right before the network is solved, and disaggregated again right after the network is solved. This feature should be tested to see if results are acceptable in any given context. The ```exclude_carriers`` should include ``DC``, and you should set the option ``central_heat_everywhere: true`` under the ``sector:`` configuration.
 
 .. tip::
    use ``min`` in ``p_nom_max:`` for more `
