@@ -9,7 +9,7 @@ tutorial: false
 
 
 pypsa_spain:
-  retrieve_Iberian_cutout: false
+  retrieve_Iberian_cutout: true
   loads_at_every_bus: false
   update_gdp_pop: false
   electricity_demand:
@@ -26,7 +26,7 @@ pypsa_spain:
       CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
   q2q_transform:
-    enable: false 
+    enable: true 
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
@@ -54,7 +54,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name:    #####
+  name: q2q  #####
   scenarios:
     enable: false
     file: config/scenarios.yaml

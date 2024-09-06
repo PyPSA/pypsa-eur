@@ -3,30 +3,30 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 0.12.0
 tutorial: false
 
 
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
-  loads_at_every_bus: true
-  update_gdp_pop: true
+  loads_at_every_bus: false
+  update_gdp_pop: false
   electricity_demand:
     enable: true
     annual_value: 316.5 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_province_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS0_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS0_by_economicSector_2022.csv
   update_elec_capacities:
-    enable: true
+    enable: false
     carriers_to_update:
       onwind: data_ES/esios/esios_onwind_capacity_2022.csv
       solar: data_ES/esios/esios_solar_capacity_2022.csv
-      # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
+      nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
       CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
   q2q_transform:
-    enable: true 
+    enable: false 
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
@@ -54,7 +54,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name: case_pypsa-spain   #####
+  name: analysis_00_reference   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -73,7 +73,7 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.05   # vopt   #####
+  - v1.0   # vopt   #####
   clusters:
   - 2
   - 8
@@ -112,7 +112,6 @@ enable:
   retrieve_cutout: true
   custom_busmap: false
   drop_leap_day: true
-
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -206,7 +205,7 @@ renewable:
       turbine: Vestas_V112_3MW
       smooth: false
       add_cutout_windspeed: true
-    capacity_per_sqkm: 1
+    capacity_per_sqkm: 1 #####
     # correction_factor: 0.93
     corine:
       grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
@@ -259,7 +258,7 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_7MW # NREL_ReferenceTurbine_5MW_offshore   #####
     # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqkm: 1
+    capacity_per_sqkm: 1 #####
     correction_factor: 1 # 0.8855   #####
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -279,7 +278,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 1
+    capacity_per_sqkm: 1 #####
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
@@ -323,6 +322,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -333,7 +333,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: iberia-2022-era5
@@ -496,19 +496,26 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    # check these numbers!
-    forward_temperature:
-      default: 90
-      DK: 70
-      SE: 70
-      NO: 70
-      FI: 70
-    return_temperature:
-      default: 50
-      DK: 40
-      SE: 40
-      NO: 40
-      FI: 40
+    supply_temperature_approximation:
+      max_forward_temperature:
+        default: 90
+        DK: 70
+        SE: 70
+        NO: 70
+      min_forward_temperature:
+        default: 68
+        DK: 54
+        SE: 54
+        NO: 54
+      return_temperature:
+        default: 50
+        DK: 40
+        SE: 40
+        NO: 40
+        FI: 40
+      lower_threshold_ambient_temperature: 0
+      upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -839,6 +846,7 @@ industry:
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2019
+  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -1119,6 +1127,8 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    oil primary: '#d2d2d2'
+    oil refining: '#e6e6e6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'

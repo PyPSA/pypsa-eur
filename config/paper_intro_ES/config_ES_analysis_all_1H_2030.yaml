@@ -9,24 +9,24 @@ tutorial: false
 
 
 pypsa_spain:
-  retrieve_Iberian_cutout: false
-  loads_at_every_bus: false
-  update_gdp_pop: false
+  retrieve_Iberian_cutout: true
+  loads_at_every_bus: true
+  update_gdp_pop: true
   electricity_demand:
-    enable: false
-    annual_value: 230 # TWh
+    enable: true
+    annual_value: 316.5 # TWh
     profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS3_by_economicSector_2022.csv
     percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS3_by_economicSector_2022.csv
   update_elec_capacities:
-    enable: false
+    enable: true
     carriers_to_update:
       onwind: data_ES/esios/esios_onwind_capacity_2022.csv
       solar: data_ES/esios/esios_solar_capacity_2022.csv
-      nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
+      # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
       CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
   q2q_transform:
-    enable: false 
+    enable: true 
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
@@ -34,7 +34,7 @@ pypsa_spain:
     solar: data_ES/q2q/q2q_solar_v001.pkl
     solar-hsat: ''
   interconnections:
-    enable: false
+    enable: true
     ic_ES_file: data_ES/interconnections/interconnections.yaml
 
 
@@ -54,7 +54,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name:    #####
+  name: analysis_all   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -75,7 +75,15 @@ scenario:
   ll:
   - v1.0   # vopt   #####
   clusters:
-  - 24   #####
+  - 2
+  - 8
+  - 15
+  - 24
+  - 35
+  - 50
+  - 65
+  - 80
+  - 100
   opts:
   - ''
   sector_opts:
@@ -140,7 +148,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2022)   #####
+  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2031)   #####
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -197,7 +205,7 @@ renewable:
       turbine: Vestas_V112_3MW
       smooth: false
       add_cutout_windspeed: true
-    capacity_per_sqkm: 3
+    capacity_per_sqkm: 1 #####
     # correction_factor: 0.93
     corine:
       grid_codes: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32]
@@ -250,7 +258,7 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_7MW # NREL_ReferenceTurbine_5MW_offshore   #####
     # ScholzPhd Tab 4.3.1: 10MW/km^2
-    capacity_per_sqkm: 2
+    capacity_per_sqkm: 1 #####
     correction_factor: 1 # 0.8855   #####
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
@@ -270,7 +278,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
-    capacity_per_sqkm: 5.1
+    capacity_per_sqkm: 1 #####
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
@@ -389,7 +397,7 @@ pypsa_eur:
   # - offwind-ac   #####
   # - offwind-dc   #####
   - offwind-float
-  - solar-hsat
+  # - solar-hsat   #####
   - solar
   - ror
   - nuclear
@@ -895,7 +903,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: '168H'   # false   #####
+    resolution_sector: false   #####
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
@@ -947,8 +955,8 @@ solving:
     SAFE: false
 
   solver:
-    name: cbc   ##### gurobi
-    options: cbc-default   ##### gurobi-default
+    name: gurobi   ##### cbc
+    options: gurobi-default   ##### cbc-default
 
   solver_options:
     highs-default:

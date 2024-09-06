@@ -9,14 +9,14 @@ tutorial: false
 
 
 pypsa_spain:
-  retrieve_Iberian_cutout: false
+  retrieve_Iberian_cutout: true
   loads_at_every_bus: false
   update_gdp_pop: false
   electricity_demand:
-    enable: false
+    enable: true
     annual_value: 230 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS3_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS3_by_economicSector_2022.csv
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS2_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS2_by_economicSector_2022.csv
   update_elec_capacities:
     enable: false
     carriers_to_update:
@@ -54,7 +54,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name:    #####
+  name: 02_load_NUTS2   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml

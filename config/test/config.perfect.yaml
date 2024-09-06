@@ -13,8 +13,8 @@ pypsa_spain:
   electricity_demand:
     enable: false
     annual_value: 230 # TWh
-    profiles: 'data_ES/electricity_demand/electricity_demand_profiles_province_by_economicSector_2022.csv'
-    percentages: 'data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv'
+    profiles: 'data_ES/electricity_demand/electricity_demand_profiles_NUTS3_by_economicSector_2022.csv'
+    percentages: 'data_ES/electricity_demand/electricity_demand_percentages_NUTS3_by_economicSector_2022.csv'
   update_elec_capacities:
     enable: false
     carriers_to_update:
@@ -25,11 +25,11 @@ pypsa_spain:
     method_increase: 'proportional' # 'additional' / 'proportional'
   q2q_transform:
     enable: false 
-    onwind: 'data_ES/q2q/q2q_onwind_v002.pkl'
+    onwind: 'data_ES/q2q/q2q_onwind_v003.pkl'
     offwind-ac: ''
     offwind-dc: ''
     offwind-float: ''
-    solar: 'q2q_solar_v001.pkl'
+    solar: 'data_ES/q2q/q2q_solar_v001.pkl'
     solar-hsat: ''
   interconnections:
     enable: false

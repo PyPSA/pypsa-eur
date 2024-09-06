@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 0.12.0
 tutorial: false
 
 
@@ -15,8 +15,8 @@ pypsa_spain:
   electricity_demand:
     enable: true
     annual_value: 230 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_province_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_province_by_economicSector_2022.csv
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS3_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS3_by_economicSector_2022.csv
   update_elec_capacities:
     enable: false
     carriers_to_update:
@@ -31,7 +31,7 @@ pypsa_spain:
     offwind-ac: ''
     offwind-dc: ''
     offwind-float: ''
-    solar: q2q_solar_v001.pkl
+    solar: data_ES/q2q/q2q_solar_v001.pkl
     solar-hsat: ''
   interconnections:
     enable: false
@@ -54,7 +54,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name: electricity_demand   #####
+  name: 02_load_NUTS3   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -105,7 +105,6 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   # 2020: 0.701
@@ -141,7 +140,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2024)   #####
+  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2022)   #####
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -315,6 +314,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -325,7 +325,7 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: iberia-2022-era5
@@ -488,19 +488,26 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    # check these numbers!
-    forward_temperature:
-      default: 90
-      DK: 70
-      SE: 70
-      NO: 70
-      FI: 70
-    return_temperature:
-      default: 50
-      DK: 40
-      SE: 40
-      NO: 40
-      FI: 40
+    supply_temperature_approximation:
+      max_forward_temperature:
+        default: 90
+        DK: 70
+        SE: 70
+        NO: 70
+      min_forward_temperature:
+        default: 68
+        DK: 54
+        SE: 54
+        NO: 54
+      return_temperature:
+        default: 50
+        DK: 40
+        SE: 40
+        NO: 40
+        FI: 40
+      lower_threshold_ambient_temperature: 0
+      upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -831,6 +838,7 @@ industry:
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2019
+  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -1111,6 +1119,8 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    oil primary: '#d2d2d2'
+    oil refining: '#e6e6e6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
