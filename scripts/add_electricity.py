@@ -51,7 +51,6 @@ Inputs
     .. image:: img/hydrocapacities.png
         :scale: 34 %
 
-- ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not currently used!
 - ``resources/electricity_demand.csv`` Hourly per-country electricity demand profiles.
 - ``resources/regions_onshore.geojson``: confer :ref:`busregions`
 - ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`

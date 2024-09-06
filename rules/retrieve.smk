@@ -282,6 +282,30 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
+    rule retrieve_worldbank_urban_population:
+        params:
+            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip",
+        output:
+            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        run:
+            import os
+            import requests
+
+            response = requests.get(
+                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params={"name": "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip"},
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
+
+
+if config["enable"]["retrieve"]:
+
     # Download directly from naciscdn.org which is a redirect from naturalearth.com
     # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
     # Use point-of-view (POV) variant of Germany so that Crimea is included.
@@ -299,6 +323,40 @@ if config["enable"]["retrieve"]:
             output_folder = Path(output["countries"]).parent
             unpack_archive(params["zip"], output_folder)
             os.remove(params["zip"])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_europe_gas_tracker:
+        output:
+            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+        run:
+            import requests
+
+            response = requests.get(
+                "https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_steel_plant_tracker:
+        output:
+            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        run:
+            import requests
+
+            response = requests.get(
+                "https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
@@ -411,3 +469,85 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-prebuilt"
+):
+
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage("https://zenodo.org/records/13358976/files/buses.csv"),
+            converters=storage(
+                "https://zenodo.org/records/13358976/files/converters.csv"
+            ),
+            lines=storage("https://zenodo.org/records/13358976/files/lines.csv"),
+            links=storage("https://zenodo.org/records/13358976/files/links.csv"),
+            transformers=storage(
+                "https://zenodo.org/records/13358976/files/transformers.csv"
+            ),
+        output:
+            buses="data/osm-prebuilt/buses.csv",
+            converters="data/osm-prebuilt/converters.csv",
+            lines="data/osm-prebuilt/lines.csv",
+            links="data/osm-prebuilt/links.csv",
+            transformers="data/osm-prebuilt/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+                validate_checksum(output[key], input[key])
+
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm-raw/{country}/cables_way.json",
+            lines_way="data/osm-raw/{country}/lines_way.json",
+            links_relation="data/osm-raw/{country}/links_relation.json",
+            substations_way="data/osm-raw/{country}/substations_way.json",
+            substations_relation="data/osm-raw/{country}/substations_relation.json",
+        log:
+            "logs/retrieve_osm_data_{country}.log",
+        threads: 1
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data_all:
+        input:
+            expand(
+                "data/osm-raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),

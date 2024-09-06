@@ -281,7 +281,7 @@ def co2_emissions_year(
 
     eurostat = build_eurostat(input_eurostat, countries)
 
-    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK
+    # this only affects the estimation of CO2 emissions for BA, RS, AL, ME, MK, XK
     eurostat_co2 = build_eurostat_co2(eurostat, year)
 
     co2_totals = build_co2_totals(countries, eea_co2, eurostat_co2)
@@ -539,7 +539,24 @@ def add_carrier_buses(n, carrier, nodes=None):
 
     unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
     # preliminary value for non-gas carriers to avoid zeros
-    capital_cost = costs.at["gas storage", "fixed"] if carrier == "gas" else 0.02
+    if carrier == "gas":
+        capital_cost = costs.at["gas storage", "fixed"]
+    elif carrier == "oil":
+        # based on https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
+        mwh_per_m3 = 44.9 * 724 * 0.278 * 1e-3  # MJ/kg * kg/m3 * kWh/MJ * MWh/kWh
+        capital_cost = (
+            costs.at["General liquid hydrocarbon storage (product)", "fixed"]
+            / mwh_per_m3
+        )
+    elif carrier == "methanol":
+        # based on https://www.engineeringtoolbox.com/fossil-fuels-energy-content-d_1298.html
+        mwh_per_m3 = 5.54 * 791 * 1e-3  # kWh/kg * kg/m3 * MWh/kWh
+        capital_cost = (
+            costs.at["General liquid hydrocarbon storage (product)", "fixed"]
+            / mwh_per_m3
+        )
+    else:
+        capital_cost = 0.1
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
@@ -556,12 +573,43 @@ def add_carrier_buses(n, carrier, nodes=None):
     fossils = ["coal", "gas", "oil", "lignite"]
     if options.get("fossil_fuels", True) and carrier in fossils:
 
+        suffix = ""
+
+        if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
+
+            n.madd(
+                "Bus",
+                nodes + " primary",
+                location=location,
+                carrier=carrier + " primary",
+                unit=unit,
+            )
+
+            n.madd(
+                "Link",
+                nodes + " refining",
+                bus0=nodes + " primary",
+                bus1=nodes,
+                bus2="co2 atmosphere",
+                location=location,
+                carrier=carrier + " refining",
+                p_nom=1e6,
+                efficiency=1
+                - (
+                    cf_industry["oil_refining_emissions"]
+                    / costs.at[carrier, "CO2 intensity"]
+                ),
+                efficiency2=cf_industry["oil_refining_emissions"],
+            )
+
+            suffix = " primary"
+
         n.madd(
             "Generator",
-            nodes,
-            bus=nodes,
+            nodes + suffix,
+            bus=nodes + suffix,
             p_nom_extendable=True,
-            carrier=carrier,
+            carrier=carrier + suffix,
             marginal_cost=costs.at[carrier, "fuel"],
         )
 
@@ -2307,8 +2355,7 @@ def add_biomass(n, costs):
     if (
         options["municipal_solid_waste"]
         and not options["industry"]
-        and cf_industry["waste_to_energy"]
-        or cf_industry["waste_to_energy_cc"]
+        and not (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"])
     ):
         logger.warning(
             "Flag municipal_solid_waste can be only used with industry "
@@ -2328,7 +2375,9 @@ def add_biomass(n, costs):
             carrier="municipal solid waste",
         )
 
-        e_max_pu = pd.Series([1] * (len(n.snapshots) - 1) + [0], index=n.snapshots)
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.msw.nodes)
+        e_max_pu.iloc[-1] = 0
+
         n.madd(
             "Store",
             spatial.msw.nodes,
@@ -2425,7 +2474,7 @@ def add_biomass(n, costs):
         )
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
-
+        add_carrier_buses(n, "oil")
         # Create timeseries to force usage of unsustainable potentials
         e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
         e_max_pu.iloc[-1] = 0
@@ -2573,13 +2622,15 @@ def add_biomass(n, costs):
         if options["municipal_solid_waste"]:
             n.madd(
                 "Link",
-                biomass_transport.index,
-                bus0=biomass_transport.bus0 + " municipal solid waste",
-                bus1=biomass_transport.bus1 + " municipal solid waste",
+                biomass_transport.index + " municipal solid waste",
+                bus0=biomass_transport.bus0.values + " municipal solid waste",
+                bus1=biomass_transport.bus1.values + " municipal solid waste",
                 p_nom_extendable=False,
                 p_nom=5e4,
                 length=biomass_transport.length.values,
-                marginal_cost=biomass_transport.costs * biomass_transport.length.values,
+                marginal_cost=(
+                    biomass_transport.costs * biomass_transport.length
+                ).values,
                 carrier="municipal solid waste transport",
             )
 
@@ -2709,6 +2760,7 @@ def add_biomass(n, costs):
 
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
+        add_carrier_buses(n, "oil")
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -2752,7 +2804,7 @@ def add_biomass(n, costs):
     # Combination of efuels and biomass to liquid, both based on Fischer-Tropsch.
     # Experimental version - use with caution
     if options["electrobiofuels"]:
-
+        add_carrier_buses(n, "oil")
         efuel_scale_factor = costs.at["BtL", "C stored"]
         name = (
             pd.Index(spatial.biomass.nodes)
@@ -2864,6 +2916,10 @@ def add_biomass(n, costs):
 
 def add_industry(n, costs):
     logger.info("Add industrial demand")
+    # add oil buses for shipping, aviation and naptha for industry
+    add_carrier_buses(n, "oil")
+    # add methanol buses for industry
+    add_carrier_buses(n, "methanol")
 
     nodes = pop_layout.index
     nhours = n.snapshot_weightings.generators.sum()
@@ -2998,25 +3054,6 @@ def add_industry(n, costs):
     )
 
     # methanol for industry
-
-    n.madd(
-        "Bus",
-        spatial.methanol.nodes,
-        carrier="methanol",
-        location=spatial.methanol.locations,
-        unit="MWh_LHV",
-    )
-
-    n.madd(
-        "Store",
-        spatial.methanol.nodes,
-        suffix=" Store",
-        bus=spatial.methanol.nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="methanol",
-        capital_cost=0.02,
-    )
 
     n.madd(
         "Bus",
@@ -3187,38 +3224,8 @@ def add_industry(n, costs):
             ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
         )
 
-    if "oil" not in n.buses.carrier.unique():
-        n.madd(
-            "Bus",
-            spatial.oil.nodes,
-            location=spatial.oil.locations,
-            carrier="oil",
-            unit="MWh_LHV",
-        )
-
-    if "oil" not in n.stores.carrier.unique():
-        # could correct to e.g. 0.001 EUR/kWh * annuity and O&M
-        n.madd(
-            "Store",
-            spatial.oil.nodes,
-            suffix=" Store",
-            bus=spatial.oil.nodes,
-            e_nom_extendable=True,
-            e_cyclic=True,
-            carrier="oil",
-        )
-
-    if options.get("fossil_fuels", True) and "oil" not in n.generators.carrier.unique():
-        n.madd(
-            "Generator",
-            spatial.oil.nodes,
-            bus=spatial.oil.nodes,
-            p_nom_extendable=True,
-            carrier="oil",
-            marginal_cost=costs.at["oil", "fuel"],
-        )
-
     if shipping_oil_share:
+
         p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
 
         if not options["regional_oil_demand"]:
@@ -3371,9 +3378,13 @@ def add_industry(n, costs):
                 spatial.msw.locations,
                 bus0=spatial.msw.nodes,
                 bus1=non_sequestered_hvc_locations,
+                bus2="co2 atmosphere",
                 carrier="municipal solid waste",
                 p_nom_extendable=True,
                 efficiency=1.0,
+                efficiency2=-costs.at[
+                    "oil", "CO2 intensity"
+                ],  # because msw is co2 neutral and will be burned in waste CHP or decomposed as oil
             )
 
         n.madd(

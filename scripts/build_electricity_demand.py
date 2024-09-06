@@ -192,9 +192,9 @@ def manual_adjustment(load, fn_load, countries):
         if "ME" in load:
             load["BA"] = load.HR * (11.0 / 16.2)
 
-    if ("KV" not in load or load.KV.isnull().values.all()) and "KV" in countries:
+    if "XK" not in load and "XK" in countries:
         if "RS" in load:
-            load["KV"] = load["RS"] * (4.8 / 27.0)
+            load["XK"] = load["RS"] * (4.8 / 27.0)
 
     copy_timeslice(load, "GR", "2015-08-11 21:00", "2015-08-15 20:00", Delta(weeks=1))
     copy_timeslice(load, "AT", "2018-12-31 22:00", "2019-01-01 22:00", Delta(days=2))
@@ -263,133 +263,67 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
 
+    fixed_year = snakemake.params["load"].get("fixed_year", False)
+    years = (
+        slice(str(fixed_year), str(fixed_year))
+        if fixed_year
+        else slice(snapshots[0], snapshots[-1])
+    )
 
+    interpolate_limit = snakemake.params.load["interpolate_limit"]
+    countries = snakemake.params.countries
 
+    time_shift = snakemake.params.load["time_shift_for_large_gaps"]
 
-    ################################################## PyPSA-Spain
-    #
-    # Generate electricity demand according to PyPSA-Spain customisation
-    #
+    load = load_timeseries(snakemake.input.reported, years, countries)
 
-    electricity_demand = snakemake.params.electricity_demand
+    load = load.reindex(index=snapshots)
 
+    if "UA" in countries:
+        # attach load of UA (best data only for entsoe transparency)
+        load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
+        snapshot_year = str(snapshots.year.unique().item())
+        time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
+        # hack indices (currently, UA is manually set to 2018)
+        load_ua.index -= time_diff
+        load["UA"] = load_ua
+        # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
+        # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
+        if "MD" in countries:
+            load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
 
-    if electricity_demand['enable']:
+    if snakemake.params.load["manual_adjustments"]:
+        load = manual_adjustment(load, snakemake.input[0], countries)
 
-        print(f'##### [PyPSA-Spain] <build_electricity_demand>: Creating customised electricity demand for Spain..')
+    logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
+    load = load.interpolate(method="linear", limit=interpolate_limit)
 
+    logger.info(
+        "Filling larger gaps by copying time-slices of period " f"'{time_shift}'."
+    )
+    load = load.apply(fill_large_gaps, shift=time_shift)
 
-        #################### Unwrap parameters
-        electricity_demand = snakemake.params.electricity_demand
+    if snakemake.params.load["supplement_synthetic"]:
+        logger.info("Supplement missing data with synthetic data.")
+        fn = snakemake.input.synthetic
+        synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
+        # UA, MD, XK do not appear in synthetic load data
+        countries = list(set(countries) - set(["UA", "MD", "XK"]))
+        synthetic_load = synthetic_load.loc[snapshots, countries]
+        load = load.combine_first(synthetic_load)
 
-        annual_value = electricity_demand['annual_value']
-        df_profiles = pd.read_csv(electricity_demand['profiles'], index_col=0)#.fillna(0, inplace=True)
-        df_percentages = pd.read_csv(electricity_demand['percentages'], index_col=0)
+    assert not load.isna().any().any(), (
+        "Load data contains nans. Adjust the parameters "
+        "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
+        "for implementing the needed load data modifications."
+    )
 
-        nHours = df_profiles.shape[0]        
+    # need to reindex load time series to target year
+    if fixed_year:
+        load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
 
-
-        ##### Initialise output
-        df_output = pd.DataFrame()
-
-
-        ##### Loop over rr and ff, multiply each profile by corresponding factor
-
-        for rr in df_percentages.columns:  # rr are the NUTS_ID labels
-        
-
-            for ff in df_percentages.index:
-
-
-                # *1e6 because annaul_electricity_demand is provided in TWh, but the time series is in MWh
-                # /nHours because hourly profiles have been obtained with the mean load, not the sum
-                # /100 because percentages are over 100
-                factor = (annual_value * 1e6 / nHours )* df_percentages.at[ff,rr] / 100
-
-                df_profiles.loc[:,f'{rr}-{ff}'] = df_profiles[f'{rr}-{ff}'] * factor
-
-
-            ### Aggregate df_profiles according to rr
-            df_output[rr] = df_profiles.filter(like=rr).sum(axis=1)
-            
-
-
-        ##### Sort columns and save output
-        df_output.sort_index(axis=1, inplace=True)
-        df_output.round(4).to_csv(snakemake.output[0], float_format='%.4f')
-
-
-
-
-
-    ##################################################
-    #
-    # Generate electricity demand according to PyPSA-Eur approach
-    #
-    else:
-
-        snapshots = get_snapshots(
-            snakemake.params.snapshots, snakemake.params.drop_leap_day
-        )
-
-        fixed_year = snakemake.params["load"].get("fixed_year", False)
-        years = (
-            slice(str(fixed_year), str(fixed_year))
-            if fixed_year
-            else slice(snapshots[0], snapshots[-1])
-        )
-
-        interpolate_limit = snakemake.params.load["interpolate_limit"]
-        countries = snakemake.params.countries
-
-        time_shift = snakemake.params.load["time_shift_for_large_gaps"]
-
-        load = load_timeseries(snakemake.input.reported, years, countries)
-
-        load = load.reindex(index=snapshots)
-
-        if "UA" in countries:
-            # attach load of UA (best data only for entsoe transparency)
-            load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
-            snapshot_year = str(snapshots.year.unique().item())
-            time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
-            # hack indices (currently, UA is manually set to 2018)
-            load_ua.index -= time_diff
-            load["UA"] = load_ua
-            # attach load of MD (no time-series available, use 2020-totals and distribute according to UA):
-            # https://www.iea.org/data-and-statistics/data-browser/?country=MOLDOVA&fuel=Energy%20consumption&indicator=TotElecCons
-            if "MD" in countries:
-                load["MD"] = 6.2e6 * (load_ua / load_ua.sum())
-
-        if snakemake.params.load["manual_adjustments"]:
-            load = manual_adjustment(load, snakemake.input[0], countries)
-
-        logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
-        load = load.interpolate(method="linear", limit=interpolate_limit)
-
-        logger.info(
-            "Filling larger gaps by copying time-slices of period " f"'{time_shift}'."
-        )
-        load = load.apply(fill_large_gaps, shift=time_shift)
-
-        if snakemake.params.load["supplement_synthetic"]:
-            logger.info("Supplement missing data with synthetic data.")
-            fn = snakemake.input.synthetic
-            synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-            # "UA" does not appear in synthetic load data
-            countries = list(set(countries) - set(["UA", "MD"]))
-            synthetic_load = synthetic_load.loc[snapshots, countries]
-            load = load.combine_first(synthetic_load)
-
-        assert not load.isna().any().any(), (
-            "Load data contains nans. Adjust the parameters "
-            "`time_shift_for_large_gaps` or modify the `manual_adjustment` function "
-            "for implementing the needed load data modifications."
-        )
-
-        # need to reindex load time series to target year
-        if fixed_year:
-            load.index = load.index.map(lambda t: t.replace(year=snapshots.year[0]))
-
-        load.to_csv(snakemake.output[0])
+    load.to_csv(snakemake.output[0])
