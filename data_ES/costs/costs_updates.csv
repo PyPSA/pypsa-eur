@@ -1,0 +1,10 @@
+technology,parameter,value
+solar,lifetime,20
+solar-rooftop,lifetime,20
+solar-rooftop commercial,lifetime,20
+solar-rooftop residential,lifetime,20
+solar-utility,investment,450
+solar-utility,lifetime,20
+solar-utility single-axis tracking,lifetime,20
+onwind,lifetime,20
+offwind,lifetime,20

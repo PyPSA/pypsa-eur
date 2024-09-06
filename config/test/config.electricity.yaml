@@ -34,6 +34,9 @@ pypsa_spain:
   interconnections:
     enable: false
     ic_ES_file: 'data_ES/interconnections/interconnections.yaml'
+  costs_update:
+    enable: false
+    costs_update_file: 'data_ES/costs/costs_updates.csv'
 
 
 

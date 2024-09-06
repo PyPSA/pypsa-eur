@@ -13,10 +13,10 @@ pypsa_spain:
   loads_at_every_bus: false
   update_gdp_pop: false
   electricity_demand:
-    enable: false
-    annual_value: 230 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS3_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS3_by_economicSector_2022.csv
+    enable: true
+    annual_value: 316.5 # TWh   230 # TWh
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS0_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS0_by_economicSector_2022.csv
   update_elec_capacities:
     enable: false
     carriers_to_update:
@@ -36,6 +36,9 @@ pypsa_spain:
   interconnections:
     enable: false
     ic_ES_file: data_ES/interconnections/interconnections.yaml
+  costs_update:
+    enable: true
+    costs_update_file: 'data_ES/costs/costs_updates.csv'
 
 
 
@@ -54,7 +57,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix:    #####
-  name: 00_reference  #####
+  name: 00_reference   #####
   scenarios:
     enable: false
     file: config/scenarios.yaml
@@ -141,7 +144,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2022)   #####
+  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'ES' and Fueltype == 'Nuclear' and DateOut < 2031)   #####
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -174,14 +177,14 @@ atlite:
     iberia-2022-era5:
       module: era5 # in priority order
       x: [-12., 42.]
-      y: [33., 72]
+      y: [33., 72.]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     iberia-2022-era5:
       module: [sarah, era5] # in priority order
       x: [-12., 42.]
-      y: [33., 65]
+      y: [33., 65.]
       dx: 0.2
       dy: 0.2
       time: ['2013', '2013']
@@ -218,8 +221,8 @@ renewable:
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       smooth: false
       add_cutout_windspeed: true
-    capacity_per_sqkm: 2
-    correction_factor: 0.8855
+    capacity_per_sqkm: 2   #####
+    # correction_factor: 0.8855
     corine: [44, 255]
     luisa: false # [0, 5230]
     natura: true
@@ -236,7 +239,7 @@ renewable:
       smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
+    # correction_factor: 0.8855
     corine: [44, 255]
     luisa: false # [0, 5230]
     natura: true
@@ -252,7 +255,7 @@ renewable:
       turbine: NREL_ReferenceTurbine_2020ATB_7MW # NREL_ReferenceTurbine_5MW_offshore   #####
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
-    correction_factor: 1 # 0.8855   #####
+    # correction_factor: 0.8855   #####
     # proxy for wake losses
     # from 10.1016/j.energy.2018.08.153
     # until done more rigorously in #153
@@ -390,7 +393,7 @@ pypsa_eur:
   # - offwind-ac   #####
   # - offwind-dc   #####
   - offwind-float
-  - solar-hsat
+  # - solar-hsat   #####
   - solar
   - ror
   - nuclear
@@ -477,7 +480,7 @@ sector:
   biomass: false   # true   #####
   industry: false   # true   #####
   agriculture: false   # true   #####
-  fossil_fuels: false   # true   #####
+  fossil_fuels: true   ##### This is important to feed gas to the CCGT links
   district_heating:
     potential: 0.6
     progress:
@@ -636,9 +639,9 @@ sector:
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
-  methanation: true
+  methanation: false   ##### This creates Sabatier links
   coal_cc: false
-  dac: true
+  dac: false   ##### true
   co2_vent: false
   central_heat_vent: false
   allam_cycle: false

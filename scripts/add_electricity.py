@@ -1228,7 +1228,7 @@ if __name__ == "__main__":
 
     if electricity_demand['enable']:
 
-        print(f'##### [PyPSA-Spain]: Using attach_load_vPyPSA_Spain to attache regional electricity demand in ES..')
+        print(f'##### [PyPSA-Spain]: Using attach_load_vPyPSA_Spain to attach electricity demand in ES..')
 
         attach_load_vPyPSA_Spain(
             n,

@@ -295,8 +295,9 @@ def calculate_energy(n, label, energy):
 
             ##### It seems that, when attempting port=3 (related to some link and bus that includes 'p3'), 'totals' remains empty
             ##### Run this block only if the resulting 'totals' is not empty
+            ##### Seems to no rise this issue if 'methanation = true'..(?)
                 if totals.empty:
-                    print(f'[PyPSA-Spain: ommiting "totals" for c.name={c.name}, port={port}')
+                    print(f'#################### PyPSA-Spain <make_summary.py>: ommiting "totals" for c.name={c.name}, port={port}')
                 else:
                     # remove values where bus is missing (bug in nomopyomo)
                     no_bus = c.df.index[c.df["bus" + port] == ""]

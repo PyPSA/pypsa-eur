@@ -122,6 +122,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
     rule retrieve_cost_data:
         params:
             version=config_provider("costs", "version"),
+            costs_update=config_provider("pypsa_spain", "costs_update"),   ########## PyPSA-Spain update
         output:
             resources("costs_{year}.csv"),
         log:
