@@ -47,10 +47,11 @@ from central_heating_temperature_approximator import (
 )
 
 
-def extrapolate_missing_supply_temperatures_by_country(extrapolate_from: dict, extrapolate_to: dict) -> xr.DataArray:
+def extrapolate_missing_supply_temperatures_by_country(
+    extrapolate_from: dict, extrapolate_to: dict
+) -> xr.DataArray:
     """
     Extrapolates missing supply temperatures by country.
-    
 
     Parameters:
         extrapolate_from (dict): A dictionary containing supply temperatures to extrapolate from. Should contain all countries.
@@ -58,13 +59,22 @@ def extrapolate_missing_supply_temperatures_by_country(extrapolate_from: dict, e
 
     Returns:
         xr.DataArray: A DataArray containing the extrapolated supply temperatures.
-
     """
     # average ratio between extrapolate_from and extrapolate_to for those countries that are in both dictionaries
-    extrapolation_ratio = np.mean([extrapolate_from[key] / extrapolate_to[key] for key in extrapolate_to.keys()])
+    extrapolation_ratio = np.mean(
+        [extrapolate_from[key] / extrapolate_to[key] for key in extrapolate_to.keys()]
+    )
 
     # apply extrapolation ratio to all keys missing in extrapolate_to
-    return {key: extrapolate_to[key] if key in extrapolate_to.keys() else extrapolate_from[key] * extrapolation_ratio for key in extrapolate_from.keys()}
+    return {
+        key: (
+            extrapolate_to[key]
+            if key in extrapolate_to.keys()
+            else extrapolate_from[key] * extrapolation_ratio
+        )
+        for key in extrapolate_from.keys()
+    }
+
 
 def get_country_from_node_name(node_name: str) -> str:
     """
@@ -135,8 +145,14 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     max_forward_temperature = snakemake.params.max_forward_temperature_central_heating
-    min_forward_temperature = extrapolate_missing_supply_temperatures_by_country(extrapolate_from=max_forward_temperature, extrapolate_to=snakemake.params.min_forward_temperature_central_heating)
-    return_temperature = extrapolate_missing_supply_temperatures_by_country(extrapolate_from=snakemake.params.return_temperature_central_heating, extrapolate_to=max_forward_temperature)
+    min_forward_temperature = extrapolate_missing_supply_temperatures_by_country(
+        extrapolate_from=max_forward_temperature,
+        extrapolate_to=snakemake.params.min_forward_temperature_central_heating,
+    )
+    return_temperature = extrapolate_missing_supply_temperatures_by_country(
+        extrapolate_from=snakemake.params.return_temperature_central_heating,
+        extrapolate_to=max_forward_temperature,
+    )
 
     # map forward and return temperatures specified on country-level to onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
