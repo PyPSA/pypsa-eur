@@ -267,6 +267,16 @@ if __name__ == "__main__":
 
 
 #################### PyPSA-Spain: if not requested, compute load as usual in PyPSA-Eur
+
+    #################### Unwrap parameters
+    electricity_demand = snakemake.params.electricity_demand
+    annual_value = electricity_demand['annual_value']
+    df_profiles = pd.read_csv(electricity_demand['profiles'], index_col=0)#.fillna(0, inplace=True)
+    df_percentages = pd.read_csv(electricity_demand['percentages'], index_col=0)
+    nHours = df_profiles.shape[0]
+
+
+
     if not electricity_demand['enable']:
 
         snapshots = get_snapshots(
@@ -339,16 +349,7 @@ if __name__ == "__main__":
     ##### Generate electricity demand according to PyPSA-Spain customisation
         
         print(f'##### [PyPSA-Spain] <build_electricity_demand>: Creating customised electricity demand for Spain..')
-
-
-        #################### Unwrap parameters
-        electricity_demand = snakemake.params.electricity_demand
-
-        annual_value = electricity_demand['annual_value']
-        df_profiles = pd.read_csv(electricity_demand['profiles'], index_col=0)#.fillna(0, inplace=True)
-        df_percentages = pd.read_csv(electricity_demand['percentages'], index_col=0)
-
-        nHours = df_profiles.shape[0]        
+               
 
 
         ##### Initialise output
