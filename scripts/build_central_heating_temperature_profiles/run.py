@@ -62,7 +62,9 @@ def extrapolate_missing_supply_temperatures_by_country(
     """
 
     if not all([key in extrapolate_from.keys() for key in extrapolate_to.keys()]):
-        raise ValueError("Not all countries in extrapolate_to are present in extrapolate_from.")
+        raise ValueError(
+            "Not all countries in extrapolate_to are present in extrapolate_from."
+        )
     # average ratio between extrapolate_from and extrapolate_to for those countries that are in both dictionaries
     extrapolation_ratio = np.mean(
         [extrapolate_from[key] / extrapolate_to[key] for key in extrapolate_to.keys()]
