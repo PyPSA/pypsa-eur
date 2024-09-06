@@ -73,7 +73,7 @@ scenario:
   simpl:
   - ''
   ll:
-  - v1.0   # vopt   #####
+  - v1.05   # vopt   #####
   clusters:
   - 2
   - 8
