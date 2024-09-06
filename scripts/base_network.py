@@ -145,7 +145,6 @@ def _load_buses(buses, europe_shape, config):
             dtype=dict(bus_id="str"),
         )
         .set_index("bus_id")
-
         .rename(columns=dict(voltage="v_nom"))
     )
 
@@ -716,7 +715,6 @@ def base_network(
     parameter_corrections,
     config,
 ):
-    buses = _load_buses_from_eg(eg_buses, europe_shape, config["electricity"])
 
     base_network = config["electricity"].get("base_network")
     assert base_network in {
