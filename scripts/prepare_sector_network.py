@@ -604,16 +604,14 @@ def add_carrier_buses(n, carrier, nodes=None):
 
             suffix = " primary"
 
-        else:
-
-            n.madd(
-                "Generator",
-                nodes + suffix,
-                bus=nodes + suffix,
-                p_nom_extendable=True,
-                carrier=carrier + suffix,
-                marginal_cost=costs.at[carrier, "fuel"],
-            )
+        n.madd(
+            "Generator",
+            nodes + suffix,
+            bus=nodes + suffix,
+            p_nom_extendable=True,
+            carrier=carrier + suffix,
+            marginal_cost=costs.at[carrier, "fuel"],
+        )
 
 
 # TODO: PyPSA-Eur merge issue
@@ -2359,7 +2357,7 @@ def add_biomass(n, costs):
     if (
         options["municipal_solid_waste"]
         and not options["industry"]
-        and (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"])
+        and not (cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"])
     ):
         logger.warning(
             "Flag municipal_solid_waste can be only used with industry "
@@ -2379,12 +2377,9 @@ def add_biomass(n, costs):
             carrier="municipal solid waste",
         )
 
-        e_max_pu = np.array(
-            len(spatial.msw.nodes) * [[1] * (len(n.snapshots) - 1) + [0]]
-        ).T
-        e_max_pu = pd.DataFrame(
-            e_max_pu, index=n.snapshots, columns=spatial.msw.nodes
-        ).astype(float)
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.msw.nodes)
+        e_max_pu.iloc[-1] = 0
+
         n.madd(
             "Store",
             spatial.msw.nodes,
@@ -3385,9 +3380,13 @@ def add_industry(n, costs):
                 spatial.msw.locations,
                 bus0=spatial.msw.nodes,
                 bus1=non_sequestered_hvc_locations,
+                bus2="co2 atmosphere",
                 carrier="municipal solid waste",
                 p_nom_extendable=True,
                 efficiency=1.0,
+                efficiency2=-costs.at[
+                    "oil", "CO2 intensity"
+                ],  # because msw is co2 neutral and will be burned in waste CHP or decomposed as oil
             )
 
         n.madd(
