@@ -117,7 +117,8 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: osm-prebuilt
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -173,14 +174,14 @@ atlite:
     iberia-2022-era5:
       module: era5 # in priority order
       x: [-12., 42.]
-      y: [33., 72]
+      y: [33., 72.]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
     iberia-2022-era5:
       module: [sarah, era5] # in priority order
       x: [-12., 42.]
-      y: [33., 65]
+      y: [33., 65.]
       dx: 0.2
       dy: 0.2
       time: ['2013', '2013']
