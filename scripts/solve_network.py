@@ -312,8 +312,8 @@ def add_carbon_constraint(n, snapshots):
             continue
 
         # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -338,8 +338,8 @@ def add_carbon_budget_constraint(n, snapshots):
             continue
 
         # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -981,8 +981,8 @@ def add_co2_atmosphere_constraint(n, snapshots):
             continue
 
         # stores
-        bus_carrier = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("@bus_carrier in @emissions.index and not e_cyclic")
+        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
@@ -1455,7 +1455,7 @@ if __name__ == "__main__":
     )
 
     with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=0.1
+        filename=getattr(snakemake.log, "memory", None), interval=30.0
     ) as mem:
         n = solve_network(
             n,

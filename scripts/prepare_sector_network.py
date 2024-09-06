@@ -473,6 +473,7 @@ def update_wind_solar_costs(n, costs):
             continue
         profile = snakemake.input["profile_offwind-" + connection]
         with xr.open_dataset(profile) as ds:
+
             # if-statement for compatibility with old profiles
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
