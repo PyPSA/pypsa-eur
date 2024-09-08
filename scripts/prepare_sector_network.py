@@ -1875,8 +1875,6 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
 
     heat_demand = build_heat_demand(n)
 
-    overdim_factor = options["overdimension_individual_heating"]
-
     district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -1905,6 +1903,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
 
+        overdim_factor = options["overdimension_heat_generators"][
+            heat_system.central_or_decentral
+        ]
         if heat_system == HeatSystem.URBAN_CENTRAL:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
@@ -2753,7 +2754,9 @@ def add_biomass(n, costs):
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"]
-                * options["overdimension_individual_heating"],
+                * options["overdimension_heat_generators"][
+                    HeatSystem(name).central_or_decentral
+                ],
                 marginal_cost=costs.at["biomass boiler", "pelletizing cost"],
                 lifetime=costs.at["biomass boiler", "lifetime"],
             )
@@ -3275,7 +3278,9 @@ def add_industry(n, costs):
                     efficiency2=costs.at["oil", "CO2 intensity"],
                     capital_cost=costs.at["decentral oil boiler", "efficiency"]
                     * costs.at["decentral oil boiler", "fixed"]
-                    * options["overdimension_individual_heating"],
+                    * options["overdimension_heat_generators"][
+                        heat_system.central_or_decentral
+                    ],
                     lifetime=costs.at["decentral oil boiler", "lifetime"],
                 )
 
