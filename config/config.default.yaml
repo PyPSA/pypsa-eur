@@ -1111,7 +1111,6 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
-    unsustainable solid biomass: '#bab000'
     municipal solid waste: '#91ba41'
     solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
