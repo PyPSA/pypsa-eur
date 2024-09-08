@@ -312,10 +312,9 @@ if config["enable"]["retrieve"]:
         run:
             import requests
 
-            response = requests.get(
-                "https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",
-                headers={"User-Agent": "Mozilla/5.0"},
-            )
+            # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
+            response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
 
@@ -329,10 +328,9 @@ if config["enable"]["retrieve"]:
         run:
             import requests
 
-            response = requests.get(
-                "https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
-                headers={"User-Agent": "Mozilla/5.0"},
-            )
+            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
+            response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
 
