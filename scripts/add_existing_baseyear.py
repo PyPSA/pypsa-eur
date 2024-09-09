@@ -546,9 +546,9 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
             )
 
-            if "residential" in heat_system.value:
+            if "residential"==heat_system.sector.value:
                 efficiency = nodes.str[:2].map(heating_efficiencies["gas residential space efficiency"])
-            elif "services" in heat_system.value:
+            elif "services"==heat_system.sector.value:
                 efficiency = nodes.str[:2].map(heating_efficiencies["gas services space efficiency"])
             else:
                 #default used for urban central, since no info on district heating boilers
@@ -577,9 +577,9 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.gas_boiler_costs_name, "lifetime"],
             )
 
-            if "residential" in heat_system.value:
+            if "residential"==heat_system.sector.value:
                 efficiency = nodes.str[:2].map(heating_efficiencies["oil residential space efficiency"])
-            elif "services" in heat_system.value:
+            elif "services"==heat_system.sector.value:
                 efficiency = nodes.str[:2].map(heating_efficiencies["oil services space efficiency"])
             else:
                 #default used for urban central, since no info on district heating boilers
@@ -639,11 +639,11 @@ if __name__ == "__main__":
             "add_existing_baseyear",
             configfiles="config/config.yaml",
             simpl="",
-            clusters="20",
-            ll="v1.5",
+            clusters="38",
+            ll="vopt",
             opts="",
-            sector_opts="none",
-            planning_horizons=2030,
+            sector_opts="",
+            planning_horizons=2020,
         )
 
     configure_logging(snakemake)
@@ -676,7 +676,7 @@ if __name__ == "__main__":
 
     if options["heating"]:
 
-        #one could use baseyear here instead (but dangerous if no data)
+        # one could use baseyear here instead (but dangerous if no data)
         heating_efficiencies = (
             pd.read_csv(snakemake.input.heating_efficiencies, index_col=[0,1])
         ).swaplevel().loc[int(snakemake.config["energy"]["energy_totals_year"])]
