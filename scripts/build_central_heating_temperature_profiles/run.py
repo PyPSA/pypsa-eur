@@ -67,7 +67,7 @@ def extrapolate_missing_supply_temperatures_by_country(
         )
     # average ratio between extrapolate_from and extrapolate_to for those countries that are in both dictionaries
     extrapolation_ratio = np.mean(
-        [extrapolate_from[key] / extrapolate_to[key] for key in extrapolate_to.keys()]
+        [extrapolate_to[key] / extrapolate_from[key] for key in extrapolate_to.keys()]
     )
 
     # apply extrapolation ratio to all keys missing in extrapolate_to
