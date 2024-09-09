@@ -63,7 +63,8 @@ def define_spatial(nodes, options):
 
     if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
-        spatial.biomass.bioliquids = nodes + " bioliquids"
+        spatial.biomass.nodes_unsustainable = nodes + " unsustainable solid biomass"
+        spatial.biomass.bioliquids = nodes + " unsustainable bioliquids"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
         spatial.biomass.industry_cc = nodes + " solid biomass for industry CC"
@@ -71,6 +72,7 @@ def define_spatial(nodes, options):
         spatial.msw.locations = nodes
     else:
         spatial.biomass.nodes = ["EU solid biomass"]
+        spatial.biomass.nodes_unsustainable = ["EU unsustainable solid biomass"]
         spatial.biomass.bioliquids = ["EU unsustainable bioliquids"]
         spatial.biomass.locations = ["EU"]
         spatial.biomass.industry = ["solid biomass for industry"]
@@ -1875,8 +1877,6 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
 
     heat_demand = build_heat_demand(n)
 
-    overdim_factor = options["overdimension_individual_heating"]
-
     district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -1905,6 +1905,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
 
+        overdim_factor = options["overdimension_heat_generators"][
+            heat_system.central_or_decentral
+        ]
         if heat_system == HeatSystem.URBAN_CENTRAL:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
@@ -2492,20 +2495,37 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu,
         )
 
+        n.madd(
+            "Bus",
+            spatial.biomass.nodes_unsustainable,
+            location=spatial.biomass.locations,
+            carrier="unsustainable solid biomass",
+            unit="MWh_LHV",
+        )
+
         e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
         e_max_pu.iloc[-1] = 0
 
         n.madd(
             "Store",
-            spatial.biomass.nodes,
-            suffix=" unsustainable",
-            bus=spatial.biomass.nodes,
+            spatial.biomass.nodes_unsustainable,
+            bus=spatial.biomass.nodes_unsustainable,
             carrier="unsustainable solid biomass",
             e_nom=unsustainable_solid_biomass_potentials_spatial,
             marginal_cost=costs.at["fuelwood", "fuel"],
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
             e_max_pu=e_max_pu,
+        )
+
+        n.madd(
+            "Link",
+            spatial.biomass.nodes_unsustainable,
+            bus0=spatial.biomass.nodes_unsustainable,
+            bus1=spatial.biomass.nodes,
+            carrier="unsustainable solid biomass",
+            efficiency=1,
+            p_nom=unsustainable_solid_biomass_potentials_spatial,
         )
 
         n.madd(
@@ -2524,7 +2544,6 @@ def add_biomass(n, costs):
         n.madd(
             "Store",
             spatial.biomass.bioliquids,
-            suffix=" unsustainable",
             bus=spatial.biomass.bioliquids,
             carrier="unsustainable bioliquids",
             e_nom=unsustainable_liquid_biofuel_potentials_spatial,
@@ -2533,6 +2552,8 @@ def add_biomass(n, costs):
             e_nom_extendable=False,
             e_max_pu=e_max_pu,
         )
+
+        add_carrier_buses(n, "oil")
 
         n.madd(
             "Link",
@@ -2662,6 +2683,29 @@ def add_biomass(n, costs):
             constant=biomass_potentials["solid biomass"].sum(),
             type="operational_limit",
         )
+        if biomass_potentials["unsustainable solid biomass"].sum() > 0:
+            n.madd(
+                "Generator",
+                spatial.biomass.nodes_unsustainable,
+                bus=spatial.biomass.nodes_unsustainable,
+                carrier="unsustainable solid biomass",
+                p_nom=10000,
+                marginal_cost=costs.at["fuelwood", "fuel"]
+                + bus_transport_costs * average_distance,
+            )
+            # Set last snapshot of e_max_pu for unsustainable solid biomass to 1 to make operational limit work
+            unsus_stores_idx = n.stores.loc[
+                n.stores.carrier == "unsustainable solid biomass"
+            ].index
+            n.stores_t.e_max_pu.loc[n.snapshots[-1], unsus_stores_idx] = 1
+            n.add(
+                "GlobalConstraint",
+                "unsustainable biomass limit",
+                carrier_attribute="unsustainable solid biomass",
+                sense="==",
+                constant=biomass_potentials["unsustainable solid biomass"].sum(),
+                type="operational_limit",
+            )
 
         if options["municipal_solid_waste"]:
             # Add municipal solid waste
@@ -2753,7 +2797,9 @@ def add_biomass(n, costs):
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"]
-                * options["overdimension_individual_heating"],
+                * options["overdimension_heat_generators"][
+                    HeatSystem(name).central_or_decentral
+                ],
                 marginal_cost=costs.at["biomass boiler", "pelletizing cost"],
                 lifetime=costs.at["biomass boiler", "lifetime"],
             )
@@ -3275,7 +3321,9 @@ def add_industry(n, costs):
                     efficiency2=costs.at["oil", "CO2 intensity"],
                     capital_cost=costs.at["decentral oil boiler", "efficiency"]
                     * costs.at["decentral oil boiler", "fixed"]
-                    * options["overdimension_individual_heating"],
+                    * options["overdimension_heat_generators"][
+                        heat_system.central_or_decentral
+                    ],
                     lifetime=costs.at["decentral oil boiler", "lifetime"],
                 )
 
@@ -4280,10 +4328,10 @@ if __name__ == "__main__":
             "prepare_sector_network",
             simpl="",
             opts="",
-            clusters="37",
+            clusters="38",
             ll="vopt",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)

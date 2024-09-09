@@ -11,6 +11,10 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Made the overdimensioning factor for heating systems specific for central/decentral heating, defaults to no overdimensionining for central heating and no changes to decentral heating compared to previous version.
+
+* bugfix: The carrier of stores was silently overwritten by their bus_carrier as a side effect when building the co2 constraints
+
 * bugfix: The oil generator was incorrectly dropped when the config `oil_refining_emissions` was greater than zero. This was the default behaviour in 0.12.0.
 
 PyPSA-Eur 0.12.0 (30th August 2024)

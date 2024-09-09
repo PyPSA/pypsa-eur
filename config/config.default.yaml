@@ -590,7 +590,9 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
-  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
+  overdimension_heat_generators:
+    decentral: 1.1  #to cover demand peaks bigger than data
+    central: 1.0
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -1124,6 +1126,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable solid biomass: '#998622'
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
