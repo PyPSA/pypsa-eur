@@ -9,8 +9,13 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
--- forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Forward temperature in district heating
--- return_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating. Must be lower than forward temperature
+-- supply_temperature_approximation,,,
+-- -- max_forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
+-- -- min_forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'., Min. forward temperature in district heating (if ambient temperature higher-or-equal `upper_threshold_ambient_temperature`)
+-- -- return_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating. Must be lower than forward temperature
+-- -- lower_threshold_ambient_temperature,°C,float, Assume `max_forward_temperature` if ambient temperature is below this threshold
+-- -- upper_threshold_ambient_temperature,°C,float, Assume `min_forward_temperature` if ambient temperature is above this threshold
+-- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
 -- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
@@ -84,7 +89,9 @@ boilers,--,"{true, false}",Add option for transforming gas into heat using gas b
 resistive_heaters,--,"{true, false}",Add option for transforming electricity into heat using resistive heaters (independently from gas boilers)
 oil_boilers,--,"{true, false}",Add option for transforming oil into heat using boilers
 biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat using boilers
-overdimension_individual_heating,--,float,Add option for overdimensioning individual heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
+overdimension_heat_generators,,,Add option for overdimensioning heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
+-- decentral,--,float,The factor for overdimensioning (increasing CAPEX) decentral heating systems
+-- central,--,float,The factor for overdimensioning (increasing CAPEX) central heating systems
 chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
