@@ -97,7 +97,6 @@ def get_country_from_node_name(node_name: str) -> str:
 def map_temperature_dict_to_onshore_regions(
     supply_temperature_by_country: dict,
     regions_onshore: pd.Index,
-    snapshots: pd.DatetimeIndex,
 ) -> xr.DataArray:
     """
     Map dictionary of temperatures to onshore regions.
@@ -110,8 +109,6 @@ def map_temperature_dict_to_onshore_regions(
         Dictionary with temperatures as values and country keys as keys.
     regions_onshore : pd.Index
         Names of onshore regions
-    snapshots : pd.DatetimeIndex
-        Time stamps
 
     Returns:
     -------
@@ -120,7 +117,6 @@ def map_temperature_dict_to_onshore_regions(
     """
     return xr.DataArray(
         [
-            [
                 (
                     supply_temperature_by_country[get_country_from_node_name(node_name)]
                     if get_country_from_node_name(node_name)
@@ -128,12 +124,9 @@ def map_temperature_dict_to_onshore_regions(
                     else np.mean(list(supply_temperature_by_country.values()))
                 )
                 for node_name in regions_onshore.values
-            ]
-            # pass both nodes and snapshots as dimensions to preserve correct data structure
-            for _ in snapshots
         ],
-        dims=["time", "name"],
-        coords={"time": snapshots, "name": regions_onshore},
+        dims=["name"],
+        coords={"name": regions_onshore},
     )
 
 
@@ -166,21 +159,18 @@ if __name__ == "__main__":
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=max_forward_temperature,
             regions_onshore=regions_onshore,
-            snapshots=snapshots,
         )
     )
     min_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=min_forward_temperature,
             regions_onshore=regions_onshore,
-            snapshots=snapshots,
         )
     )
     return_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=return_temperature,
             regions_onshore=regions_onshore,
-            snapshots=snapshots,
         )
     )
 
