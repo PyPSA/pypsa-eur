@@ -117,13 +117,13 @@ def map_temperature_dict_to_onshore_regions(
     """
     return xr.DataArray(
         [
-                (
-                    supply_temperature_by_country[get_country_from_node_name(node_name)]
-                    if get_country_from_node_name(node_name)
-                    in supply_temperature_by_country.keys()
-                    else np.mean(list(supply_temperature_by_country.values()))
-                )
-                for node_name in regions_onshore.values
+            (
+                supply_temperature_by_country[get_country_from_node_name(node_name)]
+                if get_country_from_node_name(node_name)
+                in supply_temperature_by_country.keys()
+                else np.mean(list(supply_temperature_by_country.values()))
+            )
+            for node_name in regions_onshore.values
         ],
         dims=["name"],
         coords={"name": regions_onshore},
