@@ -2503,7 +2503,9 @@ def add_biomass(n, costs):
             unit="MWh_LHV",
         )
 
-        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.biomass.nodes)
+        e_max_pu = pd.DataFrame(
+            1, index=n.snapshots, columns=spatial.biomass.nodes_unsustainable
+        )
         e_max_pu.iloc[-1] = 0
 
         n.madd(
@@ -2694,9 +2696,12 @@ def add_biomass(n, costs):
                 + bus_transport_costs * average_distance,
             )
             # Set last snapshot of e_max_pu for unsustainable solid biomass to 1 to make operational limit work
-            unsus_stores_idx = n.stores.loc[
-                n.stores.carrier == "unsustainable solid biomass"
-            ].index
+            unsus_stores_idx = n.stores.query(
+                "carrier == 'unsustainable solid biomass'"
+            ).index
+            unsus_stores_idx = unsus_stores_idx.intersection(
+                n.stores_t.e_max_pu.columns
+            )
             n.stores_t.e_max_pu.loc[n.snapshots[-1], unsus_stores_idx] = 1
             n.add(
                 "GlobalConstraint",
