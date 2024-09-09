@@ -418,6 +418,46 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             ]
 
 
+def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
+    """
+    Computes the heating system efficiency based on the sector and carrier type.
+
+    Parameters:
+    -----------
+    heat_system : object
+    carrier : str
+        The type of fuel or energy carrier (e.g., 'gas', 'oil').
+    nodes : pandas.Series
+        A pandas Series containing node information used to match the heating efficiency data.
+    heating_efficiencies : dict
+        A dictionary containing efficiency values for different carriers and sectors.
+    costs : pandas.DataFrame
+        A DataFrame containing boiler cost and efficiency data for different heating systems.
+
+    Returns:
+    --------
+    efficiency : pandas.Series or float
+        A pandas Series mapping the efficiencies based on nodes for residential and services sectors, or a single
+        efficiency value for other heating systems (e.g., urban central).
+
+    Notes:
+    ------
+    - For residential and services sectors, efficiency is mapped based on the nodes.
+    - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
+    """
+    
+    if heat_system.sector.value == "residential":
+        key = f"{carrier} residential space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    elif heat_system.sector.value == "services":
+        key = f"{carrier} services space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    else:
+        boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
+        efficiency = costs.at[boiler_costs_name, "efficiency"]
+
+    return efficiency
+
 def add_heating_capacities_installed_before_baseyear(
     n: pypsa.Network,
     baseyear: int,
@@ -546,13 +586,8 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
             )
 
-            if "residential"==heat_system.sector.value:
-                efficiency = nodes.str[:2].map(heating_efficiencies["gas residential space efficiency"])
-            elif "services"==heat_system.sector.value:
-                efficiency = nodes.str[:2].map(heating_efficiencies["gas services space efficiency"])
-            else:
-                #default used for urban central, since no info on district heating boilers
-                efficiency = costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
+            efficiency = get_efficiency(heat_system, "gas", nodes,
+                                        heating_efficiencies, costs)
 
             n.madd(
                 "Link",
@@ -577,13 +612,8 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.gas_boiler_costs_name, "lifetime"],
             )
 
-            if "residential"==heat_system.sector.value:
-                efficiency = nodes.str[:2].map(heating_efficiencies["oil residential space efficiency"])
-            elif "services"==heat_system.sector.value:
-                efficiency = nodes.str[:2].map(heating_efficiencies["oil services space efficiency"])
-            else:
-                #default used for urban central, since no info on district heating boilers
-                efficiency = costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
+            efficiency = get_efficiency(heat_system, "oil", nodes,
+                                        heating_efficiencies, costs)
 
             n.madd(
                 "Link",
