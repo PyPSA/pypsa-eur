@@ -420,7 +420,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
 def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     """
-    Computes the heating system efficiency based on the sector and carrier type.
+    Computes the heating system efficiency based on the sector and carrier
+    type.
 
     Parameters:
     -----------
@@ -445,7 +446,7 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     - For residential and services sectors, efficiency is mapped based on the nodes.
     - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
     """
-    
+
     if heat_system.sector.value == "residential":
         key = f"{carrier} residential space efficiency"
         efficiency = nodes.str[:2].map(heating_efficiencies[key])
@@ -457,6 +458,7 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
         efficiency = costs.at[boiler_costs_name, "efficiency"]
 
     return efficiency
+
 
 def add_heating_capacities_installed_before_baseyear(
     n: pypsa.Network,
@@ -586,8 +588,9 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
             )
 
-            efficiency = get_efficiency(heat_system, "gas", nodes,
-                                        heating_efficiencies, costs)
+            efficiency = get_efficiency(
+                heat_system, "gas", nodes, heating_efficiencies, costs
+            )
 
             n.madd(
                 "Link",
@@ -612,8 +615,9 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.gas_boiler_costs_name, "lifetime"],
             )
 
-            efficiency = get_efficiency(heat_system, "oil", nodes,
-                                        heating_efficiencies, costs)
+            efficiency = get_efficiency(
+                heat_system, "oil", nodes, heating_efficiencies, costs
+            )
 
             n.madd(
                 "Link",
@@ -708,7 +712,7 @@ if __name__ == "__main__":
 
         # one could use baseyear here instead (but dangerous if no data)
         heating_efficiencies = (
-            pd.read_csv(snakemake.input.heating_efficiencies, index_col=[1,0])
+            pd.read_csv(snakemake.input.heating_efficiencies, index_col=[1, 0])
         ).loc[int(snakemake.config["energy"]["energy_totals_year"])]
 
         add_heating_capacities_installed_before_baseyear(

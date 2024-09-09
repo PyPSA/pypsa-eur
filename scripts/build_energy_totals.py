@@ -612,9 +612,11 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
-    exclude = totals.columns.str.fullmatch("passenger cars") \
-        ^ totals.columns.str.fullmatch(".*space efficiency") \
+    exclude = (
+        totals.columns.str.fullmatch("passenger cars")
+        ^ totals.columns.str.fullmatch(".*space efficiency")
         ^ totals.columns.str.fullmatch(".*water efficiency")
+    )
     totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
@@ -696,11 +698,11 @@ def build_energy_totals(
         [countries, eurostat_years], names=["country", "year"]
     )
 
-    to_drop = idees.columns[idees.columns.str.contains("space efficiency")
-                            ^ idees.columns.str.contains("water efficiency")]
-    to_drop = to_drop.append(pd.Index(
-        ["passenger cars", "passenger car efficiency"]
-    ))
+    to_drop = idees.columns[
+        idees.columns.str.contains("space efficiency")
+        ^ idees.columns.str.contains("water efficiency")
+    ]
+    to_drop = to_drop.append(pd.Index(["passenger cars", "passenger car efficiency"]))
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
 
@@ -1543,6 +1545,7 @@ def build_transformation_output_coke(eurostat, fn):
     df = eurostat.loc[slicer, :].droplevel(level=[2, 3, 4, 5])
     df.to_csv(fn)
 
+
 def build_heating_efficiencies(
     countries: List[str], idees: pd.DataFrame
 ) -> pd.DataFrame:
@@ -1569,8 +1572,10 @@ def build_heating_efficiencies(
 
     years = np.arange(2000, 2022)
 
-    cols = idees.columns[idees.columns.str.contains("space efficiency")
-                         ^ idees.columns.str.contains("water efficiency")]
+    cols = idees.columns[
+        idees.columns.str.contains("space efficiency")
+        ^ idees.columns.str.contains("water efficiency")
+    ]
 
     logger.info(cols)
 
@@ -1594,6 +1599,7 @@ def build_heating_efficiencies(
         heating_efficiencies[col] = unstacked.stack()
 
     return heating_efficiencies
+
 
 # %%
 if __name__ == "__main__":
