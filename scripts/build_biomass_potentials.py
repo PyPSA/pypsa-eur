@@ -330,7 +330,7 @@ def add_unsustainable_potentials(df):
     )
 
     share_sus = params.get("share_sustainable_potential_available").get(investment_year)
-    df *= share_sus
+    df.loc[df_wo_ch.index] *= share_sus
 
     df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
 
@@ -345,8 +345,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
-            clusters="37",
-            planning_horizons=2020,
+            clusters="38",
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)

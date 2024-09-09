@@ -9,9 +9,12 @@ Release Notes
 ##########################################
 
 .. Upcoming Release
-.. ================
 
 * Updated district heating supply temperatures based on `Euroheat's DHC Market Outlook 2024<https://api.euroheat.org/uploads/Market_Outlook_2024_beeecd62d4.pdf>`__ and `AGFW-Hauptbericht 2022 <https://www.agfw.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjU2MjI2MTUsImV4cCI6MTcyNTcxMjYxNSwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW4vdXNlcl91cGxvYWQvWmFobGVuX3VuZF9TdGF0aXN0aWtlbi9IYXVwdGJlcmljaHRfMjAyMi9BR0ZXX0hhdXB0YmVyaWNodF8yMDIyLnBkZiIsInBhZ2UiOjQzNn0.Bhma3PKg9uJnC57Ixi2p9STW5-II9VXPTDXS544M208/AGFW_Hauptbericht_2022.pdf>`__. `min_forward_temperature` and `return_temperature` (not given by Euroheat) are extrapolated based on German values.
+* Made the overdimensioning factor for heating systems specific for central/decentral heating, defaults to no overdimensionining for central heating and no changes to decentral heating compared to previous version.
+
+* bugfix: The carrier of stores was silently overwritten by their bus_carrier as a side effect when building the co2 constraints
+
 * bugfix: The oil generator was incorrectly dropped when the config `oil_refining_emissions` was greater than zero. This was the default behaviour in 0.12.0.
 
 PyPSA-Eur 0.12.0 (30th August 2024)
