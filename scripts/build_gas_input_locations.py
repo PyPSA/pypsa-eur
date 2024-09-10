@@ -27,7 +27,7 @@ def read_scigrid_gas(fn):
 
 
 def build_gem_lng_data(fn):
-    df = pd.read_excel(fn, sheet_name="LNG terminals - data")
+    df = pd.read_excel(fn, sheet_name="LNG terminals - data", engine="openpyxl")
     df = df.set_index("ComboID")
 
     remove_country = ["Cyprus", "Turkey"]  # noqa: F841
@@ -53,7 +53,7 @@ def build_gem_lng_data(fn):
 
 
 def build_gem_prod_data(fn):
-    df = pd.read_excel(fn, sheet_name="Gas extraction - main")
+    df = pd.read_excel(fn, sheet_name="Gas extraction - main", engine="openpyxl")
     df = df.set_index("GEM Unit ID")
 
     remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
@@ -69,7 +69,7 @@ def build_gem_prod_data(fn):
               & ~Longitude.isna()"
     ).copy()
 
-    p = pd.read_excel(fn, sheet_name="Gas extraction - production")
+    p = pd.read_excel(fn, sheet_name="Gas extraction - production", engine="openpyxl")
     p = p.set_index("GEM Unit ID")
     p = p[p["Fuel description"].str.contains("gas")]
 
