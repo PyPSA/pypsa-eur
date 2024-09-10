@@ -2332,7 +2332,7 @@ def add_biomass(n, costs):
         ].rename(index=lambda x: x + " municipal solid waste")
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
-        ].rename(index=lambda x: x + " solid biomass")
+        ].rename(index=lambda x: x + " unsustainable solid biomass")
 
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
@@ -2693,7 +2693,12 @@ def add_biomass(n, costs):
                 carrier="unsustainable solid biomass",
                 p_nom=10000,
                 marginal_cost=costs.at["fuelwood", "fuel"]
-                + bus_transport_costs * average_distance,
+                + bus_transport_costs.rename(
+                    dict(
+                        zip(spatial.biomass.nodes, spatial.biomass.nodes_unsustainable)
+                    )
+                )
+                * average_distance,
             )
             # Set last snapshot of e_max_pu for unsustainable solid biomass to 1 to make operational limit work
             unsus_stores_idx = n.stores.query(
