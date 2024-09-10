@@ -436,10 +436,8 @@ rule build_biomass_potentials:
 
 rule build_biomass_transport_costs:
     input:
-        transport_cost_data=storage(
-            "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-            keep_local=True,
-        ),
+        sc1="data/biomass_transport_costs_supplychain1.csv",
+        sc2="data/biomass_transport_costs_supplychain2.csv",
     output:
         biomass_transport_costs=resources("biomass_transport_costs.csv"),
     threads: 1
