@@ -2332,7 +2332,7 @@ def add_biomass(n, costs):
         ].rename(index=lambda x: x + " municipal solid waste")
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
-        ].rename(index=lambda x: x + " solid biomass")
+        ].rename(index=lambda x: x + " unsustainable solid biomass")
 
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
