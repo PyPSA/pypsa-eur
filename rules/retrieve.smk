@@ -315,6 +315,30 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
+    rule retrieve_worldbank_urban_population:
+        params:
+            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip",
+        output:
+            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        run:
+            import os
+            import requests
+
+            response = requests.get(
+                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params={"name": "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip"},
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
+
+
+if config["enable"]["retrieve"]:
+
     # Download directly from naciscdn.org which is a redirect from naturalearth.com
     # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
     # Use point-of-view (POV) variant of Germany so that Crimea is included.
@@ -342,10 +366,25 @@ if config["enable"]["retrieve"]:
         run:
             import requests
 
-            response = requests.get(
-                "https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",
-                headers={"User-Agent": "Mozilla/5.0"},
-            )
+            # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
+            response = requests.get(url)
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_steel_plant_tracker:
+        output:
+            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        run:
+            import requests
+
+            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
+            response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
 

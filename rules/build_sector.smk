@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/urban_percent.csv",
+        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
@@ -212,16 +212,71 @@ rule build_temperature_profiles:
         "../scripts/build_temperature_profiles.py"
 
 
+rule build_central_heating_temperature_profiles:
+    params:
+        max_forward_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "max_forward_temperature",
+        ),
+        min_forward_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "min_forward_temperature",
+        ),
+        return_temperature_central_heating=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "return_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+        lower_threshold_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "lower_threshold_ambient_temperature",
+        ),
+        upper_threshold_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "upper_threshold_ambient_temperature",
+        ),
+        rolling_window_ambient_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "rolling_window_ambient_temperature",
+        ),
+    input:
+        temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
+        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+    output:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_central_heating_temperature_profiles_s{simpl}_{clusters}.log"),
+    benchmark:
+        benchmarks("build_central_heating_temperature_profiles/s{simpl}_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_central_heating_temperature_profiles/run.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
-        ),
-        forward_temperature_central_heating=config_provider(
-            "sector", "district_heating", "forward_temperature"
-        ),
-        return_temperature_central_heating=config_provider(
-            "sector", "district_heating", "return_temperature"
         ),
         heat_source_cooling_central_heating=config_provider(
             "sector", "district_heating", "heat_source_cooling"
@@ -232,6 +287,12 @@ rule build_cop_profiles:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         snapshots=config_provider("snapshots"),
     input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+        ),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -575,10 +636,14 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        hotmaps_industrial_database=storage(
+        hotmaps=storage(
             "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
             keep_local=True,
         ),
+        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        ammonia="data/ammonia_plants.csv",
+        cement_supplement="data/cement-plants-noneu.csv",
+        refineries_supplement="data/refineries-noneu.csv",
     output:
         industrial_distribution_key=resources(
             "industrial_distribution_key_elec_s{simpl}_{clusters}.csv"
