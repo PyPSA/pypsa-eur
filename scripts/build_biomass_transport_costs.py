@@ -16,15 +16,18 @@ assuming as an approximation energy content of wood pellets
 
 @author: bw0928
 """
+# try:
+#     import tabula as tbl
+#     import platform
+# except:
+#     ImportError("Please install tabula-py and platform")
 
-import platform
+# system = platform.system()
+# encoding = "cp1252" if system == "Windows" else "utf-8"
+
 
 import pandas as pd
-import tabula as tbl
-
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
-system = platform.system()
-encoding = "cp1252" if system == "Windows" else "utf-8"
 
 
 def get_countries():
@@ -65,10 +68,16 @@ def get_cost_per_tkm(page, countries):
 
 
 def build_biomass_transport_costs():
-    countries = get_countries()
+    # Optional build from JRC report pdf, requires tabula and java dependencies.
+    # countries = get_countries()
+    # sc1 = get_cost_per_tkm(146, countries)
+    # sc2 = get_cost_per_tkm(147, countries)
 
-    sc1 = get_cost_per_tkm(146, countries)
-    sc2 = get_cost_per_tkm(147, countries)
+    # Use extracted csv from JRC report
+    # https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf
+    # Pages 146 (144) for supply chain 1 and 147 (145) for supply chain 2
+    sc1 = pd.read_csv(snakemake.input.sc1, index_col=0, skiprows=2)
+    sc2 = pd.read_csv(snakemake.input.sc2, index_col=0, skiprows=2)
 
     # take mean of both supply chains
     to_concat = [sc1["EUR/km/ton"], sc2["EUR/km/ton"]]
