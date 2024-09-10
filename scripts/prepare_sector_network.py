@@ -6,7 +6,7 @@
 Adds all sector-coupling components to the network, including demand and supply
 technologies for the buildings, transport and industry sectors.
 """
- 
+
 import logging
 import os
 import re
@@ -1108,7 +1108,7 @@ def add_storage_and_grids(n, costs):
 
     electrolysis_cost_factor = options.get("hydrogen_electrolysis_cost_factor", 1)
     capex = costs.at["electrolysis", "fixed"] * electrolysis_cost_factor
-    
+
     n.madd(
         "Link",
         nodes + " H2 Electrolysis",
@@ -1116,8 +1116,8 @@ def add_storage_and_grids(n, costs):
         bus0=nodes,
         p_nom_extendable=True,
         carrier="H2 Electrolysis",
-        efficiency=capex,
-        capital_cost=costs.at["electrolysis", "fixed"],
+        efficiency=costs.at["electrolysis", "efficiency"],
+        capital_cost=capex,
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
@@ -3419,9 +3419,10 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
     )
 
     n.links.loc[carrier_i, "p_min_pu"] = 0
-    n.links.loc[carrier_i, "efficiency"] = (
-        efficiency_static
-        * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
+    n.links.loc[
+        carrier_i, "efficiency"
+    ] = efficiency_static * efficiency_per_1000km ** (
+        n.links.loc[carrier_i, "length"] / 1e3
     )
     rev_links = (
         n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
@@ -3445,6 +3446,17 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         n.links.loc[carrier_i, "efficiency2"] = (
             -compression_per_1000km * n.links.loc[carrier_i, "length_original"] / 1e3
         )
+
+
+def balance_carbon_transmission_losses(n):
+    "When carbon is transmitted with losses, move losses to atmosphere."
+    carrier_i = n.links.query("carrier == 'CO2 pipeline'").index
+    venting_ratio = 1 - n.links.efficiency
+    if venting_ratio.eq(0).all():
+        return
+    n.links.loc[carrier_i, "bus2"] = "co2 atmosphere"
+    n.links.loc[carrier_i, "efficiency2"] = venting_ratio
+    return
 
 
 if __name__ == "__main__":

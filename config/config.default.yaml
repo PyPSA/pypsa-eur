@@ -494,8 +494,11 @@ sector:
       efficiency_per_1000km: 0.988
       compression_per_1000km: 0.018
     gas pipeline:
-      efficiency_per_1000km: 1 #0.977
-      compression_per_1000km: 0.01
+      efficiency_per_1000km: 0.99
+      compression_per_1000km: 0.008
+    CO2 pipeline:
+      efficiency_per_1000km: 0.992
+      compression_per_1000km: 0.25 # MWh/tCO2/1000km
   H2_network: true
   gas_network: false
   H2_retrofit: false
