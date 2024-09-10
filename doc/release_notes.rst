@@ -17,6 +17,10 @@ Release Notes
 
 * bugfix: The oil generator was incorrectly dropped when the config `oil_refining_emissions` was greater than zero. This was the default behaviour in 0.12.0.
 
+* Uses of Snakemake's ``storage()`` function are integrated into retrieval
+  rules. This simplifies the use of ``mock_snakemake`` and places downloaded
+  data more transparently into the ``data`` directory.
+
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================
 
