@@ -455,7 +455,7 @@ rule build_sequestration_potentials:
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential="data/omplete_map_2020_unit_Mt.geojson",
+        sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
     output:
