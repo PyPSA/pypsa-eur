@@ -5,6 +5,7 @@
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -16,7 +17,6 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
@@ -75,6 +75,32 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_shapes_data:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+            ),
+        output:
+            shapes="data/nuts3/NUTS_RG_03M_2013_3035_LEVL_3.geojson",
+        params:
+            zip_file="data/nuts3/ref-nuts-2013-03m.geojson.zip",
+        run:
+            move(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                zip_ref.extract(
+                    "NUTS_RG_03M_2013_3035_LEVL_3.geojson",
+                    Path(output.shapes).parent,
+                )
+            extracted_file = (
+                Path(output.shapes).parent / "NUTS_RG_03M_2013_3035_LEVL_3.geojson"
+            )
+            extracted_file.rename(output.shapes)
+            os.remove(params.zip_file)
+
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
