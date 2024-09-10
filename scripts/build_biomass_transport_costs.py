@@ -79,7 +79,7 @@ def build_biomass_transport_costs():
     transport_costs.name = "EUR/km/MWh"
 
     # rename country names
-    to_rename = {"UK": "GB", "XK": "KO", "EL": "GR"}
+    to_rename = {"UK": "GB", "EL": "GR"}
     transport_costs.rename(to_rename, inplace=True)
 
     # add missing Norway with data from Sweden
