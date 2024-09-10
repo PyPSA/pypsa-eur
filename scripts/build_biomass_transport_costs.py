@@ -23,21 +23,23 @@ ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 def get_cost_per_tkm(pdf, datapage, countrypage):
     """
-    Extracts the cost tables from the JRC report PDF. 
+    Extracts the cost tables from the JRC report PDF.
+
     https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf
     - pdf (str): The filepath of the PDF file containing the data.
-    - datapage (int): The page number of the data table in the PDF. 
+    - datapage (int): The page number of the data table in the PDF.
     - countrypage (int): The page number of the table containing the country indices in the PDF.
 
     Returns:
     - pandas.DataFrame: The data table with the cost per tkm for biomass transport, indexed by country.
-    
+
     Raises:
     - ImportError: If tabula-py and platform are not installed.
     """
     try:
-        import tabula as tbl
         import platform
+
+        import tabula as tbl
     except:
         ImportError("Please install tabula-py and platform")
 
@@ -81,7 +83,7 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
 
 
 def build_biomass_transport_costs():
-    # Optional build from JRC report pdf, requires tabula and java dependencies. 
+    # Optional build from JRC report pdf, requires tabula and java dependencies.
     # Update `pdf` path to the JRC report if needed.
     # sc1 = get_cost_per_tkm(pdf = "report.pdf", datapage=146, countrypage=145)
     # sc2 = get_cost_per_tkm(pdf = "report.pdf", datapage=147, countrypage=145)
