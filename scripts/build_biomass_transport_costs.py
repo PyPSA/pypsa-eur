@@ -27,6 +27,7 @@ assuming as an approximation energy content of wood pellets
 
 
 import pandas as pd
+
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
 
