@@ -1839,9 +1839,14 @@ def build_heat_demand(n):
     for sector, use in product(sectors, uses):
         name = f"{sector} {use}"
 
+        # efficiency for final energy to thermal energy service
+        eff = pop_weighted_energy_totals.index.str[:2].map(
+            heating_efficiencies[f"total {sector} {use} efficiency"]
+        )
+
         heat_demand[name] = (
             heat_demand_shape[name] / heat_demand_shape[name].sum()
-        ).multiply(pop_weighted_energy_totals[f"total {sector} {use}"]) * 1e6
+        ).multiply(pop_weighted_energy_totals[f"total {sector} {use}"] * eff) * 1e6
         electric_heat_supply[name] = (
             heat_demand_shape[name] / heat_demand_shape[name].sum()
         ).multiply(pop_weighted_energy_totals[f"electricity {sector} {use}"]) * 1e6
@@ -4372,6 +4377,10 @@ if __name__ == "__main__":
         pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+
+    fn = snakemake.input.heating_efficiencies
+    year = int(snakemake.params["energy_totals_year"])
+    heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
     patch_electricity_network(n)
 
