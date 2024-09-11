@@ -1572,7 +1572,6 @@ def build_heating_efficiencies(
         ^ idees.columns.str.contains("water efficiency")
     ]
 
-    logger.info(cols)
 
     heating_efficiencies = pd.DataFrame(idees[cols])
 
