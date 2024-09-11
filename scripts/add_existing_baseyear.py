@@ -446,16 +446,18 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     - For residential and services sectors, efficiency is mapped based on the nodes.
     - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
     """
-
-    if heat_system.sector.value == "residential":
+    
+    if heat_system.value == "urban central":
+        boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
+        efficiency = costs.at[boiler_costs_name, "efficiency"]
+    elif heat_system.sector.value == "residential":
         key = f"{carrier} residential space efficiency"
         efficiency = nodes.str[:2].map(heating_efficiencies[key])
     elif heat_system.sector.value == "services":
         key = f"{carrier} services space efficiency"
         efficiency = nodes.str[:2].map(heating_efficiencies[key])
     else:
-        boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
-        efficiency = costs.at[boiler_costs_name, "efficiency"]
+        logger.warning(f"{heat_system} not defined.")
 
     return efficiency
 
@@ -671,13 +673,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/config.yaml",
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="38",
-            ll="vopt",
+            clusters="5",
+            ll="v1.5",
             opts="",
             sector_opts="",
-            planning_horizons=2020,
+            planning_horizons=2030,
         )
 
     configure_logging(snakemake)
