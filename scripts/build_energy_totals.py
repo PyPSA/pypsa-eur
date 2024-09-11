@@ -1572,7 +1572,6 @@ def build_heating_efficiencies(
         ^ idees.columns.str.contains("water efficiency")
     ]
 
-
     heating_efficiencies = pd.DataFrame(idees[cols])
 
     new_index = pd.MultiIndex.from_product(
