@@ -2812,7 +2812,6 @@ def add_biomass(n, costs):
         )
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
-        add_carrier_buses(n, "oil")
         # Create timeseries to force usage of unsustainable potentials
         e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
         e_max_pu.iloc[-1] = 0
@@ -2830,14 +2829,6 @@ def add_biomass(n, costs):
             e_max_pu=e_max_pu,
         )
 
-        n.madd(
-            "Bus",
-            spatial.biomass.nodes_unsustainable,
-            location=spatial.biomass.locations,
-            carrier="unsustainable solid biomass",
-            unit="MWh_LHV",
-        )
-
         e_max_pu = pd.DataFrame(
             1, index=n.snapshots, columns=spatial.biomass.nodes_unsustainable
         )
@@ -2846,23 +2837,13 @@ def add_biomass(n, costs):
         n.madd(
             "Store",
             spatial.biomass.nodes_unsustainable,
-            bus=spatial.biomass.nodes_unsustainable,
+            bus=spatial.biomass.nodes,
             carrier="unsustainable solid biomass",
             e_nom=unsustainable_solid_biomass_potentials_spatial,
             marginal_cost=costs.at["fuelwood", "fuel"],
             e_initial=unsustainable_solid_biomass_potentials_spatial,
             e_nom_extendable=False,
             e_max_pu=e_max_pu,
-        )
-
-        n.madd(
-            "Link",
-            spatial.biomass.nodes_unsustainable,
-            bus0=spatial.biomass.nodes_unsustainable,
-            bus1=spatial.biomass.nodes,
-            carrier="unsustainable solid biomass",
-            efficiency=1,
-            p_nom=unsustainable_solid_biomass_potentials_spatial,
         )
 
         n.madd(
@@ -3024,7 +3005,7 @@ def add_biomass(n, costs):
             n.madd(
                 "Generator",
                 spatial.biomass.nodes_unsustainable,
-                bus=spatial.biomass.nodes_unsustainable,
+                bus=spatial.biomass.nodes,
                 carrier="unsustainable solid biomass",
                 p_nom=10000,
                 marginal_cost=costs.at["fuelwood", "fuel"]
