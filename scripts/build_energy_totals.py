@@ -612,11 +612,8 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
-    exclude = (
-        totals.columns.str.fullmatch("passenger cars")
-        ^ totals.columns.str.fullmatch(".*space efficiency")
-        ^ totals.columns.str.fullmatch(".*water efficiency")
-    )
+    patterns = ["passenger cars", ".*space efficiency", ".*water efficiency"]
+    exclude = totals.columns.str.fullmatch("|".join(patterns))
     totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
