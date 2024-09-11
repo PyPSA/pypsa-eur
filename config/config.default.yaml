@@ -700,11 +700,6 @@ sector:
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
-  vary:
-    Link:
-      electricity distribution grid:
-        capital_cost: 1.0
-
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
@@ -856,7 +851,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+        Link:
+          electricity distribution grid:
+            capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

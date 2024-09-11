@@ -18,6 +18,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import (
+    get,
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
@@ -238,37 +239,6 @@ def determine_emission_sectors(options):
 
     return sectors
 
-
-def get(item, investment_year=None):
-    """
-    Check whether item depends on investment year.
-    """
-    if not isinstance(item, dict):
-        return item
-    elif investment_year in item.keys():
-        return item[investment_year]
-    else:
-        logger.warning(
-            f"Investment key {investment_year} not found in dictionary {item}."
-        )
-        keys = sorted(item.keys())
-        if investment_year < keys[0]:
-            logger.warning(f"Lower than minimum key. Taking minimum key {keys[0]}")
-            return item[keys[0]]
-        elif investment_year > keys[-1]:
-            logger.warning(f"Higher than maximum key. Taking maximum key {keys[0]}")
-            return item[keys[-1]]
-        else:
-            logger.warning(
-                "Interpolate linearly between the next lower and next higher year."
-            )
-            lower_key = max(k for k in keys if k < investment_year)
-            higher_key = min(k for k in keys if k > investment_year)
-            lower = item[lower_key]
-            higher = item[higher_key]
-            return lower + (higher - lower) * (investment_year - lower_key) / (
-                higher_key - lower_key
-            )
 
 
 def co2_emissions_year(
@@ -4362,8 +4332,6 @@ if __name__ == "__main__":
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
         )
 
-    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
-
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)
 
@@ -4382,18 +4350,6 @@ if __name__ == "__main__":
         )
         n.mremove("Line", idx)
 
-    for c in options["vary"].keys():
-        if c not in n.components.keys():
-            logger.warning(f"{c} needs to be a PyPSA Component")
-            continue
-        for carrier in options["vary"][c].keys():
-            ind_i = n.df(c)[n.df(c).carrier == carrier].index
-            if ind_i.empty:
-                continue
-            for parameter in options["vary"][c][carrier].keys():
-                factor = get(options["vary"][c][carrier][parameter], investment_year)
-                logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
-                n.df(c).loc[ind_i, parameter] *= factor
 
     first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
@@ -4401,6 +4357,9 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
+    
+    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"],
+                                      investment_year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
