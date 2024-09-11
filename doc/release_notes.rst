@@ -21,6 +21,14 @@ Release Notes
   rules. This simplifies the use of ``mock_snakemake`` and places downloaded
   data more transparently into the ``data`` directory.
 
+* Removed use of ``data/hydro_capacities.csv`` for hydro energy storage
+  capacities because its source is untraceable. Many larger hydro reservoirs
+  from ``powerplantmatching`` have storage capacities given. The storage
+  capacity of hydro-electric plants with missing storage capacities is now
+  approximated through a configurable quantile of the storage durations of hydro
+  reservoirs with data, seperately for each country. The default is the 10%
+  quantile, assuming that missing data points are rather smaller reservoirs.
+
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================
 

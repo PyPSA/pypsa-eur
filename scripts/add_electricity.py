@@ -616,41 +616,20 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
 
     if "hydro" in carriers and not hydro.empty:
-        hydro_max_hours = params.get("hydro_max_hours")
+        hydro_max_hours_quantile = params.get("hydro_max_hours_quantile", 0.1)
 
-        assert hydro_max_hours is not None, "No path for hydro capacities given."
-
-        hydro_stats = pd.read_csv(
-            hydro_capacities, comment="#", na_values="-", index_col=0
-        )
-        e_target = hydro_stats["E_store[TWh]"].clip(lower=0.2) * 1e6
-        e_installed = hydro.eval("p_nom * max_hours").groupby(hydro.country).sum()
-        e_missing = e_target - e_installed
-        missing_mh_i = hydro.query("max_hours.isnull()").index
-
-        if hydro_max_hours == "energy_capacity_totals_by_country":
-            # watch out some p_nom values like IE's are totally underrepresented
-            max_hours_country = (
-                e_missing / hydro.loc[missing_mh_i].groupby("country").p_nom.sum()
-            )
-
-        elif hydro_max_hours == "estimate_by_large_installations":
-            max_hours_country = (
-                hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
-            )
-
-        max_hours_country.clip(0, inplace=True)
+        max_hours_country = hydro.groupby("country").max_hours.quantile(hydro_max_hours_quantile)
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
         )
         if not missing_countries.empty:
             logger.warning(
-                f'Assuming max_hours=6 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
+                f'Assuming max_hours=24 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
             )
         hydro_max_hours = hydro.max_hours.where(
             hydro.max_hours > 0, hydro.country.map(max_hours_country)
-        ).fillna(6)
+        ).fillna(24)
 
         if params.get("flatten_dispatch", False):
             buffer = params.get("flatten_dispatch_buffer", 0.2)
