@@ -10,6 +10,7 @@ rule add_existing_baseyear:
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=RESULTS
         + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
