@@ -193,6 +193,65 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
+    rule retrieve_jrc_enspreso_biomass:
+        input:
+            storage(
+                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
+                keep_local=True,
+            ),
+        output:
+            "data/ENSPRESO_BIOMASS.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_hotmaps_industrial_sites:
+        input:
+            storage(
+                "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
+                keep_local=True,
+            ),
+        output:
+            "data/Industrial_Database.csv",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_usgs_ammonia_production:
+        input:
+            storage(
+                "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+            ),
+        output:
+            "data/myb1-2022-nitro-ert.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_geological_co2_storage_potential:
+        input:
+            storage(
+                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
+                keep_local=True,
+            ),
+        output:
+            "data/complete_map_2020_unit_Mt.geojson",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
     # Downloading Copernicus Global Land Cover for land cover and land use:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
