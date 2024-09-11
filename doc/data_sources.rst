@@ -124,6 +124,44 @@ Specific retrieval rules
 
 Data in this section is retrieved and extracted in rules specified in ``rules/retrieve.smk``.
 
+``https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx``
+
+- **Source:** European Commission Joint Research Centre (JRC)
+- **Link:** https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
+- **License:** CC-BY 4.0
+- **Description:** Contains biomass potentials for Europe.
+
+``https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson``
+
+- **Source:** SETIS
+- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en, processed with https://github.com/ericzhou571/Co2Storage
+- **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
+- **Description:** European CO2 storage database CO2StoP.
+
+``https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx``
+
+- **Source:** United States Geological Survey (USGS)
+- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information
+- **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
+- **Description:** Statistics and information on the worldwide supply of, demand for, and flow of the mineral commodity nitrogen.
+
+``https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv``
+
+- **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
+  Giulia Garegnani, Chiara Scaramuzzino, Ramón Pascual Pascuas, Alyona
+  Zubaryeva, Franziska Haas, Dagmar Exner (EURAC), Andreas Mueller (e-think),
+  Michael Hartner (TUW), Tobias Fleiter, Anna-Lena Klingler, Matthias Kuehnbach,
+  Pia Manz, Simon Marwitz, Matthias Rehfeldt, Jan Steinbach, Eftim Popovski
+  (Fraunhofer ISI) Reviewed by Lukas Kranzl, Sara Fritz (TUW)
+  Hotmaps Project, D2.3 WP2 Report - Open Data Set for the EU28, 2018
+  https://www.hotmaps-project.eu
+- **Link:** https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
+- **License:** CC-BY 4.0 (`reference <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`__)
+- **Description:** Contains georeferenced industrial sites of energy-intensive
+  industry sectors, together with GHG-emissions, production capacity, fuel
+  demand and excess heat potentials calculated from emission and production
+  data.
+
 ``data/eurostat/Balances-April2023``
 
 - **Source:**
@@ -271,56 +309,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains energy balances for Europe.
 
-
-Directly used URLs
-==================
-
-Data in this section is directly used in rules using the Snakemake ``storage()`` function.
-
-``https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx``
-
-- **Source:** European Commission Joint Research Centre (JRC)
-- **Link:** https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
-- **License:** CC-BY 4.0
-- **Description:** Contains biomass potentials for Europe.
-
-``https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf``
-
-- **Source:** European Commission Joint Research Centre (JRC)
-- **Link:** https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf
-- **License:** CC-BY 4.0
-- **Description:** Contains data on biomass transport costs for Europe.
-
-``https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson``
-
-- **Source:** SETIS
-- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en, processed with https://github.com/ericzhou571/Co2Storage
-- **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
-- **Description:** European CO2 storage database CO2StoP.
-
-``https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx``
-
-- **Source:** United States Geological Survey (USGS)
-- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information
-- **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
-- **Description:** Statistics and information on the worldwide supply of, demand for, and flow of the mineral commodity nitrogen.
-
-``https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv``
-
-- **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
-  Giulia Garegnani, Chiara Scaramuzzino, Ramón Pascual Pascuas, Alyona
-  Zubaryeva, Franziska Haas, Dagmar Exner (EURAC), Andreas Mueller (e-think),
-  Michael Hartner (TUW), Tobias Fleiter, Anna-Lena Klingler, Matthias Kuehnbach,
-  Pia Manz, Simon Marwitz, Matthias Rehfeldt, Jan Steinbach, Eftim Popovski
-  (Fraunhofer ISI) Reviewed by Lukas Kranzl, Sara Fritz (TUW)
-  Hotmaps Project, D2.3 WP2 Report - Open Data Set for the EU28, 2018
-  https://www.hotmaps-project.eu
-- **Link:** https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database
-- **License:** CC-BY 4.0 (`reference <https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database>`__)
-- **Description:** Contains georeferenced industrial sites of energy-intensive
-  industry sectors, together with GHG-emissions, production capacity, fuel
-  demand and excess heat potentials calculated from emission and production
-  data.
 
 Repository
 ==========
@@ -496,3 +484,9 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** CC-BY 4.0
 - **Description:** Contains energy balances for Europe.
 
+``data/biomass_transport_costs_supply_chain{1,2}.csv``
+
+- **Source:**
+- **Link:** https://www.xyz.com/renewables
+- **License:** CC-BY 4.0
+- **Description:** Contains energy balances for Europe.
