@@ -103,14 +103,17 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
                     logger.info(f"Set {parameter} of {carrier} to {factor} ")
                     n.df(c).loc[ind_i, parameter] = factor
                 else:
-                    logger.warning(f"{modification} needs to be either 'absolute' or 'factor'.")
-   
-    
-def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):   
+                    logger.warning(
+                        f"{modification} needs to be either 'absolute' or 'factor'."
+                    )
+
+
+def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
     if not adjustments:
         return
     for modification in adjustments.keys():
         modify_attribute(n, adjustments, investment_year, modification)
+
 
 def add_co2limit(n, co2limit, Nyears=1.0):
     n.add(
@@ -314,7 +317,8 @@ def set_line_nom_max(
     n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=s_nom_max_set)
     n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

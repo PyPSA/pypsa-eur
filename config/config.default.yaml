@@ -853,9 +853,9 @@ adjustments:
   electricity: false
   sector:
     factor:
-        Link:
-          electricity distribution grid:
-            capital_cost: 1.0
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
     absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving

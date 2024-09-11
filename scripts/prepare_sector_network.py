@@ -18,8 +18,8 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import (
-    get,
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -238,7 +238,6 @@ def determine_emission_sectors(options):
         sectors += ["agriculture"]
 
     return sectors
-
 
 
 def co2_emissions_year(
@@ -4350,16 +4349,16 @@ if __name__ == "__main__":
         )
         n.mremove("Line", idx)
 
-
     first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
     )
 
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
-    
-    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"],
-                                      investment_year)
+
+    maybe_adjust_costs_and_potentials(
+        n, snakemake.params["adjustments"], investment_year
+    )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

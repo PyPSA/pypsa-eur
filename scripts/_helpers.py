@@ -281,6 +281,7 @@ def aggregate_p(n):
         ]
     )
 
+
 def get(item, investment_year=None):
     """
     Check whether item depends on investment year.
@@ -311,7 +312,8 @@ def get(item, investment_year=None):
             return lower + (higher - lower) * (investment_year - lower_key) / (
                 higher_key - lower_key
             )
-        
+
+
 def aggregate_e_nom(n):
     return pd.concat(
         [
