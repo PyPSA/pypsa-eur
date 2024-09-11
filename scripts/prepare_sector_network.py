@@ -2477,7 +2477,6 @@ def add_biomass(n, costs):
         )
 
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
-        add_carrier_buses(n, "oil")
         # Create timeseries to force usage of unsustainable potentials
         e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.gas.biogas)
         e_max_pu.iloc[-1] = 0
