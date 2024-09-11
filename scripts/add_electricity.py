@@ -618,7 +618,9 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
     if "hydro" in carriers and not hydro.empty:
         hydro_max_hours_quantile = params.get("hydro_max_hours_quantile", 0.1)
 
-        max_hours_country = hydro.groupby("country").max_hours.quantile(hydro_max_hours_quantile)
+        max_hours_country = hydro.groupby("country").max_hours.quantile(
+            hydro_max_hours_quantile
+        )
 
         missing_countries = pd.Index(hydro["country"].unique()).difference(
             max_hours_country.dropna().index
