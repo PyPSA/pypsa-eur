@@ -711,9 +711,9 @@ if __name__ == "__main__":
     if options["heating"]:
 
         # one could use baseyear here instead (but dangerous if no data)
-        heating_efficiencies = (
-            pd.read_csv(snakemake.input.heating_efficiencies, index_col=[1, 0])
-        ).loc[int(snakemake.config["energy"]["energy_totals_year"])]
+        fn = snakemake.input.heating_efficiencies
+        year = int(snakemake.params["energy_totals_year"])
+        heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
         add_heating_capacities_installed_before_baseyear(
             n=n,
