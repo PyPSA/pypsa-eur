@@ -164,31 +164,34 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``data/eurostat/Balances-April2023``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
+- **Source:** Eurostat
+- **Link:** https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip
+- **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
 - **Description:** Contains energy balances for Europe.
 
 ``data/eurostat/eurostat-household_energy_balances-february_2024.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Eurostat
+- **Link:** https://ec.europa.eu/eurostat/databrowser-backend/api/extraction/1.0/LIVE/false/sdmx/csv/nrg_d_hhq__custom_11480365?startPeriod=2013&endPeriod=2022&i&compressed=true
+- **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
+- **Description:** Contains household energy balances for Europe.
 
 ``data/jrc-idees-2021``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Rózsai, M., Jaxa-Rozen, M., Salvucci, R., Sikora, P., Tattini, J.
+  and Neuwahl, F., JRC-IDEES-2021: the Integrated Database of the European
+  Energy System - Data update and technical documentation, Publications Office
+  of the European Union, Luxembourg, 2024, doi:10.2760/614599, JRC137809.
+- **Link:** https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1
+- **License:** CC-BY 4.0 (`reference <https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/copyright.txt>`__)
+- **Description:** Contains more granular energy balances for Europe.
 
 ``data/gas_network``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** SciGRID_gas
+- **Link:** https://zenodo.org/records/4767098
+- **License:** CC-BY 4.0 (`reference <https://zenodo.org/record/4767098>`__)
+- **Description:** Contains gas infrastructure data.
 
 ``data/electricity_demand_raw.csv``
 
@@ -206,108 +209,123 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``data/shipdensity_global.zip``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** World Bank
+- **Link:** https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density
+- **License:** CC-BY 4.0 (`reference <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`__)
+- **Description:** Global shipping traffic density.
 
 ``data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Copernicus Land Service
+- **Link:** https://zenodo.org/records/3939050
+- **License:** CC-BY 4.0 (`reference <https://zenodo.org/record/3939050>`__)
+- **Description:** Contains rastered land cover and land use data.
 
 ``data/LUISA_basemap_020321_50m.tif``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** European Commission Joint Research Centre (JRC)
+- **Link:** https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/
+- **License:** CC-BY 4.0 (`reference <https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/>`__)
+- **Description:** Contains rastered land cover and land use data.
 
 ``data/eez``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Marine Regions
+- **Link:** https://www.marineregions.org/download_file.php
+- **License:** CC-BY-NC-SA
+- **Description:** Contains offshore exclusive economic zones.
 
 ``data/worldbank``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Source:** World Bank
+- **Link:** https://data.worldbank.org/indicator/SP.URB.TOTL.IN.ZS
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains share of urban population by country.
 
 ``data/naturalearth``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Natural Earth
+- **Link:** https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
+- **License:** CC0 (`reference <https://www.naturalearthdata.com/about/terms-of-use/>`__)
+- **Description:** Country shapes, using point-of-view (POV) variant of Germany so that Crimea is included.
 
 ``data/gem/Europe-Gas-Tracker-2024-05.xlsx``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Global Energy Monitor
+- **Link:** https://globalenergymonitor.org/projects/global-steel-plant-tracker/
+- **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/europe-gas-tracker/download-data/>`__)
+- **Description:** Covers methane gas pipelines, LNG terminals, oil and gas-fired power plants, and methane gas extraction sites.
 
 ``data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Global Energy Monitor
+- **Link:** https://globalenergymonitor.org/projects/global-steel-plant-tracker/
+- **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/global-steel-plant-tracker/download-data/>`__)
+- **Description:** The Global Steel Plant Tracker (GSPT) provides information on
+  global crude iron and steel production plants, and includes every plant
+  currently operating with a capacity of five hundred thousand tonnes per year
+  (ttpa) or more of crude iron or steel.
 
 ``data/WDPA.gpkg``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** UNEP-WCMC and IUCN (2024), Protected Planet: The World Database on
+  Protected Areas (WDPA) [Online], September 2024, Cambridge, UK: UNEP-WCMC and
+  IUCN. Available at: www.protectedplanet.net.
+- **Link:** https://www.protectedplanet.net/en/thematic-areas/wdpa
+- **License:** `custom <https://www.protectedplanet.net/en/legal>`__
+- **Description:** Contains global protected areas.
 
 ``data/WDPA_WDOECM_marine.gpkg``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** UNEP-WCMC and IUCN (2024), Protected Planet: The World Database on
+  Protected Areas (WDPA) and World Database on Other Effective Area-based
+  Conservation Measures (WD-OECM) [Online], September 2024, Cambridge, UK:
+  UNEP-WCMC and IUCN. Available at: www.protectedplanet.net.
+- **Link:** https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
+- **License:** `custom <https://www.protectedplanet.net/en/legal>`__
+- **Description:** Contains global protected marine areas.
 
 ``data/osm-prebuilt``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** OpenStreetMap
+- **Link:** https://zenodo.org/records/13358976
+- **License:** ODbL (`reference <https://zenodo.org/records/13358976>`)
+- **Description:** Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.
 
 ``data/osm-raw``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** OpenStreetMap via Overpass API
+- **Link:** https://overpass-api.de/api/interpreter
+- **License:** ODbL
+- **Description:** Data of high-voltage transmission grid in Europe from OpenStreetMap.
 
 ``cutouts``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Source:** `ERA5
+  <https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>`__
+  and `SARAH-3 <https://navigator.eumetsat.int/product/EO:EUM:DAT:0863>`__
+- **Link:** https://zenodo.org/records/12791128
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains weather data cutouts for Europe to read in with ``atlite``.
 
 ``resources/costs_{year}.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** PyPSA-Eur authors, mostly compiled from Danish Energy Agency (DEA)
+  `Technology Catalogues
+  <https://ens.dk/en/our-services/technology-catalogues>`__.
+- **Link:** https://github.com/PyPSA/technology-data
+- **License:** GPL-3.0
+- **Description:** Contains technology data for different years such as costs, efficiencies, and lifetimes.
 
 ``resources/powerplants.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** F. Gotzens, H. Heinrichs, J. Hörsch, and F. Hofmann, Performing
+  energy modelling exercises in a transparent way - The issue of data quality in
+  power plant databases, Energy Strategy Reviews, vol. 23, pp. 1-12, Jan. 2019.
+  https://doi.org/10.1016/j.esr.2018.11.004
+- **Link:** https://github.com/PyPSA/powerplantmatching
+- **License:** GPL-3.0
+- **Description:** Contains matched dataset of powerplants in Europe.
 
 
 Repository
@@ -320,9 +338,12 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **Source:** ENTSO-E
 - **Link:** https://www.entsoe.eu/data/map/, extracted with https://github.com/PyPSA/GridKit/tree/master/entsoe
 - **License:** unknown
-- **Description:** Data of high-voltage transmission grid in Europe.
+- **Description:** Data of high-voltage transmission grid in Europe from ENTSO-E.
 
 ``data/existing_infrastructure``
+
+Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables). URL https://
+ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment.
 
 - **Source:**
 - **Link:** https://www.xyz.com/renewables
@@ -480,7 +501,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 ``data/unit_commitment.csv``
 
 - **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Link:** https://github.com/lisazeyen/hourly_vs_annually/blob/b67ca9222711372d8ab6cd58f9ebe7bc637939bf/scripts/solve_network.py#L554
 - **License:** CC-BY 4.0
 - **Description:** Contains energy balances for Europe.
 
