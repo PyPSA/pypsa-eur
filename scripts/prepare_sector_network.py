@@ -966,7 +966,7 @@ def insert_electricity_distribution_grid(n, costs):
         carrier="electricity distribution grid",
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
-        capital_cost=costs.at["electricity distribution grid", "fixed"],
+        capital_cost=costs.at["electricity distribution grid", "fixed"] * cost_factor,
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
