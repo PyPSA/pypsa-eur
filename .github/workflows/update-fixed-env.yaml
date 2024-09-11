@@ -5,7 +5,7 @@ on:
     branches:
     - master
     paths:
-    - 'env/environment.yaml'
+    - 'envs/environment.yaml'
 
 jobs:
   update_environment_fixed:
