@@ -699,7 +699,7 @@ def build_energy_totals(
     )
 
     efficiency_keywords = ["space efficiency", "water efficiency"]
-    to_drop = idees.columns[~idees.columns.str.contains('|'.join(efficiency_keywords))]
+    to_drop = idees.columns[~idees.columns.str.contains("|".join(efficiency_keywords))]
     to_drop = to_drop.append(["passenger cars", "passenger car efficiency"])
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
