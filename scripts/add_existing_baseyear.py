@@ -446,7 +446,7 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     - For residential and services sectors, efficiency is mapped based on the nodes.
     - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
     """
-    
+
     if heat_system.value == "urban central":
         boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
         efficiency = costs.at[boiler_costs_name, "efficiency"]
