@@ -919,7 +919,7 @@ def add_methanol_to_power(n, costs, types={}):
             carrier="CCGT methanol",
             p_nom_extendable=True,
             capital_cost=capital_cost,
-            marginal_cost=2,
+            marginal_cost=costs.at["CCGT", "VOM"],
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=costs.at["CCGT", "lifetime"],
@@ -952,7 +952,7 @@ def add_methanol_to_power(n, costs, types={}):
             carrier="CCGT methanol CC",
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
-            marginal_cost=costs.at["CCGT", "VOM"] * costs.at["CCGT", "VOM"],
+            marginal_cost=costs.at["CCGT", "VOM"],
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
             * costs.at["methanolisation", "carbondioxide-input"],
@@ -982,7 +982,7 @@ def add_methanol_to_power(n, costs, types={}):
 
 
 def add_methanol_to_olefins(n, costs):
-    nodes = pop_layout.index
+    nodes = spatial.nodes
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
@@ -2617,7 +2617,7 @@ def add_methanol(n, costs):
     logger.info("Add methanol")
     add_carrier_buses(n, "methanol")
 
-    if n.buses.carrier.str.contains("biomass").any():
+    if options["biomass"]:
         if methanol_options["biomass_to_methanol"]:
             add_biomass_to_methanol(n, costs)
 
