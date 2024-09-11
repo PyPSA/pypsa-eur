@@ -698,11 +698,9 @@ def build_energy_totals(
         [countries, eurostat_years], names=["country", "year"]
     )
 
-    to_drop = idees.columns[
-        idees.columns.str.contains("space efficiency")
-        ^ idees.columns.str.contains("water efficiency")
-    ]
-    to_drop = to_drop.append(pd.Index(["passenger cars", "passenger car efficiency"]))
+    efficiency_keywords = ["space efficiency", "water efficiency"]
+    to_drop = idees.columns[~idees.columns.str.contains('|'.join(efficiency_keywords))]
+    to_drop = to_drop.append(["passenger cars", "passenger car efficiency"])
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
 
