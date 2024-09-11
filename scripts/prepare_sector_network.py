@@ -4378,11 +4378,9 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    heating_efficiencies = (
-        (pd.read_csv(snakemake.input.heating_efficiencies, index_col=[0, 1]))
-        .swaplevel()
-        .loc[int(snakemake.config["energy"]["energy_totals_year"])]
-    )
+    fn = snakemake.input.heating_efficiencies
+    year = int(snakemake.params["energy_totals_year"])
+    heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
     patch_electricity_network(n)
 
