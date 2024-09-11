@@ -1,4 +1,4 @@
-name: Fixed Environment YAML Monitor
+name: Environment Checker
 
 on:
   push:
@@ -8,32 +8,27 @@ on:
     - 'envs/environment.yaml'
 
 jobs:
-  update_environment_fixed:
+  update-environment-fixed:
+    name: Update environment.fixed.yaml
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup micromamba
-      uses: mamba-org/setup-micromamba@v1
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        micromamba-version: latest
+        activate-environment: pypsa-eur
         environment-file: envs/environment.yaml
-        log-level: debug
-        init-shell: bash
-        cache-environment: true
-        cache-downloads: true
 
     - name: Update environment.fixed.yaml
       run: |
-        mamba env export --file envs/environment.fixed.yaml  --no-builds
+        conda env export --name pypsa-eur > envs/environment.fixed.yaml
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: update-environment-fixed
-        title: Update fixed environment
-        body: Automatically generated PR to update environment.fixed.yaml
-        labels: automated
+        title: "[github-actions.ci] Update fixed environment"
+        body: Automatically generated PR to update environment.fixed.yaml, since environment.yaml was updated.
