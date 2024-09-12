@@ -59,6 +59,10 @@ toe_to_MWh = 11.630
 
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
 
+eu28 = ["FR","DE","GB","IT","ES","PL","SE","NL","BE","FI","DK","PT","RO","AT","BG","EE","GR","LV","CZ","HU","IE","SK","LT","HR","LU","SI","CY","MT",]
+
+eu_idees = ["AT","BE","BG","CY","CZ","DE","DK","EE","EL","ES","FI","FR","HR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","UK"] # EL is greece GR and UK is GB -> need to change manually
+
 
 sheet_names = {
     "Iron and steel": "ISI",
@@ -1528,6 +1532,37 @@ def other_industrial_sectors():
     return df
 
 
+def steel_capacities():
+
+    sector = "Iron and steel"
+    columns = ["country", "tech", "value"]
+    techs = ["BOF", "EAF"]
+
+    df = pd.DataFrame(columns=columns)
+
+    for country in eu_idees:
+
+        idees = load_idees_capacities(sector, country)
+        cap = idees[10:12]
+        cap_values = [cap.loc['Integrated steelworks',2015], cap.loc['Electric arc',2015]]
+        df_cap = pd.DataFrame(index = [0,1], columns=columns)
+
+        df_cap["tech"] = techs
+        # Manually fix the different naming of Greece and United Kingdom
+        if country == 'EL':
+            df_cap["country"] = ['GR'] * len(df_cap)
+        elif country == 'UK':
+            df_cap["country"] = ['GB'] * len(df_cap)
+        else:
+            df_cap["country"] = [country] * len(df_cap)
+
+        df_cap["value"] = cap_values
+        df = pd.concat([df,df_cap])
+
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1536,6 +1571,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
+    endo_industry = snakemake.params.endo_industry
 
     year = params["reference_year"]
 
@@ -1558,3 +1594,7 @@ if __name__ == "__main__":
 
     df.index.name = "MWh/tMaterial"
     df.to_csv(snakemake.output.industry_sector_ratios)
+
+    if endo_industry:
+        cap = steel_capacities()
+        cap.to_csv(snakemake.output.steel_capacities)
