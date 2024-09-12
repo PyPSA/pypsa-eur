@@ -597,7 +597,7 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 nodes,
-                suffix=f"{heat_system} gas boiler-{grouping_year}",
+                suffix=f" {heat_system} gas boiler-{grouping_year}",
                 bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
@@ -664,6 +664,22 @@ def add_heating_capacities_installed_before_baseyear(
                     if str(grouping_year) in index and n.links.p_nom[index] < threshold
                 ],
             )
+
+
+def set_defaults(n):
+    """
+    Set default values for missing values in the network.
+
+    Parameters:
+        n (pypsa.Network): The network object.
+    Returns:
+        None
+    """
+    if "Link" in n.components:
+        if "reversed" in n.links.columns:
+            # Replace NA values with default value False
+            n.links.loc[n.links.reversed.isna(), "reversed"] = False
+            n.links.reversed = n.links.reversed.astype(bool)
 
 
 # %%
@@ -733,6 +749,9 @@ if __name__ == "__main__":
                 index_col=0,
             ),
         )
+
+    # Set defaults for missing missing values
+    set_defaults(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
