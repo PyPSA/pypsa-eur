@@ -214,23 +214,23 @@ rule build_temperature_profiles:
 
 rule build_central_heating_temperature_profiles:
     params:
-        max_forward_temperature_central_heating=config_provider(
+        max_forward_temperature_central_heating_today=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "max_forward_temperature",
+            "max_forward_temperature_today",
         ),
-        min_forward_temperature_central_heating=config_provider(
+        min_forward_temperature_central_heating_today=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "min_forward_temperature",
+            "min_forward_temperature_today",
         ),
-        return_temperature_central_heating=config_provider(
+        return_temperature_central_heating_today=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "return_temperature",
+            "return_temperature_today",
         ),
         snapshots=config_provider("snapshots"),
         lower_threshold_ambient_temperature=config_provider(
@@ -251,6 +251,13 @@ rule build_central_heating_temperature_profiles:
             "supply_temperature_approximation",
             "rolling_window_ambient_temperature",
         ),
+        relative_annual_temperature_reduction=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "relative_annual_temperature_reduction",
+        ),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),

@@ -130,6 +130,57 @@ def map_temperature_dict_to_onshore_regions(
     )
 
 
+def scale_temperature_to_investment_year(
+    temperature_today: dict,
+    relative_annual_temperature_reduction: float,
+    investment_year: int,
+    current_year: int,
+) -> dict:
+    """
+    Scale temperature for each country to investment year by constant exponential factor.
+
+    Parameters
+    ----------
+    temperature_today : dict
+        Dictionary with the current temperatures as values and country keys as keys.
+    relative_annual_temperature_reduction : float
+        The annual reduction rate of the temperature, must be between 0 and 1.
+    investment_year : int
+        The year in which the investment is planned.
+    current_year : int
+        The current year.
+
+    Returns
+    -------
+    dict
+        A dictionary with the temperature for each country in the investment year.
+
+    Raises
+    ------
+    ValueError
+        If the investment year is before the current year.
+        If the relative annual temperature reduction is not between 0 and 1.
+    """
+
+    if investment_year < current_year:
+        raise ValueError(
+            f"Error: Investment year {investment_year} is before current year {current_year}."
+        )
+    if (
+        relative_annual_temperature_reduction < 0
+        or relative_annual_temperature_reduction > 1
+    ):
+        raise ValueError(
+            f"Error: Relative annual temperature reduction must be between 0 and 1, but is {relative_annual_temperature_reduction}."
+        )
+
+    return {
+        key: temperature_today[key] * relative_annual_temperature_reduction
+        ^ (investment_year - current_year)
+        for key in temperature_today.keys()
+    }
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -138,17 +189,41 @@ if __name__ == "__main__":
             "build_cop_profiles",
             simpl="",
             clusters=48,
+            planning_horizons="2050",
         )
 
     set_scenario_config(snakemake)
 
-    max_forward_temperature = snakemake.params.max_forward_temperature_central_heating
-    min_forward_temperature = extrapolate_missing_supply_temperatures_by_country(
-        extrapolate_from=max_forward_temperature,
+    # reduce temperatures to investment years by constant exponential factor
+    max_forward_temperature_investment_year = scale_temperature_to_investment_year(
+        temperature_today=snakemake.params.max_forward_temperature_today,
+        relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
+        investment_year=int(snakemake.wildcards.planning_horizons[:-4]),
+        current_year=int(snakemake.params.energy_totals_year),
+    )
+
+    min_forward_temperature_investment_year = scale_temperature_to_investment_year(
+        temperature_today=snakemake.params.min_forward_temperature_today,
+        relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
+        investment_year=int(snakemake.wildcards.planning_horizons[:-4]),
+        current_year=int(snakemake.params.energy_totals_year),
+    )
+
+    return_temperature_investment_year = scale_temperature_to_investment_year(
+        temperature_today=snakemake.params.return_temperature_today,
+        relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
+        investment_year=int(snakemake.wildcards.planning_horizons[:-4]),
+        current_year=int(snakemake.params.energy_totals_year),
+    )
+
+    # min_forward_temperature and return_temperature contain only values for Germany by default
+    # extrapolate missing values based on ratio between max_forward_temperature and min_forward_temperature / return_temperature for Germany (or other countries provided in min_forward_temperature_today and return_temperature_today)
+    min_forward_temperature_investment_year = extrapolate_missing_supply_temperatures_by_country(
+        extrapolate_from=max_forward_temperature_investment_year,
         extrapolate_to=snakemake.params.min_forward_temperature_central_heating,
     )
-    return_temperature = extrapolate_missing_supply_temperatures_by_country(
-        extrapolate_from=max_forward_temperature,
+    return_temperature_investment_year = extrapolate_missing_supply_temperatures_by_country(
+        extrapolate_from=max_forward_temperature_investment_year,
         extrapolate_to=snakemake.params.return_temperature_central_heating,
     )
 
@@ -157,19 +232,19 @@ if __name__ == "__main__":
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     max_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
-            supply_temperature_by_country=max_forward_temperature,
+            supply_temperature_by_country=max_forward_temperature_investment_year,
             regions_onshore=regions_onshore,
         )
     )
     min_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
-            supply_temperature_by_country=min_forward_temperature,
+            supply_temperature_by_country=min_forward_temperature_investment_year,
             regions_onshore=regions_onshore,
         )
     )
     return_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
-            supply_temperature_by_country=return_temperature,
+            supply_temperature_by_country=return_temperature_investment_year,
             regions_onshore=regions_onshore,
         )
     )
