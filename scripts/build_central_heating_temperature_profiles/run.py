@@ -137,7 +137,8 @@ def scale_temperature_to_investment_year(
     current_year: int,
 ) -> dict:
     """
-    Scale temperature for each country to investment year by constant exponential factor.
+    Scale temperature for each country to investment year by constant
+    exponential factor.
 
     Parameters
     ----------

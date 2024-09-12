@@ -21,7 +21,9 @@ rule add_existing_baseyear:
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
-        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"),
+        cop_profiles=resources(
+            "cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"
+        ),
         existing_heating_distribution=resources(
             "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
