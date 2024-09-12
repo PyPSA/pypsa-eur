@@ -104,6 +104,32 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_gas_network.py"
 
+    rule plot_balance_map:
+        params:
+            plotting=config_provider("plotting_map"),
+        input:
+            network=RESULTS
+            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        output:
+            map=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}.pdf",
+        threads: 2
+        resources:
+            mem_mb=10000,
+        log:
+            RESULTS
+            + "logs/plot_balance_map/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_balance_map/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_balance_map.py"
+
 
 if config["foresight"] == "perfect":
 
