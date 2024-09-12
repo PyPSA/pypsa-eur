@@ -175,8 +175,11 @@ def scale_temperature_to_investment_year(
         )
 
     return {
-        key: temperature_today[key] * relative_annual_temperature_reduction
-        ** (investment_year - current_year)
+        key: temperature_today[key]
+        * (
+            (1 - relative_annual_temperature_reduction)
+            ** (investment_year - current_year)
+        )
         for key in temperature_today.keys()
     }
 
@@ -217,16 +220,19 @@ if __name__ == "__main__":
         current_year=int(snakemake.params.energy_totals_year),
     )
 
-
     # min_forward_temperature and return_temperature contain only values for Germany by default
     # extrapolate missing values based on ratio between max_forward_temperature and min_forward_temperature / return_temperature for Germany (or other countries provided in min_forward_temperature_today and return_temperature_today)
-    min_forward_temperature_investment_year = extrapolate_missing_supply_temperatures_by_country(
-        extrapolate_from=max_forward_temperature_investment_year,
-        extrapolate_to=min_forward_temperature_investment_year,
+    min_forward_temperature_investment_year = (
+        extrapolate_missing_supply_temperatures_by_country(
+            extrapolate_from=max_forward_temperature_investment_year,
+            extrapolate_to=min_forward_temperature_investment_year,
+        )
     )
-    return_temperature_investment_year = extrapolate_missing_supply_temperatures_by_country(
-        extrapolate_from=max_forward_temperature_investment_year,
-        extrapolate_to=return_temperature_investment_year,
+    return_temperature_investment_year = (
+        extrapolate_missing_supply_temperatures_by_country(
+            extrapolate_from=max_forward_temperature_investment_year,
+            extrapolate_to=return_temperature_investment_year,
+        )
     )
 
     # map forward and return temperatures specified on country-level to onshore regions
