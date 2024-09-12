@@ -561,7 +561,7 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 ``data/unit_commitment.csv``
 
 - **Source:** `DIW
-  <https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf>`,
+  <https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf>`__,
   `Agora Energiewende
   <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__,
   `Schill et al. (2017)
