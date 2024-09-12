@@ -71,6 +71,7 @@ enable:
   retrieve_cutout: true
   custom_busmap: false
   drop_leap_day: true
+  endo_industry: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
