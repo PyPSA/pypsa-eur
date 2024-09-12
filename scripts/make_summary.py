@@ -543,13 +543,14 @@ def calculate_weighted_prices(n, label, weighted_prices):
     
     carriers = n.buses.carrier.unique()
     
-    for carrier in carriers:
-        price = n.buses_t.marginal_price.loc[:, n.buses.carrier==carrier]
-        
+    for carrier in carriers:        
         grouper = n.statistics.groupers.get_bus_and_carrier
         load = n.statistics.withdrawal(groupby=grouper, aggregate_time=False,
                                        nice_names=False, bus_carrier=carrier
                                        ).groupby(level="bus").sum().T
+        
+        price = n.buses_t.marginal_price.loc[:, n.buses.carrier==carrier]
+        price = price.reindex(columns=load.columns)
 
         
         
