@@ -451,21 +451,18 @@ sector:
     district_heating_loss: 0.15
     supply_temperature_approximation:
       max_forward_temperature:
-        default: 90
-        DK: 70
-        SE: 70
-        NO: 70
+        FR: 110
+        DK: 75
+        DE: 109
+        CZ: 130
+        FI: 115
+        PL: 130
+        SE: 102
+        IT: 90
       min_forward_temperature:
-        default: 68
-        DK: 54
-        SE: 54
-        NO: 54
+        DE: 82
       return_temperature:
-        default: 50
-        DK: 40
-        SE: 40
-        NO: 40
-        FI: 40
+        DE: 58
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
@@ -608,7 +605,6 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -641,6 +637,19 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  methanol:
+    regional_methanol_demand: false
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: false
+    methanol_to_olefins: false
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: false
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -653,7 +662,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -806,7 +814,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.1
+  version: v0.9.2
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -862,7 +870,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
@@ -1257,8 +1270,19 @@ plotting:
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
     naphtha for industry: '#57ebc4'
-    methanolisation: '#83d6d5'
-    methanol: '#468c8b'
+    methanol-to-kerosene: '#C98468'
+    methanol-to-olefins/aromatics: '#FFA07A'
+    Methanol steam reforming: '#FFBF00'
+    Methanol steam reforming CC: '#A2EA8A'
+    methanolisation: '#00FFBF'
+    biomass-to-methanol: '#EAD28A'
+    biomass-to-methanol CC: '#EADBAD'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
+    methanol: '#FF7B00'
+    methanol transport: '#FF7B00'
     shipping methanol: '#468c8b'
     industry methanol: '#468c8b'
     # co2

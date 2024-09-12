@@ -9,7 +9,14 @@ Release Notes
 ##########################################
 
 .. Upcoming Release
-.. ================
+
+* Add function ``modify_attribute`` which allows to adjust every attribute of every PyPSA component either by a multiplication with a factor or setting an absolute value. These adjustments can also depend on the planning horizons and are set in the config under ``adjustments``. The function ``maybe_adjust_costs_and_potentials`` is removed.
+
+* Add technology options for methanol, like electricity production from methanol, biomass to methanol, methanol to kerosene, ...
+
+* Change the heating demand from final energy which includes losses in legacy equipment to thermal energy service based on JRC-IDEES. Efficiencies of existing heating capacities are lowered according to the conversion of final energy to thermal energy service. For overnight scenarios or future planning horizon this change leads to a reduction in heat supply.
+
+* Updated district heating supply temperatures based on `Euroheat's DHC Market Outlook 2024<https://api.euroheat.org/uploads/Market_Outlook_2024_beeecd62d4.pdf>`__ and `AGFW-Hauptbericht 2022 <https://www.agfw.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjU2MjI2MTUsImV4cCI6MTcyNTcxMjYxNSwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW4vdXNlcl91cGxvYWQvWmFobGVuX3VuZF9TdGF0aXN0aWtlbi9IYXVwdGJlcmljaHRfMjAyMi9BR0ZXX0hhdXB0YmVyaWNodF8yMDIyLnBkZiIsInBhZ2UiOjQzNn0.Bhma3PKg9uJnC57Ixi2p9STW5-II9VXPTDXS544M208/AGFW_Hauptbericht_2022.pdf>`__. `min_forward_temperature` and `return_temperature` (not given by Euroheat) are extrapolated based on German values.
 
 * Increased the resolution of NUTS3 and NUTS2 shapes from 1:60M to 1:3M, with data now directly retrieved from GISCO
 
@@ -18,6 +25,12 @@ Release Notes
 * bugfix: The carrier of stores was silently overwritten by their bus_carrier as a side effect when building the co2 constraints
 
 * bugfix: The oil generator was incorrectly dropped when the config `oil_refining_emissions` was greater than zero. This was the default behaviour in 0.12.0.
+
+* Uses of Snakemake's ``storage()`` function are integrated into retrieval
+  rules. This simplifies the use of ``mock_snakemake`` and places downloaded
+  data more transparently into the ``data`` directory.
+
+* The sources of nearly all data files are now listed in the documentation.
 
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================

@@ -58,6 +58,15 @@ class CentralHeatingTemperatureApproximator:
         rolling_window_ambient_temperature : int
             Rolling window size for averaging ambient temperature.
         """
+
+        if any(max_forward_temperature < min_forward_temperature):
+            raise ValueError(
+                "max_forward_temperature must be greater than min_forward_temperature"
+            )
+        if any(min_forward_temperature < fixed_return_temperature):
+            raise ValueError(
+                "min_forward_temperature must be greater than fixed_return_temperature"
+            )
         self._ambient_temperature = ambient_temperature
         self.max_forward_temperature = max_forward_temperature
         self.min_forward_temperature = min_forward_temperature

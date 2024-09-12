@@ -366,6 +366,7 @@ rule build_energy_totals:
         co2_name=resources("co2_totals.csv"),
         transport_name=resources("transport_data.csv"),
         district_heat_share=resources("district_heat_share.csv"),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
     threads: 16
     resources:
         mem_mb=10000,
@@ -402,10 +403,7 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=storage(
-            "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
-            keep_local=True,
-        ),
+        enspreso_biomass="data/ENSPRESO_BIOMASS.xlsx",
         eurostat="data/eurostat/Balances-April2023",
         nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
@@ -435,10 +433,8 @@ rule build_biomass_potentials:
 
 rule build_biomass_transport_costs:
     input:
-        transport_cost_data=storage(
-            "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass potentials in europe_web rev.pdf",
-            keep_local=True,
-        ),
+        sc1="data/biomass_transport_costs_supplychain1.csv",
+        sc2="data/biomass_transport_costs_supplychain2.csv",
     output:
         biomass_transport_costs=resources("biomass_transport_costs.csv"),
     threads: 1
@@ -460,10 +456,7 @@ rule build_sequestration_potentials:
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential=storage(
-            "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-            keep_local=True,
-        ),
+        sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_elec_s{simpl}_{clusters}.geojson"),
     output:
@@ -505,9 +498,7 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs=storage(
-            "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
-        ),
+        usgs="data/myb1-2022-nitro-ert.xlsx",
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
@@ -636,10 +627,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
-        hotmaps=storage(
-            "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
-            keep_local=True,
-        ),
+        hotmaps="data/Industrial_Database.csv",
         gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
@@ -1028,6 +1016,7 @@ rule prepare_sector_network:
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1099,9 +1088,13 @@ rule prepare_sector_network:
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_elec_s{simpl}_{clusters}.nc"
         ),
+        industrial_production=resources(
+            "industrial_production_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+        ),
         district_heat_share=resources(
             "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
         ),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
