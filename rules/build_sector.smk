@@ -263,17 +263,17 @@ rule build_central_heating_temperature_profiles:
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
     output:
         central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+            "central_heating_forward_temperature_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"
         ),
         central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}.nc"
+            "central_heating_return_temperature_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=20000,
     log:
-        logs("build_central_heating_temperature_profiles_s{simpl}_{clusters}.log"),
+        logs("build_central_heating_temperature_profiles_s{simpl}_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("build_central_heating_temperature_profiles/s{simpl}_{clusters}")
+        benchmarks("build_central_heating_temperature_profiles/s{simpl}_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
