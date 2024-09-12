@@ -41,46 +41,46 @@ Upcoming Release
     ``determine_availability_matrix`` for land eligibility analysis and
     ``build_renewable_profiles``, which now only computes the profiles and total
     potentials from the pre-computed availability matrix.
-  
+
   - Removed variables ``weight``, ``underwater_fraction``, and ``potential`` from the
     output of ``build_renewable_profiles`` as it is no longer needed.
-  
+
   - HAC-clustering is now based on wind speeds and irradiation time series
     rather than capacity factors of wind and solar power plants.
-  
+
   - Added new rule ``build_hac_features`` that aggregates cutout weather data to
     base regions in preparation for ``cluster_network``.
-  
+
   - Removed ``{simpl}`` wildcard and all associated code of the ``m`` suffix of
     the ``{cluster}`` wildcard. This means that the option to pre-cluster the
     network in ``simplify_network`` was removed. It will be superseded by
     clustering renewable profiles and potentials within clustered regions by
     resource classes soon.
-  
+
   - Added new rule ``add_transmission_projects_and_dlr`` which adds the outputs
     from ``build_line_rating`` and ``build_transmission_projects`` to the output
     of ``base_network``.
-  
+
   - The rule ``add_extra_components`` was integrated into ``add_electricity``
-  
+
   - Added new rule ``build_electricity_demand_base`` to determine the load
     distribution of the substations in the base network (which was previously
     done in ``add_electricity``). This time series is used as weights for
     kmeans-clustering in ``cluster_network`` and is later added to the network in
     ``add_electricity`` in aggregated form.
-  
+
   - The weights of the kmeans clustering algorithm are now exclusively based on
     the load distribution. Previously, they also included the distribution of
     thermal capacity.
-  
+
   - Since the networks no longer start with the whole electricity system added
     pre-clustering, the files have been renamed from ``elec...nc`` to
     ``base...nc`` to identify them as derivatives of ``base.nc``.
-  
+
   - The scripts ``simplify_network.py`` and ``cluster_network.py`` were
     simplified to become less nested and profited from the removed need to deal
     with cost data.
-  
+
   - New configuration options to calculate connection costs of offshore wind
     plants. Offshore connection costs are now calculated based on the underwater
     distance to the shoreline plus a configurable ``landfall_length`` which
