@@ -47,7 +47,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup secrets
       run: |
@@ -73,7 +73,7 @@ jobs:
         echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV
 
     - name: Cache data and cutouts folders
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           data
@@ -84,7 +84,7 @@ jobs:
       run: ./test.sh
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4.3.0
+      uses: actions/upload-artifact@v4.4.0
       with:
         name: resources-results
         path: |
