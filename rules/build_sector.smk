@@ -214,23 +214,23 @@ rule build_temperature_profiles:
 
 rule build_central_heating_temperature_profiles:
     params:
-        max_forward_temperature_central_heating_today=config_provider(
+        max_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "max_forward_temperature_today",
+            "max_forward_temperature_baseyear",
         ),
-        min_forward_temperature_central_heating_today=config_provider(
+        min_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "min_forward_temperature_today",
+            "min_forward_temperature_baseyear",
         ),
-        return_temperature_central_heating_today=config_provider(
+        return_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "return_temperature_today",
+            "return_temperature_baseyear",
         ),
         snapshots=config_provider("snapshots"),
         lower_threshold_ambient_temperature=config_provider(
