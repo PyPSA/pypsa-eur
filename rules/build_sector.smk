@@ -271,9 +271,13 @@ rule build_central_heating_temperature_profiles:
     resources:
         mem_mb=20000,
     log:
-        logs("build_central_heating_temperature_profiles_s{simpl}_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_central_heating_temperature_profiles_s{simpl}_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_central_heating_temperature_profiles/s{simpl}_{clusters}_{planning_horizons}")
+        benchmarks(
+            "build_central_heating_temperature_profiles/s{simpl}_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -304,7 +308,9 @@ rule build_cop_profiles:
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
     output:
-        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"),
+        cop_profiles=resources(
+            "cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"
+        ),
     resources:
         mem_mb=20000,
     log:
@@ -1104,7 +1110,9 @@ rule prepare_sector_network:
         heating_efficiencies=resources("heating_efficiencies.csv"),
         temp_soil_total=resources("temp_soil_total_elec_s{simpl}_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_elec_s{simpl}_{clusters}.nc"),
-        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"),
+        cop_profiles=resources(
+            "cop_profiles_elec_s{simpl}_{clusters}_{planning_horizons}.nc"
+        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_elec_s{simpl}_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
