@@ -50,8 +50,6 @@ Inputs
     .. image:: img/hydrocapacities.png
         :scale: 34 %
 
-- ``data/geth2015_hydro_capacities.csv``: alternative to capacities above; not
-  currently used!
 - ``resources/electricity_demand_base_s.nc`` Hourly nodal electricity demand
   profiles.
 - ``resources/regions_onshore_base_s_{clusters}.geojson``: confer
@@ -113,6 +111,7 @@ network with **zero** initial capacity:
 """
 
 import logging
+from pathlib import Path
 from typing import Dict, List
 
 import numpy as np

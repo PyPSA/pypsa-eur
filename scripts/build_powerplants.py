@@ -206,12 +206,11 @@ if __name__ == "__main__":
 
     # Add "everywhere powerplants" to all bus locations
     ppl = add_everywhere_powerplants(
-        ppl, n.buses.query("substation_lv"), snakemake.params.everywhere_powerplants
+        ppl, n.buses, snakemake.params.everywhere_powerplants
     )
 
-    substations = n.buses.query("substation_lv")
     ppl = ppl.dropna(subset=["lat", "lon"])
-    ppl = map_country_bus(ppl, substations)
+    ppl = map_country_bus(ppl, n.buses)
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():

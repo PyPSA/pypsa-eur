@@ -80,7 +80,7 @@ adapt the required range of coordinates to the selection of countries.
 
 We can also decide which weather data source should be used to calculate
 potentials and capacity factor time-series for each carrier. For example, we may
-want to use the ERA-5 dataset for solar and not the default SARAH-2 dataset.
+want to use the ERA-5 dataset for solar and not the default SARAH-3 dataset.
 
 .. literalinclude:: ../config/test/config.electricity.yaml
    :language: yaml

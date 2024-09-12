@@ -26,7 +26,7 @@ Inputs
     .. image:: img/countries.png
         :scale: 33 %
 
-- ``data/bundle/eez/World_EEZ_v8_2014.shp``: World `exclusive economic zones <https://en.wikipedia.org/wiki/Exclusive_economic_zone>`_ (EEZ)
+- ``data/eez/World_EEZ_v12_20231025_gpkg/eez_v12.gpkg   ``: World `exclusive economic zones <https://en.wikipedia.org/wiki/Exclusive_economic_zone>`_ (EEZ)
 
     .. image:: img/eez.png
         :scale: 33 %
@@ -73,22 +73,16 @@ from functools import reduce
 from itertools import takewhile
 from operator import attrgetter
 
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import pycountry as pyc
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
 
 logger = logging.getLogger(__name__)
 
-
-def _get_country(target, **keys):
-    assert len(keys) == 1
-    try:
-        return getattr(pyc.countries.get(**keys), target)
-    except (KeyError, AttributeError):
-        return np.nan
+cc = coco.CountryConverter()
 
 
 def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
@@ -112,8 +106,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
 
 
 def countries(naturalearth, country_list):
-    if "RS" in country_list:
-        country_list.append("KV")
 
     df = gpd.read_file(naturalearth)
 
@@ -122,35 +114,26 @@ def countries(naturalearth, country_list):
         df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
     )
     df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
+    df.replace({"name": {"KV": "XK"}}, inplace=True)
 
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
     ]
     s = df.set_index("name")["geometry"].map(_simplify_polys).set_crs(df.crs)
-    if "RS" in country_list:
-        s["RS"] = s["RS"].union(s.pop("KV"))
-        # cleanup shape union
-        s["RS"] = Polygon(s["RS"].exterior.coords)
 
     return s
 
 
-def eez(country_shapes, eez, country_list):
+def eez(eez, country_list):
     df = gpd.read_file(eez)
-    df = df.loc[
-        df["ISO_3digit"].isin(
-            [_get_country("alpha_3", alpha_2=c) for c in country_list]
-        )
-    ]
-    df["name"] = df["ISO_3digit"].map(lambda c: _get_country("alpha_2", alpha_3=c))
+    iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")
+    pol_type = ["200NM", "Overlapping claim"]
+    df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()
+    df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
         lambda s: _simplify_polys(s, filterremote=False)
     )
-    s = gpd.GeoSeries(
-        {k: v for k, v in s.items() if v.distance(country_shapes[k]) < 1e-3},
-        crs=df.crs,
-    )
-    s = s.to_frame("geometry")
+    s = s.to_frame("geometry").set_crs(df.crs)
     s.index.name = "name"
     return s
 
@@ -207,7 +190,9 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
 
-    df["country"] = df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR"))
+    df["country"] = (
+        df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR", KV="XK"))
+    )
 
     excludenuts = pd.Index(
         (
@@ -229,13 +214,18 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             "FR9",
         )
     )
-    excludecountry = pd.Index(("MT", "TR", "LI", "IS", "CY", "KV"))
+    excludecountry = pd.Index(("MT", "TR", "LI", "IS", "CY"))
 
     df = df.loc[df.index.difference(excludenuts)]
     df = df.loc[~df.country.isin(excludecountry)]
 
     manual = gpd.GeoDataFrame(
-        [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
+        [
+            ["BA1", "BA", 3234.0],
+            ["RS1", "RS", 6664.0],
+            ["AL1", "AL", 2778.0],
+            ["XK1", "XK", 1587.0],
+        ],
         columns=["NUTS_ID", "country", "pop"],
         geometry=gpd.GeoSeries(),
         crs=df.crs,
@@ -246,7 +236,7 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     df = pd.concat([df, manual], sort=False)
 
-    df.loc["ME000", "pop"] = 650.0
+    df.loc["ME000", "pop"] = 617.0
 
     return df
 
@@ -262,9 +252,7 @@ if __name__ == "__main__":
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
-    offshore_shapes = eez(
-        country_shapes, snakemake.input.eez, snakemake.params.countries
-    )
+    offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     europe_shape = gpd.GeoDataFrame(

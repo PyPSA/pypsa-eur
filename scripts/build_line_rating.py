@@ -5,7 +5,7 @@
 
 # coding: utf-8
 """
-Adds dynamic line rating timeseries to the base network.
+Calculates dynamic line rating time series from base network.
 
 Relevant Settings
 -----------------
@@ -19,6 +19,7 @@ Relevant Settings
 
 .. seealso::
     Documentation of the configuration file ``config.yaml`
+
 Inputs
 ------
 
@@ -28,7 +29,7 @@ Inputs
 Outputs
 -------
 
-- ``resources/line_rating.nc``
+- ``resources/dlr.nc``
 
 
 Description
@@ -56,7 +57,6 @@ import re
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
@@ -93,7 +93,7 @@ def calculate_line_rating(
     n: pypsa.Network,
     cutout: atlite.Cutout,
     show_progress: bool = True,
-    dask_kwargs: dict = {},
+    dask_kwargs: dict = None,
 ) -> xr.DataArray:
     """
     Calculates the maximal allowed power flow in each line for each time step
@@ -107,6 +107,9 @@ def calculate_line_rating(
     -------
     xarray DataArray object with maximal power.
     """
+    if dask_kwargs is None:
+        dask_kwargs = {}
+
     logger.info("Calculating dynamic line rating.")
     relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
@@ -150,36 +153,6 @@ def calculate_line_rating(
     )
 
 
-def attach_line_rating(
-    n: pypsa.Network,
-    rating: pd.DataFrame,
-    s_max_pu: float,
-    correction_factor: float,
-    max_voltage_difference: float | bool,
-    max_line_rating: float | bool,
-) -> None:
-    logger.info("Attaching dynamic line rating to network.")
-    # TODO: Only considers overhead lines
-    n.lines_t.s_max_pu = (rating / n.lines.s_nom[rating.columns]) * correction_factor
-    if max_voltage_difference:
-        x_pu = (
-            n.lines.type.map(n.line_types["x_per_length"])
-            * n.lines.length
-            / (n.lines.v_nom**2)
-        )
-        # need to clip here as cap values might be below 1
-        # -> would mean the line cannot be operated at actual given pessimistic ampacity
-        s_max_pu_cap = (
-            np.deg2rad(max_voltage_difference) / (x_pu * n.lines.s_nom)
-        ).clip(lower=1)
-        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(
-            lower=1, upper=s_max_pu_cap, axis=1
-        )
-    if max_line_rating:
-        n.lines_t.s_max_pu = n.lines_t.s_max_pu.clip(upper=max_line_rating)
-    n.lines_t.s_max_pu *= s_max_pu
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -203,21 +176,4 @@ if __name__ == "__main__":
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
     da = calculate_line_rating(n, cutout, show_progress, dask_kwargs)
-    rating = da.to_pandas().transpose()
-
-    config = snakemake.params["dlr"]
-    s_max_pu = snakemake.params["s_max_pu"]
-    correction_factor = config["correction_factor"]
-    max_voltage_difference = config["max_voltage_difference"]
-    max_line_rating = config["max_line_rating"]
-
-    attach_line_rating(
-        n,
-        rating,
-        s_max_pu,
-        correction_factor,
-        max_voltage_difference,
-        max_line_rating,
-    )
-
-    n.export_to_netcdf(snakemake.output[0])
+    da.to_netcdf(snakemake.output[0])

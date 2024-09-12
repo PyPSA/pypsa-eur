@@ -40,9 +40,9 @@ def calculate_costs(n, label, costs):
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
         [
-            costs.columns.levels[0],
-            costs.columns.levels[1],
-            costs.columns.levels[2],
+            costs.columns.unique(0),
+            costs.columns.unique(1),
+            costs.columns.unique(2),
             investments,
         ],
         names=costs.columns.names[:3] + ["year"],
@@ -339,9 +339,9 @@ def calculate_supply_energy(n, label, supply_energy):
     investments = n.investment_periods
     cols = pd.MultiIndex.from_product(
         [
-            supply_energy.columns.levels[0],
-            supply_energy.columns.levels[1],
-            supply_energy.columns.levels[2],
+            supply_energy.columns.unique(0),
+            supply_energy.columns.unique(1),
+            supply_energy.columns.unique(2),
             investments,
         ],
         names=supply_energy.columns.names[:3] + ["year"],

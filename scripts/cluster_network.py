@@ -36,7 +36,7 @@ Inputs
 - ``resources/regions_offshore_base.geojson``: confer :ref:`simplify`
 - ``resources/busmap_base_s.csv``: confer :ref:`simplify`
 - ``networks/base.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_base_s_{clusters}.csv``: optional input
+- ``data/custom_busmap_base_s_{clusters}_{base_network}.csv``: optional input
 
 Outputs
 -------
@@ -309,6 +309,7 @@ def clustering_for_n_clusters(
         line_length_factor=line_length_factor,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
+        custom_line_groupers=["build_year"],
     )
 
     return clustering
@@ -416,12 +417,12 @@ if __name__ == "__main__":
     for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    nc.shapes = n.shapes.copy()
+    # nc.shapes = n.shapes.copy()
     for which in ["regions_onshore", "regions_offshore"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions((clustering.busmap,), regions)
         clustered_regions.to_file(snakemake.output[which])
-        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+        # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
     nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     nc.export_to_netcdf(snakemake.output.network)
