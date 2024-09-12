@@ -88,9 +88,11 @@ def build_nuts_population_data(year=2013):
     pop = pd.concat([pop, pd.concat(swiss)]).to_frame("total")
 
     # add missing manually
-    pop["AL"] = 2893
-    pop["BA"] = 3871
-    pop["RS"] = 7210
+    pop["AL"] = 2778
+    pop["BA"] = 3234
+    pop["RS"] = 6664
+    pop["ME"] = 617
+    pop["XK"] = 1587
 
     pop["ct"] = pop.index.str[:2]
 
@@ -149,10 +151,6 @@ def enspreso_biomass_potentials(year=2020, scenario="ENS_Low"):
 
     bio = dff.groupby(["NUTS2", "commodity"]).potential.sum().unstack()
 
-    # currently Serbia and Kosovo not split, so aggregate
-    bio.loc["RS"] += bio.loc["XK"]
-    bio.drop("XK", inplace=True)
-
     return bio
 
 
@@ -199,7 +197,7 @@ def build_nuts2_shapes():
     )
 
     countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
-    missing_iso2 = countries.index.intersection(["AL", "RS", "BA"])
+    missing_iso2 = countries.index.intersection(["AL", "RS", "XK", "BA"])
     missing = countries.loc[missing_iso2]
 
     nuts2.rename(index={"ME00": "ME", "MK00": "MK"}, inplace=True)
@@ -332,7 +330,7 @@ def add_unsustainable_potentials(df):
     )
 
     share_sus = params.get("share_sustainable_potential_available").get(investment_year)
-    df *= share_sus
+    df.loc[df_wo_ch.index] *= share_sus
 
     df = df.join(df_wo_ch.filter(like="unsustainable")).fillna(0)
 
@@ -347,8 +345,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_biomass_potentials",
             simpl="",
-            clusters="37",
-            planning_horizons=2020,
+            clusters="38",
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)

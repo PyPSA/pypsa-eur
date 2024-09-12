@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 0.12.0
 tutorial: false
 
 logging:
@@ -42,7 +42,7 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 38
+  - 39
   - 128
   - 256
   opts:
@@ -56,7 +56,7 @@ scenario:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -155,7 +155,7 @@ renewable:
     resource:
       method: wind
       turbine: Vestas_V112_3MW
-      smooth: true
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -175,7 +175,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
-      smooth: true
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -192,7 +192,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
-      smooth: true
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -209,7 +209,7 @@ renewable:
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
-      smooth: true
+      smooth: false
       add_cutout_windspeed: true
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
@@ -449,19 +449,23 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
-    # check these numbers!
-    forward_temperature:
-      default: 90
-      DK: 70
-      SE: 70
-      NO: 70
-      FI: 70
-    return_temperature:
-      default: 50
-      DK: 40
-      SE: 40
-      NO: 40
-      FI: 40
+    supply_temperature_approximation:
+      max_forward_temperature:
+        FR: 110
+        DK: 75
+        DE: 109
+        CZ: 130
+        FI: 115
+        PL: 130
+        SE: 102
+        IT: 90
+      min_forward_temperature:
+        DE: 82
+      return_temperature:
+        DE: 58
+      lower_threshold_ambient_temperature: 0
+      upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
@@ -583,7 +587,9 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
-  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
+  overdimension_heat_generators:
+    decentral: 1.1  #to cover demand peaks bigger than data
+    central: 1.0
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -599,7 +605,6 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -632,6 +637,19 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  methanol:
+    regional_methanol_demand: false
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: false
+    methanol_to_olefins: false
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: false
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -790,12 +808,13 @@ industry:
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2019
+  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.1
+  version: v0.9.2
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1075,6 +1094,8 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    oil primary: '#d2d2d2'
+    oil refining: '#e6e6e6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -1118,6 +1139,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable solid biomass: '#998622'
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
@@ -1248,8 +1270,19 @@ plotting:
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
     naphtha for industry: '#57ebc4'
-    methanolisation: '#83d6d5'
-    methanol: '#468c8b'
+    methanol-to-kerosene: '#C98468'
+    methanol-to-olefins/aromatics: '#FFA07A'
+    Methanol steam reforming: '#FFBF00'
+    Methanol steam reforming CC: '#A2EA8A'
+    methanolisation: '#00FFBF'
+    biomass-to-methanol: '#EAD28A'
+    biomass-to-methanol CC: '#EADBAD'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
+    methanol: '#FF7B00'
+    methanol transport: '#FF7B00'
     shipping methanol: '#468c8b'
     industry methanol: '#468c8b'
     # co2

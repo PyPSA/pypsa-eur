@@ -41,12 +41,29 @@ Rule ``build_cutout``
 .. automodule:: build_cutout
 
 
+Rule ``clean_osm_data``
+=============================
+
+.. automodule:: clean_osm_data
+
+
+Rule ``build_osm_network``
+=============================
+
+.. automodule:: build_osm_network
+
 .. _base:
 
 Rule ``base_network``
 =============================
 
 .. automodule:: base_network
+
+
+Rule ``build_transmission_projects``
+====================================
+
+.. automodule:: build_transmission_projects
 
 .. _shapes:
 
@@ -55,6 +72,10 @@ Rule ``build_shapes``
 
 .. automodule:: build_shapes
 
+Rule ``build_gdp_pop_non_nuts3``
+=============================
+
+.. automodule:: build_gdp_pop_non_nuts3
 
 .. _powerplants:
 

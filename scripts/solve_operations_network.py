@@ -49,7 +49,13 @@ if __name__ == "__main__":
 
     n.optimize.fix_optimal_capacities()
     n = prepare_network(n, solve_opts, config=snakemake.config)
-    n = solve_network(n, config=snakemake.config, log_fn=snakemake.log.solver)
+    n = solve_network(
+        n,
+        config=snakemake.config,
+        params=snakemake.params,
+        solving=snakemake.params.solving,
+        log_fn=snakemake.log.solver,
+    )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])
