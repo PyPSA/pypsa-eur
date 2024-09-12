@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Increased the resolution of NUTS3 and NUTS2 shapes from 1:60M to 1:3M, with data now directly retrieved from GISCO
+
 * Made the overdimensioning factor for heating systems specific for central/decentral heating, defaults to no overdimensionining for central heating and no changes to decentral heating compared to previous version.
 
 * bugfix: The carrier of stores was silently overwritten by their bus_carrier as a side effect when building the co2 constraints
