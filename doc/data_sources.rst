@@ -14,11 +14,14 @@ data sources.
 Zenodo data bundle
 =======================
 
-Data in this section is downloaded and extracted from the Zenodo data bundle (https://zenodo.org/records/12760663).
+Data in this section is downloaded and extracted from the Zenodo data bundle
+(https://zenodo.org/records/12760663). Files included in the data bundle are too
+large to be placed directly in the repository, have been reduced in spatial
+scope to reduce file size, or are not provided through stable URLs elsewhere.
 
 ``data/bundle/je-e-21.03.02.xls``
 
-- **Source:** Swiss Federal Statistics Office 
+- **Source:** Swiss Federal Statistics Office
 - **Link:** https://www.bfs.admin.ch/bfs/en/home/news/whats-new.assetdetail.7786557.html#context-sidebar
 - **License:**  `custom (OPEN BY ASK) <https://www.bfs.admin.ch/bfs/en/home/fso/swiss-federal-statistical-office/terms-of-use.html>`__
 - **Description:** Population and GDP data for Swiss Cantons.
@@ -105,7 +108,7 @@ Data in this section is downloaded and extracted from the Zenodo data bundle (ht
 - **License:** CC0 (`reference <https://datadryad.org/stash/dataset/doi:10.5061/dryad.dk1j0>`__)
 - **Description:** Gridded GDP data.
 
-``data/bunlde/ppp_2013_1km_Aggregated.tif``
+``data/bundle/ppp_2013_1km_Aggregated.tif``
 
 - **Source:** WorldPop (www.worldpop.org - School of Geography and Environmental
   Science, University of Southampton; Department of Geography and Geosciences,
@@ -113,7 +116,7 @@ Data in this section is downloaded and extracted from the Zenodo data bundle (ht
   Center for International Earth Science Information Network (CIESIN), Columbia
   University (2018). Global High Resolution Population Denominators Project -
   Funded by The Bill and Melinda Gates Foundation (OPP1134076).
-  https://dx.doi.org/10.5258/SOTON/WP00647 
+  https://dx.doi.org/10.5258/SOTON/WP00647
 - **Link:** https://hub.worldpop.org/doi/10.5258/SOTON/WP00647
 - **License:** CC-BY 4.0 (`reference <https://hub.worldpop.org/geodata/summary?id=24770>`__)
 - **Description:** Gridded population data.
@@ -124,28 +127,28 @@ Specific retrieval rules
 
 Data in this section is retrieved and extracted in rules specified in ``rules/retrieve.smk``.
 
-``https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx``
+``data/ENSPRESO_BIOMASS.xlsx``
 
 - **Source:** European Commission Joint Research Centre (JRC)
 - **Link:** https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
 - **License:** CC-BY 4.0
 - **Description:** Contains biomass potentials for Europe.
 
-``https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson``
+``data/complete_map_2020_unit_Mt.geojson``
 
 - **Source:** SETIS
 - **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en, processed with https://github.com/ericzhou571/Co2Storage
 - **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
 - **Description:** European CO2 storage database CO2StoP.
 
-``https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx``
+``data/myb1-2022-nitro-ert.xlsx``
 
 - **Source:** United States Geological Survey (USGS)
 - **Link:** https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information
 - **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
 - **Description:** Statistics and information on the worldwide supply of, demand for, and flow of the mineral commodity nitrogen.
 
-``https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv``
+``data/Industrial_Database.csv``
 
 - **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
   Giulia Garegnani, Chiara Scaramuzzino, Ramón Pascual Pascuas, Alyona
@@ -188,24 +191,29 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``data/gas_network``
 
-- **Source:** SciGRID_gas
+- **Source:** Jan Diettrich, Adam Pluta, & Wided Medjroubi. (2021). SciGRID_gas
+  IGGIELGN (1.1.2) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.4767098
 - **Link:** https://zenodo.org/records/4767098
 - **License:** CC-BY 4.0 (`reference <https://zenodo.org/record/4767098>`__)
 - **Description:** Contains gas infrastructure data.
 
 ``data/electricity_demand_raw.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Open Power System Data (OPSD) from ENTSO-E Transparency
+- **Link:**
+  https://data.open-power-system-data.org/time_series/2019-06-05/time_series_60min_singleindex.csv
+  and https://data.open-power-system-data.org/time_series/2020-10-06/time_series_60min_singleindex.csv
+- **License:** unknown
+- **Description:** Contains country-level electricity demand time series.
 
 ``data/load_synthetic_raw.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Source:** Frysztacki, M., van der Most, L., & Neumann, F. (2024).
+  Interannual Electricity Demand Calculator [Data set]. Zenodo.
+  https://doi.org/10.5281/zenodo.10820928
+- **Link:** https://zenodo.org/records/10820928
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains synthetic country-level electricity demand time series.
 
 ``data/shipdensity_global.zip``
 
@@ -216,7 +224,10 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif``
 
-- **Source:** Copernicus Land Service
+- **Source:** Marcel Buchhorn, Bruno Smets, Luc Bertels, Bert De Roo, Myroslava
+  Lesiv, Nandin-Erdene Tsendbazar, Martin Herold, & Steffen Fritz. (2020).
+  Copernicus Global Land Service: Land Cover 100m: collection 3: epoch 2019:
+  Globe (V3.0.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3939050
 - **Link:** https://zenodo.org/records/3939050
 - **License:** CC-BY 4.0 (`reference <https://zenodo.org/record/3939050>`__)
 - **Description:** Contains rastered land cover and land use data.
@@ -287,7 +298,9 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``data/osm-prebuilt``
 
-- **Source:** OpenStreetMap
+- **Source:** OpenStreetMap; Xiong, B., Neumann, F., & Brown, T. (2024).
+  Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data (0.3)
+  [Data set]. Zenodo. https://doi.org/10.5281/zenodo.13358976
 - **Link:** https://zenodo.org/records/13358976
 - **License:** ODbL (`reference <https://zenodo.org/records/13358976>`)
 - **Description:** Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.
@@ -310,7 +323,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 
 ``resources/costs_{year}.csv``
 
-- **Source:** PyPSA-Eur authors, mostly compiled from Danish Energy Agency (DEA)
+- **Source:** various, mostly compiled from Danish Energy Agency (DEA)
   `Technology Catalogues
   <https://ens.dk/en/our-services/technology-catalogues>`__.
 - **Link:** https://github.com/PyPSA/technology-data
@@ -342,27 +355,78 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 
 ``data/existing_infrastructure``
 
-Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables). URL https://
-ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment.
+- **Source:** European Commission DG ENER; Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment
+- **Link:** https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
+- **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
+- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal boilers, resistive heaters, air- and ground-sourced heat pumps.
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+``data/retro/comparative_level_investment.csv``
+
+- **Source:** Eurostat
+- **Link:** https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Comparative_price_levels_for_investment
+- **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
+- **Description:** Contains data on comparative price levels for investment in Europe.
+
+``data/retro/data_building_stock.csv``
+
+- **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
+  Giulia Garegnani, Chiara Scaramuzzino, Ramón Pascual Pascuas, Alyona
+  Zubaryeva, Franziska Haas, Dagmar Exner (EURAC), Andreas Müller (e-think),
+  Michael Hartner (TUW), Tobias Fleiter, Anna-Lena Klingler, Matthias Kühnbach,
+  Pia Manz, Simon Marwitz, Matthias Rehfeldt, Jan Steinbach, Eftim Popovski
+  (Fraunhofer ISI) Reviewed by Lukas Kranzl, Sara Fritz (TUW) Hotmaps Project,
+  D2.3 WP2 Report - Open Data Set for the EU28, 2018 www.hotmaps-project.eu
+- **Link:** https://gitlab.com/hotmaps/building-stock
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains data on European building stock.
 
-``data/retro``
+``data/retro/electricity_taxes_eu.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Eurostat
+- **Link:** https://ec.europa.eu/eurostat/databrowser/view/NRG_PC_204/default/table?lang=en
+- **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
+- **Description:** Electricity prices for household consumers.
 
-``data/transmission_projects``
+``data/retro/{floor_area_missing,u_values_poland}.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** EU Building Stock Observatory
+- **Link:** https://data.europa.eu/euodp/de/data/dataset/building-stock-observatory
+- **License:** `custom <https://data.europa.eu/data/datasets/building-stock-observatory?locale=en>`__
+- **Description:** The EU Building Stock Observatory monitors the energy
+  performance of buildings across Europe. It assesses improvements in the energy
+  efficiency of buildings and the impact of this on the actual energy
+  consumption of the buildings sector overall.
+
+``data/retro/retro_cost_germany.csv``
+
+- **Source:** Institut Wohnen und Umwelt (IWU)
+- **Link:** https://www.iwu.de/forschung/handlungslogiken/kosten-energierelevanter-bau-und-anlagenteile-bei-modernisierung/
+- **License:** unknown
+- **Description:** Contains thermal envelop costs for retrofitting buildings in
+  Germany.
+
+``data/retro/window_assumptions.csv``
+
+- **Source:** ifeu, Fraunhofer IEE and Consentec (2018): Building sector
+  Efficiency: A crucial Component of the Energy Transition. A study commissioned
+  by Agora Energiewende.
+- **Link:** https://www.agora-energiewende.de/en/publications/building-sector-efficiency-a-crucial-component-of-the-energy-transition/
+- **License:** unknown
+- **Description:** Contains data on physical parameters of double- and triple-glazed windows.
+
+``data/transmission_projects/nep``
+
+- **Source:** German Federal Network Agency (Bundesnetzagentur, BNetzA)
+- **Link:** https://data.netzausbau.de/2037-2023/NEP/NEP_2037_2045_Bestaetigung.pdf
+- **License:** unknown
+- **Description:** Contains transmission projects in Europe from German network development plan (Netzentwicklungsplan).
+
+``data/transmission_projects/tyndp2020``
+
+- **Source:** ENTSO-E
+- **Link:** https://tyndp2020-project-platform.azurewebsites.net/projectsheets
+- **License:** unknown
+- **Description:** Contains transmission projects in Europe from ENTSO-E Ten Year Network Development Plan (TYNDP).
 
 ``data/ammonia_plants.csv``
 
@@ -431,17 +495,21 @@ ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030
 
 ``data/era5-annual-HDD-per-country.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Source:** Neumann, Fabian
+- **Link:** https://gist.github.com/fneum/d99e24e19da423038fd55fe3a4ddf875
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains country-level annual sum of heating degree days in
+  Europe. Used for rescaling heat demand in weather years not covered by energy
+  balance statistics.
 
 ``data/era5-annual-runoff-per-country.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
+- **Source:** Neumann, Fabian
+- **Link:** https://gist.github.com/fneum/d99e24e19da423038fd55fe3a4ddf875
 - **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Description:** Contains country-level annual sum of runoff in Europe. Used
+  for rescaling hydro-electricity availability in weather years not covered by
+  EIA hydro-generation statistics.
 
 ``data/gr-e-11.03.02.01.01-cc.csv``
 
@@ -454,28 +522,20 @@ ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030
 
 - **Source:** oemof/demandlib
 - **Link:** https://github.com/oemof/demandlib
-- **License:** MIT
+- **License:** unknown
 - **Description:** Contains standard heat load profiles based on data from BDEW (German Association of Energy and Water Industries).
-
-.. note::
-   The provenance of the data is unclear. We will improve this in the future.
 
 ``data/hydro_capacities.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
-
-.. note::
+.. warning::
    The provenance of the data is unclear. We will improve this in the future.
 
 ``data/links_p_nom.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Wikipedia
+- **Link:** https://en.wikipedia.org/wiki/List_of_HVDC_projects
+- **License:** CC-BY-SA 4.0
+- **Description:** Contains list of HVDC transmission line projects.
 
 ``data/nuclear_p_max_pu.csv``
 
@@ -493,21 +553,27 @@ ec.europa.eu/energy/en/studies/mapping-and-analyses-current-and-future-2020-2030
 
 ``data/switzerland-new_format-all_years.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** Swiss Federal Office of Energy (SFOE)
+- **Link:** https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/energiestatistiken/energieverbrauch-nach-verwendungszweck.html/
+- **License:** `custom <https://www.admin.ch/gov/de/start/rechtliches.html>`__
+- **Description:** Contains energy consumption by sector / application for Switzerland.
 
 ``data/unit_commitment.csv``
 
-- **Source:**
+- **Source:** `DIW
+  <https://www.diw.de/documents/publikationen/73/diw_01.c.424566.de/diw_datadoc_2013-068.pdf>`,
+  `Agora Energiewende
+  <https://www.agora-energiewende.de/fileadmin/Projekte/2017/Flexibility_in_thermal_plants/115_flexibility-report-WEB.pdf>`__,
+  `Schill et al. (2017)
+  <https://static-content.springer.com/esm/art%3A10.1038%2Fnenergy.2017.50/MediaObjects/41560_2017_BFnenergy201750_MOESM196_ESM.pdf>`__,
+  `Martin (2022) <https://zenodo.org/records/6421682>`__
 - **Link:** https://github.com/lisazeyen/hourly_vs_annually/blob/b67ca9222711372d8ab6cd58f9ebe7bc637939bf/scripts/solve_network.py#L554
 - **License:** CC-BY 4.0
 - **Description:** Contains energy balances for Europe.
 
 ``data/biomass_transport_costs_supply_chain{1,2}.csv``
 
-- **Source:**
-- **Link:** https://www.xyz.com/renewables
-- **License:** CC-BY 4.0
-- **Description:** Contains energy balances for Europe.
+- **Source:** European Commission Joint Research Centre (JRC)
+- **Link:** https://publications.jrc.ec.europa.eu/repository/handle/JRC98626
+- **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en#copyright-notice>`__)
+- **Description:** Contains transport costs for different types of biomass.

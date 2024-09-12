@@ -21,6 +21,8 @@ Release Notes
   rules. This simplifies the use of ``mock_snakemake`` and places downloaded
   data more transparently into the ``data`` directory.
 
+* The sources of nearly all data files are now listed in the documentation.
+
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================
 
