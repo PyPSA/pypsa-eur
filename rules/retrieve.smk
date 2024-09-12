@@ -85,18 +85,18 @@ if config["enable"]["retrieve"]:
                 "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
             ),
         output:
-            shapes="data/nuts3/NUTS_RG_03M_2013_3035_LEVL_3.geojson",
+            shapes="data/nuts3/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
         params:
             zip_file="data/nuts3/ref-nuts-2013-03m.geojson.zip",
         run:
             move(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
                 zip_ref.extract(
-                    "NUTS_RG_03M_2013_3035_LEVL_3.geojson",
+                    "NUTS_RG_03M_2013_4326_LEVL_3.geojson",
                     Path(output.shapes).parent,
                 )
             extracted_file = (
-                Path(output.shapes).parent / "NUTS_RG_03M_2013_3035_LEVL_3.geojson"
+                Path(output.shapes).parent / "NUTS_RG_03M_2013_4326_LEVL_3.geojson"
             )
             extracted_file.rename(output.shapes)
             os.remove(params.zip_file)
