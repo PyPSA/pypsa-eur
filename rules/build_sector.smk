@@ -407,7 +407,7 @@ rule build_biomass_potentials:
             keep_local=True,
         ),
         eurostat="data/eurostat/Balances-April2023",
-        nuts2="data/bundle/nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
+        nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),

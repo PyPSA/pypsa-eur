@@ -21,7 +21,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
-        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -79,26 +78,26 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_shapes_data:
+    rule retrieve_nuts_shapes:
         input:
             shapes=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
             ),
         output:
-            shapes="data/nuts3/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         params:
-            zip_file="data/nuts3/ref-nuts-2013-03m.geojson.zip",
+            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
         run:
-            move(input.shapes, params.zip_file)
+            os.rename(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
-                zip_ref.extract(
-                    "NUTS_RG_03M_2013_4326_LEVL_3.geojson",
-                    Path(output.shapes).parent,
-                )
-            extracted_file = (
-                Path(output.shapes).parent / "NUTS_RG_03M_2013_4326_LEVL_3.geojson"
-            )
-            extracted_file.rename(output.shapes)
+                for level in ["LEVL_3", "LEVL_2"]:
+                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
+                    extracted_file = Path(output.shapes_level_3).parent / filename
+                    extracted_file.rename(
+                        getattr(output, f"shapes_level_{level[-1]}")
+                    )
             os.remove(params.zip_file)
 
 
