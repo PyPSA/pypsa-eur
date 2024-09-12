@@ -16,33 +16,51 @@ assuming as an approximation energy content of wood pellets
 
 @author: bw0928
 """
-
-import platform
-
 import pandas as pd
-import tabula as tbl
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
-system = platform.system()
-encoding = "cp1252" if system == "Windows" else "utf-8"
 
 
-def get_countries():
-    pandas_options = dict(
+def get_cost_per_tkm(pdf, datapage, countrypage):
+    """
+    Extracts the cost tables from the JRC report PDF.
+
+    https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf
+    - pdf (str): The filepath of the PDF file containing the data.
+    - datapage (int): The page number of the data table in the PDF.
+    - countrypage (int): The page number of the table containing the country indices in the PDF.
+
+    Returns:
+    - pandas.DataFrame: The data table with the cost per tkm for biomass transport, indexed by country.
+
+    Raises:
+    - ImportError: If tabula-py and platform are not installed.
+    """
+    try:
+        import platform
+
+        import tabula as tbl
+    except:
+        ImportError("Please install tabula-py and platform")
+
+    system = platform.system()
+    encoding = "cp1252" if system == "Windows" else "utf-8"
+
+    # Obtain countries:
+    pandas_options_country = dict(
         skiprows=range(6), header=None, index_col=0, encoding=encoding
     )
 
-    return tbl.read_pdf(
-        str(snakemake.input.transport_cost_data),
-        pages="145",
+    countries = tbl.read_pdf(
+        pdf,
+        pages=countrypage,
         multiple_tables=False,
-        pandas_options=pandas_options,
+        pandas_options=pandas_options_country,
         encoding=encoding,
     )[0].index
 
-
-def get_cost_per_tkm(page, countries):
-    pandas_options = dict(
+    # Obtain data tables
+    pandas_options_data = dict(
         skiprows=range(6),
         header=0,
         sep=" |,",
@@ -52,10 +70,10 @@ def get_cost_per_tkm(page, countries):
     )
 
     sc = tbl.read_pdf(
-        str(snakemake.input.transport_cost_data),
-        pages=page,
+        pdf,
+        pages=datapage,
         multiple_tables=False,
-        pandas_options=pandas_options,
+        pandas_options=pandas_options_data,
         encoding=encoding,
     )[0]
     sc.index = countries
@@ -65,10 +83,16 @@ def get_cost_per_tkm(page, countries):
 
 
 def build_biomass_transport_costs():
-    countries = get_countries()
+    # Optional build from JRC report pdf, requires tabula and java dependencies.
+    # Update `pdf` path to the JRC report if needed.
+    # sc1 = get_cost_per_tkm(pdf = "report.pdf", datapage=146, countrypage=145)
+    # sc2 = get_cost_per_tkm(pdf = "report.pdf", datapage=147, countrypage=145)
 
-    sc1 = get_cost_per_tkm(146, countries)
-    sc2 = get_cost_per_tkm(147, countries)
+    # Use extracted csv from JRC report
+    # https://publications.jrc.ec.europa.eu/repository/bitstream/JRC98626/biomass%20potentials%20in%20europe_web%20rev.pdf
+    # Pages 146 (144) for supply chain 1 and 147 (145) for supply chain 2
+    sc1 = pd.read_csv(snakemake.input.sc1, index_col=0, skiprows=2)
+    sc2 = pd.read_csv(snakemake.input.sc2, index_col=0, skiprows=2)
 
     # take mean of both supply chains
     to_concat = [sc1["EUR/km/ton"], sc2["EUR/km/ton"]]
@@ -79,7 +103,7 @@ def build_biomass_transport_costs():
     transport_costs.name = "EUR/km/MWh"
 
     # rename country names
-    to_rename = {"UK": "GB", "XK": "KO", "EL": "GR"}
+    to_rename = {"UK": "GB", "EL": "GR"}
     transport_costs.rename(to_rename, inplace=True)
 
     # add missing Norway with data from Sweden
