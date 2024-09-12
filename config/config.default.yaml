@@ -450,7 +450,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
     supply_temperature_approximation:
-      max_forward_temperature_today:
+      max_forward_temperature_baseyear:
         FR: 110
         DK: 75
         DE: 109
@@ -459,9 +459,9 @@ sector:
         PL: 130
         SE: 102
         IT: 90
-      min_forward_temperature_today:
+      min_forward_temperature_baseyear:
         DE: 82
-      return_temperature_today:
+      return_temperature_baseyear:
         DE: 58
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
