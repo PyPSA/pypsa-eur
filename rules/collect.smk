@@ -6,7 +6,6 @@
 localrules:
     all,
     cluster_networks,
-    extra_components_networks,
     prepare_elec_networks,
     prepare_sector_networks,
     solve_elec_networks,
@@ -17,15 +16,6 @@ rule cluster_networks:
     input:
         expand(
             resources("networks/base_s_{clusters}.nc"),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-
-
-rule extra_components_networks:
-    input:
-        expand(
-            resources("networks/base_s_{clusters}_elec.nc"),
             **config["scenario"],
             run=config["run"]["name"],
         ),

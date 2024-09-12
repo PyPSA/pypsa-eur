@@ -681,7 +681,6 @@ rule add_electricity:
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
-        geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
         fuel_price=lambda w: (
             resources("monthly_fuel_price.csv")
