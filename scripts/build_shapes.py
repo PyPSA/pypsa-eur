@@ -150,7 +150,6 @@ def country_cover(country_shapes, eez_shapes=None):
 
 def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     df = gpd.read_file(nuts3)
-    df = df.loc[df["STAT_LEVL_"] == 3]
     df["geometry"] = df["geometry"].map(_simplify_polys)
     df = df.rename(columns={"NUTS_ID": "id"})[["id", "geometry"]].set_index("id")
 
