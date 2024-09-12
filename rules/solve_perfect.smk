@@ -135,7 +135,6 @@ def input_networks_make_summary_perfect(w):
     return {
         f"networks_s_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
         + f"postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
-        for simpl in config_provider("scenario", "simpl")(w)
         for clusters in config_provider("scenario", "clusters")(w)
         for opts in config_provider("scenario", "opts")(w)
         for sector_opts in config_provider("scenario", "sector_opts")(w)
