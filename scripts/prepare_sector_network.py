@@ -451,7 +451,7 @@ def update_wind_solar_costs(
 
     if landfall_lengths is None:
         landfall_lengths = {}
-    
+
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -479,8 +479,7 @@ def update_wind_solar_costs(
             submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
             underground_cost = costs.at[tech + "-connection-underground", "fixed"]
             connection_cost = line_length_factor * (
-                distance * submarine_cost
-                + landfall_length * underground_cost
+                distance * submarine_cost + landfall_length * underground_cost
             )
 
             capital_cost = (

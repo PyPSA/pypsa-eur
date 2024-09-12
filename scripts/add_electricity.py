@@ -486,8 +486,7 @@ def attach_wind_and_solar(
                     car + "-connection-underground", "capital_cost"
                 ]
                 connection_cost = line_length_factor * (
-                    distance * submarine_cost
-                    + landfall_length * underground_cost
+                    distance * submarine_cost + landfall_length * underground_cost
                 )
 
                 capital_cost = (

@@ -84,7 +84,9 @@ from scipy.sparse.csgraph import connected_components, dijkstra
 logger = logging.getLogger(__name__)
 
 
-def simplify_network_to_380(n: pypsa.Network, linetype_380: str) -> Tuple[pypsa.Network, pd.Series]:
+def simplify_network_to_380(
+    n: pypsa.Network, linetype_380: str
+) -> Tuple[pypsa.Network, pd.Series]:
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 

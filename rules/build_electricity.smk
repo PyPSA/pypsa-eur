@@ -419,7 +419,11 @@ rule add_transmission_projects_and_dlr:
         s_max_pu=config_provider("lines", "s_max_pu"),
     input:
         network=resources("networks/base.nc"),
-        dlr=lambda w: resources("dlr.nc") if config_provider("lines", "dynamic_line_rating", "activate")(w) else [],
+        dlr=lambda w: (
+            resources("dlr.nc")
+            if config_provider("lines", "dynamic_line_rating", "activate")(w)
+            else []
+        ),
         transmission_projects=lambda w: (
             [
                 resources("transmission_projects/new_buses.csv"),
@@ -597,11 +601,11 @@ rule cluster_network:
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
     input:
+        unpack(input_cluster_network),
         network=resources("networks/base_s.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         busmap=ancient(resources("busmap_base_s.csv")),
-        unpack(input_cluster_network),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)

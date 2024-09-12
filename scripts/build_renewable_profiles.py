@@ -183,7 +183,9 @@ if __name__ == "__main__":
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
         regions = regions.loc[offshore_regions]
-        regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(regions.crs)
+        regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
+            regions.crs
+        )
     else:
         # for onshore regions, the representative point of the region is used
         regions = regions.representative_point()
@@ -255,7 +257,7 @@ if __name__ == "__main__":
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
-        distances = co.distance(regions[bus]).div(1e3) # km
+        distances = co.distance(regions[bus]).div(1e3)  # km
         average_distance.append((distances * (row / row.sum())).sum())
 
     average_distance = xr.DataArray(average_distance, [buses])

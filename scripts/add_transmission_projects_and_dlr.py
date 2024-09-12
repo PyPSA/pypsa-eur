@@ -7,15 +7,13 @@ Add transmission projects and DLR to the network.
 """
 
 import logging
-import pypsa
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import pypsa
 import xarray as xr
-from _helpers import (
-    configure_logging,
-    set_scenario_config,
-)
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +84,6 @@ if __name__ == "__main__":
     if params["transmission_projects"]["enable"]:
 
         attach_transmission_projects(n, snakemake.input.transmission_projects)
-
 
     if params["dlr"]["activate"]:
 
