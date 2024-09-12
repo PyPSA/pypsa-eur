@@ -669,6 +669,7 @@ def add_heating_capacities_installed_before_baseyear(
 def set_defaults(n):
     """
     Set default values for missing values in the network.
+
     Parameters:
         n (pypsa.Network): The network object.
     Returns:
