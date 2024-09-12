@@ -667,7 +667,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -875,7 +874,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

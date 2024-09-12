@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add function ``modify_attribute`` which allows to adjust every attribute of every PyPSA component either by a multiplication with a factor or setting an absolute value. These adjustments can also depend on the planning horizons and are set in the config under ``adjustments``. The function ``maybe_adjust_costs_and_potentials`` is removed.
+
 * Add technology options for methanol, like electricity production from methanol, biomass to methanol, methanol to kerosene, ...
 
 * Change the heating demand from final energy which includes losses in legacy equipment to thermal energy service based on JRC-IDEES. Efficiencies of existing heating capacities are lowered according to the conversion of final energy to thermal energy service. For overnight scenarios or future planning horizon this change leads to a reduction in heat supply.
