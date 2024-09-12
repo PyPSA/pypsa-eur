@@ -540,22 +540,21 @@ def calculate_prices(n, label, prices):
 
 
 def calculate_weighted_prices(n, label, weighted_prices):
-    
+
     carriers = n.buses.carrier.unique()
-    
+
     for carrier in carriers:
         grouper = n.statistics.groupers.get_bus_and_carrier
-        balance = n.statistics.energy_balance(groupby=grouper, aggregate_time=False,
-                                              nice_names=False, bus_carrier=carrier)
-        load = (balance[balance<0].groupby(level=1).sum()).T
-        price = n.buses_t.marginal_price.loc[:, n.buses.carrier==carrier]
-        
-        
+        balance = n.statistics.energy_balance(
+            groupby=grouper, aggregate_time=False, nice_names=False, bus_carrier=carrier
+        )
+        load = (balance[balance < 0].groupby(level=1).sum()).T
+        price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
+
         weighted_prices.loc[carrier, label] = (
             load * price
         ).sum().sum() / load.sum().sum()
 
-        
     return weighted_prices
 
 
@@ -693,7 +692,8 @@ def to_csv(df):
     for key in df:
         df[key].to_csv(snakemake.output[key])
 
-#%%
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
