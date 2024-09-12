@@ -61,13 +61,6 @@ scope to reduce file size, or are not provided through stable URLs elsewhere.
 - **License:** CC-BY 4.0 (`reference <https://www.eea.europa.eu/en/legal-notice#copyright-notice>`__)
 - **Description:** Total GHG emissions and removals in the EU.
 
-``data/bundle/nuts``
-
-- **Source:** GISCO
-- **Link:** https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/
-- **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
-- **Description:** Europe's NUTS administrative regions.
-
 ``data/bundle/emobility``
 
 - **Source:** German Federal Highway Research Institute (BASt)
@@ -126,6 +119,13 @@ Specific retrieval rules
 ========================
 
 Data in this section is retrieved and extracted in rules specified in ``rules/retrieve.smk``.
+
+``data/nuts``
+
+- **Source:** GISCO
+- **Link:** https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/
+- **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
+- **Description:** Europe's NUTS administrative regions.
 
 ``data/ENSPRESO_BIOMASS.xlsx``
 
