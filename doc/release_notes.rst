@@ -25,6 +25,11 @@ PyPSA-Eur 0.13.0 (13th September 2024)
   are set in the config under ``adjustments``.
   (https://github.com/PyPSA/pypsa-eur/pull/1244)
 
+* Add version control to osm-prebuilt:
+  ``config["electricity"]["osm-prebuilt-version"]``. Defaults to latest Zenodo
+  release, i.e. v0.4, Config is only considered when selecting ``osm-prebuilt``
+  as ``base_network``. (https://github.com/PyPSA/pypsa-eur/pull/1293) 
+
 **Changes**
 
 * Use JRC-IDEES thermal energy service instead of final energy demand for
@@ -72,6 +77,12 @@ PyPSA-Eur 0.13.0 (13th September 2024)
 
 **Bugfixes and Compatibility**
 
+* Updated osm-prebuilt network to version 0.4
+  (https://doi.org/10.5281/zenodo.13759222). Added Kosovo (XK) as dedicated
+  region. Fixed major 330 kV line in Moldova (MD)
+  (https://www.openstreetmap.org/way/33360284).
+  (https://github.com/PyPSA/pypsa-eur/pull/1293)
+
 * Made the overdimensioning factor for heating systems specific for
   central/decentral heating, defaults to no overdimensionining for central
   heating and no changes to decentral heating compared to previous version.
@@ -103,10 +114,6 @@ PyPSA-Eur 0.13.0 (13th September 2024)
 
 * The sources of nearly all data files are now listed in the documentation.
   (https://github.com/PyPSA/pypsa-eur/pull/1284)
-
-* Updated osm-prebuilt network to version 0.4: https://doi.org/10.5281/zenodo.13759222 : Added Kosovo (XK) as dedicated region. Fixed major 330 kV line in Moldova (MD) (https://www.openstreetmap.org/way/33360284).
-
-* Add version control to osm-prebuilt: `config["electricity"]["osm-prebuilt-version"]`. Defaults to latest Zenodo release, i.e. v0.4, Config is only considered when selecting `osm-prebuilt` as `base_network`.
 
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================
