@@ -539,7 +539,7 @@ if config["enable"]["retrieve"] and (
         0.1: "12799202",
         0.2: "13342577",
         0.3: "13358976",
-        0.4: "13358976",
+        0.4: "13759222",
     }
 
     # update rule to use the correct version
