@@ -1,4 +1,4 @@
-name: Environment Checker
+name: Fixed-Version Environment Checker
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
 
     - name: Update environment.fixed.yaml
       run: |
-        conda env export --name pypsa-eur > envs/environment.fixed.yaml
+        conda env export --name pypsa-eur --no-builds > envs/environment.fixed.yaml
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
