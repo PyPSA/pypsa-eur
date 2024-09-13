@@ -19,6 +19,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -239,38 +240,6 @@ def determine_emission_sectors(options):
         sectors += ["agriculture"]
 
     return sectors
-
-
-def get(item, investment_year=None):
-    """
-    Check whether item depends on investment year.
-    """
-    if not isinstance(item, dict):
-        return item
-    elif investment_year in item.keys():
-        return item[investment_year]
-    else:
-        logger.warning(
-            f"Investment key {investment_year} not found in dictionary {item}."
-        )
-        keys = sorted(item.keys())
-        if investment_year < keys[0]:
-            logger.warning(f"Lower than minimum key. Taking minimum key {keys[0]}")
-            return item[keys[0]]
-        elif investment_year > keys[-1]:
-            logger.warning(f"Higher than maximum key. Taking maximum key {keys[0]}")
-            return item[keys[-1]]
-        else:
-            logger.warning(
-                "Interpolate linearly between the next lower and next higher year."
-            )
-            lower_key = max(k for k in keys if k < investment_year)
-            higher_key = min(k for k in keys if k > investment_year)
-            lower = item[lower_key]
-            higher = item[higher_key]
-            return lower + (higher - lower) * (investment_year - lower_key) / (
-                higher_key - lower_key
-            )
 
 
 def co2_emissions_year(
@@ -1313,12 +1282,6 @@ def insert_electricity_distribution_grid(n, costs):
     # TODO pop_layout?
     # TODO options?
 
-    cost_factor = options["electricity_distribution_grid_cost_factor"]
-
-    logger.info(
-        f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}"
-    )
-
     nodes = pop_layout.index
 
     n.madd(
@@ -1339,7 +1302,7 @@ def insert_electricity_distribution_grid(n, costs):
         carrier="electricity distribution grid",
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
-        capital_cost=costs.at["electricity distribution grid", "fixed"] * cost_factor,
+        capital_cost=costs.at["electricity distribution grid", "fixed"],
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
@@ -4794,8 +4757,6 @@ if __name__ == "__main__":
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
         )
 
-    maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
-
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)
 
@@ -4820,6 +4781,10 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False) and not first_year_myopic:
         cluster_heat_buses(n)
+
+    maybe_adjust_costs_and_potentials(
+        n, snakemake.params["adjustments"], investment_year
+    )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
