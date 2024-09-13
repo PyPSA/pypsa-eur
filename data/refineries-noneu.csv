@@ -1,0 +1,15 @@
+"Site","Capacity [bbl/day]","Country","Latitude","Longitude","Date","Source","Comment"
+"Modrica",1,"BA",44.95978,18.31294,"29-08-2024","https://modricaoil.com/Content/Read/onama?lang=en-US","the only one"
+"OKTA, Skopje",1,"MK",42.0022,21.65532,"29-08-2024","https://en.wikipedia.org/wiki/OKTA","the only one"
+"Ballsh",20000,"AL",40.60468,19.75231,"29-08-2024","https://www.trade.gov/country-commercial-guides/albania-oil-and-gas",
+"Fier",10000,"AL",40.70095,19.54698,"29-08-2024","https://www.trade.gov/country-commercial-guides/albania-oil-and-gas",
+"Elbasan",5000,"AL",41.08621,20.00762,"29-08-2024","https://www.trade.gov/country-commercial-guides/albania-oil-and-gas",
+"Pančevo",96000,"RS",44.83051,20.68127,"29-08-2024","https://en.wikipedia.org/wiki/Naftna_Industrija_Srbije",
+"Novi Sad",52000,"RS",45.27559,19.86733,"29-08-2024","https://en.wikipedia.org/wiki/Naftna_Industrija_Srbije",
+"Halychyna Refinery (Pryvat), Drohobych",40000,"UA",49.34,23.4851,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",
+"Kherson Refinery (Alliance)",36000,"UA",46.65946,32.57479,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",
+"Kremenchuk Refinery (Ukrtatnafta)",368500,"UA",49.15299,33.4327,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",
+"LINOS Refinery, Lysychansk Oil Refinery (TNK-BP)",320000,"UA",48.84876,38.29979,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",
+"Lviv Oil Research & Refinery",18000,"UA",49.80662,24.04376,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries","capacity estimated based on number of employees"
+"Naftokhimik Prykarpattya (Pryvat) Nadvirna",39000,"UA",48.62873,24.59924,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",
+"Odesa Refinery (LUKOIL)",70000,"UA",46.51189,30.68805,"29-08-2024","https://en.wikipedia.org/wiki/List_of_oil_refineries",

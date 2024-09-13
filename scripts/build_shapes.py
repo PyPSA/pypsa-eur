@@ -106,8 +106,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
 
 
 def countries(naturalearth, country_list):
-    if "RS" in country_list:
-        country_list.append("KV")
 
     df = gpd.read_file(naturalearth)
 
@@ -116,15 +114,12 @@ def countries(naturalearth, country_list):
         df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
     )
     df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
+    df.replace({"name": {"KV": "XK"}}, inplace=True)
 
     df = df.loc[
         df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
     ]
     s = df.set_index("name")["geometry"].map(_simplify_polys).set_crs(df.crs)
-    if "RS" in country_list:
-        s["RS"] = s["RS"].union(s.pop("KV"))
-        # cleanup shape union
-        s["RS"] = Polygon(s["RS"].exterior.coords)
 
     return s
 
@@ -155,7 +150,6 @@ def country_cover(country_shapes, eez_shapes=None):
 
 def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     df = gpd.read_file(nuts3)
-    df = df.loc[df["STAT_LEVL_"] == 3]
     df["geometry"] = df["geometry"].map(_simplify_polys)
     df = df.rename(columns={"NUTS_ID": "id"})[["id", "geometry"]].set_index("id")
 
@@ -195,7 +189,9 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
 
-    df["country"] = df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR"))
+    df["country"] = (
+        df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR", KV="XK"))
+    )
 
     excludenuts = pd.Index(
         (
@@ -217,13 +213,18 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
             "FR9",
         )
     )
-    excludecountry = pd.Index(("MT", "TR", "LI", "IS", "CY", "KV"))
+    excludecountry = pd.Index(("MT", "TR", "LI", "IS", "CY"))
 
     df = df.loc[df.index.difference(excludenuts)]
     df = df.loc[~df.country.isin(excludecountry)]
 
     manual = gpd.GeoDataFrame(
-        [["BA1", "BA", 3871.0], ["RS1", "RS", 7210.0], ["AL1", "AL", 2893.0]],
+        [
+            ["BA1", "BA", 3234.0],
+            ["RS1", "RS", 6664.0],
+            ["AL1", "AL", 2778.0],
+            ["XK1", "XK", 1587.0],
+        ],
         columns=["NUTS_ID", "country", "pop"],
         geometry=gpd.GeoSeries(),
         crs=df.crs,
@@ -234,7 +235,7 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
 
     df = pd.concat([df, manual], sort=False)
 
-    df.loc["ME000", "pop"] = 650.0
+    df.loc["ME000", "pop"] = 617.0
 
     return df
 
