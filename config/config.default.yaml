@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.12.0
+version: 0.13.0
 tutorial: false
 
 logging:
@@ -86,6 +86,7 @@ co2_budget:
 electricity:
   voltages: [200., 220., 300., 380., 500., 750.]
   base_network: osm-prebuilt
+  osm-prebuilt-version: 0.4
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
