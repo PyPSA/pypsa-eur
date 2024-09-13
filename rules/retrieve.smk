@@ -33,7 +33,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     rule retrieve_databundle:
         output:
             expand("data/bundle/{file}", file=datafiles),
-            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -201,7 +200,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
+                "https://zenodo.org/records/13756400/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
