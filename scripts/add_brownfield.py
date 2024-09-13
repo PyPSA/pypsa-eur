@@ -216,6 +216,13 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
+    
+   for link_name_p in n_p.links.index:
+       if "heat pump" in link_name_p:
+            link_name = link_name_p.replace(link_name_p[-4:], str(year))
+            n_p.links_t["efficiency"][link_name_p] = n.links_t["efficiency"][link_name]
+    
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -246,6 +253,8 @@ if __name__ == "__main__":
     add_build_year_to_new_assets(n, year)
 
     n_p = pypsa.Network(snakemake.input.network_p)
+
+    update_heat_pump_efficiency(n, n_p, year)
 
     add_brownfield(n, n_p, year)
 
