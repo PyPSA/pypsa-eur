@@ -8,13 +8,13 @@ Build spatial distribution of industries from Hotmaps database.
 Inputs
 -------
 
-- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``
-- ``resources/pop_layout_elec_s{simpl}_{clusters}.csv``
+- ``resources/regions_onshore_base_s_{clusters}.geojson``
+- ``resources/pop_layout_base_s_{clusters}.csv``
 
 Outputs
 -------
 
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
 
 Description
 -------
@@ -388,7 +388,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",
-            simpl="",
             clusters=128,
         )
     configure_logging(snakemake)

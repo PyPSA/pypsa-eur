@@ -38,15 +38,6 @@ series and potentials using the rule :mod:`build_renewable_profiles`.
 It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, ``offwind-float``, and ``solar`` but **not** ``hydro``
 (since hydroelectric plant profiles are created by a different rule)``
 
-.. _simpl:
-
-The ``{simpl}`` wildcard
-========================
-
-The ``{simpl}`` wildcard specifies number of buses a detailed
-network model should be pre-clustered to in the rule
-:mod:`simplify_network` (before :mod:`cluster_network`).
-
 .. _clusters:
 
 The ``{clusters}`` wildcard
@@ -57,11 +48,6 @@ network model should be reduced to in the rule :mod:`cluster_network`.
 The number of clusters must be lower than the total number of nodes
 and higher than the number of countries. However, a country counts twice if
 it has two asynchronous subnetworks (e.g. Denmark or Italy).
-
-If an `m` is placed behind the number of clusters (e.g. ``100m``),
-generators are only moved to the clustered buses but not aggregated
-by carrier; i.e. the clustered bus may have more than one e.g. wind generator.
-
 .. _ll:
 
 The ``{ll}`` wildcard
