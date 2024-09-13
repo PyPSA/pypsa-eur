@@ -554,11 +554,11 @@ def calculate_weighted_prices(n, label, weighted_prices):
             )
             .groupby(level="bus")
             .sum()
-            .T
+            .T.fillna(0)
         )
 
         price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
-        price = price.reindex(columns=load.columns)
+        price = price.reindex(columns=load.columns, fill_value=1)
 
         weighted_prices.loc[carrier, label] = (
             load * price
