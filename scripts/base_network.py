@@ -729,7 +729,11 @@ def base_network(
             DeprecationWarning,
         )
 
-    logger_str = f"Creating base network using {base_network}" + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "") + "."
+    logger_str = (
+        f"Creating base network using {base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + "."
+    )
     logger.info(logger_str)
 
     buses = _load_buses(buses, europe_shape, config)
@@ -766,7 +770,11 @@ def base_network(
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
-    n.name = f"PyPSA-Eur ({base_network}" + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "") +")"
+    n.name = (
+        f"PyPSA-Eur ({base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + ")"
+    )
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)

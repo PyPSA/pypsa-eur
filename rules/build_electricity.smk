@@ -57,9 +57,11 @@ def input_base_network(w):
     if base_network == "osm-raw":
         inputs = {c: resources(f"osm-raw/build/{c}.csv") for c in components}
     elif base_network == "osm-prebuilt":
-        inputs = {c: f"data/{base_network}/{osm_prebuilt_version}/{c}.csv" for c in components}
+        inputs = {
+            c: f"data/{base_network}/{osm_prebuilt_version}/{c}.csv" for c in components
+        }
     elif base_network == "entsoegridkit":
-        inputs= {c: f"data/{base_network}/{c}.csv" for c in components}
+        inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
         inputs["links_p_nom"] = "data/links_p_nom.csv"
     return inputs

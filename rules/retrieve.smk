@@ -545,11 +545,21 @@ if config["enable"]["retrieve"] and (
     # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage(f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"),
-            converters=storage(f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"),
-            lines=storage(f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"),
-            links=storage(f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"),
-            transformers=storage(f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"),
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
+            ),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
+            transformers=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
+            ),
         output:
             buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
             converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
