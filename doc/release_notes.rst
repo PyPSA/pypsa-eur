@@ -15,15 +15,15 @@ PyPSA-Eur 0.13.0 (13th September 2024)
 
 **Features**
 
-* Add function ``modify_attribute`` which allows to adjust any attribute of any
+* Add new methanol-based technologies: methanol-to-power, methanol reforming,
+  methanol-to-kerosene, methanol-to-olefins/aromatics, biomass-to-methanol with
+  and without carbon capture. (https://github.com/PyPSA/pypsa-eur/pull/1207)
+
+* Add function ``modify_attribute`` to :mod:`prepare_sector_network` which allows to adjust any attribute of any
   PyPSA component either by a multiplication with a factor or setting an
   absolute value. These adjustments can also depend on the planning horizons and
   are set in the config under ``adjustments``.
   (https://github.com/PyPSA/pypsa-eur/pull/1244)
-
-* Add new methanol-based technologies: methanol-to-power, methanol reforming,
-  methanol-to-kerosene, methanol-to-olefins/aromatics, biomass-to-methanol with
-  and without carbon capture. (https://github.com/PyPSA/pypsa-eur/pull/1207)
 
 **Changes**
 
