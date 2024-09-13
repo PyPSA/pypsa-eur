@@ -1,6 +1,7 @@
 ,Unit,Values,Description
 voltages,kV,"Any subset of {200., 220., 300., 380., 500., 750.}",Voltage levels to consider
 base_network, --, "Any value in {'entsoegridkit', 'osm-prebuilt', 'osm-raw}", "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer."
+osm-prebuilt-version, --, "float, any value in range 0.1-0.4", "Choose the version of the prebuilt OSM network. Defaults to latest Zenodo release."
 gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
 co2limit_enable,bool,true or false,Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks..
@@ -26,7 +27,7 @@ custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/
 ,,,
 everywhere_powerplants,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with ``extendable_carriers`` to allow for building conventional powerplants irrespective of existing locations."
 ,,,
-conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
+conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants_s_{clusters}.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,,
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,

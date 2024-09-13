@@ -41,12 +41,12 @@ Inputs
 ------
 
 - ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/elec_s{simpl}_{clusters}.nc``: confer :ref:`cluster`
+- ``networks/base_s_{clusters}.nc``: confer :ref:`cluster`
 
 Outputs
 -------
 
-- ``networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
+- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
 
 Description
 -----------
@@ -64,10 +64,11 @@ import pandas as pd
 import pypsa
 from _helpers import (
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import load_costs, update_transmission_costs
+from add_electricity import load_costs, set_transmission_costs
 from pypsa.descriptors import expand_series
 
 idx = pd.IndexSlice
@@ -75,26 +76,43 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def maybe_adjust_costs_and_potentials(n, adjustments):
+def modify_attribute(n, adjustments, investment_year, modification="factor"):
+    if not adjustments[modification]:
+        return
+    change_dict = adjustments[modification]
+    for c in change_dict.keys():
+        if c not in n.components.keys():
+            logger.warning(f"{c} needs to be a PyPSA Component")
+            continue
+        for carrier in change_dict[c].keys():
+            ind_i = n.df(c)[n.df(c).carrier == carrier].index
+            if ind_i.empty:
+                continue
+            for parameter in change_dict[c][carrier].keys():
+                if parameter not in n.df(c).columns:
+                    logger.warning(f"Attribute {parameter} needs to be in {c} columns.")
+                    continue
+                if investment_year:
+                    factor = get(change_dict[c][carrier][parameter], investment_year)
+                else:
+                    factor = change_dict[c][carrier][parameter]
+                if modification == "factor":
+                    logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+                    n.df(c).loc[ind_i, parameter] *= factor
+                elif modification == "absolute":
+                    logger.info(f"Set {parameter} of {carrier} to {factor} ")
+                    n.df(c).loc[ind_i, parameter] = factor
+                else:
+                    logger.warning(
+                        f"{modification} needs to be either 'absolute' or 'factor'."
+                    )
+
+
+def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
     if not adjustments:
         return
-
-    for attr, carrier_factor in adjustments.items():
-        for carrier, factor in carrier_factor.items():
-            # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-                continue
-            comps = {
-                "p_nom_max": {"Generator", "Link", "StorageUnit"},
-                "e_nom_max": {"Store"},
-                "capital_cost": {"Generator", "Link", "StorageUnit", "Store"},
-                "marginal_cost": {"Generator", "Link", "StorageUnit", "Store"},
-            }
-            for c in n.iterate_components(comps[attr]):
-                sel = c.df.index[c.df.carrier == carrier]
-                c.df.loc[sel, attr] *= factor
-        logger.info(f"changing {attr} for {carrier} by factor {factor}")
+    for modification in adjustments.keys():
+        modify_attribute(n, adjustments, investment_year, modification)
 
 
 def add_co2limit(n, co2limit, Nyears=1.0):
@@ -173,7 +191,7 @@ def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
         + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
     )
 
-    update_transmission_costs(n, costs)
+    set_transmission_costs(n, costs)
 
     if factor == "opt" or float(factor) > 1.0:
         n.lines["s_nom_min"] = lines_s_nom
@@ -300,13 +318,13 @@ def set_line_nom_max(
     n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_network",
-            simpl="",
             clusters="37",
             ll="v1.0",
             opts="Co2L-4H",
