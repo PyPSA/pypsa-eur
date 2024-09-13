@@ -98,7 +98,7 @@ rule build_shapes:
     input:
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3=ancient("data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp"),
+        nuts3=ancient("data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson"),
         nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
         ch_cantons=ancient("data/ch_cantons.csv"),
@@ -469,7 +469,6 @@ rule add_electricity:
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
-        geth_hydro_capacities="data/geth2015_hydro_capacities.csv",
         unit_commitment="data/unit_commitment.csv",
         fuel_price=lambda w: (
             resources("monthly_fuel_price.csv")

@@ -12,7 +12,7 @@ dependencies:
 
 - pypsa>=0.25.1
 - atlite>=0.2.9
-- pypsa>=0.29
+- pypsa>=0.30.2
 - linopy
 - dask
 
@@ -25,7 +25,7 @@ dependencies:
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.15
+- powerplantmatching>=0.5.15,<0.6
 - numpy
 - pandas>=2.1
 - geopandas>=1
@@ -65,4 +65,3 @@ dependencies:
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
   - highspy
-  - tabula-py

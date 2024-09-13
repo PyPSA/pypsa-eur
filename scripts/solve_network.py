@@ -330,8 +330,8 @@ def add_carbon_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -356,8 +356,8 @@ def add_carbon_budget_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -1033,8 +1033,8 @@ def add_co2_atmosphere_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
@@ -1089,8 +1089,8 @@ def extra_functionality(n, snapshots):
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
-    if snakemake.params.custom_extra_functionality:
-        source_path = snakemake.params.custom_extra_functionality
+    if n.params.custom_extra_functionality:
+        source_path = n.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
@@ -1099,7 +1099,7 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, **kwargs):
+def solve_network(n, config, params, solving, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1127,6 +1127,7 @@ def solve_network(n, config, solving, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
+    n.params = params
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
@@ -1201,6 +1202,7 @@ if __name__ == "__main__":
         n = solve_network(
             n,
             config=snakemake.config,
+            params=snakemake.params,
             solving=snakemake.params.solving,
             log_fn=snakemake.log.solver,
         )

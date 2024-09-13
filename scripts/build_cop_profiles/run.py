@@ -53,47 +53,6 @@ from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
-def map_temperature_dict_to_onshore_regions(
-    supply_temperature_by_country: dict,
-    regions_onshore: pd.Index,
-    snapshots: pd.DatetimeIndex,
-) -> xr.DataArray:
-    """
-    Map dictionary of temperatures to onshore regions.
-
-    Parameters:
-    ----------
-    supply_temperature_by_country : dictionary
-        Dictionary with temperatures as values and country keys as keys. One key must be named "default"
-    regions_onshore : pd.Index
-        Names of onshore regions
-    snapshots : pd.DatetimeIndex
-        Time stamps
-
-    Returns:
-    -------
-    xr.DataArray
-        The dictionary values mapped to onshore regions with onshore regions as coordinates.
-    """
-    return xr.DataArray(
-        [
-            [
-                (
-                    supply_temperature_by_country[get_country_from_node_name(node_name)]
-                    if get_country_from_node_name(node_name)
-                    in supply_temperature_by_country.keys()
-                    else supply_temperature_by_country["default"]
-                )
-                for node_name in regions_onshore.values
-            ]
-            # pass both nodes and snapshots as dimensions to preserve correct data structure
-            for _ in snapshots
-        ],
-        dims=["time", "name"],
-        coords={"time": snapshots, "name": regions_onshore},
-    )
-
-
 def get_cop(
     heat_system_type: str,
     heat_source: str,
@@ -154,20 +113,13 @@ if __name__ == "__main__":
     # map forward and return temperatures specified on country-level to onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
     snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-    forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
-        map_temperature_dict_to_onshore_regions(
-            supply_temperature_by_country=snakemake.params.forward_temperature_central_heating,
-            regions_onshore=regions_onshore,
-            snapshots=snapshots,
-        )
+    central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_forward_temperature_profiles
     )
-    return_temperature_central_heating_by_node_and_time: xr.DataArray = (
-        map_temperature_dict_to_onshore_regions(
-            supply_temperature_by_country=snakemake.params.return_temperature_central_heating,
-            regions_onshore=regions_onshore,
-            snapshots=snapshots,
-        )
+    central_heating_return_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_return_temperature_profiles
     )
+
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
@@ -179,8 +131,8 @@ if __name__ == "__main__":
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-                forward_temperature_by_node_and_time=forward_temperature_central_heating_by_node_and_time,
-                return_temperature_by_node_and_time=return_temperature_central_heating_by_node_and_time,
+                forward_temperature_by_node_and_time=central_heating_forward_temperature,
+                return_temperature_by_node_and_time=central_heating_return_temperature,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(

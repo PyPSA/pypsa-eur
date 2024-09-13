@@ -367,6 +367,24 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[43] == "Thermal uses"
     ct_totals["thermal uses residential"] = df.iloc[43]
 
+    df = pd.read_excel(fn_residential, "RES_hh_eff", index_col=0)
+
+    ct_totals["total residential space efficiency"] = df.loc["Space heating"]
+
+    assert df.index[5] == "Diesel oil"
+    ct_totals["oil residential space efficiency"] = df.iloc[5]
+
+    assert df.index[6] == "Natural gas"
+    ct_totals["gas residential space efficiency"] = df.iloc[6]
+
+    ct_totals["total residential water efficiency"] = df.loc["Water heating"]
+
+    assert df.index[18] == "Diesel oil"
+    ct_totals["oil residential water efficiency"] = df.iloc[18]
+
+    assert df.index[19] == "Natural gas"
+    ct_totals["gas residential water efficiency"] = df.iloc[19]
+
     # services
 
     df = pd.read_excel(fn_tertiary, "SER_hh_fec", index_col=0)
@@ -399,6 +417,24 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[46] == "Thermal uses"
     ct_totals["thermal uses services"] = df.iloc[46]
+
+    df = pd.read_excel(fn_tertiary, "SER_hh_eff", index_col=0)
+
+    ct_totals["total services space efficiency"] = df.loc["Space heating"]
+
+    assert df.index[5] == "Diesel oil"
+    ct_totals["oil services space efficiency"] = df.iloc[5]
+
+    assert df.index[7] == "Conventional gas heaters"
+    ct_totals["gas services space efficiency"] = df.iloc[7]
+
+    ct_totals["total services water efficiency"] = df.loc["Hot water"]
+
+    assert df.index[20] == "Diesel oil"
+    ct_totals["oil services water efficiency"] = df.iloc[20]
+
+    assert df.index[21] == "Natural gas"
+    ct_totals["gas services water efficiency"] = df.iloc[21]
 
     # agriculture, forestry and fishing
 
@@ -576,7 +612,8 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
     totals.loc[:, "passenger car efficiency"] /= 1e6
     # convert ktoe to TWh
-    exclude = totals.columns.str.fullmatch("passenger cars")
+    patterns = ["passenger cars", ".*space efficiency", ".*water efficiency"]
+    exclude = totals.columns.str.fullmatch("|".join(patterns))
     totals = totals.copy()
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
@@ -654,10 +691,13 @@ def build_energy_totals(
     eurostat_countries = eurostat.index.unique(0)
     eurostat_years = eurostat.index.unique(1)
 
-    to_drop = ["passenger cars", "passenger car efficiency"]
     new_index = pd.MultiIndex.from_product(
         [countries, eurostat_years], names=["country", "year"]
     )
+
+    efficiency_keywords = ["space efficiency", "water efficiency"]
+    to_drop = idees.columns[idees.columns.str.contains("|".join(efficiency_keywords))]
+    to_drop = to_drop.append(pd.Index(["passenger cars", "passenger car efficiency"]))
 
     df = idees.reindex(new_index).drop(to_drop, axis=1)
 
@@ -1065,9 +1105,11 @@ def build_eurostat_co2(eurostat: pd.DataFrame, year: int = 1990) -> pd.Series:
     specific_emissions = pd.Series(index=eurostat.columns, dtype=float)
 
     # emissions in tCO2_equiv per MWh_th
-    specific_emissions["Solid fuels"] = 0.36  # Approximates coal
-    specific_emissions["Oil (total)"] = 0.285  # Average of distillate and residue
-    specific_emissions["Gas"] = 0.2  # For natural gas
+    specific_emissions["Solid fossil fuels"] = 0.36  # Approximates coal
+    specific_emissions["Oil and petroleum products"] = (
+        0.285  # Average of distillate and residue
+    )
+    specific_emissions["Natural gas"] = 0.2  # For natural gas
 
     return eurostat_year.multiply(specific_emissions).sum(axis=1)
 
@@ -1099,7 +1141,9 @@ def build_co2_totals(
 
     co2 = eea_co2.reindex(countries)
 
-    for ct in pd.Index(countries).intersection(["BA", "RS", "AL", "ME", "MK"]):
+    for ct in pd.Index(countries).intersection(
+        ["BA", "RS", "XK", "AL", "ME", "MK", "UA", "MD"]
+    ):
         mappings = {
             "electricity": (ct, "+", "Electricity & heat generation", np.nan),
             "residential non-elec": (ct, "+", "+", "Residential"),
@@ -1451,10 +1495,10 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     for nrg_name, (code, siec) in nrg_type.items():
 
         # Select energy balance type, rename columns and countries to match IDEES data,
-        # convert TJ to TWh, and drop XK data already since included in RS data
+        # convert TJ to TWh
         col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
         idx_to_rename = {v: k for k, v in idees_rename.items()}
-        drop_geo = ["EU27_2020", "EA20", "XK"]
+        drop_geo = ["EU27_2020", "EA20"]
         nrg_data = eurostat_households.query(
             "nrg_bal == @code and siec == @siec and geo not in @drop_geo and OBS_VALUE > 0"
         ).copy()
@@ -1495,6 +1539,59 @@ def build_transformation_output_coke(eurostat, fn):
     slicer = pd.IndexSlice[:, :, :, "Coke ovens", "Other sources", :]
     df = eurostat.loc[slicer, :].droplevel(level=[2, 3, 4, 5])
     df.to_csv(fn)
+
+
+def build_heating_efficiencies(
+    countries: List[str], idees: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Build heating efficiencies for a set of countries based on IDEES data.
+
+    Parameters
+    ----------
+    countries : List[str]
+        List of country codes.
+    idees : pd.DataFrame
+        DataFrame with IDEES data.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with heating efficiencies.
+
+
+    Notes
+    -----
+    - It fills missing data with average data.
+    """
+
+    years = np.arange(2000, 2022)
+
+    cols = idees.columns[
+        idees.columns.str.contains("space efficiency")
+        ^ idees.columns.str.contains("water efficiency")
+    ]
+
+    heating_efficiencies = pd.DataFrame(idees[cols])
+
+    new_index = pd.MultiIndex.from_product(
+        [countries, heating_efficiencies.index.unique(1)],
+        names=["country", "year"],
+    )
+
+    heating_efficiencies = heating_efficiencies.reindex(index=new_index)
+
+    for col in cols:
+        unstacked = heating_efficiencies[col].unstack()
+
+        fillvalue = unstacked.mean()
+
+        for ct in unstacked.index:
+            mask = unstacked.loc[ct].isna()
+            unstacked.loc[ct, mask] = fillvalue[mask]
+        heating_efficiencies[col] = unstacked.stack()
+
+    return heating_efficiencies
 
 
 # %%
@@ -1552,3 +1649,6 @@ if __name__ == "__main__":
 
     transport = build_transport_data(countries, population, idees)
     transport.to_csv(snakemake.output.transport_name)
+
+    heating_efficiencies = build_heating_efficiencies(countries, idees)
+    heating_efficiencies.to_csv(snakemake.output.heating_efficiencies)
