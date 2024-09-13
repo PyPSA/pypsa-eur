@@ -21,6 +21,10 @@ STACKED = {
 }
 
 
+def find_duplicate_substrings(idx):
+    idx.split("_")
+
+
 def rename_index(df):
     # rename index and drop duplicates
     specific = df.index.map(lambda x: f"{x[1]}({x[0]})")
@@ -29,18 +33,22 @@ def rename_index(df):
     index = specific.where(duplicated, generic)
     df = df.set_axis(index)
     # rename columns and drop duplicates
-    opts = df.columns.get_level_values(-1).str.split("_", expand=True)
-    scenario = df.columns.get_level_values(0)
+    opts = df.columns.get_level_values("opts").str.split("_", expand=True)
+    # drops column level if all values are the same, if not keep unique values
     opts = [
-        opts.get_level_values(level).unique()
+        opts.get_level_values(level).to_list()
         for level in range(opts.nlevels)
-        if not opts.get_level_values(level).duplicated(keep=False).all()
+        if (~opts.get_level_values(level).duplicated(keep="first")).sum() > 1
     ]
-    opts = [""] if not opts else opts  # in case all opts are the same
-    if df.columns.nlevels > 1:
-        columns = pd.MultiIndex.from_product([scenario, opts])
-    # columns = pd.MultiIndex.from_arrays(columns)
-    df.columns = columns.map("\n".join)
+    opts = ["_".join(x) for x in zip(*opts)]
+
+    if df.columns.nlevels == 1:
+        columns = opts
+    else:
+        scenarios = df.columns.get_level_values("scenario")
+        columns = pd.MultiIndex.from_arrays([scenarios, opts])
+        columns = columns.map("\n".join)
+    df.columns = columns
     return df
 
 
@@ -82,17 +90,20 @@ def plot_static_comparison(df, ax, stacked=False, tech_colors=None):
     ax.grid(axis="x")
 
 
-def read_csv(input, output, num_run):
+def read_csv(input, output, single_run):
+    # TODO since always read_csv always assigns column names, even if they do not exist, we drop them later. Maybe there is a better way.
     try:
         # filter required csv to plot the wanted output
         files = list(filter(lambda x: output in x, input))
         # retrieves network labels from folder name
-        if num_run == 1:
+        if single_run:  # only single scenario which can have opts
             network_labels = [file.split("/")[-3] for file in files]
-        else:
+            names = ["opts", "to_drop"]
+        else:  # multiple scenarios which can have different opts
             network_labels = [
                 (file.split("/")[-6], file.split("/")[-3]) for file in files
             ]
+            names = ["scenario", "opts", "to_drop"]
         df = pd.concat(
             [
                 pd.read_csv(f, skiprows=2).set_index(["component", "carrier"])
@@ -100,7 +111,7 @@ def read_csv(input, output, num_run):
             ],
             axis=1,
             keys=network_labels,
-            names=["scenario", "opts", "to_drop"],
+            names=names,
         )
         df.columns = df.columns.droplevel("to_drop")
     except Exception as e:
@@ -115,7 +126,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_statistics_comparison",
-            run="",
+            run="solar",
             country="all",
             carrier="electricity",
         )
@@ -126,9 +137,10 @@ if __name__ == "__main__":
     tech_colors = pd.Series(plotting["tech_colors"]).groupby(rename_techs).first()
     conversion = pd.Series(snakemake.params.statistics)
 
-    all_runs = snakemake.config["run"]["name"]
-    runs = plotting["statistics"].get("scenario_comparison", all_runs)
-    num_run = len(np.atleast_1d(runs))
+    if "run" in snakemake.wildcards.keys():
+        single_run = True
+    else:
+        single_run = False
 
     for output in snakemake.output.keys():
         if "touch" in output:
@@ -136,7 +148,7 @@ if __name__ == "__main__":
                 pass
                 continue
         fig, ax = plt.subplots()
-        df = read_csv(snakemake.input, output, num_run)
+        df = read_csv(snakemake.input, output, single_run)
         if df.empty:
             ax.text(
                 0.5,

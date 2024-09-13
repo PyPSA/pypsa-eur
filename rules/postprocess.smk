@@ -373,6 +373,15 @@ rule plot_statistics_comparison:
         "../scripts/plot_statistics_comparison.py"
 
 
+def get_scnario_copmarison_run(w):
+    run = config_provider("plotting", "statistics")(w).get(
+        "scenario_comparison", config["run"]["name"]
+    )
+    if run == [""] or run == "":
+        run = config["run"]["name"]
+    return run
+
+
 rule plot_statistics_scenario_comparison:
     params:
         plotting=config_provider("plotting"),
@@ -385,9 +394,7 @@ rule plot_statistics_scenario_comparison:
             metric=config_provider("plotting", "statistics")(run).get(
                 "metrics", STATISTICS
             ),
-            run=config_provider("plotting", "statistics")(run).get(
-                "scenario_comparison", config["run"]["name"]
-            ),
+            run=get_scnario_copmarison_run(run),
             allow_missing=True,
         ),
     output:

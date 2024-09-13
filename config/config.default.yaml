@@ -1017,6 +1017,7 @@ plotting:
     countries:
     - all
     carriers:
+    - all
     - electricity
     - heat
     - co2
