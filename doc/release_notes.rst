@@ -28,7 +28,7 @@ PyPSA-Eur 0.13.0 (13th September 2024)
 * Add version control to osm-prebuilt:
   ``config["electricity"]["osm-prebuilt-version"]``. Defaults to latest Zenodo
   release, i.e. v0.4, Config is only considered when selecting ``osm-prebuilt``
-  as ``base_network``. (https://github.com/PyPSA/pypsa-eur/pull/1293) 
+  as ``base_network``. (https://github.com/PyPSA/pypsa-eur/pull/1293)
 
 **Changes**
 
