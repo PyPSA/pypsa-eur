@@ -24,7 +24,7 @@ jobs:
     - name: Update environment.fixed.yaml
       run: |
         conda env export --name pypsa-eur --no-builds > envs/environment.fixed.yaml
-        
+
     - name: Add SPDX header
       run: |
         SPDX_HEADER="# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
