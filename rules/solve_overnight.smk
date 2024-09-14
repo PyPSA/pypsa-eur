@@ -14,21 +14,21 @@ rule solve_sector_network:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output:
         network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
-        + "configs/config.elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
+        + "configs/config.base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
         "shallow"
     log:
         solver=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         memory=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         python=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem_mb"),
@@ -36,7 +36,7 @@ rule solve_sector_network:
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/solve_sector_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

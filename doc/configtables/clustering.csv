@@ -2,16 +2,14 @@
 focus_weights,,,Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries.
 simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
--- algorithm,str,"One of {‘kmeans’, ‘hac’, ‘modularity‘}",
--- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",
 -- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
 -- remove stubs,bool,"{'true','false'}",Controls whether radial parts of the network should be recursively aggregated. Defaults to true.
 -- remove_stubs_across_borders,bool,"{'true','false'}",Controls whether radial parts of the network should be recursively aggregated across borders. Defaults to true.
 cluster_network,,,
 -- algorithm,str,"One of {‘kmeans’, ‘hac’}",
--- feature,str,"Str in the format ‘carrier1+carrier2+...+carrierN-X’, where CarrierI can be from {‘solar’, ‘onwind’, ‘offwind’, ‘ror’} and X is one of {‘cap’, ‘time’}.",
--- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
--- consider_efficiency_classes,bool,"{'true','false'}","Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium)."
+-- hac_features,list,"List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
+exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
+consider_efficiency_classes,bool,"{'true','false'}","Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium)."
 aggregation_strategies,,,
 -- generators,,,
 -- -- {key},str,"{key} can be any of the component of the generator (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."

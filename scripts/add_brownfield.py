@@ -170,14 +170,6 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     using the latest year below or equal to the selected year.
     """
 
-    # spatial clustering
-    cluster_busmap = pd.read_csv(snakemake.input.cluster_busmap, index_col=0).squeeze()
-    simplify_busmap = pd.read_csv(
-        snakemake.input.simplify_busmap, index_col=0
-    ).squeeze()
-    clustermaps = simplify_busmap.map(cluster_busmap)
-    clustermaps.index = clustermaps.index.astype(str)
-
     # temporal clustering
     dr = get_snapshots(params["snapshots"], params["drop_leap_day"])
     snapshotmaps = (
@@ -202,11 +194,6 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
                 .transpose("time", "bus")
                 .to_pandas()
             )
-
-            # spatial clustering
-            weight = ds["weight"].sel(year=closest_year).to_pandas()
-            weight = weight.groupby(clustermaps).transform(normed_or_uniform)
-            p_max_pu = (p_max_pu * weight).T.groupby(clustermaps).sum().T
             p_max_pu.columns = p_max_pu.columns + f" {carrier}"
 
             # temporal_clustering
@@ -222,7 +209,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            simpl="",
             clusters="37",
             opts="",
             ll="v1.0",
