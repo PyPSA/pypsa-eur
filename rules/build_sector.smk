@@ -1124,7 +1124,7 @@ rule prepare_sector_network:
         import_costs="data/imports/results.csv",
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        country_shapes="data/naturalearth/ne_10m_admin_0_countries_deu.shp", # TODO FN: instead of country_centroids use .representative_point()
+        country_shapes="data/naturalearth/ne_10m_admin_0_countries_deu.shp",  # TODO FN: instead of country_centroids use .representative_point()
         # country_centroids=storage(
         #     "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
         #     keep_local=True,
