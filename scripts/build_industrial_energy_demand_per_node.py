@@ -70,11 +70,7 @@ if __name__ == "__main__":
     nodal_production_stacked.index.names = [None, None]
 
     # final energy consumption per node and industry (TWh/a)
-    nodal_df = (
-        (nodal_sector_ratios.multiply(nodal_production_stacked))
-        .T.groupby(level=0)
-        .sum()
-    )
+    nodal_df = nodal_sector_ratios.multiply(nodal_production_stacked).T
 
     rename_sectors = {
         "elec": "electricity",
