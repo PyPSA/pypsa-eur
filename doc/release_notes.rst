@@ -26,6 +26,11 @@ Release Notes
 * Add investment period dependent CO2 sequestration potentials
 
 
+* Added options ``biosng_cc`` and ``biomass_to_liquid_cc`` to separate the base
+  technology from the option to capture carbon from it.
+
+* Added 98% imperfect capture rate of Allam cycle gas turbine.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 

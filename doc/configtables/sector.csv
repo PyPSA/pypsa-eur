@@ -168,7 +168,9 @@ biomass_transport,--,"{true, false}",Add option for transporting solid biomass b
 biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
+biomass_to_liquid_cc,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil with carbon capture
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+biosng_cc,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas with carbon capture
 bioH2,--,"{true, false}",Add option for transforming solid biomass into hydrogen with carbon capture
 municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,

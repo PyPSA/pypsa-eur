@@ -691,8 +691,10 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
   electrobiofuels: false
   biosng: false
+  biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
