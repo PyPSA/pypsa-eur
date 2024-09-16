@@ -68,6 +68,11 @@ Upcoming Release
     defaults to 10 km. Previously the distance to the region's centroid was
     used, which is not practical when the regions are already aggregated.
 
+* Added options ``biosng_cc`` and ``biomass_to_liquid_cc`` to separate the base
+  technology from the option to capture carbon from it.
+
+* Added 98% imperfect capture rate of Allam cycle gas turbine.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
