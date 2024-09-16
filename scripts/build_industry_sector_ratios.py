@@ -762,7 +762,7 @@ def nonmetalic_mineral_products():
 
     # Efficiency changes due to electrification
     key = "Ceramics: Microwave drying and sintering"
-    # the values are zero in new JRC-data -> assume here value from JRC-2015
+    # the values are zero in new JRC-data -> assume here value from JRC-2021
     # eff_elec = s_ued[key] / s_fec[key]
     eff_elec = 11.6 / 26
 
@@ -1540,19 +1540,28 @@ def steel_capacities():
 
     df = pd.DataFrame(columns=columns)
 
-    for country in eu_idees:
+    for country in eu27:
 
-        idees = load_idees_capacities(sector, country)
+        # IDEES reports Greece as EL
+        if country == 'GR':
+            country = 'EL'
+
+        idees = pd.read_excel(
+            f"{snakemake.input.idees}/{country}/JRC-IDEES-2021_Industry_{country}.xlsx",
+            sheet_name=sheet_names[sector],
+            index_col=0,
+            header=0,
+            #usecols=usecols,
+        )
+
         cap = idees[10:12]
-        cap_values = [cap.loc['Integrated steelworks',2015], cap.loc['Electric arc',2015]]
+        cap_values = [cap.loc['Integrated steelworks',2021], cap.loc['Electric arc',2021]]
         df_cap = pd.DataFrame(index = [0,1], columns=columns)
 
         df_cap["tech"] = techs
         # Manually fix the different naming of Greece and United Kingdom
         if country == 'EL':
             df_cap["country"] = ['GR'] * len(df_cap)
-        elif country == 'UK':
-            df_cap["country"] = ['GB'] * len(df_cap)
         else:
             df_cap["country"] = [country] * len(df_cap)
 

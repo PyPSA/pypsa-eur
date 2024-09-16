@@ -39,6 +39,7 @@ from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
+from collections import Counter
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -213,6 +214,32 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
+
+    # steel
+    spatial.steel = SimpleNamespace()
+    spatial.steel.nodes = ["EU steel"] 
+    spatial.steel.locations = ["EU"] 
+
+    # high temperature heat
+    spatial.heat4steel = SimpleNamespace()
+    spatial.heat4steel.nodes = ["EU heat for steel"] 
+    spatial.heat4steel.locations = ["EU"]
+
+
+    # iron
+    spatial.iron = SimpleNamespace()
+    spatial.iron.nodes = ["EU iron"]
+    spatial.iron.locations = ["EU"]
+
+    # sponge iron -> DRI product
+    spatial.sponge_iron = SimpleNamespace()
+    spatial.sponge_iron.nodes = ["EU sponge iron"] 
+    spatial.sponge_iron.locations = ["EU"] 
+
+    # pig iron -> blast furnace product
+    spatial.pig_iron = SimpleNamespace()
+    spatial.pig_iron.nodes =  ["EU pig iron"] 
+    spatial.pig_iron.locations = ["EU"] 
 
     return spatial
 
@@ -615,6 +642,65 @@ def add_carrier_buses(n, carrier, nodes=None):
             marginal_cost=costs.at[carrier, "fuel"],
         )
 
+def carrier4industry(n, carrier_name, nodes):
+    n.add("Carrier", carrier_name)
+
+    n.add("Bus", carrier_name, location=nodes, carrier=carrier_name, unit="MWh_th")
+    
+    # can also be negative
+    n.add(
+        "Store",
+        carrier_name,
+        e_nom_extendable=True,
+        carrier=carrier_name,
+        bus=carrier_name,
+    )
+
+def add_carrier_iron(n, carrier, nodes=None):
+    """
+    Add buses to connect e.g. coal, nuclear and oil plants.
+    """
+    if nodes is None:
+        nodes = vars(spatial)[carrier].nodes
+    location = vars(spatial)[carrier].locations
+
+    # skip if carrier already exists
+    if carrier in n.carriers.index:
+        return
+
+    if not isinstance(nodes, pd.Index):
+        nodes = pd.Index(nodes)
+
+    n.add("Carrier", carrier)
+
+    unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
+
+    n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
+
+    #ADB to add iron
+    if carrier not in ['coal','gas','oil','uranium']:
+        costs.at[carrier, "discount rate"] = 0.04
+
+    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
+    n.madd(
+        "Store",
+        nodes + " Store",
+        bus=nodes,
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier=carrier,
+        capital_cost=0.2
+        * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
+    )
+
+    n.madd(
+        "Generator",
+        nodes,
+        bus=nodes,
+        p_nom_extendable=True,
+        carrier=carrier,
+        marginal_cost=costs.at[carrier, "fuel"],
+    )
 
 # TODO: PyPSA-Eur merge issue
 def remove_elec_base_techs(n):
@@ -4073,12 +4159,17 @@ def add_steel_industry(n, investment_year):
     duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
 
     #ADB for now assign half capacity per node in countries with 2 nodes
+    
     for i in duplicated:
-        capacities_bof.loc[i, 'value'] /= 2
-        capacities_eaf.loc[i, 'value'] /= 2
+        if i == 'GB': # No values for United Kingdom
+            pass
+        else:
+            capacities_bof.loc[i, 'value'] /= 2
+            capacities_eaf.loc[i, 'value'] /= 2
     
     p_nom_bof = pd.DataFrame(index=nodes,columns=(['value']))
     p_nom_eaf = pd.DataFrame(index=nodes,columns=(['value']))
+    
 
     for i in p_nom_bof.index: # index and missing countries should be the same
         if i[:2] not in capacities_bof.index:
@@ -4109,7 +4200,7 @@ def add_steel_industry(n, investment_year):
     p_nom_bof = p_nom_bof * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
     p_nom_eaf = p_nom_eaf * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
 
-    add_carrier_buses(n, "iron")
+    add_carrier_iron(n, "iron")
 
     carrier4industry(n, "steel", spatial.steel.nodes)
     carrier4industry(n, "heat4steel", spatial.heat4steel.nodes)
@@ -4117,7 +4208,7 @@ def add_steel_industry(n, investment_year):
     carrier4industry(n, "pig_iron", spatial.pig_iron.nodes)
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 1
+    prod_constantly = 0
 
     # STEEL
     n.madd(
@@ -4163,7 +4254,7 @@ def add_steel_industry(n, investment_year):
         bus2=spatial.gas.nodes, # in this process is the reducing agent, it is not burnt
         bus3=spatial.co2.process_emissions,
         carrier="direct reduced iron",
-        p_nom = p_nom_eaf * 1.36, # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
+        p_nom = p_nom_eaf * 1.36 , # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
         p_min_pu = prod_constantly, # hot elements cannot be turned off easily
         p_nom_extendable = False,
         efficiency=1/1.36,
@@ -4254,7 +4345,7 @@ def add_steel_industry(n, investment_year):
         bus3=spatial.co2.process_emissions,
         carrier="direct reduced iron",
         p_nom_extendable = True,
-        p_nom_max = max_cap * 1.36,
+        #p_nom_max = max_cap * 1.36,
         p_min_pu = prod_constantly, # hot elements cannot be turned off easily
         capital_cost=145000/nhours/(1/1.36)*0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
         efficiency=1/1.36,
@@ -4275,14 +4366,14 @@ def add_steel_industry(n, investment_year):
         carrier="basic oxygen furnace",
         p_min_pu = prod_constantly, # to avoid using a plant only when electricity is cheap
         p_nom_extendable=True,
-        p_nom_max = max_cap,
+        #p_nom_max = max_cap,
         capital_cost=100000 /nhours/1 * 0.7551 ,
         efficiency=1, #ADB 0.7 kt coke for 1 kt steel
         efficiency2=-524, #MWh electricity per kt coke
         efficiency3=-615, #MWh heat per kt coke
         lifetime=40,
     )
-
+    
     # EAF
 
     
@@ -4315,7 +4406,7 @@ def add_steel_industry(n, investment_year):
         suffix=" heat for steel",
         bus0=spatial.gas.nodes,
         bus1=spatial.heat4steel.nodes,
-        bus2="co2_ets",
+        bus2="co2 atmosphere",
         p_nom_extendable = True,
         carrier="heat4steel",
         capital_cost=0.1,
@@ -4932,17 +5023,19 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 cyclic_state_of_charge=True,
             )
 
+"""
 def forecast_loads_industry(n, load_coeffs):
 
     # This function modifies the electric load for commercial and residential with the desired parameters [0-1]
 
     load_coeffs = pd.read_csv(load_coeffs)
+    print(f"THIS is coeff {load_coeffs}")
     load_coeffs.set_index('Region', inplace=True)
 
     for col_name in n.loads_t.p_set.columns:
         if col_name.split(' ')[0][:2] in load_coeffs.index and col_name.endswith('0'):
             n.loads_t.p_set.loc[:, col_name.split(' ')[0] + ' 0'] *= load_coeffs.loc[col_name.split(' ')[0][:2], str(investment_year)]
-
+"""
 
 # %%
 if __name__ == "__main__":
@@ -5122,6 +5215,7 @@ if __name__ == "__main__":
 
     sanitize_carriers(n, snakemake.config)
 
+    """
     if snakemake.params.endo_industry:
 
         #ADB I filter only the low-voltage residential and commercial electricity, electricity for industry, agriculture, heating and transport should derive from the endogenous optimization of the model
@@ -5134,6 +5228,7 @@ if __name__ == "__main__":
             n,
             snakemake.input.steel_capacities,
         )
+    """
 
     sanitize_locations(n)
 
