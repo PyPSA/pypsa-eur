@@ -10,7 +10,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 .. image:: https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases
     :alt: GitHub release (latest by date including pre-releases)
 
-.. image:: https://github.com/pypsa/pypsa-eur/actions/workflows/ci.yaml/badge.svg
+.. image:: https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg
     :target: https://github.com/PyPSA/pypsa-eur/actions
 
 .. image:: https://readthedocs.org/projects/pypsa-eur/badge/?version=latest

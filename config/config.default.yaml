@@ -648,7 +648,6 @@ sector:
     methanol_reforming: false
     methanol_reforming_cc: false
     methanol_to_kerosene: false
-    methanol_to_olefins: false
     methanol_to_power:
       ccgt: false
       ccgt_cc: false
