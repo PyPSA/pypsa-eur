@@ -533,11 +533,7 @@ def add_carrier_buses(n, carrier, nodes=None):
     )
 
     fossils = ["coal", "gas", "oil", "lignite"]
-    if (
-        options.get("fossil_fuels", True)
-        and carrier in fossils
-        and costs.at[carrier, "fuel"] > 0
-    ):
+    if options.get("fossil_fuels", True) and carrier in fossils:
 
         suffix = ""
 
@@ -3536,7 +3532,7 @@ def add_industry(n, costs):
     )
 
     p_set_methanol = (
-        industrial_demand["methanol"].rename(lambda x: x + " industry methanol")
+        industrial_demand.loc[(nodes, sectors_b), "methanol"].rename(lambda x: x + " industry methanol")
         / nhours
     )
 
@@ -3807,8 +3803,8 @@ def add_industry(n, costs):
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
-        industrial_demand.loc[nodes, "process emission from feedstock"].sum()
-        / industrial_demand.loc[nodes, "naphtha"].sum()
+        industrial_demand.loc[(nodes, sectors_b), "process emission from feedstock"].sum()
+        / industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
     )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
 
