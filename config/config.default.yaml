@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.12.0
+version: 0.13.0
 tutorial: false
 
 logging:
@@ -37,8 +37,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  simpl:
-  - ''
   ll:
   - vopt
   clusters:
@@ -88,6 +86,7 @@ co2_budget:
 electricity:
   voltages: [200., 220., 300., 380., 500., 750.]
   base_network: osm-prebuilt
+  osm-prebuilt-version: 0.4
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -187,6 +186,7 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-dc:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -204,6 +204,7 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-float:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -224,6 +225,7 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   solar:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -300,6 +302,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
+  length_factor: 1.25
   under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
@@ -334,6 +337,9 @@ load:
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
   supplement_synthetic: true
+  distribution_key:
+    gdp: 0.6
+    population: 0.4
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -600,7 +606,7 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
@@ -642,7 +648,6 @@ sector:
     methanol_reforming: false
     methanol_reforming_cc: false
     methanol_to_kerosene: false
-    methanol_to_olefins: false
     methanol_to_power:
       ccgt: false
       ccgt_cc: false
@@ -662,7 +667,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -689,8 +693,10 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
   electrobiofuels: false
   biosng: false
+  biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
@@ -849,16 +855,15 @@ clustering:
   focus_weights: false
   simplify_network:
     to_substations: false
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time
-    exclude_carriers: []
     remove_stubs: true
-    remove_stubs_across_borders: true
+    remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
-    feature: solar+onwind-time
-    exclude_carriers: []
-    consider_efficiency_classes: false
+    hac_features:
+    - wnd100m
+    - influx_direct
+  exclude_carriers: []
+  consider_efficiency_classes: false
   aggregation_strategies:
     generators:
       committable: any
@@ -871,7 +876,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

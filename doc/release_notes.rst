@@ -8,26 +8,175 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
+Upcoming Release
+================
 
 
-* Add technology options for methanol, like electricity production from methanol, biomass to methanol, methanol to kerosene, ...
+* Rearranged workflow to cluster the electricity network before calculating
+  renewable profiles and adding further electricity system components.
 
-* Change the heating demand from final energy which includes losses in legacy equipment to thermal energy service based on JRC-IDEES. Efficiencies of existing heating capacities are lowered according to the conversion of final energy to thermal energy service. For overnight scenarios or future planning horizon this change leads to a reduction in heat supply.
+  - Moved rules ``simplify_network`` and ``cluster_network`` before
+    ``add_electricity`` and ``build_renewable_profiles``.
 
-* Updated district heating supply temperatures based on `Euroheat's DHC Market Outlook 2024<https://api.euroheat.org/uploads/Market_Outlook_2024_beeecd62d4.pdf>`__ and `AGFW-Hauptbericht 2022 <https://www.agfw.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjU2MjI2MTUsImV4cCI6MTcyNTcxMjYxNSwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW4vdXNlcl91cGxvYWQvWmFobGVuX3VuZF9TdGF0aXN0aWtlbi9IYXVwdGJlcmljaHRfMjAyMi9BR0ZXX0hhdXB0YmVyaWNodF8yMDIyLnBkZiIsInBhZ2UiOjQzNn0.Bhma3PKg9uJnC57Ixi2p9STW5-II9VXPTDXS544M208/AGFW_Hauptbericht_2022.pdf>`__. `min_forward_temperature` and `return_temperature` (not given by Euroheat) are extrapolated based on German values.
+  - Split rule ``build_renewable_profiles`` into two separate rules,
+    ``determine_availability_matrix`` for land eligibility analysis and
+    ``build_renewable_profiles``, which now only computes the profiles and total
+    potentials from the pre-computed availability matrix.
 
-* Made the overdimensioning factor for heating systems specific for central/decentral heating, defaults to no overdimensionining for central heating and no changes to decentral heating compared to previous version.
+  - Removed variables ``weight``, ``underwater_fraction``, and ``potential`` from the
+    output of ``build_renewable_profiles`` as it is no longer needed.
 
-* bugfix: The carrier of stores was silently overwritten by their bus_carrier as a side effect when building the co2 constraints
+  - HAC-clustering is now based on wind speeds and irradiation time series
+    rather than capacity factors of wind and solar power plants.
 
-* bugfix: The oil generator was incorrectly dropped when the config `oil_refining_emissions` was greater than zero. This was the default behaviour in 0.12.0.
+  - Added new rule ``build_hac_features`` that aggregates cutout weather data to
+    base regions in preparation for ``cluster_network``.
+
+  - Removed ``{simpl}`` wildcard and all associated code of the ``m`` suffix of
+    the ``{cluster}`` wildcard. This means that the option to pre-cluster the
+    network in ``simplify_network`` was removed. It will be superseded by
+    clustering renewable profiles and potentials within clustered regions by
+    resource classes soon.
+
+  - Added new rule ``add_transmission_projects_and_dlr`` which adds the outputs
+    from ``build_line_rating`` and ``build_transmission_projects`` to the output
+    of ``base_network``.
+
+  - The rule ``add_extra_components`` was integrated into ``add_electricity``
+
+  - Added new rule ``build_electricity_demand_base`` to determine the load
+    distribution of the substations in the base network (which was previously
+    done in ``add_electricity``). This time series is used as weights for
+    kmeans-clustering in ``cluster_network`` and is later added to the network in
+    ``add_electricity`` in aggregated form.
+
+  - The weights of the kmeans clustering algorithm are now exclusively based on
+    the load distribution. Previously, they also included the distribution of
+    thermal capacity.
+
+  - Since the networks no longer start with the whole electricity system added
+    pre-clustering, the files have been renamed from ``elec...nc`` to
+    ``base...nc`` to identify them as derivatives of ``base.nc``.
+
+  - The scripts ``simplify_network.py`` and ``cluster_network.py`` were
+    simplified to become less nested and profited from the removed need to deal
+    with cost data.
+
+  - New configuration options to calculate connection costs of offshore wind
+    plants. Offshore connection costs are now calculated based on the underwater
+    distance to the shoreline plus a configurable ``landfall_length`` which
+    defaults to 10 km. Previously the distance to the region's centroid was
+    used, which is not practical when the regions are already aggregated.
+
+* Added options ``biosng_cc`` and ``biomass_to_liquid_cc`` to separate the base
+  technology from the option to capture carbon from it.
+
+* Added 98% imperfect capture rate of Allam cycle gas turbine.
+
+PyPSA-Eur 0.13.0 (13th September 2024)
+======================================
+
+**Features**
+
+* Add new methanol-based technologies: methanol-to-power, methanol reforming,
+  methanol-to-kerosene, methanol-to-olefins/aromatics, biomass-to-methanol with
+  and without carbon capture. (https://github.com/PyPSA/pypsa-eur/pull/1207)
+
+* Add function ``modify_attribute`` to :mod:`prepare_sector_network` which allows to adjust any attribute of any
+  PyPSA component either by a multiplication with a factor or setting an
+  absolute value. These adjustments can also depend on the planning horizons and
+  are set in the config under ``adjustments``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1244)
+
+* Add version control to osm-prebuilt:
+  ``config["electricity"]["osm-prebuilt-version"]``. Defaults to latest Zenodo
+  release, i.e. v0.4, Config is only considered when selecting ``osm-prebuilt``
+  as ``base_network``. (https://github.com/PyPSA/pypsa-eur/pull/1293)
+
+**Changes**
+
+* Use JRC-IDEES thermal energy service instead of final energy demand for
+  buildings heating demand. Final energy includes losses in legacy equipment.
+  Efficiencies of existing heating capacities are lowered according to the
+  conversion of final energy to thermal energy service. For overnight scenarios
+  or future planning horizons this change leads to a reduction in heat supply
+  and, therefore, system cost. (https://github.com/PyPSA/pypsa-eur/pull/1255)
+
+* Updated district heating supply temperatures based on `Euroheat's DHC Market
+  Outlook
+  2024<https://api.euroheat.org/uploads/Market_Outlook_2024_beeecd62d4.pdf>`__
+  and `AGFW-Hauptbericht 2022
+  <https://www.agfw.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjU2MjI2MTUsImV4cCI6MTcyNTcxMjYxNSwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW4vdXNlcl91cGxvYWQvWmFobGVuX3VuZF9TdGF0aXN0aWtlbi9IYXVwdGJlcmljaHRfMjAyMi9BR0ZXX0hhdXB0YmVyaWNodF8yMDIyLnBkZiIsInBhZ2UiOjQzNn0.Bhma3PKg9uJnC57Ixi2p9STW5-II9VXPTDXS544M208/AGFW_Hauptbericht_2022.pdf>`__.
+  ``min_forward_temperature`` and ``return_temperature`` (not given by Euroheat) are
+  extrapolated based on German values. (https://github.com/PyPSA/pypsa-eur/pull/1264)
+
+* Refined implementation of unsustainable biomass.
+  (https://github.com/PyPSA/pypsa-eur/pull/1275,
+  https://github.com/PyPSA/pypsa-eur/pull/1271,
+  https://github.com/PyPSA/pypsa-eur/pull/1254,
+  https://github.com/PyPSA/pypsa-eur/pull/1266)
+
+* Biomass transport costs are now stored in the ``data`` folder. Extraction from
+  PDF file is skipped. (https://github.com/PyPSA/pypsa-eur/pull/1272)
+
+* Increased the resolution of NUTS3 and NUTS2 shapes from 1:60M to 1:3M. The
+  shapefiles are now directly retrieved with the ``retrieve_nuts_shapes`` rule.
+  (https://github.com/PyPSA/pypsa-eur/pull/1286)
 
 * Uses of Snakemake's ``storage()`` function are integrated into retrieval
   rules. This simplifies the use of ``mock_snakemake`` and places downloaded
   data more transparently into the ``data`` directory.
+  (https://github.com/PyPSA/pypsa-eur/pull/1274)
+
+* Updated data bundle to remove files which are now directly downloaded in the
+  rules. This reduces the size of the data bundle.
+  (https://github.com/PyPSA/pypsa-eur/pull/1291)
+
+* Update NEP transmission projects to include `Startnetz`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1263)
+
+* Auto-update ``envs/environment.fixed.yaml``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1281)
+
+**Bugfixes and Compatibility**
+
+* Updated osm-prebuilt network to version 0.4
+  (https://doi.org/10.5281/zenodo.13759222). Added Kosovo (XK) as dedicated
+  region. Fixed major 330 kV line in Moldova (MD)
+  (https://www.openstreetmap.org/way/33360284).
+  (https://github.com/PyPSA/pypsa-eur/pull/1293)
+
+* Made the overdimensioning factor for heating systems specific for
+  central/decentral heating, defaults to no overdimensionining for central
+  heating and no changes to decentral heating compared to previous version.
+  (https://github.com/PyPSA/pypsa-eur/pull/1259)
+
+* The carrier of stores was previously silently overwritten by their bus'
+  carrier when building global emission constraints.
+  (https://github.com/PyPSA/pypsa-eur/pull/1262)
+
+* The fossil oil generator was incorrectly dropped when ``sector:
+  oil_refining_emissions`` was greater than zero. (https://github.com/PyPSA/pypsa-eur/pull/1257)
+
+* Correctly account for the CO2 emissions of municipal solid waste.
+  (https://github.com/PyPSA/pypsa-eur/pull/1256)
+
+* Added a missing space in the component name of retrofitted gas boilers.
+  (https://github.com/PyPSA/pypsa-eur/pull/1289)
+
+* Global Energy Monitor datasets are temporarily mirrored on alternative
+  servers. (https://github.com/PyPSA/pypsa-eur/pull/1265)
+
+* Fixed plotting of hydrogen networks with myopic pathway optimisation.
+  (https://github.com/PyPSA/pypsa-eur/pull/1270)
+
+* Fixed internet connection check.
+  (https://github.com/PyPSA/pypsa-eur/pull/1280)
+
+**Documentation**
 
 * The sources of nearly all data files are now listed in the documentation.
+  (https://github.com/PyPSA/pypsa-eur/pull/1284)
 
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================

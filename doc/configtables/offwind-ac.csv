@@ -15,3 +15,4 @@ max_depth,m,float,"Maximum sea water depth at which wind turbines can be build. 
 min_shore_distance,m,float,"Minimum distance to the shore below which wind turbines cannot be build. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential."
 max_shore_distance,m,float,"Maximum distance to the shore above which wind turbines cannot be build. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential."
 clip_p_max_pu,p.u.,float,"To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero."
+landfall_length,km,float,"Fixed length of the cable connection that is onshorelandfall in km. If 'centroid', the length is calculated as the distance to centroid of the onshore bus."
