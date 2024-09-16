@@ -15,7 +15,30 @@
 
 fast:
   sector:
-    car_reg_factor: 1
+    car_reg_factor:
+      2025: 0.5  # level in 2023 0.16
+      2030: 1
+      2035: 1
+      2040: 1.2
+      2050: 1.2
+    vary:
+      Link:
+        land transport EV heavy:
+          lifetime: 0.6
+        BEV charger heavy:
+          lifetime: 0.6
+        BEV charger light:
+          lifetime: 0.6
+        land transport EV light:
+          lifetime: 0.6
+        land transport fuel cell heavy:
+          lifetime: 0.6
+        land transport fuel cell light:
+          lifetime: 0.6
+        land transport oil heavy:
+          lifetime: 0.6
+        land transport oil light:
+          lifetime: 0.6
 
 base:
   sector:
