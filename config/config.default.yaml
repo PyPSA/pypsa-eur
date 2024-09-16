@@ -1255,11 +1255,8 @@ plotting:
     rural biomass boiler: '#a1a066'
     urban decentral biomass boiler: '#b0b87b'
     biomass to liquid: '#32CD32'
-<<<<<<< HEAD
     biomass to liquid CC: '#32CDaa'
-=======
     unsustainable solid biomass: '#998622'
->>>>>>> master
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
