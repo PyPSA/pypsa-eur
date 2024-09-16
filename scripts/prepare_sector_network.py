@@ -3532,7 +3532,9 @@ def add_industry(n, costs):
     )
 
     p_set_methanol = (
-        industrial_demand.loc[(nodes, sectors_b), "methanol"].rename(lambda x: x + " industry methanol")
+        industrial_demand.loc[(nodes, sectors_b), "methanol"].rename(
+            lambda x: x + " industry methanol"
+        )
         / nhours
     )
 
@@ -3803,7 +3805,9 @@ def add_industry(n, costs):
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
-        industrial_demand.loc[(nodes, sectors_b), "process emission from feedstock"].sum()
+        industrial_demand.loc[
+            (nodes, sectors_b), "process emission from feedstock"
+        ].sum()
         / industrial_demand.loc[(nodes, sectors_b), "naphtha"].sum()
     )
     emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
