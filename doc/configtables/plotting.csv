@@ -9,8 +9,11 @@ costs_threshold,bn Euro,float,Threshold below which technologies will not be sho
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.
 energy_min,TWh,float,Lower y-axis limit in energy bar plots.
 energy_threshold,TWh,float,Threshold below which technologies will not be shown in energy bar plots.
-countries,--,[str],List of countries you want to plot in your statistics figures. Default is all coutries but also single countries can be defined like ``DE``.
-carriers,--,[str],Carrier you want to plot from in your statistics figures. This carrier must be an available bus carrier in your network or substring of a carrier or a defined carrier group.
+countries,--,[str],List of countries you want to create the statistcs for. Statistics includes csv files and figures. Default is all coutries but also single countries can be defined like ``DE``.
+carriers,--,[str],"Carrier you want to create the statistcs for, i.e. csv files and figures. This carrier must be an available bus carrier in your network or substring of a carrier or a defined carrier group."
 carrier_groups,--,str -> carrier,Mapping from ``carrier_groups`` to individual bus carriers in the network.
+metrics,--,[str],"List of metrics you want to create your statistics for. Default is `energy_balance' and 'total_cost'. However, you can choose other metrics from the list below:",
+comparison_folder, --,str,"Folder name where the scenario comparison statistics are stored. If this is empty, no senario comparison plots will be generated Defaultis an empty string ''."
+scenario_comparison,--,[str],"List of scenarios you want to compare. If the list is empty, all scenarios from ``run:name`` are compared. Only works, when a ``comparison_folder`` is defined. Default is an empty list."
 nice_names,--,str -> str,Mapping from network ``carrier`` to a more readable name.
 tech_colors,--,carrier -> HEX colour code,Mapping from network ``carrier`` to a colour (`HEX colour code <https://en.wikipedia.org/wiki/Web_colors#Hex_triplet>`_).
