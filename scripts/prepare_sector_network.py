@@ -3273,8 +3273,6 @@ def add_industry(n, costs):
     endogenous_sectors = []
     if options["endogenous_steel"]:
         endogenous_sectors += ["DRI + Electric arc"]
-    if options["endogenous_hvc"]:
-        endogenous_sectors += ["HVC"]
     sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
         endogenous_sectors
     )
@@ -3773,108 +3771,6 @@ def add_industry(n, costs):
         p_min_pu=options.get("min_part_load_fischer_tropsch", 0),
         lifetime=costs.at["Fischer-Tropsch", "lifetime"],
     )
-
-    if options["endogenous_hvc"]:
-        logger.info("Adding endogenous primary high-value chemicals demand in tonnes.")
-
-        n.add(
-            "Bus",
-            "EU HVC",
-            location="EU",
-            carrier="HVC",
-            unit="t",
-        )
-
-        p_set = demand_factor * industrial_production["HVC"].sum() / nhours
-
-        n.add(
-            "Load",
-            "EU HVC",
-            bus="EU HVC",
-            carrier="HVC",
-            p_set=p_set,
-        )
-
-        # n.add(
-        #     "Store",
-        #     "EU HVC Store",
-        #     bus="EU HVC",
-        #     e_nom_extendable=True,
-        #     e_cyclic=True,
-        #     carrier="HVC",
-        # )
-
-        tech = "methanol-to-olefins/aromatics"
-
-        logger.info(f"Adding {tech}.")
-
-        p_nom_max = (
-            demand_factor
-            * industrial_production.loc[nodes, "HVC"]
-            / nhours
-            * costs.at[tech, "methanol-input"]
-        )
-
-        co2_release = (
-            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
-            + costs.at["methanolisation", "carbondioxide-input"]
-        )
-
-        n.madd(
-            "Link",
-            nodes,
-            suffix=f" {tech}",
-            carrier=tech,
-            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
-            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
-            p_nom_extendable=True,
-            bus0=spatial.methanol.nodes,
-            bus1="EU HVC",
-            bus2=nodes,
-            bus3="co2 atmosphere",
-            p_min_pu=1,
-            p_nom_max=p_nom_max.values,
-            efficiency=1 / costs.at[tech, "methanol-input"],
-            efficiency2=-costs.at[tech, "electricity-input"]
-            / costs.at[tech, "methanol-input"],
-            efficiency3=co2_release,
-        )
-
-        tech = "electric steam cracker"
-
-        logger.info(f"Adding {tech}.")
-
-        p_nom_max = (
-            demand_factor
-            * industrial_production.loc[nodes, "HVC"]
-            / nhours
-            * costs.at[tech, "naphtha-input"]
-        )
-
-        co2_release = (
-            costs.at[tech, "carbondioxide-output"] / costs.at[tech, "naphtha-input"]
-            + costs.at["oil", "CO2 intensity"]
-        )
-
-        n.madd(
-            "Link",
-            nodes,
-            suffix=f" {tech}",
-            carrier=tech,
-            capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "naphtha-input"],
-            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "naphtha-input"],
-            p_nom_extendable=True,
-            bus0=spatial.oil.nodes,
-            bus1="EU HVC",
-            bus2=nodes,
-            bus3="co2 atmosphere",
-            p_min_pu=1,
-            p_nom_max=p_nom_max.values,
-            efficiency=1 / costs.at[tech, "naphtha-input"],
-            efficiency2=-costs.at[tech, "electricity-input"]
-            / costs.at[tech, "naphtha-input"],
-            efficiency3=co2_release,
-        )
 
     # naphtha
     demand_factor = options.get("HVC_demand_factor", 1)

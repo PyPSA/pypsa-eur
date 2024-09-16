@@ -233,8 +233,6 @@ if __name__ == "__main__":
     endogenous_sectors = []
     if options["endogenous_steel"]:
         endogenous_sectors += ["DRI + Electric arc"]
-    if options["endogenous_hvc"]:
-        endogenous_sectors += ["HVC"]
     sectors_b = ~industrial_demand.index.get_level_values("sector").isin(
         endogenous_sectors
     )

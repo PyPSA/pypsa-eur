@@ -565,9 +565,6 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
-  shipping_ammonia_efficiency: 0.40
-  shipping_lng_efficiency: 0.44
-  shipping_lh2_efficiency: 0.44
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
@@ -698,12 +695,11 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biomass_to_liquid_cc: false
-  biosng: false
-  bioH2: false
-  biosng_cc: false
   electrobiofuels: false
+  biosng: false
+  biosng_cc: false
+  bioH2: false
   endogenous_steel: false
-  endogenous_hvc: false
   relocation_steel: false
   flexibility_steel: false
   relocation_ammonia: false
