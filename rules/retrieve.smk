@@ -534,24 +534,38 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
+    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
+    osm_prebuilt_version = {
+        0.1: "12799202",
+        0.2: "13342577",
+        0.3: "13358976",
+        0.4: "13759222",
+    }
 
+    # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage("https://zenodo.org/records/13358976/files/buses.csv"),
-            converters=storage(
-                "https://zenodo.org/records/13358976/files/converters.csv"
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
             ),
-            lines=storage("https://zenodo.org/records/13358976/files/lines.csv"),
-            links=storage("https://zenodo.org/records/13358976/files/links.csv"),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
             transformers=storage(
-                "https://zenodo.org/records/13358976/files/transformers.csv"
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
             ),
         output:
-            buses="data/osm-prebuilt/buses.csv",
-            converters="data/osm-prebuilt/converters.csv",
-            lines="data/osm-prebuilt/lines.csv",
-            links="data/osm-prebuilt/links.csv",
-            transformers="data/osm-prebuilt/transformers.csv",
+            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
+            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
+            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
+            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
+            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
