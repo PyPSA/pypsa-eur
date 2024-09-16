@@ -38,8 +38,6 @@ from build_transport_demand import transport_degree_factor
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from definitions.heat_system_type import HeatSystemType
-from geopy.extra.rate_limiter import RateLimiter
-from geopy.geocoders import Nominatim
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -47,11 +45,6 @@ from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 from shapely.geometry import Point
-
-cc = coco.CountryConverter()
-
-geolocator = Nominatim(user_agent=str(uuid.uuid4()), timeout=10)
-geocode = RateLimiter(geolocator.geocode, min_delay_seconds=2)
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -4322,20 +4315,10 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         .to_pandas()
     )
 
-    def _coordinates(ct):
-        iso2 = ct.split("-")[0]
-        if iso2 in country_centroids.index:
-            return country_centroids.loc[iso2, ["longitude", "latitude"]].values
-        else:
-            query = cc.convert(iso2, to="name")
-            loc = geocode(dict(country=query), language="en")
-            return [loc.longitude, loc.latitude]
-
-    exporters = pd.DataFrame(
-        {ct: _coordinates(ct) for ct in cf["exporters"]}, index=["x", "y"]
-    ).T
-    geometry = gpd.points_from_xy(exporters.x, exporters.y)
-    exporters = gpd.GeoDataFrame(exporters, geometry=geometry, crs=4326)
+    exporters_iso2 = [e.split("-")[0] for e in cf["exporters"]] # noqa
+    exporters = country_shapes.query(
+        "ISO_A2 in @exporters_iso2"
+    ).set_index("ISO_A2").representative_point()
 
     import_links = {}
     a = regions.representative_point().to_crs(DISTANCE_CRS)
@@ -4345,14 +4328,14 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     a = a.loc[~a.index.str[:2].isin(forbidden_hvdc_importers)]
 
     for ct in exporters.index:
-        b = exporters.to_crs(DISTANCE_CRS).loc[ct].geometry
+        b = exporters.to_crs(DISTANCE_CRS)[ct]
         d = a.distance(b)
         import_links[ct] = (
             d.where(d < d.quantile(cf["distance_threshold"])).div(1e3).dropna()
         )  # km
     import_links = pd.concat(import_links)
     import_links.loc[
-        import_links.index.get_level_values(0).str.contains("KZ|CN")
+        import_links.index.get_level_values(0).str.contains("KZ|CN|MN|UZ")
     ] *= 1.2  # proxy for detour through Caucasus
 
     # xlinks
@@ -4381,7 +4364,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     buses_i = exporters.index
 
-    n.madd("Bus", buses_i, **exporters.drop("geometry", axis=1))
+    n.madd("Bus", buses_i, x=exporters.x, y=exporters.y)
 
     efficiency = cf["efficiency_static"] * cf["efficiency_per_1000km"] ** (
         import_links.values / 1e3
@@ -5210,9 +5193,7 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-    country_centroids = pd.read_csv(
-        snakemake.input.country_centroids[0], index_col="ISO"
-    )
+    country_shapes = gpd.read_file(snakemake.input.country_shapes)
 
     landfall_lengths = {
         tech: settings["landfall_length"]
