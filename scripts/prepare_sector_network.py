@@ -762,7 +762,7 @@ def add_allam_gas(n, costs):
         bus0=spatial.gas.df.loc[nodes, "nodes"].values,
         bus1=nodes,
         bus2=spatial.co2.df.loc[nodes, "nodes"].values,
-        bus2="co2 atmosphere",
+        bus3="co2 atmosphere",
         carrier="allam gas",
         p_nom_extendable=True,
         capital_cost=costs.at["allam", "fixed"] * costs.at["allam", "efficiency"],
