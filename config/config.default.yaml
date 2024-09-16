@@ -614,19 +614,6 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  methanol:
-    regional_methanol_demand: false
-    methanol_reforming: false
-    methanol_reforming_cc: false
-    methanol_to_kerosene: false
-    methanol_to_olefins: false
-    methanol_to_power:
-      ccgt: false
-      ccgt_cc: false
-      ocgt: false
-      allam: false
-    biomass_to_methanol: false
-    biomass_to_methanol_cc: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -659,6 +646,19 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  methanol:
+    regional_methanol_demand: false
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: false
+    methanol_to_olefins: false
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: false
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -698,8 +698,6 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biomass_to_liquid_cc: false
-  biomass_to_methanol: false
-  biomass_to_methanol_cc: false
   biosng: false
   bioH2: false
   biosng_cc: false
@@ -708,6 +706,8 @@ sector:
   endogenous_hvc: false
   relocation_steel: false
   flexibility_steel: false
+  relocation_ammonia: false
+  flexibility_ammonia: false
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh
@@ -1199,10 +1199,6 @@ plotting:
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
     allam gas: '#B98F76'
-    allam methanol: '#B98F76'
-    CCGT methanol: '#B98F76'
-    CCGT methanol CC: '#B98F76'
-    OCGT methanol: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
@@ -1418,7 +1414,6 @@ plotting:
     methanol: '#FF7B00'
     methanol transport: '#FF7B00'
     shipping methanol: '#468c8b'
-    methanol-to-kerosene: '#579d9c'
     industry methanol: '#468c8b'
     # co2
     CC: '#f29dae'
@@ -1483,15 +1478,11 @@ plotting:
     steel: '#b1bbc9'
     DRI + Electric arc: '#b1bbc9'
     shipping ammonia: '#46caf0'
-    Methanol steam reforming CC: '#468c8b'
     biomass to methanol CC: '#468c8b'
     biomass to methanol: '#468c8b'
-    Methanol steam reforming: '#468c8b'
     shipping LNG: '#e0986c'
-    industry methanol: '#468c8b'
     industry methanol emissions: '#468c8b'
     HVC: '#012345'
-    methanol-to-olefins/aromatics: '#012345'
     electric steam cracker: '#012345'
     load: "#dd2e23"
     waste CHP: '#e3d37d'

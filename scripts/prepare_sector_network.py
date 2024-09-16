@@ -3086,7 +3086,6 @@ def add_biomass(n, costs):
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
         add_carrier_buses(n, "oil")
-
         n.madd(
             "Link",
             spatial.biomass.nodes,
@@ -3104,7 +3103,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "VOM"] * costs.at["BtL", "efficiency"],
         )
 
-    if options.get("biomass_to_liquid_cc"):
+    if options["biomass_to_liquid_cc"]:
 
         # Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
         # process (Methanol) and that electricity demand for this is included in the base process
@@ -3126,56 +3125,6 @@ def add_biomass(n, costs):
             capital_cost=costs.at["BtL", "fixed"] * costs.at["BtL", "efficiency"]
             + costs.at["biomass CHP capture", "fixed"] * costs.at["BtL", "CO2 stored"],
             marginal_cost=costs.at["BtL", "VOM"] * costs.at["BtL", "efficiency"],
-        )
-
-    # biomethanol
-
-    if options.get("biomass_to_methanol"):
-        add_carrier_buses(n, "methanol")
-
-        n.madd(
-            "Link",
-            spatial.biomass.nodes,
-            suffix=" biomass to methanol",
-            bus0=spatial.biomass.nodes,
-            bus1=spatial.methanol.nodes,
-            bus2="co2 atmosphere",
-            carrier="biomass to methanol",
-            lifetime=costs.at["biomass-to-methanol", "lifetime"],
-            efficiency=costs.at["biomass-to-methanol", "efficiency"],
-            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-            + costs.at["biomass-to-methanol", "CO2 stored"],
-            p_nom_extendable=True,
-            capital_cost=costs.at["biomass-to-methanol", "fixed"]
-            / costs.at["biomass-to-methanol", "efficiency"],
-            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-            / costs.at["biomass-to-methanol", "efficiency"],
-        )
-
-    if options.get("biomass_to_methanol_cc"):
-        n.madd(
-            "Link",
-            spatial.biomass.nodes,
-            suffix=" biomass to methanol CC",
-            bus0=spatial.biomass.nodes,
-            bus1=spatial.methanol.nodes,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.nodes,
-            carrier="biomass to methanol CC",
-            lifetime=costs.at["biomass-to-methanol", "lifetime"],
-            efficiency=costs.at["biomass-to-methanol", "efficiency"],
-            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-            + costs.at["biomass-to-methanol", "CO2 stored"]
-            * (1 - costs.at["biomass-to-methanol", "capture rate"]),
-            efficiency3=costs.at["biomass-to-methanol", "CO2 stored"]
-            * costs.at["biomass-to-methanol", "capture rate"],
-            p_nom_extendable=True,
-            capital_cost=costs.at["biomass-to-methanol", "fixed"]
-            / costs.at["biomass-to-methanol", "efficiency"]
-            + costs.at["biomass CHP capture", "fixed"]
-            * costs.at["biomass-to-methanol", "CO2 stored"],
-            marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-            / costs.at["biomass-to-methanol", "efficiency"],
         )
 
     # Electrobiofuels (BtL with hydrogen addition to make more use of biogenic carbon).
@@ -3234,7 +3183,7 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BioSNG", "VOM"] * costs.at["BioSNG", "efficiency"],
         )
 
-    if options.get("biosng_cc"):
+    if options["biosng_cc"]:
         # Assuming that acid gas removal (incl. CO2) from syngas i performed with Rectisol
         # process (Methanol) and that electricity demand for this is included in the base process
         n.madd(
@@ -4374,40 +4323,6 @@ def add_waste_heat(n):
                 / costs.at["methanolisation", "hydrogen-input"]
             ) * options["use_methanolisation_waste_heat"]
 
-        if options["use_methanation_waste_heat"]:
-            n.links.loc[urban_central + " Sabatier", "bus3"] = (
-                urban_central + " urban central heat"
-            )
-            n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
-                0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            )
-
-        # DEA quotes 15% of total input (11% of which are high-value heat)
-        if options["use_haber_bosch_waste_heat"]:
-            n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
-                urban_central + " urban central heat"
-            )
-            total_energy_input = (
-                cf_industry["MWh_H2_per_tNH3_electrolysis"]
-                + cf_industry["MWh_elec_per_tNH3_electrolysis"]
-            ) / cf_industry["MWh_NH3_per_tNH3"]
-            electricity_input = (
-                cf_industry["MWh_elec_per_tNH3_electrolysis"]
-                / cf_industry["MWh_NH3_per_tNH3"]
-            )
-            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
-                0.15 * total_energy_input / electricity_input
-            )
-
-        if options["use_methanolisation_waste_heat"]:
-            n.links.loc[urban_central + " methanolisation", "bus4"] = (
-                urban_central + " urban central heat"
-            )
-            n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
-                costs.at["methanolisation", "heat-output"]
-                / costs.at["methanolisation", "hydrogen-input"]
-            )
-
         # TODO integrate usable waste heat efficiency into technology-data from DEA
         if (
             options["use_electrolysis_waste_heat"]
@@ -5004,47 +4919,6 @@ def add_import_options(
         )
 
 
-def maybe_adjust_costs_and_potentials(n, opts):
-    for o in opts:
-        flags = ["+e", "+p", "+m"]
-        if all(flag not in o for flag in flags):
-            continue
-        oo = o.split("+")
-        carrier_list = np.hstack(
-            (
-                n.generators.carrier.unique(),
-                n.links.carrier.unique(),
-                n.stores.carrier.unique(),
-                n.storage_units.carrier.unique(),
-            )
-        )
-        suptechs = map(lambda c: c.split("-", 2)[0], carrier_list)
-        if oo[0].startswith(tuple(suptechs)):
-            carrier = oo[0]
-            attr_lookup = {"p": "p_nom_max", "e": "e_nom_max", "c": "capital_cost"}
-            attr = attr_lookup[oo[1][0]]
-            factor = float(oo[1][1:])
-            # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-            else:
-                if attr == "p_nom_max":
-                    comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == "e_nom_max":
-                    comps = {"Store"}
-                else:
-                    comps = {"Generator", "Link", "StorageUnit", "Store"}
-                for c in n.iterate_components(comps):
-                    if carrier == "solar":
-                        sel = c.df.carrier.str.contains(
-                            carrier
-                        ) & ~c.df.carrier.str.contains("solar rooftop")
-                    else:
-                        sel = c.df.carrier.str.contains(carrier)
-                    c.df.loc[sel, attr] *= factor
-            logger.info(f"changing {attr} for {carrier} by factor {factor}")
-
-
 def limit_individual_line_extension(n, maxext):
     logger.info(f"Limiting new HVAC and HVDC extensions to {maxext} MW")
     n.lines["s_nom_max"] = n.lines["s_nom"] + maxext
@@ -5218,7 +5092,6 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km}, compression per 1000km: {compression_per_1000km}). "
         "Splitting bidirectional links."
     )
-    logger.info("Distribution of snapshot durations: ", weightings.value_counts())
 
     n.links.loc[carrier_i, "p_min_pu"] = 0
     n.links.loc[carrier_i, "efficiency"] = (
@@ -5606,17 +5479,6 @@ if __name__ == "__main__":
 
     if options["allam_cycle_gas"]:
         add_allam_cycle_gas(n, costs)
-
-    add_methanol_to_power(n, costs, types=options["methanol_to_power"])
-
-    if options["methanol_to_kerosene"]:
-        add_methanol_to_kerosene(n, costs)
-
-    if options["methanol_reforming"]:
-        add_methanol_reforming(n, costs)
-
-    if options["methanol_reforming_cc"]:
-        add_methanol_reforming_cc(n, costs)
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

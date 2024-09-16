@@ -105,7 +105,7 @@ rule build_gas_input_locations:
         gas_input_nodes_simplified=resources(
             "gas_input_locations_s_{clusters}_simplified.csv"
         ),
-        ports=resources("ports_s{simpl}_{clusters}.csv"),
+        ports=resources("ports_s_{clusters}.csv"),
     resources:
         mem_mb=2000,
     log:
@@ -1083,7 +1083,7 @@ rule prepare_sector_network:
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
         industrial_demand_today=resources(
-            "industrial_energy_demand_today_elec_s{simpl}_{clusters}.csv"
+            "industrial_energy_demand_today_base_s_{clusters}.csv"
         ),
         industry_sector_ratios=resources(
             "industry_sector_ratios_{planning_horizons}.csv"
@@ -1121,15 +1121,14 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        # import_costs=storage("https://tubcloud.tu-berlin.de/s/Woq9Js5MjtoaqGP/download/results.csv", keep_local=True),
         import_costs="data/imports/results.csv",
-        # import_p_max_pu=storage("https://tubcloud.tu-berlin.de/s/qPaoD54qHtEAo8i/download/combined_weighted_generator_timeseries.nc", keep_local=True),
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
-        regions_onshore=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
-        country_centroids=storage(
-            "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
-            keep_local=True,
-        ),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        country_shapes="data/naturalearth/ne_10m_admin_0_countries_deu.shp", # TODO FN: instead of country_centroids use .representative_point()
+        # country_centroids=storage(
+        #     "https://raw.githubusercontent.com/gavinr/world-countries-centroids/v1.0.0/dist/countries.csv",
+        #     keep_local=True,
+        # ),
     output:
         RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

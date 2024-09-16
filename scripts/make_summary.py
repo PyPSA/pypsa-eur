@@ -760,11 +760,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    s = snakemake.input.networks[0]
-    base_dir = s[: s.find("results/") + 8]
-
     networks_dict = {
-        (cluster, ll, opt + sector_opt, planning_horizon): base_dir
+        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
         + f"/postnetworks/base_s_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for cluster in snakemake.params.scenario["clusters"]
