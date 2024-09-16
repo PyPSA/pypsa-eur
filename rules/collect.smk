@@ -122,20 +122,27 @@ rule plot_statistics:
                 ),
                 run=config["run"]["name"],
             ),
-            expand(
-                "results/statistics/"
-                + config_provider("plotting", "statistics")(run).get(
-                    "comparison_folder", "results/scenario_comparison"
+            (
+                expand(
+                    "results/statistics/"
+                    + config_provider("plotting", "statistics")(run).get(
+                        "comparison_folder", "''"
+                    )
+                    + "/"
+                    + "figures/country_{country}/.statistics_{carrier}_plots",
+                    **config["scenario"],
+                    country=config_provider("plotting", "statistics")(run).get(
+                        "countries", "all"
+                    ),
+                    carrier=config_provider("plotting", "statistics")(run).get(
+                        "carriers", "all"
+                    ),
+                    run=config["run"]["name"],
                 )
-                + "/"
-                + "figures/country_{country}/.statistics_{carrier}_plots",
-                **config["scenario"],
-                country=config_provider("plotting", "statistics")(run).get(
-                    "countries", "all"
-                ),
-                carrier=config_provider("plotting", "statistics")(run).get(
-                    "carriers", "all"
-                ),
-                run=config["run"]["name"],
+                if config_provider("plotting", "statistics")(run).get(
+                    "comparison_folder", ""
+                )
+                != ""
+                else []
             ),
         ],

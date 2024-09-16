@@ -401,7 +401,7 @@ rule plot_statistics_scenario_comparison:
         **{
             f"{metric}": "results/statistics/"
             + config_provider("plotting", "statistics")(run).get(
-                "comparison_folder", "scenario_comparison"
+                "comparison_folder", ""
             )
             + "/"
             + "figures/country_{country}/{carrier}_"

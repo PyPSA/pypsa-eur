@@ -1026,9 +1026,9 @@ plotting:
     metrics:
     - energy_balance
     - total_cost
+    comparison_folder: ""
     scenario_comparison:
     - ""
-    comparison_folder: "scenario_comparison"
 
   nice_names:
     OCGT: "Open-Cycle Gas"
