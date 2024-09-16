@@ -859,7 +859,7 @@ def _get_linetype_by_voltage(v_nom, d_linetypes):
     return line_type_min
 
 
-def voronoi(points, outline, crs=4326):
+def voronoi(points, outline, crs=4326, dissolve_by="Bus"):
     """
     Create Voronoi polygons from a set of points within an outline.
     """
@@ -878,7 +878,7 @@ def voronoi(points, outline, crs=4326):
         voronoi = gpd.GeoDataFrame(geometry=voronoi)
         joined = gpd.sjoin_nearest(pts, voronoi, how="right")
 
-    return joined.dissolve(by="Bus").reindex(points.index).squeeze()
+    return joined.dissolve(by=dissolve_by).reindex(points.index).squeeze()
 
 
 def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
