@@ -37,6 +37,7 @@ def build_nodal_transport_data(fn, pop_layout, year):
     transport_data = pd.read_csv(fn, index_col=[0, 1])
     transport_data = transport_data.xs(year, level="year")
 
+    # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
     nodal_transport_data.index = pop_layout.index
     
@@ -55,7 +56,11 @@ def build_nodal_transport_data(fn, pop_layout, year):
     return nodal_transport_data
 
 
-def get_shape(traffic_fn):
+def build_transport_demand(traffic_fn, airtemp_fn, nodes, nodal_transport_data):
+    """
+    Returns transport demand per bus in unit km driven [100 km].
+    """
+    # averaged weekly counts from the year 2010-2015
     traffic = pd.read_csv(traffic_fn, skiprows=2, usecols=["count"]).squeeze("columns")
 
     # create annual profile take account time zone + summer time
@@ -79,7 +84,7 @@ def build_transport_demand(traffic_fn_Pkw, traffic_fn_Lkw,
 
     # get heating demand for correction to demand time series
     temperature = xr.open_dataarray(airtemp_fn).to_pandas()
-    
+
     # correction factors for vehicle heating
     dd_ICE = transport_degree_factor(
         temperature,

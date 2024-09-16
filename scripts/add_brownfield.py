@@ -91,10 +91,6 @@ def add_brownfield(n, n_p, year):
     # deal with gas network
     pipe_carrier = ["gas pipeline"]
     if snakemake.params.H2_retrofit:
-        # drop capacities of previous year to avoid duplicating
-        to_drop = n.links.carrier.isin(pipe_carrier) & (n.links.build_year != year)
-        n.mremove("Link", n.links.loc[to_drop].index)
-
         # subtract the already retrofitted from today's gas grid capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
@@ -117,10 +113,6 @@ def add_brownfield(n, n_p, year):
             index=pipe_capacity.index
         ).fillna(0)
         n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
-    else:
-        new_pipes = n.links.carrier.isin(pipe_carrier) & (n.links.build_year == year)
-        n.links.loc[new_pipes, "p_nom"] = 0.0
-        n.links.loc[new_pipes, "p_nom_min"] = 0.0
 
 
 def disable_grid_expansion_if_limit_hit(n):
@@ -180,14 +172,6 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
     using the latest year below or equal to the selected year.
     """
 
-    # spatial clustering
-    cluster_busmap = pd.read_csv(snakemake.input.cluster_busmap, index_col=0).squeeze()
-    simplify_busmap = pd.read_csv(
-        snakemake.input.simplify_busmap, index_col=0
-    ).squeeze()
-    clustermaps = simplify_busmap.map(cluster_busmap)
-    clustermaps.index = clustermaps.index.astype(str)
-
     # temporal clustering
     dr = get_snapshots(params["snapshots"], params["drop_leap_day"])
     snapshotmaps = (
@@ -212,11 +196,6 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
                 .transpose("time", "bus")
                 .to_pandas()
             )
-
-            # spatial clustering
-            weight = ds["weight"].sel(year=closest_year).to_pandas()
-            weight = weight.groupby(clustermaps).transform(normed_or_uniform)
-            p_max_pu = (p_max_pu * weight).T.groupby(clustermaps).sum().T
             p_max_pu.columns = p_max_pu.columns + f" {carrier}"
 
             # temporal_clustering
@@ -269,7 +248,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            simpl="",
             clusters="37",
             opts="",
             ll="v1.0",

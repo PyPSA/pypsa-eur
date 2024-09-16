@@ -201,7 +201,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_egs_potentials",
-            simpl="",
             clusters=37,
         )
 

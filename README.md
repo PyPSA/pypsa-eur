@@ -4,7 +4,7 @@ SPDX-License-Identifier: CC-BY-4.0
 -->
 
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)
-[![Build Status](https://github.com/pypsa/pypsa-eur/actions/workflows/ci.yaml/badge.svg)](https://github.com/PyPSA/pypsa-eur/actions)
+[![Test workflows](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg)](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml)
 [![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
 ![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur)
 [![Zenodo PyPSA-Eur](https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg)](https://doi.org/10.5281/zenodo.3520874)
@@ -65,10 +65,10 @@ The dataset consists of:
   (alternating current lines at and above 220kV voltage level and all high
   voltage direct current lines) and 3803 substations.
 - The open power plant database
-  [powerplantmatching](https://github.com/FRESNA/powerplantmatching).
+  [powerplantmatching](https://github.com/PyPSA/powerplantmatching).
 - Electrical demand time series from the
   [OPSD project](https://open-power-system-data.org/).
-- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/FRESNA/atlite).
+- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/PyPSA/atlite).
 - Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [atlite library](https://github.com/PyPSA/atlite).
 
 A sector-coupled extension adds demand
@@ -105,4 +105,4 @@ We strongly welcome anyone interested in contributing to this project. If you ha
 The code in PyPSA-Eur is released as free software under the
 [MIT License](https://opensource.org/licenses/MIT), see [`doc/licenses.rst`](doc/licenses.rst).
 However, different licenses and terms of use may apply to the various
-input data.
+input data, see [`doc/data_sources.rst`](doc/data_sources.rst).

@@ -115,7 +115,9 @@ def plot_h2_map(n, regions):
 
         retro_wo_new_i = h2_retro.index.difference(h2_new.index)
         h2_retro_wo_new = h2_retro.loc[retro_wo_new_i]
-        h2_retro_wo_new.index = h2_retro_wo_new.index_orig
+        h2_retro_wo_new.index = h2_retro_wo_new.index_orig.apply(
+            lambda x: x.split("-2")[0]
+        )
 
         to_concat = [h2_new, h2_retro_w_new, h2_retro_wo_new]
         h2_total = pd.concat(to_concat).p_nom_opt.groupby(level=0).sum()
@@ -126,7 +128,12 @@ def plot_h2_map(n, regions):
     link_widths_total = h2_total / linewidth_factor
 
     n.links.rename(index=lambda x: x.split("-2")[0], inplace=True)
-    n.links = n.links.groupby(level=0).first()
+    # group links by summing up p_nom values and taking the first value of the rest of the columns
+    other_cols = dict.fromkeys(n.links.columns.drop(["p_nom_opt", "p_nom"]), "first")
+    n.links = n.links.groupby(level=0).agg(
+        {"p_nom_opt": "sum", "p_nom": "sum", **other_cols}
+    )
+
     link_widths_total = link_widths_total.reindex(n.links.index).fillna(0.0)
     link_widths_total[n.links.p_nom_opt < line_lower_threshold] = 0.0
 
@@ -249,7 +256,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_hydrogen_network",
-            simpl="",
             opts="",
             clusters="37",
             ll="v1.0",

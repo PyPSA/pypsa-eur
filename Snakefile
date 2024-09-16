@@ -40,7 +40,6 @@ localrules:
 
 
 wildcard_constraints:
-    simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
     ll=r"(v|c)([0-9\.]+|opt)",
     opts=r"[-+a-zA-Z0-9\.]*",
@@ -55,6 +54,7 @@ include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
 include: "rules/validate.smk"
+include: "rules/development.smk"
 
 
 if config["foresight"] == "overnight":
