@@ -223,9 +223,7 @@ rule plot_choropleth_demand:
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
         shipping_demand=resources("shipping_demand_s_{clusters}.csv"),
-        nodal_energy_totals=resources(
-            "pop_weighted_energy_totals_s_{clusters}.csv"
-        ),
+        nodal_energy_totals=resources("pop_weighted_energy_totals_s_{clusters}.csv"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         rc="matplotlibrc",
     output:
