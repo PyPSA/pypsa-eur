@@ -98,7 +98,9 @@ jobs:
         uv pip install git+https://github.com/PyPSA/linopy.git@master
 
     - name: Run snakemake test workflows
-      run: ./test.sh
+      run: |
+        chmod +x test.sh
+        ./test.sh
 
     - name: Upload artifacts
       if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable-inhouse-deps'
