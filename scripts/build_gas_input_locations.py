@@ -13,8 +13,8 @@ import logging
 import geopandas as gpd
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from cluster_gas_network import load_bus_regions
 from base_network import voronoi
+from cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
 
