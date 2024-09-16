@@ -602,7 +602,7 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
