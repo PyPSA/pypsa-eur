@@ -702,6 +702,14 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["relocation_ammonia"] = False
             config["sector"]["flexibility_ammonia"] = False
 
+        if "noPtXflex" in opts:
+            logger.info("Disabling power-to-x flexibility.")
+            config["sector"]["min_part_load_fischer_tropsch"] = 1
+            config["sector"]["min_part_load_methanolisation"] = 1
+            config["sector"]["min_part_load_methanation"] = 1
+            config["sector"]["min_part_load_electrolysis"] = 1
+            config["sector"]["min_part_load_haber_bosch"] = 1
+
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True

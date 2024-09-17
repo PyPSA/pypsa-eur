@@ -659,6 +659,8 @@ sector:
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
+  min_part_load_electrolysis: 0
+  min_part_load_haber_bosch: 0
   use_fischer_tropsch_waste_heat: 0.25
   use_haber_bosch_waste_heat: 0.25
   use_methanolisation_waste_heat: 0.25
