@@ -8,7 +8,7 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
+.. Upcoming Release 
 .. ================
 
 * Created a separate namespace for biogas and split it form the gas namespace
@@ -25,6 +25,111 @@ Release Notes
 
 * Add investment period dependent CO2 sequestration potentials
 
+
+PyPSA-Eur 0.13.0 (13th September 2024)
+======================================
+
+**Features**
+
+* Add new methanol-based technologies: methanol-to-power, methanol reforming,
+  methanol-to-kerosene, methanol-to-olefins/aromatics, biomass-to-methanol with
+  and without carbon capture. (https://github.com/PyPSA/pypsa-eur/pull/1207)
+
+* Add function ``modify_attribute`` to :mod:`prepare_sector_network` which allows to adjust any attribute of any
+  PyPSA component either by a multiplication with a factor or setting an
+  absolute value. These adjustments can also depend on the planning horizons and
+  are set in the config under ``adjustments``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1244)
+
+* Add version control to osm-prebuilt:
+  ``config["electricity"]["osm-prebuilt-version"]``. Defaults to latest Zenodo
+  release, i.e. v0.4, Config is only considered when selecting ``osm-prebuilt``
+  as ``base_network``. (https://github.com/PyPSA/pypsa-eur/pull/1293)
+
+**Changes**
+
+* Use JRC-IDEES thermal energy service instead of final energy demand for
+  buildings heating demand. Final energy includes losses in legacy equipment.
+  Efficiencies of existing heating capacities are lowered according to the
+  conversion of final energy to thermal energy service. For overnight scenarios
+  or future planning horizons this change leads to a reduction in heat supply
+  and, therefore, system cost. (https://github.com/PyPSA/pypsa-eur/pull/1255)
+
+* Updated district heating supply temperatures based on `Euroheat's DHC Market
+  Outlook
+  2024<https://api.euroheat.org/uploads/Market_Outlook_2024_beeecd62d4.pdf>`__
+  and `AGFW-Hauptbericht 2022
+  <https://www.agfw.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MjU2MjI2MTUsImV4cCI6MTcyNTcxMjYxNSwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW4vdXNlcl91cGxvYWQvWmFobGVuX3VuZF9TdGF0aXN0aWtlbi9IYXVwdGJlcmljaHRfMjAyMi9BR0ZXX0hhdXB0YmVyaWNodF8yMDIyLnBkZiIsInBhZ2UiOjQzNn0.Bhma3PKg9uJnC57Ixi2p9STW5-II9VXPTDXS544M208/AGFW_Hauptbericht_2022.pdf>`__.
+  ``min_forward_temperature`` and ``return_temperature`` (not given by Euroheat) are
+  extrapolated based on German values. (https://github.com/PyPSA/pypsa-eur/pull/1264)
+
+* Refined implementation of unsustainable biomass.
+  (https://github.com/PyPSA/pypsa-eur/pull/1275,
+  https://github.com/PyPSA/pypsa-eur/pull/1271,
+  https://github.com/PyPSA/pypsa-eur/pull/1254,
+  https://github.com/PyPSA/pypsa-eur/pull/1266)
+
+* Biomass transport costs are now stored in the ``data`` folder. Extraction from
+  PDF file is skipped. (https://github.com/PyPSA/pypsa-eur/pull/1272)
+
+* Increased the resolution of NUTS3 and NUTS2 shapes from 1:60M to 1:3M. The
+  shapefiles are now directly retrieved with the ``retrieve_nuts_shapes`` rule.
+  (https://github.com/PyPSA/pypsa-eur/pull/1286)
+
+* Uses of Snakemake's ``storage()`` function are integrated into retrieval
+  rules. This simplifies the use of ``mock_snakemake`` and places downloaded
+  data more transparently into the ``data`` directory.
+  (https://github.com/PyPSA/pypsa-eur/pull/1274)
+
+* Updated data bundle to remove files which are now directly downloaded in the
+  rules. This reduces the size of the data bundle.
+  (https://github.com/PyPSA/pypsa-eur/pull/1291)
+
+* Update NEP transmission projects to include `Startnetz`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1263)
+
+* Auto-update ``envs/environment.fixed.yaml``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1281)
+
+**Bugfixes and Compatibility**
+
+* Updated osm-prebuilt network to version 0.4
+  (https://doi.org/10.5281/zenodo.13759222). Added Kosovo (XK) as dedicated
+  region. Fixed major 330 kV line in Moldova (MD)
+  (https://www.openstreetmap.org/way/33360284).
+  (https://github.com/PyPSA/pypsa-eur/pull/1293)
+
+* Made the overdimensioning factor for heating systems specific for
+  central/decentral heating, defaults to no overdimensionining for central
+  heating and no changes to decentral heating compared to previous version.
+  (https://github.com/PyPSA/pypsa-eur/pull/1259)
+
+* The carrier of stores was previously silently overwritten by their bus'
+  carrier when building global emission constraints.
+  (https://github.com/PyPSA/pypsa-eur/pull/1262)
+
+* The fossil oil generator was incorrectly dropped when ``sector:
+  oil_refining_emissions`` was greater than zero. (https://github.com/PyPSA/pypsa-eur/pull/1257)
+
+* Correctly account for the CO2 emissions of municipal solid waste.
+  (https://github.com/PyPSA/pypsa-eur/pull/1256)
+
+* Added a missing space in the component name of retrofitted gas boilers.
+  (https://github.com/PyPSA/pypsa-eur/pull/1289)
+
+* Global Energy Monitor datasets are temporarily mirrored on alternative
+  servers. (https://github.com/PyPSA/pypsa-eur/pull/1265)
+
+* Fixed plotting of hydrogen networks with myopic pathway optimisation.
+  (https://github.com/PyPSA/pypsa-eur/pull/1270)
+
+* Fixed internet connection check.
+  (https://github.com/PyPSA/pypsa-eur/pull/1280)
+
+**Documentation**
+
+* The sources of nearly all data files are now listed in the documentation.
+  (https://github.com/PyPSA/pypsa-eur/pull/1284)
 
 PyPSA-Eur 0.12.0 (30th August 2024)
 ===================================

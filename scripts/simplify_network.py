@@ -396,6 +396,17 @@ def simplify_links(
     if node_corsica is not None:
         added_supernodes.append(node_corsica)
 
+    node_corsica = find_closest_bus(
+        n,
+        x=9.44802,
+        y=42.52842,
+        tol=2000,  # Tolerance needed to only return the bus if the region is actually modelled
+    )
+
+    added_supernodes = []
+    if node_corsica is not None:
+        added_supernodes.append(node_corsica)
+
     for lbl in labels.value_counts().loc[lambda s: s > 2].index:
         for b, buses, links in split_links(
             labels.index[labels == lbl], added_supernodes

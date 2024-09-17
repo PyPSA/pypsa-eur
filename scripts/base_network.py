@@ -717,6 +717,7 @@ def base_network(
 ):
 
     base_network = config["electricity"].get("base_network")
+    osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
     assert base_network in {
         "entsoegridkit",
         "osm-raw",
@@ -728,7 +729,12 @@ def base_network(
             DeprecationWarning,
         )
 
-    logger.info(f"Creating base network using {base_network}.")
+    logger_str = (
+        f"Creating base network using {base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + "."
+    )
+    logger.info(logger_str)
 
     buses = _load_buses(buses, europe_shape, config)
     transformers = _load_transformers(buses, transformers)
@@ -764,7 +770,11 @@ def base_network(
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
-    n.name = f"PyPSA-Eur ({base_network})"
+    n.name = (
+        f"PyPSA-Eur ({base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + ")"
+    )
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)

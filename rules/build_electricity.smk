@@ -52,12 +52,16 @@ rule build_powerplants:
 
 def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
+    osm_prebuilt_version = config_provider("electricity", "osm-prebuilt-version")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if base_network == "osm-raw":
         inputs = {c: resources(f"osm-raw/build/{c}.csv") for c in components}
-    else:
+    elif base_network == "osm-prebuilt":
+        inputs = {
+            c: f"data/{base_network}/{osm_prebuilt_version}/{c}.csv" for c in components
+        }
+    elif base_network == "entsoegridkit":
         inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
-    if base_network == "entsoegridkit":
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
         inputs["links_p_nom"] = "data/links_p_nom.csv"
     return inputs
@@ -98,7 +102,7 @@ rule build_shapes:
     input:
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3=ancient("data/bundle/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp"),
+        nuts3=ancient("data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson"),
         nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
         ch_cantons=ancient("data/ch_cantons.csv"),
