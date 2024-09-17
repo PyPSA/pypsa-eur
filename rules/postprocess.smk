@@ -33,6 +33,10 @@ if config["foresight"] != "perfect":
         output:
             map=RESULTS
             + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            map_transport_heavy=RESULTS
+            + "maps/elec_s_{clusters}_l{ll}_{opts}_{sector_opts}-transport-heavy_{planning_horizons}.pdf",
+            map_transport_light=RESULTS
+            + "maps/elec_s}_{clusters}_l{ll}_{opts}_{sector_opts}-transport-light_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,

@@ -31,7 +31,7 @@ from build_energy_totals import (
     build_eurostat_co2,
     car_types
 )
-from build_transport_demand import transport_degree_factor
+from build_transport_demand import transport_degree_factor, transport_cols
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from definitions.heat_system_type import HeatSystemType
@@ -1912,6 +1912,10 @@ def add_EVs(
     electric_share,
     number_cars,
     temperature,
+    car_efficiency,
+    suffix,
+    transport_type="light",
+    endogenous=False
 ):
 
     if not "Li ion" in n.carriers.index:
@@ -2088,8 +2092,6 @@ def add_ice_cars(n, nodes, p_set, ice_share, number_cars, temperature,
                            ):
 
     add_carrier_buses(n, "oil")
-
-    car_efficiency = options["transport_ice_efficiency"]
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
@@ -2298,8 +2300,6 @@ def add_land_transport(n, costs):
     if endogenous:
         adjust_endogenous_transport(n, engine_types, transport_types)
 
-    if shares["ice"] > 0:
-        add_ice_cars(n, p_set, shares["ice"], temperature)
 
 def adjust_endogenous_transport(n, engine_types, transport_types):
 
@@ -2368,7 +2368,8 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
     #     carrier = f"land transport {map_carrier[car_type]} heavy"
     #     car_i = n.links[n.links.carrier==carrier].index
     #     n.links.loc[car_i, "marginal_cost"] = VOM
-
+    
+    
 def build_heat_demand(n):
     heat_demand_shape = (
         xr.open_dataset(snakemake.input.hourly_heat_demand_total)
@@ -4082,7 +4083,7 @@ def add_industry(n, costs):
         add_methanol_to_olefins(n, costs)
 
     # aviation
-    demand_factor = options.get("aviation_demand_factor", 1)
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -4890,7 +4891,56 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 cyclic_state_of_charge=True,
             )
 
+def adjust_transport_temporal_agg(n):
 
+    engine_types = {
+        "fuel_cell": "land transport fuel cell",
+        "electric": "land transport EV",
+        "ice": "land transport oil",
+    }
+    
+    endogenous = options["endogenous_transport"]
+    
+    transport_types = ["light", "heavy"]
+    
+    shares = get_shares(engine_types.keys(), transport_types, endogenous)
+    
+    for transport_type in transport_types:
+        p_set = n.loads_t.p_set.loc[:, n.loads.carrier == f"land transport demand {transport_type}"]
+        for engine, carrier in engine_types.items():
+            
+            share = shares[engine][transport_type]
+    
+            
+            links_i = n.links[n.links.carrier == carrier + f" {transport_type}"].index
+            if links_i.empty: continue
+            efficiency = n.links_t.efficiency.loc[:, links_i]
+
+            p_set.columns = efficiency.columns
+            p_nom = share * p_set.div(efficiency).max()
+            profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    
+            n.links.loc[links_i, "p_nom"] = p_nom
+            # TODO just for testing
+            # if engine == "electric": 
+            #     n.links_t.p_max_pu[links_i] = 1
+            #     n.links_t.p_min_pu[links_i] = 0
+            # else:
+            n.links_t.p_max_pu[links_i] = profile
+            if links_i.difference(n.links_t.p_min_pu.columns).empty:
+                n.links_t.p_min_pu[links_i] = profile
+                
+                
+def add_LULUCF(investment_year):
+    logger.info("add LULUCF")
+    lulucf = get(options["LULUCF"], investment_year)
+    lulucf = lulucf/8760*1e6
+    n.add("Load",
+          name="LULUCF",
+          bus="co2 atmosphere",
+          p_set=lulucf,
+          carrier="LULUCF"
+          )
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -5047,6 +5097,8 @@ if __name__ == "__main__":
         add_enhanced_geothermal(
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
         )
+        
+    add_LULUCF(investment_year)
 
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)

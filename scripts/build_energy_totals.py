@@ -498,7 +498,6 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
         ct_totals[f"electricity {car_type}"] = row
     
     # vehicle efficiency (kgoe/100km) 
-    
     start = "Vehicle-efficiency - effective (kgoe/100 km)"
     end = "Energy intensity over activity"
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0).loc[start:end]
@@ -663,14 +662,13 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     
     # convert ktoe to TWh
     # efficiency kgoe/100km -> MWh/100km 
-
-    exclude = (totals.columns.str.contains("Number") 
-               | totals.columns.str.contains("mio km-driven")
-               | totals.columns.str.contains("New registration")
-               | totals.columns.str.contains("vehicle-km (mio km)")
-               | totals.columns.str.contains("mio tkm driven")
-               | totals.columns.str.contains("space efficiency")
-               | totals.columns.str.contains("water efficiency")
+    exclude = (totals.columns.str.contains("Number", regex=False)
+               | totals.columns.str.contains("mio km-driven", regex=False)
+               | totals.columns.str.contains("New registration", regex=False)
+               | totals.columns.str.contains("vehicle-km (mio km)", regex=False)
+               | totals.columns.str.contains("mio tkm driven", regex=False)
+               | totals.columns.str.contains("space efficiency", regex=False)
+               | totals.columns.str.contains("water efficiency", regex=False)
                )
     # convert ktoe to TWh
     totals = totals.copy()
@@ -751,24 +749,20 @@ def build_energy_totals(
     eurostat_fuels = {"electricity": "Electricity", "total": "Total all products"}
     eurostat_countries = eurostat.index.levels[0]
     eurostat_years = eurostat.index.levels[1]
-
-    exclude = (idees.columns.str.contains("Number") 
-               | idees.columns.str.contains("mio km-driven")
-               | idees.columns.str.contains("New registration")
-               | idees.columns.str.contains("vehicle-km (mio km)")
-               | idees.columns.str.contains("mio tkm driven")
-               )
+    
+    exclude = (idees.columns.str.contains("Number", regex=False)
+           | idees.columns.str.contains("mio km-driven", regex=False)
+           | idees.columns.str.contains("New registration", regex=False)
+           | idees.columns.str.contains("vehicle-km (mio km)", regex=False)
+           | idees.columns.str.contains("mio tkm driven", regex=False)
+           | idees.columns.str.contains("space efficiency", regex=False)
+           | idees.columns.str.contains("water efficiency", regex=False)
+           )
     new_index = pd.MultiIndex.from_product(
         [countries, eurostat_years], names=["country", "year"]
     )
 
-    # todo check if car efficiency should be droped
-
-    efficiency_keywords = ["space efficiency", "water efficiency"]
-    df = idees.loc[:, ~idees.columns.str.contains("|".join(efficiency_keywords))]
-    
-    exclude = idees.columns[exclude]
-    df = df.reindex(new_index).drop(exclude, axis=1)
+    df = idees.reindex(new_index).loc[:, ~exclude]
 
     in_eurostat = df.index.levels[0].intersection(eurostat_countries)
 
@@ -930,18 +924,12 @@ def build_energy_totals(
     # fill missing years for some countries by mean over the other years
     fill_values = fill_missing_years(fill_values)
     df.loc[to_fill, "total domestic navigation"] = fill_values
-
+    
     # split road traffic for non-IDEES
-    missing = df.index[df["total passenger cars"].isna()]
+    missing = df.index[df["total Passenger cars"].isna()]
     for fuel in ["total", "electricity"]:
-        selection = [
-            f"{fuel} passenger cars",
-            f"{fuel} other road passenger",
-            f"{fuel} light duty road freight",
-        ]
-        if fuel == "total":
-            selection.extend([f"{fuel} two-wheel", f"{fuel} heavy duty road freight"])
-        road = df[selection].sum()
+        selection = [f"{fuel} {car_type}" for car_type in car_types]
+        road = df.reindex(columns=selection).sum()
         road_fraction = road / road.sum()
         fill_values = cartesian(df.loc[missing, f"{fuel} road"], road_fraction)
         df.loc[missing, road_fraction.index] = fill_values
@@ -1268,12 +1256,19 @@ def build_transport_data(
     """
     years = np.arange(2000, 2022)
 
-    # first collect number of cars
-    transport_data = pd.DataFrame(idees["passenger cars"])
+    transport_cols = (idees.columns.str.contains("Number", regex=False) 
+                  | idees.columns.str.contains("mio km-driven", regex=False)
+                  | idees.columns.str.contains("New registration", regex=False)
+                  | idees.columns.str.contains("vehicle-km (mio km)", regex=False)
+                  | idees.columns.str.contains("mio tkm driven", regex=False)
+                 )
 
-    countries_without_ch = set(countries) - {"CH"}
+    
+    # first collect number of cars
+    transport_data = pd.DataFrame(idees.loc[:, transport_cols])
+
     new_index = pd.MultiIndex.from_product(
-        [countries_without_ch, transport_data.index.unique(1)],
+        [countries, transport_data.index.unique(1)],
         names=["country", "year"],
     )
 
@@ -1281,37 +1276,31 @@ def build_transport_data(
 
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
-        swiss_cars = pd.read_csv(fn, index_col=0).loc[years, ["passenger cars"]]
-
-        swiss_cars.index = pd.MultiIndex.from_product(
-            [["CH"], swiss_cars.index], names=["country", "year"]
-        )
-
-        transport_data = pd.concat([transport_data, swiss_cars]).sort_index()
-
-    transport_data = transport_data.rename(columns={"passenger cars": "number cars"})
+        swiss_cars = pd.read_csv(fn, index_col=0).loc[2000:2015, ["passenger cars"]]
+        transport_data.loc[("CH", swiss_cars.index), "Number Passenger cars"] = swiss_cars["passenger cars"].values
+    
     # clean up dataframe
     transport_data = transport_data[
         transport_data.index.get_level_values(1).isin(years)
     ]
 
-    missing = transport_data.index[transport_data["number cars"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on cars from:\n{list(missing)}\nFilling gaps with averaged data."
-        )
-
-        cars_pp = transport_data["number cars"] / population
-
-        fill_values = {
-            year: cars_pp.mean() * population for year in transport_data.index.unique(1)
-        }
-        fill_values = pd.DataFrame(fill_values).stack()
-        fill_values = pd.DataFrame(fill_values, columns=["number cars"])
-        fill_values.index.names = ["country", "year"]
-        fill_values = fill_values.reindex(transport_data.index)
-
-        transport_data = transport_data.combine_first(fill_values)
+    for col in transport_data.columns:
+        missing = transport_data.index[transport_data[col].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on {col} from:\n{list(missing.get_level_values(0).unique())}\nFilling gaps with averaged data."
+            )
+    
+            cars_pp = transport_data[col] / population
+            
+            data = np.outer(population, cars_pp.groupby(level=1).mean())
+            fill_values = pd.DataFrame(data,
+                                       index=population.index,
+                                       columns=cars_pp.groupby(level=1).mean().index
+                                       ).stack()
+            fill_values = fill_values.reindex(transport_data.index)
+    
+            transport_data[col] = transport_data[col].combine_first(fill_values)
 
     # collect average fuel efficiency in MWh/100km
     for car_type in car_types:      
@@ -1335,7 +1324,6 @@ def build_transport_data(
 
 
     return transport_data
-
 
 def rescale_idees_from_eurostat(
     idees_countries: List[str], energy: pd.DataFrame, eurostat: pd.DataFrame

@@ -665,7 +665,7 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
     for transport_type in transport_types:
         
         reg = registrations.loc[transport_type].iloc[:,0] * factor
-        today_ev = historical_ev_share.iloc[-1].loc[transport_type]
+        today_ev = historical_ev_share.ffill().iloc[-1].loc[transport_type]
         
         if options["endogenous_transport"]:
             share = 1/3  # TODO make this nicer
@@ -751,12 +751,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
-            clusters="5",
-            ll="v1.5",
+            # configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.myopic.yaml",
+            ll="v1.0",
             opts="",
             sector_opts="",
-            planning_horizons=2030,
+            planning_horizons=2025,
+            clusters=39,
         )
 
     configure_logging(snakemake)

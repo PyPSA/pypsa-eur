@@ -327,9 +327,9 @@ def plot_balances(balances_df, drop=None):
             fig.savefig(snakemake.output.balances[:-19] + "co2-stacked-area.pdf",
                         bbox_inches="tight")
             
-                
-            for carrier in co2_b.index:
-                co2_b.loc[carrier].unstack().T.plot(title=carrier)
+            grouped = co2_b.groupby(level=0).sum()
+            for carrier in grouped.index:
+                grouped.loc[carrier].unstack().T.plot(title=carrier)
                 plt.ylabel("CO2 [MtCO2/a]")
                 plt.xlabel("")
                 plt.savefig(snakemake.output.balances[:-19] + f"co2-{carrier}.pdf",
@@ -844,7 +844,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm.yaml",)
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
