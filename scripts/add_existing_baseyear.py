@@ -474,8 +474,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
                 existing_large, "p_nom_min"
             ]
-        
-
 
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # rename fuel of CHPs - lignite not in DEA database
@@ -701,6 +699,94 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
             )
 
 
+def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
+    """
+    Computes the heating system efficiency based on the sector and carrier
+    type.
+
+    Parameters:
+    -----------
+    heat_system : object
+    carrier : str
+        The type of fuel or energy carrier (e.g., 'gas', 'oil').
+    nodes : pandas.Series
+        A pandas Series containing node information used to match the heating efficiency data.
+    heating_efficiencies : dict
+        A dictionary containing efficiency values for different carriers and sectors.
+    costs : pandas.DataFrame
+        A DataFrame containing boiler cost and efficiency data for different heating systems.
+
+    Returns:
+    --------
+    efficiency : pandas.Series or float
+        A pandas Series mapping the efficiencies based on nodes for residential and services sectors, or a single
+        efficiency value for other heating systems (e.g., urban central).
+
+    Notes:
+    ------
+    - For residential and services sectors, efficiency is mapped based on the nodes.
+    - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
+    """
+
+    if heat_system.value == "urban central":
+        boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
+        efficiency = costs.at[boiler_costs_name, "efficiency"]
+    elif heat_system.sector.value == "residential":
+        key = f"{carrier} residential space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    elif heat_system.sector.value == "services":
+        key = f"{carrier} services space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    else:
+        logger.warning(f"{heat_system} not defined.")
+
+    return efficiency
+
+
+def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
+    """
+    Computes the heating system efficiency based on the sector and carrier
+    type.
+
+    Parameters:
+    -----------
+    heat_system : object
+    carrier : str
+        The type of fuel or energy carrier (e.g., 'gas', 'oil').
+    nodes : pandas.Series
+        A pandas Series containing node information used to match the heating efficiency data.
+    heating_efficiencies : dict
+        A dictionary containing efficiency values for different carriers and sectors.
+    costs : pandas.DataFrame
+        A DataFrame containing boiler cost and efficiency data for different heating systems.
+
+    Returns:
+    --------
+    efficiency : pandas.Series or float
+        A pandas Series mapping the efficiencies based on nodes for residential and services sectors, or a single
+        efficiency value for other heating systems (e.g., urban central).
+
+    Notes:
+    ------
+    - For residential and services sectors, efficiency is mapped based on the nodes.
+    - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
+    """
+
+    if heat_system.value == "urban central":
+        boiler_costs_name = getattr(heat_system, f"{carrier}_boiler_costs_name")
+        efficiency = costs.at[boiler_costs_name, "efficiency"]
+    elif heat_system.sector.value == "residential":
+        key = f"{carrier} residential space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    elif heat_system.sector.value == "services":
+        key = f"{carrier} services space efficiency"
+        efficiency = nodes.str[:2].map(heating_efficiencies[key])
+    else:
+        logger.warning(f"{heat_system} not defined.")
+
+    return efficiency
+
+
 def add_heating_capacities_installed_before_baseyear(
     n: pypsa.Network,
     baseyear: int,
@@ -835,10 +921,14 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[heat_system.resistive_heater_costs_name, "lifetime"],
             )
 
+            efficiency = get_efficiency(
+                heat_system, "gas", nodes, heating_efficiencies, costs
+            )
+
             n.madd(
                 "Link",
                 nodes,
-                suffix=f"{heat_system} gas boiler-{grouping_year}",
+                suffix=f" {heat_system} gas boiler-{grouping_year}",
                 bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
@@ -860,6 +950,10 @@ def add_heating_capacities_installed_before_baseyear(
                 ),
                 build_year=int(grouping_year),
                 lifetime=costs.at[heat_system.gas_boiler_costs_name, "lifetime"],
+            )
+
+            efficiency = get_efficiency(
+                heat_system, "oil", nodes, heating_efficiencies, costs
             )
 
             n.madd(
@@ -930,6 +1024,22 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def set_defaults(n):
+    """
+    Set default values for missing values in the network.
+
+    Parameters:
+        n (pypsa.Network): The network object.
+    Returns:
+        None
+    """
+    if "Link" in n.components:
+        if "reversed" in n.links.columns:
+            # Replace NA values with default value False
+            n.links.loc[n.links.reversed.isna(), "reversed"] = False
+            n.links.reversed = n.links.reversed.astype(bool)
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -937,12 +1047,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/config.yaml",
+            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="20",
+            clusters="5",
             ll="v1.5",
             opts="",
-            sector_opts="none",
+            sector_opts="",
             planning_horizons=2030,
         )
 
@@ -976,6 +1086,11 @@ if __name__ == "__main__":
 
     if options["heating"]:
 
+        # one could use baseyear here instead (but dangerous if no data)
+        fn = snakemake.input.heating_efficiencies
+        year = int(snakemake.params["energy_totals_year"])
+        heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
+
         add_heating_capacities_installed_before_baseyear(
             n=n,
             baseyear=baseyear,
@@ -992,6 +1107,9 @@ if __name__ == "__main__":
                 index_col=0,
             ),
         )
+
+    # Set defaults for missing missing values
+    set_defaults(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)

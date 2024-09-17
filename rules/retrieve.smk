@@ -5,6 +5,7 @@
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -16,12 +17,10 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
-        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
@@ -34,7 +33,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     rule retrieve_databundle:
         output:
             expand("data/bundle/{file}", file=datafiles),
-            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -75,6 +73,32 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_nuts_shapes:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+            ),
+        output:
+            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+        params:
+            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+        run:
+            os.rename(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                for level in ["LEVL_3", "LEVL_2"]:
+                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
+                    extracted_file = Path(output.shapes_level_3).parent / filename
+                    extracted_file.rename(
+                        getattr(output, f"shapes_level_{level[-1]}")
+                    )
+            os.remove(params.zip_file)
+
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
@@ -176,7 +200,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
+                "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
@@ -189,6 +213,65 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_jrc_enspreso_biomass:
+        input:
+            storage(
+                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
+                keep_local=True,
+            ),
+        output:
+            "data/ENSPRESO_BIOMASS.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_hotmaps_industrial_sites:
+        input:
+            storage(
+                "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
+                keep_local=True,
+            ),
+        output:
+            "data/Industrial_Database.csv",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_usgs_ammonia_production:
+        input:
+            storage(
+                "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+            ),
+        output:
+            "data/myb1-2022-nitro-ert.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_geological_co2_storage_potential:
+        input:
+            storage(
+                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
+                keep_local=True,
+            ),
+        output:
+            "data/complete_map_2020_unit_Mt.geojson",
+        retries: 1
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -451,24 +534,38 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
+    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
+    osm_prebuilt_version = {
+        0.1: "12799202",
+        0.2: "13342577",
+        0.3: "13358976",
+        0.4: "13759222",
+    }
 
+    # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage("https://zenodo.org/records/13358976/files/buses.csv"),
-            converters=storage(
-                "https://zenodo.org/records/13358976/files/converters.csv"
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
             ),
-            lines=storage("https://zenodo.org/records/13358976/files/lines.csv"),
-            links=storage("https://zenodo.org/records/13358976/files/links.csv"),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
             transformers=storage(
-                "https://zenodo.org/records/13358976/files/transformers.csv"
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
             ),
         output:
-            buses="data/osm-prebuilt/buses.csv",
-            converters="data/osm-prebuilt/converters.csv",
-            lines="data/osm-prebuilt/lines.csv",
-            links="data/osm-prebuilt/links.csv",
-            transformers="data/osm-prebuilt/transformers.csv",
+            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
+            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
+            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
+            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
+            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
