@@ -433,16 +433,18 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     )
                 else:
                     if generator == "solid biomass":
-                        bus0=spatial.biomass.df.loc[new_capacity.index, "nodes"].values
+                        bus0 = spatial.biomass.df.loc[
+                            new_capacity.index, "nodes"
+                        ].values
                     elif generator == "biogas":
-                        bus0=spatial.biogas.df.loc[new_capacity.index, "nodes"].values
+                        bus0 = spatial.biogas.df.loc[new_capacity.index, "nodes"].values
                     else:
                         logger.error(f"Generator {generator} not recognized.")
 
                     # We assume the electrical efficiency of a CHP for the biomass and biogas power plants
                     # The EOP from technology data seems to be somewhat too efficient
 
-                    key = "central solid biomass CHP" 
+                    key = "central solid biomass CHP"
 
                     n.madd(
                         "Link",
@@ -474,7 +476,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
                 existing_large, "p_nom_min"
             ]
-        
 
 
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
@@ -614,7 +615,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     carrier=f"urban central {generator} CHP",
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power.dropna(),
                     efficiency2=efficiency_heat.dropna(),
@@ -634,7 +636,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     carrier=generator,
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power,
                     efficiency2=efficiency_heat,
@@ -672,7 +675,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 carrier=f"urban central {generator} CHP",
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "investment"]
+                * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
@@ -692,7 +696,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 carrier=generator,
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "investment"]
+                * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency-heat"],
