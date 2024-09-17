@@ -487,9 +487,11 @@ def apply_time_segmentation_perfect(
 
     return n
 
+
 def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
     """
-    Update the efficiency of heat pumps from previous years to current year (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
 
     Note: this also updates the efficiency of heat pumps in preceding years for previous years, which should have no effect (e.g. 2040 heat pumps receive 2030 COPs in 2030).
 
@@ -510,8 +512,12 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
         if "heat pump" in link_name:
             heat_pump_name = link_name[:-4]
             for year in years:
-                correct_efficiency = n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_name+str(year)]
-                n.links_t["efficiency"].loc[(year, slice(None)), link_name] = correct_efficiency
+                correct_efficiency = n.links_t["efficiency"].loc[
+                    (year, slice(None)), heat_pump_name + str(year)
+                ]
+                n.links_t["efficiency"].loc[
+                    (year, slice(None)), link_name
+                ] = correct_efficiency
 
 
 if __name__ == "__main__":
