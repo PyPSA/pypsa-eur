@@ -7,6 +7,7 @@ Concats pypsa networks of single investment periods to one network.
 """
 
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -486,6 +487,32 @@ def apply_time_segmentation_perfect(
 
     return n
 
+def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
+    """
+    Update the efficiency of heat pumps from previous years to current year (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+
+    Note: this also updates the efficiency of heat pumps in preceding years for previous years, which should have no effect (e.g. 2040 heat pumps receive 2030 COPs in 2030).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The concatenated network.
+    years : List[int]
+        List of planning horizon years.
+
+    Returns
+    -------
+    None
+        This function updates the efficiency in place and does not return a value.
+    """
+
+    for link_name in n.links.index:
+        if "heat pump" in link_name:
+            heat_pump_name = link_name[:-4]
+            for year in years:
+                correct_efficiency = n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_name+str(year)]
+                n.links_t["efficiency"].loc[(year, slice(None)), link_name] = correct_efficiency
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -537,6 +564,9 @@ if __name__ == "__main__":
 
     # update meta
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    # update heat pump efficiency
+    update_heat_pump_efficiency(n=n, years=years)
 
     # export network
     n.export_to_netcdf(snakemake.output[0])
