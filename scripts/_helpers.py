@@ -710,6 +710,10 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["min_part_load_electrolysis"] = 1
             config["sector"]["min_part_load_haber_bosch"] = 1
 
+        if "noshipflex" in opts:
+            logger.info("Disabling shipping import flexibility.")
+            config["sector"]["import"]["min_part_load_shipping_imports"] = 1
+
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True

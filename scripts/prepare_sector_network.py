@@ -4655,6 +4655,7 @@ def add_import_options(
                 p_nom_max=import_nodes_tech.p_nom.mul(capacity_boost)
                 .clip(upper=upper_p_nom_max)
                 .values,
+                p_min_pu=import_config["min_part_load_shipping_imports"],
             )
 
         else:
@@ -4719,6 +4720,7 @@ def add_import_options(
             efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
             marginal_cost=marginal_costs,
             p_nom=1e7,
+            p_min_pu=import_config["min_part_load_shipping_imports"],
         )
 
     copperplated_carbonfree_options = {
@@ -4742,6 +4744,7 @@ def add_import_options(
             carrier=f"import {tech}",
             marginal_cost=marginal_costs,
             p_nom=1e7,
+            p_min_pu=import_config["min_part_load_shipping_imports"],
         )
 
 
