@@ -80,7 +80,7 @@ rule add_brownfield:
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs=resources("costs_{planning_horizons}.csv"),
-        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     output:
         RESULTS
         + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
