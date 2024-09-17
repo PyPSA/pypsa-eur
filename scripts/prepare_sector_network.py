@@ -2859,7 +2859,7 @@ def add_biomass(n, costs):
 
     if options["municipal_solid_waste"]:
 
-        n.add("Carrier", "municipal solid waste") 
+        n.add("Carrier", "municipal solid waste")
 
     n.madd(
         "Bus",

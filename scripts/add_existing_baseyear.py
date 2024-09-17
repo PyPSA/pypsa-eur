@@ -476,7 +476,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
                 existing_large, "p_nom_min"
             ]
-            
+
+
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # rename fuel of CHPs - lignite not in DEA database
     rename_fuel = {
