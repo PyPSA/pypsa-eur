@@ -8,7 +8,7 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release 
+.. Upcoming Release
 .. ================
 
 * Created a separate namespace for biogas and split it form the gas namespace

@@ -603,7 +603,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
-    fossils = ["coal", "gas", "oil", "lignite"]
+    fossils = ["coal", "gas", "oil", "lignite", "uranium"]
     if options.get("fossil_fuels", True) and carrier in fossils:
 
         suffix = ""
@@ -2859,7 +2859,7 @@ def add_biomass(n, costs):
 
     if options["municipal_solid_waste"]:
 
-        n.add("Carrier", "municipal solid waste") 
+        n.add("Carrier", "municipal solid waste")
 
     n.madd(
         "Bus",
@@ -3039,7 +3039,6 @@ def add_biomass(n, costs):
             e_nom_extendable=False,
             e_max_pu=e_max_pu,
         )
-
 
         e_max_pu = pd.DataFrame(
             1, index=n.snapshots, columns=spatial.biomass.nodes_unsustainable
@@ -3346,10 +3345,14 @@ def add_biomass(n, costs):
                 efficiency=costs.at["biomass boiler", "efficiency"],
                 capital_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "fixed"]
-                * options["overdimension_heat_generators"][HeatSystem(name).central_or_decentral],
+                * options["overdimension_heat_generators"][
+                    HeatSystem(name).central_or_decentral
+                ],
                 overnight_cost=costs.at["biomass boiler", "efficiency"]
                 * costs.at["biomass boiler", "investment"]
-                * options["overdimension_heat_generators"][HeatSystem(name).central_or_decentral],
+                * options["overdimension_heat_generators"][
+                    HeatSystem(name).central_or_decentral
+                ],
                 marginal_cost=costs.at["biomass boiler", "pelletizing cost"],
                 lifetime=costs.at["biomass boiler", "lifetime"],
             )
@@ -3893,10 +3896,14 @@ def add_industry(n, costs):
                     efficiency2=costs.at["oil", "CO2 intensity"],
                     capital_cost=costs.at["decentral oil boiler", "efficiency"]
                     * costs.at["decentral oil boiler", "fixed"]
-                    * options["overdimension_heat_generators"][heat_system.central_or_decentral],
+                    * options["overdimension_heat_generators"][
+                        heat_system.central_or_decentral
+                    ],
                     overnight_cost=costs.at["decentral oil boiler", "efficiency"]
                     * costs.at["decentral oil boiler", "investment"]
-                    * options["overdimension_heat_generators"][heat_system.central_or_decentral],
+                    * options["overdimension_heat_generators"][
+                        heat_system.central_or_decentral
+                    ],
                     lifetime=costs.at["decentral oil boiler", "lifetime"],
                 )
 
