@@ -422,7 +422,8 @@ sector:
     2040: 0.3
     2045: 0.15
     2050: 0
-  transport_fuel_cell_efficiency: 0.5
+  transport_electric_vehicle_efficiency: 0.99
+  transport_fuel_cell_efficiency: 0.71 #0.5
   transport_internal_combustion_efficiency: 0.3
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
