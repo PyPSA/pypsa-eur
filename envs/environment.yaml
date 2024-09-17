@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-name: pypsa-eur
+name: pypsa-eur-sep24
 channels:
 - conda-forge
 - bioconda

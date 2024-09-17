@@ -529,3 +529,99 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-prebuilt"
+):
+    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
+    osm_prebuilt_version = {
+        0.1: "12799202",
+        0.2: "13342577",
+        0.3: "13358976",
+        0.4: "13759222",
+    }
+
+    # update rule to use the correct version
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
+            ),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
+            transformers=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
+            ),
+        output:
+            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
+            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
+            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
+            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
+            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+                validate_checksum(output[key], input[key])
+
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm-raw/{country}/cables_way.json",
+            lines_way="data/osm-raw/{country}/lines_way.json",
+            links_relation="data/osm-raw/{country}/links_relation.json",
+            substations_way="data/osm-raw/{country}/substations_way.json",
+            substations_relation="data/osm-raw/{country}/substations_relation.json",
+        log:
+            "logs/retrieve_osm_data_{country}.log",
+        threads: 1
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data_all:
+        input:
+            expand(
+                "data/osm-raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),

@@ -851,13 +851,13 @@ rule build_transport_demand:
         traffic_data_Pkw="data/bundle/emobility/Pkw__count",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
-        transport_demand=resources("transport_demand_s{simpl}_{clusters}.csv"),
-        transport_data=resources("transport_data_s{simpl}_{clusters}.csv"),
-        avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
-        dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
-        car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
-        projected_ev_share=resources("projected_ev_share_s{simpl}_{clusters}.csv"),
-        historical_ev_share=resources("historical_ev_share_s{simpl}_{clusters}.csv"),
+        transport_demand=resources("transport_demand_s_{clusters}.csv"),
+        transport_data=resources("transport_data_s_{clusters}.csv"),
+        avail_profile=resources("avail_profile_s_{clusters}.csv"),
+        dsm_profile=resources("dsm_profile_s_{clusters}.csv"),
+        car_registration=resources("car_registration_s_{clusters}.csv"),
+        projected_ev_share=resources("projected_ev_share_s_{clusters}.csv"),
+        historical_ev_share=resources("historical_ev_share_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=2000,

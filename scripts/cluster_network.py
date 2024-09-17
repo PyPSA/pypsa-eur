@@ -337,12 +337,13 @@ def cluster_regions(
     regions_c.index.name = "name"
     return regions_c.reset_index()
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake("cluster_network", clusters=39,
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm.yaml")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -356,7 +357,7 @@ if __name__ == "__main__":
         xr.open_dataarray(snakemake.input.load)
         .mean(dim="time")
         .to_pandas()
-        .reindex(n.buses.index, fill_value=0.0)
+        .reindex(n.buses.index, fill_value=1.0)
     )
 
     if snakemake.wildcards.clusters == "all":

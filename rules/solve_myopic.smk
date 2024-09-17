@@ -18,7 +18,7 @@ rule add_existing_baseyear:
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
-	car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
+        car_registration=resources("car_registration_s_{clusters}.csv"),
         costs=lambda w: resources(
             "costs_{}.csv".format(
                 config_provider("scenario", "planning_horizons", 0)(w)
@@ -53,14 +53,12 @@ rule add_existing_baseyear:
     script:
         "../scripts/add_existing_baseyear.py"
 
-
 def input_profile_tech_brownfield(w):
     return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        f"profile_{tech}": resources("profile_{clusters}_" + tech + ".nc")
         for tech in config_provider("electricity", "renewable_carriers")(w)
         if tech != "hydro"
     }
-
 
 rule add_brownfield:
     params:

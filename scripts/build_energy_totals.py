@@ -498,6 +498,7 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
         ct_totals[f"electricity {car_type}"] = row
     
     # vehicle efficiency (kgoe/100km) 
+    
     start = "Vehicle-efficiency - effective (kgoe/100 km)"
     end = "Energy intensity over activity"
     df = pd.read_excel(fn_transport, "TrRoad_ene", index_col=0).loc[start:end]
@@ -659,16 +660,23 @@ def build_idees(countries: List[str]) -> pd.DataFrame:
     # clean up dataframe
     years = np.arange(2000, 2022)
     totals = totals[totals.index.get_level_values(1).isin(years)]
-
-    # efficiency kgoe/100km -> ktoe/100km so that after conversion TWh/100km
-    totals.loc[:, "passenger car efficiency"] /= 1e6
+    
     # convert ktoe to TWh
-    patterns = ["Number.*", ".*space efficiency", ".*water efficiency",
-		"mio km-driven.*", "New registration.*", "vehicle-km (mio km).*",
-		"mio tkm driven.*"]
-    exclude = totals.columns.str.fullmatch("|".join(patterns))
+    # efficiency kgoe/100km -> MWh/100km 
+
+    exclude = (totals.columns.str.contains("Number") 
+               | totals.columns.str.contains("mio km-driven")
+               | totals.columns.str.contains("New registration")
+               | totals.columns.str.contains("vehicle-km (mio km)")
+               | totals.columns.str.contains("mio tkm driven")
+               | totals.columns.str.contains("space efficiency")
+               | totals.columns.str.contains("water efficiency")
+               )
+    # convert ktoe to TWh
     totals = totals.copy()
+    
     totals.loc[:, ~exclude] *= 11.63 / 1e3
+ 
 
     return totals
 
@@ -757,9 +765,10 @@ def build_energy_totals(
     # todo check if car efficiency should be droped
 
     efficiency_keywords = ["space efficiency", "water efficiency"]
-    exclude.append(idees.columns[idees.columns.str.contains("|".join(efficiency_keywords))])
-
-    df = idees.reindex(new_index).drop(exclude, axis=1)
+    df = idees.loc[:, ~idees.columns.str.contains("|".join(efficiency_keywords))]
+    
+    exclude = idees.columns[exclude]
+    df = df.reindex(new_index).drop(exclude, axis=1)
 
     in_eurostat = df.index.levels[0].intersection(eurostat_countries)
 
@@ -1304,17 +1313,26 @@ def build_transport_data(
 
         transport_data = transport_data.combine_first(fill_values)
 
-    # collect average fuel efficiency in MWh/100km, taking passengar car efficiency in TWh/100km
-    transport_data["average fuel efficiency"] = idees["passenger car efficiency"] * 1e6
+    # collect average fuel efficiency in MWh/100km
+    for car_type in car_types:      
+        transport_data[f"average fuel efficiency {car_type}"] = idees[f"{car_type} efficiency"]
+        if f"{car_type} efficiency electric" in idees.columns:
+            transport_data[f"average fuel efficiency {car_type} electric"] = idees[f"{car_type} efficiency electric"]
+    
+        missing = transport_data.index[transport_data[f"average fuel efficiency {car_type}"].isna()]
+        if not missing.empty:
+            logger.info(
+                f"Missing data on fuel efficiency {car_type} from:\n{list(missing.get_level_values(0).unique())}\nFilling gaps with averaged data."
+            )
+    
+            fill_values = transport_data[f"average fuel efficiency {car_type}"].mean()
+            transport_data.loc[missing, f"average fuel efficiency {car_type}"] = fill_values
+            # fill values of electric cars based on 2021
+            if f"{car_type} efficiency electric" in idees.columns:
+                fill_values =  idees[f"{car_type} efficiency electric"].xs(2021,level=1).mean()
+                missing = transport_data.index[transport_data[f"average fuel efficiency {car_type} electric"].isna()]
+                transport_data.loc[missing, f"average fuel efficiency {car_type} electric"] = fill_values
 
-    missing = transport_data.index[transport_data["average fuel efficiency"].isna()]
-    if not missing.empty:
-        logger.info(
-            f"Missing data on fuel efficiency from:\n{list(missing)}\nFilling gaps with averaged data."
-        )
-
-        fill_values = transport_data["average fuel efficiency"].mean()
-        transport_data.loc[missing, "average fuel efficiency"] = fill_values
 
     return transport_data
 
