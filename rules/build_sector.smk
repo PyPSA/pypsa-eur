@@ -308,9 +308,7 @@ rule build_cop_profiles:
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        cop_profiles=resources(
-            "cop_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     resources:
         mem_mb=20000,
     log:
@@ -1104,9 +1102,7 @@ rule prepare_sector_network:
         heating_efficiencies=resources("heating_efficiencies.csv"),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        cop_profiles=resources(
-            "cop_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
