@@ -4315,10 +4315,12 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         .to_pandas()
     )
 
-    exporters_iso2 = [e.split("-")[0] for e in cf["exporters"]] # noqa
-    exporters = country_shapes.query(
-        "ISO_A2 in @exporters_iso2"
-    ).set_index("ISO_A2").representative_point()
+    exporters_iso2 = [e.split("-")[0] for e in cf["exporters"]]  # noqa
+    exporters = (
+        country_shapes.query("ISO_A2 in @exporters_iso2")
+        .set_index("ISO_A2")
+        .representative_point()
+    )
 
     import_links = {}
     a = regions.representative_point().to_crs(DISTANCE_CRS)
