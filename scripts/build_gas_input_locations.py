@@ -27,7 +27,7 @@ def read_scigrid_gas(fn):
 
 
 def build_gem_lng_data(fn):
-    df = pd.read_excel(fn, sheet_name="LNG terminals - data")
+    df = pd.read_excel(fn, sheet_name="LNG terminals - data", engine="openpyxl")
     df = df.set_index("ComboID")
 
     remove_country = ["Cyprus", "Turkey"]  # noqa: F841
@@ -36,35 +36,42 @@ def build_gem_lng_data(fn):
         "Gran Canaria LNG Terminal",
     ]
 
+    status_list = ["Operating", "Construction"]  # noqa: F841
+
     df = df.query(
-        "Status != 'Cancelled' \
+        "Status in @status_list \
+              & FacilityType == 'Import' \
               & Country != @remove_country \
               & TerminalName != @remove_terminal \
-              & CapacityInMtpa != '--'"
+              & CapacityInMtpa != '--' \
+              & CapacityInMtpa != 0"
     )
 
     geometry = gpd.points_from_xy(df["Longitude"], df["Latitude"])
-    return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    return gdf
 
 
 def build_gem_prod_data(fn):
-    df = pd.read_excel(fn, sheet_name="Gas extraction - main")
+    df = pd.read_excel(fn, sheet_name="Gas extraction - main", engine="openpyxl")
     df = df.set_index("GEM Unit ID")
 
     remove_country = ["Cyprus", "Türkiye"]  # noqa: F841
     remove_fuel_type = ["oil"]  # noqa: F841
 
+    status_list = ["operating", "in development"]  # noqa: F841
+
     df = df.query(
-        "Status != 'shut in' \
+        "Status in @status_list \
               & 'Fuel type' != 'oil' \
               & Country != @remove_country \
               & ~Latitude.isna() \
               & ~Longitude.isna()"
     ).copy()
 
-    p = pd.read_excel(fn, sheet_name="Gas extraction - production")
+    p = pd.read_excel(fn, sheet_name="Gas extraction - production", engine="openpyxl")
     p = p.set_index("GEM Unit ID")
-    p = p[p["Fuel description"] == "gas"]
+    p = p[p["Fuel description"].str.contains("gas")]
 
     capacities = pd.DataFrame(index=df.index)
     for key in ["production", "production design capacity", "reserves"]:
@@ -85,7 +92,8 @@ def build_gem_prod_data(fn):
     )
 
     geometry = gpd.points_from_xy(df["Longitude"], df["Latitude"])
-    return gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+    return gdf
 
 
 def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
@@ -134,8 +142,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_gas_input_locations",
             simpl="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="128",
         )
 
     configure_logging(snakemake)
