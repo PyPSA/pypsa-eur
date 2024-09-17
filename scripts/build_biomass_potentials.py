@@ -193,7 +193,7 @@ def build_nuts2_shapes():
     - consistently name ME, MK
     """
     nuts2 = gpd.GeoDataFrame(
-        gpd.read_file(snakemake.input.nuts2).set_index("id").geometry
+        gpd.read_file(snakemake.input.nuts2).set_index("NUTS_ID").geometry
     )
 
     countries = gpd.read_file(snakemake.input.country_shapes).set_index("name")
@@ -344,8 +344,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",
-            simpl="",
-            clusters="38",
+            clusters="39",
             planning_horizons=2050,
         )
 

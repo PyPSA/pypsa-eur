@@ -39,7 +39,6 @@ localrules:
 
 
 wildcard_constraints:
-    simpl="[a-zA-Z0-9]*",
     clusters="[0-9]+(m|c)?|all",
     ll=r"(v|c)([0-9\.]+|opt)",
     opts=r"[-+a-zA-Z0-9\.]*",

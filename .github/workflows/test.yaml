@@ -1,0 +1,112 @@
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: Test workflows
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+  - cron: "0 5 * * TUE"
+
+# Cancel any in-progress runs when a new run is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    name: Run
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - macos
+        - windows
+        - ubuntu
+        inhouse:
+        - stable-inhouse-deps
+        - dev-inhouse-deps
+        exclude:
+        - os: macos
+          inhouse: dev-inhouse-deps
+        - os: windows
+          inhouse: dev-inhouse-deps
+    runs-on: ${{ matrix.os }}-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup secrets
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+
+    - name: Set cache dates
+      run: |
+        echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_ENV # env
+
+    - name: Cache data and cutouts folders
+      uses: actions/cache@v4
+      with:
+        path: |
+          data
+          cutouts
+        key: data-cutouts-${{ env.week }}
+
+    - name: Setup Conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: pypsa-eur
+
+    - name: Cache Conda env
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: conda-${{ runner.os }}--${{ runner.arch }}--${{ env.today }}-${{ hashFiles('envs/environment.yaml') }}
+      id: cache-env
+
+    - name: Update environment
+      if: steps.cache-env.outputs.cache-hit != 'true' && matrix.os != 'macos'
+      run: conda env update -n pypsa-eur -f envs/environment.yaml
+
+    # Temporary fix for MacOS, since highspy with pypsa can not be resolved
+    - name: Update environment (macos specific)
+      if: steps.cache-env.outputs.cache-hit != 'true' && matrix.os == 'macos'
+      run: |
+        sed -i '' '/- pypsa/d' envs/environment.yaml # Remove pypsa from environment list
+        conda env update -n pypsa-eur -f envs/environment.yaml
+        pip install highspy
+        conda install -c conda-forge pypsa
+
+    - name: Install inhouse packages from master
+      if: matrix.inhouse == 'dev-inhouse-deps'
+      run: |
+        python -m pip install uv
+        uv pip install git+https://github.com/PyPSA/pypsa.git@master
+        uv pip install git+https://github.com/PyPSA/atlite.git@master
+        uv pip install git+https://github.com/PyPSA/powerplantmatching.git@master
+        uv pip install git+https://github.com/PyPSA/linopy.git@master
+
+    - name: Run snakemake test workflows
+      run: |
+        chmod +x test.sh
+        ./test.sh
+
+    - name: Upload artifacts
+      if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable-inhouse-deps'
+      uses: actions/upload-artifact@v4.4.0
+      with:
+        name: resources-results
+        path: |
+          results
+        retention-days: 7

@@ -150,7 +150,7 @@ if __name__ == "__main__":
             planning_horizons="2030",
         )
 
-    year = int(snakemake.wildcards.planning_horizons[-4:])
+    year = int(snakemake.wildcards.planning_horizons)
 
     params = snakemake.params.industry
 

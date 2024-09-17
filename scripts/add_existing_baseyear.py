@@ -120,7 +120,7 @@ def add_existing_renewables(df_agg, costs):
                     df_agg.at[name, "DateOut"] = (
                         year + costs.at[cost_key, "lifetime"] - 1
                     )
-                    df_agg.at[name, "cluster_bus"] = node
+                    df_agg.at[name, "bus"] = node
 
 
 def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, baseyear):
@@ -135,7 +135,8 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     baseyear : int
     """
     logger.debug(
-        f"Adding power capacities installed before {baseyear} from powerplants.csv"
+        f"Adding power capacities installed before {baseyear} from"
+        " powerplants_s_{clusters}.csv"
     )
 
     df_agg = pd.read_csv(snakemake.input.powerplants, index_col=0)
@@ -184,19 +185,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     )
     df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
 
-    # assign clustered bus
-    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
-    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
-
-    inv_busmap = {}
-    for k, v in busmap.items():
-        inv_busmap[v] = inv_busmap.get(v, []) + [k]
-
-    clustermaps = busmap_s.map(busmap)
-    clustermaps.index = clustermaps.index.astype(int)
-
-    df_agg["cluster_bus"] = df_agg.bus.map(clustermaps)
-
     # include renewables in df_agg
     add_existing_renewables(df_agg, costs)
 
@@ -225,14 +213,14 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     df = df_agg.pivot_table(
         index=["grouping_year", "Fueltype"],
-        columns="cluster_bus",
+        columns="bus",
         values="Capacity",
         aggfunc="sum",
     )
 
     lifetime = df_agg.pivot_table(
         index=["grouping_year", "Fueltype"],
-        columns="cluster_bus",
+        columns="bus",
         values="lifetime",
         aggfunc="mean",  # currently taken mean for clustering lifetimes
     )
@@ -280,54 +268,23 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 ] = capacity.loc[already_build.str.replace(name_suffix, "")].values
             new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
-            if "m" in snakemake.wildcards.clusters:
-                for ind in new_capacity.index:
-                    # existing capacities are split evenly among regions in every country
-                    inv_ind = list(inv_busmap[ind])
+            p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix_by]
 
-                    # for offshore the splitting only includes coastal regions
-                    inv_ind = [
-                        i for i in inv_ind if (i + name_suffix_by) in n.generators.index
-                    ]
-
-                    p_max_pu = n.generators_t.p_max_pu[
-                        [i + name_suffix_by for i in inv_ind]
-                    ]
-                    p_max_pu.columns = [i + name_suffix for i in inv_ind]
-
-                    n.madd(
-                        "Generator",
-                        [i + name_suffix for i in inv_ind],
-                        bus=ind,
-                        carrier=generator,
-                        p_nom=new_capacity[ind]
-                        / len(inv_ind),  # split among regions in a country
-                        marginal_cost=marginal_cost,
-                        capital_cost=capital_cost,
-                        efficiency=costs.at[cost_key, "efficiency"],
-                        p_max_pu=p_max_pu,
-                        build_year=grouping_year,
-                        lifetime=costs.at[cost_key, "lifetime"],
-                    )
-
-            else:
-                p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix_by]
-
-                if not new_build.empty:
-                    n.madd(
-                        "Generator",
-                        new_capacity.index,
-                        suffix=name_suffix,
-                        bus=new_capacity.index,
-                        carrier=generator,
-                        p_nom=new_capacity,
-                        marginal_cost=marginal_cost,
-                        capital_cost=capital_cost,
-                        efficiency=costs.at[cost_key, "efficiency"],
-                        p_max_pu=p_max_pu.rename(columns=n.generators.bus),
-                        build_year=grouping_year,
-                        lifetime=costs.at[cost_key, "lifetime"],
-                    )
+            if not new_build.empty:
+                n.madd(
+                    "Generator",
+                    new_capacity.index,
+                    suffix=name_suffix,
+                    bus=new_capacity.index,
+                    carrier=generator,
+                    p_nom=new_capacity,
+                    marginal_cost=marginal_cost,
+                    capital_cost=capital_cost,
+                    efficiency=costs.at[cost_key, "efficiency"],
+                    p_max_pu=p_max_pu.rename(columns=n.generators.bus),
+                    build_year=grouping_year,
+                    lifetime=costs.at[cost_key, "lifetime"],
+                )
 
         else:
             bus0 = vars(spatial)[carrier[generator]].nodes
@@ -597,7 +554,7 @@ def add_heating_capacities_installed_before_baseyear(
             n.madd(
                 "Link",
                 nodes,
-                suffix=f"{heat_system} gas boiler-{grouping_year}",
+                suffix=f" {heat_system} gas boiler-{grouping_year}",
                 bus0="EU gas" if "EU gas" in spatial.gas.nodes else nodes + " gas",
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
@@ -666,6 +623,22 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def set_defaults(n):
+    """
+    Set default values for missing values in the network.
+
+    Parameters:
+        n (pypsa.Network): The network object.
+    Returns:
+        None
+    """
+    if "Link" in n.components:
+        if "reversed" in n.links.columns:
+            # Replace NA values with default value False
+            n.links.loc[n.links.reversed.isna(), "reversed"] = False
+            n.links.reversed = n.links.reversed.astype(bool)
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -674,7 +647,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "add_existing_baseyear",
             configfiles="config/test/config.myopic.yaml",
-            simpl="",
             clusters="5",
             ll="v1.5",
             opts="",
@@ -733,6 +705,9 @@ if __name__ == "__main__":
                 index_col=0,
             ),
         )
+
+    # Set defaults for missing missing values
+    set_defaults(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)

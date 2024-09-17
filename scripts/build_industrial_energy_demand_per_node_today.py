@@ -8,19 +8,19 @@ Build industrial energy demand per model region.
 Inputs
 -------
 
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
 - ``resources/industrial_energy_demand_per_country_today.csv``
 
 Outputs
 -------
 
-- ``resources/industrial_energy_demand_per_node_today_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_energy_demand_per_node_today_base_s_{clusters}.csv``
 
 Description
 -------
 
 This rule maps the industrial energy demand per country `industrial_energy_demand_per_country_today.csv` to each bus region.
-The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_elec_s{simpl}_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
+The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_base_s_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
 
 The unit of the energy demand is TWh/a.
 """
@@ -92,7 +92,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_energy_demand_per_node_today",
-            simpl="",
             clusters=48,
         )
     set_scenario_config(snakemake)
