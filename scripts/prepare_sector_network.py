@@ -634,7 +634,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         overnight_cost=overnight_cost,
     )
 
-    fossils = ["coal", "gas", "oil", "lignite"]
+    fossils = ["coal", "gas", "oil", "lignite", "uranium"]
     if options.get("fossil_fuels", True) and carrier in fossils:
 
         suffix = ""
