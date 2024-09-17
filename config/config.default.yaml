@@ -702,9 +702,7 @@ sector:
   bioH2: false
   endogenous_steel: false
   relocation_steel: false
-  flexibility_steel: false
   relocation_ammonia: false
-  flexibility_ammonia: false
   import:
     capacity_boost: 2
     limit: false # bool or number in TWh
@@ -1334,6 +1332,7 @@ plotting:
     heat pumps: '#2fb537'
     heat pump: '#2fb537'
     air heat pump: '#36eb41'
+    rural air heat pump: '#36eb41'
     residential urban decentral air heat pump: '#48f74f'
     services urban decentral air heat pump: '#5af95d'
     urban decentral air heat pump: '#5af95d'
@@ -1474,6 +1473,9 @@ plotting:
     external HVDC: "#8a1caf"
     steel: '#b1bbc9'
     DRI + Electric arc: '#b1bbc9'
+    DRI: '#b1bbc9'
+    EAF: '#b1bba1'
+    HBI: '#cd7a56'
     shipping ammonia: '#46caf0'
     biomass to methanol CC: '#468c8b'
     biomass to methanol: '#468c8b'

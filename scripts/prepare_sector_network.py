@@ -10,11 +10,9 @@ technologies for the buildings, transport and industry sectors.
 import logging
 import os
 import re
-import uuid
 from itertools import product
 from types import SimpleNamespace
 
-import country_converter as coco
 import geopandas as gpd
 import networkx as nx
 import numpy as np
@@ -1161,6 +1159,13 @@ def add_ammonia(n, costs):
 
     nodes = pop_layout.index
 
+    p_nom = n.loads.loc[spatial.ammonia.nodes, "p_set"]
+
+    no_relocation = not options["relocation_ammonia"]
+
+    s = " not" if no_relocation else ""
+    logger.info(f"Ammonia industry relocation{s} activated.")
+
     n.add("Carrier", "NH3")
 
     n.madd(
@@ -1174,7 +1179,10 @@ def add_ammonia(n, costs):
         bus0=nodes,
         bus1=spatial.ammonia.nodes,
         bus2=nodes + " H2",
-        p_nom_extendable=True,
+        p_nom=p_nom if no_relocation else 0,
+        p_nom_extendable=False if no_relocation else True,
+        p_max_pu=1 if no_relocation else 0, # so that no imports can substitute
+        p_min_pu=options["min_part_load_haber_bosch"],
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -1396,6 +1404,7 @@ def add_storage_and_grids(n, costs):
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "fixed"],
         lifetime=costs.at["electrolysis", "lifetime"],
+        p_min_pu=options["min_part_load_electrolysis"],
     )
 
     if options["hydrogen_fuel_cell"]:
@@ -3190,9 +3199,6 @@ def add_industry(n, costs):
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
-    add_carrier_buses(n, "oil")
-    add_carrier_buses(n, "methanol")
-
     # 1e6 to convert TWh to MWh
     industrial_demand = (
         pd.read_csv(snakemake.input.industrial_demand, index_col=[0, 1]) * 1e6 * nyears
@@ -3219,14 +3225,10 @@ def add_industry(n, costs):
 
         sector = "DRI + Electric arc"
 
-        no_relocation = not options.get("relocation_steel", False)
-        no_flexibility = not options.get("flexibility_steel", False)
+        no_relocation = not options["relocation_steel"]
 
-        s = " not" if no_relocation else " "
+        s = " not" if no_relocation else ""
         logger.info(f"Steel industry relocation{s} activated.")
-
-        s = " not" if no_flexibility else " "
-        logger.info(f"Steel industry flexibility{s} activated.")
 
         n.add(
             "Bus",
@@ -3252,7 +3254,7 @@ def add_industry(n, costs):
             p_set=industrial_production[sector].sum() / nhours,
         )
 
-        if not no_flexibility:
+        if not no_relocation:
             n.add(
                 "Store",
                 "EU steel Store",
@@ -3299,9 +3301,9 @@ def add_industry(n, costs):
             capital_cost=costs.at["direct iron reduction furnace", "fixed"]
             / electricity_input,
             marginal_cost=marginal_cost,
-            p_nom_max=p_nom if no_relocation else np.inf,
-            p_nom_extendable=True,
-            p_min_pu=1 if no_flexibility else 0,
+            p_nom=p_nom if no_relocation else 0,
+            p_nom_extendable=False if no_relocation else True,
+            p_min_pu=1 if no_relocation else 0, # so that no imports can substitute
             bus0=nodes,
             bus1="EU HBI",
             bus2=nodes + " H2",
@@ -3319,9 +3321,9 @@ def add_industry(n, costs):
             suffix=" EAF",
             carrier="EAF",
             capital_cost=costs.at["electric arc furnace", "fixed"] / electricity_input,
-            p_nom_max=p_nom if no_relocation else np.inf,
-            p_nom_extendable=True,
-            p_min_pu=1 if no_flexibility else 0,
+            p_nom=p_nom if no_relocation else 0,
+            p_nom_extendable=False if no_relocation else True,
+            p_min_pu=1 if no_relocation else 0, # so that no imports can substitute
             bus0=nodes,
             bus1="EU steel",
             bus2="EU HBI",
@@ -3986,14 +3988,12 @@ def add_industry(n, costs):
             -industrial_demand.loc[(nodes, sectors_b), "process emission"]
             .groupby(level="node")
             .sum()
-            .sum(axis=1)
             .rename(index=lambda x: x + " process emissions")
             / nhours
         )
     else:
         p_set = (
             -industrial_demand.loc[(nodes, sectors_b), "process emission"]
-            .sum(axis=1)
             .sum()
             / nhours
         )
@@ -5232,14 +5232,14 @@ if __name__ == "__main__":
     if options["biomass"]:
         add_biomass(n, costs)
 
-    if options["ammonia"]:
-        add_ammonia(n, costs)
-
     if options["methanol"]:
         add_methanol(n, costs)
 
     if options["industry"]:
         add_industry(n, costs)
+
+    if options["ammonia"]:
+        add_ammonia(n, costs)
 
     if options["heating"]:
         add_waste_heat(n)
@@ -5269,7 +5269,7 @@ if __name__ == "__main__":
         St=["shipping-steel"],
         HBI=["shipping-HBI"],
     )
-    for o in opts:
+    for o in snakemake.wildcards.sector_opts.split("-"):
         if not o.startswith("imp"):
             continue
         subsets = o.split("+")[1:]
