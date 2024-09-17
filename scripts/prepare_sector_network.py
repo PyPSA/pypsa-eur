@@ -3021,20 +3021,6 @@ def add_biomass(n, costs):
             marginal_cost=costs.at["BtL", "VOM"],
         )
 
-        n.madd(
-            "Link",
-            spatial.biomass.nodes,
-            suffix=" solid biomass import",
-            bus0=["EU solid biomass import"],
-            bus1=spatial.biomass.nodes,
-            bus2="co2 atmosphere",
-            carrier="solid biomass import",
-            efficiency=1.0,
-            efficiency2=biomass_import_upstream_emissions
-            * costs.at["solid biomass", "CO2 intensity"],
-            p_nom_extendable=True,
-        )
-
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
         add_carrier_buses(n, "oil")
         # Create timeseries to force usage of unsustainable potentials
