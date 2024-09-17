@@ -205,7 +205,8 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
 
 def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
     """
-    Update the efficiency of heat pumps from previous years to current year (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
 
     Parameters
     ----------
