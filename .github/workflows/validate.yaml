@@ -42,5 +42,8 @@ jobs:
           graphs/energy.svg
           graphs/costs.svg
           graphs/balances-energy.svg
+          graphs/balances-urban_central_heat.svg
+          graphs/balances-urban_decentral_heat.svg
+          graphs/balances-rural_heat.svg
           "
         validator_key: ${{ secrets.VALIDATOR_KEY }}
