@@ -465,12 +465,20 @@ def create_network_topology(
     return topo
 
 
-# TODO merge issue with PyPSA-Eur
-def update_wind_solar_costs(n, costs):
+def update_wind_solar_costs(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    line_length_factor: int | float = 1,
+    landfall_lengths: dict = None,
+) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
     """
+
+    if landfall_lengths is None:
+        landfall_lengths = {}
+
     # NB: solar costs are also manipulated for rooftop
     # when distribution grid is inserted
     n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
@@ -482,22 +490,9 @@ def update_wind_solar_costs(n, costs):
     ]
 
     # for offshore wind, need to calculated connection costs
-
-    # assign clustered bus
-    # map initial network -> simplified network
-    busmap_s = pd.read_csv(snakemake.input.busmap_s, index_col=0).squeeze()
-    busmap_s.index = busmap_s.index.astype(str)
-    busmap_s = busmap_s.astype(str)
-    # map simplified network -> clustered network
-    busmap = pd.read_csv(snakemake.input.busmap, index_col=0).squeeze()
-    busmap.index = busmap.index.astype(str)
-    busmap = busmap.astype(str)
-    # map initial network -> clustered network
-    clustermaps = busmap_s.map(busmap)
-
-    # code adapted from pypsa-eur/scripts/add_electricity.py
     for connection in ["dc", "ac", "float"]:
         tech = "offwind-" + connection
+        landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
             continue
         profile = snakemake.input["profile_offwind-" + connection]
@@ -507,30 +502,12 @@ def update_wind_solar_costs(n, costs):
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
-            underwater_fraction = ds["underwater_fraction"].to_pandas()
-            connection_cost = (
-                snakemake.params.length_factor
-                * ds["average_distance"].to_pandas()
-                * (
-                    underwater_fraction
-                    * costs.at[tech + "-connection-submarine", "fixed"]
-                    + (1.0 - underwater_fraction)
-                    * costs.at[tech + "-connection-underground", "fixed"]
-                )
+            distance = ds["average_distance"].to_pandas()
+            submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
+            underground_cost = costs.at[tech + "-connection-underground", "fixed"]
+            connection_cost = line_length_factor * (
+                distance * submarine_cost + landfall_length * underground_cost
             )
-
-            # convert to aggregated clusters with weighting
-            weight = ds["weight"].to_pandas()
-
-            # e.g. clusters == 37m means that VRE generators are left
-            # at clustering of simplified network, but that they are
-            # connected to 37-node network
-            genmap = (
-                busmap_s if snakemake.wildcards.clusters[-1:] == "m" else clustermaps
-            )
-            connection_cost = (connection_cost * weight).groupby(
-                genmap
-            ).sum() / weight.groupby(genmap).sum()
 
             capital_cost = (
                 costs.at["offwind", "fixed"]
@@ -547,6 +524,7 @@ def update_wind_solar_costs(n, costs):
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
+
 
 
 def add_carrier_buses(n, carrier, nodes=None):
@@ -5023,19 +5001,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 cyclic_state_of_charge=True,
             )
 
-"""
-def forecast_loads_industry(n, load_coeffs):
-
-    # This function modifies the electric load for commercial and residential with the desired parameters [0-1]
-
-    load_coeffs = pd.read_csv(load_coeffs)
-    print(f"THIS is coeff {load_coeffs}")
-    load_coeffs.set_index('Region', inplace=True)
-
-    for col_name in n.loads_t.p_set.columns:
-        if col_name.split(' ')[0][:2] in load_coeffs.index and col_name.endswith('0'):
-            n.loads_t.p_set.loc[:, col_name.split(' ')[0] + ' 0'] *= load_coeffs.loc[col_name.split(' ')[0][:2], str(investment_year)]
-"""
 
 # %%
 if __name__ == "__main__":
