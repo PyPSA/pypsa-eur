@@ -69,7 +69,7 @@ jobs:
         activate-environment: pypsa-eur
 
     - name: Cache Conda env
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
         key: conda-${{ runner.os }}--${{ runner.arch }}--${{ env.today }}-${{ hashFiles('envs/environment.yaml') }}
