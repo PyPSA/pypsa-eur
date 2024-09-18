@@ -4934,12 +4934,24 @@ def adjust_transport_temporal_agg(n):
 def add_LULUCF(investment_year):
     logger.info("add LULUCF")
     lulucf = get(options["LULUCF"], investment_year)
-    lulucf = lulucf/8760*1e6
-    n.add("Load",
+    # convert Mt_CO2/a in t_CO2/h
+    lulucf = lulucf/8760*1e6 * options["LULUCF_factor"]
+    # n.add("Load",
+    #       name="LULUCF",
+    #       bus="co2 atmosphere",
+    #       p_set=lulucf,
+    #       carrier="LULUCF"
+    #       )
+    
+    n.add("Generator",
           name="LULUCF",
           bus="co2 atmosphere",
-          p_set=lulucf,
-          carrier="LULUCF"
+          carrier="LULUCF",
+          p_nom = lulucf,
+          p_max_pu=0,
+          p_min_pu=-1,
+          marginal_cost=25, # https://archive.ipcc.ch/ipccreports/sres/land_use/index.php?idp=254
+          
           )
 # %%
 if __name__ == "__main__":
