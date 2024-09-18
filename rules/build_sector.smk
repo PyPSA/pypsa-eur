@@ -1121,7 +1121,7 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        import_costs="data/imports/results.csv",
+        import_costs="data/imports/results.parquet",
         import_p_max_pu="data/imports/combined_weighted_generator_timeseries.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         country_shapes="data/naturalearth/ne_10m_admin_0_countries_deu.shp",

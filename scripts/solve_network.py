@@ -890,8 +890,10 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_energy_import_limit(n, sns):
-    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
-    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+    import_links = n.links.loc[
+        n.links.carrier.str.contains("import")
+        & n.links.carrier.str.contains("import infrastructure")
+    ].index
 
     limit = n.config["sector"].get("import", {}).get("limit", False)
     limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
@@ -903,19 +905,14 @@ def add_energy_import_limit(n, sns):
             limit = float(match)
         break
 
-    if (import_gens.empty and import_links.empty) or not limit:
+    if import_links.empty or not limit:
         return
 
     weightings = n.snapshot_weightings.loc[sns, "generators"]
 
-    p_gens = n.model["Generator-p"].loc[sns, import_gens]
     p_links = n.model["Link-p"].loc[sns, import_links]
 
-    # using energy content of iron as proxy: 2.1 MWh/t
-    energy_weightings = np.where(import_gens.str.contains("(steel|HBI)"), 2.1, 1.0)
-    energy_weightings = pd.Series(energy_weightings, index=import_gens)
-
-    lhs = (p_gens * weightings * energy_weightings).sum() + (p_links * weightings).sum()
+    lhs = (p_links * weightings).sum()
 
     rhs = limit * 1e6
 

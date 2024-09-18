@@ -718,6 +718,8 @@ sector:
     p_nom_max:
       pipeline-h2: .inf
     min_part_load_shipping_imports: 0
+    min_part_load_pipeline_imports: 0.9
+    exporter_energy_limit: 500.e+6
     endogenous_hvdc_import:
       enable: false
       exporters:
