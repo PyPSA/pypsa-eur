@@ -73,6 +73,8 @@ Upcoming Release
 
 * Added 98% imperfect capture rate of Allam cycle gas turbine.
 
+* Resolved a problem where excluding certain countries from `countries` configuration led to clustering errors.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
