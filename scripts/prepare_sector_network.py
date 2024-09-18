@@ -4543,7 +4543,7 @@ def add_import_options(
     import_nodes["hvdc-to-elec"] = 15000
 
     import_config = snakemake.params["sector"]["import"]
-    cost_year = snakemake.params["costs"]["year"] # noqa: F841
+    cost_year = snakemake.params["costs"]["year"]  # noqa: F841
 
     ports = pd.read_csv(snakemake.input.ports, index_col=0)
 
@@ -4574,16 +4574,18 @@ def add_import_options(
     }
 
     terminal_capital_cost = {
-        "shipping-lch4": 7018, # €/MW/a
-        "shipping-lh2": 7018 * 1.2, #+20% compared to LNG
+        "shipping-lch4": 7018,  # €/MW/a
+        "shipping-lh2": 7018 * 1.2,  # +20% compared to LNG
     }
 
-    import_costs = pd.read_parquet(
-        snakemake.input.import_costs
-    ).reset_index().query("year == @cost_year and scenario == 'default'")
+    import_costs = (
+        pd.read_parquet(snakemake.input.import_costs)
+        .reset_index()
+        .query("year == @cost_year and scenario == 'default'")
+    )
 
     cols = ["esc", "exporter", "importer", "value"]
-    fields = ["Cost per MWh delivered", "Cost per t delivered"] # noqa: F841
+    fields = ["Cost per MWh delivered", "Cost per t delivered"]  # noqa: F841
     import_costs = import_costs.query("subcategory in @fields")[cols]
     import_costs.rename(columns={"value": "marginal_cost"}, inplace=True)
 
@@ -4594,7 +4596,9 @@ def add_import_options(
     if endogenous_hvdc and "hvdc-to-elec" in import_options:
         add_endogenous_hvdc_import_options(n, import_options.pop("hvdc-to-elec"))
 
-    export_buses = import_costs.query("esc in @import_options").exporter.unique() + " export"
+    export_buses = (
+        import_costs.query("esc in @import_options").exporter.unique() + " export"
+    )
     n.madd("Bus", export_buses, carrier="export")
     n.madd(
         "Store",
@@ -4616,8 +4620,10 @@ def add_import_options(
         import_nodes_tech = import_nodes[tech].dropna()
         forbidden_importers = []
         if "pipeline" in tech:
-            forbidden_importers.extend(["DE", "BE", "FR", "GB"]) # internal entrypoints
-            forbidden_importers.extend(["EE", "LT", "LV", "FI"]) # entrypoints via RU_BY
+            forbidden_importers.extend(["DE", "BE", "FR", "GB"])  # internal entrypoints
+            forbidden_importers.extend(
+                ["EE", "LT", "LV", "FI"]
+            )  # entrypoints via RU_BY
             sel = ~import_nodes_tech.index.str.contains("|".join(forbidden_importers))
             import_nodes_tech = import_nodes_tech.loc[sel]
 
@@ -4651,7 +4657,9 @@ def add_import_options(
 
         upper_p_nom_max = import_config["p_nom_max"].get(tech, np.inf)
         import_nodes_p_nom = import_nodes_tech.loc[df.importer.unique()]
-        p_nom_max = import_nodes_p_nom.mul(capacity_boost).clip(upper=upper_p_nom_max).values
+        p_nom_max = (
+            import_nodes_p_nom.mul(capacity_boost).clip(upper=upper_p_nom_max).values
+        )
         p_nom_min = (
             import_nodes_p_nom.clip(upper=upper_p_nom_max).values
             if tech == "shipping-lch4"
@@ -4705,7 +4713,8 @@ def add_import_options(
     for tech in set(import_options).intersection(copperplated_options):
         marginal_costs = (
             import_costs.query("esc == @tech")
-            .groupby("exporter").marginal_cost.min()
+            .groupby("exporter")
+            .marginal_cost.min()
             .mul(import_options[tech])
         )
 
@@ -4717,7 +4726,7 @@ def add_import_options(
         )
 
         # using energy content of iron as proxy: 2.1 MWh/t
-        unit_to_mwh = 2.1 if tech in ["shipping-steel", "shipping-hbi"] else 1.
+        unit_to_mwh = 2.1 if tech in ["shipping-steel", "shipping-hbi"] else 1.0
 
         suffix = bus_suffix[tech]
 
