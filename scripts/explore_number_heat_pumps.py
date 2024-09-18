@@ -25,6 +25,9 @@ to_plot.plot(ax=ax, color=["black", "green", "red", "blue", "pink"],
 ax.set_ylabel("Number of heat pumps [millions]")
 ax.set_xlim([2005, 2050])
 
+fig.savefig(snakemake.output.balances[:-19] + "heat_pump_installation.pdf",
+            bbox_inches="tight")
+
 #%%
 # renewable capacities
 fn = "/home/lisa/Documents/endogenous_transport/data/statistic_id864189_renewable-energy-capacity-in-europe-2010-2023.xlsx"
@@ -41,4 +44,20 @@ fig, ax = plt.subplots()
              style = ["-", "--", "--", "--", "--"])
 ax.set_ylabel("Installed renewable capacity [GW]")
 ax.set_xlim([2010, 2050])
+fig.savefig(snakemake.output.balances[:-19] + "res_installation.pdf",
+            bbox_inches="tight")
 #%%
+new_index = pd.Index(range(to_plot.index[0], to_plot.index[-1]+1), name='year')
+to_plot_reindexed = to_plot.reindex(new_index)
+
+# Step 2: Interpolate missing values for all scenarios
+to_plot_interpolated = to_plot_reindexed.interpolate(method='linear')
+
+# Step 3: Calculate the yearly difference
+yearly_diff = to_plot_interpolated.diff()
+yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
+
+(yearly_diff.shift(-1)/1e3).plot()
+plt.ylabel("Annual additional RES capacity [GW]")
+plt.savefig(snakemake.output.balances[:-19] + "res_annual_additional.pdf",
+            bbox_inches="tight")
