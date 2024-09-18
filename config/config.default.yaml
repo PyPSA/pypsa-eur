@@ -717,6 +717,70 @@ sector:
     - shipping-hbi
     - shipping-steel
     - hvdc-to-elec
+    exporters:
+    - AR-South
+    - AR-North
+    - AU-West
+    - AU-East
+    - BR-Northeast
+    - BR-Southeast
+    - CA-East
+    - CL
+    - CN-Northeast
+    - CN-Southeast
+    - CN-West
+    - DZ
+    - EG
+    - KZ
+    - LY
+    - MA
+    - EH
+    - NA
+    - OM
+    - SA
+    - TN
+    - TR
+    - UA
+    - US-Northeast
+    - US-Southeast
+    - US-Northwest
+    - US-South
+    - US-Southwest
+    - US-Alaska
+    - MX
+    - TM
+    - UZ
+    - MN
+    - PK
+    - VN
+    - MM
+    - TH
+    - ZA
+    - KE
+    - TZ
+    - NG
+    - AO
+    - ET
+    - MZ
+    - ER
+    - MR
+    - SN
+    - UY
+    - CO
+    - PE
+    - IN-Northwest
+    - IN-South
+    - IN-East
+    - SD
+    - SY
+    - YE
+    - IR
+    - IQ
+    - AF
+    - SO
+    - MG
+    - BO
+    - VE
     p_nom_max:
       pipeline-h2: .inf
     min_part_load_shipping_imports: 0
@@ -760,6 +824,40 @@ sector:
         - x: -8.70
           y: 42.31
           length: 1800
+        MR:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 5300
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 5500
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 4700
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 3300
+        EH:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 4800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 5000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 4200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 2800
         DZ:
         # Barcelona
         - x: 2.37

@@ -4544,6 +4544,7 @@ def add_import_options(
 
     import_config = snakemake.params["sector"]["import"]
     cost_year = snakemake.params["costs"]["year"]  # noqa: F841
+    exporters = import_config["exporters"]  # noqa: F841
 
     ports = pd.read_csv(snakemake.input.ports, index_col=0)
 
@@ -4581,7 +4582,7 @@ def add_import_options(
     import_costs = (
         pd.read_parquet(snakemake.input.import_costs)
         .reset_index()
-        .query("year == @cost_year and scenario == 'default'")
+        .query("year == @cost_year and scenario == 'default' and exporter in @exporters")
     )
 
     cols = ["esc", "exporter", "importer", "value"]
