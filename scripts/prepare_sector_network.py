@@ -4582,7 +4582,9 @@ def add_import_options(
     import_costs = (
         pd.read_parquet(snakemake.input.import_costs)
         .reset_index()
-        .query("year == @cost_year and scenario == 'default' and exporter in @exporters")
+        .query(
+            "year == @cost_year and scenario == 'default' and exporter in @exporters"
+        )
     )
 
     cols = ["esc", "exporter", "importer", "value"]
