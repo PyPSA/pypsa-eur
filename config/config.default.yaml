@@ -714,6 +714,8 @@ sector:
     - shipping-lnh3
     - shipping-ftfuel
     - shipping-meoh
+    - shipping-hbi
+    - shipping-steel
     - hvdc-to-elec
     p_nom_max:
       pipeline-h2: .inf
