@@ -674,8 +674,7 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         
         ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index
         p_nom = n.links.loc[ice_i, "p_nom"] / share
-
-
+ 
         efficiency = n.links_t.efficiency[ice_i]
         p_min_pu = n.links_t.p_min_pu[ice_i]
         
@@ -718,6 +717,13 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         )
         
         n.links.loc[ice_i, "p_nom"] = 0
+        
+        # set current EV share as minimum
+        
+        ev_i = n.links[n.links.carrier==f"land transport EV {transport_type}"].index
+        p_nom = n.links.loc[ev_i, "p_nom"]
+        p_nom_min = p_nom/share*today_ev.values
+        n.links.loc[ev_i, "p_nom_min"] = p_nom_min
 
 def fix_boiler_profiles(n):
 
