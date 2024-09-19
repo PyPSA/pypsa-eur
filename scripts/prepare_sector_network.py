@@ -10,6 +10,7 @@ technologies for the buildings, transport and industry sectors.
 import logging
 import os
 import re
+import warnings
 from itertools import product
 from types import SimpleNamespace
 
@@ -4304,22 +4305,15 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
 
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
-    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu.sel(
-        importer="EUE"
-    )
+    p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu
+    p_max_pu = p_max_pu.isel(importer=p_max_pu.notnull().argmax('importer'))
 
-    p_nom_max = (
-        xr.open_dataset(snakemake.input.import_p_max_pu)
-        .p_nom_max.sel(importer="EUE")
-        .to_pandas()
-    )
+    p_nom_max = xr.open_dataset(snakemake.input.import_p_max_pu).p_nom_max
+    p_nom_max = p_nom_max.isel(importer=p_nom_max.notnull().argmax('importer')).to_pandas()
 
     exporters_iso2 = [e.split("-")[0] for e in cf["exporters"]]  # noqa
-    exporters = (
-        country_shapes.query("ISO_A2 in @exporters_iso2")
-        .set_index("ISO_A2")
-        .representative_point()
-    )
+    exporters = country_shapes.set_index("ISO_A2").loc[exporters_iso2].representative_point()
+    exporters.index = cf["exporters"]
 
     import_links = {}
     a = regions.representative_point().to_crs(DISTANCE_CRS)
@@ -4337,21 +4331,23 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     import_links = pd.concat(import_links)
     import_links.loc[
         import_links.index.get_level_values(0).str.contains("KZ|CN|MN|UZ")
-    ] *= 1.2  # proxy for detour through Caucasus
+    ] *= 1.2  # proxy for detour through Caucasus in addition to crow-fly distance factor
 
-    # xlinks
-    xlinks = {}
-    for bus0, links in cf["xlinks"].items():
-        for link in links:
-            landing_point = gpd.GeoSeries(
-                [Point(link["x"], link["y"])], crs=4326
-            ).to_crs(DISTANCE_CRS)
-            bus1 = (
-                regions.to_crs(DISTANCE_CRS)
-                .geometry.distance(landing_point[0])
-                .idxmin()
-            )
-            xlinks[(bus0, bus1)] = link["length"]
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        # xlinks
+        xlinks = {}
+        for bus0, links in cf["xlinks"].items():
+            for link in links:
+                landing_point = gpd.GeoSeries(
+                    [Point(link["x"], link["y"])], crs=4326
+                ).to_crs(DISTANCE_CRS)
+                bus1 = (
+                    regions.to_crs(DISTANCE_CRS)
+                    .geometry.distance(landing_point[0])
+                    .idxmin()
+                )
+                xlinks[(bus0, bus1)] = link["length"]
 
     import_links = pd.concat([import_links, pd.Series(xlinks)], axis=0)
     import_links = import_links.drop_duplicates(keep="first")
@@ -4377,12 +4373,13 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         bus0=import_links.index.get_level_values(0),
         bus1=import_links.index.get_level_values(1),
         carrier="import hvdc-to-elec",
-        p_min_pu=0,
         p_nom_extendable=True,
         length=import_links.values,
         capital_cost=hvdc_cost * cost_factor,
         efficiency=efficiency,
         p_nom_max=cf["p_nom_max"],
+        bus2=import_links.index.get_level_values(0) + " export",
+        efficiency2=-1,
     )
 
     for tech in ["solar-utility", "onwind"]:
@@ -4397,12 +4394,12 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
             exporters_tech_i,
             suffix=" " + tech,
             bus=exporters_tech_i,
-            carrier=f"external {tech}",
+            carrier="external " + tech,
             p_nom_extendable=True,
             capital_cost=(costs.at[tech, "fixed"] + grid_connection) * cost_factor,
             lifetime=costs.at[tech, "lifetime"],
-            p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i),
-            p_nom_max=p_nom_max[tech].reindex(index=exporters_tech_i)
+            p_max_pu=p_max_pu_tech.reindex(columns=exporters_tech_i).values,
+            p_nom_max=p_nom_max[tech].reindex(index=exporters_tech_i).values
             * cf["share_of_p_nom_max_available"],
         )
 
@@ -4534,7 +4531,9 @@ def add_import_options(
     ],
     endogenous_hvdc=False,
 ):
-    if not isinstance(import_options, dict):
+    if not import_options:
+        return
+    elif not isinstance(import_options, dict):
         import_options = {k: 1.0 for k in import_options}
 
     logger.info("Add import options: " + " ".join(import_options.keys()))
@@ -4596,9 +4595,6 @@ def add_import_options(
         import_nodes[k] = import_nodes[v]
         ports[k] = ports.get(v)
 
-    if endogenous_hvdc and "hvdc-to-elec" in import_options:
-        add_endogenous_hvdc_import_options(n, import_options.pop("hvdc-to-elec"))
-
     export_buses = (
         import_costs.query("esc in @import_options").exporter.unique() + " export"
     )
@@ -4610,6 +4606,10 @@ def add_import_options(
         e_nom=import_config["exporter_energy_limit"],
         e_nom_initial=import_config["exporter_energy_limit"],
     )
+
+    if endogenous_hvdc and "hvdc-to-elec" in import_options:
+        cost_factor = import_options.pop("hvdc-to-elec")
+        add_endogenous_hvdc_import_options(n, cost_factor)
 
     regionalised_options = {
         "hvdc-to-elec",
@@ -5300,12 +5300,14 @@ if __name__ == "__main__":
                     return options["import"]["options"]
 
     import_options = wildcard_to_import_options(snakemake.wildcards.sector_opts)
+    capacity_boost = options["import"]["capacity_boost"]
+    endogenous_hvdc = options["import"]["endogenous_hvdc_import"]["enable"]
 
     add_import_options(
         n,
-        capacity_boost=options["import"]["capacity_boost"],
+        capacity_boost=capacity_boost,
         import_options=import_options,
-        endogenous_hvdc=options["import"]["endogenous_hvdc_import"]["enable"],
+        endogenous_hvdc=endogenous_hvdc,
     )
 
     if options["allam_cycle_gas"]:
