@@ -897,7 +897,7 @@ def add_energy_import_limit(n, sns):
 
     limit = n.config["sector"].get("import", {}).get("limit", False)
     limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
-    for o in n.opts:
+    for o in n.meta["wildcards"]["sector_opts"]:
         if not o.startswith("imp"):
             continue
         match = o.split("+")[0][3:]
