@@ -7,7 +7,9 @@ Created on Wed Sep  4 06:50:42 2024
 """
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from build_energy_totals import car_types
+from build_transport_demand import transport_cols
+import numpy as np
 # heat pumps
 fn = "/home/lisa/Documents/endogenous_transport/data/statistic_id1434431_total-stock-of-heat-pumps-in-europe-2005-2022.xlsx"
 historical = pd.read_excel(fn, index_col=[1], sheet_name="Data")
@@ -61,3 +63,57 @@ yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
 plt.ylabel("Annual additional RES capacity [GW]")
 plt.savefig(snakemake.output.balances[:-19] + "res_annual_additional.pdf",
             bbox_inches="tight")
+#%%
+transport_demand = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/transport_data.csv",
+                            index_col=[0,1])
+transport_types = ["light", "heavy"]
+fn = "/home/lisa/Documents/endogenous_transport/graphics/demand/"
+for transport_type in transport_types:
+    fig, ax = plt.subplots()
+    cols = [f"mio km-driven {car_type}" for car_type in transport_cols[transport_type]]
+    demand = transport_demand.loc[:, cols]
+    grouped = demand.groupby(level=1).sum().sum(axis=1)
+    
+    # convert million to trillion
+    grouped /= 1e6
+    grouped.plot(ax=ax, 
+                 title=f"transport demand {transport_type} duty")
+    
+    # Get x and y values for the linear fit
+    x = np.arange(len(grouped))
+    y = grouped.values
+    
+    # Perform linear regression using polyfit
+    slope, intercept = np.polyfit(x, y, 1)
+    
+    # Create the linear fit line based on the calculated slope and intercept
+    linear_fit = slope * x + intercept
+    
+    # Plot the linear fit line
+    ax.plot(grouped.index, linear_fit, color='gray',linestyle='--',
+            label=f'Linear fit')
+    
+    starting_value = grouped.iloc[0]  # Starting value from the first year
+
+    percentage_increase_per_year = (slope / starting_value) * 100
+    
+    ax.set_title(f"Transport demand {transport_type} duty \n Avgerage increase: {percentage_increase_per_year:.1f}%/year")
+    
+    ax.set_ylabel("trillion km driven")
+    ax.legend()
+    
+    fig.savefig(fn + f"historic_demand_{transport_type}.pdf",
+                bbox_inches="tight")
+    
+#%% car registration
+reg = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/car_registration_s_39.csv", index_col=[0,1])
+for transport_type in transport_types:
+    fig, ax = plt.subplots()
+    to_plot = reg.loc[transport_type]
+    to_plot = (to_plot.groupby(to_plot.index.str[:2]).mean().iloc[:,0].sort_values()*100)
+    to_plot.name = "country"
+    to_plot.plot(ax=ax, kind="bar", title=f"Car registration {transport_type} duty \n Average {to_plot.mean():.1f}%")
+    ax.set_ylabel("New car registration \n compared to total fleet [%]")
+    ax.set_xlabel("Country")
+    fig.savefig(fn + f"new_car_registration_{transport_type}.pdf",
+                bbox_inches="tight")
