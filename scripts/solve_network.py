@@ -1102,18 +1102,16 @@ if __name__ == "__main__":
 
     np.random.seed(solve_opts.get("seed", 123))
 
-    fn = getattr(snakemake.log, "memory", None)
-    with memory_logger(filename=fn, interval=10.0) as mem:
-        n = pypsa.Network(snakemake.input.network)
+    n = pypsa.Network(snakemake.input.network)
 
-        n = prepare_network(
-            n,
-            solve_opts,
-            config=snakemake.config,
-            foresight=snakemake.params.foresight,
-            planning_horizons=snakemake.params.planning_horizons,
-            co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-        )
+    n = prepare_network(
+        n,
+        solve_opts,
+        config=snakemake.config,
+        foresight=snakemake.params.foresight,
+        planning_horizons=snakemake.params.planning_horizons,
+        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
+    )
 
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=30.0
