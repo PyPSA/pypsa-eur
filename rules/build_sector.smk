@@ -716,6 +716,7 @@ rule build_industrial_energy_demand_per_country_today:
     params:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
+        ammonia=config_provider("sector", "ammonia", default=False),
     input:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
