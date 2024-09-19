@@ -866,7 +866,7 @@ def add_allam_gas(n, costs):
         carrier="allam gas",
         p_nom_extendable=True,
         capital_cost=costs.at["allam", "fixed"] * costs.at["allam", "efficiency"],
-        overnigh_cost=costs.at["allam", "investment"] * costs.at["allam", "efficiency"],
+        overnight_cost=costs.at["allam", "investment"] * costs.at["allam", "efficiency"],
         marginal_cost=costs.at["allam", "VOM"] * costs.at["allam", "efficiency"],
         efficiency=costs.at["allam", "efficiency"],
         efficiency2=0.98 * costs.at["gas", "CO2 intensity"],
@@ -891,6 +891,8 @@ def add_biomass_to_methanol(n, costs):
         + costs.at["biomass-to-methanol", "CO2 stored"],
         p_nom_extendable=True,
         capital_cost=costs.at["biomass-to-methanol", "fixed"]
+        / costs.at["biomass-to-methanol", "efficiency"],
+        overnight_cost=costs.at["biomass-to-methanol", "investment"]
         / costs.at["biomass-to-methanol", "efficiency"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
         / costs.at["biomass-to-methanol", "efficiency"],
@@ -920,6 +922,10 @@ def add_biomass_to_methanol_cc(n, costs):
         / costs.at["biomass-to-methanol", "efficiency"]
         + costs.at["biomass CHP capture", "fixed"]
         * costs.at["biomass-to-methanol", "CO2 stored"],
+        overnight_cost=costs.at["biomass-to-methanol", "investment"]
+        / costs.at["biomass-to-methanol", "efficiency"]
+        + costs.at["biomass CHP capture", "investment"]
+        * costs.at["biomass-to-methanol", "CO2 stored"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
         / costs.at["biomass-to-methanol", "efficiency"],
     )
@@ -946,6 +952,7 @@ def add_methanol_to_power(n, costs, types=None):
             carrier="allam methanol",
             p_nom_extendable=True,
             capital_cost=costs.at["allam", "fixed"] * costs.at["allam", "efficiency"],
+            overnight_cost=costs.at["allam", "investment"] * costs.at["allam", "efficiency"],
             marginal_cost=costs.at["allam", "VOM"] * costs.at["allam", "efficiency"],
             efficiency=costs.at["allam", "efficiency"],
             efficiency2=0.98 * costs.at["methanolisation", "carbondioxide-input"],
@@ -969,6 +976,7 @@ def add_methanol_to_power(n, costs, types=None):
             carrier="CCGT methanol",
             p_nom_extendable=True,
             capital_cost=capital_cost,
+            overnight_cost=costs.at["CCGT", "investment"], * costs.at["CCGT", "efficiency"],
             marginal_cost=costs.at["CCGT", "VOM"],
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
@@ -984,12 +992,19 @@ def add_methanol_to_power(n, costs, types=None):
 
         # efficiency * EUR/MW * (annuity + FOM)
         capital_cost = costs.at["CCGT", "efficiency"] * costs.at["CCGT", "fixed"]
+        overnight_cost = costs.at["CCGT", "investment"] * costs.at["CCGT", "efficiency"]
 
         capital_cost_cc = (
             capital_cost
             + costs.at["cement capture", "fixed"]
             * costs.at["methanolisation", "carbondioxide-input"]
         )
+        overnight_cost_cc = (
+            overnight_cost
+            + costs.at["cement capture", "investment"]
+            * costs.at["methanolisation", "carbondioxide-input"]
+        )
+
 
         n.madd(
             "Link",
@@ -1002,6 +1017,7 @@ def add_methanol_to_power(n, costs, types=None):
             carrier="CCGT methanol CC",
             p_nom_extendable=True,
             capital_cost=capital_cost_cc,
+            overnight_cost=overnight_cost_cc,
             marginal_cost=costs.at["CCGT", "VOM"],
             efficiency=costs.at["CCGT", "efficiency"],
             efficiency2=costs.at["cement capture", "capture_rate"]
@@ -1024,6 +1040,7 @@ def add_methanol_to_power(n, costs, types=None):
             carrier="OCGT methanol",
             p_nom_extendable=True,
             capital_cost=costs.at["OCGT", "fixed"] * costs.at["OCGT", "efficiency"],
+            overnight_cost=costs.at["OCGT", "investment"] * costs.at["OCGT", "efficiency"],
             marginal_cost=costs.at["OCGT", "VOM"] * costs.at["OCGT", "efficiency"],
             efficiency=costs.at["OCGT", "efficiency"],
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
@@ -1066,6 +1083,7 @@ def add_methanol_to_olefins(n, costs):
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
+        overnight_cost=costs.at[tech, "investment"] / costs.at[tech, "methanol-input"],
         marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         bus0=spatial.methanol.nodes,
@@ -1102,6 +1120,7 @@ def add_methanol_to_kerosene(n, costs):
     )
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+    overnight_cost = costs.at[tech, "investment"] / costs.at[tech, "methanol-input"]
 
     n.madd(
         "Link",
@@ -1109,6 +1128,7 @@ def add_methanol_to_kerosene(n, costs):
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=capital_cost,
+        overnight_cost=overnight_cost,
         bus0=spatial.methanol.nodes,
         bus1=spatial.oil.kerosene,
         bus2=spatial.h2.nodes,
@@ -1127,6 +1147,7 @@ def add_methanol_reforming(n, costs):
     tech = "Methanol steam reforming"
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+    overnight_cost = costs.at[tech, "investment"] / costs.at[tech, "methanol-input"]
 
     n.madd(
         "Link",
@@ -1137,6 +1158,7 @@ def add_methanol_reforming(n, costs):
         bus2="co2 atmosphere",
         p_nom_extendable=True,
         capital_cost=capital_cost,
+        overnight_cost=overnight_cost,
         efficiency=1 / costs.at[tech, "methanol-input"],
         efficiency2=costs.at["methanolisation", "carbondioxide-input"],
         carrier=tech,
@@ -1154,10 +1176,16 @@ def add_methanol_reforming_cc(n, costs):
     # 10.1016/j.rser.2020.110171: 0.129 kWh_e/kWh_H2, -0.09 kWh_heat/kWh_H2
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
+    overnight_cost = costs.at[tech, "investment"] / costs.at[tech, "methanol-input"]
 
     capital_cost_cc = (
         capital_cost
         + costs.at["cement capture", "fixed"]
+        * costs.at["methanolisation", "carbondioxide-input"]
+    )
+    overnight_cost_cc = (
+        overnight_cost
+        + costs.at["cement capture", "investment"]
         * costs.at["methanolisation", "carbondioxide-input"]
     )
 
@@ -1171,6 +1199,7 @@ def add_methanol_reforming_cc(n, costs):
         bus3=spatial.co2.nodes,
         p_nom_extendable=True,
         capital_cost=capital_cost_cc,
+        overnight_cost=overnight_cost_cc,
         efficiency=1 / costs.at[tech, "methanol-input"],
         efficiency2=(1 - costs.at["cement capture", "capture_rate"])
         * costs.at["methanolisation", "carbondioxide-input"],
@@ -3525,6 +3554,10 @@ def add_biomass(n, costs):
             capital_cost=costs.at["solid biomass to hydrogen", "fixed"]
             * costs.at["solid biomass to hydrogen", "efficiency"]
             + costs.at["biomass CHP capture", "fixed"]
+            * costs.at["solid biomass", "CO2 intensity"],
+            overnight_cost=costs.at["solid biomass to hydrogen", "investment"]
+            * costs.at["solid biomass to hydrogen", "efficiency"]
+            + costs.at["biomass CHP capture", "investment"]
             * costs.at["solid biomass", "CO2 intensity"],
             marginal_cost=0.0,
         )
