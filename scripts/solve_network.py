@@ -1069,6 +1069,8 @@ def solve_network(n, config, params, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+    if "warning" in status:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
