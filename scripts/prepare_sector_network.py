@@ -4306,13 +4306,17 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     regions = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
 
     p_max_pu = xr.open_dataset(snakemake.input.import_p_max_pu).p_max_pu
-    p_max_pu = p_max_pu.isel(importer=p_max_pu.notnull().argmax('importer'))
+    p_max_pu = p_max_pu.isel(importer=p_max_pu.notnull().argmax("importer"))
 
     p_nom_max = xr.open_dataset(snakemake.input.import_p_max_pu).p_nom_max
-    p_nom_max = p_nom_max.isel(importer=p_nom_max.notnull().argmax('importer')).to_pandas()
+    p_nom_max = p_nom_max.isel(
+        importer=p_nom_max.notnull().argmax("importer")
+    ).to_pandas()
 
     exporters_iso2 = [e.split("-")[0] for e in cf["exporters"]]  # noqa
-    exporters = country_shapes.set_index("ISO_A2").loc[exporters_iso2].representative_point()
+    exporters = (
+        country_shapes.set_index("ISO_A2").loc[exporters_iso2].representative_point()
+    )
     exporters.index = cf["exporters"]
 
     import_links = {}
@@ -4331,7 +4335,9 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
     import_links = pd.concat(import_links)
     import_links.loc[
         import_links.index.get_level_values(0).str.contains("KZ|CN|MN|UZ")
-    ] *= 1.2  # proxy for detour through Caucasus in addition to crow-fly distance factor
+    ] *= (
+        1.2  # proxy for detour through Caucasus in addition to crow-fly distance factor
+    )
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
