@@ -709,6 +709,7 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["min_part_load_methanation"] = 1
             config["sector"]["min_part_load_electrolysis"] = 1
             config["sector"]["min_part_load_haber_bosch"] = 1
+            config["sector"]["central_heat_vent"] = True
 
         if "noshipflex" in opts:
             logger.info("Disabling shipping import flexibility.")
