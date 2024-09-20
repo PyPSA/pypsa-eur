@@ -133,6 +133,9 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
 
         df["hydrogen"] = 0.0
 
+        if snakemake.params.ammonia:
+            df["ammonia"] = 0.0
+
         df["other"] = df["all"] - df.loc[df.index != "all"].sum()
 
         return df
@@ -153,14 +156,6 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
 
 
 def separate_basic_chemicals(demand, production):
-
-    ammonia = pd.DataFrame(
-        {
-            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
-            "electricity": production["Ammonia"]
-            * params["MWh_elec_per_tNH3_electrolysis"],
-        }
-    ).T
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -174,16 +169,29 @@ def separate_basic_chemicals(demand, production):
         }
     ).T
 
-    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Chlorine"] = chlorine.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Methanol"] = methanol.unstack().reindex(index=demand.index, fill_value=0.0)
 
-    demand["HVC"] = (
-        demand["Basic chemicals"]
-        - demand["Ammonia"]
-        - demand["Methanol"]
-        - demand["Chlorine"]
-    )
+    demand["HVC"] = demand["Basic chemicals"] - demand["Methanol"] - demand["Chlorine"]
+
+    # Deal with ammonia separately, depending on whether it is modelled endogenously.
+    ammonia_exo = pd.DataFrame(
+        {
+            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
+            "electricity": production["Ammonia"]
+            * params["MWh_elec_per_tNH3_electrolysis"],
+        }
+    ).T
+
+    if snakemake.params.ammonia:
+        ammonia = pd.DataFrame(
+            {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
+        ).T
+    else:
+        ammonia = ammonia_exo
+
+    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
+    demand["HVC"] -= ammonia_exo.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)
 
