@@ -1183,7 +1183,7 @@ def add_ammonia(n, costs):
         bus2=nodes + " H2",
         p_nom=p_nom if no_relocation else 0,
         p_nom_extendable=False if no_relocation else True,
-        p_min_pu=1 if no_relocation else options["min_part_load_haber_bosch"],
+        p_min_pu=options["min_part_load_haber_bosch"],
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -3289,7 +3289,6 @@ def add_industry(n, costs):
             marginal_cost=marginal_cost,
             p_nom=p_nom if no_relocation else 0,
             p_nom_extendable=False if no_relocation else True,
-            p_min_pu=1 if no_relocation else 0,  # so that no imports can substitute
             bus0=nodes,
             bus1="EU HBI",
             bus2=nodes + " H2",
@@ -3309,7 +3308,6 @@ def add_industry(n, costs):
             capital_cost=costs.at["electric arc furnace", "fixed"] / electricity_input,
             p_nom=p_nom if no_relocation else 0,
             p_nom_extendable=False if no_relocation else True,
-            p_min_pu=1 if no_relocation else 0,  # so that no imports can substitute
             bus0=nodes,
             bus1="EU steel",
             bus2="EU HBI",
