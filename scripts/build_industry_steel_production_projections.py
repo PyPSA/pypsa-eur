@@ -3,7 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 """
-DESCRIPTION
+This script calculates the global steel demand. Then we assume that Europe will continue to produce the same quantity, leaving constant internat consumption and export.
+
 """
 
 import logging

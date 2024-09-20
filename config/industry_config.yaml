@@ -21,10 +21,12 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: ""
+  name:
+  - baseline
+  - climate_policy
   scenarios:
-    enable: false
-    file: config/scenarios.yaml
+    enable: true
+    file: config/industry_scenarios.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
@@ -49,8 +51,8 @@ scenario:
   - ''
   planning_horizons:
   # - 2020
-  # - 2030
-  #- 2040
+  - 2030
+  - 2040
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
@@ -81,7 +83,7 @@ co2_budget:
   2035: 0.150
   2040: 0.071
   2045: 0.032
-  2050: 1.000
+  2050: 0.000
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -1305,3 +1307,9 @@ plotting:
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     HVC to air: 'k'
+    basic oxygen furnace: 'b'
+    blast furnaces: 'blue'
+    direct reduced iron: 'k'
+    electric arc furnaces: 'g'
+    heat4steel: 'r'
+    iron: 'green'
