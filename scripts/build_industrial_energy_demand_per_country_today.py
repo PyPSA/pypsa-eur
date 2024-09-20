@@ -121,7 +121,7 @@ eu27 = cc.EU27as("ISO2").ISO2.tolist()
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-def industrial_energy_demand_per_country(country, year, jrc_dir):
+def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammonia):
     jrc_country = jrc_names.get(country, country)
     fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
 
@@ -133,7 +133,8 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
 
         df["hydrogen"] = 0.0
 
-        if snakemake.params.ammonia:
+        # ammonia is handled separately
+        if endogenous_ammonia:
             df["ammonia"] = 0.0
 
         df["other"] = df["all"] - df.loc[df.index != "all"].sum()
@@ -220,7 +221,10 @@ def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     func = partial(
-        industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc
+        industrial_energy_demand_per_country,
+        year=year,
+        jrc_dir=snakemake.input.jrc,
+        endogenous_ammonia=snakemake.params.ammonia,
     )
     tqdm_kwargs = dict(
         ascii=False,
