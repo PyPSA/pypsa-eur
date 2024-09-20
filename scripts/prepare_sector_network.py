@@ -4371,7 +4371,7 @@ def add_endogenous_hvdc_import_options(n, cost_factor=1.0):
         efficiency=efficiency,
         p_nom_max=cf["p_nom_max"],
         bus2=import_links.index.get_level_values(0) + " export",
-        efficiency2=-1,
+        efficiency2=-efficiency,
     )
 
     for tech in ["solar-utility", "onwind"]:
