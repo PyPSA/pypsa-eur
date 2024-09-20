@@ -4640,7 +4640,10 @@ def add_import_options(
         suffix = bus_suffix[tech]
 
         import_buses = df.importer.unique() + " import " + tech
-        domestic_buses = df.importer.unique() + suffix
+        if tech == "shipping-lch4" and len(spatial.gas.nodes) == 1:
+            domestic_buses = "EU gas"
+        else:
+            domestic_buses = df.importer.unique() + suffix
 
         # pipeline imports require high minimum loading
         if "pipeline" in tech:
