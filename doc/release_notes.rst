@@ -75,6 +75,8 @@ Upcoming Release
 
 * Resolved a problem where excluding certain countries from `countries` configuration led to clustering errors.
 
+* Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
