@@ -26,6 +26,7 @@ from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from definitions.heat_system_type import HeatSystemType
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -623,6 +624,158 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+
+def add_steel_industry_existing(n):
+
+    # Steel capacities in Europe in kton of steel products per year
+    capacities = pd.read_csv(snakemake.input.steel_capacities)
+
+    # Retrieve BOF capacities
+    capacities_bof = capacities[capacities['tech'] == 'BOF']
+    capacities_bof = capacities_bof.drop(columns=["Unnamed: 0", "tech"])
+    capacities_bof.set_index('country', inplace = True)
+
+    # Retrieve EAF capacities
+    capacities_eaf = capacities[capacities['tech'] == 'EAF']
+    capacities_eaf = capacities_eaf.drop(columns=["Unnamed: 0", "tech"])
+    capacities_eaf.set_index('country', inplace = True)
+
+    # Retrieve countries that have two nodes
+    nodes = pop_layout.index
+    nodes2 = [value[:2] for value in nodes]
+    duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
+
+    #ADB for now assign half capacity per node in countries with 2 nodes
+    
+    for i in duplicated:
+        if i == 'GB': # No values for United Kingdom
+            pass
+        else:
+            capacities_bof.loc[i, 'value'] /= 2
+            capacities_eaf.loc[i, 'value'] /= 2
+    
+    p_nom_bof = pd.DataFrame(index=nodes,columns=(['value']))
+    p_nom_eaf = pd.DataFrame(index=nodes,columns=(['value']))
+    
+
+    for i in p_nom_bof.index: # index and missing countries should be the same
+        if i[:2] not in capacities_bof.index:
+            p_nom_bof.loc[i, 'value'] = 0
+            p_nom_eaf.loc[i, 'value'] = 0
+        else:
+            p_nom_bof.loc[i, 'value'] = capacities_bof.loc[i[:2],'value']
+            p_nom_eaf.loc[i, 'value'] = capacities_eaf.loc[i[:2],'value']
+    
+    p_nom_bof = p_nom_bof['value']/nhours # get the hourly production capacity 
+    p_nom_eaf = p_nom_eaf['value']/nhours # get the hourly production capacity 
+
+    # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
+    prod_share = (p_nom_bof + p_nom_eaf)/(p_nom_bof.sum() + p_nom_eaf.sum())
+
+    # Maximum capacity that can be installed per country, based on historical values in the economy
+    # Assumption: cannot triple the capacity
+    max_cap_df = pd.concat([p_nom_bof, p_nom_eaf], axis=1)
+    max_cap = pd.DataFrame(max_cap_df.max(axis=1), columns=['Max_Value'])
+    max_cap = max_cap['Max_Value']*3
+
+    # Consider the replacement of old existing capacities: average age 13 years
+    # Average lifetime 40 years -> replace 1/3 per decade
+
+    # p_nom_bof = p_nom_bof * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
+    # p_nom_eaf = p_nom_eaf * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
+
+    # Should steel be produced at a constant rate during the year or not? 1 or 0
+    prod_constantly = 1
+
+    ########### Add existing steel production capacities ############
+    # Blast furnace assuming with natural gas
+    
+    # BOF
+    
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" Blast Furnaces-2020",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.pig_iron.nodes,
+        bus2=spatial.coal.nodes,
+        bus3=spatial.co2.process_emissions,
+        carrier="blast furnaces",
+        p_nom = p_nom_bof * 1.429,
+        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
+        p_nom_extendable = False,
+        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html 
+        efficiency=1/1.429, 
+        efficiency2= -5.054/1.429,#-3758.27/1.429,
+        efficiency3=216.4/1.429,
+        lifetime= 40,#25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        build_year = 2020,
+    )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" DRI-2020",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.sponge_iron.nodes,
+        bus2=spatial.gas.nodes, # in this process is the reducing agent, it is not burnt
+        bus3=spatial.co2.process_emissions,
+        carrier="direct reduced iron",
+        p_nom = p_nom_eaf * 1.36 , # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
+        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
+        p_nom_extendable = False,
+        efficiency=1/1.36,
+        efficiency2=-2.8*1000/1.36,
+        efficiency3=28/1.36,
+        lifetime=  40, # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        build_year = 2020,
+    )
+
+    # Blast Furnace + Basic Oxygen Furnace -> BOF
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" BOF-2020",
+        bus0=spatial.pig_iron.nodes,
+        bus1=spatial.steel.nodes,
+        bus2=nodes,
+        bus3=spatial.heat4steel.nodes,
+        carrier="basic oxygen furnace",
+        p_nom = p_nom_bof, #capacities_bof.loc[],
+        p_min_pu = prod_constantly, #  hot elements cannot be turned off easily
+        p_nom_extendable=False,
+        efficiency=1, #ADB 0.7 kt coke for 1 kt steel
+        efficiency2=-524, #MWh electricity per kt coke
+        efficiency3=-615, #MWh heat per kt coke
+        lifetime=40,
+        build_year = 2020,
+    )
+
+    # EAF
+
+
+    # Electric Arc Furnace
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" EAF-2020",
+        bus0=spatial.sponge_iron.nodes,
+        bus1=spatial.steel.nodes,
+        bus2=nodes,
+        bus3=spatial.heat4steel.nodes, # This heat is mainly from side processes in the refinery
+        carrier="electric arc furnaces",
+        p_nom = p_nom_eaf,
+        p_min_pu = 0, # electrical stuff can be switched on and off
+        p_nom_extendable=False,
+        #p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
+        efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
+        efficiency2=-861/1, #MWh electricity per kt sponge iron
+        efficiency3=-305.6/1, #MWh thermal energy per kt sponge iron
+        lifetime=40,
+        build_year = 2020,
+    )
+
+
 def set_defaults(n):
     """
     Set default values for missing values in the network.
@@ -711,6 +864,11 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
+    
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    nhours = n.snapshot_weightings.generators.sum()
+    if snakemake.params.endo_industry:
+        add_steel_industry_existing(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

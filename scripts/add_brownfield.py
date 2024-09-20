@@ -34,6 +34,7 @@ def add_brownfield(n, n_p, year):
     n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
+        print(f"LINKS {n_p.links[n_p.links.index.str.contains('BOF')].build_year}")
         attr = "e" if c.name == "Store" else "p"
 
         # first, remove generators, links and stores that track
@@ -85,6 +86,7 @@ def add_brownfield(n, n_p, year):
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
+    print(f"FINAL LINKS {n.links[n.links.index.str.contains('BOF')].build_year}")
 
     # deal with gas network
     pipe_carrier = ["gas pipeline"]

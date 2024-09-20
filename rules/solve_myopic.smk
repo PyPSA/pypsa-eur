@@ -11,6 +11,7 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        endo_industry=config_provider('enable','endo_industry')
     input:
         network=RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -28,6 +29,11 @@ rule add_existing_baseyear:
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
+        steel_capacities = lambda w: (
+            resources("steel_demand_projections/steel_capacities.csv")
+            if config_provider("enable","endo_industry")(w)
+            else []
+        ),
     output:
         RESULTS
         + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
