@@ -4596,7 +4596,7 @@ def add_import_options(
         export_buses + " budget",
         bus=export_buses,
         e_nom=import_config["exporter_energy_limit"],
-        e_nom_initial=import_config["exporter_energy_limit"],
+        e_initial=import_config["exporter_energy_limit"],
     )
 
     if endogenous_hvdc and "hvdc-to-elec" in import_options:
