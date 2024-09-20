@@ -1159,8 +1159,9 @@ def add_ammonia(n, costs):
     logger.info("Adding ammonia carrier with synthesis, cracking and storage")
 
     nodes = pop_layout.index
+    nhours = n.snapshot_weightings.generators.sum()
 
-    p_nom = n.loads.loc[spatial.ammonia.nodes, "p_set"]
+    p_nom = industrial_demand["ammonia"].groupby(level="node").sum().div(nhours)
 
     no_relocation = not options["relocation_ammonia"]
 
@@ -1182,8 +1183,7 @@ def add_ammonia(n, costs):
         bus2=nodes + " H2",
         p_nom=p_nom if no_relocation else 0,
         p_nom_extendable=False if no_relocation else True,
-        p_max_pu=1 if no_relocation else 0,  # so that no imports can substitute
-        p_min_pu=options["min_part_load_haber_bosch"],
+        p_min_pu=1 if no_relocation else options["min_part_load_haber_bosch"],
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -3198,21 +3198,6 @@ def add_industry(n, costs):
 
     nodes = pop_layout.index
     nhours = n.snapshot_weightings.generators.sum()
-    nyears = nhours / 8760
-
-    # 1e6 to convert TWh to MWh
-    industrial_demand = (
-        pd.read_csv(snakemake.input.industrial_demand, index_col=[0, 1]) * 1e6 * nyears
-    )
-    industrial_demand_today = (
-        pd.read_csv(snakemake.input.industrial_demand_today, index_col=0) * 1e6 * nyears
-    )
-
-    industrial_production = (
-        pd.read_csv(snakemake.input.industrial_production, index_col=0)
-        * 1e3
-        * nyears  # kt/a -> t/a
-    )
 
     endogenous_sectors = []
     if options["endogenous_steel"]:
@@ -5190,6 +5175,20 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
+
+    # 1e6 to convert TWh to MWh
+    industrial_demand = (
+        pd.read_csv(snakemake.input.industrial_demand, index_col=[0, 1]) * 1e6 * nyears
+    )
+    industrial_demand_today = (
+        pd.read_csv(snakemake.input.industrial_demand_today, index_col=0) * 1e6 * nyears
+    )
+
+    industrial_production = (
+        pd.read_csv(snakemake.input.industrial_production, index_col=0)
+        * 1e3
+        * nyears  # kt/a -> t/a
+    )
 
     costs = prepare_costs(
         snakemake.input.costs,
