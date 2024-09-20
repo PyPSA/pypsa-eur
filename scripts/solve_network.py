@@ -892,12 +892,12 @@ def add_pipe_retrofit_constraint(n):
 def add_energy_import_limit(n, sns):
     import_links = n.links.loc[
         n.links.carrier.str.contains("import")
-        & n.links.carrier.str.contains("import infrastructure")
+        & ~n.links.carrier.str.contains("import infrastructure")
     ].index
 
     limit = n.config["sector"].get("import", {}).get("limit", False)
     limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
-    for o in n.meta["wildcards"]["sector_opts"]:
+    for o in n.meta["wildcards"]["sector_opts"].split("-"):
         if not o.startswith("imp"):
             continue
         match = o.split("+")[0][3:]
