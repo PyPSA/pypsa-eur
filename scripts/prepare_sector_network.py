@@ -4698,7 +4698,7 @@ def add_import_options(
 
     # need special handling for copperplated imports
     copperplated_options = {
-        # "shipping-ftfuel",
+        "shipping-ftfuel",
         "shipping-meoh",
         "shipping-steel",
         "shipping-hbi",
