@@ -692,6 +692,14 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["use_fuel_cell_waste_heat"] = False
             config["sector"]["use_electrolysis_waste_heat"] = False
 
+        if "allwasteheat" in opts:
+            config["sector"]["use_fischer_tropsch_waste_heat"] = True
+            config["sector"]["use_methanolisation_waste_heat"] = True
+            config["sector"]["use_haber_bosch_waste_heat"] = True
+            config["sector"]["use_methanation_waste_heat"] = True
+            config["sector"]["use_fuel_cell_waste_heat"] = True
+            config["sector"]["use_electrolysis_waste_heat"] = True
+
         if "nodistrict" in opts:
             config["sector"]["district_heating"]["progress"] = 0.0
 
