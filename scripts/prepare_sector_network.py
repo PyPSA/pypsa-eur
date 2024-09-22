@@ -956,8 +956,7 @@ def add_methanol_to_kerosene(n, costs):
         efficiency=costs.at[tech, "methanol-input"],
         efficiency2=-costs.at[tech, "hydrogen-input"]
         / costs.at[tech, "methanol-input"],
-        efficiency3=costs.at["oil", "CO2 intensity"]
-        / costs.at[tech, "methanol-input"],
+        efficiency3=costs.at["oil", "CO2 intensity"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
     )
 
