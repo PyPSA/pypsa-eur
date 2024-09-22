@@ -931,24 +931,9 @@ def add_methanol_to_power(n, costs, types=None):
 
 
 def add_methanol_to_kerosene(n, costs):
-    nodes = pop_layout.index
-    nhours = n.snapshot_weightings.generators.sum()
-
-    demand_factor = options["aviation_demand_factor"]
-
     tech = "methanol-to-kerosene"
 
     logger.info(f"Adding {tech}.")
-
-    all_aviation = ["total international aviation", "total domestic aviation"]
-
-    p_nom_max = (
-        demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
-        * 1e6
-        / nhours
-        * costs.at[tech, "methanol-input"]
-    )
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
@@ -961,12 +946,13 @@ def add_methanol_to_kerosene(n, costs):
         bus0=spatial.methanol.nodes,
         bus1=spatial.oil.kerosene,
         bus2=spatial.h2.nodes,
+        bus3="co2 atmosphere",
         efficiency=costs.at[tech, "methanol-input"],
         efficiency2=-costs.at[tech, "hydrogen-input"]
         / costs.at[tech, "methanol-input"],
+        efficiency3=costs.at["oil", "CO2 intensity"]
+        / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
-        p_min_pu=1,
-        p_nom_max=p_nom_max.values,
     )
 
 
