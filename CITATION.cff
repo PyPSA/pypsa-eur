@@ -6,7 +6,7 @@ cff-version: 1.1.0
 message: "If you use this package, please cite it in the following way."
 title: "PyPSA-Eur: An open sector-coupled optimisation model of the European energy system"
 repository: https://github.com/pypsa/pypsa-eur
-version: 0.11.0
+version: 0.13.0
 license: MIT
 authors:
   - family-names: Brown
@@ -36,3 +36,17 @@ authors:
   - family-names: Hörsch
     given-names: Jonas
     orcid: https://orcid.org/0000-0001-9438-767X
+  - family-names: Schledorn
+    given-names: Amos
+  - family-names: Schauß
+    given-names: Caspar
+  - family-names: van Greevenbroek
+    given-names: Koen
+  - family-names: Millinger
+    given-names: Markus
+  - family-names: Glaum
+    given-names: Philipp
+  - family-names: Xiong
+    given-names: Bobby
+  - family-names: Seibold
+    given-names: Toni

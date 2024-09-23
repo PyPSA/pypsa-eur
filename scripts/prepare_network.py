@@ -64,6 +64,7 @@ import pandas as pd
 import pypsa
 from _helpers import (
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -75,27 +76,43 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def maybe_adjust_costs_and_potentials(n, adjustments):
+def modify_attribute(n, adjustments, investment_year, modification="factor"):
+    if not adjustments[modification]:
+        return
+    change_dict = adjustments[modification]
+    for c in change_dict.keys():
+        if c not in n.components.keys():
+            logger.warning(f"{c} needs to be a PyPSA Component")
+            continue
+        for carrier in change_dict[c].keys():
+            ind_i = n.df(c)[n.df(c).carrier == carrier].index
+            if ind_i.empty:
+                continue
+            for parameter in change_dict[c][carrier].keys():
+                if parameter not in n.df(c).columns:
+                    logger.warning(f"Attribute {parameter} needs to be in {c} columns.")
+                    continue
+                if investment_year:
+                    factor = get(change_dict[c][carrier][parameter], investment_year)
+                else:
+                    factor = change_dict[c][carrier][parameter]
+                if modification == "factor":
+                    logger.info(f"Modify {parameter} of {carrier} by factor {factor} ")
+                    n.df(c).loc[ind_i, parameter] *= factor
+                elif modification == "absolute":
+                    logger.info(f"Set {parameter} of {carrier} to {factor} ")
+                    n.df(c).loc[ind_i, parameter] = factor
+                else:
+                    logger.warning(
+                        f"{modification} needs to be either 'absolute' or 'factor'."
+                    )
+
+
+def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
     if not adjustments:
         return
-
-    for attr, carrier_factor in adjustments.items():
-        for carrier, factor in carrier_factor.items():
-            # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
-            if carrier == "AC":  # lines do not have carrier
-                n.lines[attr] *= factor
-                continue
-            comps = {
-                "p_nom_max": {"Generator", "Link", "StorageUnit"},
-                "e_nom_max": {"Store"},
-                "capital_cost": {"Generator", "Link", "StorageUnit", "Store"},
-                "overnight_cost": {"Generator", "Link", "StorageUnit", "Store"},
-                "marginal_cost": {"Generator", "Link", "StorageUnit", "Store"},
-            }
-            for c in n.iterate_components(comps[attr]):
-                sel = c.df.index[c.df.carrier == carrier]
-                c.df.loc[sel, attr] *= factor
-        logger.info(f"changing {attr} for {carrier} by factor {factor}")
+    for modification in adjustments.keys():
+        modify_attribute(n, adjustments, investment_year, modification)
 
 
 def add_co2limit(n, co2limit, Nyears=1.0):
@@ -138,9 +155,7 @@ def add_emission_prices(n, emission_prices={"co2": 0.0}, exclude_co2=False):
 def add_dynamic_emission_prices(n):
     co2_price = pd.read_csv(snakemake.input.co2_price, index_col=0, parse_dates=True)
     co2_price = co2_price[~co2_price.index.duplicated()]
-    co2_price = (
-        co2_price.reindex(n.snapshots).fillna(method="ffill").fillna(method="bfill")
-    )
+    co2_price = co2_price.reindex(n.snapshots).ffill().bfill()
 
     emissions = (
         n.generators.carrier.map(n.carriers.co2_emissions) / n.generators.efficiency
@@ -303,6 +318,7 @@ def set_line_nom_max(
     n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

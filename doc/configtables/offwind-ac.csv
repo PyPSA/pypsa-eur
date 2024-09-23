@@ -3,6 +3,7 @@ cutout,--,"Should be a folder listed in the configuration ``atlite: cutouts:`` (
 resource,,,
 -- method,--,"Must be 'wind'","A superordinate technology type."
 -- turbine,--,"One of turbine types included in `atlite <https://github.com/PyPSA/atlite/tree/master/atlite/resources/windturbine>`_.  Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available.","Specifies the turbine type and its characteristic power curve."
+-- smooth,--,"{True, False}","Switch to apply a gaussian kernel density smoothing to the power curve."
 capacity_per_sqkm,:math:`MW/km^2`,float,"Allowable density of wind turbine placement."
 correction_factor,--,float,"Correction factor for capacity factor time series."
 excluder_resolution,m,float,"Resolution on which to perform geographical elibility analysis."

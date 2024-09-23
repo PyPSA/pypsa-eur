@@ -38,4 +38,4 @@ reference_year,year,YYYY,The year used as the baseline for industrial energy dem
 steam_biomass_fraction,--,float,The fraction of steam produced from biomass. The sum of all steam fractions should be 1.
 steam_hydrogen_fraction,--,float,The fraction of steam produced from hydrogen. The sum of all steam fractions should be 1.
 steam_electricity_fraction,--,float,The fraction of steam produced from electricity. The sum of all steam fractions should be 1.
-fuel_refining carrier emissions,tCO2/MWh,float,"The emissions from fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019. The EU value is very similar. This is also used for energy losses to be consistent with CO2 loss."
+oil_refining_emissions,tCO2/MWh,float,"The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar."

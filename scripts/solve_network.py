@@ -44,6 +44,7 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from numpy.random import randint
+from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -288,15 +289,22 @@ def add_solar_potential_constraints(n, config):
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, limit_dict):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+        limit = pd.Series(
+            {
+                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
+                for period in periods
+            }
+        )
+        names = limit.index
     else:
+        limit = get(limit_dict, int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -323,8 +331,8 @@ def add_carbon_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -349,8 +357,8 @@ def add_carbon_budget_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -516,8 +524,8 @@ def prepare_network(
             n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
-        limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        limit_dict = co2_sequestration_potential
+        add_co2_sequestration_limit(n, limit_dict=limit_dict)
 
     return n
 
@@ -634,7 +642,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     each node to produce on average at least 70% of its consumption.
     """
     # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
+    float_regex = r"[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
         ggrouper = n.generators.bus.map(n.buses.country)
@@ -1019,8 +1027,8 @@ def add_co2_atmosphere_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
@@ -1076,8 +1084,8 @@ def extra_functionality(n, snapshots):
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
-    if snakemake.params.custom_extra_functionality:
-        source_path = snakemake.params.custom_extra_functionality
+    if n.params.custom_extra_functionality:
+        source_path = n.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
@@ -1086,7 +1094,8 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, attempt=1, **kwargs):
+
+def solve_network(n, config, params, solving, attempt=1, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1121,6 +1130,7 @@ def solve_network(n, config, solving, attempt=1, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
+    n.params = params
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
@@ -1162,6 +1172,7 @@ def solve_network(n, config, solving, attempt=1, **kwargs):
     return n
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1204,6 +1215,7 @@ if __name__ == "__main__":
         n = solve_network(
             n,
             config=snakemake.config,
+            params=snakemake.params,
             solving=snakemake.params.solving,
             attempt=snakemake.resources.attempt,
             log_fn=snakemake.log.solver,
