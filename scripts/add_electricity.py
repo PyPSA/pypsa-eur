@@ -231,9 +231,13 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
-    # correct units to MW
+    # correct units from kW to MW
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.unit = costs.unit.str.replace("/kW", "/MW")
+
+    # correct units from GW to MW
+    costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
+    costs.unit = costs.unit.str.replace("/GW", "/MW")
 
     fill_values = config["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
