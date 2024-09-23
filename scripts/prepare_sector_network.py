@@ -3097,14 +3097,14 @@ def add_industry(n, costs):
             carrier="steel",
             unit="t",
         )
-
-        n.add(
-            "Bus",
-            "EU hbi",
-            location="EU",
-            carrier="hbi",
-            unit="t",
-        )
+        if options["import"]["non_eu"]:
+            n.add(
+                "Bus",
+                "EU hbi",
+                location="EU",
+                carrier="hbi",
+                unit="t",
+            )
 
         n.add(
             "Load",
@@ -3167,23 +3167,23 @@ def add_industry(n, costs):
             efficiency=1 / electricity_input,
             efficiency2=-hydrogen_input / electricity_input,
         )
-
-    n.madd(
-        "Link",
-        nodes,
-        suffix=" hbi",
-        carrier="hbi",
-        capital_cost=costs.at["electric arc furnace", "investment"],
-        marginal_cost=0,
-        p_nom_max=p_nom if no_relocation else np.inf,
-        p_nom_extendable=True,
-        p_min_pu=1 if no_flexibility else 0,
-        bus0=nodes,
-        bus1="EU steel",
-        bus2="EU hbi",
-        efficiency=costs.at["electric arc furnace", "electricity-input"],
-        efficiency2=costs.at["electric arc furnace", "hbi-input"],
-    )
+        if options["import"]["non_eu"]:
+            n.madd(
+                "Link",
+                nodes,
+                suffix=" hbi",
+                carrier="hbi",
+                capital_cost=costs.at["electric arc furnace", "investment"],
+                marginal_cost=0,
+                p_nom_max=p_nom if no_relocation else np.inf,
+                p_nom_extendable=True,
+                p_min_pu=1 if no_flexibility else 0,
+                bus0=nodes,
+                bus1="EU steel",
+                bus2="EU hbi",
+                efficiency=costs.at["electric arc furnace", "electricity-input"],
+                efficiency2=costs.at["electric arc furnace", "hbi-input"],
+            )
 
     n.madd(
         "Bus",
@@ -3731,6 +3731,8 @@ def add_industry(n, costs):
 
     if not options["regional_oil_demand"]:
         p_set_naphtha = p_set_naphtha.sum()
+    else:
+        p_set_naphtha = p_set_naphtha.groupby(level="node").sum()
 
     n.madd(
         "Bus",
@@ -4024,6 +4026,7 @@ def add_industry(n, costs):
             )
             / nhours
         )
+        p_set = p_set.groupby(level="node").sum()
     else:
         p_set = (
             -industrial_demand.loc[(nodes, sectors_b), "process emission"].sum()
@@ -4098,6 +4101,8 @@ def add_industry(n, costs):
 
         if not options["regional_coal_demand"]:
             p_set = p_set.sum()
+        else:
+            p_set = p_set.groupby(level=0).sum()
 
         n.madd(
             "Bus",
@@ -4939,12 +4944,15 @@ def add_import_options(
                 e_min_pu=1,
                 e_max_pu=0,
             )
-
+            if options["gas_network"]:
+                bus1 = import_nodes_tech.index + suffix
+            else:
+                bus1 = ["EU gas"]
             n.madd(
                 "Link",
                 buses,
                 bus0=buses + " bus",
-                bus1=import_nodes_tech.index + suffix,
+                bus1=bus1,
                 bus2="co2 atmosphere",
                 carrier=f"import {tech}",
                 efficiency2=-costs.at[co2_intensity[tech][0], co2_intensity[tech][1]],
@@ -5461,14 +5469,14 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            # configfiles="test/config.overnight.yaml",
+            configfiles="/home/toni-seibold/Documents/02_repos/pypsa-de-import/config/scenarios.yaml",
             simpl="",
             clusters="37",
             opts="",
             ll="vopt",
             sector_opts="none",
             planning_horizons="2030",
-            run="all_import_le-20"
+            run="all_import_me_all"
         )
 
     configure_logging(snakemake)
@@ -5536,8 +5544,8 @@ if __name__ == "__main__":
     if options["industry"]:
         add_industry(n, costs)
 
-    if options["shipping"] and not options["shipping_endogenous"]["enable"]:
-        add_shipping(n, costs)
+    # if options["shipping"] and not options["shipping_endogenous"]["enable"]:
+    #     add_shipping(n, costs)
 
     if options["shipping_endogenous"]["enable"]:
         add_shipping_endogenous(n, costs)
