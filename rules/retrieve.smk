@@ -363,9 +363,12 @@ if config["enable"]["retrieve"]:
             unpack_archive(params["zip"], output_folder)
 
             for f in os.listdir(output_folder):
-                if f.startswith("API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_") and f.endswith(".csv"):
+                if f.startswith(
+                    "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
+                ) and f.endswith(".csv"):
                     os.rename(os.path.join(output_folder, f), output.gpkg)
                     break
+
 
 
 if config["enable"]["retrieve"]:
