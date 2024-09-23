@@ -43,6 +43,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from numpy.random import randint
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -1090,8 +1091,11 @@ def solve_network(n, config, solving, attempt=1, **kwargs):
     cf_solving = solving["options"]
 
     kwargs["multi_investment_periods"] = config["foresight"] == "perfect"
-    kwargs["solver_options"] = (
-        solving["solver_options"][set_of_options] if set_of_options else {}
+    if attempt > 1:
+        kwargs["solver_options"] = solving["solver_options"]["gurobi-numeric-focus"]
+    else:
+        kwargs["solver_options"] = (
+            solving["solver_options"][set_of_options] if set_of_options else {}
     )
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = extra_functionality
@@ -1106,6 +1110,7 @@ def solve_network(n, config, solving, attempt=1, **kwargs):
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
 
     if attempt > 1:
+        kwargs["solver_options"]["Seed"] = randint(1, 999)
         kwargs["solver_options"]["NumericFocus"] = min(2, max(attempt - 1, 1))
 
     rolling_horizon = cf_solving.pop("rolling_horizon", False)
