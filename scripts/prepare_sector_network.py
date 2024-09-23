@@ -949,6 +949,7 @@ def add_methanol_to_kerosene(n, costs):
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=capital_cost,
+        marginal_cost=costs.at[tech, "VOM"],
         bus0=spatial.methanol.nodes,
         bus1=spatial.oil.kerosene,
         bus2=spatial.h2.nodes,
