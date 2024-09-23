@@ -99,8 +99,7 @@ jobs:
 
     - name: Run snakemake test workflows
       run: |
-        chmod +x test.sh
-        ./test.sh
+        make test
 
     - name: Upload artifacts
       if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable-inhouse-deps'
