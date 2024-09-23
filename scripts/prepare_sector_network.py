@@ -3157,7 +3157,7 @@ def add_biomass(n, costs):
             + costs.at["biomass CHP capture", "fixed"]
             * costs.at["solid biomass", "CO2 intensity"],
             marginal_cost=0.0,
-            lifetime=25, # TODO: add value to technology-data
+            lifetime=25,  # TODO: add value to technology-data
         )
 
 
