@@ -23,7 +23,7 @@ jobs:
 
     - name: Update environment.fixed.yaml
       run: |
-        conda env export --name pypsa-eur --no-builds > envs/environment.fixed.yaml
+        conda env export --name pypsa-eur-fixed --no-builds > envs/environment.fixed.yaml
 
     - name: Add SPDX header
       run: |
