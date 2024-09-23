@@ -9,3 +9,4 @@ config/test
 envs
 matplotlibrc
 Snakefile
+data
