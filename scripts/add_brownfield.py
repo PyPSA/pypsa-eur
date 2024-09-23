@@ -34,16 +34,17 @@ def add_brownfield(n, n_p, year):
     n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
-        print(f"LINKS {n_p.links[n_p.links.index.str.contains('BOF')].build_year}")
+        
         attr = "e" if c.name == "Store" else "p"
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
         n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
-
+        
         # remove assets whose build_year + lifetime <= year
         n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
-
+        print(f"LINKS {n_p.links[n_p.links.index.str.contains('BOF')].build_year}")
+        
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
         chp_heat = c.df.index[
@@ -51,6 +52,15 @@ def add_brownfield(n, n_p, year):
             & c.df.index.str.contains("CHP")
             & c.df.index.str.contains("heat")
         ]
+
+        steel_processes = c.df.index[
+            c.df[f"{attr}_nom_extendable"]
+            & (c.df.index.str.contains("BOF") 
+            | c.df.index.str.contains("DRI") 
+            | c.df.index.str.contains("Blast Furnaces") 
+            | c.df.index.str.contains("EAF"))
+        ]
+
 
         threshold = snakemake.params.threshold_capacity
 
@@ -69,8 +79,16 @@ def add_brownfield(n, n_p, year):
         n_p.mremove(
             c.name,
             c.df.index[
-                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
+                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat) & ~c.df.index.isin(steel_processes))
                 & (c.df[f"{attr}_nom_opt"] < threshold)
+            ],
+        )
+
+        n_p.mremove(
+            c.name,
+            c.df.index[
+                (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
+                & (c.df[f"{attr}_nom_opt"] < 0.1)
             ],
         )
 
@@ -211,11 +229,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="37",
+            clusters="39",
             opts="",
-            ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
-            planning_horizons=2030,
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons=2040,
+            run="baseline",
         )
 
     configure_logging(snakemake)

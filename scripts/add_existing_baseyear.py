@@ -672,17 +672,11 @@ def add_steel_industry_existing(n):
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     prod_share = (p_nom_bof + p_nom_eaf)/(p_nom_bof.sum() + p_nom_eaf.sum())
 
-    # Maximum capacity that can be installed per country, based on historical values in the economy
-    # Assumption: cannot triple the capacity
-    max_cap_df = pd.concat([p_nom_bof, p_nom_eaf], axis=1)
-    max_cap = pd.DataFrame(max_cap_df.max(axis=1), columns=['Max_Value'])
-    max_cap = max_cap['Max_Value']*3
-
     # Consider the replacement of old existing capacities: average age 13 years
-    # Average lifetime 40 years -> replace 1/3 per decade
+    # Average lifetime 40 years -> replace 1/3 per decade so since this runs for the 2030 I remove 1/3 of the existing capacities
 
-    # p_nom_bof = p_nom_bof * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
-    # p_nom_eaf = p_nom_eaf * 1/3 * (40 - 10 - (investment_year - 2020)) / 10
+    p_nom_bof = p_nom_bof * 2/3 
+    p_nom_eaf = p_nom_eaf * 2/3
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 1

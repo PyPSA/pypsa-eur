@@ -101,8 +101,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_industry_steel_production_projections",
             simpl="",
-            clusters="5",
+            clusters="39",
             planning_horizons=2050,
+            run="baseline"
             )
 
     configure_logging(snakemake)

@@ -240,6 +240,11 @@ def define_spatial(nodes, options):
     spatial.pig_iron.nodes =  ["EU pig iron"] 
     spatial.pig_iron.locations = ["EU"] 
 
+    # coke for steel
+    spatial.coke_steel = SimpleNamespace()
+    spatial.coke_steel.nodes =  ["EU coke for steel"] 
+    spatial.coke_steel.locations = ["EU"] 
+
     return spatial
 
 
@@ -619,65 +624,6 @@ def add_carrier_buses(n, carrier, nodes=None):
             marginal_cost=costs.at[carrier, "fuel"],
         )
 
-def carrier4industry(n, carrier_name, nodes):
-    n.add("Carrier", carrier_name)
-
-    n.add("Bus", carrier_name, location=nodes, carrier=carrier_name, unit="MWh_th")
-    
-    # can also be negative
-    n.add(
-        "Store",
-        carrier_name,
-        e_nom_extendable=True,
-        carrier=carrier_name,
-        bus=carrier_name,
-    )
-
-def add_carrier_iron(n, carrier, nodes=None):
-    """
-    Add buses to connect e.g. coal, nuclear and oil plants.
-    """
-    if nodes is None:
-        nodes = vars(spatial)[carrier].nodes
-    location = vars(spatial)[carrier].locations
-
-    # skip if carrier already exists
-    if carrier in n.carriers.index:
-        return
-
-    if not isinstance(nodes, pd.Index):
-        nodes = pd.Index(nodes)
-
-    n.add("Carrier", carrier)
-
-    unit = "MWh_LHV" if carrier == "gas" else "MWh_th"
-
-    n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
-
-    #ADB to add iron
-    if carrier not in ['coal','gas','oil','uranium']:
-        costs.at[carrier, "discount rate"] = 0.04
-
-    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
-    n.madd(
-        "Store",
-        nodes + " Store",
-        bus=nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier=carrier,
-        capital_cost=0.2
-        * costs.at[carrier, "discount rate"],  # preliminary value to avoid zeros
-    )
-
-    n.madd(
-        "Generator",
-        nodes,
-        bus=nodes,
-        p_nom_extendable=True,
-        carrier=carrier,
-        marginal_cost=costs.at[carrier, "fuel"],
-    )
 
 # TODO: PyPSA-Eur merge issue
 def remove_elec_base_techs(n):
@@ -4117,27 +4063,57 @@ def add_steel_industry(n, investment_year):
 
     nodes = pop_layout.index
 
-    n.madd("Bus", nodes + " BOF", location=nodes, carrier="basic oxygen furnace", unit = "kt_steel/yr")
-    n.madd("Bus", nodes + " Blast Furnaces", location=nodes, carrier="Blast Furnaces", unit = "kt_steel/yr")
-    n.madd("Bus", nodes + " EAF", location=nodes, carrier="electric arc furnaces", unit = "kt_steel/yr")
-    n.madd("Bus", nodes + " DRI", location=nodes, carrier="direct reduced iron", unit = "kt_steel/yr")
+    #n.madd("Bus", nodes + " BOF", location=nodes, carrier="basic oxygen furnace", unit = "kt_steel/yr")
+    #n.madd("Bus", nodes + " Blast Furnaces", location=nodes, carrier="Blast Furnaces", unit = "kt_steel/yr")
+    #n.madd("Bus", nodes + " EAF", location=nodes, carrier="electric arc furnaces", unit = "kt_steel/yr")
+    #n.madd("Bus", nodes + " DRI", location=nodes, carrier="direct reduced iron", unit = "kt_steel/yr")
 
-    add_carrier_iron(n, "iron")
+    n.add("Carrier", "iron")
 
-    for carrier_name in  ["steel","heat4steel","sponge_iron","pig_iron"]:
+    n.madd("Bus", spatial.iron.nodes, location=spatial.iron.locations, carrier="iron", unit="kt/yr")
+
+    costs.at["iron", "discount rate"] = 0.04
+
+    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
+    n.madd(
+        "Store",
+        nodes + " Store",
+        bus=spatial.iron.nodes,
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier="iron",
+        capital_cost=0.2
+        * costs.at["iron", "discount rate"],  # preliminary value to avoid zeros
+    )
+
+    n.madd(
+        "Generator",
+        spatial.iron.nodes,
+        bus=spatial.iron.nodes,
+        p_nom_extendable=True,
+        carrier="iron",
+        marginal_cost=costs.at["iron", "fuel"],
+    )
+
+    for carrier in  ["steel","heat4steel","sponge_iron","pig_iron","coke_steel"]:
+
+        carrier_name = carrier.replace("_", " ")
+
         n.add("Carrier", carrier_name)
 
-        location_value = getattr(spatial, carrier_name).nodes
+        location_value = getattr(spatial, carrier).nodes
 
-        n.add("Bus", carrier_name, location=location_value, carrier=carrier_name, unit="MWh_th")
+        unit = "kt/yr" if carrier_name != 'heat4steel' else 'MWh_th'
+
+        n.madd("Bus", location_value, location=location_value, carrier=carrier_name, unit=unit)
         
         # can also be negative
-        n.add(
+        n.madd(
             "Store",
-            carrier_name,
+            location_value,
             e_nom_extendable=True,
             carrier=carrier_name,
-            bus=carrier_name,
+            bus=location_value,
         )
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
@@ -4164,7 +4140,7 @@ def add_steel_industry(n, investment_year):
         suffix=" Blast Furnaces",
         bus0=spatial.iron.nodes,
         bus1=spatial.pig_iron.nodes,
-        bus2=spatial.coal.nodes,
+        bus2=spatial.coke_steel.nodes,
         bus3=spatial.co2.process_emissions,
         carrier="blast furnaces",
         p_nom_extendable = True,
