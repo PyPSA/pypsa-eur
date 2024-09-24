@@ -43,7 +43,7 @@ def add_brownfield(n, n_p, year):
         
         # remove assets whose build_year + lifetime <= year
         n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
-        print(f"LINKS {n_p.links[n_p.links.index.str.contains('BOF')].build_year}")
+        
         
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
@@ -61,8 +61,11 @@ def add_brownfield(n, n_p, year):
             | c.df.index.str.contains("EAF"))
         ]
 
+        print(f"Steel index {steel_processes}")
+
 
         threshold = snakemake.params.threshold_capacity
+        threshold_steel = snakemake.params.threshold_capacity_steel
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -88,14 +91,13 @@ def add_brownfield(n, n_p, year):
             c.name,
             c.df.index[
                 (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
-                & (c.df[f"{attr}_nom_opt"] < 0.1)
+                & (c.df[f"{attr}_nom_opt"] < threshold_steel)
             ],
         )
 
         # copy over assets but fix their capacity
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
         c.df[f"{attr}_nom_extendable"] = False
-
         n.import_components_from_dataframe(c.df, c.name)
 
         # copy time-dependent
@@ -104,7 +106,7 @@ def add_brownfield(n, n_p, year):
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
-    print(f"FINAL LINKS {n.links[n.links.index.str.contains('BOF')].build_year}")
+
 
     # deal with gas network
     pipe_carrier = ["gas pipeline"]
