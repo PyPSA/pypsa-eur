@@ -1828,8 +1828,6 @@ def add_EVs(
 
     profile = electric_share * p_set.div(efficiency)
 
-    # breakpoint()
-
     n.madd(
         "Load",
         spatial.nodes,
