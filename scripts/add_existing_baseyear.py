@@ -161,9 +161,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     # If heat is considered, add CHPs in the add_heating_capacities function.
     # Assume that all oil power plants are not CHPs.
-    if snakemake.params.sector["heating"]:
+    if options["heating"]:
         df_agg = df_agg.query("Set != 'CHP'")
-    elif not snakemake.params.sector["industry"] and "Industry" in df_agg.columns:
+    elif not options["industry"] and "Industry" in df_agg.columns:
         df_agg["Industry"].fillna(False, inplace=True)
         df_agg.query("not Industry", inplace=True)
 
@@ -515,7 +515,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
-        if not snakemake.params.sector["industry"]:
+        if not options["industry"]:
             chp.query("Industry == False", inplace=True)
 
         thermal_capacity_b = ~chp.Capacity_thermal.isna()
@@ -1052,7 +1052,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            # configfiles="config/test/config.myopic.yaml",
             simpl="",
             clusters=27,
             opts="",
