@@ -10,8 +10,10 @@ dependencies:
 - python>=3.8
 - pip
 
+- pypsa>=0.30.2
 - atlite>=0.2.9
 - linopy
+
 - dask
 
 # Dependencies of the workflow itself
@@ -62,4 +64,3 @@ dependencies:
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
   - highspy
-  - pypsa>=0.30.2
