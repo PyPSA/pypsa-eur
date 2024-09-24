@@ -3,7 +3,7 @@
 
 name: pypsa-eur-fixed
 channels:
-  - conda-forge
-  - bioconda
-  - defaults
+- conda-forge
+- bioconda
+- defaults
 prefix: /usr/share/miniconda/envs/pypsa-eur-fixed
