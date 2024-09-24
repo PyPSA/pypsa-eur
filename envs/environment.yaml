@@ -10,7 +10,7 @@ dependencies:
 - python>=3.8
 - pip
 
-- pypsa>=0.30.2
+- pypsa>=0.30.3
 - atlite>=0.2.9
 - linopy
 
