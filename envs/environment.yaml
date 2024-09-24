@@ -11,7 +11,6 @@ dependencies:
 - pip
 
 - atlite>=0.2.9
-- pypsa>=0.30.2
 - linopy
 - dask
 
@@ -63,3 +62,4 @@ dependencies:
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
   - highspy
+  - pypsa>=0.30.2
