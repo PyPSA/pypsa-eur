@@ -1041,24 +1041,9 @@ def add_methanol_to_olefins(n, costs):
 
 
 def add_methanol_to_kerosene(n, costs):
-    nodes = pop_layout.index
-    nhours = n.snapshot_weightings.generators.sum()
-
-    demand_factor = options["aviation_demand_factor"]
-
     tech = "methanol-to-kerosene"
 
     logger.info(f"Adding {tech}.")
-
-    all_aviation = ["total international aviation", "total domestic aviation"]
-
-    p_nom_max = (
-        demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
-        * 1e6
-        / nhours
-        * costs.at[tech, "methanol-input"]
-    )
 
     capital_cost = costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"]
 
@@ -1068,15 +1053,17 @@ def add_methanol_to_kerosene(n, costs):
         suffix=f" {tech}",
         carrier=tech,
         capital_cost=capital_cost,
+        marginal_cost=costs.at[tech, "VOM"],
         bus0=spatial.methanol.nodes,
         bus1=spatial.oil.kerosene,
         bus2=spatial.h2.nodes,
-        efficiency=costs.at[tech, "methanol-input"],
+        bus3="co2 atmosphere",
+        efficiency=1 / costs.at[tech, "methanol-input"],
         efficiency2=-costs.at[tech, "hydrogen-input"]
         / costs.at[tech, "methanol-input"],
+        efficiency3=costs.at["oil", "CO2 intensity"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
-        p_min_pu=1,
-        p_nom_max=p_nom_max.values,
+        lifetime=costs.at[tech, "lifetime"],
     )
 
 
@@ -2909,6 +2896,7 @@ def add_biomass(n, costs):
         efficiency=costs.at["biogas", "efficiency"],
         efficiency2=-costs.at["gas", "CO2 intensity"],
         p_nom_extendable=True,
+        lifetime=costs.at["biogas", "lifetime"],
     )
 
     if options.get("biogas_upgrading_cc"):
@@ -2936,6 +2924,7 @@ def add_biomass(n, costs):
             - costs.at["biogas CC", "CO2 stored"]
             * costs.at["biogas CC", "capture rate"],
             p_nom_extendable=True,
+            lifetime=costs.at["biogas CC", "lifetime"],
         )
 
     if options["biomass_transport"]:
@@ -3292,6 +3281,7 @@ def add_biomass(n, costs):
             + costs.at["biomass CHP capture", "investment"]
             * costs.at["solid biomass", "CO2 intensity"],
             marginal_cost=0.0,
+            lifetime=25,  # TODO: add value to technology-data
         )
 
 
@@ -4790,6 +4780,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
             capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
             efficiency=bus_eta,
+            lifetime=costs.at["geothermal", "lifetime"],
         )
 
         # adding Organic Rankine Cycle as a single link
@@ -4802,6 +4793,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             carrier="geothermal organic rankine cycle",
             capital_cost=orc_capital_cost * efficiency_orc,
             efficiency=efficiency_orc,
+            lifetime=costs.at["organic rankine cycle", "lifetime"],
         )
 
         if as_chp and bus + " urban central heat" in n.buses.index:
@@ -4817,6 +4809,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 / 100.0,
                 efficiency=efficiency_dh,
                 p_nom_extendable=True,
+                lifetime=costs.at["geothermal", "lifetime"],
             )
         elif as_chp and not bus + " urban central heat" in n.buses.index:
             n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = (
