@@ -4221,7 +4221,7 @@ def add_steel_industry(n, investment_year):
         capital_cost=0.1,
         efficiency=0.75,
         efficiency2=costs.at["gas", "CO2 intensity"],
-        lifetime=40,
+        lifetime=100,
     )
 
 

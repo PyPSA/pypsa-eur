@@ -702,7 +702,7 @@ def add_steel_industry_existing(n):
         efficiency=1/1.429, 
         efficiency2= -5.054/1.429,#-3758.27/1.429,
         efficiency3=216.4/1.429,
-        lifetime= 40,#25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime= 40*2/3,#25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year = 2020,
     )
 
@@ -721,7 +721,7 @@ def add_steel_industry_existing(n):
         efficiency=1/1.36,
         efficiency2=-2.8*1000/1.36,
         efficiency3=28/1.36,
-        lifetime=  40, # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime=  40*2/3, # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year = 2020,
     )
 
@@ -741,7 +741,7 @@ def add_steel_industry_existing(n):
         efficiency=1, #ADB 0.7 kt coke for 1 kt steel
         efficiency2=-524, #MWh electricity per kt coke
         efficiency3=-615, #MWh heat per kt coke
-        lifetime=40,
+        lifetime=40*2/3,
         build_year = 2020,
     )
 
@@ -765,7 +765,7 @@ def add_steel_industry_existing(n):
         efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861/1, #MWh electricity per kt sponge iron
         efficiency3=-305.6/1, #MWh thermal energy per kt sponge iron
-        lifetime=40,
+        lifetime=40*2/3,
         build_year = 2020,
     )
 
