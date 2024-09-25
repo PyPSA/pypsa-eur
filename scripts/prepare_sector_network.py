@@ -4053,11 +4053,6 @@ def add_steel_industry(n, investment_year):
 
     nodes = pop_layout.index
 
-    #n.madd("Bus", nodes + " BOF", location=nodes, carrier="basic oxygen furnace", unit = "kt_steel/yr")
-    #n.madd("Bus", nodes + " Blast Furnaces", location=nodes, carrier="Blast Furnaces", unit = "kt_steel/yr")
-    #n.madd("Bus", nodes + " EAF", location=nodes, carrier="electric arc furnaces", unit = "kt_steel/yr")
-    #n.madd("Bus", nodes + " DRI", location=nodes, carrier="direct reduced iron", unit = "kt_steel/yr")
-
     n.add("Carrier", "iron")
 
     n.madd("Bus", spatial.iron.nodes, location=spatial.iron.locations, carrier="iron", unit="kt/yr")
@@ -4088,11 +4083,8 @@ def add_steel_industry(n, investment_year):
     for carrier in  ["steel","heat4steel","sponge_iron","pig_iron","coke_steel"]:
 
         carrier_name = carrier.replace("_", " ")
-
         n.add("Carrier", carrier_name)
-
         location_value = getattr(spatial, carrier).nodes
-
         unit = "kt/yr" if carrier_name != 'heat4steel' else 'MWh_th'
 
         n.madd("Bus", location_value, location=location_value, carrier=carrier_name, unit=unit)
@@ -4117,7 +4109,6 @@ def add_steel_industry(n, investment_year):
         carrier="steel",
         p_set=hourly_steel_production,
     )
-    
 
     ########### Add carriers for new capacity for steel production ############
         # Blast furnace assuming with natural gas
