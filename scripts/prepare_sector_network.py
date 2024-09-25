@@ -2893,6 +2893,27 @@ def add_biomass(n, costs):
 
         n.add("Carrier", "municipal solid waste")
 
+        n.madd(
+            "Bus",
+            spatial.msw.nodes,
+            location=spatial.msw.locations,
+            carrier="municipal solid waste",
+        )
+
+        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.msw.nodes)
+        e_max_pu.iloc[-1] = 0
+
+        n.madd(
+            "Store",
+            spatial.msw.nodes,
+            bus=spatial.msw.nodes,
+            carrier="municipal solid waste",
+            e_nom=msw_biomass_potentials_spatial,
+            marginal_cost=0,  # costs.at["municipal solid waste", "fuel"],
+            e_max_pu=e_max_pu,
+            e_initial=msw_biomass_potentials_spatial,
+        )
+
     n.madd(
         "Bus",
         spatial.biogas.nodes,
