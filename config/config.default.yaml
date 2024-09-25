@@ -915,6 +915,7 @@ solving:
         DC: 0.3
         H2 pipeline: 0.3
         gas pipeline: 0.3
+      fractional_last_unit_size: false
 
   agg_p_nom_limits:
     agg_offwind: false

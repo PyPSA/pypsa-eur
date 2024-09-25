@@ -76,17 +76,8 @@ jobs:
       id: cache-env
 
     - name: Update environment
-      if: steps.cache-env.outputs.cache-hit != 'true' && matrix.os != 'macos'
+      if: steps.cache-env.outputs.cache-hit != 'true'
       run: conda env update -n pypsa-eur -f envs/environment.yaml
-
-    # Temporary fix for MacOS, since highspy with pypsa can not be resolved
-    - name: Update environment (macos specific)
-      if: steps.cache-env.outputs.cache-hit != 'true' && matrix.os == 'macos'
-      run: |
-        sed -i '' '/- pypsa/d' envs/environment.yaml # Remove pypsa from environment list
-        conda env update -n pypsa-eur -f envs/environment.yaml
-        pip install highspy
-        conda install -c conda-forge pypsa
 
     - name: Install inhouse packages from master
       if: matrix.inhouse == 'dev-inhouse-deps'
@@ -99,8 +90,7 @@ jobs:
 
     - name: Run snakemake test workflows
       run: |
-        chmod +x test.sh
-        ./test.sh
+        make test
 
     - name: Upload artifacts
       if: matrix.os == 'ubuntu' && matrix.inhouse == 'stable-inhouse-deps'
