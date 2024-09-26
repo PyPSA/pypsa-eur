@@ -489,7 +489,9 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
     if snakemake.input.get("custom_powerplants"):
-        ppl = ppl.query("~(Set == 'CHP' and Country == 'DE')")
+        if snakemake.input.custom_powerplants.endswith("german_chp.csv"):
+            logger.info("Supersedeing default German CHPs with custom_powerplants.")
+            ppl = ppl.query("~(Set == 'CHP' and Country == 'DE')")
         ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, True)
 
     # drop assets which are already phased out / decommissioned
