@@ -142,7 +142,6 @@ def prepare_gem_database(regions):
         snakemake.input.gem_gspt,
         sheet_name="Steel Plants",
         na_values=["N/A", "unknown", ">0"],
-        engine="openpyxl",
     ).query("Region == 'Europe'")
 
     df["Retired Date"] = pd.to_numeric(

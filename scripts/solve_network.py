@@ -641,7 +641,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     each node to produce on average at least 70% of its consumption.
     """
     # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
+    float_regex = r"[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
         ggrouper = n.generators.bus.map(n.buses.country)
