@@ -602,7 +602,7 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
@@ -691,8 +691,10 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
   electrobiofuels: false
   biosng: false
+  biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
@@ -1160,9 +1162,10 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    biomass to liquid CC: '#32DDD2'
     unsustainable solid biomass: '#998622'
     unsustainable bioliquids: '#32CD32'
-    electrobiofuels: 'red'
+    electrobiofuels: '#de4060'
     BioSNG: '#123456'
     solid biomass to hydrogen: '#654321'
     # power transmission
