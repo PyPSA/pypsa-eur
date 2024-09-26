@@ -39,6 +39,7 @@ from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
+from collections import Counter
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -4049,9 +4050,36 @@ def add_steel_industry(n, investment_year):
 
     # Retrieving existing capacities only to give a maximum potential
     capacities = pd.read_csv(snakemake.input.steel_capacities)
-    max_cap = max(capacities['value'])*3
+    capacities = capacities.groupby('country').sum().reset_index()
+    capacities = capacities.set_index('country').squeeze()
+    capacities = capacities.drop(['Unnamed: 0','tech'], axis = 1)
 
+    # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
+    cap_share = capacities/ capacities.sum()
+    min_cap = cap_share * hourly_steel_production
+    # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
+    max_cap = max(capacities['value'])*2
+
+    # Retrieve countries that have two nodes
     nodes = pop_layout.index
+    nodes2 = [value[:2] for value in nodes]
+    duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
+
+    #ADB for now assign half capacity per node in countries with 2 nodes
+    
+    for i in duplicated:
+        if i == 'GB': # No values for United Kingdom
+            pass
+        else:
+            min_cap.loc[i, 'value'] /= 2
+    
+    min_cap_node = pd.DataFrame(index=nodes,columns=(['value']))
+    
+    for i in min_cap_node.index: # index and missing countries should be the same
+        if i[:2] not in min_cap.index:
+            min_cap_node.loc[i, 'value'] = 0
+        else:
+            min_cap_node.loc[i, 'value'] = min_cap.loc[i[:2],'value']
 
     n.add("Carrier", "iron")
 
@@ -4127,7 +4155,9 @@ def add_steel_industry(n, investment_year):
         p_nom_extendable = True,
         p_nom_max = max_cap * 1.429,
         p_min_pu = prod_constantly, # hot elements cannot be turned off easily
-        capital_cost=211000/nhours/(1/1.429) * 0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price, USD/kt steel
+        capital_cost=211000/nhours/(1/1.429) * 0.7551,
+        # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt coke
+        # also considering that the efficiency for the BOF is 1
         # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html 
         efficiency=1/1.429, 
         efficiency2= -5.054/1.429, #-3758.27/1.429,
@@ -4187,17 +4217,18 @@ def add_steel_industry(n, investment_year):
         bus2=nodes,
         bus3=spatial.heat4steel.nodes, # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
-        p_nom_extendable=True,
+        p_nom_extendable=False,
         p_nom_max = max_cap,
-        p_min_pu = 0, # electrical stuff can be switched on and off
-        #p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
+        p_min_pu = prod_constantly, # electrical stuff can be switched on and off
+        p_nom_min = min_cap_node,
+        #•p_nom = min_cap_node,
         capital_cost= 80000/nhours/1*0.7551,
         efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861/1, #MWh electricity per kt sponge iron
         efficiency3=-305.6/1, #MWh thermal energy per kt sponge iron
         lifetime=40,
-    )
-    
+    )    
+    print(f"Example {n.links.loc[n.links.index.str.contains('EAF'), 'p_nom_min']}")
 
     # Link to produce heat for steel industry processes
     n.madd(

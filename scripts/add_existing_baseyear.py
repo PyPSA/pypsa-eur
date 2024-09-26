@@ -669,9 +669,6 @@ def add_steel_industry_existing(n):
     p_nom_bof = p_nom_bof['value']/nhours # get the hourly production capacity 
     p_nom_eaf = p_nom_eaf['value']/nhours # get the hourly production capacity 
 
-    # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
-    prod_share = (p_nom_bof + p_nom_eaf)/(p_nom_bof.sum() + p_nom_eaf.sum())
-
     # Consider the replacement of old existing capacities: average age 13 years
     # Average lifetime 40 years -> replace 1/3 per decade so since this runs for the 2030 I remove 1/3 of the existing capacities
 
@@ -747,7 +744,6 @@ def add_steel_industry_existing(n):
 
     # EAF
 
-
     # Electric Arc Furnace
     n.madd(
         "Link",
@@ -759,7 +755,7 @@ def add_steel_industry_existing(n):
         bus3=spatial.heat4steel.nodes, # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
         p_nom = p_nom_eaf,
-        p_min_pu = 0, # electrical stuff can be switched on and off
+        p_min_pu = prod_constantly, # electrical stuff can be switched on and off
         p_nom_extendable=False,
         #p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
         efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
