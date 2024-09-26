@@ -161,12 +161,9 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
 
     # If heat is considered, add CHPs in the add_heating_capacities function.
     # Assume that all oil power plants are not CHPs.
-    if "H" in snakemake.wildcards.sector_opts.split("-"):
+    if options["heating"]:
         df_agg = df_agg.query("Set != 'CHP'")
-    elif (
-        "I" not in snakemake.wildcards.sector_opts.split("-")
-        and "Industry" in df_agg.columns
-    ):
+    elif not options["industry"] and "Industry" in df_agg.columns:
         df_agg["Industry"].fillna(False, inplace=True)
         df_agg.query("not Industry", inplace=True)
 
@@ -492,6 +489,9 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
     if snakemake.input.get("custom_powerplants"):
+        if snakemake.input.custom_powerplants.endswith("german_chp.csv"):
+            logger.info("Supersedeing default German CHPs with custom_powerplants.")
+            ppl = ppl.query("~(Set == 'CHP' and Country == 'DE')")
         ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, True)
 
     # drop assets which are already phased out / decommissioned
@@ -517,7 +517,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
 
     # check if the CHPs were read in from MaStR for Germany
     if "Capacity_thermal" in chp.columns:
-        if "I" not in snakemake.wildcards.sector_opts.split("-"):
+        if not options["industry"]:
             chp.query("Industry == False", inplace=True)
 
         thermal_capacity_b = ~chp.Capacity_thermal.isna()
@@ -1054,13 +1054,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
             simpl="",
-            clusters="5",
-            ll="v1.5",
+            clusters=27,
             opts="",
-            sector_opts="",
-            planning_horizons=2030,
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons="2020",
+            run="KN2045_Bal_v4",
         )
 
     configure_logging(snakemake)
