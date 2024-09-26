@@ -44,7 +44,7 @@ dependencies:
 - geopy
 - tqdm
 - pytz
-- tabula-py
+- tabula-py=2.7.0
 - pyxlsb
 - graphviz
 - pre-commit
