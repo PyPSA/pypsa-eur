@@ -147,9 +147,7 @@ jobs:
     - name: Install inhouse packages from master
       if: env.pinned == 'false'
       run: |
-        python -m pip install uv
-        uv pip install "${{ matrix.inhouse }}" --reinstall
-        uv pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master --reinstall
+        python -m pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master
 
     - name: Run snakemake test workflows
       if: env.pinned == 'false'
