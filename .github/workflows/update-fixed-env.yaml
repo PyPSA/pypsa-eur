@@ -18,12 +18,12 @@ jobs:
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
       with:
-        activate-environment: pypsa-eur
+        activate-environment: ${{ github.event.repository.name }}
         environment-file: envs/environment.yaml
 
     - name: Update environment.fixed.yaml
       run: |
-        conda env export --name pypsa-eur-fixed --no-builds > envs/environment.fixed.yaml
+        conda env export --name ${{ github.event.repository.name }} --no-builds | sed 's/^name: ${{ github.event.repository.name }}$/name: ${{ github.event.repository.name }}-fixed/' > envs/environment.fixed.yaml
 
     - name: Add SPDX header
       run: |
