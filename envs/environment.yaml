@@ -39,7 +39,7 @@ dependencies:
 - pyscipopt
 - matplotlib
 - proj
-- fiona
+- fiona=1.9.5
 - country_converter
 - geopy
 - tqdm
