@@ -56,7 +56,7 @@ dependencies:
 # GIS dependencies:
 - cartopy
 - descartes
-- rasterio!=1.2.10
+- rasterio<1.4
 
 - pip:
   - tsam>=2.3.1
