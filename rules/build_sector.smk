@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
@@ -727,6 +727,7 @@ rule build_industrial_energy_demand_per_country_today:
     params:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
+        ammonia=config_provider("sector", "ammonia", default=False),
     input:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
@@ -952,15 +953,15 @@ rule time_aggregation:
         ),
     output:
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
-        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}.log"),
+        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.log"),
     benchmark:
-        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}")
+        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1032,7 +1033,7 @@ rule prepare_sector_network:
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
         retro_cost=lambda w: (
             resources("retro_cost_base_s_{clusters}.csv")
