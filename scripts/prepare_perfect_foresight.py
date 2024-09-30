@@ -508,16 +508,20 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
         This function updates the efficiency in place and does not return a value.
     """
 
-    for link_name in n.links.index:
-        if "heat pump" in link_name:
-            heat_pump_name = link_name[:-4]
-            for year in years:
-                correct_efficiency = n.links_t["efficiency"].loc[
-                    (year, slice(None)), heat_pump_name + str(year)
-                ]
-                n.links_t["efficiency"].loc[
-                    (year, slice(None)), link_name
-                ] = correct_efficiency
+    # get names of all heat pumps
+    heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
+    for year in years:
+        # for each heat pump type, correct efficiency is the efficiency of that technology built in <year>
+        correct_efficiency = n.links_t["efficiency"].loc[
+            (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
+        ]
+        # in <year>, set the efficiency of all heat pumps to the correct efficiency
+        n.links_t["efficiency"].loc[
+            (year, slice(None)), heat_pump_idx
+        ] = correct_efficiency.values
+
+
+
 
 
 if __name__ == "__main__":
