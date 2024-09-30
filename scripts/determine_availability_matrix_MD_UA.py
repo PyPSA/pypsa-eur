@@ -8,16 +8,15 @@ Create land elibility analysis for Ukraine and Moldova with different datasets.
 
 import functools
 import logging
+import os
 import time
+from tempfile import NamedTemporaryFile
 
 import atlite
 import fiona
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import numpy as np
 from _helpers import configure_logging, set_scenario_config
-from atlite.gis import shape_availability
-from rasterio.plot import show
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +34,22 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix_MD_UA", technology="solar"
+            "determine_availability_matrix_MD_UA", clusters=100, technology="solar"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    nprocesses = None  # snakemake.config["atlite"].get("nprocesses")
+    nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
-    config = snakemake.config["renewable"][snakemake.wildcards.technology]
+    config = snakemake.params["renewable"][snakemake.wildcards.technology]
 
     cutout = atlite.Cutout(snakemake.input.cutout)
     regions = (
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
-    buses = regions.index
+    # Limit to "UA" and "MD" regions
+    buses = regions.filter(regex="(UA|MD)", axis=0).index.values
+    regions = regions.loc[buses]
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
 
@@ -93,8 +94,15 @@ if __name__ == "__main__":
             bbox=regions.geometry,
             layer=layer,
         ).to_crs(3035)
+
+        # temporary file needed for parallelization
+        with NamedTemporaryFile(suffix=".geojson", delete=False) as f:
+            plg_tmp_fn = f.name
         if not wdpa.empty:
-            excluder.add_geometry(wdpa.geometry)
+            wdpa[["geometry"]].to_file(plg_tmp_fn)
+            while not os.path.exists(plg_tmp_fn):
+                time.sleep(1)
+            excluder.add_geometry(plg_tmp_fn)
 
         layer = get_wdpa_layer_name(wdpa_fn, "points")
         wdpa_pts = gpd.read_file(
@@ -107,27 +115,34 @@ if __name__ == "__main__":
         wdpa_pts = wdpa_pts.set_geometry(
             wdpa_pts["geometry"].buffer(wdpa_pts["buffer_radius"])
         )
-        if not wdpa_pts.empty:
-            excluder.add_geometry(wdpa_pts.geometry)
 
-    if "max_depth" in config:
+        # temporary file needed for parallelization
+        with NamedTemporaryFile(suffix=".geojson", delete=False) as f:
+            pts_tmp_fn = f.name
+        if not wdpa_pts.empty:
+            wdpa_pts[["geometry"]].to_file(pts_tmp_fn)
+            while not os.path.exists(pts_tmp_fn):
+                time.sleep(1)
+            excluder.add_geometry(pts_tmp_fn)
+
+    if config.get("max_depth"):
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -config["max_depth"])
         excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
 
-    if "min_shore_distance" in config:
+    if config.get("min_shore_distance"):
         buffer = config["min_shore_distance"]
         excluder.add_geometry(snakemake.input.country_shapes, buffer=buffer)
 
-    if "max_shore_distance" in config:
+    if config.get("max_shore_distance"):
         buffer = config["max_shore_distance"]
         excluder.add_geometry(
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
 
-    if "ship_threshold" in config:
+    if config.get("ship_threshold"):
         shipping_threshold = config["ship_threshold"] * 8760 * 6
         func = functools.partial(np.less, shipping_threshold)
         excluder.add_raster(
@@ -144,16 +159,10 @@ if __name__ == "__main__":
     else:
         availability = cutout.availabilitymatrix(regions, excluder, **kwargs)
 
-    regions_geometry = regions.to_crs(3035).geometry
-    band, transform = shape_availability(regions_geometry, excluder)
-    fig, ax = plt.subplots(figsize=(4, 8))
-    gpd.GeoSeries(regions_geometry.union_all()).plot(ax=ax, color="none")
-    show(band, transform=transform, cmap="Greens", ax=ax)
-    plt.axis("off")
-    plt.savefig(snakemake.output.availability_map, bbox_inches="tight", dpi=500)
+    for fn in [pts_tmp_fn, plg_tmp_fn]:
+        if os.path.exists(fn):
+            os.remove(fn)
 
-    # Limit results only to buses for UA and MD
-    buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
     availability = availability.sel(bus=buses)
 
     # Save and plot for verification

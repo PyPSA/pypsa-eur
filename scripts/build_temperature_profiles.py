@@ -25,15 +25,15 @@ Relevant Settings
 Inputs
 ------
 
-- ``resources/<run_name>/pop_layout_<scope>.nc``:
-- ``resources/<run_name>/regions_onshore_elec_s<simpl>_<clusters>.geojson``:
+- ``resources/<run_name>/pop_layout_total.nc``:
+- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``:
 - ``cutout``: Weather data cutout, as specified in config
 
 Outputs
 -------
 
-- ``resources/temp_soil_<scope>_elec_s<simpl>_<clusters>.nc``:
-- ``resources/temp_air_<scope>_elec_s<simpl>_<clusters>.nc`
+- ``resources/temp_soil_total_base_s<simpl>_<clusters>.nc``:
+- ``resources/temp_air_total_base_s<simpl>_<clusters>.nc`
 """
 
 import atlite
@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_temperature_profiles",
-            simpl="",
             clusters=48,
         )
     set_scenario_config(snakemake)

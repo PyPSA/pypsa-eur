@@ -4,6 +4,8 @@
 
 import requests
 from datetime import datetime, timedelta
+from shutil import move, unpack_archive
+from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -15,26 +17,22 @@ if config["enable"]["retrieve"] is False:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
         "je-e-21.03.02.xls",
-        "eez/World_EEZ_v8_2014.shp",
-        "naturalearth/ne_10m_admin_0_countries.shp",
-        "NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp",
         "nama_10r_3popgdp.tsv.gz",
         "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
-        "nuts/NUTS_RG_10M_2013_4326_LEVL_2.geojson",
-        "myb1-2017-nitro.xls",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
+        "GDP_per_capita_PPP_1990_2015_v2.nc",
+        "ppp_2013_1km_Aggregated.tif",
     ]
 
     rule retrieve_databundle:
         output:
             expand("data/bundle/{file}", file=datafiles),
-            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -51,8 +49,19 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
+        conda:
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
+
+    rule retrieve_jrc_idees:
+        output:
+            directory("data/jrc-idees-2021"),
+        log:
+            "logs/retrieve_jrc_idees.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_jrc_idees.py"
 
     rule retrieve_eurostat_household_data:
         output:
@@ -60,8 +69,36 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
+        conda:
+            "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_nuts_shapes:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+            ),
+        output:
+            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+        params:
+            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+        run:
+            os.rename(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                for level in ["LEVL_3", "LEVL_2"]:
+                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
+                    extracted_file = Path(output.shapes_level_3).parent / filename
+                    extracted_file.rename(
+                        getattr(output, f"shapes_level_{level[-1]}")
+                    )
+            os.remove(params.zip_file)
+
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
@@ -69,10 +106,10 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/6382570/files/{cutout}.nc",
+                "https://zenodo.org/records/12791128/files/{cutout}.nc",
             ),
         output:
-            protected("cutouts/" + CDIR + "{cutout}.nc"),
+            "cutouts/" + CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
@@ -163,7 +200,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/10973944/files/shipdensity_global.zip",
+                "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
@@ -176,6 +213,65 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_jrc_enspreso_biomass:
+        input:
+            storage(
+                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
+                keep_local=True,
+            ),
+        output:
+            "data/ENSPRESO_BIOMASS.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_hotmaps_industrial_sites:
+        input:
+            storage(
+                "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
+                keep_local=True,
+            ),
+        output:
+            "data/Industrial_Database.csv",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_usgs_ammonia_production:
+        input:
+            storage(
+                "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+            ),
+        output:
+            "data/myb1-2022-nitro-ert.xlsx",
+        retries: 1
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_geological_co2_storage_potential:
+        input:
+            storage(
+                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
+                keep_local=True,
+            ),
+        output:
+            "data/complete_map_2020_unit_Mt.geojson",
+        retries: 1
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -207,6 +303,125 @@ if config["enable"]["retrieve"]:
             "data/LUISA_basemap_020321_50m.tif",
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_eez:
+        params:
+            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
+        output:
+            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
+        run:
+            import os
+            import requests
+            from uuid import uuid4
+
+            name = str(uuid4())[:8]
+            org = str(uuid4())[:8]
+
+            response = requests.post(
+                "https://www.marineregions.org/download_file.php",
+                params={"name": "World_EEZ_v12_20231025_LR.zip"},
+                data={
+                    "name": name,
+                    "organisation": org,
+                    "email": f"{name}@{org}.org",
+                    "country": "Germany",
+                    "user_category": "academia",
+                    "purpose_category": "Research",
+                    "agree": "1",
+                },
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_worldbank_urban_population:
+        params:
+            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+        output:
+            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+        run:
+            import os
+            import requests
+
+            response = requests.get(
+                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+            )
+
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
+            unpack_archive(params["zip"], output_folder)
+
+            for f in os.listdir(output_folder):
+                if f.startswith(
+                    "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
+                ) and f.endswith(".csv"):
+                    os.rename(os.path.join(output_folder, f), output.gpkg)
+                    break
+
+
+
+if config["enable"]["retrieve"]:
+
+    # Download directly from naciscdn.org which is a redirect from naturalearth.com
+    # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
+    # Use point-of-view (POV) variant of Germany so that Crimea is included.
+    rule retrieve_naturalearth_countries:
+        input:
+            storage(
+                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+            ),
+        params:
+            zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
+        output:
+            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
+        run:
+            move(input[0], params["zip"])
+            output_folder = Path(output["countries"]).parent
+            unpack_archive(params["zip"], output_folder)
+            os.remove(params["zip"])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_europe_gas_tracker:
+        output:
+            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+        run:
+            import requests
+
+            # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
+            response = requests.get(url)
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_steel_plant_tracker:
+        output:
+            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        run:
+            import requests
+
+            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
+            response = requests.get(url)
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
@@ -319,3 +534,99 @@ if config["enable"]["retrieve"]:
             "../envs/retrieve.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-prebuilt"
+):
+    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
+    osm_prebuilt_version = {
+        0.1: "12799202",
+        0.2: "13342577",
+        0.3: "13358976",
+        0.4: "13759222",
+    }
+
+    # update rule to use the correct version
+    rule retrieve_osm_prebuilt:
+        input:
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
+            ),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
+            transformers=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
+            ),
+        output:
+            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
+            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
+            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
+            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
+            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
+        log:
+            "logs/retrieve_osm_prebuilt.log",
+        threads: 1
+        resources:
+            mem_mb=500,
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+                validate_checksum(output[key], input[key])
+
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data:
+        output:
+            cables_way="data/osm-raw/{country}/cables_way.json",
+            lines_way="data/osm-raw/{country}/lines_way.json",
+            links_relation="data/osm-raw/{country}/links_relation.json",
+            substations_way="data/osm-raw/{country}/substations_way.json",
+            substations_relation="data/osm-raw/{country}/substations_relation.json",
+        log:
+            "logs/retrieve_osm_data_{country}.log",
+        threads: 1
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_osm_data.py"
+
+
+if config["enable"]["retrieve"] and (
+    config["electricity"]["base_network"] == "osm-raw"
+):
+
+    rule retrieve_osm_data_all:
+        input:
+            expand(
+                "data/osm-raw/{country}/cables_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/lines_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/links_relation.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_way.json",
+                country=config_provider("countries"),
+            ),
+            expand(
+                "data/osm-raw/{country}/substations_relation.json",
+                country=config_provider("countries"),
+            ),

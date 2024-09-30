@@ -18,7 +18,8 @@ Outputs
 Description
 -------
 
-This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information>`_ (June 2024) published by the US Geological Survey (USGS) and the National Minerals Information Center and extracts the annual ammonia production per country in ktonN/a. The data is converted to ktonNH3/a.
+This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information>`_
+ (July 2024) published by the US Geological Survey (USGS) and the National Minerals Information Center and extracts the annual ammonia production per country in ktonN/a. The data is converted to ktonNH3/a.
 """
 
 import country_converter as coco
@@ -42,15 +43,15 @@ if __name__ == "__main__":
         skiprows=5,
         header=0,
         index_col=0,
-        skipfooter=19,
+        skipfooter=7,
         na_values=["--"],
     )
 
     ammonia.index = cc.convert(ammonia.index, to="iso2")
 
-    years = [str(i) for i in range(2013, 2018)]
+    years = [str(i) for i in range(2018, 2023)]
 
-    ammonia = ammonia[years]
+    ammonia = ammonia.rename(columns=lambda x: str(x))[years]
 
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14

@@ -13,19 +13,19 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources("networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
     output:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
-        config=RESULTS + "configs/config.elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.yaml",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
+        config=RESULTS + "configs/config.base_s_{clusters}_elec_l{ll}_{opts}.yaml",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_solver.log"
+            + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_python.log",
+        + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_python.log",
     benchmark:
-        (RESULTS + "benchmarks/solve_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}")
+        (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_l{ll}_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,
@@ -41,21 +41,28 @@ rule solve_network:
 rule solve_operations_network:
     params:
         options=config_provider("solving", "options"),
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
+        ),
+        custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
     output:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}_op.nc",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_solver.log"
+            + "logs/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}_op_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}_op_python.log",
+        + "logs/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}_op_python.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_operations_network/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}"
+            + "benchmarks/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}"
         )
     threads: 4
     resources:

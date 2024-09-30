@@ -10,12 +10,10 @@ run:
   shared_cutouts: true
 
 scenario:
-  simpl:
-  - ''
   ll:
   - vopt
   clusters:
-  - 39
+  - 41
   - 128
   - 256
   opts:
@@ -26,7 +24,7 @@ scenario:
   - ''
 
 # TODO add Turkey (TR)
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MD', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA', 'XK']
 
 electricity:
   custom_powerplants: true
