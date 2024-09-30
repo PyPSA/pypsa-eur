@@ -216,7 +216,7 @@ if __name__ == "__main__":
     return_temperature_investment_year = scale_temperature_to_investment_year(
         temperature_baseyear=snakemake.params.return_temperature_central_heating_baseyear,
         relative_annual_temperature_reduction=snakemake.params.relative_annual_temperature_reduction,
-        investment_year=int(snakemake.wildcards.planning_horizons[-4:]),
+        investment_year=int(snakemake.wildcards.planning_horizons),
         current_year=int(snakemake.params.energy_totals_year),
     )
 
