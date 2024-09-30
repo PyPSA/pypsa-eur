@@ -242,12 +242,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     """
 
     # get names of heat pumps in previous iteration
-    heat_pump_idx_previous_iteration = n_p.links.index[n_p.links.index.str.contains("heat pump")]
+    heat_pump_idx_previous_iteration = n_p.links.index[
+        n_p.links.index.str.contains("heat pump")
+    ]
     # construct names of same-technology heat pumps in the current iteration
-    corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(year)  
+    corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(
+        year
+    )
     # update efficiency of heat pumps in previous iteration in-place to efficiency in this iteration
-    n_p.links_t["efficiency"].loc[:, heat_pump_idx_previous_iteration] = n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
-
+    n_p.links_t["efficiency"].loc[:, heat_pump_idx_previous_iteration] = (
+        n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
+    )
 
 
 if __name__ == "__main__":

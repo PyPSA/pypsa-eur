@@ -521,9 +521,6 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
         ] = correct_efficiency.values
 
 
-
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
