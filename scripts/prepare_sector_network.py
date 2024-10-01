@@ -1269,7 +1269,7 @@ def insert_electricity_distribution_grid(n, costs):
         bus=n.generators.loc[solar, "bus"] + " low voltage",
         carrier="solar rooftop",
         p_nom_extendable=True,
-        p_nom_max=potential,
+        p_nom_max=potential.loc[solar],
         marginal_cost=n.generators.loc[solar, "marginal_cost"],
         capital_cost=costs.at["solar-rooftop", "fixed"],
         efficiency=n.generators.loc[solar, "efficiency"],
@@ -1821,7 +1821,7 @@ def add_EVs(
         suffix=" land transport EV",
         bus=spatial.nodes + " EV battery",
         carrier="land transport EV",
-        p_set=profile,
+        p_set=profile.loc[n.snapshots],
     )
 
     p_nom = number_cars * options["bev_charge_rate"] * electric_share
@@ -1834,7 +1834,7 @@ def add_EVs(
         bus1=spatial.nodes + " EV battery",
         p_nom=p_nom,
         carrier="BEV charger",
-        p_max_pu=avail_profile[spatial.nodes],
+        p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
         lifetime=1,
         efficiency=options["bev_charge_efficiency"],
     )
@@ -1848,7 +1848,7 @@ def add_EVs(
             bus0=spatial.nodes + " EV battery",
             p_nom=p_nom,
             carrier="V2G",
-            p_max_pu=avail_profile[spatial.nodes],
+            p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
             lifetime=1,
             efficiency=options["bev_charge_efficiency"],
         )
@@ -1870,7 +1870,7 @@ def add_EVs(
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
-            e_min_pu=dsm_profile[spatial.nodes],
+            e_min_pu=dsm_profile.loc[n.snapshots, spatial.nodes],
         )
 
 
@@ -2152,7 +2152,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             suffix=f" {heat_system} heat",
             bus=nodes + f" {heat_system} heat",
             carrier=f"{heat_system} heat",
-            p_set=heat_load,
+            p_set=heat_load.loc[n.snapshots],
         )
 
         ## Add heat pumps
