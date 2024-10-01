@@ -21,6 +21,7 @@ concurrency:
 
 env:
   ENV_FILE: envs/environment.yaml
+  ENV_FIXED_FILE: envs/environment.fixed.yaml
 
 jobs:
   run-tests:
@@ -62,16 +63,39 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ env.today }}-${hashFiles('${{ env.ENV_FILE }}')}
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ env.today }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
       id: cache-env
 
     - name: Update environment
       if: steps.cache-env.outputs.cache-hit != 'true'
       run: conda env update -n pypsa-eur -f ${{ env.ENV_FILE }}
 
+    - name: Log env diff to environment.fixed.yaml
+      if: ${{ matrix.os == 'ubuntu' }}
+      run: |
+        # Get fixed environment of current env
+        conda env export --name ${{ github.event.repository.name }} --no-builds | sed 's/^name: ${{ github.event.repository.name }}$/name: ${{ github.event.repository.name }}-fixed/' > current-env.yaml
+
+        # Add SPDX header
+        SPDX_HEADER="# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
+        echo -e "$SPDX_HEADER" | cat - current-env.yaml > temp && mv temp current-env.yaml
+
+        # Format with pre-commit (it differs from the conda output)
+        pip install pre-commit
+        pre-commit run --files current-env.yaml || true
+
+        # Get diff
+        diff ${{ env.ENV_FIXED_FILE }} current-env.yaml > diff.txt || true
+
+        # Format
+        { echo -e "**Environment diff**\n\`\`\` diff\n"; cat diff.txt; echo -e "\n\`\`\`"; } > temp && mv temp diff.txt
+
+        # Write to summary
+        cat diff.txt >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
     - name: Run snakemake test workflows
       run: |
-        conda activate pypsa-eur
         make test
 
     - name: Upload artifacts
@@ -137,7 +161,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-${{ env.today }}-${hashFiles('${{ env.ENV_FILE }}')}
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-${{ env.today }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
       id: cache-env
 
     - name: Update environment
@@ -152,7 +176,6 @@ jobs:
     - name: Run snakemake test workflows
       if: env.pinned == 'false'
       run: |
-        conda activate pypsa-eur
         make test
 
     - name: Upload artifacts
