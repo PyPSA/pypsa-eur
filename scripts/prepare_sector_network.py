@@ -4073,13 +4073,14 @@ def add_steel_industry(n, investment_year):
         else:
             min_cap.loc[i, 'value'] /= 2
     
-    min_cap_node = pd.DataFrame(index=nodes,columns=(['value']))
-    
-    for i in min_cap_node.index: # index and missing countries should be the same
+    min_cap_node = pd.Series(index=nodes, dtype=float)
+
+    for i in min_cap_node.index:
         if i[:2] not in min_cap.index:
-            min_cap_node.loc[i, 'value'] = 0
+            min_cap_node[i] = 0
         else:
-            min_cap_node.loc[i, 'value'] = min_cap.loc[i[:2],'value']
+            min_cap_node[i] = min_cap.loc[i[:2], 'value']
+
 
     n.add("Carrier", "iron")
 
@@ -4217,18 +4218,18 @@ def add_steel_industry(n, investment_year):
         bus2=nodes,
         bus3=spatial.heat4steel.nodes, # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
-        p_nom_extendable=False,
+        p_nom_extendable=True,
         p_nom_max = max_cap,
-        p_min_pu = prod_constantly, # electrical stuff can be switched on and off
+        p_min_pu = 0, #prod_constantly, # electrical stuff can be switched on and off
         p_nom_min = min_cap_node,
-        #•p_nom = min_cap_node,
+        p_nom = min_cap_node,
         capital_cost= 80000/nhours/1*0.7551,
         efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861/1, #MWh electricity per kt sponge iron
         efficiency3=-305.6/1, #MWh thermal energy per kt sponge iron
         lifetime=40,
     )    
-    print(f"Example {n.links.loc[n.links.index.str.contains('EAF'), 'p_nom_min']}")
+
 
     # Link to produce heat for steel industry processes
     n.madd(
