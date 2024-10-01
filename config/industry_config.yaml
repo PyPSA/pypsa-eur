@@ -84,6 +84,7 @@ co2_budget:
   2040: 0.071
   2045: 0.032
   2050: 0.000
+co2_budget_apply: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -858,7 +859,7 @@ clustering:
       ramp_limit_up: max
       ramp_limit_down: max
   temporal:
-    resolution_elec: 2920h
+    resolution_elec: false
     resolution_sector: 2920h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments

@@ -12,22 +12,8 @@
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
 baseline:
-  co2_budget:
-    2020: 1.0
-    2025: 1.0
-    2030: 1.0
-    2035: 1.0
-    2040: 1.0
-    2045: 1.0
-    2050: 1.0
+  co2_budget_apply: false
 
 climate_policy:
-  co2_budget:
-    2020: 0.701
-    2025: 0.524
-    2030: 0.297
-    2035: 0.150
-    2040: 0.071
-    2045: 0.032
-    2050: 0.000
+  co2_budget_apply: true
 

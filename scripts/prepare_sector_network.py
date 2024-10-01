@@ -4991,7 +4991,8 @@ if __name__ == "__main__":
         limit = co2_cap.loc[investment_year]
     else:
         limit = get(co2_budget, investment_year)
-    add_co2limit(n, options, nyears, limit)
+    if snakemake.params.co2_budget_apply:
+        add_co2limit(n, options, nyears, limit)
 
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:

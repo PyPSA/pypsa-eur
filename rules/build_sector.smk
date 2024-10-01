@@ -1036,6 +1036,7 @@ rule prepare_sector_network:
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         endo_industry = config_provider('enable', 'endo_industry'),
+        co2_budget_apply=config_provider('co2_budget_apply'),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
