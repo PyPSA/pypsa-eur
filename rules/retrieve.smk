@@ -103,7 +103,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
     rule retrieve_cutout:
         input:
             storage(
-                "https://drive.upm.es/s/0HL1G3QmOnHSFmS/download",
+                "https://drive.upm.es/s/uhf5e2ZVNAghyIl/download",
             ),
         output:
             protected("cutouts/" + CDIR + "{cutout}.nc"),
