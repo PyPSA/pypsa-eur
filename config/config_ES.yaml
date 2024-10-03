@@ -10,31 +10,31 @@ tutorial: false
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
-  update_gdp_pop: false
-  electricity_demand:
-    enable: true
-    annual_value: 316.5 # TWh   230 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS0_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS0_by_economicSector_2022.csv
-  update_elec_capacities:
-    enable: false
-    carriers_to_update:
-      onwind: data_ES/esios/esios_onwind_capacity_2022.csv
-      solar: data_ES/esios/esios_solar_capacity_2022.csv
-      nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
-      CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
-    method_increase: proportional # additional / proportional
   q2q_transform:
-    enable: false 
+    enable: true 
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
     offwind-float: ''
     solar: data_ES/q2q/q2q_solar_v001.pkl
     solar-hsat: ''
+  electricity_demand:
+    enable: true
+    annual_value: 316.5 # TWh   230 # TWh
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS0_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS0_by_economicSector_2022.csv
   interconnections:
-    enable: false
+    enable: true
     ic_ES_file: data_ES/interconnections/interconnections.yaml
+  update_elec_capacities:
+    enable: true
+    carriers_to_update:
+      onwind: data_ES/esios/esios_onwind_capacity_2022.csv
+      solar: data_ES/esios/esios_solar_capacity_2022.csv
+      nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
+      CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
+    method_increase: proportional # additional / proportional
+  update_gdp_pop: true
   costs_update:
     enable: true
     costs_update_file: 'data_ES/costs/costs_updates.csv'
