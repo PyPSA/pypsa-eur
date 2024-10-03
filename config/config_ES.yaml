@@ -10,7 +10,6 @@ tutorial: false
 
 pypsa_spain:
   retrieve_Iberian_cutout: true
-  loads_at_every_bus: false
   update_gdp_pop: false
   electricity_demand:
     enable: true

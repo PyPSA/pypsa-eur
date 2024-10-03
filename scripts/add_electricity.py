@@ -299,21 +299,7 @@ def attach_load(
     n, regions, load, nuts3_shapes, gdp_pop_non_nuts3, countries, scaling=1.0
 ):
 
-
-    #################### PyPSA-Spain
-    #
-    # Select all the buses to deploy loads, not only substations..
-    #
-
-    if loads_at_every_bus:
-        substation_lv_i = n.buses.index   ##### PyPSA-Spain version
-
-    else:
-        substation_lv_i = n.buses.index[n.buses["substation_lv"]]   ##### PyPSA-Eur version
-    
-    ####################
-
-
+    substation_lv_i = n.buses.index[n.buses["substation_lv"]]
 
     gdf_regions = gpd.read_file(regions).set_index("name").reindex(substation_lv_i)
     opsd_load = pd.read_csv(load, index_col=0, parse_dates=True).filter(items=countries)
@@ -402,21 +388,7 @@ def attach_load_vPyPSA_Spain(
     # - The regions are named through the NUTS ID, see columns in 'resources/electricity_demand.csv'
     """
 
-
-    #################### PyPSA-Spain
-    #
-    # Select all the buses to deploy loads, not only substations..
-    #
-
-    if loads_at_every_bus:
-        substation_lv_i = n.buses.index   ##### PyPSA-Spain version
-
-    else:
-        ##### Filters 522 buses with substation_lv=True out of the 1109 buses in peninsular Spain
-        substation_lv_i = n.buses.index[n.buses["substation_lv"]]   ##### PyPSA-Eur version
-    
-    ####################
-
+    substation_lv_i = n.buses.index[n.buses["substation_lv"]] 
 
     
     ##### Creates a gdf with index=name, and filters the 522 buses defined above
@@ -1221,7 +1193,6 @@ if __name__ == "__main__":
     # Attach electricity demand according to PyPSA-Spain customisation
     #
 
-    loads_at_every_bus = snakemake.params.loads_at_every_bus
     update_gdp_pop = snakemake.params.update_gdp_pop
     electricity_demand = snakemake.params.electricity_demand
 
