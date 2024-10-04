@@ -1111,13 +1111,8 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
 
     nodes = pop_layout.index
 
-<<<<<<< HEAD
-    fallback = {"OCGT": "gas"}
-    conventionals = options.get("conventional_generation", fallback)
-=======
     conventionals = options["conventional_generation"]
 
->>>>>>> upstream/master
     for generator, carrier in conventionals.items():
         carrier_nodes = vars(spatial)[carrier].nodes
 
@@ -4615,7 +4610,6 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-<<<<<<< HEAD
     if options.get("keep_existing_capacities", False):
         existing_capacities, existing_efficiencies = get_capacities_from_elec(
             n,
@@ -4625,8 +4619,6 @@ if __name__ == "__main__":
     else:
         existing_capacities, existing_efficiencies = 0, None
 
-    patch_electricity_network(n)
-=======
     landfall_lengths = {
         tech: settings["landfall_length"]
         for tech, settings in snakemake.params.renewable.items()
@@ -4637,7 +4629,6 @@ if __name__ == "__main__":
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
->>>>>>> upstream/master
 
     spatial = define_spatial(pop_layout.index, options)
 
