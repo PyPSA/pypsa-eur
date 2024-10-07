@@ -10,16 +10,16 @@ rule build_existing_heating_distribution:
         existing_capacities=config["existing_capacities"],
     input:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
-        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         clustered_pop_energy_layout=resources(
-            "pop_weighted_energy_totals_s{simpl}_{clusters}.csv"
+            "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         district_heat_share=resources(
-            "district_heat_share_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+            "district_heat_share_base_s_{clusters}_{planning_horizons}.csv"
         ),
     output:
         existing_heating_distribution=resources(
-            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+            "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
     wildcard_constraints:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
@@ -28,11 +28,11 @@ rule build_existing_heating_distribution:
         mem_mb=2000,
     log:
         logs(
-            "build_existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.log"
+            "build_existing_heating_distribution_base_s_{clusters}_{planning_horizons}.log"
         ),
     benchmark:
         benchmarks(
-            "build_existing_heating_distribution/elec_s{simpl}_{clusters}_{planning_horizons}"
+            "build_existing_heating_distribution/base_s_{clusters}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

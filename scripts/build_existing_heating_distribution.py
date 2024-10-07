@@ -13,7 +13,7 @@ Inputs:
 -------
 - Existing heating generators: `data/existing_heating_raw.csv` per country
 - Population layout: `resources/{run_name}/pop_layout_s<simpl>_<clusters>.csv`. Output of `scripts/build_clustered_population_layout.py`
-- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s<simpl>_<clusters>.csv`
+- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s_<clusters>.csv`
 - District heating share: `resources/<run_name>/district_heat_share_base_s<simpl>_<clusters>_<planning_horizons>.csv`
 
 Outputs:
