@@ -210,7 +210,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
     add_existing_renewables(df_agg, costs)
 
     # add chp plants
-    add_chp_plants(n, grouping_years, costs, baseyear, clustermaps)
+    add_chp_plants(n, grouping_years, costs, baseyear)
 
     # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
@@ -431,7 +431,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             ]
 
 
-def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
+def add_chp_plants(n, grouping_years, costs, baseyear):
     # rename fuel of CHPs - lignite not in DEA database
     rename_fuel = {
         "Hard Coal": "coal",
@@ -445,7 +445,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
     if snakemake.input.get("custom_powerplants"):
-        if snakemake.input.custom_powerplants.endswith("german_chp.csv"):
+        if snakemake.input.custom_powerplants.endswith("german_chp_{clusters}.csv"):
             logger.info("Supersedeing default German CHPs with custom_powerplants.")
             ppl = ppl.query("~(Set == 'CHP' and Country == 'DE')")
         ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, True)
@@ -462,9 +462,6 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # phase out date at the end of the year)
     chp.Fueltype = chp.Fueltype.map(rename_fuel)
 
-    # assign clustered bus
-    chp["bus"] = chp["bus"].astype(int)
-    chp["cluster_bus"] = chp.bus.map(clustermaps)
 
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
@@ -517,21 +514,21 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
 
         mastr_chp_efficiency_power = mastr_chp.pivot_table(
             index=["grouping_year", "Fueltype"],
-            columns="cluster_bus",
+            columns="bus",
             values="Efficiency",
             aggfunc=lambda x: np.average(x, weights=mastr_chp.loc[x.index, "p_nom"]),
         )
 
         mastr_chp_efficiency_heat = mastr_chp.pivot_table(
             index=["grouping_year", "Fueltype"],
-            columns="cluster_bus",
+            columns="bus",
             values="efficiency-heat",
             aggfunc=lambda x: np.average(x, weights=mastr_chp.loc[x.index, "p_nom"]),
         )
 
         mastr_chp_p_nom = mastr_chp.pivot_table(
             index=["grouping_year", "Fueltype"],
-            columns="cluster_bus",
+            columns="bus",
             values="p_nom",
             aggfunc="sum",
         )
@@ -604,7 +601,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # CHPs that are not from MaStR
     chp_nodal_p_nom = chp.pivot_table(
         index=["grouping_year", "Fueltype"],
-        columns="cluster_bus",
+        columns="bus",
         values="Capacity",
         aggfunc="sum",
     )
@@ -1014,7 +1011,6 @@ if __name__ == "__main__":
             clusters="5",
             ll="v1.5",
             opts="",
-            ll="vopt",
             sector_opts="none",
             planning_horizons="2020",
             run="KN2045_Bal_v4",
