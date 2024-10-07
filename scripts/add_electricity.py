@@ -345,6 +345,7 @@ def load_and_aggregate_powerplants(
         "FOM",
         "efficiency",
         "capital_cost",
+        "investment",
         "marginal_cost",
         "fuel",
         "lifetime",
@@ -357,7 +358,6 @@ def load_and_aggregate_powerplants(
     ppl["marginal_cost"] = (
         ppl.carrier.map(costs.VOM) + ppl.carrier.map(costs.fuel) / ppl.efficiency
     )
-
     strategies = {
         **DEFAULT_ONE_PORT_STRATEGIES,
         **{"country": "first"},
