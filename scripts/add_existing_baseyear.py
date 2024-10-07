@@ -462,7 +462,6 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
     # phase out date at the end of the year)
     chp.Fueltype = chp.Fueltype.map(rename_fuel)
 
-
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
     )

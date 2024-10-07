@@ -478,10 +478,15 @@ def update_wind_solar_costs(
             connection_cost = line_length_factor * (
                 distance * submarine_cost + landfall_length * underground_cost
             )
-            submarine_investment = costs.at[tech + "-connection-submarine", "investment"]
-            underground_investment = costs.at[tech + "-connection-underground", "investment"]
+            submarine_investment = costs.at[
+                tech + "-connection-submarine", "investment"
+            ]
+            underground_investment = costs.at[
+                tech + "-connection-underground", "investment"
+            ]
             connection_overnight_cost = line_length_factor * (
-                distance * submarine_investment + landfall_length * underground_investment
+                distance * submarine_investment
+                + landfall_length * underground_investment
             )
 
             capital_cost = (
