@@ -98,9 +98,7 @@ def memory(w):
         if m is not None:
             factor *= int(m.group(1)) / 8760
             break
-    if w.clusters.endswith("m") or w.clusters.endswith("c"):
-        return int(factor * (55000 + 600 * int(w.clusters[:-1])))
-    elif w.clusters == "all":
+    if w.clusters == "all":
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
@@ -144,7 +142,7 @@ def solved_previous_horizon(w):
 
     return (
         RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_"
         + planning_horizon_p
         + ".nc"
     )
