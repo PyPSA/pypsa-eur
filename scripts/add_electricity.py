@@ -516,12 +516,15 @@ def attach_wind_and_solar(
                 connection_cost = line_length_factor * (
                     distance * submarine_cost + landfall_length * underground_cost
                 )
-                submarine_investment = costs.at[car + "-connection-submarine", "investment"]
+                submarine_investment = costs.at[
+                    car + "-connection-submarine", "investment"
+                ]
                 underground_investment = costs.at[
                     car + "-connection-underground", "investment"
                 ]
                 connection_overnight_cost = line_length_factor * (
-                    distance * submarine_investment + landfall_length * underground_investment
+                    distance * submarine_investment
+                    + landfall_length * underground_investment
                 )
 
                 capital_cost = (
