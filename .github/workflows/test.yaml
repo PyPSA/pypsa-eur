@@ -99,7 +99,7 @@ jobs:
         make test
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3.2.1-node20
+      uses: actions/upload-artifact@v4.4.2
       with:
         name: logs-${{ matrix.inhouse }}
         path: |
@@ -180,7 +180,7 @@ jobs:
 
     - name: Upload artifacts
       if: env.pinned == 'false'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.4.2
       with:
         name: logs-${{ matrix.inhouse }}
         path: |
