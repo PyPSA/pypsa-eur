@@ -44,18 +44,12 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-
-
-def add_land_use_constraint(n, planning_horizons, config):
-    if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, planning_horizons, config)
-    else:
-        _add_land_use_constraint(n)
 
 
 def add_land_use_constraint_perfect(n):
@@ -121,7 +115,7 @@ def add_land_use_constraint_perfect(n):
     return n
 
 
-def _add_land_use_constraint(n):
+def add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in [
@@ -142,58 +136,6 @@ def _add_land_use_constraint(n):
         )
         existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
         n.generators.loc[existing.index, "p_nom_max"] -= existing
-
-    # check if existing capacities are larger than technical potential
-    existing_large = n.generators[
-        n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
-    if len(existing_large):
-        logger.warning(
-            f"Existing capacities larger than technical potential for {existing_large},\
-                        adjust technical potential to existing capacities"
-        )
-        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
-            existing_large, "p_nom_min"
-        ]
-
-    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
-
-
-def _add_land_use_constraint_m(n, planning_horizons, config):
-    # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
-
-    grouping_years = config["existing_capacities"]["grouping_years_power"]
-    current_horizon = snakemake.wildcards.planning_horizons
-
-    for carrier in [
-        "solar",
-        "solar rooftop",
-        "solar-hsat",
-        "onwind",
-        "offwind-ac",
-        "offwind-dc",
-    ]:
-
-        existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
-        ind = list(
-            {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
-        )
-
-        previous_years = [
-            str(y)
-            for y in set(planning_horizons + grouping_years)
-            if y < int(snakemake.wildcards.planning_horizons)
-        ]
-
-        for p_year in previous_years:
-            ind2 = [
-                i for i in ind if i + " " + carrier + "-" + p_year in existing.index
-            ]
-            sel_current = [i + " " + carrier + "-" + current_horizon for i in ind2]
-            sel_p_year = [i + " " + carrier + "-" + p_year for i in ind2]
-            n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[
-                sel_p_year
-            ].rename(lambda x: x[:-4] + current_horizon)
 
     # check if existing capacities are larger than technical potential
     existing_large = n.generators[
@@ -246,37 +188,17 @@ def add_solar_potential_constraints(n, config):
             lambda x: (x * factor) if carrier in x.name else x, axis=1
         )
 
-    if "m" in snakemake.wildcards.clusters:
-        location = pd.Series(
-            [" ".join(i.split(" ")[:2]) for i in n.generators.index],
-            index=n.generators.index,
-        )
-        ggrouper = pd.Series(
-            n.generators.loc[solar].index.rename("bus").map(location),
-            index=n.generators.loc[solar].index,
-        ).to_xarray()
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].index.rename("bus").map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].index.rename("bus").map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
-
-    else:
-        location = pd.Series(n.buses.index, index=n.buses.index)
-        ggrouper = n.generators.loc[solar].bus
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].bus.map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].bus.map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
+    location = pd.Series(n.buses.index, index=n.buses.index)
+    ggrouper = n.generators.loc[solar].bus
+    rhs = (
+        n.generators.loc[solar_today, "p_nom_max"]
+        .groupby(n.generators.loc[solar_today].bus.map(location))
+        .sum()
+        - n.generators.loc[solar_hsat, "p_nom_opt"]
+        .groupby(n.generators.loc[solar_hsat].bus.map(location))
+        .sum()
+        * land_use_factors["solar-hsat"]
+    ).clip(lower=0)
 
     lhs = (
         (n.model["Generator-p_nom"].rename(rename).loc[solar] * land_use.squeeze())
@@ -288,15 +210,22 @@ def add_solar_potential_constraints(n, config):
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
 
 
-def add_co2_sequestration_limit(n, limit=200):
+def add_co2_sequestration_limit(n, limit_dict):
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
     """
 
     if not n.investment_periods.empty:
         periods = n.investment_periods
-        names = pd.Index([f"co2_sequestration_limit-{period}" for period in periods])
+        limit = pd.Series(
+            {
+                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
+                for period in periods
+            }
+        )
+        names = limit.index
     else:
+        limit = get(limit_dict, int(snakemake.wildcards.planning_horizons))
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
@@ -323,8 +252,8 @@ def add_carbon_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -349,8 +278,8 @@ def add_carbon_budget_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last = n.snapshot_weightings.reset_index().groupby("period").last()
             last_i = last.set_index([last.index, last.timestep]).index
@@ -472,6 +401,22 @@ def prepare_network(
             p_nom=1e9,  # kW
         )
 
+    if solve_opts.get("curtailment_mode"):
+        n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
+        n.generators_t.p_min_pu = n.generators_t.p_max_pu
+        buses_i = n.buses.query("carrier == 'AC'").index
+        n.madd(
+            "Generator",
+            buses_i,
+            suffix=" curtailment",
+            bus=buses_i,
+            p_min_pu=-1,
+            p_max_pu=0,
+            marginal_cost=-0.1,
+            carrier="curtailment",
+            p_nom=1e6,
+        )
+
     if solve_opts.get("noisy_costs"):
         for t in n.iterate_components():
             # if 'capital_cost' in t.df:
@@ -492,7 +437,7 @@ def prepare_network(
         n.snapshot_weightings[:] = 8760.0 / nhours
 
     if foresight == "myopic":
-        add_land_use_constraint(n, planning_horizons, config)
+        add_land_use_constraint(n)
 
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
@@ -500,8 +445,8 @@ def prepare_network(
             n = add_max_growth(n)
 
     if n.stores.carrier.eq("co2 sequestered").any():
-        limit = co2_sequestration_potential
-        add_co2_sequestration_limit(n, limit=limit)
+        limit_dict = co2_sequestration_potential
+        add_co2_sequestration_limit(n, limit_dict=limit_dict)
 
     return n
 
@@ -977,8 +922,8 @@ def add_co2_atmosphere_constraint(n, snapshots):
             continue
 
         # stores
-        n.stores["carrier"] = n.stores.bus.map(n.buses.carrier)
-        stores = n.stores.query("carrier in @emissions.index and not e_cyclic")
+        bus_carrier = n.stores.bus.map(n.buses.carrier)
+        stores = n.stores[bus_carrier.isin(emissions.index) & ~n.stores.e_cyclic]
         if not stores.empty:
             last_i = snapshots[-1]
             lhs = n.model["Store-e"].loc[last_i, stores.index]
@@ -1032,8 +977,8 @@ def extra_functionality(n, snapshots):
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
-    if snakemake.params.custom_extra_functionality:
-        source_path = snakemake.params.custom_extra_functionality
+    if n.params.custom_extra_functionality:
+        source_path = n.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
         sys.path.append(os.path.dirname(source_path))
         module_name = os.path.splitext(os.path.basename(source_path))[0]
@@ -1042,7 +987,7 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
-def solve_network(n, config, solving, **kwargs):
+def solve_network(n, config, params, solving, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1070,6 +1015,7 @@ def solve_network(n, config, solving, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
+    n.params = params
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
@@ -1102,6 +1048,7 @@ def solve_network(n, config, solving, **kwargs):
     return n
 
 
+# %%
 if __name__ == "__main__":
     # debugpy.listen(5678)
     # print("Waiting for debugger attach")
@@ -1113,14 +1060,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
+            "solve_sector_network_perfect",
             configfiles="../config/test/config.perfect.yaml",
-            simpl="",
             opts="",
-            clusters="37",
+            clusters="5",
             ll="v1.0",
-            sector_opts="CO2L0-1H-T-H-B-I-A-dist1",
-            planning_horizons="2030",
+            sector_opts="",
+            # planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1147,6 +1093,7 @@ if __name__ == "__main__":
         n = solve_network(
             n,
             config=snakemake.config,
+            params=snakemake.params,
             solving=snakemake.params.solving,
             log_fn=snakemake.log.solver,
         )

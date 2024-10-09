@@ -29,7 +29,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_validation_electricity_production",
-            simpl="",
             opts="Ept",
             clusters="37c",
             ll="v1.0",
@@ -70,7 +69,7 @@ if __name__ == "__main__":
     optimized = optimized[["Generator", "StorageUnit"]].droplevel(0, axis=1)
     optimized = optimized.rename(columns=n.buses.country, level=0)
     optimized = optimized.rename(columns=carrier_groups, level=1)
-    optimized = optimized.groupby(axis=1, level=[0, 1]).sum()
+    optimized = optimized.T.groupby(level=[0, 1]).sum().T
 
     data = pd.concat([historic, optimized], keys=["Historic", "Optimized"], axis=1)
     data.columns.names = ["Kind", "Country", "Carrier"]

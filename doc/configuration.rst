@@ -87,7 +87,7 @@ facilitate running multiple scenarios through a single command
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
-``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
+``results/networks/base_s_{clusters}_elec_l{ll}_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
 <https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
@@ -376,6 +376,23 @@ overwrite the existing values.
    :header-rows: 1
    :widths: 22,7,22,33
    :file: configtables/links.csv
+
+.. _transformers_cf:
+
+``transmission projects``
+=======================
+
+Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of ``data/transmission_projects/``. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` while extending the list of ``transmission_projects`` in the ``config.yaml`` by ``tyndp2024``. The CSV files in the project folder should have the same columns as the CSV files in the template folder ``data/transmission_projects/template``.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: transmission_projects:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/transmission_projects.csv
 
 .. _transformers_cf:
 

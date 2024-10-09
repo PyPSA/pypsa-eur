@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.11.0
+version: 0.13.0
 tutorial: false
 
 logging:
@@ -37,12 +37,10 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  simpl:
-  - ''
   ll:
   - vopt
   clusters:
-  - 37
+  - 39
   - 128
   - 256
   opts:
@@ -56,7 +54,7 @@ scenario:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -67,14 +65,12 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
-  prepare_links_p_nom: false
   retrieve_databundle: true
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
   custom_busmap: false
   drop_leap_day: true
-
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
@@ -88,7 +84,9 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 380., 500., 750.]
+  base_network: osm-prebuilt
+  osm-prebuilt-version: 0.4
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -134,38 +132,29 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
-  default_cutout: europe-2013-era5
+  default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
     # base:
       # module: era5
-    europe-2013-era5:
-      module: era5 # in priority order
+    europe-2013-sarah3-era5:
+      module: [sarah, era5] # in priority order
       x: [-12., 42.]
-      y: [33., 72]
+      y: [33., 72.]
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
-    europe-2013-sarah:
-      module: [sarah, era5] # in priority order
-      x: [-12., 42.]
-      y: [33., 65]
-      dx: 0.2
-      dy: 0.2
-      time: ['2013', '2013']
-      sarah_interpolate: false
-      sarah_dir:
-      features: [influx, temperature]
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: Vestas_V112_3MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 3
     # correction_factor: 0.93
@@ -181,10 +170,11 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -196,11 +186,13 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-dc:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
+      smooth: false
       add_cutout_windspeed: true
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -212,11 +204,14 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-float:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
+      smooth: false
+      add_cutout_windspeed: true
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -230,8 +225,9 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   solar:
-    cutout: europe-2013-sarah
+    cutout: europe-2013-sarah3-era5
     resource:
       method: pv
       panel: CSi
@@ -246,7 +242,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   solar-hsat:
-    cutout: europe-2013-sarah
+    cutout: europe-2013-sarah3-era5
     resource:
       method: pv
       panel: CSi
@@ -261,7 +257,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
@@ -282,6 +278,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
@@ -292,10 +289,10 @@ lines:
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
-    cutout: europe-2013-era5
+    cutout: europe-2013-sarah3-era5
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false
@@ -305,8 +302,26 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
-  include_tyndp: true
-  under_construction: 'zero' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity
+  length_factor: 1.25
+  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: true
+    nep: true
+    manual: true
+  skip:
+  - upgraded_lines
+  - upgraded_links
+  status:
+  - under_construction
+  - in_permitting
+  - confirmed
+    #- planned_not_yet_permitted
+    #- under_consideration
+  new_link_capacity: zero #keep or zero
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
@@ -322,6 +337,9 @@ load:
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
   supplement_synthetic: true
+  distribution_key:
+    gdp: 0.6
+    population: 0.4
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -365,7 +383,6 @@ biomass:
     - Secondary Forestry residues - woodchips
     - Sawdust
     - Residues from landscape care
-    - Municipal waste
     not included:
     - Sugar from sugar beet
     - Rape seed
@@ -379,6 +396,25 @@ biomass:
     biogas:
     - Manure solid, liquid
     - Sludge
+    municipal solid waste:
+    - Municipal waste
+  share_unsustainable_use_retained:
+    2020: 1
+    2025: 0.66
+    2030: 0.33
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 0
+    2025: 0.33
+    2030: 0.66
+    2035: 1
+    2040: 1
+    2045: 1
+    2050: 1
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -407,6 +443,7 @@ sector:
   biomass: true
   industry: true
   agriculture: true
+  fossil_fuels: true
   district_heating:
     potential: 0.6
     progress:
@@ -418,6 +455,37 @@ sector:
       2045: 0.8
       2050: 1.0
     district_heating_loss: 0.15
+    supply_temperature_approximation:
+      max_forward_temperature:
+        FR: 110
+        DK: 75
+        DE: 109
+        CZ: 130
+        FI: 115
+        PL: 130
+        SE: 102
+        IT: 90
+      min_forward_temperature:
+        DE: 82
+      return_temperature:
+        DE: 58
+      lower_threshold_ambient_temperature: 0
+      upper_threshold_ambient_temperature: 10
+      rolling_window_ambient_temperature: 72
+    heat_source_cooling: 6 #K
+    heat_pump_cop_approximation:
+      refrigerant: ammonia
+      heat_exchanger_pinch_point_temperature_difference: 5 #K
+      isentropic_compressor_efficiency: 0.8
+      heat_loss: 0.0
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
@@ -500,7 +568,7 @@ sector:
   aviation_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
-  heat_pump_sink_T: 55.
+  heat_pump_sink_T_individual_heating: 55.
   reduce_space_heat_exogenously: true
   reduce_space_heat_exogenously_factor:
     2020: 0.10  # this results in a space heat demand reduction of 10%
@@ -525,7 +593,9 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
-  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
+  overdimension_heat_generators:
+    decentral: 1.1  #to cover demand peaks bigger than data
+    central: 1.0
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -536,12 +606,11 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -555,7 +624,14 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 200
+  co2_sequestration_potential:
+    2020: 0
+    2025: 0
+    2030: 50
+    2035: 100
+    2040: 200
+    2045: 200
+    2050: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -567,6 +643,18 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  methanol:
+    regional_methanol_demand: false
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: false
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: false
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -579,7 +667,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -606,7 +693,12 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
+  electrobiofuels: false
   biosng: false
+  biosng_cc: false
+  bioH2: false
+  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -628,6 +720,12 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
+  solid_biomass_import:
+    enable: false
+    price: 54 #EUR/MWh
+    max_amount: 1390 # TWh
+    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -716,13 +814,14 @@ industry:
   MWh_CH4_per_tMeOH: 10.25
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
-  reference_year: 2015
+  reference_year: 2019
+  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.0
+  version: v0.9.2
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -756,16 +855,15 @@ clustering:
   focus_weights: false
   simplify_network:
     to_substations: false
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time
-    exclude_carriers: []
     remove_stubs: true
-    remove_stubs_across_borders: true
+    remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
-    feature: solar+onwind-time
-    exclude_carriers: []
-    consider_efficiency_classes: false
+    hac_features:
+    - wnd100m
+    - influx_direct
+  exclude_carriers: []
+  consider_efficiency_classes: false
   aggregation_strategies:
     generators:
       committable: any
@@ -778,7 +876,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
@@ -786,6 +889,7 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
+    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -811,6 +915,7 @@ solving:
         DC: 0.3
         H2 pipeline: 0.3
         gas pipeline: 0.3
+      fractional_last_unit_size: false
 
   agg_p_nom_limits:
     agg_offwind: false
@@ -830,7 +935,7 @@ solving:
   solver_options:
     highs-default:
       # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 4
+      threads: 1
       solver: "ipm"
       run_crossover: "off"
       small_matrix_value: 1e-6
@@ -841,7 +946,7 @@ solving:
       parallel: "on"
       random_seed: 123
     gurobi-default:
-      threads: 4
+      threads: 8
       method: 2 # barrier
       crossover: 0
       BarConvTol: 1.e-6
@@ -878,6 +983,13 @@ solving:
     copt-default:
       Threads: 8
       LpMethod: 2
+      Crossover: 0
+      RelGap: 1.e-6
+      Dualize: 0
+    copt-gpu:
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.e-5
       Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
@@ -989,6 +1101,8 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
+    oil primary: '#d2d2d2'
+    oil refining: '#e6e6e6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -1017,6 +1131,8 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
+    municipal solid waste: '#91ba41'
+    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1030,7 +1146,11 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    unsustainable solid biomass: '#998622'
+    unsustainable bioliquids: '#32CD32'
+    electrobiofuels: 'red'
     BioSNG: '#123456'
+    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
@@ -1056,7 +1176,7 @@ plotting:
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    Li ion: '#baf238'
+    EV battery: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
@@ -1157,8 +1277,19 @@ plotting:
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
     naphtha for industry: '#57ebc4'
-    methanolisation: '#83d6d5'
-    methanol: '#468c8b'
+    methanol-to-kerosene: '#C98468'
+    methanol-to-olefins/aromatics: '#FFA07A'
+    Methanol steam reforming: '#FFBF00'
+    Methanol steam reforming CC: '#A2EA8A'
+    methanolisation: '#00FFBF'
+    biomass-to-methanol: '#EAD28A'
+    biomass-to-methanol CC: '#EADBAD'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
+    methanol: '#FF7B00'
+    methanol transport: '#FF7B00'
     shipping methanol: '#468c8b'
     industry methanol: '#468c8b'
     # co2

@@ -55,7 +55,7 @@ def dynamic_getter(wildcards, keys, default):
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
-            f"Scenario {scenario_name} not found in file {config['run']['scenario']['file']}."
+            f"Scenario {scenario_name} not found in file {config['run']['scenarios']['file']}."
         )
     config_with_scenario = scenario_config(scenario_name)
     config_with_wildcards = update_config_from_wildcards(
@@ -81,7 +81,8 @@ def config_provider(*keys, default=None):
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
-    threads = solver_options[option_set].get("threads", 4)
+    solver_option_set = solver_options[option_set]
+    threads = solver_option_set.get("threads") or solver_option_set.get("Threads") or 4
     return threads
 
 
@@ -97,9 +98,7 @@ def memory(w):
         if m is not None:
             factor *= int(m.group(1)) / 8760
             break
-    if w.clusters.endswith("m") or w.clusters.endswith("c"):
-        return int(factor * (55000 + 600 * int(w.clusters[:-1])))
-    elif w.clusters == "all":
+    if w.clusters == "all":
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
@@ -114,20 +113,26 @@ def input_custom_extra_functionality(w):
     return []
 
 
-# Check if the workflow has access to the internet by trying to access the HEAD of specified url
-def has_internet_access(url="www.zenodo.org") -> bool:
-    import http.client as http_client
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+    """
+    Checks if internet connection is available by sending a HEAD request
+    to a reliable server like Google.
 
-    # based on answer and comments from
-    # https://stackoverflow.com/a/29854274/11318472
-    conn = http_client.HTTPConnection(url, timeout=5)  # need access to zenodo anyway
+    Parameters:
+    - url (str): The URL to check for internet connection. Default is Google.
+    - timeout (int | float): The maximum time (in seconds) the request should wait.
+
+    Returns:
+    - bool: True if the internet is available, otherwise False.
+    """
     try:
-        conn.request("HEAD", "/")
-        return True
-    except:
+        # Send a HEAD request to avoid fetching full response
+        response = requests.head(url, timeout=timeout, allow_redirects=True)
+        return response.status_code == 200
+    except requests.ConnectionError:  # (e.g., no internet, DNS issues)
         return False
-    finally:
-        conn.close()
+    except requests.Timeout:  # (e.g., slow or no network)
+        return False
 
 
 def solved_previous_horizon(w):
@@ -137,7 +142,7 @@ def solved_previous_horizon(w):
 
     return (
         RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_"
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_"
         + planning_horizon_p
         + ".nc"
     )

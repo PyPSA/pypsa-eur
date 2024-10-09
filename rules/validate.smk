@@ -69,16 +69,16 @@ rule build_electricity_prices:
 
 rule plot_validation_electricity_production:
     input:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
         electricity_production=resources("historical_electricity_production.csv"),
     output:
         **{
             plot: RESULTS
-            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/validation_{plot}_base_s_{{clusters}}_elec_l{{ll}}_{{opts}}.pdf"
             for plot in PRODUCTION_PLOTS
         },
         plots_touch=RESULTS
-        + "figures/.validation_production_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+        + "figures/.validation_production_plots_base_s_{clusters}_elec_l{ll}_{opts}",
     script:
         "../scripts/plot_validation_electricity_production.py"
 
@@ -87,31 +87,31 @@ rule plot_validation_cross_border_flows:
     params:
         countries=config_provider("countries"),
     input:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
         cross_border_flows=resources("historical_cross_border_flows.csv"),
     output:
         **{
             plot: RESULTS
-            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/validation_{plot}_base_s_{{clusters}}_elec_l{{ll}}_{{opts}}.pdf"
             for plot in CROSS_BORDER_PLOTS
         },
         plots_touch=RESULTS
-        + "figures/.validation_cross_border_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+        + "figures/.validation_cross_border_plots_base_s_{clusters}_elec_l{ll}_{opts}",
     script:
         "../scripts/plot_validation_cross_border_flows.py"
 
 
 rule plot_validation_electricity_prices:
     input:
-        network=RESULTS + "networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
         electricity_prices=resources("historical_electricity_prices.csv"),
     output:
         **{
             plot: RESULTS
-            + f"figures/validation_{plot}_elec_s{{simpl}}_{{clusters}}_ec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/validation_{plot}_base_s_{{clusters}}_elec_l{{ll}}_{{opts}}.pdf"
             for plot in PRICES_PLOTS
         },
         plots_touch=RESULTS
-        + "figures/.validation_prices_plots_elec_s{simpl}_{clusters}_ec_l{ll}_{opts}",
+        + "figures/.validation_prices_plots_base_s_{clusters}_elec_l{ll}_{opts}",
     script:
         "../scripts/plot_validation_electricity_prices.py"

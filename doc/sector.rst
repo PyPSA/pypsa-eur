@@ -43,6 +43,11 @@ Rule ``build_biomass_potentials``
 
 .. automodule:: build_biomass_potentials
 
+Rule ``build_egs_potentials``
+==============================================================================
+
+.. automodule:: build_egs_potentials
+
 Rule ``build_biomass_transport_costs``
 ==============================================================================
 
@@ -57,6 +62,11 @@ Rule ``build_cop_profiles``
 ==============================================================================
 
 .. automodule:: build_cop_profiles
+
+Rule ``build_central_heating_temperature_profiles``
+==============================================================================
+
+.. automodule:: build_central_heating_temperature_profiles
 
 Rule ``build_energy_totals``
 ==============================================================================

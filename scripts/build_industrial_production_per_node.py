@@ -8,13 +8,13 @@ Build industrial production per model region.
 Inputs
 -------
 
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
+- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
 - ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
 
 Outputs
 -------
 
-- ``resources/industrial_production_per_node_elec_s{simpl}_{clusters}_{planning_horizons}.csv``
+- ``resources/industrial_production_per_node_base_s_{clusters}_{planning_horizons}.csv``
 
 Description
 -------
@@ -32,10 +32,10 @@ from _helpers import set_scenario_config
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
-    "Electric arc": "Iron and steel",
-    "Integrated steelworks": "Iron and steel",
-    "DRI + Electric arc": "Iron and steel",
-    "Ammonia": "Chemical industry",
+    "Electric arc": "EAF",
+    "Integrated steelworks": "Integrated steelworks",
+    "DRI + Electric arc": "DRI + EAF",
+    "Ammonia": "Ammonia",
     "HVC": "Chemical industry",
     "HVC (mechanical recycling)": "Chemical industry",
     "HVC (chemical recycling)": "Chemical industry",
@@ -87,11 +87,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_industrial_production_per_node",
-            simpl="",
-            clusters=48,
-        )
+        snakemake = mock_snakemake("build_industrial_production_per_node", clusters=48)
     set_scenario_config(snakemake)
 
     build_nodal_industrial_production()
