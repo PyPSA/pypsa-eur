@@ -141,7 +141,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",
-            simpl="",
             clusters="128",
         )
 

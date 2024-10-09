@@ -101,7 +101,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
-allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
+allam_cycle_gas,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
@@ -131,7 +131,6 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- methanol_reforming,--,"{true, false}"," Add methanol reforming"
 -- methanol_reforming_cc,--,"{true, false}"," Add methanol reforming with carbon capture"
 -- methanol_to_kerosene,--,"{true, false}"," Add methanol to kerosene"
--- methanol_to_olefins,--,"{true, false}"," Add methanol to olefins"
 -- methanol_to_power,--,--," Add different methanol to power technologies"
 -- -- ccgt,--,"{true, false}"," Add combined cycle gas turbine (CCGT) using methanol"
 -- -- ccgt_cc,--,"{true, false}"," Add combined cycle gas turbine (CCGT) with carbon capture using methanol"
@@ -168,7 +167,9 @@ biomass_transport,--,"{true, false}",Add option for transporting solid biomass b
 biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
+biomass_to_liquid_cc,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil with carbon capture
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+biosng_cc,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas with carbon capture
 bioH2,--,"{true, false}",Add option for transforming solid biomass into hydrogen with carbon capture
 municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,

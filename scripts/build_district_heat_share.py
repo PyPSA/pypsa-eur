@@ -44,14 +44,13 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_district_heat_share",
-            simpl="",
             clusters=60,
             planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    investment_year = int(snakemake.wildcards.planning_horizons[-4:])
+    investment_year = int(snakemake.wildcards.planning_horizons)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 
