@@ -107,7 +107,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    Generator: [solar, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
@@ -117,7 +117,7 @@ electricity:
   everywhere_powerplants: []
 
   conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
 
   estimate_renewable_capacities:
     enable: true
@@ -353,7 +353,7 @@ pypsa_eur:
   - offwind-ac
   - offwind-dc
   - offwind-float
-  - solar-hsat
+  #- solar-hsat
   - solar
   - ror
   - nuclear
