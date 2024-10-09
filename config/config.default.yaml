@@ -566,6 +566,7 @@ sector:
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
   aviation_demand_factor: 1.
+  land_transport_demand_factor: 1.
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
   heat_pump_sink_T_individual_heating: 55.
@@ -682,6 +683,7 @@ sector:
       efficiency_static: 0.97
   H2_network: true
   gas_network: false
+  regional_gas_demand: false
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1
@@ -767,6 +769,9 @@ industry:
   #2020 recycling rates based on Agora https://static.agora-energiewende.de/fileadmin/Projekte/2021/2021_02_EU_CEAP/A-EW_254_Mobilising-circular-economy_study_WEB.pdf
   #fractions refer to the total primary HVC production in 2020
   #assumes 6.7 Mtplastics produced from recycling in 2020
+  steam_biomass_fraction: 1.0
+  steam_hydrogen_fraction: 0
+  steam_electricity_fraction: 0
   HVC_primary_fraction:
     2020: 1.0
     2025: 0.9
@@ -832,7 +837,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
+  # Marginal and capital costs, as well as investments can be overwritten
   # capital_cost:
   #   onwind: 500
   marginal_cost:
@@ -869,6 +874,14 @@ clustering:
       committable: any
       ramp_limit_up: max
       ramp_limit_down: max
+      investment: mean
+      overnight_cost: mean
+      connection_overnight_cost: mean
+    lines:
+      overnight_cost: mean
+    one_ports:
+      overnight_cost: mean
+
   temporal:
     resolution_elec: false
     resolution_sector: false
@@ -1020,6 +1033,13 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  countries:
+  - all
+  carriers:
+  - electricity
+  - heat
+  carrier_groups:
+    electricity: [AC, low_voltage]
 
   nice_names:
     OCGT: "Open-Cycle Gas"
@@ -1102,7 +1122,7 @@ plotting:
     # oil
     oil: '#c9c9c9'
     oil primary: '#d2d2d2'
-    oil refining: '#e6e6e6'
+    oil refining: '#a6a6a6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -1139,6 +1159,7 @@ plotting:
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
     urban central solid biomass CHP: '#9d9042'
+    solid biomass OP: '#9d9042'
     urban central solid biomass CHP CC: '#6c5d28'
     biomass boiler: '#8A9A5B'
     residential rural biomass boiler: '#a1a066'
@@ -1146,9 +1167,10 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
+    biomass to liquid CC: '#32DDD2'
     unsustainable solid biomass: '#998622'
     unsustainable bioliquids: '#32CD32'
-    electrobiofuels: 'red'
+    electrobiofuels: '#de4060'
     BioSNG: '#123456'
     solid biomass to hydrogen: '#654321'
     # power transmission
@@ -1229,6 +1251,8 @@ plotting:
     Ambient: '#98eb9d'
     CHP: '#8a5751'
     urban central gas CHP: '#8d5e56'
+    urban central lignite CHP: '#8d5e56'
+    urban central coal CHP: '#8d5e56'
     CHP CC: '#634643'
     urban central gas CHP CC: '#6e4e4c'
     CHP heat: '#8a5751'

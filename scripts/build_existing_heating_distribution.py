@@ -13,7 +13,7 @@ Inputs:
 -------
 - Existing heating generators: `data/existing_heating_raw.csv` per country
 - Population layout: `resources/{run_name}/pop_layout_s<simpl>_<clusters>.csv`. Output of `scripts/build_clustered_population_layout.py`
-- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s<simpl>_<clusters>.csv`
+- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s_<clusters>.csv`
 - District heating share: `resources/<run_name>/district_heat_share_base_s<simpl>_<clusters>_<planning_horizons>.csv`
 
 Outputs:
@@ -47,7 +47,13 @@ cc = coco.CountryConverter()
 
 
 def build_existing_heating():
-    # retrieve existing heating capacities
+    # Add existing heating capacities, data comes from the study
+    # "Mapping and analyses of the current and future (2020 - 2030)
+    # heating/cooling fuel deployment (fossil/renewables) "
+    # https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
+    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
+    # data is for buildings only (i.e. NOT district heating) and represents the year 2012
+    # TODO start from original file
 
     # Add existing heating capacities, data comes from the study
     # "Mapping and analyses of the current and future (2020 - 2030)

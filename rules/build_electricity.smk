@@ -575,7 +575,7 @@ rule simplify_network:
         benchmarks("simplify_network_b")
     threads: 1
     resources:
-        mem_mb=12000,
+        mem_mb=24000,
     conda:
         "../envs/environment.yaml"
     script:

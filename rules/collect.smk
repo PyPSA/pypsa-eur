@@ -83,3 +83,24 @@ rule validate_elec_networks:
             run=config["run"]["name"],
             kind=["production", "prices", "cross_border"],
         ),
+
+
+rule plot_statistics:
+    input:
+        [
+            expand(
+                RESULTS
+                + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+                country=config["plotting"].get("countries", "all"),
+                carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
+            ),
+            expand(
+                RESULTS
+                + "statistics/figures/single/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+                **config["scenario"],
+                country=config["plotting"].get("countries", "all"),
+                carrier=config["plotting"].get("carriers", ["all"]),
+                run=config["run"]["name"],
+            ),
+        ],

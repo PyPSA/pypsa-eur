@@ -23,6 +23,7 @@ This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/cent
 """
 
 import country_converter as coco
+import numpy as np
 import pandas as pd
 from _helpers import set_scenario_config
 
@@ -52,6 +53,8 @@ if __name__ == "__main__":
     years = [str(i) for i in range(2018, 2023)]
 
     ammonia = ammonia.rename(columns=lambda x: str(x))[years]
+    ammonia.replace("--", np.nan, inplace=True)
+    ammonia = ammonia.astype(float)
 
     # convert from ktonN to ktonNH3
     ammonia *= 17 / 14

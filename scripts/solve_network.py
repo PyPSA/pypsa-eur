@@ -193,7 +193,7 @@ def add_solar_potential_constraints(n, config):
         n.generators.loc[solar_today, "p_nom_max"]
         .groupby(n.generators.loc[solar_today].bus.map(location))
         .sum()
-        - n.generators.loc[solar_hsat, "p_nom_opt"]
+        - n.generators.loc[solar_hsat, "p_nom"]
         .groupby(n.generators.loc[solar_hsat].bus.map(location))
         .sum()
         * land_use_factors["solar-hsat"]
@@ -562,7 +562,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     each node to produce on average at least 70% of its consumption.
     """
     # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
+    float_regex = r"[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
         ggrouper = n.generators.bus.map(n.buses.country)
@@ -1038,11 +1038,17 @@ def solve_network(n, config, params, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'")
+
+    if status == "warning":
+        raise RuntimeError(
+            "Solving status 'warning'. Results may not be reliable. Aborting."
+        )
 
     return n
 

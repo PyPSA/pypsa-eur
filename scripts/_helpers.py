@@ -45,9 +45,17 @@ def get_scenarios(run):
         fn = Path(scenario_config["file"])
         if fn.exists():
             scenarios = yaml.safe_load(fn.read_text())
+            if scenarios == None:
+                print(
+                    "WARNING! Scenario management enabled but scenarios file appears to be empty."
+                )
             if run["name"] == "all":
                 run["name"] = list(scenarios.keys())
             return scenarios
+        else:
+            print(
+                "WARNING! Scenario management enabled but scenarios file does not exist."
+            )
     return {}
 
 
@@ -677,12 +685,12 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["H2_network"] = False
 
         if "nowasteheat" in opts:
-            config["sector"]["use_fischer_tropsch_waste_heat"] = False
-            config["sector"]["use_methanolisation_waste_heat"] = False
-            config["sector"]["use_haber_bosch_waste_heat"] = False
-            config["sector"]["use_methanation_waste_heat"] = False
-            config["sector"]["use_fuel_cell_waste_heat"] = False
-            config["sector"]["use_electrolysis_waste_heat"] = False
+            config["sector"]["use_waste_heat"]["fischer_tropsch"] = False
+            config["sector"]["use_waste_heat"]["methanolisation"] = False
+            config["sector"]["use_waste_heat"]["haber_bosch"] = False
+            config["sector"]["use_waste_heat"]["methanation"] = False
+            config["sector"]["use_waste_heat"]["fuel_cell"] = False
+            config["sector"]["use_waste_heat"]["electrolysis"] = False
 
         if "nodistrict" in opts:
             config["sector"]["district_heating"]["progress"] = 0.0
