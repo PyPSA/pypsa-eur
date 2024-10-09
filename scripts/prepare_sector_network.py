@@ -449,9 +449,6 @@ def update_wind_solar_costs(
     n.generators.loc[n.generators.carrier == "solar", "overnight_cost"] = costs.at[
         "solar-utility", "investment"
     ]
-    n.generators.loc[n.generators.carrier == "solar", "overnight_cost"] = costs.at[
-        "solar-utility", "investment"
-    ]
 
     n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
         "onwind", "fixed"
