@@ -19,7 +19,7 @@ gurobi.log
 /networks
 /benchmarks
 /logs
-/notebooks
+#/notebooks
 /data
 /cutouts
 /tmp
