@@ -20,7 +20,7 @@ def assign_location(n):
             names = ifind.index[ifind == i]
             c.df.loc[names, "location"] = names.str[:i]
 
-def plot_steel_map(n, regions, foresight, ax=None): 
+def plot_steel_map(n, regions, year, ax=None): 
     #n = pypsa.Network(root_dir + res_dir + scenario + "postnetworks/base_s_39_lvopt___2030.nc")
 
     
@@ -76,6 +76,9 @@ def plot_steel_map(n, regions, foresight, ax=None):
     
     
     ax.set_facecolor("white")
+    
+    # Add a title and subtitle (if provided)
+    ax.set_title(year, fontsize=14, loc="center")  # Main title
 
     
 #%%
@@ -110,7 +113,7 @@ for i, year in enumerate([2030, 2040, 2050]):
         fn = root_dir + "results/" + scenario + f"/postnetworks/base_s_39_lvopt___{year}.nc"
         ax = axes[i]
         n = pypsa.Network(fn)
-        plot_steel_map(n, regions, foresight="myopic", ax=ax)
+        plot_steel_map(n, regions, year, ax=ax)
 
 plt.tight_layout()
 
