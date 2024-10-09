@@ -1,0 +1,33 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+  "name": "pypsa eur dev",
+  "build": {
+     "dockerfile": "../../Dockerfile.solved"
+  },
+  
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/bash-command:1": {},
+    "ghcr.io/eliises/devcontainer-features/bash-profile:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "terminal.integrated.profiles.linux": {
+        "bash": {
+          "path": "/bin/bash"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "ms-toolsai.jupyter",
+        "zainchen.json",
+        "tomoki1207.pdf",
+        "grapecity.gc-excelviewer"
+      ]
+    }
+  },
+
+  "postCreateCommand": "python -m pip install --upgrade debugpy"
+}

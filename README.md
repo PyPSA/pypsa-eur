@@ -3,102 +3,100 @@ SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)
-[![Test workflows](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg)](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml)
-[![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
-![Size](https://img.shields.io/github/repo-size/pypsa/pypsa-eur)
-[![Zenodo PyPSA-Eur](https://zenodo.org/badge/DOI/10.5281/zenodo.3520874.svg)](https://doi.org/10.5281/zenodo.3520874)
-[![Zenodo PyPSA-Eur-Sec](https://zenodo.org/badge/DOI/10.5281/zenodo.3938042.svg)](https://doi.org/10.5281/zenodo.3938042)
-[![Snakemake](https://img.shields.io/badge/snakemake-≥8.14.0-brightgreen.svg?style=flat)](https://snakemake.readthedocs.io)
-[![REUSE status](https://api.reuse.software/badge/github.com/pypsa/pypsa-eur)](https://api.reuse.software/info/github.com/pypsa/pypsa-eur)
-[![Stack Exchange questions](https://img.shields.io/stackexchange/stackoverflow/t/pypsa)](https://stackoverflow.com/questions/tagged/pypsa)
-
 # PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
-
-PyPSA-Eur is an open model dataset of the European energy system at the
-transmission network level that covers the full ENTSO-E area. The model is suitable both for operational studies and generation and transmission expansion planning studies.
-The continental scope and highly resolved spatial scale enables a proper description of the long-range
-smoothing effects for renewable power generation and their varying resource availability.
-
-
-
 
 The model is described in the [documentation](https://pypsa-eur.readthedocs.io)
 and in the paper
-[PyPSA-Eur: An Open Optimisation Model of the European Transmission
-System](https://arxiv.org/abs/1806.01613), 2018,
-[arXiv:1806.01613](https://arxiv.org/abs/1806.01613).
-The model building routines are defined through a snakemake workflow.
-Please see the [documentation](https://pypsa-eur.readthedocs.io/)
-for installation instructions and other useful information about the snakemake workflow.
-The model is designed to be imported into the open toolbox
 [PyPSA](https://github.com/PyPSA/PyPSA).
 
-**WARNING**: PyPSA-Eur is under active development and has several
-[limitations](https://pypsa-eur.readthedocs.io/en/latest/limitations.html) which
-you should understand before using the model. The github repository
-[issues](https://github.com/PyPSA/pypsa-eur/issues) collect known topics we are
-working on (please feel free to help or make suggestions). The
-[documentation](https://pypsa-eur.readthedocs.io/) remains somewhat patchy. You
-can find showcases of the model's capabilities in the Joule paper [The potential
-role of a hydrogen network in
-Europe](https://doi.org/10.1016/j.joule.2023.06.016), another [paper in Joule
-with a description of the industry
-sector](https://doi.org/10.1016/j.joule.2022.04.016), or in [a 2021 presentation
-at EMP-E](https://nworbmot.org/energy/brown-empe.pdf). We do not recommend to
-use the full resolution network model for simulations. At high granularity the
-assignment of loads and generators to the nearest network node may not be a
-correct assumption, depending on the topology of the underlying distribution
-grid, and local grid bottlenecks may cause unrealistic load-shedding or
-generator curtailment. We recommend to cluster the network to a couple of
-hundred nodes to remove these local inconsistencies. See the discussion in
-Section 3.4 "Model validation" of the paper.
+
+# Devcontainers
+
+For details about dev containers see [Dev Containers](https://containers.dev).
+
+This repository is an attempt to use pre-built images to speed up development. Learn more at the [Dev Containers Guide](https://containers.dev/guide/prebuild), inspired by the repository [kubernetes-devcontainer](https://github.com/craiglpeters/kubernetes-devcontainer).
+
+![Adding development package to repository](doc/img/pypsa-eur-package.png)
+
+Link to the package: [pypsa-eur](https://github.com/drifter089/pypsa-eur/pkgs/container/pypsa-eur).
+
+## Steps
+
+1. You need [Visual Studio Code](https://code.visualstudio.com/) installed.
+2. Install Docker: [Install Docker](https://code.visualstudio.com/docs/devcontainers/tutorial#_install-docker).
+3. Install the Dev Containers extension for VS Code: [Install the Extension](https://code.visualstudio.com/docs/devcontainers/tutorial#_install-the-extension).
+4. Clone this repo and open it in VS Code.
+5. Hit `Ctrl+Shift+P` to open the command palette in VS Code and search for "Dev Containers".
+   ![Select "Reopen in Container"](doc/img/select-reopen-dev-container.png)
+6. Wait for the image to be downloaded.
+   ![Opening Dev Container](doc/img/opening-dev-container.png)
+7. Once finished, you will be inside the container.
+   ![Attached Dev Container](doc/img/attached-dev-container.png)
+8. Inside the container, you can see the welcome message.
+   ![Welcome Message](doc/img/message-dev-container.png)
+9. Open the terminal and see that the `pypsa-eur` environment is pre-configured.
+   ![Terminal in Dev Container](doc/img/terminal-dev-con.png)
+10. Navigate to the files to see the solved folders for the electricity tutorial copied from the container.
+    ![Solved Structure in Dev Container](doc/img/solved-structure-dev-con.png)
 
 
-![PyPSA-Eur Grid Model](doc/img/elec.png)
+# Debug
 
-The dataset consists of:
+Addressing issues like these [Stack Overflow](https://stackoverflow.com/questions/78677266/how-to-debug-scripts-for-pypsa-eur).
 
-- A grid model based on a modified [GridKit](https://github.com/bdw/GridKit)
-  extraction of the [ENTSO-E Transmission System
-  Map](https://www.entsoe.eu/data/map/). The grid model contains 7072 lines
-  (alternating current lines at and above 220kV voltage level and all high
-  voltage direct current lines) and 3803 substations.
-- The open power plant database
-  [powerplantmatching](https://github.com/PyPSA/powerplantmatching).
-- Electrical demand time series from the
-  [OPSD project](https://open-power-system-data.org/).
-- Renewable time series based on ERA5 and SARAH, assembled using the [atlite tool](https://github.com/PyPSA/atlite).
-- Geographical potentials for wind and solar generators based on land use (CORINE) and excluding nature reserves (Natura2000) are computed with the [atlite library](https://github.com/PyPSA/atlite).
+Here I attempt to propose a debugging guide where we can use Snakemake commands to specify config and stop execution in the middle with `debugpy` and attach using VS Code debugger.
 
-A sector-coupled extension adds demand
-and supply for the following sectors: transport, space and water
-heating, biomass, industry and industrial feedstocks, agriculture,
-forestry and fishing. This completes the energy system and includes
-all greenhouse gas emitters except waste management and land use.
+More detailed guide: [VS Code Python Debugging](https://code.visualstudio.com/docs/python/debugging#_example).
 
-This diagram gives an overview of the sectors and the links between
-them:
+These steps can be followed whether you are using the devcontainers or not.
 
-![sector diagram](doc/img/multisector_figure.png)
+1. Let's say you have [electricity tutorial](https://pypsa-eur.readthedocs.io/en/latest/tutorial.html) already ran successfully.
+2. Let's delete the results folder:
 
-Each of these sectors is built up on the transmission network nodes
-from [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur):
+```
+sudo rm -r results
+```
 
-![network diagram](https://github.com/PyPSA/pypsa-eur/blob/master/doc/img/base.png?raw=true)
+3. Now, if we want to rebuild the results folder and resulting networks in debug mode:
+   - First, let's navigate to the 'scripts/solvenetwork.py' reference file [solve_network.py](https://github.com/drifter089/pypsa-eur/blob/master/scripts/solve_network.py).
+   
+   - Import `debugpy` 
+   
+   ![debugpy](doc/img/debugpy-code-1.png).
+   
+   - Add code snippet to stop execution and wait for the debugger ![debugpy code](doc/img/debugpy-code-2.png).
+   
 
-For computational reasons the model is usually clustered down
-to 50-200 nodes.
+4. Instead of using this command:
+```
+snakemake -call results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml
+```
 
-Already-built versions of the model can be found in the accompanying [Zenodo
-repository](https://doi.org/10.5281/zenodo.3601881).
+5. We have to modify it to use one core only and pass the `--debug` flag to Snakemake:
+
+```
+snakemake --cores 1 results/test-elec/networks/elec_s_6_ec_lcopt_.nc --configfile config/test/config.electricity.yaml --debug
+```
+
+   ![debug command](doc/img/debug-command.png)
+
+6. Navigate to the "Run and Debug" tab in VS Code and use the debugger attach configuration to launch the debugger, file link [launch.json](https://github.com/drifter089/pypsa-eur/blob/master/.vscode/launch.json).
+
+   ![attach config debug](doc/img/attach-config-debug.png)
+
+7. Once launched, the debugger will attach to paused code. From here on, you can add breakpoints to the code and use the debugger UI.
+
+   ![debugger](doc/img/debugger.png)
+
 
 # Contributing and Support
+
 We strongly welcome anyone interested in contributing to this project. If you have any ideas, suggestions or encounter problems, feel invited to file issues or make pull requests on GitHub.
--   In case of code-related **questions**, please post on [stack overflow](https://stackoverflow.com/questions/tagged/pypsa).
--   For non-programming related and more general questions please refer to the [mailing list](https://groups.google.com/group/pypsa).
--   To **discuss** with other PyPSA users, organise projects, share news, and get in touch with the community you can use the [discord server](https://discord.com/invite/AnuJBk23FU).
--   For **bugs and feature requests**, please use the [PyPSA-Eur Github Issues page](https://github.com/PyPSA/pypsa-eur/issues).
+
+- In case of code-related **questions**, please post on [stack overflow](https://stackoverflow.com/questions/tagged/pypsa).
+- For non-programming related and more general questions please refer to the [mailing list](https://groups.google.com/group/pypsa).
+- To **discuss** with other PyPSA users, organise projects, share news, and get in touch with the community you can use the [discord server](https://discord.com/invite/AnuJBk23FU).
+- For **bugs and feature requests**, please use the [PyPSA-Eur Github Issues page](https://github.com/PyPSA/pypsa-eur/issues).
 
 # Licence
 

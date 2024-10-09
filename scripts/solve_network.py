@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+# import debugpy
 
 import numpy as np
 import pandas as pd
@@ -1049,6 +1050,12 @@ def solve_network(n, config, params, solving, **kwargs):
 
 # %%
 if __name__ == "__main__":
+    # debugpy.listen(5678)
+    # print("Waiting for debugger attach")
+    # debugpy.wait_for_client()
+    # debugpy.breakpoint()
+    # print('break on this line')
+    
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 

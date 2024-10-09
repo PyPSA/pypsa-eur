@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Attach",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      }
+    }
+    // {
+    //   "name": "Pytest - Folder",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "module": "pytest",
+    //   "args": "${workspaceFolder}",
+    //   "justMyCode": true
+    // },
+    // {
+    //   "name": "Pytest - File",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "module": "pytest",
+    //   "args": "${file}",
+    //   "justMyCode": true
+    // },
+    // {
+    //   "name": "Python: Current File",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "program": "${file}",
+    //   "console": "integratedTerminal",
+    //   "justMyCode": true
+    // },
+    // {
+    //   "name": "Python: All Files",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "program": "${file}",
+    //   "console": "integratedTerminal",
+    //   "justMyCode": false
+    // }
+  ]
+}

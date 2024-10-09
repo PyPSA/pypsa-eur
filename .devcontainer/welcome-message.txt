@@ -1,0 +1,13 @@
+
+
+👋 Welcome to pypsa-eur contribution in a dev container! 
+     Works in VS Code, or in docker using the devcontainer cli
+
+See https://github.com/drifter089/pypsa-eur/blob/master/README.md for guidance on debugging and contributing to pypsa-eur
+
+
+For details about dev containers see https://containers.dev
+
+The configuration for the dev container is in the .github/.devcontainer folder.
+
+🔍 To explore VS Code to its fullest, search using the Command Palette (Cmd/Ctrl + Shift + P or F1).+

@@ -1,0 +1,9 @@
+// For format details, see https://aka.ms/devcontainer.json. 
+{
+  "name": "pypsa eur dev",
+  "image": "ghcr.io/drifter089/pypsa-eur:latest",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind,consistency=cached",
+  "initializeCommand": "docker pull ghcr.io/drifter089/pypsa-eur:latest",
+  "workspaceFolder": "/workspaces",
+  "postAttachCommand": "bash .devcontainer/setup.sh"
+}
