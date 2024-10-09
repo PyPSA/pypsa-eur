@@ -10,12 +10,13 @@ dependencies:
 - python>=3.8
 - pip
 
+- pypsa>=0.30.3
 - atlite>=0.2.9
-- pypsa>=0.29
 - linopy
+
 - dask
 
-  # Dependencies of the workflow itself
+# Dependencies of the workflow itself
 - xlrd
 - openpyxl!=3.1.1
 - seaborn
@@ -49,14 +50,13 @@ dependencies:
 - pre-commit
 - geojson
 
-  # Keep in conda environment when calling ipython
+# Keep in conda environment when calling ipython
 - ipython
 
-  # GIS dependencies:
+# GIS dependencies:
 - cartopy
 - descartes
-- rasterio!=1.2.10
-
+- rasterio<1.4
 
 - pip:
   - tsam>=2.3.1

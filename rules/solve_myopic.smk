@@ -10,25 +10,27 @@ rule add_existing_baseyear:
         existing_capacities=config_provider("existing_capacities"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-        powerplants=resources("powerplants.csv"),
-        busmap_s=resources("busmap_elec_s{simpl}.csv"),
-        busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
-        clustered_pop_layout=resources("pop_layout_elec_s{simpl}_{clusters}.csv"),
+        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        powerplants=resources("powerplants_s_{clusters}.csv"),
+        busmap_s=resources("busmap_base_s.csv"),
+        busmap=resources("busmap_base_s_{clusters}.csv"),
+        clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
             "costs_{}.csv".format(
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
-        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
         existing_heating_distribution=resources(
-            "existing_heating_distribution_elec_s{simpl}_{clusters}_{planning_horizons}.csv"
+            "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
     output:
         RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
         # TODO: The first planning_horizon needs to be aligned across scenarios
         # snakemake does not support passing functions to wildcard_constraints
@@ -39,11 +41,11 @@ rule add_existing_baseyear:
         mem_mb=2000,
     log:
         RESULTS
-        + "logs/add_existing_baseyear_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        + "logs/add_existing_baseyear_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/add_existing_baseyear/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/add_existing_baseyear/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -53,7 +55,7 @@ rule add_existing_baseyear:
 
 def input_profile_tech_brownfield(w):
     return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
+        f"profile_{tech}": resources("profile_{clusters}_" + tech + ".nc")
         for tech in config_provider("electricity", "renewable_carriers")(w)
         if tech != "hydro"
     }
@@ -72,26 +74,26 @@ rule add_brownfield:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
     input:
         unpack(input_profile_tech_brownfield),
-        simplify_busmap=resources("busmap_elec_s{simpl}.csv"),
-        cluster_busmap=resources("busmap_elec_s{simpl}_{clusters}.csv"),
+        simplify_busmap=resources("busmap_base_s.csv"),
+        cluster_busmap=resources("busmap_base_s_{clusters}.csv"),
         network=RESULTS
-        + "prenetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs=resources("costs_{planning_horizons}.csv"),
-        cop_profiles=resources("cop_profiles_elec_s{simpl}_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
     output:
         RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     threads: 4
     resources:
         mem_mb=10000,
     log:
         RESULTS
-        + "logs/add_brownfield_elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        + "logs/add_brownfield_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/add_brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/add_brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -113,22 +115,22 @@ rule solve_sector_network_myopic:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=RESULTS
-        + "prenetworks-brownfield/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         costs=resources("costs_{planning_horizons}.csv"),
     output:
         network=RESULTS
-        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
-        + "configs/config.elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
+        + "configs/config.base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
         "shallow"
     log:
         solver=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_solver.log",
         memory=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_memory.log",
         python=RESULTS
-        + "logs/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
+        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_python.log",
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem_mb"),
@@ -136,7 +138,7 @@ rule solve_sector_network_myopic:
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_sector_network/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/solve_sector_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

@@ -42,11 +42,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         - gdp: A GeoDataFrame with the mean GDP p.c. values mapped to each bus.
         - pop: A GeoDataFrame with the summed POP values mapped to each bus.
     """
-    regions = (
-        regions.rename(columns={"name": "Bus"})
-        .drop(columns=["x", "y"])
-        .set_index("Bus")
-    )
+    regions = regions.rename(columns={"name": "Bus"}).set_index("Bus")
     regions = regions[regions.country == country]
     # Create a bounding box for UA, MD from region shape, including a buffer of 10000 metres
     bounding_box = (

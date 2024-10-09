@@ -27,11 +27,12 @@ Then the process continues by calculating conventional power plant capacities, p
 
 - :mod:`build_powerplants` for today's thermal power plant capacities using `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`__ allocating these to the closest substation for each powerplant,
 - :mod:`build_ship_raster` for building shipping traffic density,
+- :mod:`determine_availability_matrix` for the land eligibility analysis of each cutout grid cell for PV, onshore and offshore wind,
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
 
 The central rule :mod:`add_electricity` then ties all the different data inputs
-together into a detailed PyPSA network stored in ``networks/elec.nc``.
+together into a detailed PyPSA network stored in ``networks/base_s_{clusters}_elec.nc``.
 
 .. _cutout:
 
@@ -115,6 +116,15 @@ Rule ``determine_availability_matrix_MD_UA``
 
 .. automodule:: determine_availability_matrix_MD_UA
 
+
+.. _renewableprofiles:
+
+Rule ``determine_availability_matrix``
+======================================
+
+.. automodule:: determine_availability_matrix
+
+
 .. _renewableprofiles:
 
 Rule ``build_renewable_profiles``
@@ -129,10 +139,3 @@ Rule ``build_hydro_profile``
 ===============================
 
 .. automodule:: build_hydro_profile
-
-.. _electricity:
-
-Rule ``add_electricity``
-=============================
-
-.. automodule:: add_electricity
