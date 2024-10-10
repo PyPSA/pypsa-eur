@@ -172,8 +172,10 @@ def add_solar_potential_constraints(n, config):
     }
 
     solar_carriers = ["solar", "solar-hsat"]
-    solar = n.generators.loc[n.generators.carrier == "solar"]
-    all_solar = n.generators.loc[n.generators.carrier.isin(solar_carriers)]
+    solar = n.generators.loc[(n.generators.carrier == "solar") & n.generators.active]
+    all_solar = n.generators.loc[
+        n.generators.carrier.isin(solar_carriers) & n.generators.active
+    ]
 
     # Separate extendable and non-extendable generators
     solar_ext = solar.loc[solar.p_nom_extendable]
@@ -184,24 +186,32 @@ def add_solar_potential_constraints(n, config):
     if all_solar_ext.empty:
         return
 
-    land_use = pd.Series(1, index=all_solar.index, name="land_use_factor")
+    land_use = pd.Series(1.0, index=all_solar.index, name="land_use_factor")
     for carrier, factor in land_use_factors.items():
         land_use.loc[all_solar.carrier == carrier] *= factor
 
-    location = n.buses.index.to_series()
-    ggrouper = all_solar.bus
+    # Compute right hand side based on the sum of currently installed
+    # solar, and p_nom_max of extendable solar. Note that "solar" here
+    # means only the "solar" carrier, not all solar carriers including
+    # "solar-hsat".
+    rhs = pd.concat([solar_non_ext.p_nom, solar_ext.p_nom_max]).groupby(solar.bus).sum()
 
-    rhs = pd.concat([solar_non_ext.p_nom, solar_ext.p_nom_max]).groupby(ggrouper).sum()
-
-    rename = {"Generator-ext": "Generator"}
+    # Compute left hand side as the sum of extendable solar and
+    # installed solar, including all solar carriers.
     lhs = (
-        n.model["Generator-p_nom"].rename(rename).loc[all_solar_ext.index]
-        * land_use.loc[all_solar_ext.index]
-    ).groupby(ggrouper.loc[all_solar_ext.index]).sum() + (
-        all_solar_non_ext.p_nom * land_use.loc[all_solar_non_ext.index]
-    ).groupby(
-        ggrouper.loc[all_solar_non_ext.index]
-    ).sum()
+        (
+            n.model["Generator-p_nom"]
+            .rename({"Generator-ext": "Generator"})
+            .loc[all_solar_ext.index]
+            * land_use.loc[all_solar_ext.index]
+        )
+        .groupby(all_solar_ext.bus)
+        .sum()
+    ) + (
+        (all_solar_non_ext.p_nom * land_use.loc[all_solar_non_ext.index])
+        .groupby(all_solar_non_ext.bus)
+        .sum()
+    )
 
     logger.info("Adding solar potential constraint.")
     n.model.add_constraints(lhs <= rhs, name="solar_potential")
