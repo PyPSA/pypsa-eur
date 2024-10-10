@@ -46,7 +46,7 @@ from _helpers import (
 )
 from prepare_sector_network import get
 from pypsa.clustering.spatial import align_strategies, flatten_multiindex
-from pypsa.descriptors import Dict, get_activity_mask
+from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from pypsa.descriptors import nominal_attrs
 from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
@@ -1056,241 +1056,145 @@ strategies = dict(
     p4="sum",
 )
 
-# The following attributes are to be stored by build year in extra
-# columns, so that they can be properly disaggregated. The string
-# "attr_nom" is replaced by the actual attribute name in the code
-# below (i.e. "p_nom", "e_nom", etc.)
-vars_to_store = [
-    "attr_nom",
-    "attr_nom_min",
-    "attr_nom_max",
-    "attr_nom_extendable",
-    "lifetime",
-    "capital_cost",
-    "marginal_cost",
-    "efficiency",
-    "efficiency2",
-    "efficiency3",
-    "efficiency4",
-]
 
-
-def aggregate_build_years(n, exclude_carriers):
+def aggregate_build_years(n, components, exclude_carriers):
     """
     Aggregate components which are identical in all but build year.
     """
     t = time.time()
-    indices = dict()
 
-    for c in n.iterate_components():
-        # No lines
-        if c.name == "Line":
-            continue
-        if ("build_year" in c.df.columns) and (c.df.build_year > 0).any():
-            indices[c.name] = c.df.index.copy()
-
+    for c in n.iterate_components(components):
+        if ("build_year" in c.static.columns) and (c.static.build_year > 0).any():
             attr = nominal_attrs[c.name]
 
-            # Define the aggregation map
-            idx_to_agg = c.df.loc[~c.df.carrier.isin(exclude_carriers)].index
-            idx_no_year = pd.Series(c.df.index.copy(), index=c.df.index)
-            idx_no_year.loc[idx_to_agg] = idx_to_agg.str.replace(
-                r"-[0-9]{4}$", "", regex=True
+            # Define the aggregation map. First select all components
+            # that are to be aggregated (i.e. every component that is
+            # not excluded by carrier and whose index ends in a
+            # year.). Then create a map that removes the build year
+            # from the index. This map is used to aggregate the
+            # components.
+            idx_to_agg = c.static.loc[
+                ~c.static.carrier.isin(exclude_carriers)
+                & c.static.index.str.match(r".*-[0-9]{4}$")
+            ].index
+            idx_no_year = pd.Series(
+                idx_to_agg.str.replace(r"-[0-9]{4}$", "", regex=True), index=idx_to_agg
             )
-
-            # For each component (row) in df with name ending in
-            # "-YYYY", store the columns listed in `vars_to_store` to
-            # be disaggregated again later.
-            to_store = []
-            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
-                if v not in c.df.columns:
-                    continue
-                for build_year in c.df.build_year.unique():
-                    if build_year == 0:
-                        continue
-                    mask = c.df.build_year == build_year
-                    col = c.df.loc[mask, v].copy()
-                    col.index = pd.Index(idx_no_year.loc[mask])
-                    col.name = f"{v}-{build_year}"
-                    to_store.append(col)
 
             # For components that are non-extendable, set
             # attr_{min,max} = attr; this is for the aggregated
             # extendable component to have the correct minimum and
             # maximum bounds for nominal capacity.
-            non_extendable = c.df[~c.df[f"{attr}_extendable"]].index.intersection(
-                idx_to_agg
-            )
-            c.df.loc[non_extendable, f"{attr}_min"] = c.df.loc[non_extendable, attr]
-            c.df.loc[non_extendable, f"{attr}_max"] = c.df.loc[non_extendable, attr]
+            non_extendable = c.static[
+                ~c.static[f"{attr}_extendable"]
+            ].index.intersection(idx_to_agg)
+            c.static.loc[non_extendable, f"{attr}_min"] = c.static.loc[
+                non_extendable, attr
+            ]
+            c.static.loc[non_extendable, f"{attr}_max"] = c.static.loc[
+                non_extendable, attr
+            ]
 
             # Aggregate
-            static_strategies = align_strategies(strategies, c.df.columns, c.name)
-            df_aggregated = c.df.groupby(idx_no_year).agg(static_strategies)
+            static_strategies = align_strategies(strategies, c.static.columns, c.name)
+            df_aggregated = (
+                c.static.loc[idx_to_agg].groupby(idx_no_year).agg(static_strategies)
+            )
 
-            # Add the columns that are stored for disaggregation.
-            df_aggregated = pd.concat([df_aggregated] + to_store, axis=1)
+            # Add new components to the original components, and set
+            # all aggregated components to inactive. Note: actual
+            # modifications of the network need to happen on n
+            # directly, as c only represents a view of the network but
+            # changes to it don't change n.
+            n.add(
+                c.name,
+                df_aggregated.index,
+                **df_aggregated.to_dict(orient="series"),
+            )
+            n.static(c.name).loc[idx_to_agg, "active"] = False
 
-            # Aggregate time-varying data.
-            pnl_aggregated = Dict()
-            dynamic_strategies = align_strategies(strategies, c.pnl, c.name)
-            for attr, data in c.pnl.items():
-                if data.empty:
-                    pnl_aggregated[attr] = data
-                    continue
-
+            # Aggregate time-varying data. The aggregated components
+            # have already been added; we just need to fill in the
+            # dynamic data correctly.
+            dynamic_strategies = align_strategies(strategies, c.dynamic, c.name)
+            for attr in c.dynamic:
                 strategy = dynamic_strategies[attr]
-                col_agg_map = idx_no_year.loc[data.columns]
-                pnl_aggregated[attr] = data.T.groupby(col_agg_map).agg(strategy).T
-
-            setattr(n, n.components[c.name]["list_name"], df_aggregated)
-            setattr(n, n.components[c.name]["list_name"] + "_t", pnl_aggregated)
+                # Find out which components have a time-varying attr
+                has_dynamic_attr = c.dynamic[attr].columns.intersection(idx_to_agg)
+                aggregated = idx_no_year.loc[has_dynamic_attr].unique()
+                # Aggregated time-varying data
+                n.dynamic(c.name)[attr][aggregated] = (
+                    c.dynamic[attr][has_dynamic_attr]
+                    .T.groupby(idx_no_year)
+                    .agg(strategy)
+                    .T[aggregated]
+                )
 
     logger.info(f"Aggregated build years in {time.time() - t:.1f} seconds")
-    return indices
 
 
-def disaggregate_build_years(n, indices, planning_horizon):
+def disaggregate_build_years(n, components, planning_horizon):
     """
     Disaggregate components which were aggregated by `aggregate_build_years`.
     """
     t = time.time()
 
-    for c in n.iterate_components():
-        if c.name in indices:
-            attr = nominal_attrs[c.name]
-            old_idx = c.df.index.copy()
+    for c in n.iterate_components(components):
+        attr = nominal_attrs[c.name]
 
-            # Find the indices of components to be disaggregated
-            idx_diff = indices[c.name].difference(c.df.index)
+        # Find the components that are to be "disaggregated":
+        # those which are set to inactive and whose name ends with
+        # a build year.
+        disagg = c.static.loc[~c.static.active]
+        if disagg.empty:
+            continue
 
-            # Create new DataFrame for all disaggregated components;
-            # create column to map to corresponding aggregated
-            # component
-            disagg_df = pd.DataFrame(index=idx_diff, columns=c.df.columns)
-            disagg_df["id_no_year"] = disagg_df.index.str.replace(
-                r"-[0-9]{4}$", "", regex=True
-            )
-            agg_map = disagg_df["id_no_year"].copy()
+        # We have to set attr_opt to the correct (optimised) value for
+        # all components in disagg whose build year equals the current
+        # planning horizon (and which are extendable). The correct
+        # value is the optimised value of the corresponding aggregated
+        # component, minus the nominal capacity of all components with
+        # a lower build year. We exploit the fact that nominal
+        # capacity of components built in the current planning horizon
+        # is 0 (since they are optimised).
+        idx_current_horizon = disagg.loc[
+            disagg.build_year == int(planning_horizon)
+        ].index
+        idx_agg = idx_current_horizon.str.replace(r"-[0-9]{4}$", "", regex=True)
+        opt_agg = c.static.loc[idx_agg, f"{attr}_opt"]
+        opt_agg.index = idx_current_horizon
 
-            # Copy values from aggregated component to disaggregated
-            disagg_df.loc[:, c.df.columns] = c.df.loc[disagg_df["id_no_year"]].values
+        map_to_current_horizon = disagg.index.str[:-4] + planning_horizon
+        attr_all_years = disagg.groupby(map_to_current_horizon).sum()[attr]
 
-            # Set build year from index
-            disagg_df.loc[:, "build_year"] = disagg_df.index.str[-4:].astype(int)
+        n.static(c.name).loc[idx_current_horizon, f"{attr}_opt"] = (
+            opt_agg - attr_all_years
+        )
 
-            # Disaggregate specially stored values exactly
-            for v in [s.replace("attr_nom", attr) for s in vars_to_store]:
-                if v not in c.df.columns:
-                    continue
-                for build_year in disagg_df.build_year.unique():
-                    idx_build_year = disagg_df.build_year == build_year
-                    disagg_df.loc[
-                        idx_build_year,
-                        v,
-                    ] = c.df.loc[
-                        disagg_df.loc[idx_build_year, "id_no_year"],
-                        f"{v}-{build_year}",
-                    ].values
+        # Also adjust dynamic data. For each component that was
+        # aggregated (and thus deactivated), we set output
+        # variables to those of the aggregated component, scaled
+        # by installed capacities.
+        agg_map = pd.Series(
+            disagg.index.str.replace(r"-[0-9]{4}$", "", regex=True), index=disagg.index
+        )
+        scaling_factors = n.static(c.name).loc[disagg.index, [attr, attr + "_opt"]].max(
+            axis=1
+        ) / agg_map.map(c.static[attr + "_opt"])
+        for v in c.dynamic:
+            if c.dynamic[v].empty or (
+                n.components[c.name]["attrs"].loc[v, "status"] != "Output"
+            ):
+                continue
 
-            # Set p_nom_opt to p_nom. This should go for all non-extendable
-            # disaggregated components. p_nom_opt for the last planning horizon
-            # is dealt with below.
-            disagg_df.loc[:, f"{attr}_opt"] = disagg_df.loc[:, attr]
+            df = c.dynamic[v][agg_map]
+            df.columns = agg_map.index
+            n.dynamic(c.name)[v][disagg.index] = df.mul(scaling_factors, axis=1)
 
-            # Handle the last planning horizon (which was just
-            # optimised) specifically: we have to subtract the sum of
-            # nominal capacities of the previous years from attr_opt.
-            idx_last_horizon = disagg_df.loc[
-                disagg_df.build_year == int(planning_horizon)
-            ].index
-            disagg_df.loc[idx_last_horizon, f"{attr}_opt"] = c.df.loc[
-                disagg_df.loc[idx_last_horizon, "id_no_year"], f"{attr}_opt"
-            ].values
-            years = c.df.columns.str.extract(rf"{attr}-(\d{{4}})$").dropna()[0]
-            prev_years = years[years.astype(int) < int(planning_horizon)]
-            disagg_df.loc[idx_last_horizon, f"{attr}_opt"] -= (
-                c.df.loc[
-                    disagg_df.loc[idx_last_horizon, "id_no_year"],
-                    [f"{attr}-{p}" for p in prev_years.values],
-                ]
-                .sum(axis=1)
-                .values
-            )
-
-            # Also make last year extendable again
-            disagg_df.loc[idx_last_horizon, f"{attr}_extendable"] = True
-
-            # Drop auxiliary column keeping track of aggregated component
-            disagg_df.drop("id_no_year", axis=1, inplace=True)
-
-            # Add disaggregated components to c.df. Watch out: c.df
-            # will still refer to the "old" dataframe.
-            import_components_from_dataframe(n, disagg_df, c.name)
-
-            # Also duplicate the corresponding column in pnl
-            for v in c.pnl:
-                if c.pnl[v].empty:
-                    continue
-
-                # Set the new columns to the values of the old columns
-                mask = agg_map.index[agg_map.isin(c.pnl[v].columns)]
-                pnl = c.pnl[v].loc[:, agg_map[mask]]
-                pnl.columns = mask
-                import_series_from_dataframe(n, pnl, c.name, v)
-
-                # Variables that are outputs and don't start with
-                # "mu_" need to be scaled by nominal capacity.
-                if (
-                    n.components[c.name]["attrs"].loc[v, "status"] == "Output"
-                ) and not (v.startswith("mu_")):
-                    scaling_factors = (
-                        (
-                            disagg_df.loc[mask, attr]
-                            / c.df.loc[agg_map[mask], attr].replace(0.0, np.nan).values
-                        )
-                        .astype(float)
-                        .fillna(0.0)
-                        .reindex(c.pnl[v].columns, fill_value=1.0)
-                    )
-                    # For extendable components, recompute the scaling
-                    # factors using attr + "_opt"
-                    ext_i = mask[c.df.loc[agg_map[mask], f"{attr}_extendable"]]
-                    scaling_factors.loc[ext_i] = (
-                        (
-                            disagg_df.loc[ext_i, f"{attr}_opt"]
-                            / c.df.loc[agg_map[ext_i], f"{attr}_opt"]
-                            .replace(0.0, np.nan)
-                            .values
-                        )
-                        .astype(float)
-                        .fillna(0.0)
-                    )
-                    c.pnl[v] = c.pnl[v].mul(scaling_factors, axis=1)
-
-            # Drop all columns in df ending in "-YYYY" (the columns
-            # used to track aggregated information that has now been
-            # disaggregated).
-            cols_to_drop = n.df(c.name).columns[
-                n.df(c.name).columns.str.match(r".*-[0-9]{4}$")
-            ]
-            n.df(c.name).drop(cols_to_drop, axis=1, inplace=True)
-
-            # Now remove the aggregated components from both static
-            # and varying data.
-            n.df(c.name).drop(old_idx.difference(indices[c.name]), inplace=True)
-            for _, data in c.pnl.items():
-                if data.empty:
-                    continue
-                data.drop(
-                    old_idx.difference(indices[c.name]).intersection(data.columns),
-                    axis=1,
-                    inplace=True,
-                )
-
-    # Fix problem with boolean values in "reversed" column
-    if "reversed" in n.links.columns:
-        n.links.reversed = n.links.reversed.astype(float)
+        # Now remove the aggregated components, and set the original
+        # components to active again
+        n.remove(c.name, agg_map.unique())
+        n.static(c.name).loc[disagg.index, "active"] = True
 
     logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
 
@@ -1329,8 +1233,10 @@ def solve_network(n, config, params, solving, build_year_agg, **kwargs):
         config["foresight"] == "myopic"
     )
     if build_year_agg_enabled:
-        indices = aggregate_build_years(
-            n, exclude_carriers=build_year_agg["exclude_carriers"]
+        aggregate_build_years(
+            n,
+            components=build_year_agg["components"],
+            exclude_carriers=build_year_agg["exclude_carriers"],
         )
 
     if rolling_horizon and snakemake.rule == "solve_operations_network":
@@ -1362,7 +1268,11 @@ def solve_network(n, config, params, solving, build_year_agg, **kwargs):
         raise RuntimeError("Solving status 'infeasible'")
 
     if build_year_agg_enabled:
-        disaggregate_build_years(n, indices, snakemake.wildcards.planning_horizons)
+        disaggregate_build_years(
+            n,
+            components=build_year_agg["components"],
+            planning_horizon=snakemake.wildcards.planning_horizons,
+        )
 
     return n
 
