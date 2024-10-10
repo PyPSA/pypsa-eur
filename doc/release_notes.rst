@@ -10,6 +10,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Bugfix: The unsustainable bioliquids potential was 0, due to a wrong index. It is now set to the correct value.
 
 * Added option to reduce central heating forward temperatures by annual percentage (see rule :mod:`build_central_heating_temperature_profiles`). This makes COP profiles and heat pump efficiencies planning-horizon-dependent. Myopic and perfect foresight modes were adjusted accordingly to update COPs of existing heat pumps in preceding years to adjusted temperatures.
 
