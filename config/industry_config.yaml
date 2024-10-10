@@ -23,7 +23,7 @@ run:
   prefix: ""
   name:
   - baseline
-  #- climate_policy
+  - climate_policy
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml

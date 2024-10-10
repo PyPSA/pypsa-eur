@@ -4169,7 +4169,7 @@ def add_steel_industry(n, investment_year):
     n.madd(
         "Link",
         nodes,
-        suffix=" DRI",
+        suffix=" NG-DRI",
         bus0=spatial.iron.nodes,
         bus1=spatial.sponge_iron.nodes,
         bus2=spatial.gas.nodes, # in this process is the reducing agent, it is not burnt
@@ -4182,6 +4182,25 @@ def add_steel_industry(n, investment_year):
         efficiency=1/1.36,
         efficiency2=-2.8/1.36,
         efficiency3=28/1.36,
+        lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+    )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" H2-DRI",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.sponge_iron.nodes,
+        bus2=spatial.h2.nodes, # in this process is the reducing agent, it is not burnt
+        #bus3=spatial.co2.process_emissions,
+        carrier="direct reduced iron",
+        p_nom_extendable = True,
+        #p_nom_max = max_cap * 1.36,
+        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
+        capital_cost=145000/nhours/(1/1.36)*0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        efficiency=1/1.39,  # Data on energy parameters: https://www.sciencedirect.com/science/article/pii/S221282712300121X?ref=pdf_download&fr=RR-2&rr=8d07426c9b7d6307 
+        efficiency2=-2.21/1.36,
+        #efficiency3=28/1.36,
         lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
     
@@ -4220,7 +4239,7 @@ def add_steel_industry(n, investment_year):
         carrier="electric arc furnaces",
         p_nom_extendable=True,
         p_nom_max = max_cap,
-        p_min_pu = 0, #prod_constantly, # electrical stuff can be switched on and off
+        p_min_pu = 0.5, #prod_constantly, # electrical stuff can be switched on and off
         p_nom_min = min_cap_node,
         p_nom = min_cap_node,
         capital_cost= 80000/nhours/1*0.7551,
