@@ -535,6 +535,7 @@ def add_carrier_buses(n, carrier, nodes=None):
     if carrier == "gas":
         capital_cost = costs.at["gas storage", "fixed"]
         overnight_cost = costs.at["gas storage", "investment"]
+        lifetime = costs.at["gas storage", "lifetime"]
     elif carrier == "oil":
         # based on https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html
         mwh_per_m3 = 44.9 * 724 * 0.278 * 1e-3  # MJ/kg * kg/m3 * kWh/MJ * MWh/kWh
@@ -546,6 +547,7 @@ def add_carrier_buses(n, carrier, nodes=None):
             costs.at["General liquid hydrocarbon storage (product)", "investment"]
             / mwh_per_m3
         )
+        lifetime = costs.at["General liquid hydrocarbon storage (product)", "lifetime"]
     elif carrier == "methanol":
         # based on https://www.engineeringtoolbox.com/fossil-fuels-energy-content-d_1298.html
         mwh_per_m3 = 5.54 * 791 * 1e-3  # kWh/kg * kg/m3 * MWh/kWh
@@ -557,9 +559,11 @@ def add_carrier_buses(n, carrier, nodes=None):
             costs.at["General liquid hydrocarbon storage (product)", "investment"]
             / mwh_per_m3
         )
+        lifetime = costs.at["General liquid hydrocarbon storage (product)", "lifetime"]
     else:
         capital_cost = 0.1
         overnight_cost = np.nan
+        lifetime = np.inf
 
     n.madd("Bus", nodes, location=location, carrier=carrier, unit=unit)
 
@@ -572,6 +576,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         carrier=carrier,
         capital_cost=capital_cost,
         overnight_cost=overnight_cost,
+        lifetime=lifetime,
     )
 
     fossils = ["coal", "gas", "oil", "lignite", "uranium"]
