@@ -83,3 +83,55 @@ rule validate_elec_networks:
             run=config["run"]["name"],
             kind=["production", "prices", "cross_border"],
         ),
+
+
+rule plot_statistics:
+    input:
+        [
+            expand(
+                RESULTS
+                + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+                country=config_provider("plotting", "statistics")(run).get(
+                    "countries", "all"
+                ),
+                carrier=config_provider("plotting", "statistics")(run).get(
+                    "carriers", "all"
+                ),
+                run=config["run"]["name"],
+            ),
+            expand(
+                RESULTS
+                + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+                **config["scenario"],
+                country=config_provider("plotting", "statistics")(run).get(
+                    "countries", "all"
+                ),
+                carrier=config_provider("plotting", "statistics")(run).get(
+                    "carriers", "all"
+                ),
+                run=config["run"]["name"],
+            ),
+            (
+                expand(
+                    "results/statistics/"
+                    + config_provider("plotting", "statistics")(run).get(
+                        "comparison_folder", "''"
+                    )
+                    + "/"
+                    + "figures/country_{country}/.statistics_{carrier}_plots",
+                    **config["scenario"],
+                    country=config_provider("plotting", "statistics")(run).get(
+                        "countries", "all"
+                    ),
+                    carrier=config_provider("plotting", "statistics")(run).get(
+                        "carriers", "all"
+                    ),
+                    run=config["run"]["name"],
+                )
+                if config_provider("plotting", "statistics")(run).get(
+                    "comparison_folder", ""
+                )
+                != ""
+                else []
+            ),
+        ],

@@ -257,6 +257,176 @@ STATISTICS_BARPLOTS = [
     "market_value",
 ]
 
+STATISTICS = {
+    "capacity_factor": ("-", "p.u."),
+    "installed_capacity": (1e3, "GW"),
+    "optimal_capacity": (1e3, "GW"),
+    "capex": (1e9, "bn €"),
+    "opex": (1e9, "bn €"),
+    "total_cost": ("1e9", "bn €"),
+    "curtailment": (1e3, "GWh"),
+    "supply": (1e6, "TWh"),
+    "withdrawal": (1e6, "TWh"),
+    "energy_balance": (1e6, "TWh"),
+    "market_value": ("-", "€/MWh"),
+}
+
+
+rule write_statistics:
+    params:
+        statistics=STATISTICS,
+    input:
+        network=RESULTS
+        + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+    output:
+        **{
+            f"{metric}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{metric}.csv"
+            for carrier in config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            )
+            for metric in config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            )
+        },
+        csv_touch=RESULTS
+        + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv",
+    log:
+        RESULTS
+        + "logs/write_statistics/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/write_statistics.py"
+
+
+rule plot_statistics_single:
+    params:
+        plotting=config_provider("plotting"),
+        statistics=STATISTICS,
+    input:
+        **{
+            f"{metric}": RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{metric}.csv"
+            for carrier in config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            )
+            for metric in config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            )
+        },
+    output:
+        **{
+            f"{metric}": RESULTS
+            + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_"
+            + f"{metric}.pdf"
+            for carrier in config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            )
+            for metric in config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            )
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_single/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/plot_statistics_single.py"
+
+
+rule plot_statistics_comparison:
+    params:
+        plotting=config_provider("plotting"),
+        statistics=STATISTICS,
+    input:
+        expand(
+            RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_{metric}.csv",
+            **config["scenario"],
+            metric=config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            ),
+            allow_missing=True,
+        ),
+    output:
+        **{
+            f"{metric}": RESULTS
+            + "statistics/figures/comparison/country_{country}/{carrier}_"
+            + f"{metric}.pdf"
+            for carrier in config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            )
+            for metric in config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            )
+        },
+        barplots_touch=RESULTS
+        + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+    log:
+        RESULTS
+        + "logs/plot_statistics_comparison/country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/plot_statistics_comparison.py"
+
+
+def get_scnario_copmarison_run(w):
+    run = config_provider("plotting", "statistics")(w).get(
+        "scenario_comparison", config["run"]["name"]
+    )
+    if run == [""] or run == "":
+        run = config["run"]["name"]
+    return run
+
+
+rule plot_statistics_scenario_comparison:
+    params:
+        plotting=config_provider("plotting"),
+        statistics=STATISTICS,
+    input:
+        expand(
+            RESULTS
+            + "statistics/csv/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/{carrier}_{metric}.csv",
+            **config["scenario"],
+            metric=config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            ),
+            run=get_scnario_copmarison_run(run),
+            allow_missing=True,
+        ),
+    output:
+        **{
+            f"{metric}": "results/statistics/"
+            + config_provider("plotting", "statistics")(run).get(
+                "comparison_folder", ""
+            )
+            + "/"
+            + "figures/country_{country}/{carrier}_"
+            + f"{metric}.pdf"
+            for carrier in config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            )
+            for metric in config_provider("plotting", "statistics")(run).get(
+                "metrics", STATISTICS
+            )
+        },
+        barplots_touch="results/statistics/"
+        + config_provider("plotting", "statistics")(run).get(
+            "comparison_folder", "results/scenario_comparison"
+        )
+        + "/"
+        + "figures/country_{country}/.statistics_{carrier}_plots",
+    log:
+        "results/statistics/"
+        + config_provider("plotting", "statistics")(run).get(
+            "comparison_folder", "scenario_comparison"
+        )
+        + "/"
+        + "logs/plot_statistics_scenario_comparison/country-{country}_carrier-{carrier}.log",
+    script:
+        "../scripts/plot_statistics_comparison.py"
+
 
 rule plot_base_statistics:
     params:
