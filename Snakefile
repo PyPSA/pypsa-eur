@@ -17,6 +17,7 @@ copy_default_files(workflow)
 
 
 configfile: "config/config.default.yaml"
+configfile: "config/config.plotting.yaml"
 configfile: "config/config.yaml"
 
 
