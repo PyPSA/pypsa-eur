@@ -44,6 +44,7 @@ Outputs
 - ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
 - ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
 """
+
 import logging
 import os
 from pathlib import Path
@@ -65,7 +66,7 @@ def add_new_buses(n, new_ports):
     # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
     duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
     to_add = new_ports[~duplicated]
-    added_buses = n.madd(
+    added_buses = n.add(
         "Bus",
         names=to_add.index,
         suffix=" bus",
@@ -412,7 +413,7 @@ def add_projects(
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
-            n.madd("Line", new_lines.index, **new_lines)
+            n.add("Line", new_lines.index, **new_lines)
         elif key == "new_links":
             new_links, new_buses_df = connect_new_lines(
                 lines,
@@ -436,7 +437,7 @@ def add_projects(
             set_underwater_fraction(new_links, offshore_shapes)
             new_links_df = pd.concat([new_links_df, new_links])
             # add new links to network to be able to find added duplicates
-            n.madd("Link", new_links.index, **new_links)
+            n.add("Link", new_links.index, **new_links)
         elif key == "upgraded_lines":
             line_map = find_closest_lines(
                 n.lines, lines, distance_upper_bound=0.30, type="upgraded"

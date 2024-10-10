@@ -701,7 +701,7 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
-    n.madd(
+    n.add(
         "Shape",
         all_shapes.index,
         geometry=all_shapes.geometry,
@@ -815,7 +815,7 @@ def base_network(
     carriers = carriers_in_buses.intersection({"AC", "DC"})
 
     if carriers:
-        n.madd("Carrier", carriers)
+        n.add("Carrier", carriers)
 
     return n
 
@@ -955,7 +955,7 @@ def append_bus_shapes(n, shapes, type):
     Parameters:
         n (pypsa.Network): The network to which the shapes will be appended.
         shapes (geopandas.GeoDataFrame): The shapes to be appended.
-        **kwargs: Additional keyword arguments used in `n.madd`.
+        **kwargs: Additional keyword arguments used in `n.add`.
 
     Returns:
         None
@@ -965,7 +965,7 @@ def append_bus_shapes(n, shapes, type):
 
     offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
     shapes = shapes.rename(lambda x: int(x) + offset)
-    n.madd(
+    n.add(
         "Shape",
         shapes.index,
         geometry=shapes.geometry,
