@@ -19,30 +19,56 @@ def assign_location(n):
                 continue
             names = ifind.index[ifind == i]
             c.df.loc[names, "location"] = names.str[:i]
+            
+def retrieve_loads(df, suffix):
 
-def plot_steel_map(n, regions, year, ax=None): 
+    filtered_df = df[[col for col in df.columns if col.endswith(suffix)]]
+    filtered_df.columns = filtered_df.columns.str.split(' 0').str[0] + ' 0'
+    return filtered_df
+
+def retrieve_links(df, suffix):
+
+    filtered_df = df.loc[:, n.links[(n.links.index.str.contains(suffix, case=False))].index]#.sum()
+    filtered_df.columns = filtered_df.columns.str.split(' 0').str[0] + ' 0'
+    filtered_df = filtered_df.T.groupby(filtered_df.columns).sum().T
+    filtered_df = filtered_df[[col for col in filtered_df.columns if not col.startswith('EU')]]
+    return filtered_df
+
+def plot_elec_prices_map(n, regions, year, ax=None): 
     
     assign_location(n)
-    timestep = n.snapshot_weightings.iloc[0,0]
     
-    steel_prod_index = n.links.query("bus1 == 'EU steel'").index
-    steel_prod = -n.links_t.p1.loc[:,steel_prod_index].sum()#*timestep/1e3 #Mtsteel
-    steel_prod.index = steel_prod.index.str.split(' 0 ').str[0] + ' 0'
-    steel_prod_df = steel_prod.to_frame(name='steel_prod')
+    mprice = n.buses_t.marginal_price
+    elec_prices = mprice[[col for col in mprice.columns if col.endswith(" 0")]]    
     
-    regions["steel"] = (
-        steel_prod_df
-        .steel_prod.groupby(level=0)
-        .sum()
-        .div(1e3)*timestep
-    )  # TWh
+    # Get electricity loads per hours
     
+    # DF from the network 
+    loads = n.loads_t.p
+    links0 = n.links_t.p0
+    links1 = n.links_t.p1
+    links2 = n.links_t.p2
     
-    regions["steel"] = regions["steel"].where(regions["steel"] > 0.1, 0)
-    regions["steel"] = regions["steel"].fillna(0)
+    elec_loads_resi = retrieve_loads(loads, '0')
+    elec_loads_ind = retrieve_loads(loads, 'industry electricity') # This will disappear
+    elec_loads_agri = retrieve_loads(loads, 'agriculture electricity')
+    elec_loads_tra = retrieve_loads(loads, 'EV')
+    elec_links_th = retrieve_links(links0, 'thermal|heat')
+    elec_links_dac = retrieve_links(links1, 'DAC')
+    elec_links_meth = retrieve_links(links2, 'methanolisation')
     
+    elec_loads = elec_loads_resi + elec_loads_ind + elec_loads_agri + elec_loads_tra + elec_links_th + elec_links_dac + elec_links_meth
+    
+    # Get the average of prices per node based on power load
+    total_elec_expen = elec_prices*elec_loads
+    weighted_average = total_elec_expen.sum()/elec_loads.sum() # €/MWh
+
+    regions["elec_price"] = (
+        weighted_average
+    )  # €/MWh
+
     # drop all links which are not H2 pipelines
-    n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
+    #n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
     
     regions = regions.to_crs(proj.proj4_init)
     
@@ -50,17 +76,16 @@ def plot_steel_map(n, regions, year, ax=None):
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
     
     
-    
     regions.plot(
         ax=ax,
-        column="steel",
-        cmap="Blues",
+        column="elec_price",
+        cmap="Reds",
         linewidths=0,
         legend=True,
-        vmax=40,
-        vmin=0,
+        vmax=60,
+        vmin=10,
         legend_kwds={
-            "label": "Steel production [Mt steel/yr]",
+            "label": "Electricity price [€/MWh]",
             #"fontsize": 12,
             "shrink": 0.5,
             "extend": "max",
@@ -109,9 +134,9 @@ for i, year in enumerate(years):
         fn = root_dir + "results/" + scenario + f"/postnetworks/base_s_39_lvopt___{year}.nc"
         ax = axes[j, i]
         n = pypsa.Network(fn)
-        plot_steel_map(n, regions, year, ax=ax)
+        plot_elec_prices_map(n, regions, year, ax=ax)
 
 plt.tight_layout()
 
-plt.savefig("graphs/steel_prod_per_country.png", bbox_inches='tight')
+plt.savefig("graphs/elec_price_per_country.png", bbox_inches='tight')
 plt.show()
