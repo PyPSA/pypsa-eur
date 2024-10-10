@@ -205,7 +205,7 @@ rule make_summary:
         metrics=RESULTS + "csvs/metrics.csv",
     threads: 2
     resources:
-        mem_mb=10000,
+        mem_mb=20000,
     log:
         RESULTS + "logs/make_summary.log",
     conda:
@@ -229,6 +229,7 @@ rule plot_summary:
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/supply_energy.csv",
         eurostat="data/eurostat/Balances-April2023",
+        rc="matplotlibrc",
         co2="data/bundle/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.svg",

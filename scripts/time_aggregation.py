@@ -144,8 +144,7 @@ if __name__ == "__main__":
             weightings, axis=0
         )
 
-        logger.info(
-            f"Distribution of snapshot durations:\n{snapshot_weightings.objective.value_counts()}"
-        )
+        sns_distribution = snapshot_weightings.objective.value_counts().sort_index()
+        logger.info(f"Distribution of snapshot durations:\n{sns_distribution}")
 
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)

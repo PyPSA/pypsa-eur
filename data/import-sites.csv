@@ -1,0 +1,12 @@
+name,y,x,comment,type
+EUSW,36.39,-5.64,https://openinframap.org/,pipeline
+EUS,37.18,14.53,https://openinframap.org/,pipeline
+EUSE,41.09,25.46,https://openinframap.org/,pipeline
+EUE,48.54,22.14,https://openinframap.org/,pipeline
+T0462,37.9600,23.4023,Revithoussa LNG terminal Greece,lng
+T0466,45.0917,12.5861,Adriatic LNG terminal Italy,lng
+T0492,51.9711,4.0689,Gate LNG terminal Netherlands,lng
+T0498,53.9092,14.2947,Swinoujscie LNG terminal Poland,lng
+T0500,37.9419,-8.8435,Sines LNG terminal Portugal,lng
+T0522,41.3394,2.1583,Barcelona LNG terminal Spain,lng
+T0557,51.7152,-5.0763,South Hook LNG terminal UK,lng

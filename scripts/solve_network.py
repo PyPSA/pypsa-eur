@@ -889,6 +889,36 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_energy_import_limit(n, sns):
+    import_links = n.links.loc[
+        n.links.carrier.str.contains("import")
+        & ~n.links.carrier.str.contains("import infrastructure")
+    ].index
+
+    limit = n.config["sector"].get("import", {}).get("limit", False)
+    limit_sense = n.config["sector"].get("import", {}).get("limit_sense", "<=")
+    for o in n.meta["wildcards"]["sector_opts"].split("-"):
+        if not o.startswith("imp"):
+            continue
+        match = o.split("+")[0][3:]
+        if match:
+            limit = float(match)
+        break
+
+    if import_links.empty or not limit:
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    lhs = (p_links * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="energy_import_limit")
+
+
 def add_flexible_egs_constraint(n):
     """
     Upper bounds the charging capacity of the geothermal reservoir according to
@@ -966,6 +996,7 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_energy_import_limit(n, snapshots)
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -1038,6 +1069,8 @@ def solve_network(n, config, params, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+    if "warning" in status:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")

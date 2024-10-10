@@ -182,6 +182,14 @@ def mute_print():
             yield
 
 
+def ensure_output_dir_exists(snakemake):
+    # ensure path exists, since snakemake does not create path for directory outputs
+    # https://github.com/snakemake/snakemake/issues/774
+    dir = snakemake.output[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+
 def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
     if scenario.get("enable") and "run" in snakemake.wildcards.keys():
@@ -684,8 +692,36 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["sector"]["use_fuel_cell_waste_heat"] = False
             config["sector"]["use_electrolysis_waste_heat"] = False
 
+        if "allwasteheat" in opts:
+            config["sector"]["use_fischer_tropsch_waste_heat"] = True
+            config["sector"]["use_methanolisation_waste_heat"] = True
+            config["sector"]["use_haber_bosch_waste_heat"] = True
+            config["sector"]["use_methanation_waste_heat"] = True
+            config["sector"]["use_fuel_cell_waste_heat"] = True
+            config["sector"]["use_electrolysis_waste_heat"] = True
+
         if "nodistrict" in opts:
             config["sector"]["district_heating"]["progress"] = 0.0
+
+        if "norelocation" in opts:
+            logger.info("Disabling steel industry relocation and flexibility.")
+            config["sector"]["relocation_steel"] = False
+            config["sector"]["flexibility_steel"] = False
+            config["sector"]["relocation_ammonia"] = False
+            config["sector"]["flexibility_ammonia"] = False
+
+        if "noPtXflex" in opts:
+            logger.info("Disabling power-to-x flexibility.")
+            config["sector"]["min_part_load_fischer_tropsch"] = 1
+            config["sector"]["min_part_load_methanolisation"] = 1
+            config["sector"]["min_part_load_methanation"] = 1
+            config["sector"]["min_part_load_electrolysis"] = 1
+            config["sector"]["min_part_load_haber_bosch"] = 1
+            config["sector"]["central_heat_vent"] = True
+
+        if "noshipflex" in opts:
+            logger.info("Disabling shipping import flexibility.")
+            config["sector"]["import"]["min_part_load_shipping_imports"] = 1
 
         dg_enable, dg_factor = find_opt(opts, "dist")
         if dg_enable:
