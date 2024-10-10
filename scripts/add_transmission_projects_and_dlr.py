@@ -28,11 +28,11 @@ def attach_transmission_projects(
         if df.empty:
             continue
         if "new_buses" in path.name:
-            n.madd("Bus", df.index, **df)
+            n.add("Bus", df.index, **df)
         elif "new_lines" in path.name:
-            n.madd("Line", df.index, **df)
+            n.add("Line", df.index, **df)
         elif "new_links" in path.name:
-            n.madd("Link", df.index, **df)
+            n.add("Link", df.index, **df)
         elif "adjust_lines" in path.name:
             n.lines.update(df)
         elif "adjust_links" in path.name:

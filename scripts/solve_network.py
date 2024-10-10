@@ -26,6 +26,7 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+
 import importlib
 import logging
 import os
@@ -126,7 +127,6 @@ def add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
@@ -228,7 +228,7 @@ def add_co2_sequestration_limit(n, limit_dict):
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
-    n.madd(
+    n.add(
         "GlobalConstraint",
         names,
         sense=">=",
@@ -389,7 +389,7 @@ def prepare_network(
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
             load_shedding = 1e2  # Eur/kWh
 
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             " load",
@@ -404,7 +404,7 @@ def prepare_network(
         n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
         n.generators_t.p_min_pu = n.generators_t.p_max_pu
         buses_i = n.buses.query("carrier == 'AC'").index
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             suffix=" curtailment",

@@ -92,7 +92,7 @@ def hvdc_transport_model(n):
 
     logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
 
-    n.madd(
+    n.add(
         "Link",
         n.lines.index,
         bus0=n.lines.bus0,
