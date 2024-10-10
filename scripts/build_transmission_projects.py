@@ -482,6 +482,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     line_factor = snakemake.params.line_factor
+    s_max_pu = snakemake.params.s_max_pu
 
     n = pypsa.Network(snakemake.input.base_network)
 
@@ -543,6 +544,8 @@ if __name__ == "__main__":
             * new_lines_df["v_nom"]
             * new_lines_df["num_parallel"]
         ).round(2)
+        # set s_max_pu
+        new_lines_df["s_max_pu"] = s_max_pu
     if not new_links_df.empty:
         # Add carrier types of lines and links
         new_links_df["carrier"] = "DC"

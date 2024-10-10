@@ -87,30 +87,48 @@ def add_brownfield(n, n_p, year):
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
     # deal with gas network
-    pipe_carrier = ["gas pipeline"]
     if snakemake.params.H2_retrofit:
-        # subtract the already retrofitted from today's gas grid capacity
+        # subtract the already retrofitted from the maximum capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
             & (n.links.build_year != year)
         ].index
-        gas_pipes_i = n.links[n.links.carrier.isin(pipe_carrier)].index
-        CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
-        fr = "H2 pipeline retrofitted"
-        to = "gas pipeline"
-        # today's pipe capacity
-        pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
+        h2_retrofitted = n.links[
+            (n.links.carrier == "H2 pipeline retrofitted")
+            & (n.links.build_year == year)
+        ].index
+
+        # pipe capacity always set in prepare_sector_network to todays gas grid capacity * H2_per_CH4
+        # and is therefore constant up to this point
+        pipe_capacity = n.links.loc[h2_retrofitted, "p_nom_max"]
         # already retrofitted capacity from gas -> H2
         already_retrofitted = (
             n.links.loc[h2_retrofitted_fixed_i, "p_nom"]
-            .rename(lambda x: x.split("-2")[0].replace(fr, to) + f"-{year}")
+            .rename(lambda x: x.split("-2")[0] + f"-{year}")
             .groupby(level=0)
             .sum()
         )
-        remaining_capacity = pipe_capacity - CH4_per_H2 * already_retrofitted.reindex(
+        remaining_capacity = pipe_capacity - already_retrofitted.reindex(
             index=pipe_capacity.index
         ).fillna(0)
-        n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
+        n.links.loc[h2_retrofitted, "p_nom_max"] = remaining_capacity
+
+        # reduce gas network capacity
+        gas_pipes_i = n.links[n.links.carrier == "gas pipeline"].index
+        if not gas_pipes_i.empty:
+            # subtract the already retrofitted from today's gas grid capacity
+            pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
+            fr = "H2 pipeline retrofitted"
+            to = "gas pipeline"
+            CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
+            already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
+            remaining_capacity = (
+                pipe_capacity
+                - CH4_per_H2
+                * already_retrofitted.reindex(index=pipe_capacity.index).fillna(0)
+            )
+            n.links.loc[gas_pipes_i, "p_nom"] = remaining_capacity
+            n.links.loc[gas_pipes_i, "p_nom_max"] = remaining_capacity
 
 
 def disable_grid_expansion_if_limit_hit(n):
@@ -203,6 +221,40 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
+    """
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The original network.
+    n_p : pypsa.Network
+        The network with the updated parameters.
+    year : int
+        The year for which the efficiency is being updated.
+
+    Returns
+    -------
+    None
+        This function updates the efficiency in place and does not return a value.
+    """
+
+    # get names of heat pumps in previous iteration
+    heat_pump_idx_previous_iteration = n_p.links.index[
+        n_p.links.index.str.contains("heat pump")
+    ]
+    # construct names of same-technology heat pumps in the current iteration
+    corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(
+        year
+    )
+    # update efficiency of heat pumps in previous iteration in-place to efficiency in this iteration
+    n_p.links_t["efficiency"].loc[:, heat_pump_idx_previous_iteration] = (
+        n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -232,6 +284,8 @@ if __name__ == "__main__":
     add_build_year_to_new_assets(n, year)
 
     n_p = pypsa.Network(snakemake.input.network_p)
+
+    update_heat_pump_efficiency(n, n_p, year)
 
     add_brownfield(n, n_p, year)
 
