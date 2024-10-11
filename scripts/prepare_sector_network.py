@@ -1111,8 +1111,8 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None):
 
     nodes = pop_layout.index
 
-        fallback = {"OCGT": "gas"}
-        conventionals = options.get("conventional_generation", fallback)
+    fallback = {"OCGT": "gas"}
+    conventionals = options.get("conventional_generation", fallback)
 
     for generator, carrier in conventionals.items():
         carrier_nodes = vars(spatial)[carrier].nodes
