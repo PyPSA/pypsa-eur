@@ -24,9 +24,15 @@ import pandas as pd
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
+from shapely.algorithms.polylabel import polylabel
 
 logger = logging.getLogger(__name__)
 
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
+BUS_TOL = (
+    500  # unit: meters, default 5000 - Buses within this distance are grouped together
+)
 
 def _create_linestring(row):
     """
@@ -444,8 +450,11 @@ def _add_line_endings_to_substations(
 
     bus_all = pd.concat([bus_s, bus_e], ignore_index=True)
 
+    # Keep identifier, if line ending bus was part of an interconnector
+    bus_all["x_node"] = bus_all["country"].str.contains(";")
+
     # Group gdf_substations by voltage and and geometry (dropping duplicates)
-    bus_all = bus_all.groupby(["voltage", "lon", "lat", "dc"]).first().reset_index()
+    bus_all = bus_all.groupby(["voltage", "lon", "lat", "dc", "x_node"]).first().reset_index()
     bus_all = bus_all[df_substations.columns]
     bus_all.loc[:, "bus_id"] = bus_all.apply(
         lambda row: f"{prefix}/{row.name + 1}", axis=1
@@ -1068,7 +1077,7 @@ def _create_substations_geometry(df_substations):
     return df_substations
 
 
-def _create_substations_centroid(df_substations):
+def _create_substations_centroid(df_substations, tol=BUS_TOL/2):
     """
     Creates centroids from geometries and keeps the original polygons.
 
@@ -1084,7 +1093,7 @@ def _create_substations_centroid(df_substations):
     df_substations = df_substations.copy()
 
     df_substations.loc[:, "geometry"] = df_substations["polygon"].apply(
-        lambda x: x.centroid
+        lambda polygon: polylabel(polygon, tol)
     )
 
     df_substations.loc[:, "lon"] = df_substations["geometry"].apply(lambda x: x.x)
@@ -1181,6 +1190,9 @@ def _finalise_substations(df_substations):
     df_substations.loc[:, "station_id"] = None
     df_substations.loc[:, "tag_area"] = None
     df_substations.loc[:, "tag_source"] = df_substations["bus_id"]
+    
+    # Initialise x_node column (if the bus is part of an interconnector) to False, will be set later
+    df_substations.loc[:, "x_node"] = False
 
     # Only included needed columns
     df_substations = df_substations[
@@ -1196,6 +1208,7 @@ def _finalise_substations(df_substations):
             "station_id",
             "tag_area",
             "country",
+            "x_node",
             "geometry",
             "polygon",
             "tag_source",
@@ -1537,7 +1550,7 @@ def _merge_touching_polygons(df):
     return gdf
 
 
-def _add_endpoints_to_line(linestring, polygon_dict):
+def _add_endpoints_to_line(linestring, polygon_dict,tol=BUS_TOL/2):
     """
     Adds endpoints to a line by removing any overlapping areas with polygons.
 
@@ -1551,9 +1564,9 @@ def _add_endpoints_to_line(linestring, polygon_dict):
     if not polygon_dict:
         return linestring
     polygon_centroids = {
-        bus_id: polygon.centroid for bus_id, polygon in polygon_dict.items()
+        bus_id: polylabel(polygon, tol) for bus_id, polygon in polygon_dict.items()
     }
-    polygon_unary = polygons = unary_union(list(polygon_dict.values()))
+    polygon_unary = unary_union(list(polygon_dict.values()))
 
     # difference with polygon
     linestring_new = linestring.difference(polygon_unary)
@@ -1593,7 +1606,7 @@ def _get_polygons_at_endpoints(linestring, polygon_dict):
     return bus_id_polygon_dict
 
 
-def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
+def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL/2):
     """
     Extends the lines in the given GeoDataFrame `gdf_lines` to the centroid of
     the nearest substations represented by the polygons in the
@@ -1642,7 +1655,7 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon):
     )
 
     gdf.loc[:, "line_geometry_new"] = gdf.apply(
-        lambda row: _add_endpoints_to_line(row["line_geometry"], row["bus_endpoints"]),
+        lambda row: _add_endpoints_to_line(row["line_geometry"], row["bus_endpoints"], tol),
         axis=1,
     )
 
@@ -1696,7 +1709,7 @@ if __name__ == "__main__":
 
     # Create polygon GeoDataFrame to remove lines within substations
     gdf_substations_polygon = gpd.GeoDataFrame(
-        df_substations[["bus_id", "polygon", "voltage"]],
+        df_substations[["bus_id", "polygon", "voltage", "country"]],
         geometry="polygon",
         crs=crs,
     )
@@ -1735,7 +1748,7 @@ if __name__ == "__main__":
     # Create GeoDataFrame
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
     gdf_lines = _remove_lines_within_substations(gdf_lines, gdf_substations_polygon)
-    gdf_lines = _extend_lines_to_substations(gdf_lines, gdf_substations_polygon)
+    gdf_lines = _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL/2)
 
     logger.info("---")
     logger.info("HVDC LINKS")
