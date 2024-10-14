@@ -123,9 +123,24 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            source_inlet_temperature_celsius = xr.open_dataarray(
-                snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
-            )
+            if heat_source in ["ground", "air"]:
+                source_inlet_temperature_celsius = xr.open_dataarray(
+                    snakemake.input[
+                        f"temp_{heat_source.replace('ground', 'soil')}_total"
+                    ]
+                )
+            elif (
+                heat_source
+                in snakemake.params.heat_source_utilisation_potentials.keys()
+            ):
+                source_inlet_temperature_celsius = snakemake.params.heat_sources[
+                    heat_source
+                ]["constant_temperature_celsius"]
+            else:
+                raise ValueError(
+                    f"Unknown heat source {heat_source}. Must be one of [ground, air] or {snakemake.params.heat_sources.keys()}."
+                )
+
             cop_da = get_cop(
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
