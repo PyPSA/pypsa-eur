@@ -478,9 +478,19 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
+    heat_source_utilisation_potentials:
+      geothermal:
+        key: hydrothermal_65
+        # activate for 85C hydrothermal
+        # key: hydrothermal_85
+        constant_temperature_celsius: 65
+        column_name: Energy_TWh
+        unit: TWh
+        full_load_hours: 4000
   heat_pump_sources:
     urban central:
     - air
+    - geothermal
     urban decentral:
     - air
     rural:
@@ -821,7 +831,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.2
+  version: master
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1222,6 +1232,7 @@ plotting:
     services urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
+    urban central geothermal heat pump: '#48f74f'
     ground heat pump: '#2fb537'
     residential rural ground heat pump: '#48f74f'
     residential rural air heat pump: '#48f74f'
