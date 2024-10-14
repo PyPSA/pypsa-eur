@@ -246,6 +246,14 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     )
     if type == "new":
         if len(found_i) != 0:
+            attr = "p_nom" if "p_nom" in lines else "v_nom"
+            duplicated=line_map["existing_line"]
+            to_ignore = is_similar(
+                new_lines.loc[duplicated.index, attr],
+                duplicated.map(lines[attr]),
+                percentage=10
+            )
+            line_map = line_map[to_ignore]
             logger.warning(
                 "Found new lines similar to existing lines:\n"
                 + str(line_map["existing_line"].to_dict())
@@ -402,13 +410,6 @@ def add_projects(
             duplicate_lines = find_closest_lines(
                 n.lines, new_lines, distance_upper_bound=0.10, type="new"
             )
-            # TODO: think about using build_year instead of v_nom
-            # ignore duplicates where v_nom is not within a tolerance of 10%
-            to_ignore = is_similar(
-                new_lines.loc[duplicate_lines.index, "v_nom"],
-                duplicate_lines.map(n.lines["v_nom"]),
-            )
-            duplicate_lines = duplicate_lines[~to_ignore]
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
@@ -425,13 +426,6 @@ def add_projects(
             duplicate_links = find_closest_lines(
                 n.links, new_links, distance_upper_bound=0.10, type="new"
             )
-            # TODO: think about using build_year instead of p_nom
-            # ignore duplicates where p_nom is not within a tolerance of 10%
-            to_ignore = is_similar(
-                new_links.loc[duplicate_links.index, "p_nom"],
-                duplicate_links.map(n.links["p_nom"]),
-            )
-            duplicate_links = duplicate_links[~to_ignore]
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
             set_underwater_fraction(new_links, offshore_shapes)
             new_links_df = pd.concat([new_links_df, new_links])
