@@ -630,3 +630,38 @@ if config["enable"]["retrieve"] and (
                 "data/osm-raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_heat_source_utilisation_potentials:
+        # params:
+        #     heat_source_utilisation_potentials=config_provider(
+        #         "sector", "district_heating", "heat_source_utilisation_potentials"
+        #     ),
+        input:
+            geothermal=storage(
+                f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{config["sector"]["district_heating"]["heat_source_utilisation_potentials"]["geothermal"]["key"]}.gpkg",
+                keep_local=True,
+            ),
+        output:
+            geothermal="data/heat_source_utilisation_potentials/geothermal.gpkg",
+            # **{
+            #     f"{heat_source}_utilisation_potential": f"data/heat_source_utilisation_potentials/{heat_source}.gpkg"
+            #     for heat_source in config_provider(
+            #         "sector", "district_heating", "heat_source_utilisation_potentials"
+            #     ).keywords.keys()
+            # },
+        log:
+            "logs/retrieve_heat_source_utilisation_potentials.log",
+        resources:
+            mem_mb=500,
+        # conda:
+        #     "../envs/retrieve.yaml"
+        # script:
+        #     "../scripts/retrieve_heat_source_utilisation_potentials.py"
+        retries: 2
+        run:
+            for key in input.keys():
+                move(input[key], output[key])
+

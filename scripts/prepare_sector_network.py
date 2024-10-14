@@ -2172,6 +2172,17 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 else costs.at[costs_name, "efficiency"]
             )
 
+            # todo: make this more generic
+            if heat_source in ["geothermal"]:
+                p_max_source = pd.read_csv(
+                    snakemake.input.heat_source_technical_potential_geothermal,
+                    index_col=0,
+                ).squeeze()
+                p_max_source.index = nodes
+                p_nom_max_electric = p_max_source / (efficiency.max() - 1)
+            else:
+                p_nom_max_electric = np.inf
+
             n.madd(
                 "Link",
                 nodes,
@@ -2184,6 +2195,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 * costs.at[costs_name, "fixed"]
                 * overdim_factor,
                 p_nom_extendable=True,
+                p_nom_max=p_nom_max_electric,
                 lifetime=costs.at[costs_name, "lifetime"],
             )
 
