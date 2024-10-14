@@ -273,6 +273,30 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
+rule build_heat_source_potentials:
+    params:
+        heat_sources=config_provider(
+            "sector", "district_heating", "heat_source_utilisation_potentials"
+        ),
+    input:
+        heat_source_utilisation_potential_geothermal="data/heat_source_utilisation_potentials/geothermal.gpkg",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        heat_source_technical_potential_geothermal=resources(
+            "heat_source_technical_potential_geothermal_base_s_{clusters}.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_heat_source_potentials_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_heat_source_potentials/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_heat_source_potentials/run.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -285,6 +309,9 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_source_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_source_utilisation_potentials"
+        ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -1112,6 +1139,9 @@ rule prepare_sector_network:
             resources("egs_capacity_factors_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
+        ),
+        heat_source_technical_potential_geothermal=resources(
+            "heat_source_technical_potential_geothermal_base_s_{clusters}.csv"
         ),
     output:
         RESULTS
