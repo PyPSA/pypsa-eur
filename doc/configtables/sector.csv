@@ -131,7 +131,6 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- methanol_reforming,--,"{true, false}"," Add methanol reforming"
 -- methanol_reforming_cc,--,"{true, false}"," Add methanol reforming with carbon capture"
 -- methanol_to_kerosene,--,"{true, false}"," Add methanol to kerosene"
--- methanol_to_olefins,--,"{true, false}"," Add methanol to olefins"
 -- methanol_to_power,--,--," Add different methanol to power technologies"
 -- -- ccgt,--,"{true, false}"," Add combined cycle gas turbine (CCGT) using methanol"
 -- -- ccgt_cc,--,"{true, false}"," Add combined cycle gas turbine (CCGT) with carbon capture using methanol"

@@ -29,7 +29,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_validation_electricity_production",
-            simpl="",
             opts="Ept",
             clusters="37c",
             ll="v1.0",

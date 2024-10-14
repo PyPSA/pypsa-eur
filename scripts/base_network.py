@@ -135,7 +135,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     )
 
 
-def _load_buses(buses, europe_shape, config):
+def _load_buses(buses, europe_shape, countries, config):
     buses = (
         pd.read_csv(
             buses,
@@ -161,6 +161,12 @@ def _load_buses(buses, europe_shape, config):
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
+    buses_in_countries_b = (
+        buses.country.isin(countries)
+        if "country" in buses
+        else pd.Series(True, buses.index)
+    )
+
     v_nom_min = min(config["electricity"]["voltages"])
     v_nom_max = max(config["electricity"]["voltages"])
 
@@ -173,7 +179,9 @@ def _load_buses(buses, europe_shape, config):
     )
 
     logger.info(f"Removing buses outside of range AC {v_nom_min} - {v_nom_max} V")
-    return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
+    return pd.DataFrame(
+        buses.loc[buses_in_europe_b & buses_in_countries_b & buses_with_v_nom_to_keep_b]
+    )
 
 
 def _load_transformers(buses, transformers):
@@ -712,6 +720,7 @@ def base_network(
     europe_shape,
     country_shapes,
     offshore_shapes,
+    countries,
     parameter_corrections,
     config,
 ):
@@ -736,7 +745,7 @@ def base_network(
     )
     logger.info(logger_str)
 
-    buses = _load_buses(buses, europe_shape, config)
+    buses = _load_buses(buses, europe_shape, countries, config)
     transformers = _load_transformers(buses, transformers)
     lines = _load_lines(buses, lines)
 
@@ -1006,6 +1015,7 @@ if __name__ == "__main__":
         europe_shape,
         country_shapes,
         offshore_shapes,
+        countries,
         parameter_corrections,
         config,
     )

@@ -121,7 +121,7 @@ eu27 = cc.EU27as("ISO2").ISO2.tolist()
 jrc_names = {"GR": "EL", "GB": "UK"}
 
 
-def industrial_energy_demand_per_country(country, year, jrc_dir):
+def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammonia):
     jrc_country = jrc_names.get(country, country)
     fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_EnergyBalance_{jrc_country}.xlsx"
 
@@ -132,6 +132,10 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
         df = df_dict[sheet][year].groupby(fuels).sum()
 
         df["hydrogen"] = 0.0
+
+        # ammonia is handled separately
+        if endogenous_ammonia:
+            df["ammonia"] = 0.0
 
         df["other"] = df["all"] - df.loc[df.index != "all"].sum()
 
@@ -153,14 +157,6 @@ def industrial_energy_demand_per_country(country, year, jrc_dir):
 
 
 def separate_basic_chemicals(demand, production):
-
-    ammonia = pd.DataFrame(
-        {
-            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
-            "electricity": production["Ammonia"]
-            * params["MWh_elec_per_tNH3_electrolysis"],
-        }
-    ).T
     chlorine = pd.DataFrame(
         {
             "hydrogen": production["Chlorine"] * params["MWh_H2_per_tCl"],
@@ -174,16 +170,29 @@ def separate_basic_chemicals(demand, production):
         }
     ).T
 
-    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Chlorine"] = chlorine.unstack().reindex(index=demand.index, fill_value=0.0)
     demand["Methanol"] = methanol.unstack().reindex(index=demand.index, fill_value=0.0)
 
-    demand["HVC"] = (
-        demand["Basic chemicals"]
-        - demand["Ammonia"]
-        - demand["Methanol"]
-        - demand["Chlorine"]
-    )
+    demand["HVC"] = demand["Basic chemicals"] - demand["Methanol"] - demand["Chlorine"]
+
+    # Deal with ammonia separately, depending on whether it is modelled endogenously.
+    ammonia_exo = pd.DataFrame(
+        {
+            "hydrogen": production["Ammonia"] * params["MWh_H2_per_tNH3_electrolysis"],
+            "electricity": production["Ammonia"]
+            * params["MWh_elec_per_tNH3_electrolysis"],
+        }
+    ).T
+
+    if snakemake.params.ammonia:
+        ammonia = pd.DataFrame(
+            {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
+        ).T
+    else:
+        ammonia = ammonia_exo
+
+    demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
+    demand["HVC"] -= ammonia_exo.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)
 
@@ -212,7 +221,10 @@ def industrial_energy_demand(countries, year):
     nprocesses = snakemake.threads
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     func = partial(
-        industrial_energy_demand_per_country, year=year, jrc_dir=snakemake.input.jrc
+        industrial_energy_demand_per_country,
+        year=year,
+        jrc_dir=snakemake.input.jrc,
+        endogenous_ammonia=snakemake.params.ammonia,
     )
     tqdm_kwargs = dict(
         ascii=False,

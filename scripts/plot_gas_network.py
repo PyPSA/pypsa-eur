@@ -233,7 +233,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_gas_network",
-            simpl="",
             opts="",
             clusters="22",
             ll="vopt",

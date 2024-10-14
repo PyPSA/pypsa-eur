@@ -79,8 +79,8 @@ lines:
 
 solving:
   solver:
-    name: glpk
-    options: "glpk-default"
+    name: highs
+    options: highs-default
 
 
 plotting:
