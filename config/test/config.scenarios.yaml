@@ -58,8 +58,4 @@ renewable:
 solving:
   solver:
     name: highs
-<<<<<<< HEAD
-    options: "highs-default"
-=======
     options: highs-default
->>>>>>> 8f1a6b15eecd651c7c9fd2edd26da8df77f3c02e
