@@ -268,16 +268,16 @@ def split_positive_negative(df):
     
     return result_df.sort_index()
 
-def plot_balances(balances_df, drop=None):
+def plot_balances(balances, drop=None):
     
     co2_carriers = ["co2", "co2 stored", "process emissions"]
-    balances = {i.replace(" ", "_"): [i] for i in balances_df.index.levels[0]}
-    balances["energy"] = [
+    balances_df = {i.replace(" ", "_"): [i] for i in balances.index.levels[0]}
+    balances_df["energy"] = [
         i for i in balances_df.index.levels[0] if i not in co2_carriers
     ]
 
-    for k, v in balances.items():
-        df = balances_df.loc[v]
+    for k, v in balances_df.items():
+        df = balances.loc[v]
         df = df.groupby(df.index.get_level_values(2)).sum()
 
         # convert MWh to TWh
@@ -336,8 +336,10 @@ def plot_balances(balances_df, drop=None):
                             bbox_inches="tight")
         
             import seaborn as sns
+            scenarios = ["base", "fast", "slow"]
             scenario1 = [scenarios[0]]
-            diff = (co2_b.stack()-co2_b.stack()[scenario1].values)
+            diff = (co2_b.stack()[scenarios]-co2_b.stack()[scenario1].values)
+            diff = diff.groupby(level=[0,1]).sum()
             bool_index = (abs(diff)>2).any(axis=1).groupby(level=0).any()
             # Calculate the global min and max for the colormap
             global_min = diff.min().min()
@@ -351,7 +353,7 @@ def plot_balances(balances_df, drop=None):
                 if scenario in scenario1: continue
                         
                 diff = co2_b[scenario] - co2_b[scenario1].values
-                
+                diff = diff.groupby(level=0).sum()
                 heatmap_data = diff.loc[bool_index]
     
                 plt.figure(figsize=(12, 8))
@@ -373,7 +375,7 @@ def plot_balances(balances_df, drop=None):
             cbar = fig.colorbar(sm, cbar_ax, orientation='vertical')
             cbar.set_label('Difference in CO$_2$ emissions [MtCO$_2$/a]')
 
-            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap-demand-vary.pdf",
+            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.pdf",
                         bbox_inches="tight")
 
             
@@ -601,7 +603,7 @@ def plot_capacities(capacities, drop=True):
             
             ax.grid(axis="x")
 
-def plot_comparison(balances_df, capacities, drop=True):
+def plot_comparison(balances, capacities, drop=True):
     LHV_H2 = 33.33 # kWh/kg
     renewables = ['offwind-ac', 'offwind-dc', "offwind-float", 
                    "onwind", "solar", "solar rooftop", "solar-hsat"]
@@ -618,7 +620,7 @@ def plot_comparison(balances_df, capacities, drop=True):
     
     nrows = 4
     ncols = len(planning_horizons[1:])
-    
+   #%%
     fig, axes = plt.subplots(
     nrows=nrows, ncols=ncols, 
     figsize=(12, 8), 
@@ -682,7 +684,7 @@ def plot_comparison(balances_df, capacities, drop=True):
         # electrified heating -----------------------------------------------
         # EU target is 13 million heat pumps sold per year by 2027
         typical_generation = 15 # MWh/a
-        heat_techs = ["ground heat pump", "air heat pump", "resistive heater"]
+        heat_techs = ["ground heat pump", "air heat pump"]#, "resistive heater"]
         heat_df = heat_balance.loc[heat_techs]/1e6
         number_pumps = (heat_df/typical_generation).xs(year, axis=1, level=1)
         diff_number = number_pumps[wished_scenarios].sub(number_pumps["base"], axis=0)
@@ -711,11 +713,9 @@ def plot_comparison(balances_df, capacities, drop=True):
             )
             j += 1
         
-        
-        # electrolysis capacities
-        # res capacities ------------------------------------------------------
+
         caps = electrolysis.loc[wished_scenarios].xs(year, level=1)/1e3
-        produced = balances_df.loc["H2"].droplevel(0).droplevel([1,2,3], axis=1).loc["H2 Electrolysis1"]
+        produced = balances.loc["H2"].droplevel(0).droplevel([1,2,3], axis=1).loc["H2 Electrolysis1"]
         # convert to million tonnes
         produced /= LHV_H2*1e6
         produced = produced.unstack().T
@@ -736,6 +736,22 @@ def plot_comparison(balances_df, capacities, drop=True):
                 va='bottom',  # Vertical alignment, place text above the line
                 fontsize=10  # Adjust the font size as needed
             )
+            
+            caps_labels = [f"{c:.0f} GW" for c in caps]
+            
+            # Add text annotations on each bar
+            for bar, label in zip(bars.patches, caps_labels):
+                height = bar.get_height()
+                # Position the text slightly above the top of the bar
+                axes[2, i].text(
+                    bar.get_x() + bar.get_width() / 2, 
+                    produced.max().max()*1.,
+                    #height + (0.02 * height),  # Adjust the vertical position
+                    label,
+                    ha='center', va='bottom',
+                    fontsize=10, color='black'
+                )
+                
         y_value =  produced.loc[year, "base"]
         axes[2,i].axhline(y=y_value, 
                           color="black")
@@ -751,19 +767,7 @@ def plot_comparison(balances_df, capacities, drop=True):
         )
         
        
-        caps_labels = [f"{c:.0f} GW" for c in caps]
-        
-        # Add text annotations on each bar
-        for bar, label in zip(bars.patches, caps_labels):
-            height = bar.get_height()
-            # Position the text slightly above the top of the bar
-            axes[2, i].text(
-                bar.get_x() + bar.get_width() / 2, 
-                height + (0.02 * height),  # Adjust the vertical position
-                label,
-                ha='center', va='bottom',
-                fontsize=10, color='black'
-            )
+       
         
         # # captured CO2 from DAC -----------------------------------------------
         # captured = (dac.unstack()[year].T[["fast", "slow"]]*-1)/1e6
@@ -829,9 +833,9 @@ def plot_comparison(balances_df, capacities, drop=True):
         )
     
     axes[0, 0].set_ylabel("GW")
-    axes[0, ncols-1].legend(ncols=1, bbox_to_anchor=(1.5,1), loc="upper right")
+    axes[0, ncols-1].legend(ncols=1, bbox_to_anchor=(1.8,1), loc="upper right")
     axes[1, 0].set_ylabel("million heat pumps")
-    axes[1, ncols-1].legend(ncols=1, bbox_to_anchor=(1.6,1), loc="upper right")
+    axes[1, ncols-1].legend(ncols=1, bbox_to_anchor=(2.,1), loc="upper right")
     axes[2, 0].set_ylabel("Mt$_{H2}$")
     axes[3, 0].set_ylabel("billion Euro/a")
     
@@ -844,7 +848,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v3.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -890,5 +894,7 @@ if __name__ == "__main__":
     plot_balances(balances, drop=True)
     
     plot_prices(prices, drop=True)
+    
+    plot_comparison(balances, capacities, drop=True)
 
 
