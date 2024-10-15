@@ -34,12 +34,12 @@ def add_brownfield(n, n_p, year):
     n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
-        
+
         attr = "e" if c.name == "Store" else "p"
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
-        
+
         n_p.remove(c.name, c.df.index[c.df.lifetime == np.inf])
 
         # remove assets whose build_year + lifetime <= year
@@ -55,14 +55,15 @@ def add_brownfield(n, n_p, year):
 
         steel_processes = c.df.index[
             c.df[f"{attr}_nom_extendable"]
-            & (c.df.index.str.contains("BOF") 
-            | c.df.index.str.contains("DRI") 
-            | c.df.index.str.contains("Blast Furnaces") 
-            | c.df.index.str.contains("EAF"))
+            & (
+                c.df.index.str.contains("BOF")
+                | c.df.index.str.contains("DRI")
+                | c.df.index.str.contains("Blast Furnaces")
+                | c.df.index.str.contains("EAF")
+            )
         ]
 
         print(f"Steel index {steel_processes}")
-
 
         threshold = snakemake.params.threshold_capacity
         threshold_steel = snakemake.params.threshold_capacity_steel
@@ -82,7 +83,11 @@ def add_brownfield(n, n_p, year):
         n_p.remove(
             c.name,
             c.df.index[
-                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat) & ~c.df.index.isin(steel_processes))
+                (
+                    c.df[f"{attr}_nom_extendable"]
+                    & ~c.df.index.isin(chp_heat)
+                    & ~c.df.index.isin(steel_processes)
+                )
                 & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
@@ -107,7 +112,6 @@ def add_brownfield(n, n_p, year):
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
-
 
     # deal with gas network
     if snakemake.params.H2_retrofit:

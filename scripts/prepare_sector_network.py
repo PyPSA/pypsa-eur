@@ -9,6 +9,7 @@ technologies for the buildings, transport and industry sectors.
 
 import logging
 import os
+from collections import Counter
 from itertools import product
 from types import SimpleNamespace
 
@@ -38,7 +39,6 @@ from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentati
 from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
 from scipy.stats import beta
-from collections import Counter
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -216,14 +216,13 @@ def define_spatial(nodes, options):
 
     # steel
     spatial.steel = SimpleNamespace()
-    spatial.steel.nodes = ["EU steel"] 
-    spatial.steel.locations = ["EU"] 
+    spatial.steel.nodes = ["EU steel"]
+    spatial.steel.locations = ["EU"]
 
     # high temperature heat
     spatial.heat4steel = SimpleNamespace()
-    spatial.heat4steel.nodes = ["EU heat for steel"] 
+    spatial.heat4steel.nodes = ["EU heat for steel"]
     spatial.heat4steel.locations = ["EU"]
-
 
     # iron
     spatial.iron = SimpleNamespace()
@@ -232,18 +231,18 @@ def define_spatial(nodes, options):
 
     # sponge iron -> DRI product
     spatial.sponge_iron = SimpleNamespace()
-    spatial.sponge_iron.nodes = ["EU sponge iron"] 
-    spatial.sponge_iron.locations = ["EU"] 
+    spatial.sponge_iron.nodes = ["EU sponge iron"]
+    spatial.sponge_iron.locations = ["EU"]
 
     # pig iron -> blast furnace product
     spatial.pig_iron = SimpleNamespace()
-    spatial.pig_iron.nodes =  ["EU pig iron"] 
-    spatial.pig_iron.locations = ["EU"] 
+    spatial.pig_iron.nodes = ["EU pig iron"]
+    spatial.pig_iron.locations = ["EU"]
 
     # coke for steel
     spatial.coke_steel = SimpleNamespace()
-    spatial.coke_steel.nodes =  ["EU coke for steel"] 
-    spatial.coke_steel.locations = ["EU"] 
+    spatial.coke_steel.nodes = ["EU coke for steel"]
+    spatial.coke_steel.locations = ["EU"]
 
     return spatial
 
@@ -527,7 +526,6 @@ def update_wind_solar_costs(
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
-
 
 
 def add_carrier_buses(n, carrier, nodes=None):
@@ -3732,7 +3730,6 @@ def add_industry(n, costs):
             efficiency3=process_co2_per_naphtha,
         )
 
-
         if options["biomass"] and options["municipal_solid_waste"]:
             n.add(
                 "Link",
@@ -4029,46 +4026,53 @@ def add_industry(n, costs):
 def add_steel_industry(n, investment_year):
 
     # Steel production demanded in Europe in kton of steel products per year
-    steel_production = pd.read_csv(snakemake.input.steel_production, index_col = 0)
-    hourly_steel_production = steel_production.loc[investment_year,'0']/nhours # get the steel that needs to be produced hourly
+    steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
+    hourly_steel_production = (
+        steel_production.loc[investment_year, "0"] / nhours
+    )  # get the steel that needs to be produced hourly
 
     # Retrieving existing capacities only to give a maximum potential
     capacities = pd.read_csv(snakemake.input.steel_capacities)
-    capacities = capacities.groupby('country').sum().reset_index()
-    capacities = capacities.set_index('country').squeeze()
-    capacities = capacities.drop(['Unnamed: 0','tech'], axis = 1)
+    capacities = capacities.groupby("country").sum().reset_index()
+    capacities = capacities.set_index("country").squeeze()
+    capacities = capacities.drop(["Unnamed: 0", "tech"], axis=1)
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
-    cap_share = capacities/ capacities.sum()
+    cap_share = capacities / capacities.sum()
     min_cap = cap_share * hourly_steel_production
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
-    max_cap = max(capacities['value'])*2
+    max_cap = max(capacities["value"]) * 2
 
     # Retrieve countries that have two nodes
     nodes = pop_layout.index
     nodes2 = [value[:2] for value in nodes]
     duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
 
-    #ADB for now assign half capacity per node in countries with 2 nodes
-    
+    # ADB for now assign half capacity per node in countries with 2 nodes
+
     for i in duplicated:
-        if i == 'GB': # No values for United Kingdom
+        if i == "GB":  # No values for United Kingdom
             pass
         else:
-            min_cap.loc[i, 'value'] /= 2
-    
+            min_cap.loc[i, "value"] /= 2
+
     min_cap_node = pd.Series(index=nodes, dtype=float)
 
     for i in min_cap_node.index:
         if i[:2] not in min_cap.index:
             min_cap_node[i] = 0
         else:
-            min_cap_node[i] = min_cap.loc[i[:2], 'value']
-
+            min_cap_node[i] = min_cap.loc[i[:2], "value"]
 
     n.add("Carrier", "iron")
 
-    n.add("Bus", spatial.iron.nodes, location=spatial.iron.locations, carrier="iron", unit="kt/yr")
+    n.add(
+        "Bus",
+        spatial.iron.nodes,
+        location=spatial.iron.locations,
+        carrier="iron",
+        unit="kt/yr",
+    )
 
     costs.at["iron", "discount rate"] = 0.04
 
@@ -4093,15 +4097,21 @@ def add_steel_industry(n, investment_year):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in  ["steel","heat4steel","sponge_iron","pig_iron","coke_steel"]:
+    for carrier in ["steel", "heat4steel", "sponge_iron", "pig_iron", "coke_steel"]:
 
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
         location_value = getattr(spatial, carrier).nodes
-        unit = "kt/yr" if carrier_name != 'heat4steel' else 'MWh_th'
+        unit = "kt/yr" if carrier_name != "heat4steel" else "MWh_th"
 
-        n.add("Bus", location_value, location=location_value, carrier=carrier_name, unit=unit)
-        
+        n.add(
+            "Bus",
+            location_value,
+            location=location_value,
+            carrier=carrier_name,
+            unit=unit,
+        )
+
         # can also be negative
         n.add(
             "Store",
@@ -4124,10 +4134,10 @@ def add_steel_industry(n, investment_year):
     )
 
     ########### Add carriers for new capacity for steel production ############
-        # Blast furnace assuming with natural gas
-    
+    # Blast furnace assuming with natural gas
+
     # BOF
-    
+
     n.add(
         "Link",
         nodes,
@@ -4137,36 +4147,39 @@ def add_steel_industry(n, investment_year):
         bus2=spatial.coke_steel.nodes,
         bus3=spatial.co2.process_emissions,
         carrier="blast furnaces",
-        p_nom_extendable = True,
-        p_nom_max = max_cap * 1.429,
-        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
-        capital_cost=211000/nhours/(1/1.429) * 0.7551,
+        p_nom_extendable=True,
+        p_nom_max=max_cap * 1.429,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        capital_cost=211000 / nhours / (1 / 1.429) * 0.7551,
         # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt coke
         # also considering that the efficiency for the BOF is 1
-        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html 
-        efficiency=1/1.429, 
-        efficiency2= -5.054/1.429, #-3758.27/1.429,
-        efficiency3=216.4/1.429,
-        lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
+        efficiency=1 / 1.429,
+        efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
+        efficiency3=216.4 / 1.429,
+        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
-    
+
     n.add(
         "Link",
         nodes,
         suffix=" NG-DRI",
         bus0=spatial.iron.nodes,
         bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.gas.nodes, # in this process is the reducing agent, it is not burnt
+        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=spatial.co2.process_emissions,
         carrier="direct reduced iron",
-        p_nom_extendable = True,
-        #p_nom_max = max_cap * 1.36,
-        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
-        capital_cost=145000/nhours/(1/1.36)*0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
-        efficiency=1/1.36,
-        efficiency2=-2.8/1.36,
-        efficiency3=28/1.36,
-        lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        capital_cost=145000
+        / nhours
+        / (1 / 1.36)
+        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        efficiency=1 / 1.36,
+        efficiency2=-2.8 / 1.36,
+        efficiency3=28 / 1.36,
+        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     n.add(
@@ -4175,19 +4188,23 @@ def add_steel_industry(n, investment_year):
         suffix=" H2-DRI",
         bus0=spatial.iron.nodes,
         bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.h2.nodes, # in this process is the reducing agent, it is not burnt
-        #bus3=spatial.co2.process_emissions,
+        bus2=spatial.h2.nodes,  # in this process is the reducing agent, it is not burnt
+        # bus3=spatial.co2.process_emissions,
         carrier="direct reduced iron",
-        p_nom_extendable = True,
-        #p_nom_max = max_cap * 1.36,
-        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
-        capital_cost=145000/nhours/(1/1.36)*0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
-        efficiency=1/1.39,  # Data on energy parameters: https://www.sciencedirect.com/science/article/pii/S221282712300121X?ref=pdf_download&fr=RR-2&rr=8d07426c9b7d6307 
-        efficiency2=-2.21/1.36,
-        #efficiency3=28/1.36,
-        lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        capital_cost=145000
+        / nhours
+        / (1 / 1.36)
+        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        efficiency=1
+        / 1.39,  # Data on energy parameters: https://www.sciencedirect.com/science/article/pii/S221282712300121X?ref=pdf_download&fr=RR-2&rr=8d07426c9b7d6307
+        efficiency2=-2.21 / 1.36,
+        # efficiency3=28/1.36,
+        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
-    
+
     # Blast Furnace + Basic Oxygen Furnace -> BOF
     n.add(
         "Link",
@@ -4198,19 +4215,18 @@ def add_steel_industry(n, investment_year):
         bus2=nodes,
         bus3=spatial.heat4steel.nodes,
         carrier="basic oxygen furnace",
-        p_min_pu = prod_constantly, # to avoid using a plant only when electricity is cheap
+        p_min_pu=prod_constantly,  # to avoid using a plant only when electricity is cheap
         p_nom_extendable=True,
-        #p_nom_max = max_cap,
-        capital_cost=100000 /nhours/1 * 0.7551 ,
-        efficiency=1, #ADB 0.7 kt coke for 1 kt steel
-        efficiency2=-524, #MWh electricity per kt coke
-        efficiency3=-615, #MWh heat per kt coke
+        # p_nom_max = max_cap,
+        capital_cost=100000 / nhours / 1 * 0.7551,
+        efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
+        efficiency2=-524,  # MWh electricity per kt coke
+        efficiency3=-615,  # MWh heat per kt coke
         lifetime=40,
     )
-    
+
     # EAF
 
-    
     # Electric Arc Furnace
     n.add(
         "Link",
@@ -4219,20 +4235,19 @@ def add_steel_industry(n, investment_year):
         bus0=spatial.sponge_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes, # This heat is mainly from side processes in the refinery
+        bus3=spatial.heat4steel.nodes,  # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
         p_nom_extendable=True,
-        p_nom_max = max_cap,
-        p_min_pu = 0.5, #prod_constantly, # electrical stuff can be switched on and off
-        p_nom_min = min_cap_node,
-        p_nom = min_cap_node,
-        capital_cost= 80000/nhours/1*0.7551,
-        efficiency=1/1, #ADB 1 kt sponge iron for 1 kt steel
-        efficiency2=-861/1, #MWh electricity per kt sponge iron
-        efficiency3=-305.6/1, #MWh thermal energy per kt sponge iron
+        p_nom_max=max_cap,
+        p_min_pu=0.5,  # prod_constantly, # electrical stuff can be switched on and off
+        p_nom_min=min_cap_node,
+        p_nom=min_cap_node,
+        capital_cost=80000 / nhours / 1 * 0.7551,
+        efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
+        efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
+        efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
         lifetime=40,
-    )    
-
+    )
 
     # Link to produce heat for steel industry processes
     n.add(
@@ -4242,7 +4257,7 @@ def add_steel_industry(n, investment_year):
         bus0=spatial.gas.nodes,
         bus1=spatial.heat4steel.nodes,
         bus2="co2 atmosphere",
-        p_nom_extendable = True,
+        p_nom_extendable=True,
         carrier="heat4steel",
         capital_cost=0.1,
         efficiency=0.75,
@@ -4946,7 +4961,7 @@ if __name__ == "__main__":
 
     if options["industry"]:
         add_industry(n, costs)
-    
+
     if snakemake.params.endo_industry:
         add_steel_industry(n, investment_year)
 

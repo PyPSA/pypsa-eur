@@ -535,7 +535,7 @@ rule build_industry_sector_ratios:
         idees="data/jrc-idees-2021",
     output:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
-        steel_capacities=resources("steel_demand_projections/steel_capacities.csv"), #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
+        steel_capacities=resources("steel_demand_projections/steel_capacities.csv"),  #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
     threads: 1
     resources:
         mem_mb=1000,
@@ -777,11 +777,12 @@ rule build_industrial_energy_demand_per_node_today:
     script:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
 
+
 if config["enable"].get("endo_industry", False):
 
     rule build_industry_steel_production_projections:
         input:
-            ssp = "data/ssp_snapshot_1706291930_allcountries.xlsx", #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login 
+            ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
         output:
             resources("steel_demand_projections/eu_steel_production.csv"),
         log:
@@ -1046,8 +1047,8 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        endo_industry = config_provider('enable', 'endo_industry'),
-        co2_budget_apply=config_provider('co2_budget_apply'),
+        endo_industry=config_provider("enable", "endo_industry"),
+        co2_budget_apply=config_provider("co2_budget_apply"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1144,14 +1145,14 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        steel_production = lambda w: (
+        steel_production=lambda w: (
             resources("steel_demand_projections/eu_steel_production.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
-        steel_capacities = lambda w: (
+        steel_capacities=lambda w: (
             resources("steel_demand_projections/steel_capacities.csv")
-            if config_provider("enable","endo_industry")(w)
+            if config_provider("enable", "endo_industry")(w)
             else []
         ),
     output:
