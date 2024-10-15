@@ -241,14 +241,14 @@ def define_spatial(nodes, options):
 
     # coke for steel
     spatial.coke_steel = SimpleNamespace()
-    spatial.coke_steel.nodes =  ["EU coke for steel"] 
-    spatial.coke_steel.locations = ["EU"] 
+    spatial.coke_steel.nodes = ["EU coke for steel"]
+    spatial.coke_steel.locations = ["EU"]
 
     # DRI
     # DRI gas link
     spatial.dri_gas = SimpleNamespace()
-    spatial.dri_gas.nodes =  nodes + " dri gas" 
-    spatial.dri_gas.locations = nodes #["EU"] 
+    spatial.dri_gas.nodes = nodes + " dri gas"
+    spatial.dri_gas.locations = nodes  # ["EU"]
 
     return spatial
 
@@ -4103,7 +4103,14 @@ def add_steel_industry(n, investment_year):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in  ["steel","heat4steel","sponge_iron","pig_iron","coke_steel","dri_gas"]:
+    for carrier in [
+        "steel",
+        "heat4steel",
+        "sponge_iron",
+        "pig_iron",
+        "coke_steel",
+        "dri_gas",
+    ]:
 
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
@@ -4118,8 +4125,14 @@ def add_steel_industry(n, investment_year):
             unit=unit,
         )
 
-        n.madd("Bus", location_value, location=location_value, carrier=carrier_name, unit=unit)
-        
+        n.madd(
+            "Bus",
+            location_value,
+            location=location_value,
+            carrier=carrier_name,
+            unit=unit,
+        )
+
         """
         # can also be negative
         n.add(
@@ -4186,10 +4199,11 @@ def add_steel_industry(n, investment_year):
         bus1=spatial.dri_gas.nodes,
         bus2=spatial.co2.process_emissions,
         carrier="direct reduced iron",
-        p_nom_extendable = True,
-        #p_nom_max = max_cap * 1.36,
-        efficiency=1/2.8, #1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
-        efficiency2=28/1, # 28tCO2/kt sponge iron as in JRC IDEES calculations
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        efficiency=1
+        / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        efficiency2=28 / 1,  # 28tCO2/kt sponge iron as in JRC IDEES calculations
     )
 
     n.add(
@@ -4199,28 +4213,32 @@ def add_steel_industry(n, investment_year):
         bus0=spatial.h2.nodes,
         bus1=spatial.dri_gas.nodes,
         carrier="direct reduced iron",
-        p_nom_extendable = True,
-        #p_nom_max = max_cap * 1.36,
-        efficiency=1/2.2, #1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        efficiency=1
+        / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
     )
-    
+
     n.add(
         "Link",
         nodes,
         suffix=" DRI",
         bus0=spatial.iron.nodes,
         bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.dri_gas.nodes, # in this process is the reducing agent, it is not burnt
-        #bus3=spatial.co2.process_emissions,
+        bus2=spatial.dri_gas.nodes,  # in this process is the reducing agent, it is not burnt
+        # bus3=spatial.co2.process_emissions,
         carrier="direct reduced iron",
-        p_nom_extendable = True,
-        #p_nom_max = max_cap * 1.36,
-        p_min_pu = prod_constantly, # hot elements cannot be turned off easily
-        capital_cost=145000/nhours/(1/1.36)*0.7551, # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
-        efficiency=1/1.36,
-        efficiency2=-2.8/1.36,
-        #efficiency3=28/1.36,
-        lifetime=25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        capital_cost=145000
+        / nhours
+        / (1 / 1.36)
+        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        efficiency=1 / 1.36,
+        efficiency2=-2.8 / 1.36,
+        # efficiency3=28/1.36,
+        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     """
