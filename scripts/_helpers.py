@@ -438,7 +438,7 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
-    from pypsa.descriptors import Dict
+    from pypsa.definitions.structures import Dict
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake

@@ -386,6 +386,7 @@ rule build_transmission_projects:
     params:
         transmission_projects=config_provider("transmission_projects"),
         line_factor=config_provider("lines", "length_factor"),
+        s_max_pu=config_provider("lines", "s_max_pu"),
     input:
         base_network=resources("networks/base.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
