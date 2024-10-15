@@ -193,7 +193,7 @@ def add_solar_potential_constraints(n, config):
         n.generators.loc[solar_today, "p_nom_max"]
         .groupby(n.generators.loc[solar_today].bus.map(location))
         .sum()
-        - n.generators.loc[solar_hsat, "p_nom_opt"]
+        - n.generators.loc[solar_hsat, "p_nom"]
         .groupby(n.generators.loc[solar_hsat].bus.map(location))
         .sum()
         * land_use_factors["solar-hsat"]

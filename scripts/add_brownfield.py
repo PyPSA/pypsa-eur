@@ -221,6 +221,40 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
+    """
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The original network.
+    n_p : pypsa.Network
+        The network with the updated parameters.
+    year : int
+        The year for which the efficiency is being updated.
+
+    Returns
+    -------
+    None
+        This function updates the efficiency in place and does not return a value.
+    """
+
+    # get names of heat pumps in previous iteration
+    heat_pump_idx_previous_iteration = n_p.links.index[
+        n_p.links.index.str.contains("heat pump")
+    ]
+    # construct names of same-technology heat pumps in the current iteration
+    corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(
+        year
+    )
+    # update efficiency of heat pumps in previous iteration in-place to efficiency in this iteration
+    n_p.links_t["efficiency"].loc[:, heat_pump_idx_previous_iteration] = (
+        n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -250,6 +284,8 @@ if __name__ == "__main__":
     add_build_year_to_new_assets(n, year)
 
     n_p = pypsa.Network(snakemake.input.network_p)
+
+    update_heat_pump_efficiency(n, n_p, year)
 
     add_brownfield(n, n_p, year)
 
