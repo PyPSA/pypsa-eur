@@ -4103,36 +4103,15 @@ def add_steel_industry(n, investment_year):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in [
-        "steel",
-        "heat4steel",
-        "sponge_iron",
-        "pig_iron",
-        "coke_steel",
-        "dri_gas",
-    ]:
+    for carrier in ["steel","heat4steel","sponge_iron","pig_iron","coke_steel","dri_gas"]:
 
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
         location_value = getattr(spatial, carrier).nodes
         unit = "kt/yr" if carrier_name != "heat4steel" else "MWh_th"
 
-        n.add(
-            "Bus",
-            location_value,
-            location=location_value,
-            carrier=carrier_name,
-            unit=unit,
-        )
-
-        n.madd(
-            "Bus",
-            location_value,
-            location=location_value,
-            carrier=carrier_name,
-            unit=unit,
-        )
-
+        n.add("Bus", location_value, location=location_value, carrier=carrier_name, unit=unit)
+        
         """
         # can also be negative
         n.add(
