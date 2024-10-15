@@ -121,18 +121,18 @@ def simplify_network_to_380(
             if col.startswith("bus"):
                 df[col] = df[col].map(trafo_map)
 
-    n.mremove("Transformer", n.transformers.index)
-    n.mremove("Bus", n.buses.index.difference(trafo_map))
+    n.remove("Transformer", n.transformers.index)
+    n.remove("Bus", n.buses.index.difference(trafo_map))
 
     return n, trafo_map
 
 
 def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) -> None:
     buses_to_del = n.buses.index.difference(busmap)
-    n.mremove("Bus", buses_to_del)
+    n.remove("Bus", buses_to_del)
     for c in n.branch_components:
         df = n.df(c)
-        n.mremove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
+        n.remove(c, df.index[df.bus0.isin(buses_to_del) | df.bus1.isin(buses_to_del)])
 
 
 def simplify_links(
@@ -254,7 +254,7 @@ def simplify_links(
                 )
             )
 
-            n.mremove("Link", all_links)
+            n.remove("Link", all_links)
 
             static_attrs = n.components["Link"]["attrs"].loc[lambda df: df.static]
             for attr, default in static_attrs.default.items():
@@ -335,7 +335,7 @@ def aggregate_to_substations(
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
     )
-    return clustering.network, busmap
+    return clustering.n, busmap
 
 
 def find_closest_bus(n, x, y, tol=2000):
