@@ -602,7 +602,7 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
-            n.mremove(
+            n.remove(
                 "Link",
                 [
                     index
@@ -613,7 +613,7 @@ def add_heating_capacities_installed_before_baseyear(
 
             # delete links with capacities below threshold
             threshold = snakemake.params.existing_capacities["threshold_capacity"]
-            n.mremove(
+            n.remove(
                 "Link",
                 [
                     index
@@ -683,7 +683,6 @@ if __name__ == "__main__":
     )
 
     if options["heating"]:
-
         # one could use baseyear here instead (but dangerous if no data)
         fn = snakemake.input.heating_efficiencies
         year = int(snakemake.params["energy_totals_year"])

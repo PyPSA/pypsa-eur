@@ -38,7 +38,6 @@ from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
 from pypsa.geo import haversine_pts
-from pypsa.io import import_components_from_dataframe
 from scipy.stats import beta
 
 spatial = SimpleNamespace()
@@ -573,7 +572,7 @@ def remove_elec_base_techs(n):
             continue
         logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
         names = c.df.index[c.df.carrier.isin(to_remove)]
-        n.mremove(c.name, names)
+        n.remove(c.name, names)
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
 
@@ -4193,10 +4192,10 @@ def cluster_heat_buses(n):
 
         # remove unclustered assets of service/residential
         to_drop = c.df.index.difference(df.index)
-        n.mremove(c.name, to_drop)
+        n.remove(c.name, to_drop)
         # add clustered assets
         to_add = df.index.difference(c.df.index)
-        import_components_from_dataframe(n, df.loc[to_add], c.name)
+        n.add(c.name, df.loc[to_add].index, **df.loc[to_add])
 
 
 def set_temporal_aggregation(n, resolution, snapshot_weightings):
@@ -4671,7 +4670,7 @@ if __name__ == "__main__":
         logger.info(
             f"Removing {len(idx)} line(s) with properties conflicting with transmission losses functionality."
         )
-        n.mremove("Line", idx)
+        n.remove("Line", idx)
 
     first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year

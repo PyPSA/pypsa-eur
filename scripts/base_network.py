@@ -671,7 +671,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
     elif lines_mode == "remove":
-        n.mremove("Line", n.lines.index[n.lines.under_construction])
+        n.remove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines."
@@ -681,7 +681,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     if links_mode == "zero":
         n.links.loc[n.links.under_construction, "p_nom"] = 0.0
     elif links_mode == "remove":
-        n.mremove("Link", n.links.index[n.links.under_construction])
+        n.remove("Link", n.links.index[n.links.under_construction])
     elif links_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links."
@@ -724,7 +724,6 @@ def base_network(
     parameter_corrections,
     config,
 ):
-
     base_network = config["electricity"].get("base_network")
     osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
     assert base_network in {
@@ -788,11 +787,11 @@ def base_network(
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
 
-    n.import_components_from_dataframe(buses, "Bus")
-    n.import_components_from_dataframe(lines, "Line")
-    n.import_components_from_dataframe(transformers, "Transformer")
-    n.import_components_from_dataframe(links, "Link")
-    n.import_components_from_dataframe(converters, "Link")
+    n.add("Bus", buses.index, **buses)
+    n.add("Line", lines.index, **lines)
+    n.add("Transformer", transformers.index, **transformers)
+    n.add("Link", links.index, **links)
+    n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
     if config["electricity"].get("base_network") == "entsoegridkit":
@@ -961,7 +960,7 @@ def append_bus_shapes(n, shapes, type):
         None
     """
     remove = n.shapes.query("component == 'Bus' and type == @type").index
-    n.mremove("Shape", remove)
+    n.remove("Shape", remove)
 
     offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
     shapes = shapes.rename(lambda x: int(x) + offset)
