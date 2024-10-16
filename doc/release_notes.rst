@@ -78,6 +78,8 @@ Upcoming Release
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
 
+* Add an experimental feature to aggregate components by build-year before optimisation, leading to a substantial reduction in memory footprint for myopic foresight optimisations. This aggregation can lead to minor changes in results, and the feature should be tested in the intended context before being used.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 

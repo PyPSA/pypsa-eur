@@ -2078,7 +2078,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
         overdim_factor = options["overdimension_heat_generators"][
             heat_system.central_or_decentral
         ]
-        if heat_system == HeatSystem.URBAN_CENTRAL:
+        if (heat_system == HeatSystem.URBAN_CENTRAL) and not options[
+            "central_heat_everywhere"
+        ]:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
@@ -4660,8 +4662,9 @@ if __name__ == "__main__":
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
 
-    for k, v in options["transmission_efficiency"].items():
-        lossy_bidirectional_links(n, k, v)
+    if options.get("transmission_efficiency_enabled", True):
+        for k, v in options["transmission_efficiency"].items():
+            lossy_bidirectional_links(n, k, v)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
