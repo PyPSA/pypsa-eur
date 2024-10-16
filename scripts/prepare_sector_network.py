@@ -518,7 +518,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         capital_cost=capital_cost,
     )
 
-    fossils = ["coal", "gas", "oil", "lignite"]
+    fossils = ["coal", "gas", "oil", "lignite", "uranium"]
     if options["fossil_fuels"] and carrier in fossils:
 
         suffix = ""
@@ -1106,17 +1106,20 @@ def prepare_costs(cost_file, params, nyears):
     return costs
 
 
-def add_generation(n, costs):
+def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None, existing_nodes=None):
     logger.info("Adding electricity generation")
 
-    nodes = pop_layout.index
-
-    conventionals = options["conventional_generation"]
+    conventionals = options.get("conventional_generation", {})
 
     for generator, carrier in conventionals.items():
         carrier_nodes = vars(spatial)[carrier].nodes
 
         add_carrier_buses(n, carrier, carrier_nodes)
+
+        if existing_nodes is None:
+            nodes = pop_layout.index
+        else:
+            nodes = existing_nodes[generator]
 
         n.madd(
             "Link",
@@ -1128,12 +1131,56 @@ def add_generation(n, costs):
             * costs.at[generator, "VOM"],  # NB: VOM is per MWel
             capital_cost=costs.at[generator, "efficiency"]
             * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
-            p_nom_extendable=True,
+            p_nom_extendable=(
+                True
+                if generator
+                in snakemake.params.electricity.get("extendable_carriers", dict()).get(
+                    "Generator", list()
+                )
+                else False
+            ),
+            p_nom=(
+                existing_capacities[generator] / existing_efficiencies[generator]
+                if not existing_capacities == 0 else 0
+            ), # NB: existing capacities are MWel
+            p_max_pu = 0.7 if carrier == "uranium" else 1, # be conservative for nuclear (maintance or unplanned shut downs)
             carrier=generator,
-            efficiency=costs.at[generator, "efficiency"],
+            efficiency=(
+                existing_efficiencies[generator]
+                if existing_efficiencies is not None
+                else costs.at[generator, "efficiency"]
+            ),
             efficiency2=costs.at[carrier, "CO2 intensity"],
             lifetime=costs.at[generator, "lifetime"],
         )
+
+
+def get_capacities_from_elec(n, carriers, component):
+    """
+    Gets capacities and efficiencies for {carrier} in n.{component} that were
+    previously assigned in add_electricity.
+    """
+    component_list = ["generators", "storage_units", "links", "stores"]
+    component_dict = {name: getattr(n, name) for name in component_list}
+    e_nom_carriers = ["stores"]
+    nom_col = {x: "e_nom" if x in e_nom_carriers else "p_nom" for x in component_list}
+    eff_col = "efficiency"
+
+    capacity_dict = {}
+    efficiency_dict = {}
+    node_dict = {}
+    for carrier in carriers:
+        capacity_dict[carrier] = component_dict[component].query("carrier in @carrier")[
+            nom_col[component]
+        ]
+        efficiency_dict[carrier] = component_dict[component].query(
+            "carrier in @carrier"
+        )[eff_col]
+        node_dict[carrier] = component_dict[component].query("carrier in @carrier")[
+            "bus"
+        ]
+
+    return capacity_dict, efficiency_dict, node_dict
 
 
 def add_ammonia(n, costs):
@@ -4570,6 +4617,16 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
+
+    if options.get("keep_existing_capacities", False):
+        existing_capacities, existing_efficiencies, existing_nodes = get_capacities_from_elec(
+            n,
+            carriers=options.get("conventional_generation").keys(),
+            component="generators",
+        )
+    else:
+        existing_capacities, existing_efficiencies, existing_nodes = 0, None, None
+
     landfall_lengths = {
         tech: settings["landfall_length"]
         for tech, settings in snakemake.params.renewable.items()
@@ -4583,7 +4640,7 @@ if __name__ == "__main__":
 
     spatial = define_spatial(pop_layout.index, options)
 
-    if snakemake.params.foresight in ["myopic", "perfect"]:
+    if snakemake.params.foresight in ["overnight", "myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
 
         conventional = snakemake.params.conventional_carriers
@@ -4594,7 +4651,7 @@ if __name__ == "__main__":
 
     add_co2_tracking(n, costs, options)
 
-    add_generation(n, costs)
+    add_generation(n, costs, existing_capacities, existing_efficiencies, existing_nodes)
 
     add_storage_and_grids(n, costs)
 
