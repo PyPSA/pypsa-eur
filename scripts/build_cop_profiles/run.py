@@ -133,7 +133,7 @@ if __name__ == "__main__":
                 heat_source
                 in snakemake.params.heat_source_utilisation_potentials.keys()
             ):
-                source_inlet_temperature_celsius = snakemake.params.heat_sources[
+                source_inlet_temperature_celsius = snakemake.params.heat_source_utilisation_potentials[
                     heat_source
                 ]["constant_temperature_celsius"]
             else:

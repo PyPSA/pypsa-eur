@@ -2174,30 +2174,67 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
 
             # todo: make this more generic
             if heat_source in ["geothermal"]:
+                # get potential
                 p_max_source = pd.read_csv(
                     snakemake.input.heat_source_technical_potential_geothermal,
                     index_col=0,
                 ).squeeze()
                 p_max_source.index = nodes
-                p_nom_max_electric = p_max_source / (efficiency.max() - 1)
-            else:
-                p_nom_max_electric = np.inf
 
-            n.madd(
-                "Link",
-                nodes,
-                suffix=f" {heat_system} {heat_source} heat pump",
-                bus0=nodes,
-                bus1=nodes + f" {heat_system} heat",
-                carrier=f"{heat_system} {heat_source} heat pump",
-                efficiency=efficiency,
-                capital_cost=costs.at[costs_name, "efficiency"]
-                * costs.at[costs_name, "fixed"]
-                * overdim_factor,
-                p_nom_extendable=True,
-                p_nom_max=p_nom_max_electric,
-                lifetime=costs.at[costs_name, "lifetime"],
-            )
+                # add resource
+                geothermal_heat_carrier = f"{heat_system} geothermal heat"
+                n.add("Carrier", geothermal_heat_carrier)
+                n.madd(
+                    "Bus", 
+                    nodes, 
+                    suffix=f" {geothermal_heat_carrier}",
+                    carrier=geothermal_heat_carrier,
+                    )
+                
+                n.madd(
+                    "Generator",
+                    nodes,
+                    suffix=f" {geothermal_heat_carrier}",
+                    bus=nodes + f" {geothermal_heat_carrier}",
+                    carrier=geothermal_heat_carrier,
+                    p_nom_extendable=True,
+                    capital_cost=0.0, # TODO: update later to underground part
+                    p_nom_max=p_max_source
+                )
+
+                # add heat pump converting geothermal heat + electricity to urban central heat
+                n.madd(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {geothermal_heat_carrier}",
+                    bus2=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=-(efficiency - 1),
+                    efficiency2=efficiency,
+                    capital_cost=costs.at[costs_name, "efficiency"]
+                    * costs.at[costs_name, "fixed"]
+                    * overdim_factor, # TODO: update later to heat pump part
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name, "lifetime"],
+                )
+            else:
+
+                n.madd(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=efficiency,
+                    capital_cost=costs.at[costs_name, "efficiency"]
+                    * costs.at[costs_name, "fixed"]
+                    * overdim_factor,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name, "lifetime"],
+                )
 
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
