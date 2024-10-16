@@ -1099,7 +1099,9 @@ def prepare_costs(cost_file, params, nyears):
     return costs
 
 
-def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None, existing_nodes=None):
+def add_generation(
+    n, costs, existing_capacities=0, existing_efficiencies=None, existing_nodes=None
+):
     logger.info("Adding electricity generation")
 
     conventionals = options.get("conventional_generation", {})
@@ -1134,9 +1136,12 @@ def add_generation(n, costs, existing_capacities=0, existing_efficiencies=None, 
             ),
             p_nom=(
                 existing_capacities[generator] / existing_efficiencies[generator]
-                if not existing_capacities == 0 else 0
-            ), # NB: existing capacities are MWel
-            p_max_pu = 0.7 if carrier == "uranium" else 1, # be conservative for nuclear (maintance or unplanned shut downs)
+                if not existing_capacities == 0
+                else 0
+            ),  # NB: existing capacities are MWel
+            p_max_pu=(
+                0.7 if carrier == "uranium" else 1
+            ),  # be conservative for nuclear (maintance or unplanned shut downs)
             carrier=generator,
             efficiency=(
                 existing_efficiencies[generator]
@@ -4597,12 +4602,13 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
-
     if options.get("keep_existing_capacities", False):
-        existing_capacities, existing_efficiencies, existing_nodes = get_capacities_from_elec(
-            n,
-            carriers=options.get("conventional_generation").keys(),
-            component="generators",
+        existing_capacities, existing_efficiencies, existing_nodes = (
+            get_capacities_from_elec(
+                n,
+                carriers=options.get("conventional_generation").keys(),
+                component="generators",
+            )
         )
     else:
         existing_capacities, existing_efficiencies, existing_nodes = 0, None, None
