@@ -22,9 +22,9 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
+from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
-from shapely.algorithms.polylabel import polylabel
 
 logger = logging.getLogger(__name__)
 
@@ -1190,7 +1190,7 @@ def _finalise_substations(df_substations):
     df_substations.loc[:, "station_id"] = None
     df_substations.loc[:, "tag_area"] = None
     df_substations.loc[:, "tag_source"] = df_substations["bus_id"]
-    
+
     # Initialise x_node column (if the bus is part of an interconnector) to False, will be set later
     df_substations.loc[:, "x_node"] = False
 
@@ -1778,21 +1778,21 @@ if __name__ == "__main__":
     path_country_shapes = snakemake.input.country_shapes
     path_offshore_shapes = snakemake.input.offshore_shapes
 
-    df_substations = _add_line_endings_to_substations(
-        df_substations,
-        gdf_lines,
-        path_country_shapes,
-        path_offshore_shapes,
-        prefix="line-end",
-    )
+    # df_substations = _add_line_endings_to_substations(
+    #     df_substations,
+    #     gdf_lines,
+    #     path_country_shapes,
+    #     path_offshore_shapes,
+    #     prefix="line-end",
+    # )
 
-    df_substations = _add_line_endings_to_substations(
-        df_substations,
-        gdf_links,
-        path_country_shapes,
-        path_offshore_shapes,
-        prefix="link-end",
-    )
+    # df_substations = _add_line_endings_to_substations(
+    #     df_substations,
+    #     gdf_links,
+    #     path_country_shapes,
+    #     path_offshore_shapes,
+    #     prefix="link-end",
+    # )
 
     # Drop polygons and create GDF
     gdf_substations = gpd.GeoDataFrame(

@@ -6,17 +6,17 @@
 import logging
 import os
 import string
+from itertools import chain
 
 import geopandas as gpd
 import networkx as nx
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
-from itertools import chain
 from pyproj import Transformer
-from shapely.geometry import LineString, Point
-from shapely.ops import linemerge, nearest_points, split
 from shapely.algorithms.polylabel import polylabel
+from shapely.geometry import LineString, MultiLineString, Point
+from shapely.ops import linemerge, nearest_points, split
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ def set_substations_ids(buses, distance_crs, tol=BUS_TOL, prefix=""):
         total=buses.shape[0],
         desc="Set substation ids ",
     )
-    
+
     station_id = 0
     for i, row in tqdm(buses.iterrows(), **tqdm_kwargs_substation_ids):
         if buses.loc[i, "station_id"] >= 0:
@@ -156,147 +156,11 @@ def set_substations_ids(buses, distance_crs, tol=BUS_TOL, prefix=""):
                         sub_id = substation_id
                         break
                 buses.loc[buses.index[close_nodes], "station_id"] = sub_id
-    
+
     # Add prefix to station_id
     buses["station_id"] = prefix + buses["station_id"].astype(str)
 
     return buses
-
-
-def set_lines_ids(lines, buses, distance_crs):
-    """
-    Function to set line buses ids to the closest bus in the list.
-    """
-    # set tqdm options for set lines ids
-    tqdm_kwargs_line_ids = dict(
-        ascii=False,
-        unit=" lines",
-        total=lines.shape[0],
-        desc="Set line/link bus ids ",
-    )
-
-    # initialization
-    lines["bus0"] = -1
-    lines["bus1"] = -1
-
-    busesepsg = buses.to_crs(distance_crs)
-    linesepsg = lines.to_crs(distance_crs)
-
-    for i, row in tqdm(linesepsg.iterrows(), **tqdm_kwargs_line_ids):
-        # select buses having the voltage level of the current line
-        buses_sel = busesepsg[
-            (buses["voltage"] == row["voltage"]) & (buses["dc"] == row["dc"])
-        ]
-
-        # find the closest node of the bus0 of the line
-        bus0_id = buses_sel.geometry.distance(row.geometry.boundary.geoms[0]).idxmin()
-        lines.loc[i, "bus0"] = buses.loc[bus0_id, "bus_id"]
-
-        # check if the line starts exactly in the node, otherwise modify the linestring
-        distance_bus0 = busesepsg.geometry.loc[bus0_id].distance(
-            row.geometry.boundary.geoms[0]
-        )
-
-        if distance_bus0 > 0:
-            # the line does not start in the node, thus modify the linestring
-            line_start_point = lines.geometry.loc[i].boundary.geoms[0]
-            new_segment = LineString([buses.geometry.loc[bus0_id], line_start_point])
-            modified_line = linemerge([new_segment, lines.geometry.loc[i]])
-            lines.loc[i, "geometry"] = modified_line
-
-        # find the closest node of the bus1 of the line
-        bus1_id = buses_sel.geometry.distance(row.geometry.boundary.geoms[1]).idxmin()
-        lines.loc[i, "bus1"] = buses.loc[bus1_id, "bus_id"]
-
-        # check if the line ends exactly in the node, otherwise modify the linestring
-        distance_bus1 = busesepsg.geometry.loc[bus1_id].distance(
-            row.geometry.boundary.geoms[1]
-        )
-
-        if distance_bus1 > 0:
-            # the line does not start in the node, thus modify the linestring
-            line_end_point = lines.geometry.loc[i].boundary.geoms[1]
-            new_segment = LineString([line_end_point, buses.geometry.loc[bus1_id]])
-            modified_line = linemerge([lines.geometry.loc[i], new_segment])
-            lines.loc[i, "geometry"] = modified_line
-
-    return lines, buses
-
-
-def merge_stations_same_station_id(
-    buses, delta_lon=0.0001, delta_lat=0.0001, precision=4
-):
-    """
-    Function to merge buses with same voltage and station_id This function
-    iterates over all substation ids and creates a bus_id for every substation
-    and voltage level.
-
-    Therefore, a substation with multiple voltage levels is represented
-    with different buses, one per voltage level
-    """
-    # initialize list of cleaned buses
-    buses_clean = []
-
-    # initialize the number of buses
-    n_buses = 0
-
-    for g_name, g_value in buses.groupby(by="station_id"):
-        station_point_x = np.round(g_value.geometry.x.mean(), precision)
-        station_point_y = np.round(g_value.geometry.y.mean(), precision)
-        # is_dclink_boundary_point = any(g_value["is_dclink_boundary_point"])
-
-        # loop for every voltage level in the bus
-        # The location of the buses is averaged; in the case of multiple voltage levels for the same station_id,
-        # each bus corresponding to a voltage level and each polatity is located at a distance regulated by delta_lon/delta_lat
-        v_it = 0
-        for v_name, bus_row in g_value.groupby(by=["voltage", "country", "dc"]):
-            lon_bus = np.round(station_point_x + v_it * delta_lon, precision)
-            lat_bus = np.round(station_point_y + v_it * delta_lat, precision)
-
-            bus_data = [
-                n_buses,  # "bus_id"
-                g_name,  # "station_id"
-                v_name[0],  # "voltage"
-                bus_row["dc"].all(),  # "dc"
-                "|".join(bus_row["symbol"].unique()),  # "symbol"
-                bus_row["under_construction"].any(),  # "under_construction"
-                "|".join(bus_row["tag_substation"].unique()),  # "tag_substation"
-                bus_row["tag_area"].sum(),  # "tag_area"
-                lon_bus,  # "lon"
-                lat_bus,  # "lat"
-                bus_row["country"].iloc[0],  # "country"
-                Point(lon_bus, lat_bus),  # "geometry"
-            ]
-
-            # add the bus
-            buses_clean.append(bus_data)
-
-            # increase counters
-            v_it += 1
-            n_buses += 1
-
-    # names of the columns
-    buses_clean_columns = [
-        "bus_id",
-        "station_id",
-        "voltage",
-        "dc",
-        "symbol",
-        "under_construction",
-        "tag_substation",
-        "tag_area",
-        "x",
-        "y",
-        "country",
-        # "is_dclink_boundary_point",
-        "geometry",
-    ]
-
-    gdf_buses_clean = gpd.GeoDataFrame(
-        buses_clean, columns=buses_clean_columns
-    ).set_crs(crs=buses.crs, inplace=True)
-
-    return gdf_buses_clean
 
 
 def get_ac_frequency(df, fr_col="tag_frequency"):
@@ -493,83 +357,6 @@ def _get_converters(buses, links, distance_crs):
     return gdf_converters
 
 
-def connect_stations_same_station_id(lines, buses):
-    """
-    Function to create fake links between substations with the same
-    substation_id.
-    """
-    ac_freq = get_ac_frequency(lines)
-    station_id_list = buses.station_id.unique()
-
-    add_lines = []
-    from shapely.geometry import LineString
-
-    for s_id in station_id_list:
-        buses_station_id = buses[buses.station_id == s_id]
-
-        if len(buses_station_id) > 1:
-            for b_it in range(1, len(buses_station_id)):
-                line_geometry = LineString(
-                    [
-                        buses_station_id.geometry.iloc[0],
-                        buses_station_id.geometry.iloc[b_it],
-                    ]
-                )
-                line_bounds = line_geometry.bounds
-
-                line_data = [
-                    f"link{buses_station_id}_{b_it}",  # "line_id"
-                    buses_station_id.index[0],  # "bus0"
-                    buses_station_id.index[b_it],  # "bus1"
-                    400000,  # "voltage"
-                    1,  # "circuits"
-                    0.0,  # "length"
-                    False,  # "underground"
-                    False,  # "under_construction"
-                    "transmission",  # "tag_type"
-                    ac_freq,  # "tag_frequency"
-                    buses_station_id.country.iloc[0],  # "country"
-                    line_geometry,  # "geometry"
-                    line_bounds,  # "bounds"
-                    buses_station_id.geometry.iloc[0],  # "bus_0_coors"
-                    buses_station_id.geometry.iloc[b_it],  # "bus_1_coors"
-                    buses_station_id.lon.iloc[0],  # "bus0_lon"
-                    buses_station_id.lat.iloc[0],  # "bus0_lat"
-                    buses_station_id.lon.iloc[b_it],  # "bus1_lon"
-                    buses_station_id.lat.iloc[b_it],  # "bus1_lat"
-                ]
-
-                add_lines.append(line_data)
-
-    # name of the columns
-    add_lines_columns = [
-        "line_id",
-        "bus0",
-        "bus1",
-        "voltage",
-        "circuits",
-        "length",
-        "underground",
-        "under_construction",
-        "tag_type",
-        "tag_frequency",
-        "country",
-        "geometry",
-        "bounds",
-        "bus_0_coors",
-        "bus_1_coors",
-        "bus0_lon",
-        "bus0_lat",
-        "bus1_lon",
-        "bus1_lat",
-    ]
-
-    df_add_lines = gpd.GeoDataFrame(pd.concat(add_lines), columns=add_lines_columns)
-    lines = pd.concat([lines, df_add_lines], ignore_index=True)
-
-    return lines
-
-
 def set_lv_substations(buses):
     """
     Function to set what nodes are lv, thereby setting substation_lv The
@@ -603,7 +390,7 @@ def _merge_buses_to_stations(buses, stations, distance_crs=DISTANCE_CRS, geo_crs
     # Merge buses with same voltage and within tolerance
     logger.info(f"Merging buses of the same substation.")
     # bus types (AC != DC)
-    buses_all = buses.copy().reset_index(drop=True).drop(columns=["station_id", "country"])
+    buses_all = buses.copy().reset_index(drop=True)
     stations_all = stations.copy()
     stations_all["polygon"] = stations_all["geometry"].copy()
 
@@ -613,14 +400,13 @@ def _merge_buses_to_stations(buses, stations, distance_crs=DISTANCE_CRS, geo_crs
 
     # TODO: For now also include DC buses in the merging process. In the future, try to keep original HVDC converter location within substation
     buses_all = buses_all.drop_duplicates(subset=["station_id", "voltage", "country"])
-    buses_all = buses_all[buses_all["dc"] == False]
 
 
     # Offsetting geometries within same substations for each voltage level
     offset = 15 # meters (radius)
     geo_to_dist = Transformer.from_crs(geo_crs, distance_crs, always_xy=True)
     dist_to_geo = Transformer.from_crs(distance_crs, geo_crs, always_xy=True)
-    
+
     for g_name, g_value in tqdm(buses_all.groupby("station_id"), desc="Updating geometries", unit=" substations"):
         voltages = sorted(g_value["voltage"].unique(), reverse=True) # Sort voltags in descending order
 
@@ -647,7 +433,7 @@ def _merge_buses_to_stations(buses, stations, distance_crs=DISTANCE_CRS, geo_crs
             v = voltages[0]
             buses_all.loc[g_value.index, "bus_id"] = g_name + "-" + str(int(v/1000))
             buses_all.loc[g_value.index, "geometry"] = g_value["poi"]
-    
+
     return buses_all
 
 
@@ -748,6 +534,8 @@ def fix_overpassing_lines(lines, buses, distance_crs, tol=1):
 
             lines_to_add.append(df_append)
 
+
+
     if not lines_to_add:
         return lines, buses
 
@@ -775,9 +563,8 @@ def _create_station_seeds(buses, buses_polygon, country_shapes, tol = BUS_TOL, d
     # Drop all buses that have bus_id starting with "way/" or "relation/" prefix
     # They are present in polygon_buffer anyway
     logger.info("Creating aggregated stations based on substation polygons")
-    columns = ["bus_id", "country", "voltage", "geometry"]
+    columns = ["bus_id", "geometry"]
     filtered_buses = buses[~buses["bus_id"].str.startswith("way/") & ~buses["bus_id"].str.startswith("relation/")]
-    
 
     buses_buffer = gpd.GeoDataFrame(data = filtered_buses[columns], geometry="geometry").set_index("bus_id")
     buses_buffer["geometry"] = buses_buffer["geometry"].to_crs(distance_crs).buffer(tol).to_crs(GEO_CRS)
@@ -790,12 +577,12 @@ def _create_station_seeds(buses, buses_polygon, country_shapes, tol = BUS_TOL, d
     # Find the pole of inaccessibility (PoI) for each polygon, the interior point most distant from a polygon's boundary
     # Garcia-Castellanos & Lombardo 2007
     # doi.org/10.1080/14702540801897809
-    buses_polygon_buffer["poi"] = buses_polygon["geometry"].to_crs(DISTANCE_CRS) \
+    buses_polygon_buffer["poi"] = buses_polygon.set_index("bus_id")["geometry"].to_crs(DISTANCE_CRS) \
         .apply(lambda polygon: polylabel(polygon, tolerance = BUS_TOL/2)) \
         .to_crs(GEO_CRS)
 
     buses_all_buffer = pd.concat([buses_buffer, buses_polygon_buffer])
-    
+
     buses_all_agg = gpd.GeoDataFrame(geometry=[poly for poly in buses_all_buffer.union_all().geoms], crs=GEO_CRS)
 
     # full spatial join
@@ -813,8 +600,8 @@ def _create_station_seeds(buses, buses_polygon, country_shapes, tol = BUS_TOL, d
 
     # Update countries based on the PoI location:
     updated_country_mapping = gpd.sjoin_nearest(
-        gpd.GeoDataFrame(buses_all_agg["poi"], geometry="poi", crs=geo_crs).to_crs(DISTANCE_CRS), 
-        country_shapes.to_crs(DISTANCE_CRS), 
+        gpd.GeoDataFrame(buses_all_agg["poi"], geometry="poi", crs=geo_crs).to_crs(DISTANCE_CRS),
+        country_shapes.to_crs(DISTANCE_CRS),
         how="left"
     )["name"]
     updated_country_mapping.index.name="country"
@@ -852,10 +639,8 @@ def _create_station_seeds(buses, buses_polygon, country_shapes, tol = BUS_TOL, d
     buses_all_agg.set_index("bus_id", inplace=True)
     # Rename index name to station_id
     buses_all_agg.index.name = "station_id"
-    buses_all_agg.drop(columns=["voltage", "area", "osm_identifier", "id_occurence"], inplace=True)
+    buses_all_agg.drop(columns=["area", "osm_identifier", "id_occurence"], inplace=True)
 
-    # Create internal perimeter for cutting lines later
-    buses_all_agg["poi"].crs=geo_crs
     buses_all_agg["poi_perimeter"] = buses_all_agg["poi"].to_crs(distance_crs).buffer(tol/2).to_crs(geo_crs)
 
     return buses_all_agg
@@ -866,16 +651,16 @@ def _create_merge_mapping(lines, buses, buses_polygon):
     lines=lines.copy()
     buses_virtual=buses.copy()
 
-    buses_virtual = buses_virtual[buses_virtual["bus_id"].str.startswith("line-end")]
+    buses_virtual = buses_virtual[buses_virtual["bus_id"].str.startswith("virtual")]
     # Drop buses_virtual that are inside buses_virtual_polygon
     bool_intersects_buses_virtual_polygon = buses_virtual.intersects(buses_polygon.union_all())
     buses_virtual = buses_virtual[~bool_intersects_buses_virtual_polygon]
 
-    # sjoin with lines_filtered in column "connected_lines", that interesect with buses_virtual
+    # sjoin with lines_filtered in column "connected_lines", that intersect with buses_virtual
     buses_virtual = gpd.sjoin(
-        buses_virtual, 
-        lines[["line_id", "geometry", "voltage", "circuits"]], 
-        how="left", 
+        buses_virtual,
+        lines[["line_id", "geometry", "voltage", "circuits"]],
+        how="left",
         predicate="touches"
     )
     # Filtering, only keep where voltage_left == voltage_right
@@ -894,24 +679,23 @@ def _create_merge_mapping(lines, buses, buses_polygon):
     buses_to_remove = buses_to_remove[buses_to_remove["count"] == 2]
     buses_to_remove = buses_virtual[buses_virtual["bus_id"].isin(buses_to_remove["bus_id"])]
 
-    # Group by bus_id, voltage, circuits and count the number of connected lines, add column "lines" which contains the list of lines 
+    # Group by bus_id, voltage, circuits and count the number of connected lines, add column "lines" which contains the list of lines
     buses_to_remove = buses_to_remove.groupby(["bus_id", "voltage", "circuits"]) \
         .agg({
             "line_id": list,
-            "country": list,
         }).reset_index()
-    
+
     unique_lines = pd.Series(chain(*buses_to_remove["line_id"])).unique()
-    lines_to_merge = lines.loc[lines["line_id"].isin(unique_lines), ["line_id", "voltage", "circuits", "length", "geometry", "country", "tag_type", "underground"]]
+    lines_to_merge = lines.loc[lines["line_id"].isin(unique_lines), ["line_id", "voltage", "circuits", "length", "geometry", "tag_type", "underground"]]
     lines_to_merge_dict = [(node, row.to_dict()) for node, row in lines_to_merge.set_index("line_id").iterrows()]
-    
+
     # Create networkx
     G = nx.Graph()
 
     # Add nodes from
     # lines_to_merge
     G.add_nodes_from(lines_to_merge_dict)
-    
+
     edges = [
         (
             row["line_id"][0],  # from node
@@ -925,31 +709,31 @@ def _create_merge_mapping(lines, buses, buses_polygon):
 
     # Add all edges at once
     G.add_edges_from(edges)
-    
+
     connected_components = nx.connected_components(G)
 
-    # Create empty 
-    merged_lines = pd.DataFrame(columns=["line_id", "circuits", "voltage", "geometry", "country", "tag_type", "underground", "contains_lines", "contains_buses"])
+    # Create empty
+    merged_lines = pd.DataFrame(columns=["line_id", "circuits", "voltage", "geometry", "tag_type", "underground", "contains_lines", "contains_buses"])
 
     # Iterate over each connected component
     for i, component in enumerate(connected_components, 1):
         # Create a subgraph for the current component
         subgraph = G.subgraph(component)
-        
+
         # Extract the first node in the component
         first_node = next(iter(component))  # Get the first node (can be arbitrary)
-        
+
         # Extract the attributes for the first node
         circuits = G.nodes[first_node].get('circuits', None)  # Default to None if not present
         voltage = G.nodes[first_node].get('voltage', None)    # Default to None if not present
-        
+
         # Extract the geometries for all nodes in the subgraph
         geometry = [G.nodes[node].get('geometry', None) for node in subgraph.nodes()]
         geometry = linemerge(geometry)  # Merge the geometries
 
-        # list of all countries
-        country = ';'.join([G.nodes[node].get('country', '') for node in subgraph.nodes()])
-        country = ';'.join(sorted(set(country.split(';'))))
+        # # list of all countries
+        # country = ';'.join([G.nodes[node].get('country', '') for node in subgraph.nodes()])
+        # country = ';'.join(sorted(set(country.split(';'))))
 
         # Contains lines
         contains_lines = list(subgraph.nodes())
@@ -969,7 +753,6 @@ def _create_merge_mapping(lines, buses, buses_polygon):
             "circuits": [circuits],
             "voltage": [voltage],
             "geometry": [geometry],
-            "country": [country],
             "tag_type": [tag_type],
             "underground": [underground],
             "contains_lines": [contains_lines],
@@ -982,7 +765,7 @@ def _create_merge_mapping(lines, buses, buses_polygon):
 
         # Drop all closed linestrings (circles)
         merged_lines = merged_lines[merged_lines["geometry"].apply(lambda x: not x.is_closed)]
-    
+
     return merged_lines
 
 
@@ -1003,7 +786,7 @@ def _merge_lines_over_virtual_buses(lines, buses, merged_lines_map):
 
     ### Update lines to add
     lines_to_add = merged_lines_map.copy().reset_index(drop=True)
-    
+
     # Update columns
     lines_to_add["under_construction"] = False
     lines_to_add["tag_frequency"] = 50
@@ -1023,59 +806,128 @@ def _merge_lines_over_virtual_buses(lines, buses, merged_lines_map):
 
     return lines_merged, buses_merged
 
-# ## TODO: Continue here
-# def _map_endpoints_to_polygons(lines, buses, coords=0):
-#     buses_polygons = buses.copy().set_index("bus_id")[["voltage", "polygon"]]
-#     buses_polygons = gpd.GeoDataFrame(buses_polygons, geometry="polygon", crs = buses.crs)
 
-#     # Join lines_all[]
-#     endpoints = lines[["voltage", "geometry"]].copy()
+def _map_endpoints_to_buses(lines, buses):
+    buses_all = buses.copy().set_index("bus_id")
+    buses_all["station_polygon"] = buses_all["polygon"].copy()
+    buses_all = gpd.GeoDataFrame(buses_all, geometry="polygon", crs = buses.crs)
 
-#     gpd.sjoin(endpoints, buses_polygons, how="left", predicate="intersects")
+    lines_all = lines.copy().set_index("line_id")
 
-#     gdf_points = gpd.sjoin_nearest(gdf_points, regions, how="left")
-#     gdf_points = gdf_points.join(
-#         regions, on="name", lsuffix="_point", rsuffix="_region"
-#     )
-#     gdf_points["distance"] = gdf_points.apply(
-#         lambda x: x.geometry_point.distance(x.geometry_region), axis=1
-#     )
+    for coord in range(2):
+        # Obtain endpoints
+        endpoints = lines_all[["voltage", "geometry"]].copy()
+        endpoints["geometry"] = endpoints["geometry"].apply(lambda x: x.boundary.geoms[coord])
+        endpoints = gpd.sjoin(endpoints, buses_all, how="left", predicate="intersects")
+        endpoints = endpoints[endpoints["voltage_left"] == endpoints["voltage_right"]]
+        # rename voltage_left
+        endpoints = endpoints.drop(columns=["voltage_right"])
+        endpoints = endpoints.rename(columns={"voltage_left": "voltage"})
 
-#     bool_too_far = gdf_points["distance"] > MAX_DISTANCE
-#     gdf_points.loc[bool_too_far, "name"] = None
+        lines_all["poi_perimeter"] = endpoints["poi_perimeter"]
+        lines_all["station_polygon"] = endpoints["station_polygon"]
+        lines_all["geometry"] = lines_all.apply(lambda row: row["geometry"].difference(row["poi_perimeter"]), axis=1)
+        lines_all[f"bus{coord}"] = endpoints["bus_id"]
 
-#     return gdf_points["name"]
+        # Remove stubs in multilinestrings of some rows, after cutting with the perimeter
+        contains_stubs = lines_all["geometry"].apply(lambda x: isinstance(x, MultiLineString))
+        if contains_stubs.any():
+            lines_stubs = lines_all.loc[contains_stubs].copy()
+            lines_stubs["linestrings"] = lines_stubs["geometry"].apply(lambda x: [line for line in x.geoms] if x.geom_type == 'MultiLineString' else [x])
+
+            # Check for each individual element in list of linestrings, if they are within the station_polygon, if yes delete
+            lines_stubs["linestrings"] = lines_stubs.apply(lambda row: [line for line in row["linestrings"] if not row["station_polygon"].contains(line)], axis=1)
+
+            # Other issues, e.g. subgeometries are loops, are clost
+            remaining_issues = lines_stubs["linestrings"].apply(lambda x: len(x) > 1)
+            if remaining_issues.any():
+                lines_stubs.loc[remaining_issues, "linestrings"] = lines_stubs.loc[remaining_issues].apply(
+                    lambda row: [line for line in row["linestrings"] if not line.is_closed],
+                    axis=1,
+                )
+
+            # Update geometry through linemerge
+            lines_stubs["geometry"] = lines_stubs["linestrings"].apply(lambda x: linemerge(x))
+
+            # Update lines_all
+            lines_all.loc[lines_stubs.index, "geometry"] = lines_stubs["geometry"]
+
+    lines_all.reset_index(inplace=True)
+    lines_all.drop(columns=["poi_perimeter", "station_polygon"], inplace=True)
+
+    return lines_all
 
 
-# def _map_to_closest_region(gdf, regions, max_distance=MAX_DISTANCE, add_suffix=None):
-#     # add Suffix to regions index
-#     regions = regions.copy()
-#     if add_suffix:
-#         regions.index = regions.index + " " + add_suffix
 
-#     gdf = gdf.copy()
-#     # if columns bus0 and bus1 dont exist, create them
-#     if "bus0" not in gdf.columns:
-#         gdf["bus0"] = None
-#     if "bus1" not in gdf.columns:
-#         gdf["bus1"] = None
+    # Debugging # TODO Remove
+    # test = gpd.sjoin(endpoints, buses_polygons, how="left", predicate="intersects")
+    # # keep only where voltages equal
+    # test = test[test["voltage_left"] == test["voltage_right"]]
+    # # line_ids that are in endpoints but not in test
+    # missing_line_ids = list(set(endpoints["line_id"]) - set(test["line_id"]))
 
-#     # Apply mapping to rows where 'bus0' is None
-#     gdf.loc[gdf["bus0"].isna(), "bus0"] = _map_endpoints_to_closest_region(
-#         gdf[gdf["bus0"].isna()], regions, max_distance, coords=0
-#     )
+    # # map = buses_polygons.explore(color="yellow",popup=True)
+    # # map = endpoints[endpoints.line_id.isin(missing_line_ids)].explore(color="red", m=map, popup=True)
+    # # map = lines[lines.line_id.isin(missing_line_ids)].explore(color="blue", m=map, popup=True)
+    # # map
 
-#     # Apply mapping to rows where 'bus1' is None
-#     gdf.loc[gdf["bus1"].isna(), "bus1"] = _map_endpoints_to_closest_region(
-#         gdf[gdf["bus1"].isna()], regions, max_distance, coords=-1
-#     )
+    return gdf_points["name"]
 
-#     return gdf
+
+def _add_point_to_line(linestring, point):
+    """
+    Adds the bus coordinate to a linestring by extending the linestring with a
+    new segment.
+
+    Parameters:
+    linestring (LineString): The original linestring to extend.
+    point (Point): The shapely.Point of the bus.
+
+    Returns:
+    merged (LineString): The extended linestring with the new segment.
+    """
+    start = linestring.boundary.geoms[0]
+    end = linestring.boundary.geoms[1]
+
+    dist_to_start = point.distance(start)
+    dist_to_end = point.distance(end)
+
+    if dist_to_start < dist_to_end:
+        new_segment = LineString([point, start])
+    else:
+        new_segment = LineString([point, end])
+
+    merged = linemerge([linestring, new_segment])
+
+    return merged
+
+
+def _extend_lines_to_buses(lines, buses):
+    lines_all = lines.copy()
+    buses_all = buses.copy()
+
+    logger.info("Extending line geometry to mapped bus points.")
+    lines_all = lines_all.merge(buses_all[["geometry", "bus_id"]], left_on="bus0", right_on="bus_id", how="left", suffixes=("", "_right"))
+    lines_all.drop(columns=["bus_id"], inplace=True)
+    lines_all.rename(columns={"geometry_right": "bus0_point"}, inplace=True)
+
+    lines_all = lines_all.merge(buses_all[["geometry", "bus_id"]], left_on="bus1", right_on="bus_id", how="left", suffixes=("", "_right"))
+    lines_all.drop(columns=["bus_id"], inplace=True)
+    lines_all.rename(columns={"geometry_right": "bus1_point"}, inplace=True)
+
+    lines_all["geometry"] = lines_all.apply(lambda row: _add_point_to_line(row["geometry"], row["bus0_point"]), axis=1)
+    lines_all["geometry"] = lines_all.apply(lambda row: _add_point_to_line(row["geometry"], row["bus1_point"]), axis=1)
+
+    # Drop bus0_point and bus1_point
+    lines_all.drop(columns=["bus0_point", "bus1_point"], inplace=True)
+
+    return lines_all
+
 
 def _merge_identical_lines(lines):
     lines_all = lines.copy()
     lines_to_drop = []
-    
+
     logger.info("Aggregating lines with identical geometries and voltage levels.")
     for g_name, g_value in tqdm(lines_all.groupby(["geometry", "voltage"]), desc="Aggregating identical lines", unit=" lines"):
         line_ids = list(g_value["line_id"])
@@ -1088,60 +940,126 @@ def _merge_identical_lines(lines):
 
             # Update line with aggregated parameters
             lines_all.loc[lines_all["line_id"] == lid_old, "line_id"] = lid_agg
-            lines_all.loc[lines_all["line_id"] == lid_agg, "circuits"] = circuits_agg  
+            lines_all.loc[lines_all["line_id"] == lid_agg, "circuits"] = circuits_agg
 
             # Add other lines to lines to drop
             lines_to_drop += line_ids[1:]
 
+    logger.info(f"In total {len(lines_to_drop)} lines aggregated.")
+
     # Drop lines
     lines_all = lines_all[~lines_all["line_id"].isin(lines_to_drop)]
-    
+
+    # Update line ids to make them unique again
+    # Add voltage suffix to line_id
+    lines_all["line_id"] = lines_all["line_id"] + "-" + lines_all["voltage"].div(1e3).astype(int).astype(str)
+
     return lines_all
+
+
+def _add_line_endings(buses, lines, add=0):
+    buses_all = buses.copy()
+
+    endpoints0 = lines[["voltage", "geometry"]].copy()
+    endpoints0["geometry"] = endpoints0["geometry"].apply(lambda x: x.boundary.geoms[0])
+
+    endpoints1 = lines[["voltage", "geometry"]].copy()
+    endpoints1["geometry"] = endpoints1["geometry"].apply(lambda x: x.boundary.geoms[1])
+
+    endpoints = pd.concat([endpoints0, endpoints1], ignore_index=True)
+    endpoints.drop_duplicates(subset=["geometry", "voltage"], inplace=True)
+    endpoints.reset_index(drop=True, inplace=True)
+
+
+    endpoints["bus_id"] = endpoints.index+add+1
+    endpoints["bus_id"] = "virtual" + "-" + endpoints["bus_id"].astype(str)
+
+    endpoints["tag_source"] = "line-end"
+
+    return endpoints[["bus_id", "voltage", "geometry", "tag_source"]]
 
 
 def build_network(inputs, countries):
     logger.info("Reading input data.")
     buses = gpd.read_file(inputs["substations"])
+    buses = buses[["bus_id", "voltage", "geometry", "tag_source"]]
     buses_polygon = gpd.read_file(inputs["substations_polygon"])
+    # Simplify buses_polygon
+    buses_polygon["bus_id"] = buses_polygon["bus_id"].apply(lambda x: x.split("-")[0])
+    buses_polygon.drop_duplicates(subset=["bus_id", "country", "geometry"], inplace=True)
+    buses_polygon.drop(columns=["voltage"], inplace=True)
+
     lines = gpd.read_file(inputs["lines"])
+    lines = lines.drop(columns=["dc", "country"])
+
     links = gpd.read_file(inputs["links"])
-    
+
     lines = _merge_identical_lines(lines)
 
-    lines = line_endings_to_bus_conversion(lines)
-    links = line_endings_to_bus_conversion(links)
+    # Add line endings
+    buses = pd.concat([buses, _add_line_endings(buses, lines, add=0)], ignore_index=True)
 
+    # Split lines overpassing nearby buses (tolerance 1 m)
     lines, buses = fix_overpassing_lines(lines, buses, DISTANCE_CRS, tol=1)
+
+    # Update end points
+    bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
+    buses = buses[~bool_virtual_buses]
+    buses = pd.concat([buses, _add_line_endings(buses, lines, add=buses.index.max())], ignore_index=True)
 
     merged_lines_map = _create_merge_mapping(lines, buses, buses_polygon)
     lines, buses = _merge_lines_over_virtual_buses(lines, buses, merged_lines_map)
 
     # Create station seeds
-    stations = _create_station_seeds(buses, buses_polygon, country_shapes, tol = BUS_TOL, distance_crs = DISTANCE_CRS)
+    stations = _create_station_seeds(buses, buses_polygon, country_shapes)
     buses = _merge_buses_to_stations(buses, stations)
 
     # Drop lines that are fully within stations.polygon
     internal_lines = gpd.sjoin(lines, stations, how="inner", predicate="within").line_id
-    lines = lines[~lines.line_id.isin(internal_lines)]
+    logger.info(f"Dropping {len(internal_lines)} lines that are fully within aggregated substations.")
+    lines = lines[~lines.line_id.isin(internal_lines)].reset_index(drop=True)
+    logger.info(f"Keeping {len(lines)} lines.")
+
+    lines = _map_endpoints_to_buses(lines, buses) # Map lines to buses
+    lines = _extend_lines_to_buses(lines, buses) # Extend lines
+
+    # Update all lengths
 
     # Cutting lines at stations["poi_perimeter"] using difference
     # TODO: Only do that with line ends so later, after mapping
     # lines["geometry"] = lines["geometry"].difference(stations["poi_perimeter"].union_all())
 
     # TODO list of accepted voltages per country
-    
+
     ### Debugging - comment out/delete later
+
+    from shapely.geometry import MultiLineString
+    ismulti = lines.geometry.apply(lambda x: isinstance(x, MultiLineString))
+    print(ismulti.sum())
+    lines[ismulti].explore()
+
     # TODO: Delete
     map = None
     map = stations.loc[(stations.index.str.startswith("way") | stations.index.str.startswith("relation"))].explore(color="red")
     map = stations.loc[~(stations.index.str.startswith("way") | stations.index.str.startswith("relation"))].explore(color="green", m=map)
     map = buses_polygon.explore(m=map, color="yellow", popup=True)
-    map = lines.explore(m=map, color="blue")
+    map = lines.explore(m=map, color="blue",popup=True)
     map = links.explore(m=map, color="purple")
     map = buses.explore(m=map, color="black", popup=True)
     map = stations.poi.explore(m=map, color="red", popup=True)
     map = stations.poi_perimeter.explore(m=map, color="white")
     map
+
+    map = lines[ismulti].iloc[[3]].explore()
+    map = stations.loc[(stations.index.str.startswith("way") | stations.index.str.startswith("relation"))].explore(color="red", m=map)
+    map = stations.loc[~(stations.index.str.startswith("way") | stations.index.str.startswith("relation"))].explore(color="green", m=map)
+    map = buses_polygon.explore(m=map, color="yellow", popup=True)
+    map = stations.poi.explore(m=map, color="red", popup=True)
+    map = stations.poi_perimeter.explore(m=map, color="white")
+    map
+
+    # Drop internal subgeometries
+
 
     # Mapping
 
