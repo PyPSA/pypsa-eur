@@ -189,7 +189,7 @@ def find_physical_output(df):
     return slice(start, end)
 
 
-def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
+def get_energy_ratio(country, eurostat_dir, jrc_dir, year, snakemake):
     if country == "CH":
         # data ranges between 2014-2023
         e_country = pd.read_csv(
@@ -228,7 +228,7 @@ def get_energy_ratio(country, eurostat_dir, jrc_dir, year):
     return pd.Series({k: e_ratio[v] for k, v in sub2sect.items()})
 
 
-def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
+def industry_production_per_country(country, year, eurostat_dir, jrc_dir, snakemake):
     def get_sector_data(sector, country):
         jrc_country = jrc_names.get(country, country)
         fn = f"{jrc_dir}/{jrc_country}/JRC-IDEES-2021_Industry_{jrc_country}.xlsx"
@@ -250,7 +250,13 @@ def industry_production_per_country(country, year, eurostat_dir, jrc_dir):
     demand = pd.concat([get_sector_data(s, ct) for s in sect2sub])
 
     if country not in eu27:
-        demand *= get_energy_ratio(country, eurostat_dir, jrc_dir, year)
+        demand *= get_energy_ratio(
+            country,
+            eurostat_dir,
+            jrc_dir,
+            year,
+            snakemake,
+        )
 
     demand.name = country
 
@@ -266,6 +272,7 @@ def industry_production(countries, year, eurostat_dir, jrc_dir):
         year=year,
         eurostat_dir=eurostat_dir,
         jrc_dir=jrc_dir,
+        snakemake=snakemake,
     )
     tqdm_kwargs = dict(
         ascii=False,
