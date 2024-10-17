@@ -577,6 +577,7 @@ def add_carrier_buses(n, carrier, nodes=None):
         suffix = ""
 
         if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
+
             n.add(
                 "Bus",
                 nodes + " primary",
@@ -844,6 +845,7 @@ def add_allam_gas(n, costs):
 
 
 def add_biomass_to_methanol(n, costs):
+
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -867,6 +869,7 @@ def add_biomass_to_methanol(n, costs):
 
 
 def add_biomass_to_methanol_cc(n, costs):
+
     n.add(
         "Link",
         spatial.biomass.nodes,
@@ -1013,6 +1016,57 @@ def add_methanol_to_power(n, costs, types=None):
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             lifetime=costs.at["OCGT", "lifetime"],
         )
+
+
+def add_methanol_to_olefins(n, costs):
+    nodes = spatial.nodes
+    nhours = n.snapshot_weightings.generators.sum()
+    nyears = nhours / 8760
+
+    tech = "methanol-to-olefins/aromatics"
+
+    logger.info(f"Adding {tech}.")
+
+    demand_factor = options["HVC_demand_factor"]
+
+    industrial_production = (
+        pd.read_csv(snakemake.input.industrial_production, index_col=0)
+        * 1e3
+        * nyears  # kt/a -> t/a
+    )
+
+    p_nom_max = (
+        demand_factor
+        * industrial_production.loc[nodes, "HVC"]
+        / nhours
+        * costs.at[tech, "methanol-input"]
+    )
+
+    co2_release = (
+        costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
+        + costs.at["methanolisation", "carbondioxide-input"]
+    )
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=f" {tech}",
+        carrier=tech,
+        capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
+        overnight_cost=costs.at[tech, "investment"] / costs.at[tech, "methanol-input"],
+        marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
+        p_nom_extendable=True,
+        bus0=spatial.methanol.nodes,
+        bus1=spatial.oil.naphtha,
+        bus2=nodes,
+        bus3="co2 atmosphere",
+        p_min_pu=1,
+        p_nom_max=p_nom_max.values,
+        efficiency=1 / costs.at[tech, "methanol-input"],
+        efficiency2=-costs.at[tech, "electricity-input"]
+        / costs.at[tech, "methanol-input"],
+        efficiency3=co2_release,
+    )
 
 
 def add_methanol_to_kerosene(n, costs):
@@ -3884,6 +3938,7 @@ def add_industry(n, costs):
             waste_source = non_sequestered_hvc_locations
 
         if cf_industry["waste_to_energy"]:
+
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP",
@@ -3905,6 +3960,7 @@ def add_industry(n, costs):
             )
 
         if cf_industry["waste_to_energy_cc"]:
+
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP CC",
@@ -3933,6 +3989,7 @@ def add_industry(n, costs):
             )
 
     else:
+
         n.add(
             "Link",
             spatial.oil.naphtha,
