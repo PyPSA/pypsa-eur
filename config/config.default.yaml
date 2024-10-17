@@ -309,9 +309,9 @@ links:
 transmission_projects:
   enable: true
   include:
-    tyndp2020: true
     nep: true
     manual: true
+    tyndp2020: true
   skip:
   - upgraded_lines
   - upgraded_links
