@@ -681,7 +681,7 @@ def add_steel_industry_existing(n):
 
     # BOF
 
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=" Blast Furnaces-2020",
@@ -703,7 +703,7 @@ def add_steel_industry_existing(n):
         build_year=2020,
     )
 
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=" DRI-2020",
@@ -726,7 +726,7 @@ def add_steel_industry_existing(n):
     )
 
     # Blast Furnace + Basic Oxygen Furnace -> BOF
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=" BOF-2020",
@@ -748,7 +748,7 @@ def add_steel_industry_existing(n):
     # EAF
 
     # Electric Arc Furnace
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=" EAF-2020",

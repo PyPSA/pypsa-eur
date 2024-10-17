@@ -214,6 +214,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
 
+    """
     # steel
     spatial.steel = SimpleNamespace()
     spatial.steel.nodes = ["EU steel"]
@@ -249,6 +250,77 @@ def define_spatial(nodes, options):
     spatial.dri_gas = SimpleNamespace()
     spatial.dri_gas.nodes = nodes + " dri gas"
     spatial.dri_gas.locations = nodes  # ["EU"]
+    """
+
+    
+    if options["endo_industry_options"]["regional_steel_demand"]:
+        # steel
+        spatial.steel = SimpleNamespace()
+        spatial.steel.nodes = nodes + " steel"
+        spatial.steel.locations = nodes
+    
+        # high temperature heat
+        spatial.heat4steel = SimpleNamespace()
+        spatial.heat4steel.nodes = nodes + " heat for steel"
+        spatial.heat4steel.locations = nodes
+
+        # iron
+        spatial.iron = SimpleNamespace()
+        spatial.iron.nodes = ["EU iron"]
+        spatial.iron.locations = ["EU"]
+
+        # sponge iron -> DRI product
+        spatial.sponge_iron = SimpleNamespace()
+        spatial.sponge_iron.nodes = nodes + " sponge iron"
+        spatial.sponge_iron.locations = nodes
+
+        # pig iron -> blast furnace product
+        spatial.pig_iron = SimpleNamespace()
+        spatial.pig_iron.nodes = nodes + " pig iron"
+        spatial.pig_iron.locations = nodes
+
+        # coke for steel
+        spatial.coke_steel = SimpleNamespace()
+        spatial.coke_steel.nodes = nodes + " coke for steel"
+        spatial.coke_steel.locations = nodes
+
+    else:
+
+        # steel
+        spatial.steel = SimpleNamespace()
+        spatial.steel.nodes = ["EU steel"]
+        spatial.steel.locations = ["EU"]
+
+        # high temperature heat
+        spatial.heat4steel = SimpleNamespace()
+        spatial.heat4steel.nodes = ["EU heat for steel"]
+        spatial.heat4steel.locations = ["EU"]
+
+        # iron
+        spatial.iron = SimpleNamespace()
+        spatial.iron.nodes = ["EU iron"]
+        spatial.iron.locations = ["EU"]
+
+        # sponge iron -> DRI product
+        spatial.sponge_iron = SimpleNamespace()
+        spatial.sponge_iron.nodes = ["EU sponge iron"]
+        spatial.sponge_iron.locations = ["EU"]
+
+        # pig iron -> blast furnace product
+        spatial.pig_iron = SimpleNamespace()
+        spatial.pig_iron.nodes = ["EU pig iron"]
+        spatial.pig_iron.locations = ["EU"]
+
+        # coke for steel
+        spatial.coke_steel = SimpleNamespace()
+        spatial.coke_steel.nodes = ["EU coke for steel"]
+        spatial.coke_steel.locations = ["EU"]
+
+    # DRI
+    # DRI gas link
+    spatial.dri_gas = SimpleNamespace()
+    spatial.dri_gas.nodes = nodes + " dri gas"
+    spatial.dri_gas.locations = nodes 
 
     return spatial
 
@@ -1019,7 +1091,7 @@ def add_methanol_to_olefins(n, costs):
         + costs.at["methanolisation", "carbondioxide-input"]
     )
 
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=f" {tech}",
@@ -4029,7 +4101,7 @@ def add_industry(n, costs):
         )
 
 
-def add_steel_industry(n, investment_year):
+def add_steel_industry(n, investment_year, options):
 
     # Steel production demanded in Europe in kton of steel products per year
     steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
@@ -4139,6 +4211,11 @@ def add_steel_industry(n, investment_year):
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 1
 
+    if options["endo_industry_options"]["regional_steel_demand"]:
+
+        hourly_steel_production = min_cap_node.copy()
+        hourly_steel_production.index = hourly_steel_production.index.astype(str) + ' steel'
+
     # STEEL
     n.add(
         "Load",
@@ -4193,8 +4270,7 @@ def add_steel_industry(n, investment_year):
         carrier="direct reduced iron",
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        efficiency=1 / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
         efficiency2=28 / 1,  # 28tCO2/kt sponge iron as in JRC IDEES calculations
     )
 
@@ -4207,8 +4283,7 @@ def add_steel_industry(n, investment_year):
         carrier="direct reduced iron",
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        efficiency=1 / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
     )
 
     n.add(
@@ -4223,40 +4298,13 @@ def add_steel_industry(n, investment_year):
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=145000
-        / nhours
-        / (1 / 1.36)
-        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        capital_cost=145000 / nhours / (1 / 1.36) * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
         efficiency=1 / 1.36,
         efficiency2=-2.8 / 1.36,
         # efficiency3=28/1.36,
         lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
-    """
-    n.madd(
-        "Link",
-        nodes,
-        suffix=" H2-DRI",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.h2.nodes,  # in this process is the reducing agent, it is not burnt
-        # bus3=spatial.co2.process_emissions,
-        carrier="direct reduced iron",
-        p_nom_extendable=True,
-        # p_nom_max = max_cap * 1.36,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=145000
-        / nhours
-        / (1 / 1.36)
-        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
-        efficiency=1
-        / 1.39,  # Data on energy parameters: https://www.sciencedirect.com/science/article/pii/S221282712300121X?ref=pdf_download&fr=RR-2&rr=8d07426c9b7d6307
-        efficiency2=-2.21 / 1.36,
-        # efficiency3=28/1.36,
-        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-    )
-    """
 
     # Blast Furnace + Basic Oxygen Furnace -> BOF
     n.add(
@@ -4292,7 +4340,7 @@ def add_steel_industry(n, investment_year):
         carrier="electric arc furnaces",
         p_nom_extendable=True,
         p_nom_max=max_cap,
-        p_min_pu=0.5,  # prod_constantly, # electrical stuff can be switched on and off
+        p_min_pu= prod_constantly, # electrical stuff can be switched on and off
         p_nom_min=min_cap_node,
         p_nom=min_cap_node,
         capital_cost=80000 / nhours / 1 * 0.7551,
@@ -5016,7 +5064,7 @@ if __name__ == "__main__":
         add_industry(n, costs)
 
     if snakemake.params.endo_industry:
-        add_steel_industry(n, investment_year)
+        add_steel_industry(n, investment_year, options)
 
     if options["heating"]:
         add_waste_heat(n)
