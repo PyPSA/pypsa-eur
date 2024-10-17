@@ -456,7 +456,7 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
     supply_temperature_approximation:
-      max_forward_temperature:
+      max_forward_temperature_baseyear:
         FR: 110
         DK: 75
         DE: 109
@@ -465,13 +465,14 @@ sector:
         PL: 130
         SE: 102
         IT: 90
-      min_forward_temperature:
+      min_forward_temperature_baseyear:
         DE: 82
-      return_temperature:
+      return_temperature_baseyear:
         DE: 58
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
+      relative_annual_temperature_reduction: 0.01
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
