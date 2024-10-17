@@ -1695,6 +1695,13 @@ if __name__ == "__main__":
     # Cleaning process
     df_substations = _import_substations(path_substations)
     df_substations["voltage"] = _clean_voltage(df_substations["voltage"])
+
+    # Extract converter subset
+    df_substations.reset_index(drop=True, inplace=True)
+    converter_candidates = df_substations["substation"].str.contains("converter").dropna()
+    converter_candidates = converter_candidates[converter_candidates].index
+    df_converters = df_substations.loc[converter_candidates]
+
     df_substations, list_voltages = _filter_by_voltage(
         df_substations, min_voltage=min_voltage_ac
     )
@@ -1716,6 +1723,15 @@ if __name__ == "__main__":
 
     gdf_substations_polygon["geometry"] = gdf_substations_polygon.polygon.copy()
 
+    # Continue cleaning of converters
+    logger.info("---")
+    logger.info("CONVERTERS")
+    logger.info(f"Extracting {len(df_converters)} converters as subset of substations.")
+    df_converters, list_converter_voltages = _filter_by_voltage(df_converters, min_voltage=min_voltage_dc)
+    df_converters.reset_index(drop=True, inplace=True)
+    gdf_converters = gpd.GeoDataFrame(df_converters[["id", "geometry"]], geometry="geometry", crs=crs)
+
+    # Lines and cables
     logger.info("---")
     logger.info("LINES AND CABLES")
     path_lines = {
@@ -1801,6 +1817,7 @@ if __name__ == "__main__":
 
     output_substations_polygon = snakemake.output["substations_polygon"]
     output_substations = snakemake.output["substations"]
+    output_converters_polygon = snakemake.output["converters_polygon"]
     output_lines = snakemake.output["lines"]
     output_links = snakemake.output["links"]
 
@@ -1812,6 +1829,8 @@ if __name__ == "__main__":
     )
     logger.info(f"Exporting clean substations to {output_substations}")
     gdf_substations.to_file(output_substations, driver="GeoJSON")
+    logger.info(f"Exporting converter polygons to {output_converters_polygon}")
+    gdf_converters.to_file(output_converters_polygon, driver="GeoJSON")
     logger.info(f"Exporting clean lines to {output_lines}")
     gdf_lines.to_file(output_lines, driver="GeoJSON")
     logger.info(f"Exporting clean links to {output_links}")
