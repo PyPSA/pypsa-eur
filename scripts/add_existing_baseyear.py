@@ -358,7 +358,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                             .fillna(costs.at[generator, "lifetime"])
                         )
 
-                    n.madd(
+                    n.add(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
@@ -556,7 +556,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                     bus0 = vars(spatial)[generator].nodes
                 else:
                     bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
-                n.madd(
+                n.add(
                     "Link",
                     p_nom.index,
                     suffix=f" urban central {generator} CHP-{grouping_year}",
@@ -570,15 +570,15 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                     overnight_cost=costs.at[key, "investment"]
                     * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power.dropna(),
-                    efficiency2=efficiency_heat.dropna(),
+                    efficiency=efficiency_power.dropna().loc[p_nom.index],
+                    efficiency2=efficiency_heat.dropna().loc[p_nom.index],
                     efficiency3=costs.at[generator, "CO2 intensity"],
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
                 )
             else:
                 key = "central solid biomass CHP"
-                n.madd(
+                n.add(
                     "Link",
                     p_nom.index,
                     suffix=f" urban {key}-{grouping_year}",
@@ -591,8 +591,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                     overnight_cost=costs.at[key, "investment"]
                     * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power,
-                    efficiency2=efficiency_heat,
+                    efficiency=efficiency_power.loc[p_nom.index],
+                    efficiency2=efficiency_heat.loc[p_nom.index],
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
                 )
@@ -616,7 +616,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                 bus0 = vars(spatial)[generator].nodes
             else:
                 bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
-            n.madd(
+            n.add(
                 "Link",
                 p_nom.index,
                 suffix=f" urban central {generator} CHP-{grouping_year}",
@@ -638,7 +638,7 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
             )
         else:
             key = "central solid biomass CHP"
-            n.madd(
+            n.add(
                 "Link",
                 p_nom.index,
                 suffix=f" urban {key}-{grouping_year}",
@@ -940,7 +940,7 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
             )
             # add biomass boilers
-            n.madd(
+            n.add(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} biomass boiler-{grouping_year}",
