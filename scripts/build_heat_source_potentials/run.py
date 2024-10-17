@@ -46,7 +46,6 @@ if __name__ == "__main__":
     heat_source_technical_potential = {}
     for heat_source, heat_source_features in snakemake.params.heat_sources.items():
 
-        # move this to retrieve later
         heat_source_utilisation_potential = gpd.read_file(
             snakemake.input[f"heat_source_utilisation_potential_{heat_source}"]
         )
@@ -65,13 +64,3 @@ if __name__ == "__main__":
             snakemake.output[f"heat_source_technical_potential_{heat_source}"]
         )
 
-    # import ipdb
-
-    # ipdb.set_trace()
-    # xr.concat(
-    #     [
-    #         val.expand_dims(dim=key)
-    #         for key, val in heat_source_technical_potential.items()
-    #     ],
-    #     dim=list(heat_source_technical_potential.keys()),
-    # ).to_netcdf(snakemake.output.heat_source_technical_potentials)
