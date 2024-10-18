@@ -1141,7 +1141,7 @@ def add_generation(
             ),  # NB: existing capacities are MWel
             p_max_pu=(
                 0.7 if carrier == "uranium" else 1
-            ),  # be conservative for nuclear (maintance or unplanned shut downs)
+            ),  # be conservative for nuclear (maintenance or unplanned shut downs)
             carrier=generator,
             efficiency=(
                 existing_efficiencies[generator]
