@@ -2682,7 +2682,7 @@ def add_biomass(n, costs):
     if biomass_potentials.filter(like="unsustainable").sum().sum() > 0:
         n.add(
             "Generator",
-            spatial.biogas.nodes,
+            spatial.gas.biogas,
             suffix=" unsustainable",
             bus=spatial.gas.biogas,
             carrier="unsustainable biogas",
