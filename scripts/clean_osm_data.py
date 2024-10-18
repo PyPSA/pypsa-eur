@@ -31,7 +31,9 @@ logger = logging.getLogger(__name__)
 
 GEO_CRS = "EPSG:4326"
 DISTANCE_CRS = "EPSG:3035"
-BUS_TOL = 500  # unit: meters, default 5000 - Buses within this distance are grouped together
+BUS_TOL = (
+    500  # unit: meters, default 5000 - Buses within this distance are grouped together
+)
 
 
 def _create_linestring(row):
@@ -937,7 +939,7 @@ def _create_substations_geometry(df_substations):
     return df_substations
 
 
-def _create_substations_poi(df_substations, tol=BUS_TOL/2):
+def _create_substations_poi(df_substations, tol=BUS_TOL / 2):
     """
     Creates Point of Inaccessibility (PoI) from geometries and keeps the original polygons.
 
@@ -1042,7 +1044,9 @@ def _finalise_substations(df_substations):
     )
 
     # Initiate new columns for subsequent build_osm_network step
-    df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(lambda x: x.split("-")[0])
+    df_substations.loc[:, "contains"] = df_substations["bus_id"].apply(
+        lambda x: x.split("-")[0]
+    )
 
     # Initialise x_node column (if the bus is part of an interconnector) to False, will be set later
     df_substations.loc[:, "x_node"] = False
@@ -1380,7 +1384,7 @@ def _merge_touching_polygons(df):
     return gdf
 
 
-def _add_endpoints_to_line(linestring, polygon_dict,tol=BUS_TOL/2):
+def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     """
     Adds endpoints to a line by removing any overlapping areas with polygons.
 
@@ -1436,7 +1440,7 @@ def _get_polygons_at_endpoints(linestring, polygon_dict):
     return bus_id_polygon_dict
 
 
-def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL/2):
+def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL / 2):
     """
     Extends the lines in the given GeoDataFrame `gdf_lines` to the Point of Inaccessibility (PoI) of
     the nearest substations represented by the polygons in the
@@ -1449,7 +1453,9 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
     Returns:
     GeoDataFrame: A new GeoDataFrame with the lines extended to the substations.
     """
-    logger.info("Extending lines ending in substations to interior 'Point of Inaccessibility'")
+    logger.info(
+        "Extending lines ending in substations to interior 'Point of Inaccessibility'"
+    )
     gdf = gpd.sjoin(
         gdf_lines,
         gdf_substations_polygon.drop_duplicates(subset="polygon", inplace=False),
@@ -1486,7 +1492,9 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
     )
 
     gdf.loc[:, "line_geometry_new"] = gdf.apply(
-        lambda row: _add_endpoints_to_line(row["line_geometry"], row["bus_endpoints"], tol),
+        lambda row: _add_endpoints_to_line(
+            row["line_geometry"], row["bus_endpoints"], tol
+        ),
         axis=1,
     )
 
@@ -1526,7 +1534,9 @@ if __name__ == "__main__":
 
     # Extract converter subset
     df_substations.reset_index(drop=True, inplace=True)
-    converter_candidates = df_substations["substation"].str.contains("converter").dropna()
+    converter_candidates = (
+        df_substations["substation"].str.contains("converter").dropna()
+    )
     converter_candidates = converter_candidates[converter_candidates].index
     df_converters = df_substations.loc[converter_candidates]
 
@@ -1555,9 +1565,13 @@ if __name__ == "__main__":
     logger.info("---")
     logger.info("CONVERTERS")
     logger.info(f"Extracting {len(df_converters)} converters as subset of substations.")
-    df_converters, list_converter_voltages = _filter_by_voltage(df_converters, min_voltage=min_voltage_dc)
+    df_converters, list_converter_voltages = _filter_by_voltage(
+        df_converters, min_voltage=min_voltage_dc
+    )
     df_converters.reset_index(drop=True, inplace=True)
-    gdf_converters = gpd.GeoDataFrame(df_converters[["id", "geometry"]], geometry="geometry", crs=crs)
+    gdf_converters = gpd.GeoDataFrame(
+        df_converters[["id", "geometry"]], geometry="geometry", crs=crs
+    )
 
     # Lines and cables
     logger.info("---")
@@ -1592,7 +1606,9 @@ if __name__ == "__main__":
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
     gdf_lines = _remove_lines_within_substations(gdf_lines, gdf_substations_polygon)
 
-    gdf_lines = _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL/2)
+    gdf_lines = _extend_lines_to_substations(
+        gdf_lines, gdf_substations_polygon, tol=BUS_TOL / 2
+    )
 
     logger.info("---")
     logger.info("HVDC LINKS")
