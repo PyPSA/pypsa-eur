@@ -2897,8 +2897,8 @@ def add_biomass(n, costs):
             p_nom=unsustainable_biogas_potentials_spatial,
             p_nom_extendable=False,
             marginal_cost=costs.at["biogas", "fuel"],
-            e_sum_min=unsustainable_biogas_potentials_spatial.sum(),
-            e_sum_max=unsustainable_biogas_potentials_spatial.sum(),
+            e_sum_min=unsustainable_biogas_potentials_spatial,
+            e_sum_max=unsustainable_biogas_potentials_spatial,
         )
 
         n.add(
@@ -2909,8 +2909,8 @@ def add_biomass(n, costs):
             p_nom=unsustainable_solid_biomass_potentials_spatial,
             p_nom_extendable=False,
             marginal_cost=costs.at["fuelwood", "fuel"],
-            e_sum_min=unsustainable_solid_biomass_potentials_spatial.sum(),
-            e_sum_max=unsustainable_solid_biomass_potentials_spatial.sum(),
+            e_sum_min=unsustainable_solid_biomass_potentials_spatial,
+            e_sum_max=unsustainable_solid_biomass_potentials_spatial,
         )
 
         n.add(
@@ -3092,6 +3092,11 @@ def add_biomass(n, costs):
             n.generators.loc[
                 n.generators.carrier == "unsustainable solid biomass", "e_sum_min"
             ] = 0
+            # Set e_sum_max to the potential to limit the faux biomass transport
+            n.generators.loc[
+                n.generators.carrier == "unsustainable solid biomass", "e_sum_max"
+            ] = unsustainable_solid_biomass_potentials_spatial.sum()
+
             n.add(
                 "GlobalConstraint",
                 "unsustainable biomass limit",
