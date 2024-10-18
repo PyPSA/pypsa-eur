@@ -2170,6 +2170,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             )
             e_nom = e_nom.max()
 
+            # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
             tes_time_constant_days = options["tes_tau"]["decentral"]
 
             n.madd(
@@ -2178,7 +2179,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 suffix=f" {heat_system} heat flexibility",
                 bus=nodes + f" {heat_system} heat",
                 carrier="residential heating flexibility",
-                standing_loss=0,  # 1 - np.exp(-1 / 24 / tes_time_constant_days),
+                standing_loss=1-np.exp(-1/24/tes_time_constant_days),
                 e_cyclic=True,
                 e_nom=e_nom,
                 e_max_pu=heat_dsm_profile,
