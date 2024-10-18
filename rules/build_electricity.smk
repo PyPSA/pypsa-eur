@@ -794,7 +794,9 @@ if config["electricity"]["base_network"] == "osm-raw":
 
     rule build_osm_network:
         params:
-            countries=config_provider("countries")
+            countries=config_provider("countries"),
+            voltages=config_provider("electricity", "voltages"),
+            line_types=config_provider("lines", "types"),
         input:
             substations=resources("osm-raw/clean/substations.geojson"),
             substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),

@@ -456,7 +456,8 @@ def _set_electrical_parameters_transformers(transformers, config):
 
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
-    transformers["s_nom"] = config.get("s_nom", 2000)
+    if "s_nom" not in transformers:
+        transformers["s_nom"] = config.get("s_nom", 2000)
     transformers["type"] = config.get("type", "")
 
     return transformers
