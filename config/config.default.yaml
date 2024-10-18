@@ -487,6 +487,9 @@ sector:
     rural:
     - air
     - ground
+  residential_heat_dsm: true
+  residential_heat_restriction_value: 0.27
+  residential_heat_restriction_time: [10, 22] # 9am and 9pm
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.75
