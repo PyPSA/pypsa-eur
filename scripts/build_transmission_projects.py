@@ -248,11 +248,11 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     if type == "new":
         if len(found_i) != 0:
             attr = "p_nom" if "p_nom" in lines else "v_nom"
-            duplicated=line_map["existing_line"]
+            duplicated = line_map["existing_line"]
             to_ignore = is_similar(
                 new_lines.loc[duplicated.index, attr],
                 duplicated.map(lines[attr]),
-                percentage=10
+                percentage=10,
             )
             line_map = line_map[to_ignore]
             logger.warning(
