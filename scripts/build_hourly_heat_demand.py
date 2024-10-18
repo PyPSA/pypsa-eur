@@ -37,6 +37,7 @@ import pandas as pd
 import xarray as xr
 from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config
 
+
 def heat_dsm_profile(nodes, options):
 
     weekly_profile = np.ones((24 * 7))
@@ -50,6 +51,7 @@ def heat_dsm_profile(nodes, options):
     )
 
     return dsm_profile
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

@@ -2165,7 +2165,9 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 .multiply(factor)
             )
 
-            heat_dsm_profile = heat_dsm_profile * options["residential_heat_restriction_value"]
+            heat_dsm_profile = (
+                heat_dsm_profile * options["residential_heat_restriction_value"]
+            )
             e_nom = e_nom.max()
 
             tes_time_constant_days = options["tes_tau"]["decentral"]
@@ -2176,10 +2178,10 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 suffix=f" {heat_system} heat flexibility",
                 bus=nodes + f" {heat_system} heat",
                 carrier="residential heating flexibility",
-                standing_loss=0, # 1 - np.exp(-1 / 24 / tes_time_constant_days),
+                standing_loss=0,  # 1 - np.exp(-1 / 24 / tes_time_constant_days),
                 e_cyclic=True,
                 e_nom=e_nom,
-                e_max_pu=heat_dsm_profile
+                e_max_pu=heat_dsm_profile,
             )
 
             logger.info(f"adding heat dsm in {heat_system} heating.")
