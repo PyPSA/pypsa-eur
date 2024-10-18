@@ -75,6 +75,15 @@ def build_nodal_industrial_production():
         buses = keys.index[keys.country == country]
         mapping = sector_mapping.get(sector, "population")
 
+        try:
+            key = keys.loc[buses, mapping].fillna(0)
+        except:
+            logger.info(
+                f"No industrial production available for {mapping}. Filling with zeros."
+            )
+            keys[mapping] = 0
+            key = keys.loc[buses, mapping].fillna(0)
+
         key = keys.loc[buses, mapping]
         nodal_production.loc[buses, sector] = (
             industrial_production.at[country, sector] * key

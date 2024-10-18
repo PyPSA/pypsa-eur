@@ -72,7 +72,15 @@ def build_nodal_industrial_energy_demand():
         buses = keys.index[keys.country == country]
         mapping = sector_mapping.get(sector, "population")
 
-        key = keys.loc[buses, mapping]
+        try:
+            key = keys.loc[buses, mapping].fillna(0)
+        except:
+            logger.info(
+                f"No industrial demand available for {mapping}. Filling with zeros."
+            )
+            keys[mapping] = 0
+            key = keys.loc[buses, mapping].fillna(0)
+            
         demand = industrial_demand[country, sector]
 
         outer = pd.DataFrame(
