@@ -265,9 +265,6 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     df_to_add.set_crs(lines.crs, inplace=True)
     df_to_add.set_index(lines.index[-1] + df_to_add.index, inplace=True)
 
-    # update length
-    df_to_add["length"] = df_to_add.to_crs(distance_crs).geometry.length
-
     # remove original lines
     lines.drop(lines_to_split, inplace=True)
     lines = df_to_add if lines.empty else pd.concat([lines, df_to_add])
@@ -1494,20 +1491,26 @@ def build_network(
     lines = _merge_identical_lines(lines)
 
     ### DATA PROCESSING (AC)
-    buses = buses[buses.intersects(lines.union_all())].reset_index(
-        drop=True
-    )  # Drop all buses that do not intersect with lines
+    # logger.info("Dropping buses that do not intersect with lines.")
+    # buses = buses[buses.intersects(lines.union_all())].reset_index(
+    #     drop=True
+    # )  # Drop all buses that do not intersect with lines
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
 
-    # Split lines overpassing nearby buses (tolerance 1 m)
-    lines = split_overpassing_lines(lines, buses)
+    enable_line_splitting = False
+    if enable_line_splitting:
+        # Split lines overpassing nearby buses (tolerance 1 m)
+        lines = split_overpassing_lines(lines, buses)
 
-    # Update end points
-    bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
-    buses = buses[~bool_virtual_buses]
-    buses_updated_line_endings = _add_line_endings(buses, lines)
-    buses = pd.concat([buses, buses_updated_line_endings], ignore_index=True)
+        # Update end points
+        bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
+        buses = buses[~bool_virtual_buses]
+        buses_updated_line_endings = _add_line_endings(buses, lines)
+        buses = pd.concat([buses, buses_updated_line_endings], ignore_index=True)
+
+    # Update length of lines
+    lines["length"] = lines.to_crs(DISTANCE_CRS).length
 
     # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)
     merged_lines_map = _create_merge_mapping(lines, buses, buses_polygon)
