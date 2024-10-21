@@ -213,45 +213,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
-
-    """
-    # steel
-    spatial.steel = SimpleNamespace()
-    spatial.steel.nodes = ["EU steel"]
-    spatial.steel.locations = ["EU"]
-
-    # high temperature heat
-    spatial.heat4steel = SimpleNamespace()
-    spatial.heat4steel.nodes = ["EU heat for steel"]
-    spatial.heat4steel.locations = ["EU"]
-
-    # iron
-    spatial.iron = SimpleNamespace()
-    spatial.iron.nodes = ["EU iron"]
-    spatial.iron.locations = ["EU"]
-
-    # sponge iron -> DRI product
-    spatial.sponge_iron = SimpleNamespace()
-    spatial.sponge_iron.nodes = ["EU sponge iron"]
-    spatial.sponge_iron.locations = ["EU"]
-
-    # pig iron -> blast furnace product
-    spatial.pig_iron = SimpleNamespace()
-    spatial.pig_iron.nodes = ["EU pig iron"]
-    spatial.pig_iron.locations = ["EU"]
-
-    # coke for steel
-    spatial.coke_steel = SimpleNamespace()
-    spatial.coke_steel.nodes = ["EU coke for steel"]
-    spatial.coke_steel.locations = ["EU"]
-
-    # DRI
-    # DRI gas link
-    spatial.dri_gas = SimpleNamespace()
-    spatial.dri_gas.nodes = nodes + " dri gas"
-    spatial.dri_gas.locations = nodes  # ["EU"]
-    """
-
+    
     if options["endo_industry_options"]["regional_steel_demand"]:
         # steel
         spatial.steel = SimpleNamespace()
@@ -4174,14 +4136,7 @@ def add_steel_industry(n, investment_year, options):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in [
-        "steel",
-        "heat4steel",
-        "sponge_iron",
-        "pig_iron",
-        "coke_steel",
-        "dri_gas",
-    ]:
+    for carrier in ["steel","heat4steel","sponge_iron","pig_iron","coke_steel","dri_gas",]:
 
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
@@ -4345,9 +4300,15 @@ def add_steel_industry(n, investment_year, options):
         carrier="electric arc furnaces",
         p_nom_extendable=True,
         p_nom_max=max_cap,
+<<<<<<< HEAD
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
         p_nom_min=min_cap_node,
         p_nom=min_cap_node,
+=======
+        p_min_pu= prod_constantly, # electrical stuff can be switched on and off
+        #p_nom_min=min_cap_node,
+        #p_nom=min_cap_node,
+>>>>>>> 1d3fc4da (Adding lifetimes from gem)
         capital_cost=80000 / nhours / 1 * 0.7551,
         efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861 / 1,  # MWh electricity per kt sponge iron

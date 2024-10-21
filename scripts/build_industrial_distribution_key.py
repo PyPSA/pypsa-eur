@@ -275,6 +275,9 @@ def build_nodal_distribution_key(
 
     # add specific steel subsectors
     steel_processes = ["EAF", "DRI + EAF", "Integrated steelworks"]
+    gem_capacities = pd.DataFrame(index=regions.index, columns=steel_processes)
+    gem_start_dates = pd.DataFrame(index=regions.index, columns=steel_processes)
+
     for process, country in product(steel_processes, countries):
         regions_ct = regions.index[regions.index.str.contains(country)]
 
@@ -346,6 +349,34 @@ def build_nodal_distribution_key(
             )
         else:
             raise ValueError(f"Unknown process {process}")
+        
+        # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
+        capacities_sum = capacities.sum() if not capacities.empty else 0
+        gem_capacities.loc[regions_ct, process] = capacities_sum
+
+        # Calculate the weighted average of start dates using capacities as weights
+        if not capacities.empty:
+            start_dates = facilities.loc[capacities.index, "Start date"].dropna()
+            filtering = capacities[(start_dates != 0) & (capacities != 0)].index
+            filtered_capacities = capacities.loc[filtering]
+            filtered_start_dates = start_dates.loc[filtering]
+            filtered_capacities_sum = filtered_capacities.sum()
+            print(f"Start dates {filtered_start_dates}")
+            print(f"Capacities {filtered_capacities}")
+            print(f"Sum {filtered_capacities_sum}")
+
+            if filtered_capacities_sum > 0:
+                weighted_sum = (filtered_capacities * filtered_start_dates).sum()
+                print(f"Region {regions_ct}")
+                print(f"Weighted sum {weighted_sum}")
+                weighted_avg = weighted_sum / filtered_capacities_sum
+                gem_start_dates.loc[regions_ct, process] = weighted_avg
+            else:
+                # If no valid capacities, assign 0 or NaN
+                gem_start_dates.loc[regions_ct, process] = 0
+        else:
+            # If capacities are empty, assign 0 or NaN
+            gem_start_dates.loc[regions_ct, process] = 0
 
         if not capacities.empty:
             if capacities.sum() == 0:
@@ -379,7 +410,7 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, "Ammonia"] = key
 
-    return keys
+    return keys, gem_capacities, gem_start_dates
 
 
 if __name__ == "__main__":
@@ -407,8 +438,11 @@ if __name__ == "__main__":
 
     refineries = prepare_refineries_supplement(regions)
 
-    keys = build_nodal_distribution_key(
+    keys, gem_capacities, gem_start_dates = build_nodal_distribution_key(
         hotmaps, gem, ammonia, cement, refineries, regions, countries
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
+    gem_capacities.to_csv(snakemake.output.gem_capacities)
+    gem_start_dates.to_csv(snakemake.output.gem_start_dates)
+

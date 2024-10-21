@@ -535,7 +535,7 @@ rule build_industry_sector_ratios:
         idees="data/jrc-idees-2021",
     output:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
-        steel_capacities=resources("steel_demand_projections/steel_capacities.csv"),  #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
+        steel_capacities=resources("steel/steel_capacities.csv"),  #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
     threads: 1
     resources:
         mem_mb=1000,
@@ -649,6 +649,8 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
+        gem_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
+        gem_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
@@ -784,7 +786,7 @@ if config["enable"].get("endo_industry", False):
         input:
             ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
         output:
-            resources("steel_demand_projections/eu_steel_production.csv"),
+            steel_demand=resources("steel/eu_steel_production.csv"),
         log:
             logs("build_industry_steel_production_projections.log"),
         resources:
@@ -1146,12 +1148,12 @@ rule prepare_sector_network:
             else []
         ),
         steel_production=lambda w: (
-            resources("steel_demand_projections/eu_steel_production.csv")
+            resources("steel/eu_steel_production.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
         steel_capacities=lambda w: (
-            resources("steel_demand_projections/steel_capacities.csv")
+            resources("steel/steel_capacities.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),

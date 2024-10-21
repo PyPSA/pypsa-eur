@@ -627,8 +627,9 @@ def add_heating_capacities_installed_before_baseyear(
 def add_steel_industry_existing(n):
 
     # Steel capacities in Europe in kton of steel products per year
-    capacities = pd.read_csv(snakemake.input.steel_capacities)
-
+    #capacities = pd.read_csv(snakemake.input.steel_capacities)
+    capacities = pd.read_csv(snakemake.input.gem_capacities)
+    start_dates = pd.read_csv(snakemake.input.gem_start_dates)
     # Retrieve BOF capacities
     capacities_bof = capacities[capacities["tech"] == "BOF"]
     capacities_bof = capacities_bof.drop(columns=["Unnamed: 0", "tech"])
@@ -806,6 +807,8 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
+    gem = snakemake.input.gem_capacities
+    print(f"GEM {gem}")
 
     baseyear = snakemake.params.baseyear
 

@@ -20,7 +20,6 @@ from pandas import Timedelta as Delta
 
 # -------------------- STEEL PRODUCTION ------------------------
 
-
 # Define the function to calculate the intensity of use for steel based on https://www.sciencedirect.com/science/article/pii/S0301420713001207
 def calculate_eu_steel_production(gdppc, gdp, investment_years):
 
@@ -126,4 +125,4 @@ if __name__ == "__main__":
     # Project the load based on empirical analyses for future years scenarios
 
     eu_prod = steel_projections(ssp, investment_years)
-    eu_prod.to_csv(snakemake.output[0])
+    eu_prod.to_csv(snakemake.output.steel_demand)
