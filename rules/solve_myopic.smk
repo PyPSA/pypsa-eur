@@ -11,6 +11,7 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        endo_industry=config_provider("enable", "endo_industry"),
     input:
         network=RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -28,6 +29,21 @@ rule add_existing_baseyear:
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
+        steel_capacities=lambda w: (
+            resources("steel/steel_capacities.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        gem_capacities=lambda w: (
+            resources("steel/gem_capacities_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        gem_start_dates=lambda w: (
+            resources("steel/gem_start_dates_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
     output:
         RESULTS
         + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -68,6 +84,9 @@ rule add_brownfield:
             "sector", "H2_retrofit_capacity_per_CH4"
         ),
         threshold_capacity=config_provider("existing_capacities", "threshold_capacity"),
+        threshold_capacity_steel=config_provider(
+            "existing_capacities", "threshold_capacity_steel"
+        ),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),

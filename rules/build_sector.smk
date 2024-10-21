@@ -529,11 +529,13 @@ rule build_industry_sector_ratios:
     params:
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
+        endo_industry=config_provider("enable", "endo_industry"),
     input:
         ammonia_production=resources("ammonia_production.csv"),
         idees="data/jrc-idees-2021",
     output:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
+        steel_capacities=resources("steel/steel_capacities.csv"),  #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
     threads: 1
     resources:
         mem_mb=1000,
@@ -647,6 +649,8 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
+        gem_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
+        gem_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
@@ -774,6 +778,23 @@ rule build_industrial_energy_demand_per_node_today:
         "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
+
+
+if config["enable"].get("endo_industry", False):
+
+    rule build_industry_steel_production_projections:
+        input:
+            ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
+        output:
+            steel_demand=resources("steel/eu_steel_production.csv"),
+        log:
+            logs("build_industry_steel_production_projections.log"),
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industry_steel_production_projections.py"
 
 
 rule build_retro_cost:
@@ -1028,6 +1049,8 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        endo_industry=config_provider("enable", "endo_industry"),
+        co2_budget_apply=config_provider("co2_budget_apply"),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1122,6 +1145,16 @@ rule prepare_sector_network:
         egs_capacity_factors=lambda w: (
             resources("egs_capacity_factors_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        steel_production=lambda w: (
+            resources("steel/eu_steel_production.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        steel_capacities=lambda w: (
+            resources("steel/steel_capacities.csv")
+            if config_provider("enable", "endo_industry")(w)
             else []
         ),
     output:

@@ -34,10 +34,12 @@ def add_brownfield(n, n_p, year):
     n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
+
         attr = "e" if c.name == "Store" else "p"
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
+
         n_p.remove(c.name, c.df.index[c.df.lifetime == np.inf])
 
         # remove assets whose build_year + lifetime <= year
@@ -51,7 +53,18 @@ def add_brownfield(n, n_p, year):
             & c.df.index.str.contains("heat")
         ]
 
+        steel_processes = c.df.index[
+            c.df[f"{attr}_nom_extendable"]
+            & (
+                c.df.index.str.contains("BOF")
+                | c.df.index.str.contains("DRI")
+                | c.df.index.str.contains("Blast Furnaces")
+                | c.df.index.str.contains("EAF")
+            )
+        ]
+
         threshold = snakemake.params.threshold_capacity
+        threshold_steel = snakemake.params.threshold_capacity_steel
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -68,8 +81,20 @@ def add_brownfield(n, n_p, year):
         n_p.remove(
             c.name,
             c.df.index[
-                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
+                (
+                    c.df[f"{attr}_nom_extendable"]
+                    & ~c.df.index.isin(chp_heat)
+                    & ~c.df.index.isin(steel_processes)
+                )
                 & (c.df[f"{attr}_nom_opt"] < threshold)
+            ],
+        )
+
+        n_p.mremove(
+            c.name,
+            c.df.index[
+                (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
+                & (c.df[f"{attr}_nom_opt"] < threshold_steel)
             ],
         )
 
@@ -84,6 +109,7 @@ def add_brownfield(n, n_p, year):
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
+            # n.add(c.pnl[tattr], c.name, tattr)
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
     # deal with gas network
@@ -261,11 +287,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="37",
+            clusters="39",
             opts="",
-            ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
-            planning_horizons=2030,
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons=2040,
+            run="baseline",
         )
 
     configure_logging(snakemake)
