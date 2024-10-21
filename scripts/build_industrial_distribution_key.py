@@ -349,7 +349,7 @@ def build_nodal_distribution_key(
             )
         else:
             raise ValueError(f"Unknown process {process}")
-        
+
         # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
         capacities_sum = capacities.sum() if not capacities.empty else 0
         gem_capacities.loc[regions_ct, process] = capacities_sum
@@ -445,4 +445,3 @@ if __name__ == "__main__":
     keys.to_csv(snakemake.output.industrial_distribution_key)
     gem_capacities.to_csv(snakemake.output.gem_capacities)
     gem_start_dates.to_csv(snakemake.output.gem_start_dates)
-

@@ -213,7 +213,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
-    
+
     if options["endo_industry_options"]["regional_steel_demand"]:
         # steel
         spatial.steel = SimpleNamespace()
