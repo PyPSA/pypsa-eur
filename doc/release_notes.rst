@@ -78,6 +78,8 @@ Upcoming Release
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
 
+* Add demand-side-response (DSR) for the heating sector.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
