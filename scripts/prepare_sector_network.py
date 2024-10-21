@@ -2541,7 +2541,7 @@ def add_biomass(n, costs):
     if options["regional_oil_demand"]:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
             "unsustainable bioliquids"
-        ].rename(index=lambda x: x + " bioliquids")
+        ].rename(index=lambda x: x + " unsustainable bioliquids")
     else:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
             "unsustainable bioliquids"
