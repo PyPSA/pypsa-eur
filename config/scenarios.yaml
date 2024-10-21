@@ -16,11 +16,18 @@
 fast:
   sector:
     car_reg_factor:
-      2025: 0.5  # level in 2023 0.16
-      2030: 1
-      2035: 1
-      2040: 1.2
-      2050: 1.2
+      light:
+        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 1.0
+        2035: 1.2
+        2040: 1.2
+        2050: 1.2
+      heavy:
+        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 1.0
+        2035: 1.2
+        2040: 1.2
+        2050: 1.2
     vary:
       Link:
         land transport EV heavy:
@@ -45,14 +52,26 @@ base:
     logistic_curve: false
 
 
+dsm:
+  sector:
+    bev_dsm: true
+
+
 slow:
   sector:
     car_reg_factor:
-      2025: 0.16  # same level as in 2023
-      2030: 0.2
-      2035: 0.3
-      2040: 0.3
-      2050: 0.5
+      light:
+        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 0.3
+        2035: 0.5
+        2040: 0.9
+        2050: 1.0
+      heavy:
+        2025: 0.1  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 0.2
+        2035: 0.3
+        2040: 0.5
+        2050: 0.9
     logistic_curve: false
 
 high-demand:

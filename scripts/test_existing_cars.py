@@ -14,7 +14,7 @@ for year in np.arange(2025,2055, 5):
                     & (n.links.carrier == f"land transport oil {transport_type}"))
     links_i = n.links[filter_links].index
     
-    factor = options["car_reg_factor"]
+    factor = get(options["car_reg_factor"][transport_type], year)
     reg = registrations.loc[transport_type].iloc[:,0] * factor
     
     unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)

@@ -660,9 +660,10 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
     registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
     historical_ev_share = pd.read_csv(snakemake.input.historical_ev_share,
                                       index_col=[0], header=[0,1])
-    factor = get(options["car_reg_factor"], baseyear)
-   
+    
     for transport_type in transport_types:
+        
+        factor = get(options["car_reg_factor"][transport_type], year)
         
         reg = registrations.loc[transport_type].iloc[:,0] * factor
         today_ev = historical_ev_share.ffill().iloc[-1].loc[transport_type]
@@ -697,7 +698,7 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         eff = efficiency.rename(
             columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
 
-        n.madd(
+        n.add(
             "Link",
             df.index,
             bus0=df.bus0,
@@ -757,11 +758,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            # configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.myopic.yaml",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",
             ll="v1.0",
             opts="",
             sector_opts="",
-            planning_horizons=2025,
+            planning_horizons=2030,
             clusters=39,
         )
 

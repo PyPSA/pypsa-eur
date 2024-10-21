@@ -273,7 +273,7 @@ def plot_balances(balances, drop=None):
     co2_carriers = ["co2", "co2 stored", "process emissions"]
     balances_df = {i.replace(" ", "_"): [i] for i in balances.index.levels[0]}
     balances_df["energy"] = [
-        i for i in balances_df.index.levels[0] if i not in co2_carriers
+        i for i in balances.index.levels[0] if i not in co2_carriers
     ]
 
     for k, v in balances_df.items():
@@ -620,7 +620,7 @@ def plot_comparison(balances, capacities, drop=True):
     
     nrows = 4
     ncols = len(planning_horizons[1:])
-   #%%
+   
     fig, axes = plt.subplots(
     nrows=nrows, ncols=ncols, 
     figsize=(12, 8), 
@@ -848,7 +848,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v3.yaml",)
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

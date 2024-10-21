@@ -39,7 +39,8 @@ def add_brownfield(n, n_p, year):
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
-        n_p.remove(c.name, c.df.index[c.df.lifetime == np.inf])
+        n_p.remove(c.name, c.df.index[(c.df.lifetime == np.inf) &
+                                       ~c.df.index.str.contains("existing")])
 
         # remove assets whose build_year + lifetime <= year
         n_p.remove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
@@ -263,7 +264,7 @@ def adjust_transport(n, ref_year=2024):
                         & (n.links.carrier == f"land transport oil {transport_type}"))
         links_i = n.links[filter_links].index
         
-        factor = get(options["car_reg_factor"], year)
+        factor = get(options["car_reg_factor"][transport_type], year)
         reg = registrations.loc[transport_type].iloc[:,0] * factor
         
         previous_year = n_p.links.build_year.max()

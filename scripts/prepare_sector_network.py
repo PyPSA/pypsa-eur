@@ -694,7 +694,7 @@ def add_co2_tracking(n, costs, options):
         unit="t_co2",
     )
 
-    n.madd(
+    n.add(
         "Link",
         sequestration_buses,
         bus0=spatial.co2.nodes,
@@ -987,7 +987,7 @@ def add_methanol_to_olefins(n, costs):
         + costs.at["methanolisation", "carbondioxide-input"]
     )
 
-    n.madd(
+    n.add(
         "Link",
         nodes,
         suffix=f" {tech}",
@@ -1922,10 +1922,10 @@ def add_EVs(
 
     n.add(
         "Bus",
-        spatial.nodes,
+        nodes,
         suffix=f" EV battery {transport_type}",
-        location=spatial.nodes,
-        carrier="EV battery",
+        location=nodes,
+        carrier="Li ion",
         unit="MWh_el",
     )
         
@@ -1945,26 +1945,50 @@ def add_EVs(
 
     efficiency *= cyclic_eff
 
-    profile = electric_share * p_set.div(efficiency)
+    p_nom = electric_share * p_set.div(efficiency).max()
 
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+    
+    capital_cost = get_capital_cost_vehicle(electric_share * number_cars,
+                                            p_nom,
+                                            endogenous,
+                                            carrier=suffix[1:])
+
+    if options["logistic_curve"]:
+        projected_ev = pd.read_csv(snakemake.input.projected_ev_share, index_col=[0],
+                               header=[0,1])
+        p_nom_e = p_nom / electric_share
+        max_p_nom_ev = projected_ev.loc[int(snakemake.wildcards.planning_horizons),transport_type]
+        p_nom_max = p_nom_e * max_p_nom_ev
+    else:
+        p_nom_max = np.inf
+        
     n.add(
-        "Load",
-        spatial.nodes,
-        suffix=" land transport EV",
-        bus=spatial.nodes + " EV battery",
-        carrier="land transport EV",
-        p_set=profile.loc[n.snapshots],
+        "Link",
+        nodes,
+        suffix=suffix,
+        bus0=nodes + f" EV battery {transport_type}",
+        bus1=nodes + f" land transport {transport_type}",
+        carrier=suffix[1:],
+        efficiency=efficiency,
+        p_min_pu=profile,
+        p_max_pu=profile,
+        p_nom=p_nom,
+        p_nom_max=p_nom_max,
+        p_nom_extendable=False,
+        capital_cost=capital_cost,
+        lifetime=15,
     )
     
     p_nom = (number_cars * options["bev_charge_rate"][transport_type]
              * electric_share)
 
-    n.madd(
+    n.add(
         "Link",
-        spatial.nodes,
-        suffix=" BEV charger",
-        bus0=spatial.nodes,
-        bus1=spatial.nodes + " EV battery",
+        nodes,
+        suffix=f" BEV charger {transport_type}",
+        bus0=nodes,
+        bus1=nodes + f" EV battery {transport_type}",
         p_nom=p_nom,
         carrier=f"BEV charger {transport_type}",
         p_max_pu=avail_profile[nodes],
@@ -1973,23 +1997,23 @@ def add_EVs(
     )
 
     if options["v2g"] and transport_type=="light":
-        n.madd(
+        n.add(
             "Link",
-            spatial.nodes,
+            nodes,
             suffix=" V2G",
-            bus1=spatial.nodes,
-            bus0=spatial.nodes + " EV battery",
+            bus1=nodes,
+            bus0=nodes + f" EV battery {transport_type}",
             p_nom=p_nom,
             carrier="V2G",
-            p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
+            p_max_pu=avail_profile[nodes],
             lifetime=1,
-            efficiency=options["bev_charge_efficiency"],
+            efficiency=options.get("bev_charge_efficiency", 0.9),
         )
 
     if options["bev_dsm"]:
         e_nom = (
             number_cars
-            * options["bev_energy"]
+            * options.get("bev_energy", 0.05)
             * options["bev_availability"]
             * electric_share
         )
@@ -1999,11 +2023,12 @@ def add_EVs(
             nodes,
             suffix=" battery storage",
             bus=nodes + f" EV battery {transport_type}",
-            carrier="EV battery",
+            carrier="battery storage",
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
-            e_min_pu=dsm_profile.loc[n.snapshots, spatial.nodes],
+            e_min_pu=dsm_profile[nodes],
+            lifetime=15,
         )
 
 def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, number_cars, 
@@ -2039,13 +2064,23 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, number_cars,
     else:
         p_nom_max = np.inf
 
+    profile = p_set.div(efficiency) / p_set.div(efficiency).max()
+
     n.add(
-        "Load",
-        spatial.nodes,
-        suffix=" land transport fuel cell",
-        bus=spatial.h2.nodes,
-        carrier="land transport fuel cell",
-        p_set=profile,
+        "Link",
+        nodes,
+        suffix=suffix,
+        bus0=spatial.h2.nodes,
+        bus1=nodes + f" land transport {transport_type}",
+        carrier=suffix[1:],
+        capital_cost=capital_cost,
+        efficiency=efficiency,
+        p_nom_extendable=False,
+        p_nom=p_nom,
+        p_nom_max=p_nom_max,
+        p_min_pu=profile,
+        p_max_pu=profile,
+        lifetime=1,
     )
 
 
@@ -2056,7 +2091,6 @@ def add_ice_cars(n, nodes, p_set, ice_share, number_cars, temperature,
                            ):
 
     add_carrier_buses(n, "oil")
-
 
     # temperature corrected efficiency
     efficiency = get_temp_efficency(
@@ -2077,60 +2111,164 @@ def add_ice_cars(n, nodes, p_set, ice_share, number_cars, temperature,
 
     profile = p_set.div(efficiency) / p_set.div(efficiency).max()
 
-    n.madd(
+    n.add(
         "Link",
-        spatial.oil.land_transport,
+        nodes,
+        suffix=suffix,
         bus0=spatial.oil.nodes,
-        bus1=spatial.oil.land_transport,
-        bus2="co2 atmosphere",
-        carrier="land transport oil",
+        bus1=nodes + f" land transport {transport_type}",
+        bus2=["co2 atmosphere"],
+        carrier=suffix[1:],
+        capital_cost=capital_cost,
+        efficiency=efficiency,
         efficiency2=costs.at["oil", "CO2 intensity"],
-        p_nom_extendable=True,
+        p_nom_extendable=False,
+        p_nom=p_nom,
+        p_min_pu=profile,
+        p_max_pu=profile,
+        lifetime=1,
     )
+
+
+
+
+car_keys = {"fuel_cell": ['FCV Bus city',
+                      'FCV Coach',
+                      'FCV Truck Semi-Trailer max 50 tons',
+                       'FCV Truck Solo max 26 tons',
+                       'FCV Truck Trailer max 56 tons'],
+        "ice": ['Diesel Bus city', 'Diesel Coach',
+               'Diesel Truck Semi-Trailer max 50 tons',
+               'Diesel Truck Solo max 26 tons',
+               'Diesel Truck Trailer max 56 tons'],
+        "electric": ['BEV Bus city', 'BEV Coach',
+                     'BEV Truck Semi-Trailer max 50 tons',
+               'BEV Truck Solo max 26 tons',
+               'BEV Truck Trailer max 56 tons']}
+
+
+def get_car_efficiencies(engine_types, transport_types):
+    car_efficiencies =  pd.DataFrame()
+    for engine in engine_types:
+        for transport_type in transport_types:
+            car_efficiencies.loc[engine, transport_type] = options[f"transport_{engine}_efficiency"][transport_type]
+        # heavy
+        logger.info(f"overwriting heavy duty efficiency from config with DEA data for {engine}")
+        car_efficiency = costs.loc[car_keys[engine], "efficiency"].mean()
+        # convert kWh/km in 100 km / MWh
+        car_efficiency = (1/(1e2*car_efficiency))*1e3
+        car_efficiencies.loc[engine, "heavy"] = car_efficiency
+        
+    return car_efficiencies
+
+
+def get_shares(engine_types, transport_types, endogenous):
+    shares = {}
+    for engine in engine_types:
+        for transport_type in transport_types:
+            shares[engine, transport_type] = get(options[f"land_transport_{engine}_share"][transport_type],
+                                 investment_year)
+            if not endogenous:
+                logger.info(f"{engine} {transport_type} share: {shares[engine, transport_type]*100}%")
+    shares = pd.Series(shares)
+    if not endogenous:
+        check_land_transport_shares(shares)
+    else:
+        logger.info("Endogenous optimisation of land transport sector")
+        # todo make this nicer
+        shares.loc[:,:] = 1/3
+    return shares
 
 
 def add_land_transport(n, costs):
 
     logger.info("Add land transport")
+    
+    nodes = spatial.nodes
 
-    # read in transport demand in units driven km [100 km]
+    # read in transport demand in units 100 km
     transport = pd.read_csv(
-        snakemake.input.transport_demand, index_col=0, parse_dates=True
-    )
-    number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
-        "number cars"
-    ]
+        snakemake.input.transport_demand, index_col=0, header=[0,1], 
+        parse_dates=True
+    ).reindex(columns=nodes, level=1)
+    
+    transport_data = pd.read_csv(snakemake.input.transport_data, index_col=0)
+    
+    number_cars = transport_data.loc[:, [f"Number {car_type}" for car_type in car_types]]
+    
     avail_profile = pd.read_csv(
         snakemake.input.avail_profile, index_col=0, parse_dates=True
     )
+    
     dsm_profile = pd.read_csv(
         snakemake.input.dsm_profile, index_col=0, parse_dates=True
     )
 
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
-    shares = pd.Series()
-    for engine in engine_types:
-        shares[engine] = get(options[f"land_transport_{engine}_share"], investment_year)
-        logger.info(f"{engine} share: {shares[engine]*100}%")
-
-    check_land_transport_shares(shares)
-
-    p_set = transport[spatial.nodes]
+    transport_types = transport.columns.levels[0]
+    endogenous = options["endogenous_transport"]
+    shares = get_shares(engine_types, transport_types, endogenous)
+        
+        
+    car_efficiencies =  get_car_efficiencies(engine_types, transport_types)
 
     # temperature for correction factor for heating/cooling
     temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
-
-    if shares["electric"] > 0:
-        add_EVs(
-            n,
-            avail_profile,
-            dsm_profile,
-            p_set,
-            shares["electric"],
-            number_cars,
-            temperature,
+    
+    transport = transport.reindex(columns=spatial.nodes, level=1)
+    
+    for transport_type in transport_types:
+        
+        # Add load for transport demand
+        n.add("Carrier", f"land transport demand {transport_type}")
+    
+        n.add(
+            "Bus",
+            nodes,
+            location=nodes,
+            suffix=f" land transport {transport_type}",
+            carrier=f"land transport demand {transport_type}",
+            unit="100 km",
         )
+    
+        p_set = transport[transport_type]
+        carrier = carrier=f"land transport demand {transport_type}"
+        
+        if carrier in options["vary_demand"].keys():
+            factor = get(options["vary_demand"][carrier], investment_year)
+            logger.info(f"Vary {carrier} by factor {factor} in {investment_year}")
+
+        # add demand
+        n.add(
+            "Load",
+            nodes,
+            suffix=f" land transport {transport_type}",
+            bus=nodes + f" land transport {transport_type}",
+            carrier=carrier,
+            p_set=factor*p_set,
+        )
+        
+        # electric vehicles
+        if shares.loc["electric", transport_type] > 0:
+            
+            car_efficiency = car_efficiencies.loc["electric",transport_type]
+            
+            cols = transport_cols[transport_type]
+            add_EVs(
+                n,
+                nodes,
+                avail_profile,
+                dsm_profile,
+                transport[transport_type],
+                shares.loc["electric", transport_type],
+                number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
+                temperature,
+                car_efficiency,
+                suffix=f" land transport EV {transport_type}",
+                transport_type=transport_type,
+                endogenous=endogenous,
+            )
 
         # fuel cell vehicles
         if shares.loc["fuel_cell", transport_type] > 0:
@@ -2162,8 +2300,6 @@ def add_land_transport(n, costs):
     if endogenous:
         adjust_endogenous_transport(n, engine_types, transport_types)
 
-    if shares["ice"] > 0:
-        add_ice_cars(n, p_set, shares["ice"], temperature)
 
 def adjust_endogenous_transport(n, engine_types, transport_types):
 
@@ -2192,7 +2328,7 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
     # add dummy generator only needed for solving with glpk with higher solver tolerance
     # n.add("Carrier", "dummy transport", color="#dd2e23", nice_name="Dummy transport")
     buses_i = n.buses[n.buses.carrier.str.contains("land transport demand")].index
-    n.madd(
+    n.add(
         "Generator",
         buses_i,
         " load",
@@ -2203,7 +2339,7 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
         p_nom=1e9,  # kW
     )
 
-    n.madd(
+    n.add(
         "Generator",
         buses_i,
         " load negative",
@@ -2232,7 +2368,6 @@ def adjust_endogenous_transport(n, engine_types, transport_types):
     #     carrier = f"land transport {map_carrier[car_type]} heavy"
     #     car_i = n.links[n.links.carrier==carrier].index
     #     n.links.loc[car_i, "marginal_cost"] = VOM
-    
     
 def build_heat_demand(n):
     heat_demand_shape = (
@@ -2455,7 +2590,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 heat_system.central_or_decentral
             ]
 
-            n.madd(
+            n.add(
                 "Store",
                 nodes + f" {heat_system} water tanks",
                 bus=nodes + f" {heat_system} water tanks",
@@ -2510,7 +2645,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
         if options["solar_thermal"]:
             n.add("Carrier", f"{heat_system} solar thermal")
 
-            n.madd(
+            n.add(
                 "Generator",
                 nodes,
                 suffix=f" {heat_system} solar thermal collector",
@@ -3241,7 +3376,7 @@ def add_biomass(n, costs):
     # Solid biomass to liquid fuel
     if options["biomass_to_liquid"]:
         add_carrier_buses(n, "oil")
-        n.madd(
+        n.add(
             "Link",
             spatial.biomass.nodes,
             suffix=" biomass to liquid",
@@ -3947,7 +4082,7 @@ def add_industry(n, costs):
         add_methanol_to_olefins(n, costs)
 
     # aviation
-    demand_factor = options["aviation_demand_factor"]
+    demand_factor = get(options["aviation_demand_factor"], investment_year)
     if demand_factor != 1:
         logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
 
@@ -4828,11 +4963,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.overnight.yaml",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",
             simpl="",
             opts="",
-            clusters="38",
-            ll="vopt",
+            clusters="39",
+            ll="v1.0",
             sector_opts="",
             planning_horizons="2030",
         )
