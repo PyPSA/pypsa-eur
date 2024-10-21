@@ -84,7 +84,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [200., 220., 300., 380., 500., 750.]
+  voltages: [200., 220., 300., 330., 380., 500., 750.]
   base_network: osm-prebuilt
   osm-prebuilt-version: 0.4
   gaslimit_enable: false
@@ -278,9 +278,10 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    200.: "Al/St 240/40 2-bundle 200.0"
+    200.: "Al/St 240/40 2-bundle 220.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
+    330.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 380.0"
     750.: "Al/St 560/50 4-bundle 750.0"
