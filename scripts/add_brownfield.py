@@ -109,7 +109,7 @@ def add_brownfield(n, n_p, year):
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
-            # n.add(c.pnl[tattr], c.name, tattr)
+            #n.add(c.pnl[tattr], c.name, tattr)
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
     # deal with gas network

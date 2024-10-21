@@ -213,7 +213,7 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat = SimpleNamespace()
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
-
+    
     if options["endo_industry_options"]["regional_steel_demand"]:
         # steel
         spatial.steel = SimpleNamespace()
@@ -4301,9 +4301,15 @@ def add_steel_industry(n, investment_year, options):
         p_nom_extendable=True,
         p_nom_max=max_cap,
 <<<<<<< HEAD
+<<<<<<< HEAD
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
         p_nom_min=min_cap_node,
         p_nom=min_cap_node,
+=======
+        p_min_pu= prod_constantly, # electrical stuff can be switched on and off
+        #p_nom_min=min_cap_node,
+        #p_nom=min_cap_node,
+>>>>>>> 1d3fc4da (Adding lifetimes from gem)
 =======
         p_min_pu= prod_constantly, # electrical stuff can be switched on and off
         #p_nom_min=min_cap_node,
