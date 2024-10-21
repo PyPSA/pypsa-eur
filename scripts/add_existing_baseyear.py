@@ -627,7 +627,7 @@ def add_heating_capacities_installed_before_baseyear(
 def add_steel_industry_existing(n):
 
     # Steel capacities in Europe in kton of steel products per year
-    #capacities = pd.read_csv(snakemake.input.steel_capacities)
+    # capacities = pd.read_csv(snakemake.input.steel_capacities)
     capacities = pd.read_csv(snakemake.input.gem_capacities)
     start_dates = pd.read_csv(snakemake.input.gem_start_dates)
     # Retrieve BOF capacities

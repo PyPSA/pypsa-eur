@@ -20,6 +20,7 @@ from pandas import Timedelta as Delta
 
 # -------------------- STEEL PRODUCTION ------------------------
 
+
 # Define the function to calculate the intensity of use for steel based on https://www.sciencedirect.com/science/article/pii/S0301420713001207
 def calculate_eu_steel_production(gdppc, gdp, investment_years):
 
