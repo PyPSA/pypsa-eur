@@ -360,7 +360,6 @@ pypsa_eur:
   - solar-hsat
   - solar
   - ror
-  - nuclear
   StorageUnit:
   - PHS
   - hydro
@@ -693,6 +692,10 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
+    nuclear: uranium
+    coal: coal
+    lignite: lignite
+  keep_existing_capacities: false
   biomass_to_liquid: false
   biomass_to_liquid_cc: false
   electrobiofuels: false
