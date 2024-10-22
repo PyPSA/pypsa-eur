@@ -36,7 +36,7 @@ LINES_COLUMNS = [
     "under_construction",
     "geometry",
 ]
-LINKS_COLUMNS = [ 
+LINKS_COLUMNS = [
     "link_id",
     "bus0",
     "bus1",

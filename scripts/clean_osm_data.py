@@ -13,13 +13,13 @@ The script performs various cleaning operations on the OSM data, including:
 - Adding line endings to substations based on line data
 """
 
+import itertools
 import json
 import logging
 import os
 import re
 
 import geopandas as gpd
-import itertools
 import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
@@ -463,9 +463,7 @@ def _import_lines_and_cables(path_lines):
 
 
 def _import_routes_relation(path_relation):
-    """
-
-    """
+    """ """
     columns = [
         "id",
         "bounds",
@@ -584,7 +582,7 @@ def _create_single_link(row):
 def _extract_members(row):
     df = pd.json_normalize(row["members"])
     df["ref"] = df["ref"].astype(str)
-    df["ways"] = "way/"+df["ref"]
+    df["ways"] = "way/" + df["ref"]
     member_ids = df["ways"].values.tolist()
 
     return member_ids
@@ -602,7 +600,7 @@ def _create_line(row):
     """
     df = pd.json_normalize(row["members"])
     df["ref"] = df["ref"].astype(str)
-    df["ways"] = "way/"+df["ref"]
+    df["ways"] = "way/" + df["ref"]
     # Drop NAs
     df = df.dropna(subset=["geometry"])
     df.loc[:, "geometry"] = df.apply(_create_linestring, axis=1)
@@ -1613,41 +1611,83 @@ if __name__ == "__main__":
 
     df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
-    df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(df_lines_cables_relation["voltage"])
-    df_lines_cables_relation, list_voltages = _filter_by_voltage(df_lines_cables_relation, min_voltage=min_voltage_ac)
-    df_lines_cables_relation.loc[:, "frequency"] = _clean_frequency(df_lines_cables_relation["frequency"])
-    df_lines_cables_relation = df_lines_cables_relation[df_lines_cables_relation["frequency"] != "0"]
+    df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(
+        df_lines_cables_relation["voltage"]
+    )
+    df_lines_cables_relation, list_voltages = _filter_by_voltage(
+        df_lines_cables_relation, min_voltage=min_voltage_ac
+    )
+    df_lines_cables_relation.loc[:, "frequency"] = _clean_frequency(
+        df_lines_cables_relation["frequency"]
+    )
+    df_lines_cables_relation = df_lines_cables_relation[
+        df_lines_cables_relation["frequency"] != "0"
+    ]
     df_lines_cables_relation["frequency"] = "50"
-    df_lines_cables_relation.loc[:, "circuits"] = _clean_circuits(df_lines_cables_relation["circuits"])
-    df_lines_cables_relation.loc[:, "cables"] = _clean_cables(df_lines_cables_relation["cables"])
+    df_lines_cables_relation.loc[:, "circuits"] = _clean_circuits(
+        df_lines_cables_relation["circuits"]
+    )
+    df_lines_cables_relation.loc[:, "cables"] = _clean_cables(
+        df_lines_cables_relation["cables"]
+    )
     df_lines_cables_relation = _clean_lines(df_lines_cables_relation, list_voltages)
-    df_lines_cables_relation.drop(columns=["voltage_original", "cleaned", "circuits_original", "split_elements"], inplace=True)
-    
+    df_lines_cables_relation.drop(
+        columns=["voltage_original", "cleaned", "circuits_original", "split_elements"],
+        inplace=True,
+    )
+
     # Create geometries
-    df_lines_cables_relation["components"] = df_lines_cables_relation.apply(_create_line, axis=1)
-    df_lines_cables_relation["geometry"] = df_lines_cables_relation["components"].apply(lambda x: x[0])
-    df_lines_cables_relation["contains"] = df_lines_cables_relation["components"].apply(lambda x: x[1])
+    df_lines_cables_relation["components"] = df_lines_cables_relation.apply(
+        _create_line, axis=1
+    )
+    df_lines_cables_relation["geometry"] = df_lines_cables_relation["components"].apply(
+        lambda x: x[0]
+    )
+    df_lines_cables_relation["contains"] = df_lines_cables_relation["components"].apply(
+        lambda x: x[1]
+    )
 
     # Show lines that are multilinestring
-    subset_multi_linestrings = df_lines_cables_relation[df_lines_cables_relation["geometry"].apply(lambda x: x.geom_type == "MultiLineString")].copy()
-    ways_in_multi_linestring = pd.Series(itertools.chain(*subset_multi_linestrings["contains"])).unique()
+    subset_multi_linestrings = df_lines_cables_relation[
+        df_lines_cables_relation["geometry"].apply(
+            lambda x: x.geom_type == "MultiLineString"
+        )
+    ].copy()
+    ways_in_multi_linestring = pd.Series(
+        itertools.chain(*subset_multi_linestrings["contains"])
+    ).unique()
 
     # Mark rows that have ways members in subset_multi_linestrings (These cannot be used)
     # TODO: Improve this in the future, to make this constraint less tight (if it is in another multi_linstring), reduce the underlying way/circuit accordingly.
     # TODO: Then, the relation can still be added.
-    df_lines_cables_relation["contains_ways_in_multi"] = df_lines_cables_relation["contains"].apply(lambda x: _check_if_ways_in_multi(x, ways_in_multi_linestring))
+    df_lines_cables_relation["contains_ways_in_multi"] = df_lines_cables_relation[
+        "contains"
+    ].apply(lambda x: _check_if_ways_in_multi(x, ways_in_multi_linestring))
 
     # Only keep rows that have contains_ways_in_multi == False
-    df_lines_cables_relation = df_lines_cables_relation[~df_lines_cables_relation["contains_ways_in_multi"]]
+    df_lines_cables_relation = df_lines_cables_relation[
+        ~df_lines_cables_relation["contains_ways_in_multi"]
+    ]
     # Only keep rows if instance of Linestring
-    df_lines_cables_relation = df_lines_cables_relation[df_lines_cables_relation["geometry"].apply(lambda x: x.geom_type == "LineString")]
-    ways_to_replace = pd.Series(itertools.chain(*df_lines_cables_relation["contains"])).unique()
+    df_lines_cables_relation = df_lines_cables_relation[
+        df_lines_cables_relation["geometry"].apply(
+            lambda x: x.geom_type == "LineString"
+        )
+    ]
+    ways_to_replace = pd.Series(
+        itertools.chain(*df_lines_cables_relation["contains"])
+    ).unique()
 
     df_lines_cables_relation.rename(columns={"id": "line_id"}, inplace=True)
-    df_lines_cables_relation = df_lines_cables_relation[["line_id", "circuits", "voltage", "geometry", "contains"]]
-    df_lines_cables_relation["circuits"] = df_lines_cables_relation["circuits"].astype(int)
-    df_lines_cables_relation["voltage"] = df_lines_cables_relation["voltage"].astype(int)
-
+    df_lines_cables_relation = df_lines_cables_relation[
+        ["line_id", "circuits", "voltage", "geometry", "contains"]
+    ]
+    df_lines_cables_relation["circuits"] = df_lines_cables_relation["circuits"].astype(
+        int
+    )
+    df_lines_cables_relation["voltage"] = df_lines_cables_relation["voltage"].astype(
+        int
+    )
 
     # Lines and cables
     logger.info("---")
@@ -1663,11 +1703,15 @@ if __name__ == "__main__":
 
     # Dropping
     len_before = len(df_lines)
-    connection_type = df_lines[df_lines["id"].isin(ways_to_replace)].set_index("id")["power"].copy()
+    connection_type = (
+        df_lines[df_lines["id"].isin(ways_to_replace)].set_index("id")["power"].copy()
+    )
     df_lines = df_lines[~df_lines["id"].isin(ways_to_replace)]
     len_after = len(df_lines)
-    logger.info(f"Dropping {len_before - len_after} OSM ways (AC lines and cables) for their parent OSM relations.")
-        
+    logger.info(
+        f"Dropping {len_before - len_after} OSM ways (AC lines and cables) for their parent OSM relations."
+    )
+
     # Cleaning process
     df_lines.loc[:, "voltage"] = _clean_voltage(df_lines["voltage"])
     df_lines, list_voltages = _filter_by_voltage(df_lines, min_voltage=min_voltage_ac)
@@ -1689,13 +1733,21 @@ if __name__ == "__main__":
     df_lines = _finalise_lines(df_lines)
     df_lines["contains"] = df_lines["line_id"].apply(lambda x: [x.split("-")[0]])
 
-    # Merge 
+    # Merge
     # Map element in list of column ways to connection_type
-    df_lines_cables_relation["underground"] = df_lines_cables_relation["contains"].apply(lambda x: [connection_type[way] for way in x if way in connection_type]) 
-    df_lines_cables_relation["underground"] = df_lines_cables_relation["underground"].apply(lambda x: list(set(x)))
-    df_lines_cables_relation["underground"] = df_lines_cables_relation["underground"].apply(lambda x: True if x == ["cable"] else False)
-    
-    df_lines = pd.concat([df_lines, df_lines_cables_relation], axis=0, ignore_index=True)
+    df_lines_cables_relation["underground"] = df_lines_cables_relation[
+        "contains"
+    ].apply(lambda x: [connection_type[way] for way in x if way in connection_type])
+    df_lines_cables_relation["underground"] = df_lines_cables_relation[
+        "underground"
+    ].apply(lambda x: list(set(x)))
+    df_lines_cables_relation["underground"] = df_lines_cables_relation[
+        "underground"
+    ].apply(lambda x: True if x == ["cable"] else False)
+
+    df_lines = pd.concat(
+        [df_lines, df_lines_cables_relation], axis=0, ignore_index=True
+    )
 
     # Create GeoDataFrame
     gdf_lines = gpd.GeoDataFrame(df_lines, geometry="geometry", crs=crs)
