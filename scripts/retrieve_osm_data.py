@@ -31,8 +31,7 @@ def retrieve_osm_data(
     features=[
         "cables_way",
         "lines_way",
-        "lines_cables_relation",
-        "links_relation",
+        "routes_relation",
         "substations_way",
         "substations_relation",
     ],
@@ -52,8 +51,7 @@ def retrieve_osm_data(
         A list of OSM features to retrieve. The default is [
             "cables_way",
             "lines_way",
-            "lines_cables_relation",
-            "links_relation",
+            "routes_relation",
             "substations_way",
             "substations_relation",
             ].
@@ -64,8 +62,7 @@ def retrieve_osm_data(
     features_dict = {
         "cables_way": 'way["power"="cable"]',
         "lines_way": 'way["power"="line"]',
-        "lines_cables_relation": 'relation["route"="power"]',
-        "links_relation": 'relation["route"="power"]["frequency"="0"]',
+        "routes_relation": 'relation["route"="power"]',
         "substations_way": 'way["power"="substation"]',
         "substations_relation": 'relation["power"="substation"]',
     }

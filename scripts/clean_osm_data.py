@@ -462,7 +462,7 @@ def _import_lines_and_cables(path_lines):
     return df_lines
 
 
-def _import_lines_cables_relation(path_relation):
+def _import_routes_relation(path_relation):
     """
 
     """
@@ -479,7 +479,7 @@ def _import_lines_cables_relation(path_relation):
     ]
     df_relation = pd.DataFrame(columns=columns)
 
-    logger.info("Importing lines/cables relation")
+    logger.info("Importing power route relations (lines, cables, links)")
     for key in path_relation:
         logger.info(f"Processing {key}...")
         for idx, ip in enumerate(path_relation[key]):
@@ -504,6 +504,7 @@ def _import_lines_cables_relation(path_relation):
                     "cables",
                     "frequency",
                     "voltage",
+                    "rating",
                 ]
 
                 tags = pd.json_normalize(df["tags"]).map(
@@ -528,89 +529,6 @@ def _import_lines_cables_relation(path_relation):
                 continue
 
     return df_relation
-
-
-def _import_links(path_links):
-    """
-    Import links from the given input paths.
-
-    Parameters:
-    - path_links (dict): A dictionary containing the input paths for links.
-
-    Returns:
-    - df_links (DataFrame): A DataFrame containing the imported links data.
-    """
-    columns = [
-        "id",
-        "bounds",
-        "nodes",
-        "geometry",
-        "country",
-        "circuits",
-        "frequency",
-        "rating",
-        "voltage",
-    ]
-    df_links = pd.DataFrame(columns=columns)
-
-    logger.info("Importing links")
-    for key in path_links:
-        logger.info(f"Processing {key}...")
-        for idx, ip in enumerate(path_links[key]):
-            if (
-                os.path.exists(ip) and os.path.getsize(ip) > 400
-            ):  # unpopulated OSM json is about 51 bytes
-                country = os.path.basename(os.path.dirname(path_links[key][idx]))
-
-                logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_links[key])).zfill(2)}: {ip}"
-                )
-                with open(ip, "r") as f:
-                    data = json.load(f)
-
-                df = pd.DataFrame(data["elements"])
-                df["id"] = df["id"].astype(str)
-                df["id"] = df["id"].apply(lambda x: (f"relation/{x}"))
-                df["country"] = country
-
-                col_tags = [
-                    "circuits",
-                    "frequency",
-                    "rating",
-                    "voltage",
-                ]
-
-                tags = pd.json_normalize(df["tags"]).map(
-                    lambda x: str(x) if pd.notnull(x) else x
-                )
-
-                for ct in col_tags:
-                    if ct not in tags.columns:
-                        tags[ct] = pd.NA
-
-                tags = tags.loc[:, col_tags]
-
-                df = pd.concat([df, tags], axis="columns")
-                df.drop(columns=["type", "tags"], inplace=True)
-
-                df_links = pd.concat([df_links, df], axis="rows")
-
-            else:
-                logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_links[key])).zfill(2)} (empty): {ip}"
-                )
-                continue
-        logger.info("---")
-        logger.info("Dropping lines without rating.")
-        len_before = len(df_links)
-        df_links = df_links.dropna(subset=["rating"])
-        len_after = len(df_links)
-        logger.info(
-            f"Dropped {len_before-len_after} elements without rating. "
-            + f"Imported {len_after} elements."
-        )
-
-    return df_links
 
 
 def _create_single_link(row):
@@ -1687,11 +1605,13 @@ if __name__ == "__main__":
     ### Lines/Cables relations
     logger.info("---")
     logger.info("AC LINES/CABLES RELATIONS")
-    path_lines_cables_relation = {
-        "lines_cables_relation": snakemake.input.lines_cables_relation,
+    path_routes_relation = {
+        "routes_relation": snakemake.input.routes_relation,
     }
 
-    df_lines_cables_relation = _import_lines_cables_relation(path_lines_cables_relation)
+    df_routes_relation = _import_routes_relation(path_routes_relation)
+
+    df_lines_cables_relation = df_routes_relation.copy()
     df_lines_cables_relation = _drop_duplicate_lines(df_lines_cables_relation)
     df_lines_cables_relation.loc[:, "voltage"] = _clean_voltage(df_lines_cables_relation["voltage"])
     df_lines_cables_relation, list_voltages = _filter_by_voltage(df_lines_cables_relation, min_voltage=min_voltage_ac)
@@ -1787,11 +1707,17 @@ if __name__ == "__main__":
 
     logger.info("---")
     logger.info("HVDC LINKS")
-    path_links = {
-        "links": snakemake.input.links_relation,
-    }
 
-    df_links = _import_links(path_links)
+    df_links = df_routes_relation.copy()
+
+    logger.info("Dropping lines without rating.")
+    len_before = len(df_links)
+    df_links = df_links.dropna(subset=["rating"])
+    len_after = len(df_links)
+    logger.info(
+        f"Dropped {len_before-len_after} elements without rating. "
+        + f"Imported {len_after} elements."
+    )
 
     df_links = _drop_duplicate_lines(df_links)
     df_links.loc[:, "voltage"] = _clean_voltage(df_links["voltage"])

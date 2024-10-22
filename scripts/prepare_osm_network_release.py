@@ -19,6 +19,7 @@ BUSES_COLUMNS = [
     "dc",
     "symbol",
     "under_construction",
+    "tags",
     "x",
     "y",
     "country",
@@ -35,7 +36,7 @@ LINES_COLUMNS = [
     "under_construction",
     "geometry",
 ]
-LINKS_COLUMNS = [
+LINKS_COLUMNS = [ 
     "link_id",
     "bus0",
     "bus1",
@@ -44,6 +45,7 @@ LINKS_COLUMNS = [
     "length",
     "underground",
     "under_construction",
+    "tags",
     "geometry",
 ]
 TRANSFORMERS_COLUMNS = [
@@ -52,6 +54,7 @@ TRANSFORMERS_COLUMNS = [
     "bus1",
     "voltage_bus0",
     "voltage_bus1",
+    "s_nom",
     "geometry",
 ]
 CONVERTERS_COLUMNS = [
@@ -59,6 +62,7 @@ CONVERTERS_COLUMNS = [
     "bus0",
     "bus1",
     "voltage",
+    "p_nom",
     "geometry",
 ]
 
