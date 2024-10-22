@@ -445,7 +445,9 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
     ppl = pd.read_csv(snakemake.input.powerplants, index_col=0)
 
     if snakemake.input.get("custom_powerplants"):
-        if snakemake.input.custom_powerplants.endswith("german_chp_{clusters}.csv"):
+        if snakemake.input.custom_powerplants.endswith(
+            f"german_chp_base_s_{snakemake.wildcards.clusters}_l{snakemake.wildcards.ll}_{snakemake.wildcards.opts}_{snakemake.wildcards.sector_opts}_{snakemake.wildcards.planning_horizons}.csv"
+        ):
             logger.info("Supersedeing default German CHPs with custom_powerplants.")
             ppl = ppl.query("~(Set == 'CHP' and Country == 'DE')")
         ppl = add_custom_powerplants(ppl, snakemake.input.custom_powerplants, True)
@@ -463,12 +465,12 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
     chp.Fueltype = chp.Fueltype.map(rename_fuel)
 
     # assign clustered bus
-    chp["bus"] = chp["bus"].astype(int)
-    chp["cluster_bus"] = chp.bus.map(clustermaps)
-    if snakemake.params.add_district_heating_subnodes:
-        chp.loc[chp.subnode.notna(), "cluster_bus"] = chp.loc[
-            chp.subnode.notna(), "subnode"
-        ]
+    # chp["bus"] = chp["bus"].astype(int)
+    # chp["cluster_bus"] = chp.bus.map(clustermaps)
+    # if snakemake.params.add_district_heating_subnodes:
+    #     chp.loc[chp.subnode.notna(), "cluster_bus"] = chp.loc[
+    #         chp.subnode.notna(), "subnode"
+    #     ]
 
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
@@ -578,8 +580,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                     overnight_cost=costs.at[key, "investment"]
                     * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power.dropna(),
-                    efficiency2=efficiency_heat.dropna(),
+                    efficiency=efficiency_power[p_nom.index],
+                    efficiency2=efficiency_heat[p_nom.index],
                     efficiency3=costs.at[generator, "CO2 intensity"],
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
@@ -601,8 +603,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                     overnight_cost=costs.at[key, "investment"]
                     * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power,
-                    efficiency2=efficiency_heat,
+                    efficiency=efficiency_power[p_nom.index],
+                    efficiency2=efficiency_heat[p_nom.index],
                     build_year=grouping_year,
                     lifetime=costs.at[key, "lifetime"],
                 )
@@ -796,8 +798,10 @@ def add_heating_capacities_installed_before_baseyear(
             "electricity_distribution_grid"
         ]:
             nodes_elec = nodes + " low voltage"
+            nodes_biomass = nodes
         else:
-            nodes_elec = nodes
+            nodes_elec = nodes.str.split().str[:2].str.join(" ")
+            nodes_biomass = nodes_elec
 
             too_large_grouping_years = [
                 gy for gy in grouping_years if gy >= int(baseyear)
@@ -838,7 +842,9 @@ def add_heating_capacities_installed_before_baseyear(
                         name=nodes,
                     )
                     .to_pandas()
-                    .T.drop_duplicates()
+                    .T.reset_index()
+                    .drop_duplicates()
+                    .set_index("name")
                     .T.reindex(index=n.snapshots)
                     if time_dep_hp_cop
                     else costs.at[costs_name, "efficiency"]
@@ -957,7 +963,7 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} biomass boiler-{grouping_year}",
-                bus0=spatial.biomass.df.loc[nodes, "nodes"].values,
+                bus0=spatial.biomass.df.loc[nodes_biomass, "nodes"].values,
                 bus1=nodes + " " + heat_system.value + " heat",
                 carrier=heat_system.value + " biomass boiler",
                 efficiency=costs.at["biomass boiler", "efficiency"],
@@ -1019,9 +1025,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
-            clusters="5",
-            ll="v1.5",
+            # configfiles="config/test/config.myopic.yaml",
+            # clusters="5",
+            clusters="27",
+            ll="vopt",
             opts="",
             sector_opts="none",
             planning_horizons="2020",
