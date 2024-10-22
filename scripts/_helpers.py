@@ -405,7 +405,7 @@ def progress_retrieve(url, file, disable=False):
             unit="B",
             unit_scale=True,
             unit_divisor=1024,
-            desc=file,
+            desc=str(file),
         ) as t:
             with open(file, "wb") as f:
                 for data in response.iter_content(chunk_size=chunk_size):
