@@ -372,13 +372,11 @@ def find_closest_bus(n, x, y, tol=2000):
         return n.buses.index[dist.argmin()]
     else:
         return None
-    
 
-def remove_converters(
-    n: pypsa.Network
-) -> pypsa.Network:
+
+def remove_converters(n: pypsa.Network) -> pypsa.Network:
     """
-    Remove all converters from the network and remap all buses that were originally connected to the 
+    Remove all converters from the network and remap all buses that were originally connected to the
     converter to the connected AC bus. Preparation step before simplifying links.
 
     Parameters:
@@ -396,15 +394,13 @@ def remove_converters(
     converters = network.links.query("carrier == ''").copy()
 
     converters["ac_bus"] = converters.apply(
-        lambda x: x["bus1"] if x["bus1_carrier"] == "AC" else x["bus0"], 
-        axis=1
+        lambda x: x["bus1"] if x["bus1_carrier"] == "AC" else x["bus0"], axis=1
     )
 
     converters["dc_bus"] = converters.apply(
-        lambda x: x["bus1"] if x["bus1_carrier"] == "DC" else x["bus0"], 
-        axis=1
+        lambda x: x["bus1"] if x["bus1_carrier"] == "DC" else x["bus0"], axis=1
     )
-    
+
     # Dictionary for remapping
     dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
 
@@ -426,7 +422,9 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", configfiles=["config/config.osm-raw.yaml"])
+        snakemake = mock_snakemake(
+            "simplify_network", configfiles=["config/config.osm-raw.yaml"]
+        )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
