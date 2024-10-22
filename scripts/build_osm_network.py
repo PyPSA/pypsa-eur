@@ -1498,7 +1498,7 @@ def build_network(
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
 
-    enable_line_splitting = False
+    enable_line_splitting = True
     if enable_line_splitting:
         # Split lines overpassing nearby buses (tolerance 1 m)
         lines = split_overpassing_lines(lines, buses)
