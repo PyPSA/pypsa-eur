@@ -598,6 +598,37 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                 )
 
     # CHPs that are not from MaStR
+
+    if options["central_heat_vent"]:
+        missing_uch_buses = pd.Series(
+            {
+                bus: " ".join(bus.split()[:2])
+                for bus in set(chp.bus.unique() + " urban central heat")
+                - set(n.buses.index)
+            }
+        )
+        if not missing_uch_buses.empty:
+            logger.info(f"add buses {missing_uch_buses}")
+
+            n.madd(
+                "Bus",
+                missing_uch_buses.index,
+                carrier="urban central heat",
+                location=missing_uch_buses,
+            )
+            # Attach heat vent to these buses
+            n.madd(
+                "Generator",
+                missing_uch_buses.index,
+                suffix=" vent",
+                bus=missing_uch_buses.index,
+                carrier="urban central heat vent",
+                p_nom_extendable=True,
+                p_max_pu=0,
+                p_min_pu=-1,
+                unit="MWh_th",
+            )
+
     chp_nodal_p_nom = chp.pivot_table(
         index=["grouping_year", "Fueltype"],
         columns="bus",
