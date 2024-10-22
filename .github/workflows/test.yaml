@@ -26,14 +26,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-         os: [ubuntu-latest, macos-latest, windows-latest]
-         include:
-           - os: ubuntu-latest
-             env_file: envs/ubuntu-pinned.yaml
-           - os: macos-latest
-             env_file: envs/macos-pinned.yaml
-           - os: windows-latest
-             env_file: envs/windows-pinned.yaml
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          env_file: envs/ubuntu-pinned.yaml
+        - os: macos-latest
+          env_file: envs/macos-pinned.yaml
+        - os: windows-latest
+          env_file: envs/windows-pinned.yaml
     runs-on: ${{ matrix.os }}
 
     defaults:
