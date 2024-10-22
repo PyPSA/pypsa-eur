@@ -372,13 +372,61 @@ def find_closest_bus(n, x, y, tol=2000):
         return n.buses.index[dist.argmin()]
     else:
         return None
+    
+
+def remove_converters(
+    n: pypsa.Network
+) -> pypsa.Network:
+    """
+    Remove all converters from the network and remap all buses that were originally connected to the 
+    converter to the connected AC bus. Preparation step before simplifying links.
+
+    Parameters:
+        n (pypsa.Network): The network object.
+
+    Returns:
+        n (pypsa.Network): The network object with all converters removed.
+    """
+    network = n.copy()
+
+    network.links["bus0_carrier"] = network.links.bus0.map(network.buses.carrier)
+    network.links["bus1_carrier"] = network.links.bus1.map(network.buses.carrier)
+
+    # Only converters
+    converters = network.links.query("carrier == ''").copy()
+
+    converters["ac_bus"] = converters.apply(
+        lambda x: x["bus1"] if x["bus1_carrier"] == "AC" else x["bus0"], 
+        axis=1
+    )
+
+    converters["dc_bus"] = converters.apply(
+        lambda x: x["bus1"] if x["bus1_carrier"] == "DC" else x["bus0"], 
+        axis=1
+    )
+    
+    # Dictionary for remapping
+    dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
+
+    # Remap all buses that were originally connected to the converter to the connected AC bus
+    network.links["bus0"] = network.links["bus0"].replace(dict_dc_to_ac)
+    network.links["bus1"] = network.links["bus1"].replace(dict_dc_to_ac)
+
+    # Remove all converters from network.links and associated dc buses from network.buses
+    network.links = network.links.loc[~network.links.index.isin(converters.index)]
+    network.buses = network.buses.loc[~network.buses.index.isin(converters["dc_bus"])]
+
+    # Drop helper columns bus0_carrier and bus1_carrier
+    network.links.drop(["bus0_carrier", "bus1_carrier"], axis=1, inplace=True)
+
+    return network
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network")
+        snakemake = mock_snakemake("simplify_network", configfiles=["config/config.osm-raw.yaml"])
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -390,6 +438,8 @@ if __name__ == "__main__":
 
     linetype_380 = snakemake.config["lines"]["types"][380]
     n, trafo_map = simplify_network_to_380(n, linetype_380)
+
+    n = remove_converters(n)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
 
