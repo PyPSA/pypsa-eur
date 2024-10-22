@@ -1199,7 +1199,7 @@ def _add_dc_buses(
         - GeoDataFrame: A GeoDataFrame containing the DC buses with their corresponding PoI and mapped to the nearest AC bus.
     """
     dc_buses = converters_polygon.copy()
-    max_distance = 50000 # m, Arbitrary, maximum distance between DC bus and AC bus (value needs to be high for Gotland HVDC to be connected)
+    max_distance = 50000  # m, Arbitrary, maximum distance between DC bus and AC bus (value needs to be high for Gotland HVDC to be connected)
 
     logger.info(
         "Adding DC buses to the network and mapping them to the nearest AC buses."
@@ -1592,8 +1592,8 @@ def build_network(
     links["length"] = links.to_crs(DISTANCE_CRS).length
 
     ### Saving outputs to PyPSA-compatible format
-    buses_final, converters_final, lines_final, links_final, transformers_final = _finalise_network(
-        all_buses, converters, lines, links, transformers
+    buses_final, converters_final, lines_final, links_final, transformers_final = (
+        _finalise_network(all_buses, converters, lines, links, transformers)
     )
 
     return buses_final, converters_final, lines_final, links_final, transformers_final
@@ -1603,7 +1603,9 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_osm_network", configfiles=["config/config.osm-raw.yaml"])
+        snakemake = mock_snakemake(
+            "build_osm_network", configfiles=["config/config.osm-raw.yaml"]
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
