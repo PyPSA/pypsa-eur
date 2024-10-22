@@ -757,6 +757,10 @@ if config["electricity"]["base_network"] == "osm-raw":
                 "data/osm-raw/{country}/lines_way.json",
                 country=config_provider("countries"),
             ),
+            lines_cables_relation=expand(
+                "data/osm-raw/{country}/lines_cables_relation.json",
+                country=config_provider("countries"),
+            ),
             links_relation=expand(
                 "data/osm-raw/{country}/links_relation.json",
                 country=config_provider("countries"),

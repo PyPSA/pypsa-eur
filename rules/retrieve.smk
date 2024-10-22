@@ -592,6 +592,7 @@ if config["enable"]["retrieve"] and (
         output:
             cables_way="data/osm-raw/{country}/cables_way.json",
             lines_way="data/osm-raw/{country}/lines_way.json",
+            lines_cables_relation="data/osm-raw/{country}/lines_cables_relation.json",
             links_relation="data/osm-raw/{country}/links_relation.json",
             substations_way="data/osm-raw/{country}/substations_way.json",
             substations_relation="data/osm-raw/{country}/substations_relation.json",
