@@ -113,6 +113,13 @@ if __name__ == "__main__":
     network.lines.length = network.lines.length * 1e3
     network.links.length = network.links.length * 1e3
 
+    # Sort alphabetically
+    network.buses.sort_index(inplace=True)
+    network.transformers.sort_index(inplace=True)
+    network.lines.sort_index(inplace=True)
+    network.links.sort_index(inplace=True)
+
+
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
     export_clean_csv(network.buses, BUSES_COLUMNS, snakemake.output.buses)

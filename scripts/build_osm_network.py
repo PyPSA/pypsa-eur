@@ -1494,16 +1494,14 @@ def build_network(
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
 
-    enable_line_splitting = True
-    if enable_line_splitting:
-        # Split lines overpassing nearby buses (tolerance 1 m)
-        lines = split_overpassing_lines(lines, buses)
+    # Split lines overpassing nearby buses (tolerance 1 m)
+    lines = split_overpassing_lines(lines, buses)
 
-        # Update end points
-        bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
-        buses = buses[~bool_virtual_buses]
-        buses_updated_line_endings = _add_line_endings(buses, lines)
-        buses = pd.concat([buses, buses_updated_line_endings], ignore_index=True)
+    # Update end points
+    bool_virtual_buses = buses["bus_id"].str.startswith("virtual")
+    buses = buses[~bool_virtual_buses]
+    buses_updated_line_endings = _add_line_endings(buses, lines)
+    buses = pd.concat([buses, buses_updated_line_endings], ignore_index=True)
 
     # Update length of lines
     lines["length"] = lines.to_crs(DISTANCE_CRS).length
