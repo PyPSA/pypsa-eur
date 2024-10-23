@@ -105,7 +105,7 @@ jobs:
     # Only run checks if package is not pinned
     - name: Check if inhouse package is pinned
       run: |
-        grep_line=$(grep -- '- ${{ matrix.inhouse }}' envs/linux-pinned.yaml)
+        grep_line=$(grep -- '- ${{ matrix.inhouse }}' envs/environment.yaml)
         if [[ $grep_line == *"<"* || $grep_line == *"=="* ]]; then
             echo "pinned=true" >> $GITHUB_ENV
         else
