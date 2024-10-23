@@ -374,6 +374,44 @@ def find_closest_bus(n, x, y, tol=2000):
         return None
 
 
+def remove_converters(n: pypsa.Network) -> pypsa.Network:
+    """
+    Remove all converters from the network and remap all buses that were originally connected to the
+    converter to the connected AC bus. Preparation step before simplifying links.
+
+    Parameters:
+        n (pypsa.Network): The network object.
+
+    Returns:
+        n (pypsa.Network): The network object with all converters removed.
+    """
+    # Extract converters
+    converters = n.links.query("carrier == ''")[["bus0", "bus1"]]
+    converters["bus0_carrier"] = converters["bus0"].map(n.buses.carrier)
+    converters["bus1_carrier"] = converters["bus1"].map(n.buses.carrier)
+
+    converters["ac_bus"] = converters.apply(
+        lambda x: x["bus1"] if x["bus1_carrier"] == "AC" else x["bus0"], axis=1
+    )
+
+    converters["dc_bus"] = converters.apply(
+        lambda x: x["bus1"] if x["bus1_carrier"] == "DC" else x["bus0"], axis=1
+    )
+
+    # Dictionary for remapping
+    dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
+
+    # Remap all buses that were originally connected to the converter to the connected AC bus
+    n.links["bus0"] = n.links["bus0"].replace(dict_dc_to_ac)
+    n.links["bus1"] = n.links["bus1"].replace(dict_dc_to_ac)
+
+    # Remove all converters from network.links and associated dc buses from network.buses
+    n.links = n.links.loc[~n.links.index.isin(converters.index)]
+    n.buses = n.buses.loc[~n.buses.index.isin(converters["dc_bus"])]
+
+    return n
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -390,6 +428,8 @@ if __name__ == "__main__":
 
     linetype_380 = snakemake.config["lines"]["types"][380]
     n, trafo_map = simplify_network_to_380(n, linetype_380)
+
+    n = remove_converters(n)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
 
