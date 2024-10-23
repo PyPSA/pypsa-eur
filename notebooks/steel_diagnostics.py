@@ -15,10 +15,10 @@ res_directory = "../results/baseline/postnetworks/"
 # %% Script to get production in different countries and demand for a single year
 
 n = pypsa.Network(res_directory + "base_s_39_lvopt___2030.nc")
-
+alinks = n.links
 # Steel demand
-timestep = n.snapshot_weightings.iloc[0, 0]
-steel_dem = n.loads_t.p.filter(like="steel", axis=1).sum() * timestep  # Mt steel
+timestep = n.snapshot_weightings.iloc[0,0]
+steel_dem = n.loads_t.p.filter(like='steel', axis=1).sum().sum()*timestep #Mt steel
 
 # Steel production
 steel_prod = -n.links_t.p1.filter(regex="EAF|BOF", axis=1)
@@ -29,6 +29,9 @@ steel_prod_per_country = steel_prod_per_country.groupby(
     steel_prod_per_country.index
 ).sum()
 steel_prod_per_country = pd.DataFrame(steel_prod_per_country, columns=["Values"])
+
+steel_cap = n.links[n.links.index.str.contains('EAF|BOF', regex=True)]
+
 
 # Create a figure and axis
 fig, ax = plt.subplots()
@@ -67,10 +70,8 @@ steel_tech_dict = {}
 for year, n in n_dict.items():
     # Steel demand calculation
     timestep = n_dict[year].snapshot_weightings.iloc[0, 0]
-    steel_dem = (
-        n_dict[year].loads_t.p.filter(like="steel", axis=1).sum() * timestep
-    )  # Mt steel
-    steel_dem_dict[year] = steel_dem / 1e3  # Store steel demand for this year
+    steel_dem = n_dict[year].loads_t.p.filter(like='steel', axis=1).sum().sum() * timestep  # Mt steel
+    steel_dem_dict[year] = steel_dem/1e3  # Store steel demand for this year
 
     # Steel production calculation
     steel_prod = -n_dict[year].links_t.p1.filter(regex="EAF|BOF", axis=1)
@@ -96,7 +97,8 @@ for year, n in n_dict.items():
     steel_tech_dict[year] = steel_prod_per_tech  # Store steel production for this year
 
 
-steel_dem_df = pd.DataFrame(steel_dem_dict)
+#steel_dem_df = pd.DataFrame(steel_dem_dict)
+steel_dem_df = pd.DataFrame.from_dict(steel_dem_dict, orient='index', columns=[0]).T
 
 steel_prod_df = pd.DataFrame(steel_prod_dict)
 steel_prod_df = steel_prod_df.fillna(0)
@@ -188,5 +190,55 @@ ax.set_ylabel("Steel capacities (Mt/yr steel)")
 ax.legend(title="Country", loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
 plt.xticks(rotation=45)
 ax.grid(True, axis="y", linestyle="--", alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+
+#%% Get the capacities with hydrogen
+
+# Initialize empty dictionaries to store steel demand and steel production per country for each year
+steel_cap_country_dict = {}
+steel_cap_tech_dict = {}
+
+steel_dri = n.links.p_nom_opt.filter(regex='DRI', axis = 0)
+dri0 = n.links_t.p0[steel_dri.index]
+dri1 = n.links_t.p1[steel_dri.index]
+
+filtered_df = n.links[n.links['bus1'].str.contains('H2', case=False, na=False)]
+
+
+
+for year, n in n_dict.items():
+    # Steel capacities calculation
+    timestep = n_dict[year].snapshot_weightings.iloc[0, 0]
+    steel_cap = n_dict[year].links.p_nom.filter(regex='EAF|BOF', axis=0)
+    steel_cap = steel_cap[steel_cap > 1e-6]
+    steel_cap_per_country = steel_cap * timestep / 1e3  # Convert from kt/h to Mt/yr of steel output
+    steel_cap_per_tech = steel_cap_per_country.copy()
+    steel_cap_per_country.index = steel_cap_per_country.index.str[:2]  # Keep only the first two characters (country code)
+    steel_cap_per_country = steel_cap_per_country.groupby(steel_cap_per_country.index).sum()  # Group by country code
+    steel_cap_country_dict[year] = steel_cap_per_country  # Store steel production for this year
+    
+    steel_cap_per_tech.index = steel_cap_per_tech.index.str.extract('(EAF|BOF)', expand=False)
+    steel_cap_per_tech = steel_cap_per_tech.groupby(steel_cap_per_tech.index).sum()  # Group by country code
+    steel_cap_tech_dict[year] = steel_cap_per_tech
+
+
+steel_cap_country_df = pd.DataFrame(steel_cap_country_dict)
+steel_cap_country_df = steel_cap_country_df.fillna(0)
+
+steel_cap_tech_df = pd.DataFrame(steel_cap_tech_dict)
+steel_cap_tech_df = steel_cap_tech_df.fillna(0)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+steel_cap_country_df.T.plot.bar(stacked=True, ax=ax, width=0.8, color=plt.cm.tab20.colors)
+bar_positions = range(len(steel_cap_country_df.sum()))
+ #ax.scatter(bar_positions, steel_cap_country_df.iloc[0], color='black', zorder=3, label='Steel Demand')
+
+ax.set_ylabel('Steel capacities (Mt/yr steel)')
+ax.legend(title='Country', loc='upper left', bbox_to_anchor=(1, 1), ncol=1)
+plt.xticks(rotation=45)
+ax.grid(True, axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()

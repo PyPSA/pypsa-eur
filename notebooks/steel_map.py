@@ -26,13 +26,14 @@ def assign_location(n):
 def plot_steel_map(n, regions, year, ax=None):
 
     assign_location(n)
-    timestep = n.snapshot_weightings.iloc[0, 0]
-
-    steel_prod_index = n.links.query("bus1 == 'EU steel'").index
-    steel_prod = -n.links_t.p1.loc[:, steel_prod_index].sum()  # *timestep/1e3 #Mtsteel
-    steel_prod.index = steel_prod.index.str.split(" 0 ").str[0] + " 0"
-    steel_prod_df = steel_prod.to_frame(name="steel_prod")
-
+    timestep = n.snapshot_weightings.iloc[0,0]
+    
+    steel_prod_index = n.links[n.links['bus1'].str.contains('steel', case=False, na=False) &
+    ~n.links['bus1'].str.contains('heat', case=False, na=False)].index
+    steel_prod = -n.links_t.p1.loc[:,steel_prod_index].sum()#*timestep/1e3 #Mtsteel
+    steel_prod.index = steel_prod.index.str.split(' 0 ').str[0] + ' 0'
+    steel_prod_df = steel_prod.to_frame(name='steel_prod')
+    
     regions["steel"] = (
         steel_prod_df.steel_prod.groupby(level=0).sum().div(1e3) * timestep
     )  # TWh
@@ -41,10 +42,8 @@ def plot_steel_map(n, regions, year, ax=None):
     regions["steel"] = regions["steel"].fillna(0)
 
     # drop all links which are not H2 pipelines
-    n.links.drop(
-        n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True
-    )
-
+    #n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
+    
     regions = regions.to_crs(proj.proj4_init)
 
     if ax is None:
@@ -56,7 +55,7 @@ def plot_steel_map(n, regions, year, ax=None):
         cmap="Blues",
         linewidths=0,
         legend=True,
-        vmax=40,
+        vmax=10,
         vmin=0,
         legend_kwds={
             "label": "Steel production [Mt steel/yr]",
