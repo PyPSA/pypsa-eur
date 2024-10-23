@@ -19,9 +19,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  ENV_FILE: envs/environment.yaml
-  ENV_FIXED_FILE: envs/environment.fixed.yaml
 
 jobs:
   run-tests:
@@ -29,11 +26,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-        - macos
-        - windows
-        - ubuntu
-    runs-on: ${{ matrix.os }}-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          env_file: envs/ubuntu-pinned.yaml
+        - os: macos-latest
+          env_file: envs/macos-pinned.yaml
+        - os: windows-latest
+          env_file: envs/windows-pinned.yaml
+    runs-on: ${{ matrix.os }}
 
     defaults:
       run:
@@ -46,7 +47,6 @@ jobs:
       run: |
         echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
         echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
-        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_ENV # env
 
     - uses: actions/cache@v4
       with:
@@ -63,43 +63,19 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ env.today }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', matrix.env_file)) }}
       id: cache-env
 
     - name: Update environment
       if: steps.cache-env.outputs.cache-hit != 'true'
-      run: conda env update -n pypsa-eur -f ${{ env.ENV_FILE }}
-
-    - name: Log env diff to environment.fixed.yaml
-      if: ${{ matrix.os == 'ubuntu' }}
-      run: |
-        # Get fixed environment of current env
-        conda env export --name ${{ github.event.repository.name }} --no-builds | sed 's/^name: ${{ github.event.repository.name }}$/name: ${{ github.event.repository.name }}-fixed/' > current-env.yaml
-
-        # Add SPDX header
-        SPDX_HEADER="# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
-        echo -e "$SPDX_HEADER" | cat - current-env.yaml > temp && mv temp current-env.yaml
-
-        # Format with pre-commit (it differs from the conda output)
-        pip install pre-commit
-        pre-commit run --files current-env.yaml || true
-
-        # Get diff
-        diff ${{ env.ENV_FIXED_FILE }} current-env.yaml > diff.txt || true
-
-        # Format
-        { echo -e "**Environment diff**\n\`\`\` diff\n"; cat diff.txt; echo -e "\n\`\`\`"; } > temp && mv temp diff.txt
-
-        # Write to summary
-        cat diff.txt >> $GITHUB_STEP_SUMMARY
-      shell: bash
+      run: conda env update -n pypsa-eur -f ${{ matrix.env_file }}
 
     - name: Run snakemake test workflows
       run: |
         make test
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3.2.1-node20
+      uses: actions/upload-artifact@v4
       with:
         name: logs-${{ matrix.inhouse }}
         path: |
@@ -129,7 +105,7 @@ jobs:
     # Only run checks if package is not pinned
     - name: Check if inhouse package is pinned
       run: |
-        grep_line=$(grep -- '- ${{ matrix.inhouse }}' ${{ env.ENV_FILE }})
+        grep_line=$(grep -- '- ${{ matrix.inhouse }}' envs/ubuntu-pinned.yaml)
         if [[ $grep_line == *"<"* || $grep_line == *"=="* ]]; then
             echo "pinned=true" >> $GITHUB_ENV
         else
@@ -161,12 +137,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-${{ env.today }}-${{ hashFiles(format('{0}', env.ENV_FILE)) }}
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-hashFiles("envs/ubuntu-pinned.yaml")
       id: cache-env
 
     - name: Update environment
       if: env.pinned == 'false' && steps.cache-env.outputs.cache-hit != 'true'
-      run: conda env update -n pypsa-eur -f ${{ env.ENV_FILE }}
+      run: conda env update -n pypsa-eur -f envs/ubuntu-pinned.yaml
 
     - name: Install inhouse packages from master
       if: env.pinned == 'false'
