@@ -30,27 +30,31 @@ Install Python Dependencies
 ===============================
 
 PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage your environments.
-For instructions for your operating system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
+We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__
+to install them and manage your environments. For instructions for your operating
+system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
 You can also use ``conda`` equivalently.
 
 The package requirements are curated in the `envs/environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/envs/environment.yaml>`__ file.
-The environment can be installed and activated using
+There are also regularly updated pinned environment files for each operating system to
+ensure reproducibility (`envs/windows-pinned.yaml`, `envs/linux-pinned.yaml`, `envs/macos-pinned.yaml`).
+We recommend to use the pinned files for a stable environment, but you could also use
+the unpinned file.
 
 .. code:: bash
 
-    .../pypsa-eur % mamba env create -f envs/environment.yaml
+    mamba env create -f envs/linux-pinned.yaml # replace for your os
 
-    .../pypsa-eur % mamba activate pypsa-eur
+    mamba activate pypsa-eur
 
 .. note::
     The equivalent commands for ``conda`` would be
 
     .. code:: bash
 
-        .../pypsa-eur % conda env create -f envs/environment.yaml
+        conda env create -f envs/linux-pinned.yaml # replace for your os
 
-        .../pypsa-eur % conda activate pypsa-eur
+        conda activate pypsa-eur
 
 
 Install a Solver
@@ -107,4 +111,4 @@ You can also use ``snakemake`` to specify another file, e.g.
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml
+    snakemake -call --configfile config/config.mymodifications.yaml
