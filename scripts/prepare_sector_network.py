@@ -4066,15 +4066,15 @@ def add_steel_industry(n, investment_year, options):
 
     # Steel production demanded in Europe in kton of steel products per year
     steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
+    capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
     hourly_steel_production = (
         steel_production.loc[investment_year, "0"] / nhours
     )  # get the steel that needs to be produced hourly
 
     # Retrieving existing capacities only to give a maximum potential
-    capacities = pd.read_csv(snakemake.input.steel_capacities)
-    capacities = capacities.groupby("country").sum().reset_index()
-    capacities = capacities.set_index("country").squeeze()
-    capacities = capacities.drop(["Unnamed: 0", "tech"], axis=1)
+    capacities = capacities.sum()
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
@@ -4163,7 +4163,7 @@ def add_steel_industry(n, investment_year, options):
         """
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 1
+    prod_constantly = 0
 
     if options["endo_industry_options"]["regional_steel_demand"]:
 
@@ -4213,7 +4213,7 @@ def add_steel_industry(n, investment_year, options):
         efficiency=1 / 1.429,
         efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
         efficiency3=216.4 / 1.429,
-        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     n.add(
@@ -4226,8 +4226,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="direct reduced iron",
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        efficiency=1 / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
         efficiency2=28 / 1,  # 28tCO2/kt sponge iron as in JRC IDEES calculations
     )
 
@@ -4240,8 +4239,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="direct reduced iron",
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
+        efficiency=1 / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
     )
 
     n.add(
@@ -4256,14 +4254,11 @@ def add_steel_industry(n, investment_year, options):
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=145000
-        / nhours
-        / (1 / 1.36)
-        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        capital_cost=145000 / nhours / (1 / 1.36) * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
         efficiency=1 / 1.36,
         efficiency2=-2.8 / 1.36,
         # efficiency3=28/1.36,
-        lifetime=25,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     # Blast Furnace + Basic Oxygen Furnace -> BOF
@@ -4283,7 +4278,7 @@ def add_steel_industry(n, investment_year, options):
         efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
         efficiency2=-524,  # MWh electricity per kt coke
         efficiency3=-615,  # MWh heat per kt coke
-        lifetime=40,
+        lifetime=100,
     )
 
     # EAF
@@ -4300,26 +4295,14 @@ def add_steel_industry(n, investment_year, options):
         carrier="electric arc furnaces",
         p_nom_extendable=True,
         p_nom_max=max_cap,
-<<<<<<< HEAD
-<<<<<<< HEAD
-        p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
-        p_nom_min=min_cap_node,
-        p_nom=min_cap_node,
-=======
         p_min_pu= prod_constantly, # electrical stuff can be switched on and off
         #p_nom_min=min_cap_node,
         #p_nom=min_cap_node,
->>>>>>> 1d3fc4da (Adding lifetimes from gem)
-=======
-        p_min_pu= prod_constantly, # electrical stuff can be switched on and off
-        #p_nom_min=min_cap_node,
-        #p_nom=min_cap_node,
->>>>>>> 1d3fc4da (Adding lifetimes from gem)
         capital_cost=80000 / nhours / 1 * 0.7551,
         efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
         efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
-        lifetime=40,
+        lifetime=67,
     )
 
     # Link to produce heat for steel industry processes

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
+
 rule add_existing_baseyear:
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
@@ -9,6 +10,7 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        endo_industry=config_provider("enable", "endo_industry"),
     input:
         network=RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -25,24 +27,45 @@ rule add_existing_baseyear:
         existing_heating_distribution=resources(
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         heating_efficiencies=resources("heating_efficiencies.csv"),
+        steel_capacities=lambda w: (
+            resources("steel/steel_capacities.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        gem_capacities=lambda w: (
+            resources("steel/gem_capacities_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        gem_start_dates=lambda w: (
+            resources("steel/gem_start_dates_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        industrial_distribution_key=lambda w: (
+            resources("industrial_distribution_key_base_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
     output:
         RESULTS
         + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     wildcard_constraints:
+        # TODO: The first planning_horizon needs to be aligned across scenarios
+        # snakemake does not support passing functions to wildcard_constraints
+        # reference: https://github.com/snakemake/snakemake/issues/2703
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
-        mem_mb=config_provider("solving", "mem_mb"),
-        runtime=config_provider("solving", "runtime", default="24h"),
+        mem_mb=2000,
     log:
-        logs(
-            "add_existing_baseyear_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
-        ),
+        RESULTS
+        + "logs/add_existing_baseyear_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
-        benchmarks(
-            "add_existing_baseyear/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        (
+            RESULTS
+            + "benchmarks/add_existing_baseyear/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

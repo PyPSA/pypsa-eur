@@ -349,34 +349,6 @@ def build_nodal_distribution_key(
             )
         else:
             raise ValueError(f"Unknown process {process}")
-        
-        # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
-        capacities_sum = capacities.sum() if not capacities.empty else 0
-        gem_capacities.loc[regions_ct, process] = capacities_sum
-
-        # Calculate the weighted average of start dates using capacities as weights
-        if not capacities.empty:
-            start_dates = facilities.loc[capacities.index, "Start date"].dropna()
-            filtering = capacities[(start_dates != 0) & (capacities != 0)].index
-            filtered_capacities = capacities.loc[filtering]
-            filtered_start_dates = start_dates.loc[filtering]
-            filtered_capacities_sum = filtered_capacities.sum()
-            print(f"Start dates {filtered_start_dates}")
-            print(f"Capacities {filtered_capacities}")
-            print(f"Sum {filtered_capacities_sum}")
-
-            if filtered_capacities_sum > 0:
-                weighted_sum = (filtered_capacities * filtered_start_dates).sum()
-                print(f"Region {regions_ct}")
-                print(f"Weighted sum {weighted_sum}")
-                weighted_avg = weighted_sum / filtered_capacities_sum
-                gem_start_dates.loc[regions_ct, process] = weighted_avg
-            else:
-                # If no valid capacities, assign 0 or NaN
-                gem_start_dates.loc[regions_ct, process] = 0
-        else:
-            # If capacities are empty, assign 0 or NaN
-            gem_start_dates.loc[regions_ct, process] = 0
 
         # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
         capacities_sum = capacities.sum() if not capacities.empty else 0
@@ -389,14 +361,9 @@ def build_nodal_distribution_key(
             filtered_capacities = capacities.loc[filtering]
             filtered_start_dates = start_dates.loc[filtering]
             filtered_capacities_sum = filtered_capacities.sum()
-            print(f"Start dates {filtered_start_dates}")
-            print(f"Capacities {filtered_capacities}")
-            print(f"Sum {filtered_capacities_sum}")
 
             if filtered_capacities_sum > 0:
                 weighted_sum = (filtered_capacities * filtered_start_dates).sum()
-                print(f"Region {regions_ct}")
-                print(f"Weighted sum {weighted_sum}")
                 weighted_avg = weighted_sum / filtered_capacities_sum
                 gem_start_dates.loc[regions_ct, process] = weighted_avg
             else:

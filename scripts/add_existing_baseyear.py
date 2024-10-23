@@ -624,12 +624,145 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
-def add_steel_industry_existing(n):
+    
+
+def add_steel_industry_existing_gem(n):
 
     # Steel capacities in Europe in kton of steel products per year
-    #capacities = pd.read_csv(snakemake.input.steel_capacities)
-    capacities = pd.read_csv(snakemake.input.gem_capacities)
-    start_dates = pd.read_csv(snakemake.input.gem_start_dates)
+    capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.gem_start_dates, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    capacities_bof = capacities["Integrated steelworks"]
+    capacities_eaf = capacities["EAF"] + capacities["DRI + EAF"]
+    capacities_bof.index = capacities.index
+    capacities_eaf.index = capacities.index
+
+    capacities_bof = capacities_bof * keys["Integrated steelworks"]
+    
+    capacities_eaf = capacities_eaf * keys["EAF"]
+
+    start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"]) / capacities_eaf)
+    start_dates_bof = round(start_dates["Integrated steelworks"])
+
+    # Average age of assets in Iron and steel in Europe: 21-28 years, so I assume they are starting in 2000 in case https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf 
+    start_dates_eaf = start_dates_eaf.where((start_dates_eaf >= 1000) & np.isfinite(start_dates_eaf), 2000)
+    start_dates_bof = start_dates_bof.where((start_dates_bof >= 1000) & np.isfinite(start_dates_bof), 2000)
+
+    nodes = pop_layout.index
+    p_nom_bof = pd.DataFrame(index=nodes, columns=(["value"]))
+    p_nom_eaf = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom_bof = capacities_bof / nhours  # get the hourly production capacity
+    p_nom_eaf = capacities_eaf / nhours  # get the hourly production capacity
+
+    # Should steel be produced at a constant rate during the year or not? 1 or 0
+    prod_constantly = 0
+    ramp_limit = 0.5
+
+    ########### Add existing steel production capacities ############
+    # Blast furnace assuming with natural gas
+
+    # BOF
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Blast Furnaces-2020",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.pig_iron.nodes,
+        bus2=spatial.coal.nodes,
+        bus3=spatial.co2.process_emissions,
+        carrier="blast furnaces",
+        p_nom=p_nom_bof * 1.429,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        p_nom_extendable=False,
+        #committable =True,
+        #ramp_limit_up=ramp_limit,
+        #ramp_limit_dowm=ramp_limit,
+        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
+        efficiency=1 / 1.429,
+        efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
+        efficiency3=216.4 / 1.429,
+        lifetime=100, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf 
+        build_year=start_dates_bof,
+    )
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" DRI-2020",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.sponge_iron.nodes,
+        bus2=spatial.dri_gas.nodes,  # in this process is the reducing agent, it is not burnt
+        carrier="direct reduced iron",
+        p_nom=p_nom_eaf
+        * 1.36,  # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        #committable =True,
+        #ramp_limit_up=ramp_limit,
+        #ramp_limit_dowm=ramp_limit,
+        p_nom_extendable=False,
+        efficiency=1 / 1.36,
+        efficiency2=-2.8 * 1000 / 1.36,
+        lifetime= 67, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        build_year=start_dates_eaf,
+    )
+
+    # Blast Furnace + Basic Oxygen Furnace -> BOF
+    n.add(
+        "Link",
+        nodes,
+        suffix=" BOF-2020",
+        bus0=spatial.pig_iron.nodes,
+        bus1=spatial.steel.nodes,
+        bus2=nodes,
+        bus3=spatial.heat4steel.nodes,
+        carrier="basic oxygen furnace",
+        p_nom=p_nom_bof,  # capacities_bof.loc[],
+        p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
+        #committable =True,
+        #ramp_limit_up=ramp_limit,
+        #ramp_limit_dowm=ramp_limit,
+        p_nom_extendable=False,
+        efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
+        efficiency2=-524,  # MWh electricity per kt coke
+        efficiency3=-615,  # MWh heat per kt coke
+        lifetime=100, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf 
+        build_year=start_dates_bof,
+    )
+
+    # EAF
+
+    # Electric Arc Furnace
+    n.add(
+        "Link",
+        nodes,
+        suffix=" EAF-2020",
+        bus0=spatial.sponge_iron.nodes,
+        bus1=spatial.steel.nodes,
+        bus2=nodes,
+        bus3=spatial.heat4steel.nodes,  # This heat is mainly from side processes in the refinery
+        carrier="electric arc furnaces",
+        p_nom=p_nom_eaf,
+        p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
+        #committable =True,
+        #ramp_limit_up=ramp_limit,
+        #ramp_limit_dowm=ramp_limit,
+        p_nom_extendable=False,
+        # p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
+        efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
+        efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
+        efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
+        lifetime=67, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        build_year=start_dates_eaf,
+    )
+
+
+def add_steel_industry_existing_jrc(n):
+
+    # Steel capacities in Europe in kton of steel products per year
+    capacities = pd.read_csv(snakemake.input.steel_capacities)
+
     # Retrieve BOF capacities
     capacities_bof = capacities[capacities["tech"] == "BOF"]
     capacities_bof = capacities_bof.drop(columns=["Unnamed: 0", "tech"])
@@ -863,7 +996,7 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     if snakemake.params.endo_industry:
-        add_steel_industry_existing(n)
+        add_steel_industry_existing_gem(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
