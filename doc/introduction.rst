@@ -35,7 +35,7 @@ For instance, an invocation to
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call results/networks/base_s_128_elec_lvopt_.nc
+    .../pypsa-eur % snakemake results/networks/base_s_128_elec_lvopt_.nc
 
 follows this dependency graph
 

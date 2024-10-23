@@ -107,4 +107,4 @@ You can also use ``snakemake`` to specify another file, e.g.
 
 .. code:: bash
 
-    .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml
+    .../pypsa-eur % snakemake --configfile config/config.mymodifications.yaml
