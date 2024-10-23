@@ -14,17 +14,17 @@ on:
 jobs:
   update-pinned-environment:
     name: Update pinned envs
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu, macos, windows]
         include:
-        - os: ubuntu-latest
+        - os: ubuntu
           suffix: "linux"
-        - os: macos-latest
+        - os: macos
           suffix: "macos"
-        - os: windows-latest
+        - os: windows
           suffix: "windows"
 
     steps:
