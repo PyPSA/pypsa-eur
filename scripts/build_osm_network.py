@@ -1491,10 +1491,6 @@ def build_network(
     lines = _merge_identical_lines(lines)
 
     ### DATA PROCESSING (AC)
-    # logger.info("Dropping buses that do not intersect with lines.")
-    # buses = buses[buses.intersects(lines.union_all())].reset_index(
-    #     drop=True
-    # )  # Drop all buses that do not intersect with lines
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
 
