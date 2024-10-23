@@ -119,7 +119,6 @@ if __name__ == "__main__":
     network.lines.sort_index(inplace=True)
     network.links.sort_index(inplace=True)
 
-
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)
     export_clean_csv(network.buses, BUSES_COLUMNS, snakemake.output.buses)
