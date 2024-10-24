@@ -7,15 +7,14 @@
 
 import geopandas as gpd
 import xarray as xr
-from OnshoreRegionData import OnshoreRegionData
 from _helpers import set_scenario_config
+from OnshoreRegionData import OnshoreRegionData
 
 
 def get_unit_conversion_factor(
     input_unit: str,
     output_unit: str,
-    unit_scaling: dict = {"Wh": 1, "kWh": 1e3,
-                          "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
+    unit_scaling: dict = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
 ) -> float:
 
     if input_unit not in unit_scaling.keys():
@@ -47,11 +46,12 @@ if __name__ == "__main__":
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
 
     heat_source_technical_potential = {}
-    for heat_source, heat_source_features in snakemake.params.fraunhofer_heat_sources.items():
+    for (
+        heat_source,
+        heat_source_features,
+    ) in snakemake.params.fraunhofer_heat_sources.items():
 
-        heat_source_utilisation_potential = gpd.read_file(
-            snakemake.input[heat_source]
-        )
+        heat_source_utilisation_potential = gpd.read_file(snakemake.input[heat_source])
 
         heat_source_technical_potential[heat_source] = OnshoreRegionData(
             onshore_regions=regions_onshore,

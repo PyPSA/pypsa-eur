@@ -2173,12 +2173,12 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
                 n.madd(
-                    "Bus", 
-                    nodes, 
+                    "Bus",
+                    nodes,
                     suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
-                    )
-                
+                )
+
                 n.madd(
                     "Generator",
                     nodes,
@@ -2186,8 +2186,8 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     bus=nodes + f" {heat_carrier}",
                     carrier=heat_carrier,
                     p_nom_extendable=True,
-                    capital_cost=0.0, # TODO: update later to underground part
-                    p_nom_max=p_max_source
+                    capital_cost=0.0,  # TODO: update later to underground part
+                    p_nom_max=p_max_source,
                 )
 
                 # add heat pump converting geothermal heat + electricity to urban central heat
@@ -2203,7 +2203,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     efficiency2=efficiency,
                     capital_cost=costs.at[costs_name, "efficiency"]
                     * costs.at[costs_name, "fixed"]
-                    * overdim_factor, # TODO: update later to heat pump part
+                    * overdim_factor,  # TODO: update later to heat pump part
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name, "lifetime"],
                 )

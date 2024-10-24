@@ -290,7 +290,7 @@ rule build_heat_source_potentials:
             "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
         ),
     input:
-    # TODO: accessing `config` as a dictionary might not work with scenario management!!
+        # TODO: accessing `config` as a dictionary might not work with scenario management!!
         **{
             heat_source: f"data/fraunhofer_heat_utilisation_potentials/{heat_source}.gpkg"
             for heat_source in config["sector"]["district_heating"][
@@ -301,7 +301,7 @@ rule build_heat_source_potentials:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         # dict comprehension gives those Fraunhofer utilisation potentials that are present in sector/district_heating/heat_pump_sources/urban central as input
     output:
-    # TODO: accessing `config` as a dictionary might not work with scenario management!!
+        # TODO: accessing `config` as a dictionary might not work with scenario management!!
         **{
             heat_source: resources(
                 "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
@@ -1072,11 +1072,20 @@ rule prepare_sector_network:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         fraunhofer_heat_sources=config_provider(
             "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
-        )
+        ),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
+        **{
+            heat_source: resources(
+                "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
+            )
+            for heat_source in config["sector"]["district_heating"][
+                "fraunhofer_heat_utilisation_potentials"
+            ].keys()
+            if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
+        },
         snapshot_weightings=resources(
             "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
@@ -1172,15 +1181,6 @@ rule prepare_sector_network:
         # heat_source_technical_potential_geothermal=resources(
         #     "heat_source_technical_potential_geothermal_base_s_{clusters}.csv"
         # ),
-        **{
-            heat_source: resources(
-                "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
-            )
-            for heat_source in config["sector"]["district_heating"][
-                "fraunhofer_heat_utilisation_potentials"
-            ].keys()
-            if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
-        }
     output:
         RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

@@ -1,5 +1,7 @@
-import geopandas as gpd
+# -*- coding: utf-8 -*-
 from typing import List
+
+import geopandas as gpd
 
 
 class OnshoreRegionData:
