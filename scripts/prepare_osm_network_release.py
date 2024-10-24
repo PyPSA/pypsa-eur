@@ -19,6 +19,7 @@ BUSES_COLUMNS = [
     "dc",
     "symbol",
     "under_construction",
+    "tags",
     "x",
     "y",
     "country",
@@ -44,6 +45,7 @@ LINKS_COLUMNS = [
     "length",
     "underground",
     "under_construction",
+    "tags",
     "geometry",
 ]
 TRANSFORMERS_COLUMNS = [
@@ -52,6 +54,7 @@ TRANSFORMERS_COLUMNS = [
     "bus1",
     "voltage_bus0",
     "voltage_bus1",
+    "s_nom",
     "geometry",
 ]
 CONVERTERS_COLUMNS = [
@@ -59,6 +62,7 @@ CONVERTERS_COLUMNS = [
     "bus0",
     "bus1",
     "voltage",
+    "p_nom",
     "geometry",
 ]
 
@@ -108,6 +112,12 @@ if __name__ == "__main__":
     network.buses["dc"] = network.buses.pop("carrier").map({"DC": "t", "AC": "f"})
     network.lines.length = network.lines.length * 1e3
     network.links.length = network.links.length * 1e3
+
+    # Sort alphabetically
+    network.buses.sort_index(inplace=True)
+    network.transformers.sort_index(inplace=True)
+    network.lines.sort_index(inplace=True)
+    network.links.sort_index(inplace=True)
 
     # Export to clean csv for release
     logger.info(f"Exporting {len(network.buses)} buses to %s", snakemake.output.buses)

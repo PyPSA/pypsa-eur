@@ -757,8 +757,8 @@ if config["electricity"]["base_network"] == "osm-raw":
                 "data/osm-raw/{country}/lines_way.json",
                 country=config_provider("countries"),
             ),
-            links_relation=expand(
-                "data/osm-raw/{country}/links_relation.json",
+            routes_relation=expand(
+                "data/osm-raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             substations_way=expand(
@@ -774,6 +774,7 @@ if config["electricity"]["base_network"] == "osm-raw":
         output:
             substations=resources("osm-raw/clean/substations.geojson"),
             substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
+            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
             lines=resources("osm-raw/clean/lines.geojson"),
             links=resources("osm-raw/clean/links.geojson"),
         log:
@@ -792,8 +793,14 @@ if config["electricity"]["base_network"] == "osm-raw":
 if config["electricity"]["base_network"] == "osm-raw":
 
     rule build_osm_network:
+        params:
+            countries=config_provider("countries"),
+            voltages=config_provider("electricity", "voltages"),
+            line_types=config_provider("lines", "types"),
         input:
             substations=resources("osm-raw/clean/substations.geojson"),
+            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
+            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
             lines=resources("osm-raw/clean/lines.geojson"),
             links=resources("osm-raw/clean/links.geojson"),
             country_shapes=resources("country_shapes.geojson"),
