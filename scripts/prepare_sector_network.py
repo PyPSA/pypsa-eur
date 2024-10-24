@@ -43,6 +43,13 @@ from scipy.stats import beta
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
+specific_emissions = {
+    "oil" : 0.2571,
+    "oil primary" : 0.2571,
+    "gas" : 0.198,
+    "coal" : 0.3361,
+    "lignite" : 0.4069,
+}
 
 def define_spatial(nodes, options):
     """
@@ -1042,7 +1049,7 @@ def add_dac(n, costs):
 
 
 def add_co2limit(n, options, nyears=1.0, limit=0.0):
-    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
+    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit} as downstream constraint")
 
     countries = snakemake.params.countries
 
@@ -1064,6 +1071,51 @@ def add_co2limit(n, options, nyears=1.0, limit=0.0):
         constant=co2_limit,
     )
 
+def add_co2limit_upstream(n, options, nyears=1.0, limit=0.0):
+    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit} as upstream constraint")
+
+    countries = snakemake.params.countries
+
+    sectors = determine_emission_sectors(options)
+
+    # convert Mt to tCO2
+    co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
+
+    co2_limit = co2_totals.loc[countries, sectors].sum().sum()
+
+    co2_limit *= limit * nyears
+
+    lhs = []
+
+    for c in specific_emissions.keys():
+        i_fossil = n.generators.index[(n.generators.carrier == c)]
+        lhs.append((n.model["Generator-p"].loc[:, i_fossil]*specific_emissions[c]*n.snapshot_weightings.generators).sum())
+
+    # sequestration
+    i_sequestered = n.links.index[(n.links.carrier == "co2 sequestered")]
+    lhs.append((-1*n.model["Link-p"].loc[:, i_sequestered]*n.snapshot_weightings.generators).sum())
+
+    # # process emissions
+    # i_pe = n.links.index[n.links.carrier == "process emissions"]
+    # lhs.append((n.model["Link-p"].loc[:, i_pe]*n.snapshot_weightings.generators).sum())
+
+    # i_pecc = n.links.index[n.links.carrier == "process emissions CC"]
+    # lhs.append((n.model["Link-p"].loc[:, i_pecc]*n.snapshot_weightings.generators).sum())
+
+    # # lost oil emissions: this is the hvc sequestered emissions that are not accounted in the downstream constraint
+    # i_nfi = n.links.index[(n.links.carrier == "naphtha for industry")]
+    # lhs.append(-1*((n.model["Link-p"].loc[:, i_nfi]*(1-n.links.loc[i_nfi, "efficiency2"])*specific_emissions["oil"]*n.snapshot_weightings.generators).sum()))
+
+    lhs = sum(lhs)
+
+    n.add(
+        "GlobalConstraint",
+        "CO2LimitUpstream",
+        constant=limit,
+        sense="<=",
+        type="co2_fossils",
+        carrier_attribute="co2_emissions",
+    )
 
 def cycling_shift(df, steps=1):
     """
@@ -4639,7 +4691,10 @@ if __name__ == "__main__":
         limit = co2_cap.loc[investment_year]
     else:
         limit = get(co2_budget, investment_year)
-    add_co2limit(n, options, nyears, limit)
+    if snakemake.params.co2_limit_upstream:
+        add_co2limit_upstream(n, options, nyears, limit)
+    else:
+        add_co2limit(n, options, nyears, limit)
 
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:
