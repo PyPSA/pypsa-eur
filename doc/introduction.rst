@@ -35,7 +35,7 @@ For instance, an invocation to
 
 .. code:: console
 
-    $ snakemake -call results/networks/base_s_128_elec_lvopt_.nc
+    $ snakemake results/networks/base_s_128_elec_lvopt_.nc
 
 follows this dependency graph
 
