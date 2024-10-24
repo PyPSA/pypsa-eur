@@ -2161,30 +2161,30 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             )
 
             # todo: make this more generic
-            if heat_source in ["geothermal"]:
+            if heat_source in snakemake.params.fraunhofer_heat_sources:
                 # get potential
                 p_max_source = pd.read_csv(
-                    snakemake.input.heat_source_technical_potential_geothermal,
+                    snakemake.input[heat_source],
                     index_col=0,
                 ).squeeze()
                 p_max_source.index = nodes
 
                 # add resource
-                geothermal_heat_carrier = f"{heat_system} geothermal heat"
-                n.add("Carrier", geothermal_heat_carrier)
+                heat_carrier = f"{heat_system} {heat_source} heat"
+                n.add("Carrier", heat_carrier)
                 n.madd(
                     "Bus", 
                     nodes, 
-                    suffix=f" {geothermal_heat_carrier}",
-                    carrier=geothermal_heat_carrier,
+                    suffix=f" {heat_carrier}",
+                    carrier=heat_carrier,
                     )
                 
                 n.madd(
                     "Generator",
                     nodes,
-                    suffix=f" {geothermal_heat_carrier}",
-                    bus=nodes + f" {geothermal_heat_carrier}",
-                    carrier=geothermal_heat_carrier,
+                    suffix=f" {heat_carrier}",
+                    bus=nodes + f" {heat_carrier}",
+                    carrier=heat_carrier,
                     p_nom_extendable=True,
                     capital_cost=0.0, # TODO: update later to underground part
                     p_nom_max=p_max_source
@@ -2196,7 +2196,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
                     bus0=nodes,
-                    bus1=nodes + f" {geothermal_heat_carrier}",
+                    bus1=nodes + f" {heat_carrier}",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=-(efficiency - 1),
