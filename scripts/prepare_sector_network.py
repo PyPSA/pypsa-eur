@@ -2160,20 +2160,69 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 else costs.at[costs_name, "efficiency"]
             )
 
-            n.add(
-                "Link",
-                nodes,
-                suffix=f" {heat_system} {heat_source} heat pump",
-                bus0=nodes,
-                bus1=nodes + f" {heat_system} heat",
-                carrier=f"{heat_system} {heat_source} heat pump",
-                efficiency=efficiency,
-                capital_cost=costs.at[costs_name, "efficiency"]
-                * costs.at[costs_name, "fixed"]
-                * overdim_factor,
-                p_nom_extendable=True,
-                lifetime=costs.at[costs_name, "lifetime"],
-            )
+            # todo: make this more generic
+            if heat_source in snakemake.params.fraunhofer_heat_sources:
+                # get potential
+                p_max_source = pd.read_csv(
+                    snakemake.input[heat_source],
+                    index_col=0,
+                ).squeeze()
+                p_max_source.index = nodes
+
+                # add resource
+                heat_carrier = f"{heat_system} {heat_source} heat"
+                n.add("Carrier", heat_carrier)
+                n.madd(
+                    "Bus",
+                    nodes,
+                    suffix=f" {heat_carrier}",
+                    carrier=heat_carrier,
+                )
+
+                n.madd(
+                    "Generator",
+                    nodes,
+                    suffix=f" {heat_carrier}",
+                    bus=nodes + f" {heat_carrier}",
+                    carrier=heat_carrier,
+                    p_nom_extendable=True,
+                    capital_cost=0.0,  # TODO: update later to underground part
+                    p_nom_max=p_max_source,
+                )
+
+                # add heat pump converting geothermal heat + electricity to urban central heat
+                n.madd(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {heat_carrier}",
+                    bus2=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=-(efficiency - 1),
+                    efficiency2=efficiency,
+                    capital_cost=costs.at[costs_name, "efficiency"]
+                    * costs.at[costs_name, "fixed"]
+                    * overdim_factor,  # TODO: update later to heat pump part
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name, "lifetime"],
+                )
+            else:
+
+                n.madd(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=efficiency,
+                    capital_cost=costs.at[costs_name, "efficiency"]
+                    * costs.at[costs_name, "fixed"]
+                    * overdim_factor,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name, "lifetime"],
+                )
 
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
