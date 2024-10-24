@@ -1,7 +1,7 @@
 ,Unit,Values,Description
-voltages,kV,"Any subset of {200., 220., 300., 380., 500., 750.}",Voltage levels to consider
+voltages,kV,"Any subset of {220., 300., 330., 380., 400., 500., 750.}",Voltage levels to consider
 base_network, --, "Any value in {'entsoegridkit', 'osm-prebuilt', 'osm-raw}", "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer."
-osm-prebuilt-version, --, "float, any value in range 0.1-0.4", "Choose the version of the prebuilt OSM network. Defaults to latest Zenodo release."
+osm-prebuilt-version, --, "float, any value in range 0.1-0.5", "Choose the version of the prebuilt OSM network. Defaults to latest Zenodo release."
 gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
 co2limit_enable,bool,true or false,Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks..

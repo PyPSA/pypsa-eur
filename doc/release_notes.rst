@@ -80,6 +80,9 @@ Upcoming Release
 
 * Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
+* Updated osm-prebuilt base network to version 0.5, for changelog, see https://zenodo.org/records/13981528
+
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
