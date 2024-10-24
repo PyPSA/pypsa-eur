@@ -4069,39 +4069,17 @@ def add_steel_industry(n, investment_year, options):
     capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    hourly_steel_production = (
-        steel_production.loc[investment_year, "0"] / nhours
-    )  # get the steel that needs to be produced hourly
-
-    # Retrieving existing capacities only to give a maximum potential
-    capacities = capacities.sum()
+    hourly_steel_production = (steel_production.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
+    capacities = capacities.sum(axis = 1)
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
-    min_cap = cap_share * hourly_steel_production
+    regional_prod = cap_share * hourly_steel_production
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
-    max_cap = max(capacities["value"]) * 2
+    max_cap = max(capacities) * 2
 
-    # Retrieve countries that have two nodes
+    # Adding carriers and components
     nodes = pop_layout.index
-    nodes2 = [value[:2] for value in nodes]
-    duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
-
-    # ADB for now assign half capacity per node in countries with 2 nodes
-
-    for i in duplicated:
-        if i == "GB":  # No values for United Kingdom
-            pass
-        else:
-            min_cap.loc[i, "value"] /= 2
-
-    min_cap_node = pd.Series(index=nodes, dtype=float)
-
-    for i in min_cap_node.index:
-        if i[:2] not in min_cap.index:
-            min_cap_node[i] = 0
-        else:
-            min_cap_node[i] = min_cap.loc[i[:2], "value"]
 
     n.add("Carrier", "iron")
 
@@ -4158,26 +4136,13 @@ def add_steel_industry(n, investment_year, options):
             unit=unit,
         )
 
-        """
-        # can also be negative
-        n.add(
-            "Store",
-            location_value,
-            e_nom_extendable=True,
-            carrier=carrier_name,
-            bus=location_value,
-        )
-        """
-
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 0
+    regional_prod.index = regional_prod.index + ' steel'
 
-    if options["endo_industry_options"]["regional_steel_demand"]:
+    if not options["endo_industry_options"]["regional_steel_demand"]:
 
-        hourly_steel_production = min_cap_node.copy()
-        hourly_steel_production.index = (
-            hourly_steel_production.index.astype(str) + " steel"
-        )
+        regional_prod = regional_prod.sum()
 
     # STEEL
     n.add(
@@ -4185,7 +4150,7 @@ def add_steel_industry(n, investment_year, options):
         spatial.steel.nodes,
         bus=spatial.steel.nodes,
         carrier="steel",
-        p_set=hourly_steel_production,
+        p_set=regional_prod,
     )
 
     n.add(

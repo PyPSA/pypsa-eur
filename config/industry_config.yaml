@@ -21,9 +21,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name:
-  - baseline
-  - climate_policy
+  name: 'all'
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml
@@ -76,13 +74,11 @@ enable:
   endo_industry: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+# Modify to reflect the climate policies in Europe
 co2_budget:
   2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
+  2030: 0.45
+  2040: 0.05
   2050: 0.000
 co2_budget_apply: true
 
@@ -714,7 +710,7 @@ sector:
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
   endo_industry_options:
-    regional_steel_demand: true
+    regional_steel_demand: false
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry

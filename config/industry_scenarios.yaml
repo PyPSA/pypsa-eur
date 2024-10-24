@@ -11,8 +11,26 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-baseline:
+baseline_eu_dem:
   co2_budget_apply: false
+  sector:
+    endo_industry_options:
+      regional_steel_demand: false
 
-climate_policy:
+climate_policy_eu_dem:
   co2_budget_apply: true
+  sector:
+    endo_industry_options:
+      regional_steel_demand: false
+
+baseline_regional_dem:
+  co2_budget_apply: false
+  sector:
+    endo_industry_options:
+      regional_steel_demand: true
+
+climate_policy_regional_dem:
+  co2_budget_apply: true
+  sector:
+    endo_industry_options:
+      regional_steel_demand: true
