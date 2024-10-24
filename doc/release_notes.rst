@@ -97,6 +97,8 @@ Upcoming Release
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
 
+* Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
+
 * Added options ``biosng_cc`` and ``biomass_to_liquid_cc`` to separate the base
   technology from the option to capture carbon from it.
 
