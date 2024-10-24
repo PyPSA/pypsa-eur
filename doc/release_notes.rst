@@ -11,6 +11,8 @@ Release Notes
 ariadne2 Branch
 ================
 
+* Added option to specify emissions from gas compressing with setting ``industry: gas_compression_losses:``.
+
 * Created a separate namespace for biogas and split it form the gas namespace
 
 * Existing Bioenergy plants from powerplantmatching are now split into biogas and solid biomass power plants. This heuristically assumes that all bioenergy power plants with a capacity smaller than 2 MW consume biogas, all bigger plants consume solid biomass. Should be further refined in the future.
