@@ -1,0 +1,27 @@
+FROM condaforge/mambaforge
+
+RUN conda update -n base conda
+RUN conda install -n base conda-libmamba-solver
+RUN conda config --set solver libmamba
+
+RUN apt-get update && apt-get install -y bash git
+
+# WORKDIR /pypsa-eur
+
+# COPY ./envs ./temp
+
+RUN git clone https://github.com/PyPSA/pypsa-eur.git
+
+RUN git clone https://github.com/open-energy-transition/solver-benchmark.git
+
+RUN conda env create -n pypsa-eur -f pypsa-eur/envs/environment.yaml
+
+RUN conda init bash
+
+RUN touch ~/.bashrc && echo "conda activate pypsa-eur" >> ~/.bashrc
+
+SHELL ["/bin/bash", "--login", "-c"]
+
+ENV PATH /opt/conda/envs/pypsa-eur/bin:$PATH
+
+CMD ["bash"]

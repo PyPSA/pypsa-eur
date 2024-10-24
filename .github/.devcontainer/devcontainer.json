@@ -3,7 +3,7 @@
 {
   "name": "pypsa eur dev",
   "build": {
-     "dockerfile": "../../Dockerfile.solved"
+     "dockerfile": "../../Dockerfile.benchmark"
   },
   
   "features": {
