@@ -604,6 +604,31 @@ def add_carrier_buses(n, carrier, nodes=None):
 
             suffix = " primary"
 
+        if carrier == "gas" and cf_industry["gas_compression_losses"] > 0:
+            n.add(
+                "Bus",
+                nodes + " primary",
+                location=location,
+                carrier=carrier + " primary",
+                unit=unit,
+            )
+
+            n.add(
+                "Link",
+                nodes + " compressing",
+                bus0=nodes + " primary",
+                bus1=nodes,
+                bus2="co2 atmosphere",
+                location=location,
+                carrier=carrier + " compressing",
+                p_nom=1e6,
+                efficiency=1 - cf_industry["gas_compression_losses"],
+                efficiency2=cf_industry["gas_compression_losses"]
+                * costs.at[carrier, "CO2 intensity"],
+            )
+
+            suffix = " primary"
+
         n.add(
             "Generator",
             nodes + suffix,
