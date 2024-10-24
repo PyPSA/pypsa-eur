@@ -622,8 +622,9 @@ def add_carrier_buses(n, carrier, nodes=None):
                 location=location,
                 carrier=carrier + " compressing",
                 p_nom=1e6,
-                efficiency=1-cf_industry["gas_compression_losses"],
-                efficiency2=cf_industry["gas_compression_losses"] * costs.at[carrier, "CO2 intensity"],
+                efficiency=1 - cf_industry["gas_compression_losses"],
+                efficiency2=cf_industry["gas_compression_losses"]
+                * costs.at[carrier, "CO2 intensity"],
             )
 
             suffix = " primary"
