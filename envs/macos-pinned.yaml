@@ -20,13 +20,13 @@ dependencies:
 - attrs=24.2.0
 - aws-c-auth=0.7.31
 - aws-c-cal=0.7.4
-- aws-c-common=0.9.30
+- aws-c-common=0.9.31
 - aws-c-compression=0.2.19
 - aws-c-event-stream=0.4.3
 - aws-c-http=0.8.10
 - aws-c-io=0.14.20
 - aws-c-mqtt=0.10.7
-- aws-c-s3=0.6.7
+- aws-c-s3=0.7.0
 - aws-c-sdkutils=0.1.19
 - aws-checksums=0.1.20
 - aws-crt-cpp=0.28.5
@@ -251,7 +251,7 @@ dependencies:
 - minizip=4.0.7
 - mpfr=4.2.1
 - msgpack-python=1.1.0
-- multiurl=0.3.1
+- multiurl=0.3.2
 - mumps-include=5.7.3
 - mumps-seq=5.7.3
 - munkres=1.1.4
@@ -285,7 +285,7 @@ dependencies:
 - plac=1.4.3
 - platformdirs=4.3.6
 - pluggy=1.5.0
-- polars=1.10.0
+- polars=1.11.0
 - poppler=24.08.0
 - poppler-data=0.4.12
 - postgresql=17.0

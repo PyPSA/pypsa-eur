@@ -17,13 +17,13 @@ dependencies:
 - attrs=24.2.0
 - aws-c-auth=0.7.31
 - aws-c-cal=0.7.4
-- aws-c-common=0.9.30
+- aws-c-common=0.9.31
 - aws-c-compression=0.2.19
 - aws-c-event-stream=0.4.3
 - aws-c-http=0.8.10
 - aws-c-io=0.14.20
 - aws-c-mqtt=0.10.7
-- aws-c-s3=0.6.7
+- aws-c-s3=0.7.0
 - aws-c-sdkutils=0.1.19
 - aws-checksums=0.1.20
 - aws-crt-cpp=0.28.5
@@ -230,7 +230,7 @@ dependencies:
 - minizip=4.0.6
 - mpfr=4.2.1
 - msgpack-python=1.1.0
-- multiurl=0.3.1
+- multiurl=0.3.2
 - mumps-seq=5.7.3
 - munkres=1.1.4
 - nbformat=5.10.4
@@ -388,7 +388,7 @@ dependencies:
   - highspy==1.7.2
   - oauthlib==3.2.2
   - ply==3.11
-  - polars==1.10.0
+  - polars==1.11.0
   - pyomo==6.8.0
   - requests-oauthlib==1.3.1
   - snakemake-executor-plugin-cluster-generic==1.0.9
