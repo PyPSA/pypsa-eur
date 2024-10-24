@@ -1108,6 +1108,8 @@ plotting:
     services urban decentral gas boiler: '#ba8947'
     urban central gas boiler: '#b0904f'
     gas: '#e05b09'
+    gas primary: '#e05b09'
+    gas compressing: '#e05b09'
     fossil gas: '#e05b09'
     natural gas: '#e05b09'
     biogas to gas: '#e36311'
