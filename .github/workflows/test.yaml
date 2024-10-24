@@ -78,10 +78,11 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: logs-${{ matrix.os }}
+        name: results-${{ matrix.os }}
         path: |
           logs
           .snakemake/log
+          results
         retention-days: 3
 
   run-tests-on-dev-deps:
@@ -159,8 +160,9 @@ jobs:
       if: env.pinned == 'false'
       uses: actions/upload-artifact@v4
       with:
-        name: logs-inhouse-${{ matrix.inhouse }}
+        name: results-inhouse-${{ matrix.inhouse }}
         path: |
           logs
           .snakemake/log
+          results
         retention-days: 3
