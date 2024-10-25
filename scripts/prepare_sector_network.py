@@ -2528,6 +2528,9 @@ def add_biomass(n, costs):
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
         ].rename(index=lambda x: x + " unsustainable solid biomass")
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " unsustainable bioliquids")
 
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
@@ -2537,12 +2540,6 @@ def add_biomass(n, costs):
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
         ].sum()
-
-    if options["regional_oil_demand"]:
-        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable bioliquids"
-        ].rename(index=lambda x: x + " bioliquids")
-    else:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
             "unsustainable bioliquids"
         ].sum()
@@ -2610,16 +2607,6 @@ def add_biomass(n, costs):
         e_sum_max=biogas_potentials_spatial,
     )
 
-    n.add(
-        "Store",
-        spatial.biomass.nodes,
-        bus=spatial.biomass.nodes,
-        carrier="solid biomass",
-        e_nom=solid_biomass_potentials_spatial,
-        marginal_cost=costs.at["solid biomass", "fuel"],
-        e_initial=solid_biomass_potentials_spatial,
-    )
-    # Make them a generator
     n.add(
         "Generator",
         spatial.biomass.nodes,
@@ -2878,10 +2865,6 @@ def add_biomass(n, costs):
             n.generators.loc[
                 n.generators.carrier == "unsustainable solid biomass", "e_sum_min"
             ] = 0
-            # Set e_sum_max to the potential to limit the faux biomass transport
-            n.generators.loc[
-                n.generators.carrier == "unsustainable solid biomass", "e_sum_max"
-            ] = unsustainable_solid_biomass_potentials_spatial.sum()
 
             n.add(
                 "GlobalConstraint",
