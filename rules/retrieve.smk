@@ -545,7 +545,7 @@ if config["enable"]["retrieve"] and (
         0.2: "13342577",
         0.3: "13358976",
         0.4: "13759222",
-        0.5: "13759222",  # TODO update link after validation
+        0.5: "13981528", 
     }
 
     # update rule to use the correct version
