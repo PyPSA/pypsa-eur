@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-.PHONY: _conda_check install install-fixed test clean-tests reset
+.PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos test clean-tests reset
 
 # Helper: Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
 _conda_check:
@@ -18,14 +18,20 @@ _conda_check:
 		exit 1; \
 	fi
 
-# Install the environment
+# Install environment
 install: _conda_check
 	@$(CONDA_OR_MAMBA) env create -f envs/environment.yaml
 	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
 
-# Install fixed environment
-install-fixed: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/environment.fixed.yaml
+# Install pinned environment
+install-pinned-linux: _conda_check
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml
+	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+install-pinned-windows: _conda_check
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml
+	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+install-pinned-macos: _conda_check
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml
 	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
 
 # Run default tests
