@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
 # SPDX-License-Identifier: CC0-1.0
 
-name: pypsa-eur-fixed
+name: pypsa-eur
 channels:
 - conda-forge
 - bioconda
@@ -21,16 +21,16 @@ dependencies:
 - attrs=24.2.0
 - aws-c-auth=0.7.31
 - aws-c-cal=0.7.4
-- aws-c-common=0.9.28
+- aws-c-common=0.9.31
 - aws-c-compression=0.2.19
 - aws-c-event-stream=0.4.3
 - aws-c-http=0.8.10
-- aws-c-io=0.14.18
+- aws-c-io=0.14.20
 - aws-c-mqtt=0.10.7
-- aws-c-s3=0.6.6
+- aws-c-s3=0.7.0
 - aws-c-sdkutils=0.1.19
 - aws-checksums=0.1.20
-- aws-crt-cpp=0.28.3
+- aws-crt-cpp=0.28.5
 - aws-sdk-cpp=1.11.407
 - azure-core-cpp=1.14.0
 - azure-identity-cpp=1.10.0
@@ -40,16 +40,16 @@ dependencies:
 - beautifulsoup4=4.12.3
 - blosc=1.21.6
 - bokeh=3.6.0
-- bottleneck=1.4.1
+- bottleneck=1.4.2
 - branca=0.7.2
 - brotli=1.1.0
 - brotli-bin=1.1.0
 - brotli-python=1.1.0
 - bzip2=1.0.8
-- c-ares=1.34.1
+- c-ares=1.34.2
 - c-blosc2=2.15.1
 - ca-certificates=2024.8.30
-- cads-api-client=1.4.4
+- cads-api-client=1.4.6
 - cairo=1.18.0
 - cartopy=0.24.0
 - cdsapi=0.7.3
@@ -79,16 +79,16 @@ dependencies:
 - cycler=0.12.1
 - cyrus-sasl=2.1.27
 - cytoolz=1.0.0
-- dask=2024.9.1
-- dask-core=2024.9.1
-- dask-expr=1.1.15
+- dask=2024.10.0
+- dask-core=2024.10.0
+- dask-expr=1.1.16
 - datrie=0.8.2
 - dbus=1.13.6
 - decorator=5.1.1
 - deprecation=2.1.0
 - descartes=1.1.0
 - distlib=0.3.9
-- distributed=2024.9.1
+- distributed=2024.10.0
 - docutils=0.21.2
 - double-conversion=3.3.0
 - dpath=2.2.0
@@ -100,7 +100,7 @@ dependencies:
 - filelock=3.16.1
 - fiona=1.10.1
 - fmt=11.0.2
-- folium=0.17.0
+- folium=0.18.0
 - font-ttf-dejavu-sans-mono=2.37
 - font-ttf-inconsolata=3.000
 - font-ttf-source-code-pro=2.038
@@ -112,7 +112,7 @@ dependencies:
 - freetype=2.12.1
 - freexl=2.0.0
 - fribidi=1.0.10
-- fsspec=2024.9.0
+- fsspec=2024.10.0
 - gdal=3.9.2
 - gdk-pixbuf=2.42.12
 - geographiclib=2.0
@@ -178,8 +178,8 @@ dependencies:
 - libbrotlidec=1.1.0
 - libbrotlienc=1.1.0
 - libcblas=3.9.0
-- libclang-cpp19.1=19.1.1
-- libclang13=19.1.1
+- libclang-cpp19.1=19.1.2
+- libclang13=19.1.2
 - libcrc32c=1.1.2
 - libcups=2.3.3
 - libcurl=8.10.1
@@ -191,8 +191,8 @@ dependencies:
 - libevent=2.1.12
 - libexpat=2.6.3
 - libffi=3.4.2
-- libgcc=14.1.0
-- libgcc-ng=14.1.0
+- libgcc=14.2.0
+- libgcc-ng=14.2.0
 - libgd=2.3.3
 - libgdal=3.9.2
 - libgdal-core=3.9.2
@@ -208,14 +208,14 @@ dependencies:
 - libgdal-postgisraster=3.9.2
 - libgdal-tiledb=3.9.2
 - libgdal-xls=3.9.2
-- libgfortran=14.1.0
-- libgfortran-ng=14.1.0
-- libgfortran5=14.1.0
+- libgfortran=14.2.0
+- libgfortran-ng=14.2.0
+- libgfortran5=14.2.0
 - libgl=1.7.0
-- libglib=2.82.1
+- libglib=2.82.2
 - libglvnd=1.7.0
 - libglx=1.7.0
-- libgomp=14.1.0
+- libgomp=14.2.0
 - libgoogle-cloud=2.30.0
 - libgoogle-cloud-storage=2.30.0
 - libgrpc=1.65.5
@@ -225,12 +225,12 @@ dependencies:
 - libkml=1.3.0
 - liblapack=3.9.0
 - liblapacke=3.9.0
-- libllvm19=19.1.1
+- libllvm19=19.1.2
 - libnetcdf=4.9.2
-- libnghttp2=1.58.0
+- libnghttp2=1.64.0
 - libnsl=2.0.1
 - libntlm=1.4
-- libopenblas=0.3.27
+- libopenblas=0.3.28
 - libopengl=1.7.0
 - libparquet=17.0.0
 - libpciaccess=0.18
@@ -243,10 +243,10 @@ dependencies:
 - libscotch=7.0.4
 - libspatialite=5.1.0
 - libspral=2024.05.08
-- libsqlite=3.46.1
+- libsqlite=3.47.0
 - libssh2=1.11.0
-- libstdcxx=14.1.0
-- libstdcxx-ng=14.1.0
+- libstdcxx=14.2.0
+- libstdcxx-ng=14.2.0
 - libthrift=0.21.0
 - libtiff=4.7.0
 - libutf8proc=2.8.0
@@ -266,7 +266,7 @@ dependencies:
 - lz4-c=1.9.4
 - lzo=2.10
 - mapclassify=2.8.1
-- markupsafe=3.0.1
+- markupsafe=3.0.2
 - matplotlib=3.9.2
 - matplotlib-base=3.9.2
 - matplotlib-inline=0.1.7
@@ -275,7 +275,7 @@ dependencies:
 - minizip=4.0.7
 - mpfr=4.2.1
 - msgpack-python=1.1.0
-- multiurl=0.3.1
+- multiurl=0.3.2
 - mumps-include=5.7.3
 - mumps-seq=5.7.3
 - munkres=1.1.4
@@ -284,10 +284,10 @@ dependencies:
 - nbformat=5.10.4
 - ncurses=6.5
 - netcdf4=1.7.1
-- networkx=3.4.1
+- networkx=3.4.2
 - nodeenv=1.9.1
 - nomkl=1.0
-- nspr=4.35
+- nspr=4.36
 - nss=3.105
 - numexpr=2.10.1
 - numpy=1.26.4
@@ -305,14 +305,14 @@ dependencies:
 - pcre2=10.44
 - pexpect=4.9.0
 - pickleshare=0.7.5
-- pillow=10.4.0
+- pillow=11.0.0
 - pip=24.2
 - pixman=0.43.2
 - pkgutil-resolve-name=1.3.10
 - plac=1.4.3
 - platformdirs=4.3.6
 - pluggy=1.5.0
-- polars=1.9.0
+- polars=1.11.0
 - poppler=24.08.0
 - poppler-data=0.4.12
 - postgresql=17.0
@@ -329,7 +329,6 @@ dependencies:
 - py-cpuinfo=9.0.0
 - pyarrow=17.0.0
 - pyarrow-core=17.0.0
-- pyarrow-hotfix=0.6
 - pycountry=24.6.1
 - pycparser=2.22
 - pygments=2.18.0
@@ -339,7 +338,7 @@ dependencies:
 - pypsa=0.31.0
 - pyscipopt=5.1.1
 - pyshp=2.3.1
-- pyside6=6.7.3
+- pyside6=6.8.0
 - pysocks=1.7.1
 - pytables=3.10.1
 - pytest=8.3.3
@@ -353,7 +352,7 @@ dependencies:
 - pyxlsb=1.0.10
 - pyyaml=6.0.2
 - qhull=2020.2
-- qt6-main=6.7.3
+- qt6-main=6.8.0
 - rasterio=1.3.11
 - re2=2024.07.02
 - readline=8.2
@@ -377,13 +376,13 @@ dependencies:
 - snakemake-interface-executor-plugins=9.3.2
 - snakemake-interface-report-plugins=1.1.0
 - snakemake-interface-storage-plugins=3.3.0
-- snakemake-minimal=8.23.0
+- snakemake-minimal=8.24.1
 - snappy=1.2.1
 - snuggs=1.4.7
 - sortedcontainers=2.4.0
 - soupsieve=2.5
 - spdlog=1.14.1
-- sqlite=3.46.1
+- sqlite=3.47.0
 - stack_data=0.6.2
 - statsmodels=0.14.4
 - tabulate=0.9.0
@@ -395,7 +394,6 @@ dependencies:
 - tk=8.6.13
 - tomli=2.0.2
 - toolz=1.0.0
-- toposort=1.10
 - tornado=6.4.1
 - tqdm=4.66.5
 - traitlets=5.14.3
@@ -404,12 +402,13 @@ dependencies:
 - tzcode=2024b
 - tzdata=2024b
 - ukkonen=1.0.1
+- unicodedata2=15.1.0
 - unidecode=1.3.8
 - unixodbc=2.3.12
 - uriparser=0.9.8
 - urllib3=2.2.3
 - validators=0.34.0
-- virtualenv=20.26.6
+- virtualenv=20.27.0
 - wayland=1.23.1
 - wcwidth=0.2.13
 - wheel=0.44.0
@@ -451,14 +450,15 @@ dependencies:
 - zstandard=0.23.0
 - zstd=1.5.6
 - pip:
+  - gurobipy==11.0.3
   - highspy==1.7.2
   - oauthlib==3.2.2
   - ply==3.11
   - pyomo==6.8.0
   - requests-oauthlib==1.3.1
   - snakemake-executor-plugin-cluster-generic==1.0.9
-  - snakemake-executor-plugin-slurm==0.11.0
+  - snakemake-executor-plugin-slurm==0.11.1
   - snakemake-executor-plugin-slurm-jobstep==0.2.1
   - snakemake-storage-plugin-http==0.2.3
-  - tsam==2.3.5
+  - tsam==2.3.6
 prefix: /usr/share/miniconda/envs/pypsa-eur

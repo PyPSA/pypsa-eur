@@ -77,3 +77,4 @@ if __name__ == "__main__":
     )
 
     plt.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close()
