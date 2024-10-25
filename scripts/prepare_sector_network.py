@@ -2686,32 +2686,6 @@ def add_methanol(n, costs):
         add_methanol_reforming_cc(n, costs)
 
 
-def add_methanol(n, costs):
-
-    methanol_options = options["methanol"]
-    if not any(methanol_options.values()):
-        return
-
-    logger.info("Add methanol")
-    add_carrier_buses(n, "methanol")
-
-    if options["biomass"]:
-        if methanol_options["biomass_to_methanol"]:
-            add_biomass_to_methanol(n, costs)
-
-        if methanol_options["biomass_to_methanol"]:
-            add_biomass_to_methanol_cc(n, costs)
-
-    if methanol_options["methanol_to_power"]:
-        add_methanol_to_power(n, costs, types=methanol_options["methanol_to_power"])
-
-    if methanol_options["methanol_reforming"]:
-        add_methanol_reforming(n, costs)
-
-    if methanol_options["methanol_reforming_cc"]:
-        add_methanol_reforming_cc(n, costs)
-
-
 def add_biomass(n, costs):
     logger.info("Add biomass")
 
@@ -2745,6 +2719,9 @@ def add_biomass(n, costs):
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
         ].rename(index=lambda x: x + " unsustainable solid biomass")
+        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
+            "unsustainable bioliquids"
+        ].rename(index=lambda x: x + " unsustainable bioliquids")
 
     else:
         solid_biomass_potentials_spatial = biomass_potentials["solid biomass"].sum()
@@ -2754,12 +2731,6 @@ def add_biomass(n, costs):
         unsustainable_solid_biomass_potentials_spatial = biomass_potentials[
             "unsustainable solid biomass"
         ].sum()
-
-    if options["regional_oil_demand"]:
-        unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
-            "unsustainable bioliquids"
-        ].rename(index=lambda x: x + " unsustainable bioliquids")
-    else:
         unsustainable_liquid_biofuel_potentials_spatial = biomass_potentials[
             "unsustainable bioliquids"
         ].sum()
@@ -2789,18 +2760,15 @@ def add_biomass(n, costs):
             carrier="municipal solid waste",
         )
 
-        e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.msw.nodes)
-        e_max_pu.iloc[-1] = 0
-
         n.add(
-            "Store",
+            "Generator",
             spatial.msw.nodes,
             bus=spatial.msw.nodes,
             carrier="municipal solid waste",
-            e_nom=msw_biomass_potentials_spatial,
+            p_nom=msw_biomass_potentials_spatial,
             marginal_cost=0,  # costs.at["municipal solid waste", "fuel"],
-            e_max_pu=e_max_pu,
-            e_initial=msw_biomass_potentials_spatial,
+            e_sum_min=msw_biomass_potentials_spatial,
+            e_sum_max=msw_biomass_potentials_spatial,
         )
 
     n.add(
@@ -2820,23 +2788,25 @@ def add_biomass(n, costs):
     )
 
     n.add(
-        "Store",
-        spatial.biogas.nodes,
-        bus=spatial.biogas.nodes,
+        "Generator",
+        spatial.gas.biogas,
+        bus=spatial.gas.biogas,
         carrier="biogas",
-        e_nom=biogas_potentials_spatial,
+        p_nom=biogas_potentials_spatial,
         marginal_cost=costs.at["biogas", "fuel"],
-        e_initial=biogas_potentials_spatial,
+        e_sum_min=0,
+        e_sum_max=biogas_potentials_spatial,
     )
 
     n.add(
-        "Store",
+        "Generator",
         spatial.biomass.nodes,
         bus=spatial.biomass.nodes,
         carrier="solid biomass",
-        e_nom=solid_biomass_potentials_spatial,
+        p_nom=solid_biomass_potentials_spatial,
         marginal_cost=costs.at["solid biomass", "fuel"],
-        e_initial=solid_biomass_potentials_spatial,
+        e_sum_min=0,
+        e_sum_max=solid_biomass_potentials_spatial,
     )
 
     if options["solid_biomass_import"].get("enable", False):
@@ -3092,10 +3062,6 @@ def add_biomass(n, costs):
             n.generators.loc[
                 n.generators.carrier == "unsustainable solid biomass", "e_sum_min"
             ] = 0
-            # Set e_sum_max to the potential to limit the faux biomass transport
-            n.generators.loc[
-                n.generators.carrier == "unsustainable solid biomass", "e_sum_max"
-            ] = unsustainable_solid_biomass_potentials_spatial.sum()
 
             n.add(
                 "GlobalConstraint",
@@ -3115,13 +3081,22 @@ def add_biomass(n, costs):
                 carrier="municipal solid waste",
                 p_nom=10000,
                 marginal_cost=0  # costs.at["municipal solid waste", "fuel"]
-                + bus_transport_costs * average_distance,
+                + bus_transport_costs.rename(
+                    dict(zip(spatial.biomass.nodes, spatial.msw.nodes))
+                )
+                * average_distance,
             )
+            n.generators.loc[
+                n.generators.carrier == "municipal solid waste", "e_sum_min"
+            ] = 0
+            n.generators.loc[
+                n.generators.carrier == "municipal solid waste", "e_sum_max"
+            ] = msw_biomass_potentials_spatial.sum()
             n.add(
                 "GlobalConstraint",
                 "msw limit",
                 carrier_attribute="municipal solid waste",
-                sense="<=",
+                sense="==",
                 constant=biomass_potentials["municipal solid waste"].sum(),
                 type="operational_limit",
             )
