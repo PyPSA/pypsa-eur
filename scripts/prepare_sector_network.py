@@ -4066,6 +4066,8 @@ def add_steel_industry(n, investment_year, options):
 
     # Steel production demanded in Europe in kton of steel products per year
     steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
+    cement_production = pd.read_csv(snakemake.input.cement_production, index_col=0)
+    print(f"Cement production {cement_production}")
     capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 

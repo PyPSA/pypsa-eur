@@ -796,6 +796,23 @@ if config["enable"].get("endo_industry", False):
         script:
             "../scripts/build_industry_steel_production_projections.py"
 
+if config["enable"].get("endo_industry", False): # This can eventually be integrate in the steel one
+
+    rule build_industry_cement_production_projections:
+        params:
+            countries=config_provider("countries")
+        input:
+            ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
+        output:
+            cement_demand=resources("cement/eu_cement_production.csv"),
+        log:
+            logs("build_industry_cement_production_projections.log"),
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industry_cement_production_projections.py"
 
 rule build_retro_cost:
     params:
@@ -1147,6 +1164,7 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
+        # Steel
         steel_production=lambda w: (
             resources("steel/eu_steel_production.csv")
             if config_provider("enable", "endo_industry")(w)
@@ -1159,6 +1177,12 @@ rule prepare_sector_network:
         ),
         industrial_distribution_key=lambda w: (
             resources("industrial_distribution_key_base_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        # Cement
+        cement_production=lambda w: (
+            resources("cement/eu_cement_production.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
