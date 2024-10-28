@@ -31,18 +31,28 @@ def calculate_eu_cement_production(gdppc, population, investment_years):
     # Retrieve the countries selected in the config file
     countries = snakemake.params.countries
 
+    # Regression parameters for Non Linear
+    a = 487
+    b = -3047
+
+    # Calculate the e^x component for all countries and years
+    e_component = a * np.exp(b / gdppc)
+
+    # Multiply by population and convert to kt
+    cement_demand = (e_component * population) / 1e6  # kt/yr
+
+    """
     for year in investment_years:
+        for country in cement_demand.index:
 
-        a = 487
-        b = -3047
-
-        cement_demand.loc[country, year] = (
-            (
-                a*np.e**(b/gdppc[year][country])
-            )
-            * population[year][country] #milion but we then divide by 1e6 to get kt from kg
-        )  # kt/yr
-
+            cement_demand.loc[country, year] = (
+                (
+                    a*np.e**(b/gdppc[year][country])
+                )
+                * population[year][country] #milion but we then divide by 1e6 to get kt from kg
+            )  # kt/yr
+    """
+    
     cement_demand.index = cc.convert(cement_demand.index, to="iso2")
     cement_demand = cement_demand[cement_demand.index.isin(countries)]
 
