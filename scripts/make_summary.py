@@ -20,7 +20,7 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
-
+total = {}
 def assign_carriers(n):
     if "carrier" not in n.lines:
         n.lines["carrier"] = "AC"
@@ -704,6 +704,37 @@ def calculate_price_statistics(n, label, price_statistics):
     return price_statistics
 
 
+
+def calculate_shares(n, label, shares):
+    existing_i = n.links[n.links.index.str.contains("-existing")].index 
+    if existing_i.empty:
+        return shares 
+
+    gen_per_bus = n.links_t.p1[existing_i].T.groupby(n.links.bus1).sum().T
+    demand = n.loads_t.p_set[n.links.loc[existing_i, "bus1"]]
+    total = pd.concat([-1*gen_per_bus.sum().rename("existing"),
+                       demand.sum().rename("demand")], axis=1)
+    if len(shares.columns.names)==len(label):
+        expanded_columns_tuples = [
+            (*col, new) for col in shares.
+        columns for new in total.columns
+    
+        ]
+        
+        expanded_columns = pd.MultiIndex.from_tuples(expanded_columns_tuples,
+                                                     names=shares.columns.names + ["shares"])
+    
+        
+        # Assign the expanded MultiIndex to shares.columns
+        shares = shares.reindex(columns=expanded_columns)
+    
+    # shares = shares.reindex(shares.index.union(total.index))
+    shares[label] = total
+    
+    return shares
+    
+    
+    
 def make_summaries(networks_dict):
     outputs = [
         "nodal_costs",
@@ -722,6 +753,7 @@ def make_summaries(networks_dict):
         "price_statistics",
         "market_values",
         "metrics",
+        "shares"
     ]
 
     columns = pd.MultiIndex.from_tuples(
@@ -748,7 +780,7 @@ def to_csv(df):
     for key in df:
         df[key].to_csv(snakemake.output[key])
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

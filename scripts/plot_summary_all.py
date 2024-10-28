@@ -96,6 +96,38 @@ grouper = {
     
     }
 
+
+def get_unchagend_fleet():
+    import yaml 
+    from prepare_sector_network import get
+    
+    transport_types = ["light", "heavy"]
+    ref_year = 2024
+    
+    registrations = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/car_registration_s_39.csv",
+                                index_col=[0,1])
+    historical_ev_share = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/historical_ev_share_s_39.csv",
+                                      index_col=[0], header=[0,1])
+    
+    shares = {}
+    for scenario in scenarios:
+        fn = path + scenario + "/configs/config.base_s_39_lv1.0___2025.yaml"
+        with open(fn, 'r') as file:
+            config = yaml.safe_load(file)
+        years = config["scenario"]["planning_horizons"]
+        for transport_type in transport_types:
+            for year in years:
+    
+                factor = get(config["sector"]["car_reg_factor"][transport_type], year)
+                
+                reg = registrations.loc[transport_type].iloc[:,0] * factor
+                today_ev = historical_ev_share.ffill().iloc[-1].loc[transport_type]
+                
+                changed_fleet = (1-(reg*(year-ref_year))-today_ev).clip(lower=0)
+                            
+                shares[scenario, transport_type, year] = changed_fleet
+                
+        
 def plot_costs(cost_df, drop=None):
 
 
@@ -474,6 +506,11 @@ def plot_balances(balances, drop=None):
         if k in [ 'land_transport_demand_heavy',  'land_transport_demand_light']:
             share = abs(df.div(df.loc[v].values, axis=1).drop(v)*100)
             
+            exogen = shares.droplevel([1,2,3], axis=1)
+            
+            exogen_grouped = exogen[exogen.index.str.contains(k.split("_")[-1])].sum().unstack()
+            
+            exogen_share = exogen_grouped["existing"].div(exogen_grouped["demand"]).unstack().T
             years = share.columns.levels[1]
             fig, axes = plt.subplots(nrows=len(years), ncols=1,
                                      sharey=True, sharex=True,
@@ -509,6 +546,10 @@ def plot_balances(balances, drop=None):
                 share.iloc[i].unstack().T.plot(title=share.index[i], ax=axes[i],
                                                legend=False,
                                                style=line_styles)
+                if share.index[i] == "land transport oil":
+                    a=exogen_share.rename(columns = lambda x: x + " exogen")
+                    (a*100).plot(ax=axes[i], legend=False, style=":", color="black",
+                                 linewidth=2)
                 axes[i].set_xlabel("")
                 axes[i].grid(axis="x")
             axes[0].set_ylabel("share [%]")
@@ -863,6 +904,7 @@ if __name__ == "__main__":
     balances = {}
     prices = {}
     capacities = {}
+    shares = {}
     for scenario in scenarios:
         try:
             costs[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/costs.csv",
@@ -877,6 +919,9 @@ if __name__ == "__main__":
             capacities[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/capacities.csv",
                                                       index_col=[0,1],
                                                       header=list(range(n_header)))
+            shares[scenario] = pd.read_csv(f"{path}/{scenario}/csvs/shares.csv",
+                                                      index_col=[0],
+                                                      header=list(range(n_header+1)))
         except FileNotFoundError:
             logger.info(f"{scenario} not solved yet.")
             
@@ -884,6 +929,7 @@ if __name__ == "__main__":
     balances = pd.concat(balances, axis=1)
     prices = pd.concat(prices, axis=1)
     capacities = pd.concat(capacities, axis=1)
+    shares = pd.concat(shares, axis=1)
     
     costs.to_csv(snakemake.output.costs_csv)
     balances.to_csv(snakemake.output.balances_csv)

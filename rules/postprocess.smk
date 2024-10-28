@@ -207,6 +207,7 @@ rule make_summary:
         market_values=RESULTS + "csvs/market_values.csv",
         price_statistics=RESULTS + "csvs/price_statistics.csv",
         metrics=RESULTS + "csvs/metrics.csv",
+        shares=RESULTS + "csvs/shares.csv",
     threads: 2
     resources:
         mem_mb=10000,
