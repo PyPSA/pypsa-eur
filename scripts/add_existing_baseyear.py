@@ -610,14 +610,14 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
         if not missing_uch_buses.empty:
             logger.info(f"add buses {missing_uch_buses}")
 
-            n.madd(
+            n.add(
                 "Bus",
                 missing_uch_buses.index,
                 carrier="urban central heat",
                 location=missing_uch_buses,
             )
             # Attach heat vent to these buses
-            n.madd(
+            n.add(
                 "Generator",
                 missing_uch_buses.index,
                 suffix=" vent",
