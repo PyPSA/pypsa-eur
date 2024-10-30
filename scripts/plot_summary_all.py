@@ -548,7 +548,7 @@ def plot_balances(balances, drop=None):
                                                style=line_styles)
                 if share.index[i] == "land transport oil":
                     a=exogen_share.rename(columns = lambda x: x + " exogen")
-                    (a*100).plot(ax=axes[i], legend=False, style=":", color="black",
+                    (a*100).plot(ax=axes[i], legend=False, style= "-.", color="black",
                                  linewidth=2)
                 axes[i].set_xlabel("")
                 axes[i].grid(axis="x")
@@ -561,6 +561,73 @@ def plot_balances(balances, drop=None):
                 )
             
             fig.savefig(snakemake.output.balances[:-19] + f"share-{k}.pdf", bbox_inches="tight")
+            
+            wished_scenarios = ["fast", "base", "slow"]
+            color = ['g','b', 'r']
+            fig, axes = plt.subplots(
+                        nrows=1, ncols=len(share.index), 
+                        figsize=(14, 5), 
+                        sharey=True  # This ensures that all subplots share the same y-axis
+                        )
+            for i in range(len(share.index)):
+                share.iloc[i][wished_scenarios].unstack().T.plot(title=share.index[i], ax=axes[i],
+                                               legend=False,
+                                               style=line_styles[:len(wished_scenarios)],
+                                               color=color)
+                
+                # Define color for the scenario's contour areas
+                # color = axes[i].get_lines()[-1].get_color()  # Color of the last plotted line for consistency
+                
+    
+                if share.index[i] == "land transport oil":
+                    a=exogen_share.rename(columns = lambda x: x + " exogen")
+                    (a*100).plot(ax=axes[i], legend=False, style=":", color="gray",
+                                 linewidth=2, alpha=0.5)
+                    
+                    axes[i].text(
+                            x=a.index[-1],  # Position near the end of the x-axis
+                            y=90, # (a * 100).iloc[-1].values[0],  # Position based on the last data point value
+                            s="exogenous", 
+                            color="gray", 
+                            fontsize=10, 
+                            ha="right",
+                            va="center"
+                        )
+                    
+                for j, sc in enumerate(wished_scenarios):
+                    # larger variation
+                    area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
+                    axes[i].fill_between(
+                            area.unstack().columns,
+                            area.unstack().min(),
+                            area.unstack().max(),
+                            color=color[j],
+                            alpha=0.05,
+                            label="+/-20% CAPEX" if j==0 else "",
+                        )
+                    # smaller variation
+                    filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
+                    ~share.columns.get_level_values(0).str.contains("2"))
+                    area = share.loc[:,filter_b].iloc[i]
+                    axes[i].fill_between(
+                            area.unstack().columns,
+                            area.unstack().min(),
+                            area.unstack().max(),
+                            color=color[j],
+                            alpha=0.1,
+                            label="+/-10% CAPEX" if j==0 else "",
+                        )
+                axes[i].set_xlabel("")
+                axes[i].grid(axis="x")
+            axes[0].set_ylabel("share [%]")
+            
+            axes[1].legend(
+                ncol=1,
+                loc="upper left",
+                frameon=False,
+                )
+            
+            fig.savefig(snakemake.output.balances[:-19] + f"area-share-{k}.pdf", bbox_inches="tight")
             
 
 def plot_prices(prices, drop=True):
@@ -882,7 +949,56 @@ def plot_comparison(balances, capacities, drop=True):
     
     fig.savefig(snakemake.output.balances[:-19] + "comparison.pdf",
                 bbox_inches="tight")
+
+
+def plot_scenarios(balances, shares):
+    carriers = ["land transport demand light", "land transport demand heavy"]
+    wished_scenarios = ["low-demand", "base", "high-demand"]
+    
+    exogen = shares.droplevel([1,2,3], axis=1)
+    
+    
+    fig, axes = plt.subplots(
+        nrows=len(carriers), ncols=1, 
+        figsize=(14, 7),  sharex=True,
+        )
+    for row, carrier in enumerate(carriers):
+        legend = (row == 0)
+
+        transport_type = carrier.split(" demand")[1]
+        exogen_grouped = exogen[exogen.index.str.contains(transport_type)].sum().unstack()
         
+        exogen_share = exogen_grouped["existing"].div(exogen_grouped["demand"]).unstack().T
+        
+        demand = -1 * balances.loc[carrier, "loads"].iloc[0].droplevel([1,2,3]).unstack()
+        demand = demand.reindex(wished_scenarios).T/1e9
+        
+        # plot demand 
+        demand.plot(kind="bar", ax=axes[row], title=transport_type[1:],
+                    legend=legend, alpha=0.7)
+        axes[row].set_ylabel("demand \n [trillion vehicle-km driven]")
+        axes[row].set_xlabel("year")
+        
+        if legend:
+            axes[row].legend(loc="upper center", bbox_to_anchor=(0.5, 0.95),
+                             ncol=3, frameon=False)
+    
+        
+        # Create secondary y-axis for exogen_share
+        ax2 = axes[row].twinx()
+        (exogen_share[["fast", "base", "slow"]]*100).plot(ax=ax2,
+                                                          style=["--", "-", ":"],
+                                                          color="black",
+                                                           legend=legend
+                                                          )
+        ax2.set_ylabel("Existing ICE share \n [%]")
+        
+        # Optionally, format secondary y-axis label on the right side
+        ax2.yaxis.label.set_color("gray")
+        
+        fig.savefig(snakemake.output.balances[:-19] + "scenario_overview.pdf",
+                    bbox_inches="tight")
+    
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
