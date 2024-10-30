@@ -28,33 +28,19 @@ def calculate_eu_cement_production(gdppc, population, investment_years):
     # Create the output dataframe
     cement_demand = pd.DataFrame(index=gdppc.index, columns=[investment_years])
 
-    # Retrieve the countries selected in the config file
-    countries = snakemake.params.countries
-
     # Regression parameters for Non Linear
     a = 487
     b = -3047
 
     # Calculate the e^x component for all countries and years
     e_component = a * np.exp(b / gdppc)
-
-    # Multiply by population and convert to kt
-    cement_demand = (e_component * population) / 1e6  # kt/yr
-
-    """
-    for year in investment_years:
-        for country in cement_demand.index:
-
-            cement_demand.loc[country, year] = (
-                (
-                    a*np.e**(b/gdppc[year][country])
-                )
-                * population[year][country] #milion but we then divide by 1e6 to get kt from kg
-            )  # kt/yr
-    """
+    e_component.columns = e_component.columns.astype(str)
+    cement_demand = (e_component * population) # kt/yr
     
     cement_demand.index = cc.convert(cement_demand.index, to="iso2")
-    cement_demand = cement_demand[cement_demand.index.isin(countries)]
+    #cement_demand = cement_demand[cement_demand.index.isin(countries)]
+    print(f"European EU cement demand {cement_demand.sum()}")
+     # I need to sum first the GDP and then divide by the population for europe
 
     return cement_demand
 
@@ -78,16 +64,50 @@ def cement_projections(coeffs, investment_years):
     # Remove specified columns
     gdp = gdp.drop(columns=columns2remove, errors="ignore")
     population = population.drop(columns=columns2remove, errors="ignore")
-    gdppc = gdp * 1000 / population  # 2017USD/person
 
-    # Convert string column names containing numbers to numeric values
-    gdppc.columns = pd.to_numeric(gdppc.columns, errors="coerce")
-    gdp.columns = pd.to_numeric(gdp.columns, errors="coerce")
+    # Retrieve the countries selected in the config file
+    countries = snakemake.params.countries
+    
+    population.index = cc.convert(population.index, to="iso2")
+    population = population[population.index.isin(countries)]
+    population_eu = population.sum()
 
-    cement_prod = calculate_eu_cement_production(
-        gdppc, population, investment_years
-    )  # ktons of cement 
+    gdp.index = cc.convert(gdp.index, to="iso2")
+    gdp = gdp[gdp.index.isin(countries)]
+    gdp_eu = gdp.sum()
 
+    gdppc_eu = gdp_eu * 1e3 / population_eu # $ / person
+        # Create the output dataframe
+    #cement_demand = pd.DataFrame(index=gdppc.index, columns=[investment_years])
+
+    # Regression parameters for Non Linear
+    a = 487
+    b = -3047
+
+    # Calculate the e^x component for all countries and years
+    e_component = a * np.exp(b / gdppc_eu)
+    #e_component.columns = e_component.columns.astype(str)
+    cement_demand_eu = (e_component * population_eu) # kt/yr
+    
+    print(f"European EU cement demand {cement_demand_eu}")
+
+
+    # Calculate the percentage change with respect to 2025 for each year
+    cement_demand_eu_change = ((cement_demand_eu - cement_demand_eu.iloc[0] ) / cement_demand_eu.iloc[0] ) * 100
+
+    # Retrieve historical data from JRC - IDEES 
+    idees = pd.read_excel(f"{snakemake.input.idees}/EU27/JRC-IDEES-2021_Industry_EU27.xlsx",sheet_name='NMM',index_col=0,header=0,)
+    idees_2021 = idees.loc["Cement (kt)", 2021][0]
+    albania_2024 = 2.8 * 1e3 # kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    bosnia_2024 = 1.6 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    montenegro_2024 = 0 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    normace_2024 = 1.4 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    serbia_2024 = 2.7 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    kosovo_2024 = 0.5 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
+    uk_2021 = 7.4 * 1e3 #kt/yr Source: https://gmk.center/en/news/uk-reduced-steel-production-by-6-5-y-y-in-2023/#:~:text=Steel%20production%20in%20the%20country,24th%20among%20steel%20producing%20countries. 
+    norway_2021 = 1.7 * 1e3 # kt/yr Source: https://www.globalcement.com/magazine/articles/1199-cement-in-northern-europe + https://www.sement.heidelbergmaterials.no/en/NorcemKjopsvik_en 
+    switzerland_2021 = 4.87 * 1e3 # kt/yr Source: https://www.sciencedirect.com/science/article/pii/S0959652620354597
+    
     return cement_prod
 
 

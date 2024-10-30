@@ -803,6 +803,8 @@ if config["enable"].get("endo_industry", False): # This can eventually be integr
             countries=config_provider("countries")
         input:
             ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
+            cement_plants="data/SFI-Global-Cement-Database-July-2021.xlsx",
+            idees="data/jrc-idees-2021",
         output:
             cement_demand=resources("cement/eu_cement_production.csv"),
         log:

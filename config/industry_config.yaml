@@ -21,7 +21,8 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: 'all'
+  name: 
+  - baseline_eu_dem #'all'
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml
