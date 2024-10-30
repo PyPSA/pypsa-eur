@@ -22,28 +22,6 @@ cc = coco.CountryConverter()
 # -------------------- CEMENT PRODUCTION ------------------------
 
 
-# Define the function to calculate the cement production per capita [kg/cap/yr] based on https://www.sciencedirect.com/science/article/pii/S0921344916301008?via%3Dihub#bibl0005 
-def calculate_eu_cement_production(gdppc, population, investment_years):
-
-    # Create the output dataframe
-    cement_demand = pd.DataFrame(index=gdppc.index, columns=[investment_years])
-
-    # Regression parameters for Non Linear
-    a = 487
-    b = -3047
-
-    # Calculate the e^x component for all countries and years
-    e_component = a * np.exp(b / gdppc)
-    e_component.columns = e_component.columns.astype(str)
-    cement_demand = (e_component * population) # kt/yr
-    
-    cement_demand.index = cc.convert(cement_demand.index, to="iso2")
-    #cement_demand = cement_demand[cement_demand.index.isin(countries)]
-    print(f"European EU cement demand {cement_demand.sum()}")
-     # I need to sum first the GDP and then divide by the population for europe
-
-    return cement_demand
-
 
 def cement_projections(coeffs, investment_years):
     """
@@ -87,29 +65,29 @@ def cement_projections(coeffs, investment_years):
     # Calculate the e^x component for all countries and years
     e_component = a * np.exp(b / gdppc_eu)
     #e_component.columns = e_component.columns.astype(str)
-    cement_demand_eu = (e_component * population_eu) # kt/yr
-    
-    print(f"European EU cement demand {cement_demand_eu}")
+    cement_prod_eu = (e_component * population_eu) # kt/yr
 
-
-    # Calculate the percentage change with respect to 2025 for each year
-    cement_demand_eu_change = ((cement_demand_eu - cement_demand_eu.iloc[0] ) / cement_demand_eu.iloc[0] ) * 100
+    # Calculate the change with respect to 2025 for each year
+    cement_prod_eu_change = ((cement_prod_eu - cement_prod_eu.iloc[0] ) / cement_prod_eu.iloc[0] )
 
     # Retrieve historical data from JRC - IDEES 
     idees = pd.read_excel(f"{snakemake.input.idees}/EU27/JRC-IDEES-2021_Industry_EU27.xlsx",sheet_name='NMM',index_col=0,header=0,)
     idees_2021 = idees.loc["Cement (kt)", 2021][0]
-    albania_2024 = 2.8 * 1e3 # kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    bosnia_2024 = 1.6 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    montenegro_2024 = 0 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    normace_2024 = 1.4 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    serbia_2024 = 2.7 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    kosovo_2024 = 0.5 * 1e3 #kt/yr Source: https://www.globalcement.com/news/item/17798-update-on-the-central-balkans-august-2024 
-    uk_2021 = 7.4 * 1e3 #kt/yr Source: https://gmk.center/en/news/uk-reduced-steel-production-by-6-5-y-y-in-2023/#:~:text=Steel%20production%20in%20the%20country,24th%20among%20steel%20producing%20countries. 
-    norway_2021 = 1.7 * 1e3 # kt/yr Source: https://www.globalcement.com/magazine/articles/1199-cement-in-northern-europe + https://www.sement.heidelbergmaterials.no/en/NorcemKjopsvik_en 
-    switzerland_2021 = 4.87 * 1e3 # kt/yr Source: https://www.sciencedirect.com/science/article/pii/S0959652620354597
+    cement_prod_extra_eu = pd.read_excel(f"{snakemake.input.cement_extra_eu}", index_col=0,header=0)
+    cement_prod_extra_eu = cement_prod_extra_eu.sum()['kt/yr']
+    tot_cement_prod = idees_2021 + cement_prod_extra_eu
+    future_eu_cement_production = tot_cement_prod * (1 + cement_prod_eu_change)
     
-    return cement_prod
+    return future_eu_cement_production
 
+
+def retrieve_cement_plants(eu_prod):
+
+    # Distribute the production per region
+    cement_plants = pd.read_excel(f"{snakemake.input.cement_plants}", sheet_name="SFI_ALD_Cement_Database", index_col=0, header=0)
+
+
+    return region_prod, cement_plants
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -133,4 +111,5 @@ if __name__ == "__main__":
     # Project the load based on empirical analyses for future years scenarios
 
     eu_prod = cement_projections(ssp, investment_years)
+    country_prod, cement_plants = cement_plants(eu_prod)
     eu_prod.to_csv(snakemake.output.cement_demand)

@@ -74,6 +74,8 @@ enable:
   drop_leap_day: true
   endo_industry: true
 
+
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 # Modify to reflect the climate policies in Europe
 co2_budget:
@@ -712,6 +714,7 @@ sector:
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
   endo_industry_options:
     regional_steel_demand: false
+    cement_prod_growth: true
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
