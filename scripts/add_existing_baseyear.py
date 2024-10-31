@@ -549,53 +549,70 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
             efficiency_power = mastr_chp_efficiency_power.loc[grouping_year, generator]
             efficiency_heat = mastr_chp_efficiency_heat.loc[grouping_year, generator]
 
-            if generator != "urban central solid biomass CHP":
-                # lignite CHPs are not in DEA database - use coal CHP parameters
-                key = keys[generator]
-                if "EU" in vars(spatial)[generator].locations:
-                    bus0 = vars(spatial)[generator].nodes
+            for bus in p_nom.index:
+                # check if link already exists and set p_nom_min and efficiency
+                if generator != "urban central solid biomass CHP":
+                    suffix = f" urban central {generator} CHP-{grouping_year}"
                 else:
-                    bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
-                n.add(
-                    "Link",
-                    p_nom.index,
-                    suffix=f" urban central {generator} CHP-{grouping_year}",
-                    bus0=bus0,
-                    bus1=p_nom.index,
-                    bus2=p_nom.index + " urban central heat",
-                    bus3="co2 atmosphere",
-                    carrier=f"urban central {generator} CHP",
-                    p_nom=p_nom,
-                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"]
-                    * costs.at[key, "efficiency"],
-                    marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power.dropna().loc[p_nom.index],
-                    efficiency2=efficiency_heat.dropna().loc[p_nom.index],
-                    efficiency3=costs.at[generator, "CO2 intensity"],
-                    build_year=grouping_year,
-                    lifetime=costs.at[key, "lifetime"],
-                )
-            else:
-                key = "central solid biomass CHP"
-                n.add(
-                    "Link",
-                    p_nom.index,
-                    suffix=f" urban {key}-{grouping_year}",
-                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                    bus1=p_nom.index,
-                    bus2=p_nom.index + " urban central heat",
-                    carrier=generator,
-                    p_nom=p_nom,
-                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"]
-                    * costs.at[key, "efficiency"],
-                    marginal_cost=costs.at[key, "VOM"],
-                    efficiency=efficiency_power.loc[p_nom.index],
-                    efficiency2=efficiency_heat.loc[p_nom.index],
-                    build_year=grouping_year,
-                    lifetime=costs.at[key, "lifetime"],
-                )
+                    suffix = f" {generator}-{grouping_year}"
+
+                if bus + suffix in n.links.index:
+                    # only change p_nom_min and efficiency
+                    n.links.loc[bus + suffix, "p_nom_min"] = p_nom.loc[bus]
+                    n.links.loc[bus + suffix, "p_nom"] = p_nom.loc[bus]
+                    n.links.loc[bus + suffix, "efficiency"] = efficiency_power.loc[bus]
+                    n.links.loc[bus + suffix, "efficiency2"] = efficiency_heat.loc[bus]
+                    continue
+
+                if generator != "urban central solid biomass CHP":
+                    # lignite CHPs are not in DEA database - use coal CHP parameters
+                    key = keys[generator]
+                    if "EU" in vars(spatial)[generator].locations:
+                        bus0 = vars(spatial)[generator].nodes[0]
+                    else:
+                        bus0 = vars(spatial)[generator].df.loc[bus, "nodes"]
+                    n.add(
+                        "Link",
+                        bus,
+                        suffix=f" urban central {generator} CHP-{grouping_year}",
+                        bus0=bus0,
+                        bus1=bus,
+                        bus2=bus + " urban central heat",
+                        bus3="co2 atmosphere",
+                        carrier=f"urban central {generator} CHP",
+                        p_nom=p_nom[bus],
+                        capital_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
+                        overnight_cost=costs.at[key, "investment"]
+                        * costs.at[key, "efficiency"],
+                        marginal_cost=costs.at[key, "VOM"],
+                        efficiency=efficiency_power.dropna().loc[bus],
+                        efficiency2=efficiency_heat.dropna().loc[bus],
+                        efficiency3=costs.at[generator, "CO2 intensity"],
+                        build_year=grouping_year,
+                        lifetime=costs.at[key, "lifetime"],
+                    )
+                else:
+                    key = "central solid biomass CHP"
+                    n.add(
+                        "Link",
+                        bus,
+                        suffix=f" urban {key}-{grouping_year}",
+                        bus0=spatial.biomass.df.loc[bus]["nodes"],
+                        bus1=bus,
+                        bus2=bus + " urban central heat",
+                        carrier=generator,
+                        p_nom=p_nom[bus],
+                        capital_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
+                        overnight_cost=costs.at[key, "investment"]
+                        * costs.at[key, "efficiency"],
+                        marginal_cost=costs.at[key, "VOM"],
+                        efficiency=efficiency_power.loc[bus],
+                        efficiency2=efficiency_heat.loc[bus],
+                        build_year=grouping_year,
+                        lifetime=costs.at[key, "lifetime"],
+                    )
 
     # CHPs that are not from MaStR
 
@@ -640,53 +657,66 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
         threshold = snakemake.params.existing_capacities["threshold_capacity"]
         p_nom = p_nom[p_nom > threshold]
 
-        if generator != "urban central solid biomass CHP":
-            # lignite CHPs are not in DEA database - use coal CHP parameters
-            key = keys[generator]
-            if "EU" in vars(spatial)[generator].locations:
-                bus0 = vars(spatial)[generator].nodes
+        for bus in p_nom.index:
+            # check if link already exists and set p_nom_min and efficiency
+            if generator != "urban central solid biomass CHP":
+                suffix = f" urban central {generator} CHP-{grouping_year}"
             else:
-                bus0 = vars(spatial)[generator].df.loc[p_nom.index, "nodes"]
-            n.add(
-                "Link",
-                p_nom.index,
-                suffix=f" urban central {generator} CHP-{grouping_year}",
-                bus0=bus0,
-                bus1=p_nom.index,
-                bus2=p_nom.index + " urban central heat",
-                bus3="co2 atmosphere",
-                carrier=f"urban central {generator} CHP",
-                p_nom=p_nom / costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"]
-                * costs.at[key, "efficiency"],
-                marginal_cost=costs.at[key, "VOM"],
-                efficiency=costs.at[key, "efficiency"],
-                efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
-                efficiency3=costs.at[generator, "CO2 intensity"],
-                build_year=grouping_year,
-                lifetime=costs.at[key, "lifetime"],
-            )
-        else:
-            key = "central solid biomass CHP"
-            n.add(
-                "Link",
-                p_nom.index,
-                suffix=f" urban {key}-{grouping_year}",
-                bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                bus1=p_nom.index,
-                bus2=p_nom.index + " urban central heat",
-                carrier=generator,
-                p_nom=p_nom / costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"]
-                * costs.at[key, "efficiency"],
-                marginal_cost=costs.at[key, "VOM"],
-                efficiency=costs.at[key, "efficiency"],
-                efficiency2=costs.at[key, "efficiency-heat"],
-                build_year=grouping_year,
-                lifetime=costs.at[key, "lifetime"],
-            )
+                suffix = f" {generator}-{grouping_year}"
+
+            if bus + suffix in n.links.index:
+                # only change p_nom_min
+                n.links.loc[bus + suffix, "p_nom_min"] = p_nom.loc[bus]
+                n.links.loc[bus + suffix, "p_nom"] = p_nom.loc[bus]
+                continue
+
+            if generator != "urban central solid biomass CHP":
+                # lignite CHPs are not in DEA database - use coal CHP parameters
+                key = keys[generator]
+                if "EU" in vars(spatial)[generator].locations:
+                    bus0 = vars(spatial)[generator].nodes[0]
+                else:
+                    bus0 = vars(spatial)[generator].df.loc[bus, "nodes"]
+                n.add(
+                    "Link",
+                    bus,
+                    suffix=f" urban central {generator} CHP-{grouping_year}",
+                    bus0=bus0,
+                    bus1=bus,
+                    bus2=bus + " urban central heat",
+                    bus3="co2 atmosphere",
+                    carrier=f"urban central {generator} CHP",
+                    p_nom=p_nom[bus] / costs.at[key, "efficiency"],
+                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
+                    marginal_cost=costs.at[key, "VOM"],
+                    efficiency=costs.at[key, "efficiency"],
+                    efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
+                    efficiency3=costs.at[generator, "CO2 intensity"],
+                    build_year=grouping_year,
+                    lifetime=costs.at[key, "lifetime"],
+                )
+            else:
+                key = "central solid biomass CHP"
+                n.add(
+                    "Link",
+                    p_nom.index,
+                    suffix=f" urban {key}-{grouping_year}",
+                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
+                    bus1=bus,
+                    bus2=bus + " urban central heat",
+                    carrier=generator,
+                    p_nom=p_nom[bus] / costs.at[key, "efficiency"],
+                    capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
+                    marginal_cost=costs.at[key, "VOM"],
+                    efficiency=costs.at[key, "efficiency"],
+                    efficiency2=costs.at[key, "efficiency-heat"],
+                    build_year=grouping_year,
+                    lifetime=costs.at[key, "lifetime"],
+                )
 
 
 def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
@@ -1037,9 +1067,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
-            clusters="5",
-            ll="v1.5",
+            configfiles="config/config.yaml",
+            clusters="27",
+            ll="vopt",
             opts="",
             sector_opts="none",
             planning_horizons="2020",
