@@ -559,10 +559,16 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                 if bus + suffix in n.links.index:
                     # only change p_nom_min and efficiency
                     n.links.loc[bus + suffix, "p_nom_min"] = p_nom.loc[bus]
-                    n.links.loc[bus + f" urban central {generator} CHP-{grouping_year}", "efficiency"] = efficiency_power.loc[bus]
-                    n.links.loc[bus + f" urban central {generator} CHP-{grouping_year}", "efficiency2"] = efficiency_heat.loc[bus]
+                    n.links.loc[
+                        bus + f" urban central {generator} CHP-{grouping_year}",
+                        "efficiency",
+                    ] = efficiency_power.loc[bus]
+                    n.links.loc[
+                        bus + f" urban central {generator} CHP-{grouping_year}",
+                        "efficiency2",
+                    ] = efficiency_heat.loc[bus]
                     continue
-                
+
                 if generator != "urban central solid biomass CHP":
                     # lignite CHPs are not in DEA database - use coal CHP parameters
                     key = keys[generator]
@@ -580,7 +586,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                         bus3="co2 atmosphere",
                         carrier=f"urban central {generator} CHP",
                         p_nom=p_nom[bus],
-                        capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                        capital_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
                         overnight_cost=costs.at[key, "investment"]
                         * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
@@ -601,7 +608,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                         bus2=bus + " urban central heat",
                         carrier=generator,
                         p_nom=p_nom[bus],
-                        capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
+                        capital_cost=costs.at[key, "fixed"]
+                        * costs.at[key, "efficiency"],
                         overnight_cost=costs.at[key, "investment"]
                         * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
