@@ -642,6 +642,7 @@ rule build_industrial_distribution_key:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
         gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        cement_sfi="data/SFI-Global-Cement-Database-July-2021.xlsx",
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
@@ -651,6 +652,7 @@ rule build_industrial_distribution_key:
         ),
         gem_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
         gem_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
+        cement_plants=resources("steel/cement_plants_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
@@ -806,11 +808,13 @@ if config["enable"].get("endo_industry", False) and config["sector"]["endo_indus
             cement_plants="data/SFI-Global-Cement-Database-July-2021.xlsx",
             idees="data/jrc-idees-2021",
             cement_extra_eu="data/cement_production_extra_eu27.xlsx",
+            industrial_distribution_key=resources("industrial_distribution_key_base_s_{clusters}.csv"),
         output:
-            cement_prod=resources("cement/cement_production.csv"),
-            cement_plants=resources("cement/cement_plants.csv"),
+            cement_prod=resources("cement/cement_production_s_{clusters}.csv"),
         log:
-            logs("build_industry_cement_production_projections.log"),
+            logs("build_industry_cement_production_projections_{clusters}.log"),
+        benchmark:
+            benchmarks("build_industry_cement_production_projections/s_{clusters}")
         resources:
             mem_mb=5000,
         conda:
@@ -1186,7 +1190,7 @@ rule prepare_sector_network:
         ),
         # Cement
         cement_production=lambda w: (
-            resources("cement/eu_cement_production.csv")
+            resources("cement/cement_production_s_{clusters}.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),

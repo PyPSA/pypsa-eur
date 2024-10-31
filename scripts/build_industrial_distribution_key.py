@@ -166,6 +166,33 @@ def prepare_gem_database(regions):
 
     return gdf
 
+def prepare_cement_database(regions):
+    """
+    Load Spatial Finance Initiatice Global Cement Database cement plants and map onto bus regions.
+    """
+
+    df = pd.read_excel(f"{snakemake.input.cement_sfi}", sheet_name="SFI_ALD_Cement_Database", index_col=0, header=0)
+    df.loc[:,'country'] = cc.convert(df.loc[:,'country'], to="ISO2")
+    df = df[df['country'].isin(countries)]
+    df = df[df['plant type'] != 'Grinding']
+
+    latlon = df.rename(columns={"latitude": "lat", "longitude": "lon"})[["lat", "lon"]]
+    #latlon = (
+    #    df["Coordinates"]
+    #    .str.split(", ", expand=True)
+    #    .rename(columns={0: "lat", 1: "lon"})
+    #)
+    geometry = gpd.points_from_xy(latlon["lon"], latlon["lat"])
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
+
+    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf["country"] = gdf.bus.str[:2]
+
+    return gdf
+
+
 
 def prepare_ammonia_database(regions):
     """
@@ -385,6 +412,118 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, process] = key
 
+    # add cement plants
+    steel_processes = ["EAF", "DRI + EAF", "Integrated steelworks"]
+    cement_capacities= pd.DataFrame(index=regions.index, columns=steel_processes)
+    gem_start_dates = pd.DataFrame(index=regions.index, columns=steel_processes)
+
+    for process, country in product(steel_processes, countries):
+        regions_ct = regions.index[regions.index.str.contains(country)]
+
+        facilities = gem.query("country == @country")
+
+        if process == "EAF":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
+            capacities = facilities.loc[
+                facilities["Capacity operating status"].isin(status_list)
+                & (
+                    facilities["Retired Date"].isna()
+                    | facilities["Retired Date"].gt(2025)
+                ),
+                "Nominal EAF steel capacity (ttpa)",
+            ].dropna()
+        elif process == "DRI + EAF":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+                "announced",
+            ]
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+                "Nominal iron capacity (ttpa)",
+            ]
+            status_filter = facilities["Capacity operating status"].isin(status_list)
+            retirement_filter = facilities["Retired Date"].isna() | facilities[
+                "Retired Date"
+            ].gt(2030)
+            start_filter = (
+                facilities["Start date"].isna()
+                & ~facilities["Capacity operating status"].eq("announced")
+            ) | facilities["Start date"].le(2030)
+            capacities = (
+                facilities.loc[status_filter & retirement_filter & start_filter, sel]
+                .sum(axis=1)
+                .dropna()
+            )
+        elif process == "Integrated steelworks":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+            ]
+            capacities = (
+                facilities.loc[
+                    facilities["Capacity operating status"].isin(status_list)
+                    & (
+                        facilities["Retired Date"].isna()
+                        | facilities["Retired Date"].gt(2025)
+                    ),
+                    sel,
+                ]
+                .sum(axis=1)
+                .dropna()
+            )
+        else:
+            raise ValueError(f"Unknown process {process}")
+
+        # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
+        capacities_sum = capacities.sum() if not capacities.empty else 0
+        gem_capacities.loc[regions_ct, process] = capacities_sum
+
+        # Calculate the weighted average of start dates using capacities as weights
+        if not capacities.empty:
+            start_dates = facilities.loc[capacities.index, "Start date"].dropna()
+            filtering = capacities[(start_dates != 0) & (capacities != 0)].index
+            filtered_capacities = capacities.loc[filtering]
+            filtered_start_dates = start_dates.loc[filtering]
+            filtered_capacities_sum = filtered_capacities.sum()
+
+            if filtered_capacities_sum > 0:
+                weighted_sum = (filtered_capacities * filtered_start_dates).sum()
+                weighted_avg = weighted_sum / filtered_capacities_sum
+                gem_start_dates.loc[regions_ct, process] = weighted_avg
+            else:
+                # If no valid capacities, assign 0 or NaN
+                gem_start_dates.loc[regions_ct, process] = 0
+        else:
+            # If capacities are empty, assign 0 or NaN
+            gem_start_dates.loc[regions_ct, process] = 0
+
+        if not capacities.empty:
+            if capacities.sum() == 0:
+                key = pd.Series(1 / len(capacities), capacities.index)
+            else:
+                key = capacities / capacities.sum()
+            buses = facilities.loc[capacities.index, "bus"]
+            key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
+        else:
+            key = keys.loc[regions_ct, "population"]
+
+        keys.loc[regions_ct, process] = key
+
     # add ammonia
     for country in countries:
         regions_ct = regions.index[regions.index.str.contains(country)]
@@ -425,7 +564,9 @@ if __name__ == "__main__":
 
     hotmaps = prepare_hotmaps_database(regions)
 
-    gem = prepare_gem_database(regions)
+    gem_steel = prepare_gem_database(regions)
+
+    sfi_cement = prepare_cement_database(regions)
 
     ammonia = prepare_ammonia_database(regions)
 
@@ -434,7 +575,7 @@ if __name__ == "__main__":
     refineries = prepare_refineries_supplement(regions)
 
     keys, gem_capacities, gem_start_dates = build_nodal_distribution_key(
-        hotmaps, gem, ammonia, cement, refineries, regions, countries
+        hotmaps, gem_steel, sfi_cement, ammonia, cement, refineries, regions, countries
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
