@@ -650,9 +650,10 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
-        gem_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
-        gem_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
-        cement_plants=resources("steel/cement_plants_s_{clusters}.csv"),
+        steel_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
+        steel_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
+        cement_capacities=resources("cement/sfi_capacities_s_{clusters}.csv"),
+        cement_start_dates=resources("cement/sfi_start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
