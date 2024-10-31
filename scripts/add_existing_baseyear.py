@@ -559,14 +559,8 @@ def add_chp_plants(n, grouping_years, costs, baseyear):
                 if bus + suffix in n.links.index:
                     # only change p_nom_min and efficiency
                     n.links.loc[bus + suffix, "p_nom_min"] = p_nom.loc[bus]
-                    n.links.loc[
-                        bus + f" urban central {generator} CHP-{grouping_year}",
-                        "efficiency",
-                    ] = efficiency_power.loc[bus]
-                    n.links.loc[
-                        bus + f" urban central {generator} CHP-{grouping_year}",
-                        "efficiency2",
-                    ] = efficiency_heat.loc[bus]
+                    n.links.loc[bus + suffix, "efficiency"] = efficiency_power.loc[bus]
+                    n.links.loc[bus + suffix, "efficiency2"] = efficiency_heat.loc[bus]
                     continue
 
                 if generator != "urban central solid biomass CHP":
