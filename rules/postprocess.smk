@@ -104,24 +104,24 @@ if config["foresight"] != "perfect":
 
     rule plot_balance_map:
         params:
-            plotting=config_provider("plotting_map"),
+            plotting=config_provider("plotting"),
         input:
             network=RESULTS
-            + "postnetworks/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}.pdf",
+            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-balance_map_{carrier}_{planning_horizons}.{ext}",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS
-            + "logs/plot_balance_map/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}.log",
+            + "logs/plot_balance_map/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{carrier}_{planning_horizons}_{ext}.log",
         benchmark:
             (
                 RESULTS
-                + "benchmarks/plot_balance_map/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-{carrier}_network_{planning_horizons}"
+                + "benchmarks/plot_balance_map/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{carrier}_{planning_horizons}_{ext}"
             )
         conda:
             "../envs/environment.yaml"

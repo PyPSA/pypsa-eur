@@ -5,9 +5,6 @@
 """
 Create energy balance maps for the defined carriers.
 """
-# %%
-import logging
-
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -27,17 +24,18 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-    snakemake = mock_snakemake(
-        "plot_balance_map",
-        simpl="",
-        opts="",
-        clusters="70",
-        ll="vopt",
-        sector_opts="",
-        planning_horizons="2050",
-        run="maps",
-        carrier="gas",
-    )
+        snakemake = mock_snakemake(
+            "plot_balance_map",
+            simpl="",
+            opts="",
+            clusters="70",
+            ll="vopt",
+            sector_opts="",
+            planning_horizons="2050",
+            run="maps",
+            carrier="oil",
+            ext="pdf",
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -46,58 +44,67 @@ if __name__ == "__main__":
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     plotting = snakemake.params.plotting
     carrier = snakemake.wildcards.carrier
-    if carrier not in n.buses.carrier.unique():
-        bus_carrier = [c for c in n.buses.carrier.unique() if carrier in c]
-        if bus_carrier:
-            logging.warning(
-                f"Carrier {carrier} is not in the network. Using {bus_carrier} instead."
-            )
-        else:
-            raise ValueError(f"Carrier {carrier} is not in the network.")
-    else:
-        bus_carrier = carrier
 
+    # set plotting style
     sns.set_theme(**plotting.get("theme", {}))
 
+    # fill empty colors or "" with light grey
+    mask = n.carriers.color.isna() | n.carriers.color.eq("")
+    n.carriers["color"] = n.carriers.color.mask(mask, "lightgrey")
+
+    # set EU location with location from config
+    eu_location = plotting["eu_node_location"]
+    n.buses.loc["EU", ["x", "y"]] = eu_location["x"], eu_location["y"]
+
+    # get balance map plotting parameters
     plotting = plotting.get("balance_map", {})
     fig_size = plotting.get("fig_size", (6, 6))
     alpha = plotting.get("alpha", 1)
     region_alpha = plotting.get("region_alpha", 0.6)
+    boundaries = plotting.get("boundaries", None)
+    carrier_plotting = plotting.get(carrier, {})
+    # use bus carrier from config if defined
+    carrier = carrier_plotting.get("bus_carrier", carrier)
+    # check if carrier is in network
+    if carrier not in n.buses.carrier.unique():
+        raise ValueError(f"Carrier {carrier} is not in the network.")
+
     fig, ax = plt.subplots(
         figsize=fig_size,
         subplot_kw={"projection": ccrs.EqualEarth()},
         layout="constrained",
     )
 
-    carrier_plotting = plotting.get(carrier, {})
+    # for plotting change bus to location
+    n.buses["location"] = n.buses["location"].replace("", "EU").fillna("EU")
 
-    n.buses.x = n.buses.location.map(n.buses.x)
-    n.buses.y = n.buses.location.map(n.buses.y)
+    # set location of buses to EU if location is empty and set x and y coordinates to bus location
+    n.buses["x"] = n.buses.location.map(n.buses.x)
+    n.buses["y"] = n.buses.location.map(n.buses.y)
 
     s = n.statistics
-    s.set_parameters(round=3)
+    s.set_parameters(round=3, drop_zero=True)
     grouper = s.groupers.get_bus_and_carrier
-    # %%
+
     # bus_sizes according to energy balance of bus carrier
     conversion = float(carrier_plotting.get("unit_conversion", 1e6))
     energy_balance_df = s.energy_balance(
-        nice_names=True, bus_carrier=bus_carrier, groupby=grouper
+        nice_names=True, bus_carrier=carrier, groupby=grouper
     ).round(2)
-    # remove energy balance of transmission carriers, which are relate to losses
-    transmission_carriers = get_transmission_carriers(
-        n, bus_carrier=bus_carrier
-    ).rename(
+
+    # remove energy balance of transmission carriers which relate to losses
+    transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
         {"name": "carrier"}
-    )  # TODO change in pypsa
-    # %%
+    )
+    # TODO change get_transmission carriers in pypsa that dropping in energy balance is easier
     energy_balance_df.loc[transmission_carriers.unique(0)] = energy_balance_df.loc[
         transmission_carriers.unique(0)
     ].drop(index=transmission_carriers.unique(1), level="carrier")
     energy_balance_df = energy_balance_df.dropna()
-    # %%
     bus_sizes = (
         energy_balance_df.groupby(level=["bus", "carrier"]).sum().div(conversion)
     )
+    bus_sizes = bus_sizes.sort_values(ascending=False)
 
     colors = (
         bus_sizes.index.get_level_values("carrier")
@@ -106,11 +113,8 @@ if __name__ == "__main__":
         .map(n.carriers.set_index("nice_name").color)
     )
 
-    # %%
     # line and links widths according to optimal capacity
-    flow = (
-        s.transmission(groupby=False, bus_carrier=bus_carrier).div(conversion).round(2)
-    )
+    flow = s.transmission(groupby=False, bus_carrier=carrier).div(conversion).round(2)
 
     if not flow.index.get_level_values(1).empty:
         flow_reversed_mask = flow.index.get_level_values(1).str.contains("reversed")
@@ -124,14 +128,13 @@ if __name__ == "__main__":
     line_widths = flow.get("Line", fallback).abs()
     link_widths = flow.get("Link", fallback).abs()
 
-    # %%
     # define maximal size of buses and branch width
     bus_size_factor = float(carrier_plotting.get("bus_factor", 2e-5))
     branch_width_factor = float(carrier_plotting.get("branch_factor", 2e-4))
     flow_size_factor = float(carrier_plotting.get("flow_factor", 2e-4))
 
     # get prices per region as colormap
-    buses = n.buses.query("carrier in @bus_carrier").index
+    buses = n.buses.query("carrier in @carrier").index
     price = (
         n.buses_t.marginal_price.mean()
         .reindex(buses)
@@ -139,7 +142,12 @@ if __name__ == "__main__":
         .groupby(level=0)
         .mean()
     )
-    regions["price"] = price.reindex(regions.index).fillna(0)
+
+    # if only one price is available, use this price for all regions
+    if price.size == 1:
+        regions["price"] = price.values[0]
+    else:
+        regions["price"] = price.reindex(regions.index).fillna(0)
 
     vmin, vmax = regions.price.min(), regions.price.max()
     cmap = carrier_plotting.get("region_cmap", "Greens")
@@ -157,27 +165,26 @@ if __name__ == "__main__":
         aspect="equal",
     )
 
-    # %%
     # plot map
     n.plot(
         bus_sizes=bus_sizes * bus_size_factor,
         bus_colors=colors,
         bus_alpha=alpha,
         bus_split_circles=True,
-        line_widths=link_widths * branch_width_factor,
+        line_widths=line_widths * branch_width_factor,
         link_widths=link_widths * branch_width_factor,
         flow=flow * flow_size_factor,
         ax=ax,
         margin=0.2,
         color_geomap={"border": "darkgrey", "coastline": "darkgrey"},
         geomap="10m",
+        boundaries=boundaries,
     )
 
-    # TODO with config
-    ax.set_title("Balance Map of carrier " + bus_carrier)
+    # TODO maybe do with config
+    ax.set_title("Balance Map of carrier " + carrier)
 
     # Add legend
-    # %%
     legend_kwargs = {
         "loc": "upper left",
         "frameon": True,
@@ -188,7 +195,7 @@ if __name__ == "__main__":
     # Add colorbar
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
     price_unit = carrier_plotting.get("region_unit", "€/MWh")
-    carrier = n.carriers.loc[bus_carrier, "nice_name"]
+    carrier = n.carriers.loc[carrier, "nice_name"]
     cbr = fig.colorbar(
         sm,
         ax=ax,
@@ -240,7 +247,6 @@ if __name__ == "__main__":
         },
     )
 
-    # TODO with config
     # Add bus legend
     legend_bus_sizes = np.array(carrier_plotting.get("bus_sizes", [10, 50]))
     carrier_unit = carrier_plotting.get("unit", "TWh")
