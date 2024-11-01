@@ -188,6 +188,7 @@ def plot_costs():
     )
 
     fig.savefig(snakemake.output.costs, bbox_inches="tight")
+    plt.close(fig)
 
 
 def plot_energy():
@@ -218,6 +219,7 @@ def plot_energy():
     if df.empty:
         fig, ax = plt.subplots(figsize=(12, 8))
         fig.savefig(snakemake.output.energy, bbox_inches="tight")
+        plt.close(fig)
         return
 
     new_index = preferred_order.intersection(df.index).append(
@@ -260,6 +262,7 @@ def plot_energy():
     )
 
     fig.savefig(snakemake.output.energy, bbox_inches="tight")
+    plt.close(fig)
 
 
 def plot_balances():
@@ -354,6 +357,7 @@ def plot_balances():
         )
 
         fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
+        plt.close(fig)
 
 
 def historical_emissions(countries):
@@ -565,6 +569,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     plt.grid(axis="y")
     path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
     plt.savefig(path, bbox_inches="tight")
+    plt.close()
 
 
 if __name__ == "__main__":
