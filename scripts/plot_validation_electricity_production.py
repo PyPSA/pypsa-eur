@@ -83,6 +83,7 @@ if __name__ == "__main__":
     df.plot.barh(ax=ax, xlabel="Electricity Production [TWh]", ylabel="")
     ax.grid(axis="y")
     fig.savefig(snakemake.output.production_bar, bbox_inches="tight")
+    plt.close(fig)
 
     # highest diffs
 
@@ -99,6 +100,7 @@ if __name__ == "__main__":
     ax.set_title("Strongest Deviations")
     ax.grid(axis="y")
     fig.savefig(snakemake.output.production_deviation_bar, bbox_inches="tight")
+    plt.close(fig)
 
     # seasonal operation
 
@@ -144,6 +146,7 @@ if __name__ == "__main__":
         labelspacing=1,
     )
     fig.savefig(snakemake.output.seasonal_operation_area, bbox_inches="tight")
+    plt.close(fig)
 
     # touch file
     with open(snakemake.output.plots_touch, "a"):
