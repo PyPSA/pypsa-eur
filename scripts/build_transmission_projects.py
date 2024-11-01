@@ -247,19 +247,23 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     )
     if type == "new":
         if len(found_i) != 0:
+            # compare if attribute of new line and existing line is similar
             attr = "p_nom" if "p_nom" in lines else "v_nom"
-            duplicated=line_map["existing_line"]
-            to_ignore = is_similar(
+            # potential duplicates
+            duplicated = line_map["existing_line"]
+            # only if lines are similar in terms of p_nom or v_nom they are kept as duplicates
+            to_keep = is_similar(
                 new_lines.loc[duplicated.index, attr],
                 duplicated.map(lines[attr]),
-                percentage=10
+                percentage=10,
             )
-            line_map = line_map[to_ignore]
-            logger.warning(
-                "Found new lines similar to existing lines:\n"
-                + str(line_map["existing_line"].to_dict())
-                + "\n Lines are assumed to be duplicated and will be ignored."
-            )
+            line_map = line_map[to_keep]
+            if not line_map.empty:
+                logger.warning(
+                    "Found new lines similar to existing lines:\n"
+                    + str(line_map["existing_line"].to_dict())
+                    + "\n Lines are assumed to be duplicated and will be ignored."
+                )
     elif type == "upgraded":
         if len(found_i) < len(new_lines):
             not_found = new_lines.index.difference(line_map.index)
@@ -472,7 +476,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_transmission_projects", run="all")
+        snakemake = mock_snakemake("build_transmission_projects")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
