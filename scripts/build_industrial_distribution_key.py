@@ -178,17 +178,14 @@ def prepare_cement_database(regions):
     df = df[df['production_type'] != 'Wet'] #for now only dry route (Wet as only 20 Mt/yr of produciton in Europe)
 
     latlon = df.rename(columns={"latitude": "lat", "longitude": "lon"})[["lat", "lon"]]
-    #latlon = (
-    #    df["Coordinates"]
-    #    .str.split(", ", expand=True)
-    #    .rename(columns={0: "lat", 1: "lon"})
-    #)
     geometry = gpd.points_from_xy(latlon["lon"], latlon["lat"])
     gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
 
     gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
 
     gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf = gdf[~gdf.index.duplicated(keep='first')]
+
     gdf["country"] = gdf.bus.str[:2]
 
     return gdf
@@ -303,8 +300,8 @@ def build_nodal_distribution_key(
 
     # add specific steel subsectors
     steel_processes = ["EAF", "DRI + EAF", "Integrated steelworks"]
-    gem_capacities = pd.DataFrame(index=regions.index, columns=steel_processes)
-    gem_start_dates = pd.DataFrame(index=regions.index, columns=steel_processes)
+    steel_capacities = pd.DataFrame(index=regions.index, columns=steel_processes)
+    steel_start_dates = pd.DataFrame(index=regions.index, columns=steel_processes)
 
     for process, country in product(steel_processes, countries):
         regions_ct = regions.index[regions.index.str.contains(country)]
@@ -378,11 +375,10 @@ def build_nodal_distribution_key(
         else:
             raise ValueError(f"Unknown process {process}")
 
-        # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
+        # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
         capacities_sum = capacities.sum() if not capacities.empty else 0
-        gem_capacities.loc[regions_ct, process] = capacities_sum
-        print(capacities)
-        print(start_dates)
+        steel_capacities.loc[regions_ct, process] = capacities_sum
+        
         # Calculate the weighted average of start dates using capacities as weights
         if not capacities.empty:
             start_dates = facilities.loc[capacities.index, "Start date"].dropna()
@@ -394,13 +390,13 @@ def build_nodal_distribution_key(
             if filtered_capacities_sum > 0:
                 weighted_sum = (filtered_capacities * filtered_start_dates).sum()
                 weighted_avg = weighted_sum / filtered_capacities_sum
-                gem_start_dates.loc[regions_ct, process] = weighted_avg
+                steel_start_dates.loc[regions_ct, process] = weighted_avg
             else:
                 # If no valid capacities, assign 0 or NaN
-                gem_start_dates.loc[regions_ct, process] = 0
+                steel_start_dates.loc[regions_ct, process] = 0
         else:
             # If capacities are empty, assign 0 or NaN
-            gem_start_dates.loc[regions_ct, process] = 0
+            steel_start_dates.loc[regions_ct, process] = 0
 
         if not capacities.empty:
             if capacities.sum() == 0:
@@ -415,8 +411,8 @@ def build_nodal_distribution_key(
         keys.loc[regions_ct, process] = key
 
     # add cement plants
-    cement_capacities= pd.DataFrame(index=regions.index, columns=steel_processes)
-    cement_start_dates = pd.DataFrame(index=regions.index, columns=steel_processes)
+    cement_capacities= pd.DataFrame(0,index=regions.index, columns=['capacity'])
+    cement_start_dates = pd.DataFrame(0,index=regions.index, columns=['year'])
     columns_to_keep = ['country','capacity']
 
     for country in countries:
@@ -424,31 +420,32 @@ def build_nodal_distribution_key(
 
         facilities = cement_sfi.query("country == @country")
 
-        capacities = facilities['capacity']
-        #capacities = capacities.set_index('country')
+        capacities = facilities['capacity'].dropna()
+        capacities = capacities[capacities != 0]
+        capacities = capacities[~capacities.index.duplicated(keep='first')]
 
-        # Sum capacities and store in the corresponding country and process in gem_capacities dataframe
+        # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
         capacities_sum = capacities.sum() if not capacities.empty else 0
-        gem_capacities.loc[regions_ct, process] = capacities_sum
+        cement_capacities.loc[regions_ct, 'capacity'] = capacities_sum
 
         # Calculate the weighted average of start dates using capacities as weights
         if not capacities.empty:
             start_dates = facilities.loc[capacities.index, "year"].dropna()
-            filtering = capacities[(start_dates != 0) & (capacities != 0)].index
-            filtered_capacities = capacities.loc[filtering]
-            filtered_start_dates = start_dates.loc[filtering]
+            start_dates = start_dates[~start_dates.index.duplicated(keep='first')]
+            filtered_capacities = capacities.loc[start_dates.index]
             filtered_capacities_sum = filtered_capacities.sum()
-
             if filtered_capacities_sum > 0:
-                weighted_sum = (filtered_capacities * filtered_start_dates).sum()
+                weighted_sum = (filtered_capacities * start_dates).sum()
                 weighted_avg = weighted_sum / filtered_capacities_sum
-                gem_start_dates.loc[regions_ct, process] = weighted_avg
+                cement_start_dates.loc[regions_ct, process] = weighted_avg
             else:
                 # If no valid capacities, assign 0 or NaN
-                gem_start_dates.loc[regions_ct, process] = 0
+                cement_start_dates.loc[regions_ct, process] = 0
         else:
             # If capacities are empty, assign 0 or NaN
-            gem_start_dates.loc[regions_ct, process] = 0
+            cement_start_dates.loc[regions_ct, process] = 0
+
+        cement_start_dates = cement_start_dates.fillna(0)
 
         if not capacities.empty:
             if capacities.sum() == 0:
@@ -456,6 +453,7 @@ def build_nodal_distribution_key(
             else:
                 key = capacities / capacities.sum()
             buses = facilities.loc[capacities.index, "bus"]
+
             key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
         else:
             key = keys.loc[regions_ct, "population"]
@@ -482,7 +480,7 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, "Ammonia"] = key
 
-    return keys, gem_capacities, gem_start_dates
+    return keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates
 
 
 if __name__ == "__main__":
@@ -512,7 +510,7 @@ if __name__ == "__main__":
 
     refineries = prepare_refineries_supplement(regions)
 
-    keys, gem_capacities, gem_start_dates, cement_capacities, cement_start_dates = build_nodal_distribution_key(
+    keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates = build_nodal_distribution_key(
         hotmaps, steel_gem, cement_sfi, ammonia, cement, refineries, regions, countries
     )
 
