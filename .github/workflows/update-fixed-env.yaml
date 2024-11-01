@@ -1,4 +1,4 @@
-name: Fixed-Version Environment Checker
+name: Update pinned envs
 
 on:
   push:
@@ -6,11 +6,26 @@ on:
     - master
     paths:
     - 'envs/environment.yaml'
+  schedule:
+  - cron: "0 5 * * 0"
+  workflow_dispatch:
+
 
 jobs:
-  update-environment-fixed:
-    name: Update environment.fixed.yaml
-    runs-on: ubuntu-latest
+  update-pinned-environment:
+    name: Update pinned envs
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+        include:
+        - os: ubuntu
+          suffix: "linux"
+        - os: macos
+          suffix: "macos"
+        - os: windows
+          suffix: "windows"
 
     steps:
     - uses: actions/checkout@v4
@@ -21,19 +36,50 @@ jobs:
         activate-environment: ${{ github.event.repository.name }}
         environment-file: envs/environment.yaml
 
-    - name: Update environment.fixed.yaml
+    - name: Update pinned environment per OS
       run: |
-        conda env export --name ${{ github.event.repository.name }} --no-builds | sed 's/^name: ${{ github.event.repository.name }}$/name: ${{ github.event.repository.name }}-fixed/' > envs/environment.fixed.yaml
+        conda env export --name ${{ github.event.repository.name }} --no-builds > envs/${{ matrix.suffix }}-pinned.yaml
 
     - name: Add SPDX header
+      if: ${{ matrix.suffix != 'windows' }}
       run: |
-        SPDX_HEADER="# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
-        echo -e "$SPDX_HEADER" | cat - envs/environment.fixed.yaml > temp && mv temp envs/environment.fixed.yaml
+        SPDX_HEADER="# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
+        echo -e "$SPDX_HEADER" | cat - envs/${{ matrix.suffix }}-pinned.yaml > temp && mv temp envs/${{ matrix.suffix }}-pinned.yaml
+
+    - name: Add SPDX header (windows)
+      if: ${{ matrix.suffix == 'windows' }}
+      run: |
+        $SPDX_HEADER = "# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
+        $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml" -Raw
+        $NewContent = $SPDX_HEADER + $CurrentContent
+        $NewContent | Set-Content "envs/${{ matrix.suffix }}-pinned.yaml"
+
+    - name: Cache environment files
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.suffix }}-pinned
+        path: envs/${{ matrix.suffix }}-pinned.yaml
+
+  create-pull-request:
+    needs: update-pinned-environment
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Prepare files for commit
+      run: |
+        mkdir -p envs
+        mv linux-pinned/* envs/linux-pinned.yaml
+        mv macos-pinned/* envs/macos-pinned.yaml
+        mv windows-pinned/* envs/windows-pinned.yaml
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v7
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: update-environment-fixed
-        title: "[github-actions.ci] Update fixed environment"
-        body: Automatically generated PR to update environment.fixed.yaml, since environment.yaml was updated.
+        branch: update-pinned-environment
+        title: "[github-actions.ci] Update pinned envs"
+        body: "Automatically generated PR to update pinned environment files for Windows, macOS, and Linux."
+        commit-message: "Update pinned environment files for all platforms"

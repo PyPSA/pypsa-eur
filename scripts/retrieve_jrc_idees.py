@@ -35,7 +35,7 @@ if __name__ == "__main__":
     to_fn_zp = to_fn + ".zip"
 
     # download .zip file
-    logger.info(f"Downloading JRC IDEES from {url_jrc}.")
+    logger.info(f"Downloading JRC IDEES from '{url_jrc}'.")
     progress_retrieve(url_jrc, to_fn_zp, disable=disable_progress)
 
     # extract

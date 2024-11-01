@@ -10,6 +10,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
 
 * Added option to reduce central heating forward temperatures by annual percentage (see rule :mod:`build_central_heating_temperature_profiles`). This makes COP profiles and heat pump efficiencies planning-horizon-dependent. Myopic and perfect foresight modes were adjusted accordingly to update COPs of existing heat pumps in preceding years to adjusted temperatures.
 
@@ -77,6 +78,8 @@ Upcoming Release
 * Resolved a problem where excluding certain countries from `countries` configuration led to clustering errors.
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
+
+* Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
