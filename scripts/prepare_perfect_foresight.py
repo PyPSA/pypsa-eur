@@ -19,7 +19,6 @@ from _helpers import (
 )
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
-from pypsa.io import import_components_from_dataframe
 from six import iterkeys
 
 logger = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ def hvdc_transport_model(n):
 
     logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
 
-    n.madd(
+    n.add(
         "Link",
         n.lines.index,
         bus0=n.lines.bus0,
@@ -112,7 +111,7 @@ def hvdc_transport_model(n):
     # Remove AC lines
     logger.info("Removing AC lines")
     lines_rm = n.lines.index
-    n.mremove("Line", lines_rm)
+    n.remove("Line", lines_rm)
 
     # Set efficiency of all DC links to include losses depending on length
     n.links.loc[n.links.carrier == "DC", "efficiency"] = (
@@ -183,7 +182,7 @@ def concat_networks(years):
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
 
-            import_components_from_dataframe(n, missing, component.name)
+            n.add(component.name, missing.index, **missing)
 
         # time variant --------------------------------------------------
         network_sns = pd.MultiIndex.from_product([[year], network.snapshots])
@@ -222,7 +221,7 @@ def concat_networks(years):
         # (3) global constraints
         for component in network.iterate_components(["GlobalConstraint"]):
             add_year_to_constraints(network, year)
-            import_components_from_dataframe(n, component.df, component.name)
+            n.add(component.name, component.df.index, **component.df)
 
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
@@ -305,7 +304,7 @@ def set_all_phase_outs(n):
         set_phase_out(n, carrier, ct, phase_out_year)
     # remove assets which are already phased out
     remove_i = n.links[n.links[["build_year", "lifetime"]].sum(axis=1) < years[0]].index
-    n.mremove("Link", remove_i)
+    n.remove("Link", remove_i)
 
 
 def set_carbon_constraints(n):
@@ -329,7 +328,7 @@ def set_carbon_constraints(n):
 
         # drop other CO2 limits
         drop_i = n.global_constraints[n.global_constraints.type == "co2_limit"].index
-        n.mremove("GlobalConstraint", drop_i)
+        n.remove("GlobalConstraint", drop_i)
 
         n.add(
             "GlobalConstraint",
@@ -376,8 +375,8 @@ def adjust_lvlimit(n):
         glc = n.df(c)[n.df(c).type == glc_type][cols].iloc[[0]]
         glc.index = pd.Index(["lv_limit"])
         remove_i = n.df(c)[n.df(c).type == glc_type].index
-        n.mremove(c, remove_i)
-        import_components_from_dataframe(n, glc, c)
+        n.remove(c, remove_i)
+        n.add(c, glc.index, **glc)
 
     return n
 
@@ -419,7 +418,7 @@ def add_H2_boilers(n):
     df["p_nom"] = 0
     df["p_nom_extendable"] = True
     # add H2 boilers to network
-    import_components_from_dataframe(n, df, c)
+    n.add(c, df.index, **df)
 
 
 def apply_time_segmentation_perfect(

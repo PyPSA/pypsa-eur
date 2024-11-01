@@ -389,17 +389,28 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 
 def progress_retrieve(url, file, disable=False):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
     if disable:
-        urllib.request.urlretrieve(url, file)
+        response = requests.get(url, headers=headers, stream=True)
+        with open(file, "wb") as f:
+            f.write(response.content)
     else:
-        with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
+        response = requests.get(url, headers=headers, stream=True)
+        total_size = int(response.headers.get("content-length", 0))
+        chunk_size = 1024
 
-            def update_to(b=1, bsize=1, tsize=None):
-                if tsize is not None:
-                    t.total = tsize
-                t.update(b * bsize - t.n)
-
-            urllib.request.urlretrieve(url, file, reporthook=update_to)
+        with tqdm(
+            total=total_size,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=str(file),
+        ) as t:
+            with open(file, "wb") as f:
+                for data in response.iter_content(chunk_size=chunk_size):
+                    f.write(data)
+                    t.update(len(data))
 
 
 def mock_snakemake(
@@ -434,7 +445,7 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
-    from pypsa.descriptors import Dict
+    from pypsa.definitions.structures import Dict
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake
