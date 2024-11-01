@@ -204,9 +204,11 @@ def sanitize_carriers(n, config):
         n.carriers.nice_name != "", nice_names
     )
 
-    colors = carrier_i.to_series().map(rename_techs)
-    colors = pd.Series(config["plotting"]["tech_colors"]).reindex(colors)
-    colors.index = carrier_i
+    tech_colors = config["plotting"]["tech_colors"]
+    colors = pd.Series(tech_colors).reindex(carrier_i)
+    # try to fill missing colors with tech_colors after renaming
+    missing_colors_i = colors[colors.isna()].index
+    colors[missing_colors_i] = missing_colors_i.map(rename_techs).map(tech_colors)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
