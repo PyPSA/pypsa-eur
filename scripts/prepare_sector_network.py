@@ -2880,6 +2880,7 @@ def add_biomass(n, costs):
             n.add(
                 "Generator",
                 spatial.msw.nodes,
+                suffix=" transported",
                 bus=spatial.msw.nodes,
                 carrier="municipal solid waste",
                 p_nom=10000,
@@ -2892,9 +2893,6 @@ def add_biomass(n, costs):
             n.generators.loc[
                 n.generators.carrier == "municipal solid waste", "e_sum_min"
             ] = 0
-            n.generators.loc[
-                n.generators.carrier == "municipal solid waste", "e_sum_max"
-            ] = msw_biomass_potentials_spatial.sum()
             n.add(
                 "GlobalConstraint",
                 "msw limit",
