@@ -10,6 +10,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
 
 * Added option to reduce central heating forward temperatures by annual percentage (see rule :mod:`build_central_heating_temperature_profiles`). This makes COP profiles and heat pump efficiencies planning-horizon-dependent. Myopic and perfect foresight modes were adjusted accordingly to update COPs of existing heat pumps in preceding years to adjusted temperatures.
 
