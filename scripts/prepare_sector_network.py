@@ -2166,8 +2166,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 p_max_source = pd.read_csv(
                     snakemake.input[heat_source],
                     index_col=0,
-                ).squeeze()
-                p_max_source.index = nodes
+                ).squeeze()[nodes]
 
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
