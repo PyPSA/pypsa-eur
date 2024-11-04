@@ -49,7 +49,6 @@ dependencies:
 - graphviz
 - pre-commit
 - geojson
-- highspy!=1.8.0
 
 # Keep in conda environment when calling ipython
 - ipython
@@ -60,6 +59,8 @@ dependencies:
 - rasterio<1.4
 
 - pip:
+  - gurobipy
+  - highspy!=1.8.0 # No conda channel for arm macos
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm

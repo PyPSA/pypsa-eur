@@ -1,4 +1,4 @@
-name: Fixed-Version Environment Checker
+name: Update pinned envs
 
 on:
   push:
@@ -12,19 +12,19 @@ on:
 
 
 jobs:
-  update-environment-fixed:
+  update-pinned-environment:
     name: Update pinned envs
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu, macos, windows]
         include:
-        - os: ubuntu-latest
-          suffix: "ubuntu"
-        - os: macos-latest
+        - os: ubuntu
+          suffix: "linux"
+        - os: macos
           suffix: "macos"
-        - os: windows-latest
+        - os: windows
           suffix: "windows"
 
     steps:
@@ -36,7 +36,7 @@ jobs:
         activate-environment: ${{ github.event.repository.name }}
         environment-file: envs/environment.yaml
 
-    - name: Update environment.fixed.yaml per OS
+    - name: Update pinned environment per OS
       run: |
         conda env export --name ${{ github.event.repository.name }} --no-builds > envs/${{ matrix.suffix }}-pinned.yaml
 
@@ -49,8 +49,8 @@ jobs:
     - name: Add SPDX header (windows)
       if: ${{ matrix.suffix == 'windows' }}
       run: |
-        $SPDX_HEADER = "# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors`n# SPDX-License-Identifier: CC0-1.0`n"
-        $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml"
+        $SPDX_HEADER = "# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
+        $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml" -Raw
         $NewContent = $SPDX_HEADER + $CurrentContent
         $NewContent | Set-Content "envs/${{ matrix.suffix }}-pinned.yaml"
 
@@ -61,7 +61,7 @@ jobs:
         path: envs/${{ matrix.suffix }}-pinned.yaml
 
   create-pull-request:
-    needs: update-environment-fixed
+    needs: update-pinned-environment
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
     - name: Prepare files for commit
       run: |
         mkdir -p envs
-        mv ubuntu-pinned/* envs/ubuntu-pinned.yaml
+        mv linux-pinned/* envs/linux-pinned.yaml
         mv macos-pinned/* envs/macos-pinned.yaml
         mv windows-pinned/* envs/windows-pinned.yaml
 
@@ -79,7 +79,7 @@ jobs:
       uses: peter-evans/create-pull-request@v7
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: update-environment-fixed
-        title: "[github-actions.ci] Update fixed environments"
-        body: "Automatically generated PR to update pinned environment files for Windows, macOS, and Ubuntu."
+        branch: update-pinned-environment
+        title: "[github-actions.ci] Update pinned envs"
+        body: "Automatically generated PR to update pinned environment files for Windows, macOS, and Linux."
         commit-message: "Update pinned environment files for all platforms"
