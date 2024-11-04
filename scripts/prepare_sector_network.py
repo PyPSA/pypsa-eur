@@ -2287,7 +2287,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             fuels = options["chp"]["fuel"]
             fuels = np.atleast_1d(fuels)
             for fuel in fuels:
-                fuel_nodes = spatial.getattr(spatial, fuel).df
+                fuel_nodes = getattr(spatial, fuel).df
                 n.add(
                     "Link",
                     nodes + f" urban central {fuel} CHP",
