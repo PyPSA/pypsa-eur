@@ -10,6 +10,7 @@ Release Notes
 
 Upcoming Release
 ================
+* Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
 
 * Replaced the Store representation of biogenic carriers (solid biomass, biogas, bioliquids, MSW) in ``prepare_sector_network`` with the extended Generator component that uses the ``e_sum_min`` and ``e_sum_max`` attributes to enforce minimum usage and limit maximum potential, respectively.
 
@@ -79,6 +80,8 @@ Upcoming Release
 * Resolved a problem where excluding certain countries from `countries` configuration led to clustering errors.
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
+
+* Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================

@@ -29,10 +29,10 @@ is located at ``config/test/config.electricity.yaml``. It includes parts deviati
 the default config file ``config/config.default.yaml``. To run the tutorial with this
 configuration, execute
 
-.. code:: bash
+.. code:: console
     :class: full-width
 
-    snakemake -call results/test-elec/networks/base_s_6_elec_lcopt_.nc --configfile config/test/config.electricity.yaml
+    $ snakemake results/test-elec/networks/base_s_6_elec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
 This configuration is set to download a reduced cutout via the rule :mod:`retrieve_cutout`.
 For more information on the data dependencies of PyPSA-Eur, continue reading :ref:`data`.
@@ -105,16 +105,16 @@ How to use ``snakemake`` rules?
 
 Open a terminal, go into the PyPSA-Eur directory, and activate the ``pypsa-eur`` environment with
 
-.. code:: bash
+.. code:: console
 
-    mamba activate pypsa-eur
+    $ mamba activate pypsa-eur
 
 Let's say based on the modifications above we would like to solve a very simplified model
 clustered down to 6 buses and every 24 hours aggregated to one snapshot. The command
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call results/test-elec/networks/base_s_6_elec_lcopt_.nc --configfile config/test/config.electricity.yaml
+    $ snakemake results/test-elec/networks/base_s_6_elec_lcopt_.nc --configfile config/test/config.electricity.yaml
 
 orders ``snakemake`` to run the rule :mod:`solve_network` that produces the solved network and stores it in ``results/networks`` with the name ``base_s_6_elec_lcopt_.nc``:
 
@@ -261,7 +261,7 @@ This triggers a workflow of multiple preceding jobs that depend on each rule's i
 
 In the terminal, this will show up as a list of jobs to be run:
 
-.. code:: bash
+.. code:: console
 
     Building DAG of jobs...
     Job stats:
@@ -299,7 +299,7 @@ In the terminal, this will show up as a list of jobs to be run:
 
 A job (here ``simplify_network``) will display its attributes and normally some logs below this block:
 
-.. code:: bash
+.. code:: console
 
     rule simplify_network:
         input: resources/test/networks/base_extended.nc, resources/test/regions_onshore.geojson, resources/test/regions_offshore.geojson
@@ -316,42 +316,42 @@ You will notice that many intermediate stages are saved, namely the outputs of e
 
 You can produce any output file occurring in the ``Snakefile`` by running
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call <output file>
+    $ snakemake <output file>
 
 For example, you can explore the evolution of the PyPSA networks by running
 
-#. ``snakemake resources/networks/base.nc -call --configfile config/test/config.electricity.yaml``
-#. ``snakemake resources/networks/base_s.nc -call --configfile config/test/config.electricity.yaml``
-#. ``snakemake resources/networks/base_s_6.nc -call --configfile config/test/config.electricity.yaml``
-#. ``snakemake resources/networks/base_s_6_elec_lcopt_.nc -call --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/base.nc --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/base_s.nc --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/base_s_6.nc --configfile config/test/config.electricity.yaml``
+#. ``snakemake resources/networks/base_s_6_elec_lcopt_.nc --configfile config/test/config.electricity.yaml``
 
 To run all combinations of wildcard values provided in the ``config/config.yaml`` under ``scenario:``,
 you can use the collection rule ``solve_elec_networks``.
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml
+    $ snakemake solve_elec_networks --configfile config/test/config.electricity.yaml
 
 If you now feel confident and want to tackle runs with larger temporal and
 spatial scope, clean-up the repository and after modifying the ``config/config.yaml`` file
 target the collection rule ``solve_elec_networks`` again without providing the test
 configuration file.
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call purge
-    snakemake -call solve_elec_networks
+    $ snakemake purge
+    $ snakemake solve_elec_networks
 
 .. note::
 
     It is good practice to perform a dry-run using the option `-n`, before you
     commit to a run:
 
-    .. code:: bash
+    .. code:: console
 
-        snakemake -call solve_elec_networks -n
+        $ snakemake solve_elec_networks -n
 
 How to analyse results?
 ===============================

@@ -1071,13 +1071,8 @@ rule prepare_sector_network:
         dsm_profile=resources("dsm_profile_s_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
-        biomass_potentials=lambda w: (
-            resources(
-                "biomass_potentials_s_{clusters}_"
-                + "{}.csv".format(config_provider("biomass", "year")(w))
-            )
-            if config_provider("foresight")(w) == "overnight"
-            else resources("biomass_potentials_s_{clusters}_{planning_horizons}.csv")
+        biomass_potentials=resources(
+            "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
         costs=lambda w: (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
