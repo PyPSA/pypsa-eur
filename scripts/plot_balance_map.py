@@ -146,10 +146,12 @@ if __name__ == "__main__":
     # if only one price is available, use this price for all regions
     if price.size == 1:
         regions["price"] = price.values[0]
+        shift = round(price.values[0] / 20, 0)
     else:
         regions["price"] = price.reindex(regions.index).fillna(0)
+        shift = 0
 
-    vmin, vmax = regions.price.min(), regions.price.max()
+    vmin, vmax = regions.price.min() - shift, regions.price.max() + shift
     cmap = carrier_plotting.get("region_cmap", "Greens")
 
     regions.plot(
