@@ -70,11 +70,7 @@ if __name__ == "__main__":
     nodal_production_stacked.index.names = [None, None]
 
     # final energy consumption per node and industry (TWh/a)
-    nodal_df = (
-        (nodal_sector_ratios.multiply(nodal_production_stacked))
-        .T.groupby(level=0)
-        .sum()
-    )
+    nodal_df = nodal_sector_ratios.multiply(nodal_production_stacked).T
 
     rename_sectors = {
         "elec": "electricity",
@@ -83,8 +79,7 @@ if __name__ == "__main__":
     }
     nodal_df.rename(columns=rename_sectors, inplace=True)
 
-    nodal_df["current electricity"] = nodal_today["electricity"]
-
+    nodal_df.index.set_names(["node", "sector"], inplace=True)
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 
     fn = snakemake.output.industrial_energy_demand_per_node

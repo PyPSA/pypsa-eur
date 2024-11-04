@@ -25,6 +25,8 @@ def rename_techs_tyndp(tech):
     tech = rename_techs(tech)
     if "heat pump" in tech or "resistive heater" in tech:
         return "power-to-heat"
+    elif "external" in tech:
+        return "import hvdc-to-elec"
     elif tech in ["H2 Electrolysis", "methanation", "H2 liquefaction"]:
         return "power-to-gas"
     elif tech == "H2":
