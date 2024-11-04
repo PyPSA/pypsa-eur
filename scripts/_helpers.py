@@ -830,7 +830,7 @@ def rename_techs(label: str) -> str:
     ----------
     label: str
         Technology label to be renamed
-    
+
     Returns:
     -------
     str
