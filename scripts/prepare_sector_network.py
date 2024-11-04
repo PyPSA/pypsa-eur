@@ -4137,7 +4137,8 @@ def add_steel_industry(n, investment_year, options):
         )
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 1
+    prod_constantly = 0
+    ramp_limit = 0
     regional_prod.index = regional_prod.index + ' steel'
 
     if not options["endo_industry_options"]["regional_steel_demand"]:
@@ -4182,6 +4183,8 @@ def add_steel_industry(n, investment_year, options):
         # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt coke
         # also considering that the efficiency for the BOF is 1
         # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         efficiency=1 / 1.429,
         efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
         efficiency3=216.4 / 1.429,
@@ -4228,10 +4231,9 @@ def add_steel_industry(n, investment_year, options):
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=145000
-        / nhours
-        / (1 / 1.36)
-        * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
+        capital_cost=145000 / nhours / (1 / 1.36) * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
         efficiency=1 / 1.36,
         efficiency2=-2.8 / 1.36,
         # efficiency3=28/1.36,
@@ -4249,6 +4251,8 @@ def add_steel_industry(n, investment_year, options):
         bus3=spatial.heat4industry.nodes,
         carrier="basic oxygen furnace",
         p_min_pu=prod_constantly,  # to avoid using a plant only when electricity is cheap
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=True,
         # p_nom_max = max_cap,
         capital_cost=100000 / nhours / 1 * 0.7551,
@@ -4273,8 +4277,8 @@ def add_steel_industry(n, investment_year, options):
         p_nom_extendable=True,
         p_nom_max=max_cap,
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
-        # p_nom_min=min_cap_node,
-        # p_nom=min_cap_node,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         capital_cost=80000 / nhours / 1 * 0.7551,
         efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
         efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
@@ -4357,7 +4361,8 @@ def add_cement_industry(n, investment_year, options):
     )
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 1
+    prod_constantly = 0
+    ramp_limit = 0
     
     # CEMENT
     n.add(
@@ -4391,6 +4396,8 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement plant",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         capital_cost=263000/nhours, # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
         efficiency=1.6,
         efficiency2= - 3526.82 * 1e3 / 3600 , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf

@@ -666,7 +666,7 @@ def add_steel_industry_existing_gem(n):
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 0
-    ramp_limit = 0.5
+    ramp_limit = 0
 
     ########### Add existing steel production capacities ############
     # Blast furnace assuming with natural gas
@@ -684,9 +684,8 @@ def add_steel_industry_existing_gem(n):
         p_nom=p_nom_bof * 1.429,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         p_nom_extendable=False,
-        # committable =True,
-        # ramp_limit_up=ramp_limit,
-        # ramp_limit_dowm=ramp_limit,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
         efficiency=1 / 1.429,
         efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
@@ -708,8 +707,8 @@ def add_steel_industry_existing_gem(n):
         * 1.36,  # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         # committable =True,
-        # ramp_limit_up=ramp_limit,
-        # ramp_limit_dowm=ramp_limit,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         efficiency=1 / 1.36,
         efficiency2=-2.8 * 1000 / 1.36,
@@ -730,8 +729,8 @@ def add_steel_industry_existing_gem(n):
         p_nom=p_nom_bof,  # capacities_bof.loc[],
         p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
         # committable =True,
-        # ramp_limit_up=ramp_limit,
-        # ramp_limit_dowm=ramp_limit,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
         efficiency2=-524,  # MWh electricity per kt coke
@@ -755,8 +754,8 @@ def add_steel_industry_existing_gem(n):
         p_nom=p_nom_eaf,
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
         # committable =True,
-        # ramp_limit_up=ramp_limit,
-        # ramp_limit_dowm=ramp_limit,
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         # p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
         efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
@@ -817,7 +816,7 @@ def add_steel_industry_existing_jrc(n):
     p_nom_eaf = p_nom_eaf * 2 / 3
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 1
+    prod_constantly = 0
 
     ########### Add existing steel production capacities ############
     # Blast furnace assuming with natural gas
@@ -840,9 +839,7 @@ def add_steel_industry_existing_jrc(n):
         efficiency=1 / 1.429,
         efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
         efficiency3=216.4 / 1.429,
-        lifetime=40
-        * 2
-        / 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime=40* 2 / 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=2020,
     )
 
@@ -862,9 +859,7 @@ def add_steel_industry_existing_jrc(n):
         efficiency=1 / 1.36,
         efficiency2=-2.8 * 1000 / 1.36,
         efficiency3=28 / 1.36,
-        lifetime=40
-        * 2
-        / 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        lifetime=40 * 2/ 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=2020,
     )
 
@@ -934,7 +929,7 @@ def add_cement_industry_existing_sfi(n):
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 0
-    ramp_limit = 0.5
+    ramp_limit = 0
 
     ########### Add existing steel production capacities ############
     # Blast furnace assuming with natural gas
@@ -951,6 +946,8 @@ def add_cement_industry_existing_sfi(n):
         carrier="cement plant",
         p_nom=p_nom,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         efficiency=1.6,
         efficiency2= - 3526.82 * 1e3 / 3600 , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
