@@ -2294,13 +2294,12 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 ],
             )
 
-        if options["chp"] and heat_system == HeatSystem.URBAN_CENTRAL:
+        if options["chp"]["enable"] and heat_system == HeatSystem.URBAN_CENTRAL:
             # add gas CHP; biomass CHP is added in biomass section
-            fuel_type = options["chp"]["fuel_type"]
-            if not isinstance(fuel_type, list):
-                fuel_type = [fuel_type]
-            for fuel in fuel_type:
-                fuel_nodes = eval(f"spatial.{fuel}.df")
+            fuels = options["chp"]["fuel"]
+            fuels = np.atleast_1d(fuels)
+            for fuel in fuels:
+                fuel_nodes = spatial.getattr(spatial, fuel).df
                 n.madd(
                     "Link",
                     nodes + f" urban central {fuel} CHP",
@@ -2322,7 +2321,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
 
                 n.madd(
                     "Link",
-                    nodes + " urban central gas CHP CC",
+                    nodes + f" urban central {fuel} CHP CC",
                     bus0=fuel_nodes.loc[nodes, "nodes"].values,
                     bus1=nodes,
                     bus2=nodes + " urban central heat",
