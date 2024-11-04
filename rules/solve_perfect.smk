@@ -34,13 +34,23 @@ rule add_existing_baseyear:
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
-        gem_capacities=lambda w: (
+        steel_capacities=lambda w: (
             resources("steel/gem_capacities_s_{clusters}.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
-        gem_start_dates=lambda w: (
+        steel_start_dates=lambda w: (
             resources("steel/gem_start_dates_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        cement_capacities=lambda w: (
+            resources("cement/sfi_capacities_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        cement_start_dates=lambda w: (
+            resources("cement/sfi_start_dates_s_{clusters}.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),

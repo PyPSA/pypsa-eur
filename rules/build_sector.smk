@@ -1179,7 +1179,7 @@ rule prepare_sector_network:
             if config_provider("enable", "endo_industry")(w)
             else []
         ),
-        gem_capacities=lambda w: (
+        steel_capacities=lambda w: (
             resources("steel/gem_capacities_s_{clusters}.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
@@ -1192,6 +1192,11 @@ rule prepare_sector_network:
         # Cement
         cement_production=lambda w: (
             resources("cement/cement_production_s_{clusters}.csv")
+            if config_provider("enable", "endo_industry")(w)
+            else []
+        ),
+        cement_capacities=lambda w: (
+            resources("cement/sfi_capacities_s_{clusters}.csv")
             if config_provider("enable", "endo_industry")(w)
             else []
         ),

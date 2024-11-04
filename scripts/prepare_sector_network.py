@@ -44,7 +44,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options):
+def define_spatial(nodes, options, endo_industry):
     """
     Namespace for spatial.
 
@@ -220,16 +220,6 @@ def define_spatial(nodes, options):
         spatial.steel.nodes = nodes + " steel"
         spatial.steel.locations = nodes
 
-        # high temperature heat
-        spatial.heat4steel = SimpleNamespace()
-        spatial.heat4steel.nodes = nodes + " heat for steel"
-        spatial.heat4steel.locations = nodes
-
-        # iron
-        spatial.iron = SimpleNamespace()
-        spatial.iron.nodes = ["EU iron"]
-        spatial.iron.locations = ["EU"]
-
         # sponge iron -> DRI product
         spatial.sponge_iron = SimpleNamespace()
         spatial.sponge_iron.nodes = nodes + " sponge iron"
@@ -252,16 +242,6 @@ def define_spatial(nodes, options):
         spatial.steel.nodes = ["EU steel"]
         spatial.steel.locations = ["EU"]
 
-        # high temperature heat
-        spatial.heat4steel = SimpleNamespace()
-        spatial.heat4steel.nodes = ["EU heat for steel"]
-        spatial.heat4steel.locations = ["EU"]
-
-        # iron
-        spatial.iron = SimpleNamespace()
-        spatial.iron.nodes = ["EU iron"]
-        spatial.iron.locations = ["EU"]
-
         # sponge iron -> DRI product
         spatial.sponge_iron = SimpleNamespace()
         spatial.sponge_iron.nodes = ["EU sponge iron"]
@@ -277,11 +257,31 @@ def define_spatial(nodes, options):
         spatial.coke_steel.nodes = ["EU coke for steel"]
         spatial.coke_steel.locations = ["EU"]
 
-    # DRI
-    # DRI gas link
-    spatial.dri_gas = SimpleNamespace()
-    spatial.dri_gas.nodes = nodes + " dri gas"
-    spatial.dri_gas.locations = nodes
+    if endo_industry:
+        # Iron and Steel
+        # DRI gas link
+        spatial.dri_gas = SimpleNamespace()
+        spatial.dri_gas.nodes = nodes + " dri gas"
+        spatial.dri_gas.locations = nodes
+
+        # iron
+        spatial.iron = SimpleNamespace()
+        spatial.iron.nodes = ["EU iron"]
+        spatial.iron.locations = ["EU"]
+
+        # Cement
+        spatial.cement = SimpleNamespace()
+        spatial.cement.nodes = nodes + " cement"
+        spatial.cement.locations = nodes
+
+        spatial.limestone = SimpleNamespace()
+        spatial.limestone.nodes = ["EU limestone"]
+        spatial.limestone.locations = ["EU"]
+
+        # high temperature heat for all industries
+        spatial.heat4industry = SimpleNamespace()
+        spatial.heat4industry.nodes = ["EU heat for industry"]
+        spatial.heat4industry.locations = ["EU"]
 
     return spatial
 
@@ -4066,9 +4066,7 @@ def add_steel_industry(n, investment_year, options):
 
     # Steel production demanded in Europe in kton of steel products per year
     steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
-    cement_production = pd.read_csv(snakemake.input.cement_production, index_col=0)
-    print(f"Cement production {cement_production}")
-    capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
+    capacities = pd.read_csv(snakemake.input.steel_capacities, index_col=0)
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     hourly_steel_production = (steel_production.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
@@ -4118,7 +4116,7 @@ def add_steel_industry(n, investment_year, options):
 
     for carrier in [
         "steel",
-        "heat4steel",
+        "heat4industry",
         "sponge_iron",
         "pig_iron",
         "coke_steel",
@@ -4128,7 +4126,7 @@ def add_steel_industry(n, investment_year, options):
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
         location_value = getattr(spatial, carrier).nodes
-        unit = "kt/yr" if carrier_name != "heat4steel" else "MWh_th"
+        unit = "kt/yr" if carrier_name != "heat4industry" else "MWh_th"
 
         n.add(
             "Bus",
@@ -4139,7 +4137,7 @@ def add_steel_industry(n, investment_year, options):
         )
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 0
+    prod_constantly = 1
     regional_prod.index = regional_prod.index + ' steel'
 
     if not options["endo_industry_options"]["regional_steel_demand"]:
@@ -4248,7 +4246,7 @@ def add_steel_industry(n, investment_year, options):
         bus0=spatial.pig_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,
+        bus3=spatial.heat4industry.nodes,
         carrier="basic oxygen furnace",
         p_min_pu=prod_constantly,  # to avoid using a plant only when electricity is cheap
         p_nom_extendable=True,
@@ -4270,7 +4268,7 @@ def add_steel_industry(n, investment_year, options):
         bus0=spatial.sponge_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,  # This heat is mainly from side processes in the refinery
+        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
         p_nom_extendable=True,
         p_nom_max=max_cap,
@@ -4284,20 +4282,120 @@ def add_steel_industry(n, investment_year, options):
         lifetime=67,
     )
 
-    # Link to produce heat for steel industry processes
+    # Link to produce heat for industry processes at high temperature, not only for steel
     n.add(
         "Link",
-        spatial.heat4steel.locations,
-        suffix=" heat for steel",
+        spatial.heat4industry.locations,
+        suffix=" heat for industry",
         bus0=spatial.gas.nodes,
-        bus1=spatial.heat4steel.nodes,
+        bus1=spatial.heat4industry.nodes,
         bus2="co2 atmosphere",
         p_nom_extendable=True,
-        carrier="heat4steel",
+        carrier="heat4industry",
         capital_cost=0.1,
         efficiency=0.75,
         efficiency2=costs.at["gas", "CO2 intensity"],
         lifetime=100,
+    )
+
+
+
+def add_cement_industry(n, investment_year, options):
+
+    # Cement production demanded in each country in Europe in kton of cement products per year
+    cement_production = pd.read_csv(snakemake.input.cement_production, index_col=0)
+    capacities = pd.read_csv(snakemake.input.cement_capacities, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    hourly_cement_production = (cement_production.loc[:, str(investment_year)] / nhours)  # get the cement that needs to be produced hourly
+    hourly_cement_production.index = hourly_cement_production.index + ' cement'
+
+    # Adding carriers and components
+    nodes = pop_layout.index
+
+    n.add("Carrier", "limestone")
+
+    n.add(
+        "Bus",
+        spatial.limestone.nodes,
+        location=spatial.limestone.locations,
+        carrier="limestone",
+        unit="kt/yr",
+    )
+
+    costs.at["limestone", "discount rate"] = 0.04
+
+    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
+    n.add(
+        "Store",
+        nodes + " Store",
+        bus=spatial.limestone.nodes,
+        e_nom_extendable=True,
+        e_cyclic=True,
+        carrier="limestone",
+        capital_cost=0.2
+        * costs.at["limestone", "discount rate"],  # preliminary value to avoid zeros
+    )
+
+    n.add(
+        "Generator",
+        spatial.limestone.nodes,
+        bus=spatial.limestone.nodes,
+        p_nom_extendable=True,
+        carrier="limestone",
+        marginal_cost=costs.at["limestone", "fuel"],
+    )
+
+    n.add("Carrier", "cement")
+    
+    n.add(
+        "Bus",
+        spatial.cement.nodes,
+        location=spatial.cement.locations,
+        carrier="cement",
+        unit="kt/yr",
+    )
+
+    # Should steel be produced at a constant rate during the year or not? 1 or 0
+    prod_constantly = 1
+    
+    # CEMENT
+    n.add(
+        "Load",
+        spatial.cement.nodes,
+        bus=spatial.cement.nodes,
+        carrier="cement",
+        p_set=hourly_cement_production,
+    )
+
+    n.add(
+        "Store",
+        spatial.cement.nodes,
+        e_nom_extendable=True,
+        carrier="cement",
+        bus=spatial.cement.nodes,
+    )
+
+    ########### Add carriers for new capacity for cement production ############
+
+    # Traditional dry process
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Cement Plant",
+        bus0=spatial.limestone.nodes,
+        bus1=spatial.cement.nodes,
+        bus2=spatial.heat4industry.nodes,
+        bus3=spatial.co2.process_emissions,
+        carrier="cement plant",
+        p_nom_extendable=True,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        capital_cost=263000/nhours, # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+        efficiency=1.6,
+        efficiency2= - 3526.82 * 1e3 / 3600 , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
+        efficiency3=500, #tCO2/kt cement
+        lifetime=100, 
     )
 
 
@@ -4959,10 +5057,11 @@ if __name__ == "__main__":
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
+    endo_industry = snakemake.params.endo_industry
 
     patch_electricity_network(n)
 
-    spatial = define_spatial(pop_layout.index, options)
+    spatial = define_spatial(pop_layout.index, options, endo_industry)
 
     if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
@@ -4997,8 +5096,9 @@ if __name__ == "__main__":
     if options["industry"]:
         add_industry(n, costs)
 
-    if snakemake.params.endo_industry:
+    if endo_industry:
         add_steel_industry(n, investment_year, options)
+        add_cement_industry(n, investment_year, options)
 
     if options["heating"]:
         add_waste_heat(n)

@@ -208,7 +208,7 @@ def prepare_ammonia_database(regions):
 
     return gdf
 
-
+#ADB to remove
 def prepare_cement_supplement(regions):
     """
     Load supplementary cement plants from non-EU-(NO-CH) and map onto bus
@@ -423,6 +423,7 @@ def build_nodal_distribution_key(
         capacities = facilities['capacity'].dropna()
         capacities = capacities[capacities != 0]
         capacities = capacities[~capacities.index.duplicated(keep='first')]
+        capacities = capacities * 1e3 # from Mt/yr to kt/yr (coherent with cement)
 
         # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
         capacities_sum = capacities.sum() if not capacities.empty else 0
@@ -437,13 +438,13 @@ def build_nodal_distribution_key(
             if filtered_capacities_sum > 0:
                 weighted_sum = (filtered_capacities * start_dates).sum()
                 weighted_avg = weighted_sum / filtered_capacities_sum
-                cement_start_dates.loc[regions_ct, process] = weighted_avg
+                cement_start_dates.loc[regions_ct, 'year'] = weighted_avg
             else:
                 # If no valid capacities, assign 0 or NaN
-                cement_start_dates.loc[regions_ct, process] = 0
+                cement_start_dates.loc[regions_ct, 'year'] = 0
         else:
             # If capacities are empty, assign 0 or NaN
-            cement_start_dates.loc[regions_ct, process] = 0
+            cement_start_dates.loc[regions_ct, 'year'] = 0
 
         cement_start_dates = cement_start_dates.fillna(0)
 
@@ -458,7 +459,7 @@ def build_nodal_distribution_key(
         else:
             key = keys.loc[regions_ct, "population"]
 
-        keys.loc[regions_ct, process] = key
+        keys.loc[regions_ct, 'Cement_SFI'] = key
 
     # add ammonia
     for country in countries:

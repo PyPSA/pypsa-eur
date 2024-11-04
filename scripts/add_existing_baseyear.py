@@ -627,8 +627,8 @@ def add_heating_capacities_installed_before_baseyear(
 def add_steel_industry_existing_gem(n):
 
     # Steel capacities in Europe in kton of steel products per year
-    capacities = pd.read_csv(snakemake.input.gem_capacities, index_col=0)
-    start_dates = pd.read_csv(snakemake.input.gem_start_dates, index_col=0)
+    capacities = pd.read_csv(snakemake.input.steel_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.steel_start_dates, index_col=0)
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     capacities_bof = capacities["Integrated steelworks"]
@@ -695,6 +695,7 @@ def add_steel_industry_existing_gem(n):
         build_year=start_dates_bof,
     )
 
+
     n.add(
         "Link",
         nodes,
@@ -724,7 +725,7 @@ def add_steel_industry_existing_gem(n):
         bus0=spatial.pig_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,
+        bus3=spatial.heat4industry.nodes,
         carrier="basic oxygen furnace",
         p_nom=p_nom_bof,  # capacities_bof.loc[],
         p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
@@ -749,7 +750,7 @@ def add_steel_industry_existing_gem(n):
         bus0=spatial.sponge_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,  # This heat is mainly from side processes in the refinery
+        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
         p_nom=p_nom_eaf,
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
@@ -875,7 +876,7 @@ def add_steel_industry_existing_jrc(n):
         bus0=spatial.pig_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,
+        bus3=spatial.heat4industry.nodes,
         carrier="basic oxygen furnace",
         p_nom=p_nom_bof,  # capacities_bof.loc[],
         p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
@@ -897,7 +898,7 @@ def add_steel_industry_existing_jrc(n):
         bus0=spatial.sponge_iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=nodes,
-        bus3=spatial.heat4steel.nodes,  # This heat is mainly from side processes in the refinery
+        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
         carrier="electric arc furnaces",
         p_nom=p_nom_eaf,
         p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
@@ -908,6 +909,54 @@ def add_steel_industry_existing_jrc(n):
         efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
         lifetime=40 * 2 / 3,
         build_year=2020,
+    )
+
+
+def add_cement_industry_existing_sfi(n):
+
+    # Cement capacities in Europe in kton of cement products per year
+    capacities = pd.read_csv(snakemake.input.cement_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.cement_start_dates, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    capacities = capacities['capacity'] * keys["Cement_SFI"]
+
+    start_dates = round(start_dates["year"])
+
+    start_dates = start_dates.where(
+        (start_dates >= 1000) & np.isfinite(start_dates), 2000
+    )
+
+    nodes = pop_layout.index
+    p_nom = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom = capacities / nhours  # get the hourly production capacity
+
+    # Should steel be produced at a constant rate during the year or not? 1 or 0
+    prod_constantly = 0
+    ramp_limit = 0.5
+
+    ########### Add existing steel production capacities ############
+    # Blast furnace assuming with natural gas
+
+    # BOF
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Cement Plant-2020",
+        bus0=spatial.limestone.nodes,
+        bus1=spatial.cement.nodes,
+        bus2=spatial.heat4industry.nodes,
+        bus3=spatial.co2.process_emissions,
+        carrier="cement plant",
+        p_nom=p_nom,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        p_nom_extendable=False,
+        efficiency=1.6,
+        efficiency2= - 3526.82 * 1e3 / 3600 , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
+        efficiency3=500, #tCO2/kt cement
+        lifetime=100, 
+        build_year=start_dates,
     )
 
 
@@ -948,15 +997,16 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-    gem = snakemake.input.gem_capacities
-    print(f"GEM {gem}")
+    gem = snakemake.input.steel_capacities
+    sfi = snakemake.input.cement_capacities
+    endo_industry = snakemake.params.endo_industry
 
     baseyear = snakemake.params.baseyear
 
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
-    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
+    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options, endo_industry)
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.0
@@ -1003,8 +1053,9 @@ if __name__ == "__main__":
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
-    if snakemake.params.endo_industry:
+    if endo_industry:
         add_steel_industry_existing_gem(n)
+        add_cement_industry_existing_sfi(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
