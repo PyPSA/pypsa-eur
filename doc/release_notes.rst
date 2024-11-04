@@ -10,6 +10,8 @@ Release Notes
 
 Upcoming Release
 ================
+* Restore share policy "base" functionality to share build renewable profiles
+
 * Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
 
 * Replaced the Store representation of biogenic carriers (solid biomass, biogas, bioliquids, MSW) in ``prepare_sector_network`` with the extended Generator component that uses the ``e_sum_min`` and ``e_sum_max`` attributes to enforce minimum usage and limit maximum potential, respectively.
