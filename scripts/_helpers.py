@@ -820,9 +820,21 @@ def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
     return time
 
 
-def rename_techs(label):
+def rename_techs(label: str) -> str:
     """
     Rename technology labels for better readability.
+
+    Removes some prefixes and renames if certain conditions defined in function body are met.
+
+    Parameters:
+    ----------
+    label: str
+        Technology label to be renamed
+    
+    Returns:
+    -------
+    str
+        Renamed label
     """
     prefix_to_remove = [
         "residential ",
