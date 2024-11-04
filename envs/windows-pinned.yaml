@@ -396,4 +396,3 @@ dependencies:
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6
 prefix: C:\Miniconda\envs\pypsa-eur-adb
-
