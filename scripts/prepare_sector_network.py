@@ -283,6 +283,10 @@ def define_spatial(nodes, options, endo_industry):
         spatial.heat4industry.nodes = ["EU heat for industry"]
         spatial.heat4industry.locations = ["EU"]
 
+        # Adding CO2 for tracking CCS
+        spatial.co2.cement = nodes + " cement process emissions"
+        spatial.co2.cement_locations = nodes
+
     return spatial
 
 
@@ -4114,14 +4118,7 @@ def add_steel_industry(n, investment_year, options):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in [
-        "steel",
-        "heat4industry",
-        "sponge_iron",
-        "pig_iron",
-        "coke_steel",
-        "dri_gas",
-    ]:
+    for carrier in ["steel","heat4industry","sponge_iron","pig_iron","coke_steel","dri_gas",]:
 
         carrier_name = carrier.replace("_", " ")
         n.add("Carrier", carrier_name)
@@ -4381,6 +4378,29 @@ def add_cement_industry(n, investment_year, options):
         bus=spatial.cement.nodes,
     )
 
+    # add CO2 process from cement industry
+    n.add("Carrier", "cement process emissions")
+    n.add("Carrier", "cement process emissions CC")
+
+    n.add(
+        "Bus",
+        spatial.co2.cement,
+        location=spatial.co2.cement_locations,
+        carrier="cement process emissions",
+        unit="t_co2",
+    )
+
+    n.add(
+        "Store",
+        spatial.co2.cement,
+        e_nom_extendable=True,
+        capital_cost=0,
+        carrier="cement process emissions",
+        e_cyclic=True,
+        bus=spatial.co2.cement_locations,
+    )
+    
+
     ########### Add carriers for new capacity for cement production ############
 
     # Traditional dry process
@@ -4392,16 +4412,48 @@ def add_cement_industry(n, investment_year, options):
         bus0=spatial.limestone.nodes,
         bus1=spatial.cement.nodes,
         bus2=spatial.heat4industry.nodes,
-        bus3=spatial.co2.process_emissions,
+        bus3=spatial.co2.cement,
         carrier="cement plant",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=263000/nhours, # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-        efficiency=1.6,
-        efficiency2= - 3526.82 * 1e3 / 3600 , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
-        efficiency3=500, #tCO2/kt cement
+        efficiency=1/1.6,
+        efficiency2= - 3526.82 * 1e3 / 3600 * (1/1.6) , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
+        efficiency3=500 * (1/1.6) , #tCO2/kt cement
+        lifetime=100, 
+    )
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" cement to total proc emis",
+        bus0=spatial.co2.cement,
+        bus1=spatial.co2.process_emissions,
+        carrier="cement process emissions",
+        p_nom_extendable=True,
+        capital_cost = 0,
+        efficiency=1,
+        lifetime=np.inf, 
+    )
+
+    # Cement plant retrofitted with post-combustion capture using amines (methylethanol amine MEA)
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" cement to total proc emis CC",
+        bus0=spatial.co2.cement,
+        bus1=spatial.co2.process_emissions,
+        bus2=spatial.co2.nodes,
+        bus3=spatial.heat4industry.nodes,
+        carrier="cement process emissions CC",
+        p_nom_extendable=True,
+        capital_cost=80 / costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
+        efficiency=1- costs.at["cement capture", "capture_rate"],
+        efficiency2=costs.at["cement capture", "capture_rate"],
+        efficiency3=3000 * 1e3 / 3600 * costs.at["cement capture", "capture_rate"],
         lifetime=100, 
     )
 

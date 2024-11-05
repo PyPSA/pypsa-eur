@@ -23,6 +23,7 @@ run:
   prefix: ""
   name: 
   - baseline_eu_dem #'all'
+  - climate_policy_eu_dem
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml
@@ -1320,3 +1321,4 @@ plotting:
     cement: 'grey'
     limestone: 'yellow'
     cement plant: 'grey'
+    cement process emissions CC: 'grey'
