@@ -44,7 +44,7 @@ dependencies:
 - c-ares=1.34.2
 - c-blosc2=2.15.1
 - ca-certificates=2024.8.30
-- cads-api-client=1.4.7
+- cads-api-client=1.5.0
 - cairo=1.18.0
 - cartopy=0.24.0
 - cdsapi=0.7.4
@@ -84,7 +84,6 @@ dependencies:
 - et_xmlfile=2.0.0
 - exceptiongroup=1.2.2
 - executing=2.1.0
-- expat=2.6.3
 - filelock=3.16.1
 - fiona=1.10.1
 - fmt=11.0.2
@@ -93,7 +92,7 @@ dependencies:
 - font-ttf-inconsolata=3.000
 - font-ttf-source-code-pro=2.038
 - font-ttf-ubuntu=0.83
-- fontconfig=2.14.2
+- fontconfig=2.15.0
 - fonts-conda-ecosystem=1
 - fonts-conda-forge=1
 - fonttools=4.54.1
@@ -150,16 +149,16 @@ dependencies:
 - libabseil=20240722.0
 - libaec=1.1.3
 - libarchive=3.7.4
-- libarrow=17.0.0
-- libarrow-acero=17.0.0
-- libarrow-dataset=17.0.0
-- libarrow-substrait=17.0.0
+- libarrow=18.0.0
+- libarrow-acero=18.0.0
+- libarrow-dataset=18.0.0
+- libarrow-substrait=18.0.0
 - libblas=3.9.0
 - libbrotlicommon=1.1.0
 - libbrotlidec=1.1.0
 - libbrotlienc=1.1.0
 - libcblas=3.9.0
-- libclang13=19.1.2
+- libclang13=19.1.3
 - libcrc32c=1.1.2
 - libcurl=8.10.1
 - libdeflate=1.22
@@ -195,7 +194,7 @@ dependencies:
 - liblapack=3.9.0
 - libnetcdf=4.9.2
 - libopenblas=0.3.28
-- libparquet=17.0.0
+- libparquet=18.0.0
 - libpng=1.6.44
 - libpq=17.0
 - libprotobuf=5.27.5
@@ -210,9 +209,9 @@ dependencies:
 - libwebp-base=1.4.0
 - libwinpthread=12.0.0.r4.gg4f2fc60ca
 - libxcb=1.17.0
-- libxml2=2.12.7
+- libxml2=2.13.4
 - libxslt=1.1.39
-- libzip=1.11.1
+- libzip=1.11.2
 - libzlib=1.3.1
 - linopy=0.3.14
 - llvm-meta=5.0.0
@@ -254,7 +253,7 @@ dependencies:
 - pcre2=10.44
 - pickleshare=0.7.5
 - pillow=11.0.0
-- pip=24.2
+- pip=24.3.1
 - pixman=0.43.4
 - pkgutil-resolve-name=1.3.10
 - plac=1.4.3
@@ -273,19 +272,19 @@ dependencies:
 - pulp=2.8.0
 - pure_eval=0.2.3
 - py-cpuinfo=9.0.0
-- pyarrow=17.0.0
-- pyarrow-core=17.0.0
+- pyarrow=18.0.0
+- pyarrow-core=18.0.0
 - pycountry=24.6.1
 - pycparser=2.22
 - pygments=2.18.0
 - pyogrio=0.10.0
 - pyparsing=3.2.0
 - pyproj=3.7.0
-- pypsa=0.31.0
+- pypsa=0.31.1
 - pyreadline3=3.5.4
 - pyscipopt=5.1.1
 - pyshp=2.3.1
-- pyside6=6.8.0
+- pyside6=6.8.0.2
 - pysocks=1.7.1
 - pytables=3.10.1
 - pytest=8.3.3
@@ -293,7 +292,7 @@ dependencies:
 - python-dateutil=2.9.0
 - python-fastjsonschema=2.20.0
 - python-tzdata=2024.2
-- python-utils=3.8.2
+- python-utils=3.9.0
 - python_abi=3.12
 - pytz=2024.1
 - pywin32=307
@@ -307,13 +306,13 @@ dependencies:
 - requests=2.32.3
 - reretry=0.11.8
 - rioxarray=0.17.0
-- rpds-py=0.20.0
+- rpds-py=0.20.1
 - scikit-learn=1.5.2
 - scip=9.1.1
 - scipy=1.14.1
 - seaborn=0.13.2
 - seaborn-base=0.13.2
-- setuptools=75.1.0
+- setuptools=75.3.0
 - shapely=2.0.6
 - six=1.16.0
 - smart_open=7.0.5
@@ -322,7 +321,7 @@ dependencies:
 - snakemake-interface-executor-plugins=9.3.2
 - snakemake-interface-report-plugins=1.1.0
 - snakemake-interface-storage-plugins=3.3.0
-- snakemake-minimal=8.24.1
+- snakemake-minimal=8.25.1
 - snappy=1.2.1
 - snuggs=1.4.7
 - sortedcontainers=2.4.0
@@ -341,7 +340,7 @@ dependencies:
 - tomli=2.0.2
 - toolz=1.0.0
 - tornado=6.4.1
-- tqdm=4.66.5
+- tqdm=4.66.6
 - traitlets=5.14.3
 - typing-extensions=4.12.2
 - typing_extensions=4.12.2
@@ -355,7 +354,7 @@ dependencies:
 - validators=0.34.0
 - vc=14.3
 - vc14_runtime=14.40.33810
-- virtualenv=20.27.0
+- virtualenv=20.27.1
 - vs2015_runtime=14.40.33810
 - wcwidth=0.2.13
 - wheel=0.44.0
@@ -388,7 +387,7 @@ dependencies:
   - highspy==1.7.2
   - oauthlib==3.2.2
   - ply==3.11
-  - polars==1.11.0
+  - polars==1.12.0
   - pyomo==6.8.0
   - requests-oauthlib==1.3.1
   - snakemake-executor-plugin-cluster-generic==1.0.9
