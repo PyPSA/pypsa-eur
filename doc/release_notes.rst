@@ -83,6 +83,8 @@ Upcoming Release
 
 * Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
+* Enable retaining existing conventional capacities added in the power only model for sector-coupeled applications.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
