@@ -152,6 +152,8 @@ if __name__ == "__main__":
         shift = 0
 
     vmin, vmax = regions.price.min() - shift, regions.price.max() + shift
+    vmin = carrier_plotting.get("vmin", vmin)
+    vmax = carrier_plotting.get("vmax", vmax)
     cmap = carrier_plotting.get("region_cmap", "Greens")
 
     regions.plot(
