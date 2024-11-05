@@ -7,14 +7,12 @@
 """
 
 import sys
+from typing import List
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from typing import List
-
-
 from _helpers import set_scenario_config
 
 
@@ -65,9 +63,7 @@ if __name__ == "__main__":
             get_profile(
                 source_temperature=get_source_temperature(heat_source_key),
                 forward_temperature=central_heating_forward_temperature,
-            ).assign_coords(
-                heat_source=heat_source_key
-            )
+            ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in direct_utilisation_heat_sources
         ],
         dim="heat_source",

@@ -489,7 +489,7 @@ sector:
         unit: TWh
         full_load_hours: 4000
     direct_utilisation_heat_sources:
-      - geothermal
+    - geothermal
   heat_pump_sources:
     urban central:
     - air

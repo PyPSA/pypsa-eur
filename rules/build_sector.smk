@@ -362,6 +362,7 @@ rule build_cop_profiles:
     script:
         "../scripts/build_cop_profiles/run.py"
 
+
 rule build_direct_heat_source_utilisation_profiles:
     params:
         direct_utilisation_heat_sources=config_provider(
@@ -376,19 +377,23 @@ rule build_direct_heat_source_utilisation_profiles:
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     output:
-        direct_heat_source_utilisation_profiles=resources("direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     resources:
         mem_mb=20000,
     log:
-        logs("build_direct_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_direct_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_direct_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}")
+        benchmarks(
+            "build_direct_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
-
-
 
 
 def solar_thermal_cutout(wildcards):

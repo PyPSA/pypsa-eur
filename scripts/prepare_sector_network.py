@@ -2030,7 +2030,12 @@ def build_heat_demand(n):
     return heat_demand
 
 
-def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray, direct_heat_source_utilisation_profile: xr.DataArray):
+def add_heat(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    cop: xr.DataArray,
+    direct_heat_source_utilisation_profile: xr.DataArray,
+):
     """
     Add heat sector to the network.
 
@@ -2225,7 +2230,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray, direct_he
                         bus1=nodes + f" {heat_system} heat",
                         efficiency=efficiency,
                         carrier=f"{heat_system} {heat_source} direct utilisation",
-                        p_nom_extendable=True
+                        p_nom_extendable=True,
                     )
             else:
                 n.madd(
