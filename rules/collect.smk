@@ -93,6 +93,7 @@ rule plot_balance_maps:
                 + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-balance_map_{carrier}_{planning_horizons}.{ext}"
             ),
             **config["scenario"],
+            run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "carriers_to_plot")(w),
             ext=config_provider("plotting", "balance_map", "ext")(w),
             allow_missing=True,
