@@ -362,6 +362,34 @@ rule build_cop_profiles:
     script:
         "../scripts/build_cop_profiles/run.py"
 
+rule build_direct_heat_source_utilisation_profiles:
+    params:
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
+        fraunhofer_heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        direct_heat_source_utilisation_profiles=resources("direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_direct_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_direct_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_direct_heat_source_utilisation_profiles.py"
+
+
+
 
 def solar_thermal_cutout(wildcards):
     c = config_provider("solar_thermal", "cutout")(wildcards)
@@ -1073,6 +1101,9 @@ rule prepare_sector_network:
         fraunhofer_heat_sources=config_provider(
             "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
         ),
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1173,9 +1204,9 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        # heat_source_technical_potential_geothermal=resources(
-        #     "heat_source_technical_potential_geothermal_base_s_{clusters}.csv"
-        # ),
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     output:
         RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",

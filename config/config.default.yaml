@@ -488,6 +488,8 @@ sector:
         column_name: Energy_TWh
         unit: TWh
         full_load_hours: 4000
+    direct_utilisation_heat_sources:
+      - geothermal
   heat_pump_sources:
     urban central:
     - air
@@ -1234,7 +1236,8 @@ plotting:
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     urban central geothermal heat pump: '#48f74f'
-    geothermal heat pump: '#2fb537'
+    geothermal heat pump: '#48f74f'
+    geothermal direct utilisation: '#2fb541'
     ground heat pump: '#2fb537'
     residential rural ground heat pump: '#48f74f'
     residential rural air heat pump: '#48f74f'

@@ -6,7 +6,6 @@
 """
 
 import geopandas as gpd
-import xarray as xr
 from _helpers import set_scenario_config
 from OnshoreRegionData import OnshoreRegionData
 

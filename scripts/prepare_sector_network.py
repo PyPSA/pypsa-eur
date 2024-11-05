@@ -2030,7 +2030,7 @@ def build_heat_demand(n):
     return heat_demand
 
 
-def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
+def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray, direct_heat_source_utilisation_profile: xr.DataArray):
     """
     Add heat sector to the network.
 
@@ -2205,8 +2205,29 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name, "lifetime"],
                 )
-            else:
 
+                if heat_source in snakemake.params.direct_utilisation_heat_sources:
+                    # todo: add efficiency
+                    efficiency = (
+                        direct_heat_source_utilisation_profile.sel(
+                            heat_source=heat_source,
+                            name=nodes,
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                    )
+                    # add link for direct usage of heat source when source temperature exceeds forward temperature
+                    n.madd(
+                        "Link",
+                        nodes,
+                        suffix=f" {heat_system} {heat_source} direct utilisation",
+                        bus0=nodes + f" {heat_carrier}",
+                        bus1=nodes + f" {heat_system} heat",
+                        efficiency=efficiency,
+                        carrier=f"{heat_system} {heat_source} direct utilisation",
+                        p_nom_extendable=True
+                    )
+            else:
                 n.madd(
                     "Link",
                     nodes,
@@ -4629,7 +4650,14 @@ if __name__ == "__main__":
         add_land_transport(n, costs)
 
     if options["heating"]:
-        add_heat(n=n, costs=costs, cop=xr.open_dataarray(snakemake.input.cop_profiles))
+        add_heat(
+            n=n,
+            costs=costs,
+            cop=xr.open_dataarray(snakemake.input.cop_profiles),
+            direct_heat_source_utilisation_profile=xr.open_dataarray(
+                snakemake.input.direct_heat_source_utilisation_profiles
+            ),
+        )
 
     if options["biomass"]:
         add_biomass(n, costs)
