@@ -27,11 +27,8 @@ Relevant Settings
                 urban central:
                 urban decentral:
                 rural:
-    snapshots:
-
 Inputs
 ------
-- `resources/<run_name>/regions_onshore.geojson`: Onshore regions
 - `resources/<run_name>/temp_soil_total`: Ground temperature
 - `resources/<run_name>/temp_air_total`: Air temperature
 
@@ -94,10 +91,6 @@ def get_cop(
         ).approximate_cop()
 
 
-def get_country_from_node_name(node_name: str) -> str:
-    return node_name[:2]
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -109,9 +102,6 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    # map forward and return temperatures specified on country-level to onshore regions
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
     )
