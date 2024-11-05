@@ -109,4 +109,4 @@ You can also use ``snakemake`` to specify another file, e.g.
 
 .. code:: console
 
-    $ snakemake -call --configfile config/config.mymodifications.yaml
+    $ snakemake --configfile config/config.mymodifications.yaml
