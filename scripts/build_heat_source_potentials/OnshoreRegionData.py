@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+"""
+"""
+
 from typing import List
 
 import geopandas as gpd
@@ -53,6 +59,4 @@ class OnshoreRegionData:
 
     @property
     def _scaled_data_in_regions(self):
-        # scaled_data_in_regions = self._data_in_regions.copy()
-        # scaled_data_in_regions[self.column_name] *= self.scaling_factor
         return self._data_in_regions * self.scaling_factor

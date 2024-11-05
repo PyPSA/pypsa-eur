@@ -2160,7 +2160,6 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 else costs.at[costs_name, "efficiency"]
             )
 
-            # todo: make this more generic
             if heat_source in snakemake.params.fraunhofer_heat_sources:
                 # get potential
                 p_max_source = pd.read_csv(
@@ -2189,7 +2188,7 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     p_nom_max=p_max_source,
                 )
 
-                # add heat pump converting geothermal heat + electricity to urban central heat
+                # add heat pump converting source heat + electricity to urban central heat
                 n.madd(
                     "Link",
                     nodes,
