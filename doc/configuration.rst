@@ -77,13 +77,13 @@ The ``scenario`` section is an extraordinary section of the config file
 that is strongly connected to the :ref:`wildcards` and is designed to
 facilitate running multiple scenarios through a single command
 
-.. code:: bash
+.. code:: console
 
    # for electricity-only studies
-   snakemake -call solve_elec_networks
+   $ snakemake solve_elec_networks
 
    # for sector-coupling studies
-   snakemake -call solve_sector_networks
+   $ snakemake solve_sector_networks
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
