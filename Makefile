@@ -37,20 +37,20 @@ install-pinned-macos: _conda_check
 # Run default tests
 test:
 	set -e
-	snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
-	snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
-	snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
-	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
-	snakemake -call all --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n
+	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
+	snakemake --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
+	snakemake --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
+	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
+	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n
 	echo "All tests completed successfully."
 
 # Cleans all output files from tests
 clean-tests:
-	snakemake -call solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake -call all --configfile config/test/config.overnight.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake -call all --configfile config/test/config.myopic.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake -call all --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n --delete-all-output
+	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime --delete-all-output
+	snakemake --configfile config/test/config.overnight.yaml --rerun-triggers=mtime --delete-all-output
+	snakemake --configfile config/test/config.myopic.yaml --rerun-triggers=mtime --delete-all-output
+	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime --delete-all-output
+	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n --delete-all-output
 
 # Removes all created files except for large cutout files (similar to fresh clone)
 reset:
