@@ -412,7 +412,7 @@ if __name__ == "__main__":
             aggregation_strategies=params.aggregation_strategies,
         )
 
-    nc = clustering.network
+    nc = clustering.n
 
     for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])

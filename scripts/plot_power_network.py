@@ -241,6 +241,7 @@ def plot_map(
         )
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
