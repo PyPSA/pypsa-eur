@@ -1,13 +1,50 @@
 ,Unit,Values,Description
+theme,,,currently themes are just applied for balance_maps
+-- style,--,str,"Matplotlib style like `darkgrid`, `whitegrid`, `dark`, `white`"
+-- context,--,str,"Seaborn context like `paper`, `notebook`"
+-- font,--,str,Font family for all text in plots.
+-- rc:,,,
+-- -- patch.linewidth,pt,float,Width for the lines of the map.
+-- -- savefig.bbox,--,str,Bounding box for saving the figure.
+-- -- savefig.dpi,dpi,float,DPI for saving the figure.
+-- -- ytick.left,--,bool,Whether to draw ticks on the left side of the y-axis.
+-- -- ytick.major.width,pt,float,Width of the major ticks on the y-axis.
+-- -- ytick.major.size,pt,float,Size of the major ticks on the y-axis.
+-- -- xtick.major.pad,pt,float,Padding between the major ticks on the x-axis and their labels.
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
-projection,,,,
--- name,--,"Valid Cartopy projection name","See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections."
+-- color_geomap,,,
+-- -- ocean,--,str,Color of the ocean in the geomap.
+-- -- land,--,str,Color of the land in the geomap.
+projection,,,
+-- name,--,Valid Cartopy projection name,See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections.
 -- args,--,--,"Other entries under 'projection' are passed as keyword arguments to the projection constructor, e.g. ``central_longitude: 10.``."
+eu_node_location,,,
+-- x,°,float,Longitude of the EU node location.
+-- y,°,float,Latitude of the EU node location.
 costs_max,bn Euro,float,Upper y-axis limit in cost bar plots.
 costs_threshold,bn Euro,float,Threshold below which technologies will not be shown in cost bar plots.
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.
 energy_min,TWh,float,Lower y-axis limit in energy bar plots.
 energy_threshold,TWh,float,Threshold below which technologies will not be shown in energy bar plots.
+balance_map,,,
+-- ext,--,str,File extension for the balance map plots.
+-- carriers_to_plot,--,[str],List of carriers to plot.
+-- alpha,--,float,Alpha value for the balance map plots.
+-- region_alpha,--,float,Alpha value for the shading of the regions in the balance map plots.
+-- figsize,--,"[float, float]",Figure size for the balance map plots.
+-- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the balance map plots in degrees latitude (y) and longitude (x).
+-- energy_carrier,,,
+-- -- unit,--,str,Unit of the energy carrier like MWh$_{el}$ for electricity with conversion factor of one.
+-- -- unit_conversion,--,float,Conversion factor for the energy carrier unit.
+-- -- region_cmap,--,str,Colormap for the price of the regions.
+-- -- vmin,--,float,Minimum value for the colormap.
+-- -- vmax,--,float,Maximum value for the colormap.
+-- -- region_unit,--,str,Unit for the price like €/MWh$_{el}$ for electricitys.
+-- -- bus_factor,--,float,Factor for the bus sizes by which they are multiplied.
+-- -- branch_factor,--,float,Factor for the branch sizes by which they are multiplied.
+-- -- flow_factor,--,float,Factor for the flow sizes by which they are multiplied.
+-- -- bus_sizes,--,[float],Sizes for the buses in the legend.
+-- -- branch_sizes,--,[float],Sizes for the branches in the legend.
 tech_colors,--,carrier -> HEX colour code,Mapping from network ``carrier`` to a colour (`HEX colour code <https://en.wikipedia.org/wiki/Web_colors#Hex_triplet>`_).
 nice_names,--,str -> str,Mapping from network ``carrier`` to a more readable name.
