@@ -83,6 +83,15 @@ Upcoming Release
 
 * Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
+* Major improvements to building the OSM based network. The code was rewritten to improve the speed, accuracy and to preserve the topology including original substation locations, wherever possible. Further features include:
+  - Aggregation of lines with identical geometries and voltages
+  - Lines overpassing virtual nodes (not actual substations), are merged, if they have the same voltage level and number of circuits
+  - Cleaner line geometries, especially at connection points to substations
+  - Substation interior point now based on Pole of Inaccessibility (doi.org/10.1080/14702540801897809)
+  - Substation radius sharpened to 500 meters
+  - Single transformers for each combination of voltage level per substation. Transformers now have a capacity s_nom based on connected lines
+  - Use of OSM relations where available and unambigious (Overwriting all lines that are members of the respective relation to avoid duplicates)
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
