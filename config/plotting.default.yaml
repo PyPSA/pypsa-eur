@@ -47,6 +47,8 @@ plotting:
       unit: TWh$_{el}$
       unit_conversion: 1e6
       region_cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh$_{el}$
       bus_factor: 2e-3
       branch_factor: 1e-2
@@ -61,6 +63,8 @@ plotting:
       unit: TWh$_{th}$
       unit_conversion: 1e6
       region_cmap: Purples
+      vmin:
+      vmax:
       region_unit: €/MWh$_{th}$
       bus_factor: 2e-3
       branch_factor: 5e-2
@@ -72,11 +76,11 @@ plotting:
       - 100
       - 50
     H2:
-      vmin: 60
-      vmax: 95
       unit: TWh$_{H_2}$
       unit_conversion: 1e6
       region_cmap: Blues
+      vmin:
+      vmax:
       region_unit: €/MWh$_{H_2}$
       bus_factor: 2e-3
       branch_factor: 7e-2
@@ -92,6 +96,8 @@ plotting:
       unit: Mt
       unit_conversion: 1e6
       region_cmap: Purples
+      vmin:
+      vmax:
       region_unit: €/t_${CO_2}$
       bus_factor: 3e-2
       branch_factor: 1
@@ -107,6 +113,8 @@ plotting:
       unit: TW$_{th}$
       unit_conversion: 1e6
       region_cmap: Oranges
+      vmin:
+      vmax:
       region_unit: €/MWh_{th}$
       bus_factor: 5e-3
       branch_factor: 1e-1
@@ -119,6 +127,8 @@ plotting:
       unit: TWh$_{MeOH}$
       unit_conversion: 1e6
       region_cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh$_{MeOH}$
       bus_factor: 5e-3
       branch_factor: 1e-1
@@ -131,6 +141,8 @@ plotting:
       unit: TWh$_{th}$
       unit_conversion: 1e6
       region_cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 1e-1
       branch_factor: 1e-1
@@ -144,6 +156,8 @@ plotting:
       unit: TWh$_{th}$
       unit_conversion: 1e6
       region_cmap: Greens
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 1e-2
       branch_factor: 1e-1
@@ -156,6 +170,8 @@ plotting:
       unit: TWh$_{th}$
       unit_conversion: 1e6
       region_cmap: Greys
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 2e-3
       branch_factor: 1e-1
