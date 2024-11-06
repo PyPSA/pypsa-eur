@@ -31,6 +31,7 @@ doc/_build
 
 config/config.yaml
 config/scenarios.yaml
+config/plotting.yaml
 
 config.yaml
 config/config.yaml

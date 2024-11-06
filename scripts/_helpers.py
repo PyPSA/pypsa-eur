@@ -31,6 +31,7 @@ def copy_default_files(workflow):
     default_files = {
         "config/config.default.yaml": "config/config.yaml",
         "config/scenarios.template.yaml": "config/scenarios.yaml",
+        "config/plotting.default.yaml": "config/plotting.yaml",
     }
     for template, target in default_files.items():
         target = os.path.join(workflow.current_basedir, target)

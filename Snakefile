@@ -17,7 +17,9 @@ copy_default_files(workflow)
 
 
 configfile: "config/config.default.yaml"
+configfile: "config/plotting.default.yaml"
 configfile: "config/config.yaml"
+configfile: "config/plotting.yaml"
 
 
 run = config["run"]
