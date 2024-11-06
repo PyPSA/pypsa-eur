@@ -27,6 +27,8 @@ ariadne2 Branch
 
 * Add investment period dependent CO2 sequestration potentials
 
+* bugfix: correct co2 intensity of unsustainable bioliquids
+
 Upcoming Release
 ================
 
