@@ -2722,11 +2722,7 @@ def add_biomass(n, costs):
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
-            efficiency2=(
-                -costs.at["solid biomass", "CO2 intensity"]
-                + costs.at["BtL", "CO2 stored"]
-            )
-            / costs.at["BtL", "efficiency"],
+            efficiency2=-costs.at["oil", "CO2 intensity"],
             p_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["BtL", "VOM"],
         )
