@@ -422,10 +422,6 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         geometry = [G.nodes[node].get("geometry", None) for node in subgraph.nodes()]
         geometry = linemerge(geometry)  # Merge the geometries
 
-        # # list of all countries
-        # country = ';'.join([G.nodes[node].get('country', '') for node in subgraph.nodes()])
-        # country = ';'.join(sorted(set(country.split(';'))))
-
         # Contains lines
         contains_lines = list(subgraph.nodes())
         number_of_lines = int(len(contains_lines))
@@ -1597,9 +1593,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_osm_network", configfiles=["config/config.osm-raw.yaml"]
-        )
+        snakemake = mock_snakemake("build_osm_network")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
