@@ -10,9 +10,14 @@ Release Notes
 
 Upcoming Release
 ================
+
 * Improve `sanitize_carrier`` function by filling in colors of missing carriers with colors mapped after using the function `rename_techs`.
 
+* Bugfix: Adjusted efficiency2 (to atmosphere) for bioliquids-to-oil Link in `prepare_sector_network` to exactly offset the corresponding oil emissions.
+
 * Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
+
+* Replaced the Store representation of biogenic carriers (solid biomass, biogas, bioliquids, MSW) in ``prepare_sector_network`` with the extended Generator component that uses the ``e_sum_min`` and ``e_sum_max`` attributes to enforce minimum usage and limit maximum potential, respectively.
 
 * Added option to reduce central heating forward temperatures by annual percentage (see rule :mod:`build_central_heating_temperature_profiles`). This makes COP profiles and heat pump efficiencies planning-horizon-dependent. Myopic and perfect foresight modes were adjusted accordingly to update COPs of existing heat pumps in preceding years to adjusted temperatures.
 
