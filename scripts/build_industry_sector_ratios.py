@@ -354,14 +354,16 @@ def iron_and_steel():
 
     # Process emissions (per physical output)
 
-    s_emi = idees["emi"][3:51]
-    assert s_emi.index[0] == sector
-
     s_out = idees["out"][6:7]
     assert s_out.index[0] == sector
 
-    # tCO2/t material
-    df.loc["process emission", sector] = s_emi["Process emissions"] / s_out[sector]
+    if not endo_industry:
+
+        s_emi = idees["emi"][3:51]
+        assert s_emi.index[0] == sector
+
+        # tCO2/t material
+        df.loc["process emission", sector] = s_emi["Process emissions"] / s_out[sector]
 
     # final energy consumption MWh/t material
     sel = ["elec", "heat", "methane", "coke", "coal"]
@@ -780,14 +782,15 @@ def nonmetalic_mineral_products():
     # Calcium carbonate -> lime + CO2
     # CaCO3  -> CaO + CO2
 
-    s_emi = idees["emi"][3:45]
-    assert s_emi.index[0] == sector
-
     s_out = idees["out"][7:8]
     assert sector in str(s_out.index)
 
-    # tCO2/t material
-    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
+    if not endo_industry:
+        s_emi = idees["emi"][3:45]
+        assert s_emi.index[0] == sector
+
+        # tCO2/t material
+        df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
     # MWh/t material
     sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]

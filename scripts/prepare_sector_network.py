@@ -286,6 +286,8 @@ def define_spatial(nodes, options, endo_industry):
         # Adding CO2 for tracking CCS
         spatial.co2.cement = nodes + " cement process emissions"
         spatial.co2.cement_locations = nodes
+        spatial.co2.cement_cc = nodes + " cement process emissions CC"
+        spatial.co2.cement_cc_locations = nodes
 
     return spatial
 
@@ -1177,7 +1179,7 @@ def add_dac(n, costs):
         costs.at["direct air capture", "heat-input"]
         - costs.at["direct air capture", "compression-heat-output"]
     )  # MWh_th / tCO2
-
+    
     n.add(
         "Link",
         heat_buses.str.replace(" heat", " DAC"),
@@ -1193,6 +1195,7 @@ def add_dac(n, costs):
         p_nom_extendable=True,
         lifetime=costs.at["direct air capture", "lifetime"],
     )
+
 
 
 def add_co2limit(n, options, nyears=1.0, limit=0.0):
@@ -4085,18 +4088,6 @@ def add_steel_industry(n, investment_year, options):
 
     costs.at["iron", "discount rate"] = 0.04
 
-    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
-    n.add(
-        "Store",
-        nodes + " Store",
-        bus=spatial.iron.nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="iron",
-        capital_cost=0.2
-        * costs.at["iron", "discount rate"],  # preliminary value to avoid zeros
-    )
-
     n.add(
         "Generator",
         spatial.iron.nodes,
@@ -4314,18 +4305,6 @@ def add_cement_industry(n, investment_year, options):
 
     costs.at["limestone", "discount rate"] = 0.04
 
-    # capital cost could be corrected to e.g. 0.2 EUR/kWh * annuity and O&M
-    n.add(
-        "Store",
-        nodes + " Store",
-        bus=spatial.limestone.nodes,
-        e_nom_extendable=True,
-        e_cyclic=True,
-        carrier="limestone",
-        capital_cost=0.2
-        * costs.at["limestone", "discount rate"],  # preliminary value to avoid zeros
-    )
-
     n.add(
         "Generator",
         spatial.limestone.nodes,
@@ -4360,7 +4339,7 @@ def add_cement_industry(n, investment_year, options):
 
     n.add(
         "Store",
-        spatial.cement.nodes,
+        spatial.cement.nodes + " Cement Store",
         e_nom_extendable=True,
         carrier="cement",
         bus=spatial.cement.nodes,
@@ -4377,17 +4356,6 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement process emissions",
         unit="t_co2",
     )
-
-    n.add(
-        "Store",
-        spatial.co2.cement,
-        e_nom_extendable=True,
-        capital_cost=0,
-        carrier="cement process emissions",
-        e_cyclic=True,
-        bus=spatial.co2.cement_locations,
-    )
-    
 
     ########### Add carriers for new capacity for cement production ############
 
@@ -4418,12 +4386,12 @@ def add_cement_industry(n, investment_year, options):
         nodes,
         suffix=" cement to total proc emis",
         bus0=spatial.co2.cement,
-        bus1=spatial.co2.process_emissions,
+        bus1="co2 atmosphere",
         carrier="cement process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
+        marginal_cost=0,
         efficiency=1,
-        lifetime=np.inf, 
     )
 
     # Cement plant retrofitted with post-combustion capture using amines (methylethanol amine MEA)
@@ -4433,7 +4401,7 @@ def add_cement_industry(n, investment_year, options):
         nodes,
         suffix=" cement to total proc emis CC",
         bus0=spatial.co2.cement,
-        bus1=spatial.co2.process_emissions,
+        bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
         bus3=spatial.heat4industry.nodes,
         carrier="cement process emissions CC",
@@ -4441,7 +4409,7 @@ def add_cement_industry(n, investment_year, options):
         capital_cost=80 / costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
         efficiency=1- costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3=3000 * 1e3 / 3600 * costs.at["cement capture", "capture_rate"],
+        efficiency3= - 3.0 / 3.6 * costs.at["cement capture", "capture_rate"],
         lifetime=100, 
     )
 

@@ -1321,4 +1321,5 @@ plotting:
     cement: 'grey'
     limestone: 'yellow'
     cement plant: 'grey'
-    cement process emissions CC: 'grey'
+    cement process emissions: 'grey'
+    cement process emissions CC: 'green'
