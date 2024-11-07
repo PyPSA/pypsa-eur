@@ -2320,10 +2320,10 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                     capital_cost=costs.at["central gas CHP", "fixed"]
                     * costs.at["central gas CHP", "efficiency"]
                     + costs.at["biomass CHP capture", "fixed"]
-                    * costs.at["gas", "CO2 intensity"],
+                    * costs.at[fuel, "CO2 intensity"],
                     marginal_cost=costs.at["central gas CHP", "VOM"],
                     efficiency=costs.at["central gas CHP", "efficiency"]
-                    - costs.at["gas", "CO2 intensity"]
+                    - costs.at[fuel, "CO2 intensity"]
                     * (
                         costs.at["biomass CHP capture", "electricity-input"]
                         + costs.at[
