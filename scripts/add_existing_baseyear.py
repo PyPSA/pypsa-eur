@@ -22,7 +22,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
+from add_electricity import sanitize_carriers, calculate_annuity
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from definitions.heat_system_type import HeatSystemType
@@ -895,10 +895,15 @@ def add_cement_industry_existing_sfi(n):
     prod_constantly = 0
     ramp_limit = 0
 
-    ########### Add existing steel production capacities ############
-    # Blast furnace assuming with natural gas
+    ########### Add existing cement production capacities ############
 
-    # BOF
+    # Lifetimes
+    lifetime_cement = 100
+
+    # Capital costs
+    discount_rate = 0.04
+    capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+
     n.add(
         "Link",
         nodes,
@@ -913,10 +918,11 @@ def add_cement_industry_existing_sfi(n):
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
+        capital_costs=capex_cement,
         efficiency=1/1.6,
         efficiency2= - 3526.82 * 1e3 / 3600 * (1/1.6) , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
         efficiency3=500 * (1/1.6), #tCO2/kt cement
-        lifetime=100, 
+        lifetime=lifetime_cement, 
         build_year=start_dates,
     )
 

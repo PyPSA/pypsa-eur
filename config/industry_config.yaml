@@ -1311,7 +1311,7 @@ plotting:
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     HVC to air: 'k'
-    BF-BOF: 'b'
+    BF-BOF: 'blue'
     NG-DRI-EAF: 'blue'
     H2-DRI-EAF: 'k'
     heat4industry: 'r'

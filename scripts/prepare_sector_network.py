@@ -4072,7 +4072,7 @@ def add_steel_industry(n, investment_year, options):
             "Bus",
             location_value,
             location=location_value,
-            carrier=carrier_name,
+            carrier=carrier,
             unit=unit,
         )
 
@@ -4294,6 +4294,13 @@ def add_cement_industry(n, investment_year, options):
 
     # Traditional dry process
 
+    # Lifetimes
+    lifetime_cement = 100
+
+    # Capital costs
+    discount_rate = 0.04
+    capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+
     n.add(
         "Link",
         nodes,
@@ -4307,11 +4314,11 @@ def add_cement_industry(n, investment_year, options):
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        capital_cost=263000/nhours, # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+        capital_cost=capex_cement, 
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.6) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.6) , #tCO2/kt cement
-        lifetime=100, 
+        lifetime=lifetime_cement, 
     )
 
     n.add(

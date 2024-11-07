@@ -321,6 +321,7 @@ def plot_balances():
         new_index = preferred_order.intersection(df.index).append(
             df.index.difference(preferred_order)
         )
+        new_index = new_index[~new_index.str.contains("BOF|EAF")]
 
         new_columns = df.columns.sort_values()
 
