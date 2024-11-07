@@ -597,7 +597,9 @@ sector:
   overdimension_heat_generators:
     decentral: 1.1  #to cover demand peaks bigger than data
     central: 1.0
-  chp: true
+  chp:
+    enable: true
+    fuel: gas # for all fuels the same techno economic data from gas CHP is taken
   micro_chp: false
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
