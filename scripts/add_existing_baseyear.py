@@ -690,11 +690,17 @@ def add_existing_land_transport(baseyear, options, ref_year=2024):
         df.rename(
             index=lambda x: x.replace(f"-{baseyear}", "-existing"), inplace=True
         )
-        p_min_pu = p_min_pu.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
-        p_max_pu = get_as_dense(n, "Link", "p_max_pu")[ice_i]
-        p_max_pu = p_max_pu.rename(
-            columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+        # allow ICE cars to be retired earlier but still annualised costs
+        if options["early_ice_retirement"]:
+            p_min_pu = 0
+            p_max_pu = 1
+        else:
+            p_min_pu = p_min_pu.rename(
+                columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+            p_max_pu = get_as_dense(n, "Link", "p_max_pu")[ice_i]
+            p_max_pu = p_max_pu.rename(
+                columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
+            
         eff = efficiency.rename(
             columns=lambda x: x.replace(f"-{baseyear}", "-existing"))
 
