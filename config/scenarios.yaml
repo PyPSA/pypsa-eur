@@ -15,116 +15,85 @@
 
 fast:
   sector:
+    early_ice_retirement: true
     car_reg_factor:
       light:
-        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.5  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
       heavy:
         2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
-    vary:
-      Link:
-        land transport EV heavy:
-          lifetime: 0.6
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
-        land transport EV light:
-          lifetime: 0.6
-        land transport fuel cell heavy:
-          lifetime: 0.6
-        land transport fuel cell light:
-          lifetime: 0.6
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
+ 
 
 fast-p2:
   sector:
+    early_ice_retirement: true
     car_reg_factor:
       light:
-        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.5  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
       heavy:
         2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
     vary:
       Link:
         land transport EV heavy:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 0.8
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
         land transport EV light:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 0.8
         land transport fuel cell heavy:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 1.2
         land transport fuel cell light:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 1.2
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+
 
 fast-p1:
   sector:
+    early_ice_retirement: true
     car_reg_factor:
       light:
-        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.5  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
       heavy:
         2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 1.0
-        2035: 1.2
-        2040: 1.2
-        2050: 1.2
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
     vary:
       Link:
         land transport EV heavy:
-          lifetime: 0.6
           capital_cost: 0.9
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
         land transport EV light:
-          lifetime: 0.6
           capital_cost: 0.9
         land transport fuel cell heavy:
-          lifetime: 0.6
           capital_cost: 1.1
         land transport fuel cell light:
-          lifetime: 0.6
           capital_cost: 1.1
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+
 
 fast-m2:
   sector:
+    early_ice_retirement: true
     car_reg_factor:
       light:
         2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
@@ -141,28 +110,18 @@ fast-m2:
     vary:
       Link:
         land transport EV heavy:
-          lifetime: 0.6
           capital_cost: 1.2
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
         land transport EV light:
-          lifetime: 0.6
           capital_cost: 1.2
         land transport fuel cell heavy:
-          lifetime: 0.6
           capital_cost: 0.8
         land transport fuel cell light:
-          lifetime: 0.6
           capital_cost: 0.8
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+
 
 fast-m1:
   sector:
+    early_ice_retirement: true
     car_reg_factor:
       light:
         2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
@@ -179,25 +138,18 @@ fast-m1:
     vary:
       Link:
         land transport EV heavy:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 1.1
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
         land transport EV light:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 1.1
         land transport fuel cell heavy:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 0.9
         land transport fuel cell light:
-          lifetime: 0.6
+          # lifetime: 0.6
           capital_cost: 0.9
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+
 
 base:
   sector:
@@ -593,37 +545,5 @@ biomass-hype:
         solid biomass:
           e_initial: 2
 
-early_ice_retirement:
-  sector:
-    early_ice_retirement: true
-    car_reg_factor:
-      light:
-        2025: 1.0  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
-        2030: 1.0
-        2035: 1.0
-        2040: 1.0
-        2050: 1.0
-      heavy:
-        2025: 0.1  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
-        2030: 0.5
-        2035: 1.0
-        2040: 1.0
-        2050: 1.0
-    vary:
-      Link:
-        land transport EV heavy:
-          lifetime: 0.6
-        BEV charger heavy:
-          lifetime: 0.6
-        BEV charger light:
-          lifetime: 0.6
-        land transport EV light:
-          lifetime: 0.6
-        land transport fuel cell heavy:
-          lifetime: 0.6
-        land transport fuel cell light:
-          lifetime: 0.6
-        land transport oil heavy:
-          lifetime: 0.6
-        land transport oil light:
-          lifetime: 0.6
+
+   

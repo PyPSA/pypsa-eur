@@ -5111,9 +5111,10 @@ if __name__ == "__main__":
         add_enhanced_geothermal(
             n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
         )
-        
-    add_LULUCF(investment_year)
-
+    if options["LULUCF_enable"]:   
+        add_LULUCF(investment_year)
+    
+    
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)
 
