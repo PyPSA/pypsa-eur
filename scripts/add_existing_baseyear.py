@@ -640,22 +640,12 @@ def add_steel_industry_existing_gem(n):
 
     capacities_eaf = capacities_eaf * keys["EAF"]
 
-    start_dates_eaf = round(
-        (
-            start_dates["EAF"] * capacities["EAF"]
-            + start_dates["DRI + EAF"] * capacities["DRI + EAF"]
-        )
-        / capacities_eaf
-    )
+    start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"])/ capacities_eaf)
     start_dates_bof = round(start_dates["Integrated steelworks"])
 
     # Average age of assets in Iron and steel in Europe: 21-28 years, so I assume they are starting in 2000 in case https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-    start_dates_eaf = start_dates_eaf.where(
-        (start_dates_eaf >= 1000) & np.isfinite(start_dates_eaf), 2000
-    )
-    start_dates_bof = start_dates_bof.where(
-        (start_dates_bof >= 1000) & np.isfinite(start_dates_bof), 2000
-    )
+    start_dates_eaf = start_dates_eaf.where((start_dates_eaf >= 1000) & np.isfinite(start_dates_eaf), 2000)
+    start_dates_bof = start_dates_bof.where((start_dates_bof >= 1000) & np.isfinite(start_dates_bof), 2000)
 
     nodes = pop_layout.index
     p_nom_bof = pd.DataFrame(index=nodes, columns=(["value"]))
@@ -672,95 +662,69 @@ def add_steel_industry_existing_gem(n):
     # Blast furnace assuming with natural gas
 
     # BOF
+
+    iron_to_steel_bof = 1.429
+    iron_to_steel_eaf_ng = 1.36
+
+    # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+    lifetime_bof = 100
+    lifetime_eaf = 67 
+
+    # Capex
+    discount_rate = 0.04
+    capex_bof = ((211000 + 100000 ) * 0.7551 / nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
+    capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
+    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+
     n.add(
         "Link",
         nodes,
-        suffix=" Blast Furnaces-2020",
+        suffix=" BF-BOF-2020",
         bus0=spatial.iron.nodes,
-        bus1=spatial.pig_iron.nodes,
+        bus1=spatial.steel.nodes,
         bus2=spatial.coal.nodes,
-        bus3=spatial.co2.process_emissions,
-        carrier="blast furnaces",
-        p_nom=p_nom_bof * 1.429,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        p_nom_extendable=False,
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
-        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
-        efficiency=1 / 1.429,
-        efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
-        efficiency3=216.4 / 1.429,
-        lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-        build_year=start_dates_bof,
-    )
-
-
-    n.add(
-        "Link",
-        nodes,
-        suffix=" DRI-2020",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.dri_gas.nodes,  # in this process is the reducing agent, it is not burnt
-        carrier="direct reduced iron",
-        p_nom=p_nom_eaf
-        * 1.36,  # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        # committable =True,
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
-        p_nom_extendable=False,
-        efficiency=1 / 1.36,
-        efficiency2=-2.8 * 1000 / 1.36,
-        lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-        build_year=start_dates_eaf,
-    )
-
-    # Blast Furnace + Basic Oxygen Furnace -> BOF
-    n.add(
-        "Link",
-        nodes,
-        suffix=" BOF-2020",
-        bus0=spatial.pig_iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=nodes,
         bus3=spatial.heat4industry.nodes,
-        carrier="basic oxygen furnace",
-        p_nom=p_nom_bof,  # capacities_bof.loc[],
-        p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
-        # committable =True,
+        bus4=nodes,
+        bus5=spatial.co2.process_emissions,
+        carrier="BF-BOF",
+        p_nom=p_nom_bof * iron_to_steel_bof,
+        p_nom_extendable=False,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        p_nom_extendable=False,
-        efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
-        efficiency2=-524,  # MWh electricity per kt coke
-        efficiency3=-615,  # MWh heat per kt coke
+        capital_cost=capex_bof,
+        efficiency=1 / iron_to_steel_bof,
+        efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
+        efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
+        efficiency4=-488.9 / iron_to_steel_bof,  # MWh electricity per kt iron
+        efficiency5=668.2 / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_bof,
     )
 
-    # EAF
-
-    # Electric Arc Furnace
     n.add(
         "Link",
         nodes,
-        suffix=" EAF-2020",
-        bus0=spatial.sponge_iron.nodes,
+        suffix=" NG-DRI-EAF-2020",
+        bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=nodes,
-        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
-        carrier="electric arc furnaces",
-        p_nom=p_nom_eaf,
-        p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
-        # committable =True,
+        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
+        bus3=spatial.heat4industry.nodes,
+        bus4=nodes,
+        bus5=spatial.co2.process_emissions,
+        carrier="NG-DRI-EAF",
+        p_nom=p_nom_eaf * iron_to_steel_eaf_ng,
+        p_nom_extendable=False,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        p_nom_extendable=False,
-        # p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
-        efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
-        efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
-        efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
+        capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+        efficiency=1 / iron_to_steel_eaf_ng,
+        efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
+        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron
+        efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
+        efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
         lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_eaf,
     )

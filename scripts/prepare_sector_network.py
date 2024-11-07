@@ -220,21 +220,6 @@ def define_spatial(nodes, options, endo_industry):
         spatial.steel.nodes = nodes + " steel"
         spatial.steel.locations = nodes
 
-        # sponge iron -> DRI product
-        spatial.sponge_iron = SimpleNamespace()
-        spatial.sponge_iron.nodes = nodes + " sponge iron"
-        spatial.sponge_iron.locations = nodes
-
-        # pig iron -> blast furnace product
-        spatial.pig_iron = SimpleNamespace()
-        spatial.pig_iron.nodes = nodes + " pig iron"
-        spatial.pig_iron.locations = nodes
-
-        # coke for steel
-        spatial.coke_steel = SimpleNamespace()
-        spatial.coke_steel.nodes = nodes + " coke for steel"
-        spatial.coke_steel.locations = nodes
-
     else:
 
         # steel
@@ -242,28 +227,8 @@ def define_spatial(nodes, options, endo_industry):
         spatial.steel.nodes = ["EU steel"]
         spatial.steel.locations = ["EU"]
 
-        # sponge iron -> DRI product
-        spatial.sponge_iron = SimpleNamespace()
-        spatial.sponge_iron.nodes = ["EU sponge iron"]
-        spatial.sponge_iron.locations = ["EU"]
-
-        # pig iron -> blast furnace product
-        spatial.pig_iron = SimpleNamespace()
-        spatial.pig_iron.nodes = ["EU pig iron"]
-        spatial.pig_iron.locations = ["EU"]
-
-        # coke for steel
-        spatial.coke_steel = SimpleNamespace()
-        spatial.coke_steel.nodes = ["EU coke for steel"]
-        spatial.coke_steel.locations = ["EU"]
-
     if endo_industry:
         # Iron and Steel
-        # DRI gas link
-        spatial.dri_gas = SimpleNamespace()
-        spatial.dri_gas.nodes = nodes + " dri gas"
-        spatial.dri_gas.locations = nodes
-
         # iron
         spatial.iron = SimpleNamespace()
         spatial.iron.nodes = ["EU iron"]
@@ -4097,12 +4062,11 @@ def add_steel_industry(n, investment_year, options):
         marginal_cost=costs.at["iron", "fuel"],
     )
 
-    for carrier in ["steel","heat4industry","sponge_iron","pig_iron","coke_steel","dri_gas",]:
+    for carrier in ["steel","heat4industry"]:
 
-        carrier_name = carrier.replace("_", " ")
-        n.add("Carrier", carrier_name)
+        n.add("Carrier", carrier)
         location_value = getattr(spatial, carrier).nodes
-        unit = "kt/yr" if carrier_name != "heat4industry" else "MWh_th"
+        unit = "kt/yr" if carrier != "heat4industry" else "MWh_th"
 
         n.add(
             "Bus",
@@ -4141,125 +4105,94 @@ def add_steel_industry(n, investment_year, options):
     ########### Add carriers for new capacity for steel production ############
     # Blast furnace assuming with natural gas
 
-    # BOF
+    # BF-BOF
+
+    iron_to_steel_bof = 1.429
+    iron_to_steel_eaf_ng = 1.36
+    iron_to_steel_eaf_h2 = 1.39
+
+    # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+    lifetime_bof = 100
+    lifetime_eaf = 67 
+
+    # Capex
+    discount_rate = 0.04
+    capex_bof = ((211000 + 100000 ) * 0.7551 / nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
+    capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
+    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
 
     n.add(
         "Link",
         nodes,
-        suffix=" Blast Furnaces",
+        suffix=" BF-BOF",
         bus0=spatial.iron.nodes,
-        bus1=spatial.pig_iron.nodes,
-        bus2=spatial.coke_steel.nodes,
-        bus3=spatial.co2.process_emissions,
-        carrier="blast furnaces",
+        bus1=spatial.steel.nodes,
+        bus2=spatial.coal.nodes,
+        bus3=spatial.heat4industry.nodes,
+        bus4=nodes,
+        bus5=spatial.co2.process_emissions,
+        carrier="BF-BOF",
         p_nom_extendable=True,
         p_nom_max=max_cap * 1.429,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=211000 / nhours / (1 / 1.429) * 0.7551,
-        # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt coke
-        # also considering that the efficiency for the BOF is 1
-        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
+        capital_cost=capex_bof,
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        efficiency=1 / 1.429,
-        efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
-        efficiency3=216.4 / 1.429,
-        lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        efficiency=1 / iron_to_steel_bof,
+        efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
+        efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
+        efficiency4=-488.9 / iron_to_steel_bof,  # MWh electricity per kt iron
+        efficiency5=668.2 / iron_to_steel_bof, # t CO2 per kt iron
+        lifetime=lifetime_bof,  
     )
 
     n.add(
         "Link",
         nodes,
-        suffix=" CH4 for DRI",
-        bus0=spatial.gas.nodes,
-        bus1=spatial.dri_gas.nodes,
-        bus2=spatial.co2.process_emissions,
-        carrier="direct reduced iron",
-        p_nom_extendable=True,
-        # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.8,  # 1 fake output of MWhth dri gas / 2.8 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
-        efficiency2=28 / 1,  # 28tCO2/kt sponge iron as in JRC IDEES calculations
-    )
-
-    n.add(
-        "Link",
-        nodes,
-        suffix=" H2 for DRI",
-        bus0=spatial.h2.nodes,
-        bus1=spatial.dri_gas.nodes,
-        carrier="direct reduced iron",
-        p_nom_extendable=True,
-        # p_nom_max = max_cap * 1.36,
-        efficiency=1
-        / 2.2,  # 1 fake output of MWhth dri gas / 2.2 MWhth/kt sponge iron https://www.sciencedirect.com/science/article/pii/S221282712300121X
-    )
-
-    n.add(
-        "Link",
-        nodes,
-        suffix=" DRI",
+        suffix=" NG-DRI-EAF",
         bus0=spatial.iron.nodes,
-        bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.dri_gas.nodes,  # in this process is the reducing agent, it is not burnt
-        # bus3=spatial.co2.process_emissions,
-        carrier="direct reduced iron",
+        bus1=spatial.steel.nodes,
+        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
+        bus3=spatial.heat4industry.nodes,
+        bus4=nodes,
+        bus5=spatial.co2.process_emissions,
+        carrier="NG-DRI-EAF",
         p_nom_extendable=True,
         # p_nom_max = max_cap * 1.36,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        capital_cost=145000 / nhours / (1 / 1.36) * 0.7551,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /8760 for the price,
-        efficiency=1 / 1.36,
-        efficiency2=-2.8 / 1.36,
-        # efficiency3=28/1.36,
-        lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        capital_cost=capex_eaf,
+        efficiency=1 / iron_to_steel_eaf_ng,
+        efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
+        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron
+        efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
+        efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
+        lifetime=lifetime_eaf,  
     )
 
-    # Blast Furnace + Basic Oxygen Furnace -> BOF
     n.add(
         "Link",
         nodes,
-        suffix=" BOF",
-        bus0=spatial.pig_iron.nodes,
+        suffix=" H2-DRI-EAF",
+        bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=nodes,
+        bus2=spatial.h2.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=spatial.heat4industry.nodes,
-        carrier="basic oxygen furnace",
-        p_min_pu=prod_constantly,  # to avoid using a plant only when electricity is cheap
+        bus4=nodes,
+        carrier="H2-DRI-EAF",
+        p_nom_extendable=True,
+        # p_nom_max = max_cap * 1.36,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        p_nom_extendable=True,
-        # p_nom_max = max_cap,
-        capital_cost=100000 / nhours / 1 * 0.7551,
-        efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
-        efficiency2=-524,  # MWh electricity per kt coke
-        efficiency3=-615,  # MWh heat per kt coke
-        lifetime=100,
-    )
-
-    # EAF
-
-    # Electric Arc Furnace
-    n.add(
-        "Link",
-        nodes,
-        suffix=" EAF",
-        bus0=spatial.sponge_iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=nodes,
-        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
-        carrier="electric arc furnaces",
-        p_nom_extendable=True,
-        p_nom_max=max_cap,
-        p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
-        capital_cost=80000 / nhours / 1 * 0.7551,
-        efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
-        efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
-        efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
-        lifetime=67,
+        capital_cost=capex_eaf, #ADB to be fixed the pricefor h2
+        efficiency=1 / iron_to_steel_eaf_h2,
+        efficiency2= -2211 / iron_to_steel_eaf_h2, # MWh hydrogen per kt iron
+        efficiency3= -333.4 / iron_to_steel_eaf_h2, # MWh heta per kt iron
+        efficiency4= -675.9 / iron_to_steel_eaf_h2, #MWh electricity per kt iron
+        lifetime=lifetime_eaf,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     # Link to produce heat for industry processes at high temperature, not only for steel
@@ -4375,8 +4308,8 @@ def add_cement_industry(n, investment_year, options):
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=263000/nhours, # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-        efficiency=1/1.6,
-        efficiency2= - 3526.82 * 1e3 / 3600 * (1/1.6) , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
+        efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2= - 3420.1 / 3.6 * (1/1.6) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.6) , #tCO2/kt cement
         lifetime=100, 
     )
