@@ -2282,62 +2282,68 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 ],
             )
 
-        if options["chp"] and heat_system == HeatSystem.URBAN_CENTRAL:
+        if options["chp"]["enable"] and heat_system == HeatSystem.URBAN_CENTRAL:
             # add gas CHP; biomass CHP is added in biomass section
-            n.add(
-                "Link",
-                nodes + " urban central gas CHP",
-                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
-                bus1=nodes,
-                bus2=nodes + " urban central heat",
-                bus3="co2 atmosphere",
-                carrier="urban central gas CHP",
-                p_nom_extendable=True,
-                capital_cost=costs.at["central gas CHP", "fixed"]
-                * costs.at["central gas CHP", "efficiency"],
-                marginal_cost=costs.at["central gas CHP", "VOM"],
-                efficiency=costs.at["central gas CHP", "efficiency"],
-                efficiency2=costs.at["central gas CHP", "efficiency"]
-                / costs.at["central gas CHP", "c_b"],
-                efficiency3=costs.at["gas", "CO2 intensity"],
-                lifetime=costs.at["central gas CHP", "lifetime"],
-            )
+            fuels = options["chp"]["fuel"]
+            fuels = np.atleast_1d(fuels)
+            for fuel in fuels:
+                fuel_nodes = getattr(spatial, fuel).df
+                n.add(
+                    "Link",
+                    nodes + f" urban central {fuel} CHP",
+                    bus0=fuel_nodes.loc[nodes, "nodes"].values,
+                    bus1=nodes,
+                    bus2=nodes + " urban central heat",
+                    bus3="co2 atmosphere",
+                    carrier="urban central CHP",
+                    p_nom_extendable=True,
+                    capital_cost=costs.at["central gas CHP", "fixed"]
+                    * costs.at["central gas CHP", "efficiency"],
+                    marginal_cost=costs.at["central gas CHP", "VOM"],
+                    efficiency=costs.at["central gas CHP", "efficiency"],
+                    efficiency2=costs.at["central gas CHP", "efficiency"]
+                    / costs.at["central gas CHP", "c_b"],
+                    efficiency3=costs.at[fuel, "CO2 intensity"],
+                    lifetime=costs.at["central gas CHP", "lifetime"],
+                )
 
-            n.add(
-                "Link",
-                nodes + " urban central gas CHP CC",
-                bus0=spatial.gas.df.loc[nodes, "nodes"].values,
-                bus1=nodes,
-                bus2=nodes + " urban central heat",
-                bus3="co2 atmosphere",
-                bus4=spatial.co2.df.loc[nodes, "nodes"].values,
-                carrier="urban central gas CHP CC",
-                p_nom_extendable=True,
-                capital_cost=costs.at["central gas CHP", "fixed"]
-                * costs.at["central gas CHP", "efficiency"]
-                + costs.at["biomass CHP capture", "fixed"]
-                * costs.at["gas", "CO2 intensity"],
-                marginal_cost=costs.at["central gas CHP", "VOM"],
-                efficiency=costs.at["central gas CHP", "efficiency"]
-                - costs.at["gas", "CO2 intensity"]
-                * (
-                    costs.at["biomass CHP capture", "electricity-input"]
-                    + costs.at["biomass CHP capture", "compression-electricity-input"]
-                ),
-                efficiency2=costs.at["central gas CHP", "efficiency"]
-                / costs.at["central gas CHP", "c_b"]
-                + costs.at["gas", "CO2 intensity"]
-                * (
-                    costs.at["biomass CHP capture", "heat-output"]
-                    + costs.at["biomass CHP capture", "compression-heat-output"]
-                    - costs.at["biomass CHP capture", "heat-input"]
-                ),
-                efficiency3=costs.at["gas", "CO2 intensity"]
-                * (1 - costs.at["biomass CHP capture", "capture_rate"]),
-                efficiency4=costs.at["gas", "CO2 intensity"]
-                * costs.at["biomass CHP capture", "capture_rate"],
-                lifetime=costs.at["central gas CHP", "lifetime"],
-            )
+                n.add(
+                    "Link",
+                    nodes + f" urban central {fuel} CHP CC",
+                    bus0=fuel_nodes.loc[nodes, "nodes"].values,
+                    bus1=nodes,
+                    bus2=nodes + " urban central heat",
+                    bus3="co2 atmosphere",
+                    bus4=spatial.co2.df.loc[nodes, "nodes"].values,
+                    carrier="urban central CHP CC",
+                    p_nom_extendable=True,
+                    capital_cost=costs.at["central gas CHP", "fixed"]
+                    * costs.at["central gas CHP", "efficiency"]
+                    + costs.at["biomass CHP capture", "fixed"]
+                    * costs.at[fuel, "CO2 intensity"],
+                    marginal_cost=costs.at["central gas CHP", "VOM"],
+                    efficiency=costs.at["central gas CHP", "efficiency"]
+                    - costs.at[fuel, "CO2 intensity"]
+                    * (
+                        costs.at["biomass CHP capture", "electricity-input"]
+                        + costs.at[
+                            "biomass CHP capture", "compression-electricity-input"
+                        ]
+                    ),
+                    efficiency2=costs.at["central gas CHP", "efficiency"]
+                    / costs.at["central gas CHP", "c_b"]
+                    + costs.at[fuel, "CO2 intensity"]
+                    * (
+                        costs.at["biomass CHP capture", "heat-output"]
+                        + costs.at["biomass CHP capture", "compression-heat-output"]
+                        - costs.at["biomass CHP capture", "heat-input"]
+                    ),
+                    efficiency3=costs.at[fuel, "CO2 intensity"]
+                    * (1 - costs.at["biomass CHP capture", "capture_rate"]),
+                    efficiency4=costs.at[fuel, "CO2 intensity"]
+                    * costs.at["biomass CHP capture", "capture_rate"],
+                    lifetime=costs.at["central gas CHP", "lifetime"],
+                )
 
         if (
             options["chp"]
@@ -2722,8 +2728,7 @@ def add_biomass(n, costs):
             bus2="co2 atmosphere",
             carrier="unsustainable bioliquids",
             efficiency=1,
-            efficiency2=-costs.at["solid biomass", "CO2 intensity"]
-            + costs.at["BtL", "CO2 stored"],
+            efficiency2=-costs.at["oil", "CO2 intensity"],
             p_nom=unsustainable_liquid_biofuel_potentials_spatial,
             marginal_cost=costs.at["BtL", "VOM"],
         )
@@ -3626,12 +3631,19 @@ def add_industry(n, costs):
             waste_source = non_sequestered_hvc_locations
 
         if cf_industry["waste_to_energy"]:
+            urban_central = spatial.nodes + " urban central heat"
+            existing_urban_central = n.buses.index[
+                n.buses.carrier == "urban central heat"
+            ]
+            urban_central_nodes = urban_central.map(
+                lambda x: x if x in existing_urban_central else ""
+            )
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP",
                 bus0=waste_source,
                 bus1=spatial.nodes,
-                bus2=spatial.nodes + " urban central heat",
+                bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
                 carrier="waste CHP",
                 p_nom_extendable=True,
@@ -3650,7 +3662,7 @@ def add_industry(n, costs):
                 spatial.nodes + " waste CHP CC",
                 bus0=waste_source,
                 bus1=spatial.nodes,
-                bus2=spatial.nodes + " urban central heat",
+                bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
                 bus4=spatial.co2.nodes,
                 carrier="waste CHP CC",

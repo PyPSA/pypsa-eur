@@ -93,7 +93,9 @@ biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat 
 overdimension_heat_generators,,,Add option for overdimensioning heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 -- decentral,--,float,The factor for overdimensioning (increasing CAPEX) decentral heating systems
 -- central,--,float,The factor for overdimensioning (increasing CAPEX) central heating systems
-chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
+chp,--,,
+-- enable,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
+-- fuel,--,string or list of fuels,"Possible options are all fuels which have an exisitng bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"". For all fuels, the techno-economic data from gas CHP is used."
 micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
