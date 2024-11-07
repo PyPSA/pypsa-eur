@@ -10,12 +10,14 @@ dependencies:
 - python>=3.8
 - pip
 
+# Inhouse packages
+- pypsa>=0.31
 - atlite>=0.2.9
-- pypsa>=0.30.2
 - linopy
-- dask
+- powerplantmatching>=0.5.15,<0.6
 
-  # Dependencies of the workflow itself
+# Dependencies of the workflow itself
+- dask
 - xlrd
 - openpyxl!=3.1.1
 - seaborn
@@ -24,7 +26,6 @@ dependencies:
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.15,<0.6
 - numpy
 - pandas>=2.1
 - geopandas>=1
@@ -49,18 +50,18 @@ dependencies:
 - pre-commit
 - geojson
 
-  # Keep in conda environment when calling ipython
+# Keep in conda environment when calling ipython
 - ipython
 
-  # GIS dependencies:
+# GIS dependencies:
 - cartopy
 - descartes
-- rasterio!=1.2.10
-
+- rasterio<1.4
 
 - pip:
+  - gurobipy
+  - highspy!=1.8.0 # No conda channel for arm macos
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
-  - highspy

@@ -33,7 +33,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     rule retrieve_databundle:
         output:
             expand("data/bundle/{file}", file=datafiles),
-            directory("data/bundle/jrc-idees-2015"),
         log:
             "logs/retrieve_databundle.log",
         resources:
@@ -201,7 +200,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/12760663/files/shipdensity_global.zip",
+                "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
                 keep_local=True,
             ),
         output:
@@ -347,23 +346,28 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip",
+            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
         output:
-            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
             import os
             import requests
 
             response = requests.get(
                 "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
-                params={"name": "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.zip"},
             )
 
             with open(params["zip"], "wb") as f:
                 f.write(response.content)
             output_folder = Path(params["zip"]).parent
             unpack_archive(params["zip"], output_folder)
-            os.remove(params["zip"])
+
+            for f in os.listdir(output_folder):
+                if f.startswith(
+                    "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
+                ) and f.endswith(".csv"):
+                    os.rename(os.path.join(output_folder, f), output.gpkg)
+                    break
 
 
 
@@ -535,24 +539,38 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
+    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
+    osm_prebuilt_version = {
+        0.1: "12799202",
+        0.2: "13342577",
+        0.3: "13358976",
+        0.4: "13759222",
+    }
 
+    # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage("https://zenodo.org/records/13358976/files/buses.csv"),
-            converters=storage(
-                "https://zenodo.org/records/13358976/files/converters.csv"
+            buses=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
             ),
-            lines=storage("https://zenodo.org/records/13358976/files/lines.csv"),
-            links=storage("https://zenodo.org/records/13358976/files/links.csv"),
+            converters=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
+            ),
+            lines=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
+            ),
+            links=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
+            ),
             transformers=storage(
-                "https://zenodo.org/records/13358976/files/transformers.csv"
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
             ),
         output:
-            buses="data/osm-prebuilt/buses.csv",
-            converters="data/osm-prebuilt/converters.csv",
-            lines="data/osm-prebuilt/lines.csv",
-            links="data/osm-prebuilt/links.csv",
-            transformers="data/osm-prebuilt/transformers.csv",
+            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
+            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
+            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
+            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
+            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1

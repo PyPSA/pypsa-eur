@@ -168,6 +168,7 @@ def plot_map_perfect(
         )
 
         fig.savefig(snakemake.output[f"map_{year}"], bbox_inches="tight")
+        plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -176,7 +177,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network_perfect",
-            simpl="",
             opts="",
             clusters="37",
             ll="v1.0",

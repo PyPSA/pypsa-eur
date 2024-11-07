@@ -26,6 +26,7 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+
 import importlib
 import logging
 import os
@@ -49,13 +50,6 @@ from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
-
-
-def add_land_use_constraint(n, planning_horizons, config):
-    if "m" in snakemake.wildcards.clusters:
-        _add_land_use_constraint_m(n, planning_horizons, config)
-    else:
-        _add_land_use_constraint(n)
 
 
 def add_land_use_constraint_perfect(n):
@@ -121,7 +115,7 @@ def add_land_use_constraint_perfect(n):
     return n
 
 
-def _add_land_use_constraint(n):
+def add_land_use_constraint(n):
     # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
 
     for carrier in [
@@ -133,7 +127,6 @@ def _add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
@@ -142,58 +135,6 @@ def _add_land_use_constraint(n):
         )
         existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
         n.generators.loc[existing.index, "p_nom_max"] -= existing
-
-    # check if existing capacities are larger than technical potential
-    existing_large = n.generators[
-        n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
-    if len(existing_large):
-        logger.warning(
-            f"Existing capacities larger than technical potential for {existing_large},\
-                        adjust technical potential to existing capacities"
-        )
-        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
-            existing_large, "p_nom_min"
-        ]
-
-    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
-
-
-def _add_land_use_constraint_m(n, planning_horizons, config):
-    # if generators clustering is lower than network clustering, land_use accounting is at generators clusters
-
-    grouping_years = config["existing_capacities"]["grouping_years_power"]
-    current_horizon = snakemake.wildcards.planning_horizons
-
-    for carrier in [
-        "solar",
-        "solar rooftop",
-        "solar-hsat",
-        "onwind",
-        "offwind-ac",
-        "offwind-dc",
-    ]:
-
-        existing = n.generators.loc[n.generators.carrier == carrier, "p_nom"]
-        ind = list(
-            {i.split(sep=" ")[0] + " " + i.split(sep=" ")[1] for i in existing.index}
-        )
-
-        previous_years = [
-            str(y)
-            for y in set(planning_horizons + grouping_years)
-            if y < int(snakemake.wildcards.planning_horizons)
-        ]
-
-        for p_year in previous_years:
-            ind2 = [
-                i for i in ind if i + " " + carrier + "-" + p_year in existing.index
-            ]
-            sel_current = [i + " " + carrier + "-" + current_horizon for i in ind2]
-            sel_p_year = [i + " " + carrier + "-" + p_year for i in ind2]
-            n.generators.loc[sel_current, "p_nom_max"] -= existing.loc[
-                sel_p_year
-            ].rename(lambda x: x[:-4] + current_horizon)
 
     # check if existing capacities are larger than technical potential
     existing_large = n.generators[
@@ -246,37 +187,17 @@ def add_solar_potential_constraints(n, config):
             lambda x: (x * factor) if carrier in x.name else x, axis=1
         )
 
-    if "m" in snakemake.wildcards.clusters:
-        location = pd.Series(
-            [" ".join(i.split(" ")[:2]) for i in n.generators.index],
-            index=n.generators.index,
-        )
-        ggrouper = pd.Series(
-            n.generators.loc[solar].index.rename("bus").map(location),
-            index=n.generators.loc[solar].index,
-        ).to_xarray()
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].index.rename("bus").map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].index.rename("bus").map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
-
-    else:
-        location = pd.Series(n.buses.index, index=n.buses.index)
-        ggrouper = n.generators.loc[solar].bus
-        rhs = (
-            n.generators.loc[solar_today, "p_nom_max"]
-            .groupby(n.generators.loc[solar_today].bus.map(location))
-            .sum()
-            - n.generators.loc[solar_hsat, "p_nom_opt"]
-            .groupby(n.generators.loc[solar_hsat].bus.map(location))
-            .sum()
-            * land_use_factors["solar-hsat"]
-        ).clip(lower=0)
+    location = pd.Series(n.buses.index, index=n.buses.index)
+    ggrouper = n.generators.loc[solar].bus
+    rhs = (
+        n.generators.loc[solar_today, "p_nom_max"]
+        .groupby(n.generators.loc[solar_today].bus.map(location))
+        .sum()
+        - n.generators.loc[solar_hsat, "p_nom"]
+        .groupby(n.generators.loc[solar_hsat].bus.map(location))
+        .sum()
+        * land_use_factors["solar-hsat"]
+    ).clip(lower=0)
 
     lhs = (
         (n.model["Generator-p_nom"].rename(rename).loc[solar] * land_use.squeeze())
@@ -307,7 +228,7 @@ def add_co2_sequestration_limit(n, limit_dict):
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
-    n.madd(
+    n.add(
         "GlobalConstraint",
         names,
         sense=">=",
@@ -468,7 +389,7 @@ def prepare_network(
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
             load_shedding = 1e2  # Eur/kWh
 
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             " load",
@@ -483,7 +404,7 @@ def prepare_network(
         n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
         n.generators_t.p_min_pu = n.generators_t.p_max_pu
         buses_i = n.buses.query("carrier == 'AC'").index
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             suffix=" curtailment",
@@ -515,7 +436,7 @@ def prepare_network(
         n.snapshot_weightings[:] = 8760.0 / nhours
 
     if foresight == "myopic":
-        add_land_use_constraint(n, planning_horizons, config)
+        add_land_use_constraint(n)
 
     if foresight == "perfect":
         n = add_land_use_constraint_perfect(n)
@@ -1134,7 +1055,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network_perfect",
             configfiles="../config/test/config.perfect.yaml",
-            simpl="",
             opts="",
             clusters="5",
             ll="v1.0",

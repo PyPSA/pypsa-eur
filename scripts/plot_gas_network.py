@@ -221,6 +221,7 @@ def plot_ch4_map(n):
     )
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -229,7 +230,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_gas_network",
-            simpl="",
             opts="",
             clusters="37",
             ll="v1.0",

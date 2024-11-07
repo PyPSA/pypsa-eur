@@ -135,7 +135,7 @@ def _find_closest_links(links, new_links, distance_upper_bound=1.5):
     )
 
 
-def _load_buses(buses, europe_shape, config):
+def _load_buses(buses, europe_shape, countries, config):
     buses = (
         pd.read_csv(
             buses,
@@ -161,6 +161,12 @@ def _load_buses(buses, europe_shape, config):
         lambda p: europe_shape_prepped.contains(Point(p)), axis=1
     )
 
+    buses_in_countries_b = (
+        buses.country.isin(countries)
+        if "country" in buses
+        else pd.Series(True, buses.index)
+    )
+
     v_nom_min = min(config["electricity"]["voltages"])
     v_nom_max = max(config["electricity"]["voltages"])
 
@@ -173,7 +179,9 @@ def _load_buses(buses, europe_shape, config):
     )
 
     logger.info(f"Removing buses outside of range AC {v_nom_min} - {v_nom_max} V")
-    return pd.DataFrame(buses.loc[buses_in_europe_b & buses_with_v_nom_to_keep_b])
+    return pd.DataFrame(
+        buses.loc[buses_in_europe_b & buses_in_countries_b & buses_with_v_nom_to_keep_b]
+    )
 
 
 def _load_transformers(buses, transformers):
@@ -663,7 +671,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
     elif lines_mode == "remove":
-        n.mremove("Line", n.lines.index[n.lines.under_construction])
+        n.remove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines."
@@ -673,7 +681,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     if links_mode == "zero":
         n.links.loc[n.links.under_construction, "p_nom"] = 0.0
     elif links_mode == "remove":
-        n.mremove("Link", n.links.index[n.links.under_construction])
+        n.remove("Link", n.links.index[n.links.under_construction])
     elif links_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links."
@@ -693,7 +701,7 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
-    n.madd(
+    n.add(
         "Shape",
         all_shapes.index,
         geometry=all_shapes.geometry,
@@ -712,11 +720,12 @@ def base_network(
     europe_shape,
     country_shapes,
     offshore_shapes,
+    countries,
     parameter_corrections,
     config,
 ):
-
     base_network = config["electricity"].get("base_network")
+    osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
     assert base_network in {
         "entsoegridkit",
         "osm-raw",
@@ -728,9 +737,14 @@ def base_network(
             DeprecationWarning,
         )
 
-    logger.info(f"Creating base network using {base_network}.")
+    logger_str = (
+        f"Creating base network using {base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + "."
+    )
+    logger.info(logger_str)
 
-    buses = _load_buses(buses, europe_shape, config)
+    buses = _load_buses(buses, europe_shape, countries, config)
     transformers = _load_transformers(buses, transformers)
     lines = _load_lines(buses, lines)
 
@@ -764,16 +778,20 @@ def base_network(
     converters = _set_electrical_parameters_converters(converters, config)
 
     n = pypsa.Network()
-    n.name = f"PyPSA-Eur ({base_network})"
+    n.name = (
+        f"PyPSA-Eur ({base_network}"
+        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + ")"
+    )
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
 
-    n.import_components_from_dataframe(buses, "Bus")
-    n.import_components_from_dataframe(lines, "Line")
-    n.import_components_from_dataframe(transformers, "Transformer")
-    n.import_components_from_dataframe(links, "Link")
-    n.import_components_from_dataframe(converters, "Link")
+    n.add("Bus", buses.index, **buses)
+    n.add("Line", lines.index, **lines)
+    n.add("Transformer", transformers.index, **transformers)
+    n.add("Link", links.index, **links)
+    n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
     if config["electricity"].get("base_network") == "entsoegridkit":
@@ -796,7 +814,7 @@ def base_network(
     carriers = carriers_in_buses.intersection({"AC", "DC"})
 
     if carriers:
-        n.madd("Carrier", carriers)
+        n.add("Carrier", carriers)
 
     return n
 
@@ -936,17 +954,17 @@ def append_bus_shapes(n, shapes, type):
     Parameters:
         n (pypsa.Network): The network to which the shapes will be appended.
         shapes (geopandas.GeoDataFrame): The shapes to be appended.
-        **kwargs: Additional keyword arguments used in `n.madd`.
+        **kwargs: Additional keyword arguments used in `n.add`.
 
     Returns:
         None
     """
     remove = n.shapes.query("component == 'Bus' and type == @type").index
-    n.mremove("Shape", remove)
+    n.remove("Shape", remove)
 
     offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
     shapes = shapes.rename(lambda x: int(x) + offset)
-    n.madd(
+    n.add(
         "Shape",
         shapes.index,
         geometry=shapes.geometry,
@@ -996,6 +1014,7 @@ if __name__ == "__main__":
         europe_shape,
         country_shapes,
         offshore_shapes,
+        countries,
         parameter_corrections,
         config,
     )

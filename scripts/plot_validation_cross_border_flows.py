@@ -120,6 +120,7 @@ def cross_border_time_series(countries, data):
             ax[x].set_ylim([neg_min, pos_max])
 
     fig.savefig(snakemake.output.trade_time_series, bbox_inches="tight")
+    plt.close(fig)
 
 
 def cross_border_bar(countries, data):
@@ -173,6 +174,7 @@ def cross_border_bar(countries, data):
     plt.legend(handles=legend_elements, loc="upper right")
 
     fig.savefig(snakemake.output.cross_border_bar, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -181,7 +183,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_electricity_prices",
-            simpl="",
             opts="Ept-12h",
             clusters="37",
             ll="v1.0",

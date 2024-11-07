@@ -17,11 +17,9 @@ Clone the Repository
 
 First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eur>`__ using the version control system ``git`` in the command line.
 
-.. code:: bash
+.. code:: console
 
-    /some/other/path % cd /some/path
-
-    /some/path % git clone https://github.com/PyPSA/pypsa-eur.git
+    $ git clone https://github.com/PyPSA/pypsa-eur.git
 
 
 .. _deps:
@@ -30,27 +28,31 @@ Install Python Dependencies
 ===============================
 
 PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage your environments.
-For instructions for your operating system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
+We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__
+to install them and manage your environments. For instructions for your operating
+system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
 You can also use ``conda`` equivalently.
 
-The package requirements are curated in the `envs/environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/envs/environment.yaml>`__ file.
-The environment can be installed and activated using
+The package requirements are curated in the ``envs/environment.yaml`` file.
+There are also regularly updated pinned environment files for each operating system to
+ensure reproducibility (``envs/windows-pinned.yaml``, ``envs/linux-pinned.yaml``, ``envs/macos-pinned.yaml``).
+We recommend to use the pinned files for a stable environment, but you could also use
+the unpinned file.
 
-.. code:: bash
+.. code:: console
 
-    .../pypsa-eur % mamba env create -f envs/environment.yaml
+    $ mamba env create -f envs/linux-pinned.yaml # replace for your os
 
-    .../pypsa-eur % mamba activate pypsa-eur
+    $ mamba activate pypsa-eur
 
 .. note::
     The equivalent commands for ``conda`` would be
 
-    .. code:: bash
+    .. code:: console
 
-        .../pypsa-eur % conda env create -f envs/environment.yaml
+        $ conda env create -f envs/linux-pinned.yaml # replace for your os
 
-        .../pypsa-eur % conda activate pypsa-eur
+        $ conda activate pypsa-eur
 
 
 Install a Solver
@@ -84,10 +86,10 @@ Nevertheless, you can still use open-source solvers for smaller problems.
     For an open-source solver setup install for example HiGHS **and** SCIP in your ``conda`` environment on OSX/Linux.
     To install the default solver Gurobi, run
 
-    .. code:: bash
+    .. code:: console
 
-        mamba activate pypsa-eur
-        mamba install -c gurobi gurobi
+        $ mamba activate pypsa-eur
+        $ mamba install -c gurobi gurobi
 
     Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
 
@@ -105,6 +107,6 @@ the configuration options are in :ref:`config`.
 You can also use ``snakemake`` to specify another file, e.g.
 ``config/config.mymodifications.yaml``, to update the settings of the ``config/config.yaml``.
 
-.. code:: bash
+.. code:: console
 
-    .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml
+    $ snakemake --configfile config/config.mymodifications.yaml
