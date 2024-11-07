@@ -270,7 +270,7 @@ slow:
   sector:
     car_reg_factor:
       light:
-        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.16  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 0.3
         2035: 0.5
         2040: 0.9
@@ -287,7 +287,7 @@ slow-p1:
   sector:
     car_reg_factor:
       light:
-        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.16  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 0.3
         2035: 0.5
         2040: 0.9
@@ -314,7 +314,7 @@ slow-p2:
   sector:
     car_reg_factor:
       light:
-        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.16  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 0.3
         2035: 0.5
         2040: 0.9
@@ -342,7 +342,7 @@ slow-m2:
   sector:
     car_reg_factor:
       light:
-        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.16  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 0.3
         2035: 0.5
         2040: 0.9
@@ -369,7 +369,7 @@ slow-m1:
   sector:
     car_reg_factor:
       light:
-        2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2025: 0.16  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
         2030: 0.3
         2035: 0.5
         2040: 0.9
@@ -592,3 +592,38 @@ biomass-hype:
       Store:
         solid biomass:
           e_initial: 2
+
+early_ice_retirement:
+  sector:
+    early_ice_retirement: true
+    car_reg_factor:
+      light:
+        2025: 1.0  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 1.0
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
+      heavy:
+        2025: 0.1  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 0.5
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
+    vary:
+      Link:
+        land transport EV heavy:
+          lifetime: 0.6
+        BEV charger heavy:
+          lifetime: 0.6
+        BEV charger light:
+          lifetime: 0.6
+        land transport EV light:
+          lifetime: 0.6
+        land transport fuel cell heavy:
+          lifetime: 0.6
+        land transport fuel cell light:
+          lifetime: 0.6
+        land transport oil heavy:
+          lifetime: 0.6
+        land transport oil light:
+          lifetime: 0.6
