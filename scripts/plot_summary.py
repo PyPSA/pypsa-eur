@@ -11,7 +11,7 @@ import logging
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, rename_techs, set_scenario_config
 from prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
@@ -19,77 +19,6 @@ plt.style.use("ggplot")
 
 
 # consolidate and rename
-def rename_techs(label):
-    prefix_to_remove = [
-        "residential ",
-        "services ",
-        "urban ",
-        "rural ",
-        "central ",
-        "decentral ",
-    ]
-
-    rename_if_contains = [
-        "CHP",
-        "gas boiler",
-        "biogas",
-        "solar thermal",
-        "air heat pump",
-        "ground heat pump",
-        "resistive heater",
-        "Fischer-Tropsch",
-    ]
-
-    rename_if_contains_dict = {
-        "water tanks": "hot water storage",
-        "retrofitting": "building retrofitting",
-        # "H2 Electrolysis": "hydrogen storage",
-        # "H2 Fuel Cell": "hydrogen storage",
-        # "H2 pipeline": "hydrogen storage",
-        "battery": "battery storage",
-        "H2 for industry": "H2 for industry",
-        "land transport fuel cell": "land transport fuel cell",
-        "land transport oil": "land transport oil",
-        "oil shipping": "shipping oil",
-        # "CC": "CC"
-    }
-
-    rename = {
-        "solar": "solar PV",
-        "Sabatier": "methanation",
-        "offwind": "offshore wind",
-        "offwind-ac": "offshore wind (AC)",
-        "offwind-dc": "offshore wind (DC)",
-        "offwind-float": "offshore wind (Float)",
-        "onwind": "onshore wind",
-        "ror": "hydroelectricity",
-        "hydro": "hydroelectricity",
-        "PHS": "hydroelectricity",
-        "NH3": "ammonia",
-        "co2 Store": "DAC",
-        "co2 stored": "CO2 sequestration",
-        "AC": "transmission lines",
-        "DC": "transmission lines",
-        "B2B": "transmission lines",
-    }
-
-    for ptr in prefix_to_remove:
-        if label[: len(ptr)] == ptr:
-            label = label[len(ptr) :]
-
-    for rif in rename_if_contains:
-        if rif in label:
-            label = rif
-
-    for old, new in rename_if_contains_dict.items():
-        if old in label:
-            label = new
-
-    for old, new in rename.items():
-        if old == label:
-            label = new
-    return label
-
 
 preferred_order = pd.Index(
     [
@@ -188,6 +117,7 @@ def plot_costs():
     )
 
     fig.savefig(snakemake.output.costs, bbox_inches="tight")
+    plt.close(fig)
 
 
 def plot_energy():
@@ -218,6 +148,7 @@ def plot_energy():
     if df.empty:
         fig, ax = plt.subplots(figsize=(12, 8))
         fig.savefig(snakemake.output.energy, bbox_inches="tight")
+        plt.close(fig)
         return
 
     new_index = preferred_order.intersection(df.index).append(
@@ -260,6 +191,7 @@ def plot_energy():
     )
 
     fig.savefig(snakemake.output.energy, bbox_inches="tight")
+    plt.close(fig)
 
 
 def plot_balances():
@@ -354,6 +286,7 @@ def plot_balances():
         )
 
         fig.savefig(snakemake.output.balances[:-10] + k + ".svg", bbox_inches="tight")
+        plt.close(fig)
 
 
 def historical_emissions(countries):
@@ -565,6 +498,7 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     plt.grid(axis="y")
     path = snakemake.output.balances.split("balances")[0] + "carbon_budget.svg"
     plt.savefig(path, bbox_inches="tight")
+    plt.close()
 
 
 if __name__ == "__main__":

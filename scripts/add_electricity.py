@@ -122,6 +122,7 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     get_snapshots,
+    rename_techs,
     set_scenario_config,
     update_p_nom_max,
 )
@@ -202,7 +203,12 @@ def sanitize_carriers(n, config):
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
-    colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
+
+    tech_colors = config["plotting"]["tech_colors"]
+    colors = pd.Series(tech_colors).reindex(carrier_i)
+    # try to fill missing colors with tech_colors after renaming
+    missing_colors_i = colors[colors.isna()].index
+    colors[missing_colors_i] = missing_colors_i.map(rename_techs).map(tech_colors)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
