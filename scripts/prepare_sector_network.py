@@ -3625,12 +3625,19 @@ def add_industry(n, costs):
             waste_source = non_sequestered_hvc_locations
 
         if cf_industry["waste_to_energy"]:
+            urban_central = spatial.nodes + " urban central heat"
+            existing_urban_central = n.buses.index[
+                n.buses.carrier == "urban central heat"
+            ]
+            urban_central_nodes = urban_central.map(
+                lambda x: x if x in existing_urban_central else ""
+            )
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP",
                 bus0=waste_source,
                 bus1=spatial.nodes,
-                bus2=spatial.nodes + " urban central heat",
+                bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
                 carrier="waste CHP",
                 p_nom_extendable=True,
@@ -3649,7 +3656,7 @@ def add_industry(n, costs):
                 spatial.nodes + " waste CHP CC",
                 bus0=waste_source,
                 bus1=spatial.nodes,
-                bus2=spatial.nodes + " urban central heat",
+                bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
                 bus4=spatial.co2.nodes,
                 carrier="waste CHP CC",

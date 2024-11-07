@@ -15,6 +15,8 @@ Upcoming Release
 
 * Bugfix: Adjusted efficiency2 (to atmosphere) for bioliquids-to-oil Link in `prepare_sector_network` to exactly offset the corresponding oil emissions.
 
+* Bugfix: Waste CHPs were added to all electricity buses even if they were not connected to heating network. This is now fixed.
+
 * Bugfix: Duplicates in build_transmission_projects were caught, but not removed from the network. This is now fixed.
 
 * Replaced the Store representation of biogenic carriers (solid biomass, biogas, bioliquids, MSW) in ``prepare_sector_network`` with the extended Generator component that uses the ``e_sum_min`` and ``e_sum_max`` attributes to enforce minimum usage and limit maximum potential, respectively.
