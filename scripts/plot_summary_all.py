@@ -561,73 +561,139 @@ def plot_balances(balances, drop=None):
                 )
             
             fig.savefig(snakemake.output.balances[:-19] + f"share-{k}.pdf", bbox_inches="tight")
-            
-            wished_scenarios = ["fast", "base", "slow"]
-            color = ['g','b', 'r']
-            fig, axes = plt.subplots(
-                        nrows=1, ncols=len(share.index), 
-                        figsize=(14, 5), 
-                        sharey=True  # This ensures that all subplots share the same y-axis
-                        )
-            for i in range(len(share.index)):
-                share.iloc[i][wished_scenarios].unstack().T.plot(title=share.index[i], ax=axes[i],
-                                               legend=False,
-                                               style=line_styles[:len(wished_scenarios)],
-                                               color=color)
-                
-                # Define color for the scenario's contour areas
-                # color = axes[i].get_lines()[-1].get_color()  # Color of the last plotted line for consistency
-                
-    
-                if share.index[i] == "land transport oil":
-                    a=exogen_share.rename(columns = lambda x: x + " exogen")
-                    (a*100).plot(ax=axes[i], legend=False, style=":", color="gray",
-                                 linewidth=2, alpha=0.5)
-                    
-                    axes[i].text(
-                            x=a.index[-1],  # Position near the end of the x-axis
-                            y=90, # (a * 100).iloc[-1].values[0],  # Position based on the last data point value
-                            s="exogenous", 
-                            color="gray", 
-                            fontsize=10, 
-                            ha="right",
-                            va="center"
-                        )
-                    
-                for j, sc in enumerate(wished_scenarios):
-                    # larger variation
-                    area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
-                    axes[i].fill_between(
-                            area.unstack().columns,
-                            area.unstack().min(),
-                            area.unstack().max(),
-                            color=color[j],
-                            alpha=0.05,
-                            label="+/-20% CAPEX" if j==0 else "",
-                        )
-                    # smaller variation
-                    filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
-                    ~share.columns.get_level_values(0).str.contains("2"))
-                    area = share.loc[:,filter_b].iloc[i]
-                    axes[i].fill_between(
-                            area.unstack().columns,
-                            area.unstack().min(),
-                            area.unstack().max(),
-                            color=color[j],
-                            alpha=0.1,
-                            label="+/-10% CAPEX" if j==0 else "",
-                        )
-                axes[i].set_xlabel("")
-                axes[i].grid(axis="x")
-            axes[0].set_ylabel("share [%]")
-            
-            axes[1].legend(
-                ncol=1,
-                loc="upper left",
-                frameon=False,
+
+def plot_shares_area(balances, shares):
+
+
+    for v in [["land transport demand light"], ["land transport demand heavy"]]:
+        df = balances.loc[v]
+        df = df.groupby(df.index.get_level_values(2)).sum()
+
+        # convert MWh to TWh
+        df = df / 1e6
+
+        # remove trailing link ports
+        df.index = [
+            (
+                i[:-1]
+                if (
+                    (i not in ["co2", "NH3", "H2"])
+                    and (i[-1:] in ["0", "1", "2", "3", "4"])
                 )
+                else i
+            )
+            for i in df.index
+        ]
+        
+        df = df.groupby(df.index.map(rename_techs)).sum()
+
+        to_drop = df.index[
+            df.abs().max(axis=1) < snakemake.config["plotting"]["energy_threshold"] / 10
+        ]
+
+        units ="TWh/a"
+        
+                        
+        logger.debug(
+            f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}"
+        )
+        logger.debug(df.loc[to_drop])
+
+        df = df.drop(to_drop)
+
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
+
+        if df.empty:
+            continue
+        
+        
+        df = df.droplevel([1,2,3], axis=1)
+
+        
+        planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
+        scenarios = df.columns.get_level_values(0).unique()
+        
+        share = abs(df.div(df.loc[v].values, axis=1).drop(v)*100)
+        
+        exogen = shares.droplevel([1,2,3], axis=1)
+        exogen_grouped = exogen[exogen.index.str.contains(v[0].split("demand ")[-1])].sum().unstack()
+        exogen_share = exogen_grouped["existing"].div(exogen_grouped["demand"]).unstack().T
+        
+           
+        wished_scenarios = ["fast", "base", "slow"]
+        color = ['g','b', 'r']
+        line_styles = ["-", "--", ":", "-."]
+        
+        fig, axes = plt.subplots(
+                    nrows=1, ncols=len(share.index), 
+                    figsize=(14, 5), 
+                    sharey=True  # This ensures that all subplots share the same y-axis
+                    )
+        for i in range(len(share.index)):
+            share.iloc[i].reindex(wished_scenarios, level=0).unstack().T.plot(title=share.index[i], ax=axes[i],
+                                           legend=False,
+                                           style=line_styles[:len(wished_scenarios)],
+                                           color=color)
             
-            fig.savefig(snakemake.output.balances[:-19] + f"area-share-{k}.pdf", bbox_inches="tight")
+            # Define color for the scenario's contour areas
+            # color = axes[i].get_lines()[-1].get_color()  # Color of the last plotted line for consistency
+            
+
+            if share.index[i] == "land transport oil":
+                a=(exogen_share.reindex(columns=wished_scenarios)
+                   .dropna(how="all", axis=1)
+                   .rename(columns = lambda x: x + " exogen"))
+                (a*100).plot(ax=axes[i], legend=False, style=line_styles[:len(wished_scenarios)],
+                             color="gray",
+                             linewidth=2, alpha=0.5)
+                
+                axes[i].text(
+                        x=a.index[-1],  # Position near the end of the x-axis
+                        y=90, # (a * 100).iloc[-1].values[0],  # Position based on the last data point value
+                        s="exogenous", 
+                        color="gray", 
+                        fontsize=10, 
+                        ha="right",
+                        va="center"
+                    )
+                
+            for j, sc in enumerate(wished_scenarios):
+                # larger variation
+                area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
+                axes[i].fill_between(
+                        area.unstack().columns,
+                        area.unstack().min(),
+                        area.unstack().max(),
+                        color=color[j],
+                        alpha=0.05,
+                        label="+/-20% CAPEX" if j==0 else "",
+                    )
+                # smaller variation
+                filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
+                ~share.columns.get_level_values(0).str.contains("2"))
+                area = share.loc[:,filter_b].iloc[i]
+                axes[i].fill_between(
+                        area.unstack().columns,
+                        area.unstack().min(),
+                        area.unstack().max(),
+                        color=color[j],
+                        alpha=0.1,
+                        label="+/-10% CAPEX" if j==0 else "",
+                    )
+            axes[i].set_xlabel("")
+            axes[i].grid(axis="x")
+        axes[0].set_ylabel("share [%]")
+        
+        axes[1].legend(
+            ncol=1,
+            loc="upper left",
+            frameon=False,
+            )
+        
+        fig.savefig(snakemake.output.balances[:-19] + f"area-share-{v[0].replace(" ", "-")}.pdf",
+                    bbox_inches="tight")
             
 
 def plot_prices(prices, drop=True):
@@ -720,7 +786,7 @@ def plot_comparison(balances, capacities, drop=True):
     electrolysis = capacities.droplevel(0).loc["H2 Electrolysis"].droplevel([1,2,3])
     dac = balances.loc["co2"].droplevel(0).loc["DAC2"].droplevel([1,2,3])
     cost_df = costs.droplevel([0,1]).droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
-    wished_scenarios = cost_df.columns.levels[0].intersection(wished_scenarios)
+    wished_scenarios = [sc for sc in wished_scenarios if sc in cost_df.columns.levels[0]]
     
     heat_balance = balances.loc[["rural heat", "urban decentral heat"]].droplevel([1]).groupby(level=1).sum().droplevel([1,2,3], axis=1).rename(index=rename_techs).groupby(level=0).sum()
     
@@ -1058,5 +1124,7 @@ if __name__ == "__main__":
     plot_prices(prices, drop=True)
     
     plot_comparison(balances, capacities, drop=True)
+    
+    # plot_shares_area(balances, shares)
 
 
