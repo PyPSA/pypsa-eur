@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Feature: Allow CHPs to use different fuel sources such as gas, oil, coal, and methanol. Note that the cost assumptions are based on a gas CHP.
+
 * Improve `sanitize_carrier`` function by filling in colors of missing carriers with colors mapped after using the function `rename_techs`.
 
 * Bugfix: Adjusted efficiency2 (to atmosphere) for bioliquids-to-oil Link in `prepare_sector_network` to exactly offset the corresponding oil emissions.
