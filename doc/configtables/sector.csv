@@ -95,8 +95,8 @@ overdimension_heat_generators,,,Add option for overdimensioning heating systems 
 -- central,--,float,The factor for overdimensioning (increasing CAPEX) central heating systems
 chp,--,,
 -- enable,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
--- fuel,--,string or list of fuels,"Possible options are all fuels which have an exisitng bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"". For all fuels, the techno-economic data from gas CHP is used."
-micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
+-- fuel,--,list of fuels,"Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"" as well as ""solid biomass"". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added."
+-- micro_chp,--,"{true, false}",Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_storage,"currency/MWh ",float,The marginal cost of discharging batteries in distributed grids
