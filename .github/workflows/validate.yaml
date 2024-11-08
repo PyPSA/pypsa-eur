@@ -16,7 +16,7 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: self-hosted
     steps:
-    - uses: lkstrp/pypsa-validator@v0.2.3
+    - uses: lkstrp/pypsa-validator@v0.2.4
       with:
         step: run-self-hosted-validation
         env_file: envs/environment.yaml
@@ -30,7 +30,7 @@ jobs:
     needs: run-validation
     runs-on: ubuntu-latest
     steps:
-    - uses: lkstrp/pypsa-validator@v0.2.3
+    - uses: lkstrp/pypsa-validator@v0.2.4
       with:
         step: create-comment
         snakemake_config: config/test/config.validator.yaml
