@@ -675,7 +675,9 @@ def add_steel_industry_existing_gem(n):
     capex_bof = ((211000 + 100000 ) * 0.7551 / nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
     capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
-    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
+    opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
 
     n.add(
         "Link",
@@ -694,6 +696,7 @@ def add_steel_industry_existing_gem(n):
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=capex_bof,
+        marginal_cost=opex_bof,
         efficiency=1 / iron_to_steel_bof,
         efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
         efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
@@ -720,6 +723,7 @@ def add_steel_industry_existing_gem(n):
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+        marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
         efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron

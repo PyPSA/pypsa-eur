@@ -4133,6 +4133,8 @@ def add_steel_industry(n, investment_year, options):
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
     capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+    opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
 
     n.add(
         "Link",
@@ -4146,9 +4148,10 @@ def add_steel_industry(n, investment_year, options):
         bus5=spatial.co2.process_emissions,
         carrier="BF-BOF",
         p_nom_extendable=True,
-        p_nom_max=max_cap * 1.429,
+        p_nom_max=max_cap * iron_to_steel_bof,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         capital_cost=capex_bof,
+        marginal_cost=opex_bof,
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         efficiency=1 / iron_to_steel_bof,
@@ -4171,11 +4174,12 @@ def add_steel_industry(n, investment_year, options):
         bus5=spatial.co2.process_emissions,
         carrier="NG-DRI-EAF",
         p_nom_extendable=True,
-        # p_nom_max = max_cap * 1.36,
+        p_nom_max = max_cap * iron_to_steel_ng,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=capex_eaf,
+        marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
         efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron
@@ -4195,11 +4199,12 @@ def add_steel_industry(n, investment_year, options):
         bus4=nodes,
         carrier="H2-DRI-EAF",
         p_nom_extendable=True,
-        # p_nom_max = max_cap * 1.36,
+        p_nom_max = max_cap * iron_to_steel_eaf_h2,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         capital_cost=capex_eaf, #ADB to be fixed the pricefor h2
+        marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_h2,
         efficiency2= -2211 / iron_to_steel_eaf_h2, # MWh hydrogen per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_h2, # MWh heta per kt iron
