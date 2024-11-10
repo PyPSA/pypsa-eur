@@ -122,6 +122,7 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     get_snapshots,
+    rename_techs,
     set_scenario_config,
     update_p_nom_max,
 )
@@ -159,7 +160,7 @@ def add_missing_carriers(n, carriers):
     """
     missing_carriers = set(carriers) - set(n.carriers.index)
     if len(missing_carriers) > 0:
-        n.madd("Carrier", missing_carriers)
+        n.add("Carrier", missing_carriers)
 
 
 def sanitize_carriers(n, config):
@@ -202,7 +203,12 @@ def sanitize_carriers(n, config):
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
-    colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
+
+    tech_colors = config["plotting"]["tech_colors"]
+    colors = pd.Series(tech_colors).reindex(carrier_i)
+    # try to fill missing colors with tech_colors after renaming
+    missing_colors_i = colors[colors.isna()].index
+    colors[missing_colors_i] = missing_colors_i.map(rename_techs).map(tech_colors)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
@@ -231,9 +237,13 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
-    # correct units to MW
+    # correct units from kW to MW
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.unit = costs.unit.str.replace("/kW", "/MW")
+
+    # correct units from GW to MW
+    costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
+    costs.unit = costs.unit.str.replace("/GW", "/MW")
 
     fill_values = config["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
@@ -410,7 +420,7 @@ def attach_load(
     logger.info(f"Load data scaled by factor {scaling}.")
     load *= scaling
 
-    n.madd("Load", load.columns, bus=load.columns, p_set=load)  # carrier="electricity"
+    n.add("Load", load.columns, bus=load.columns, p_set=load)  # carrier="electricity"
 
 
 def set_transmission_costs(
@@ -502,7 +512,7 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
-            n.madd(
+            n.add(
                 "Generator",
                 ds.indexes["bus"],
                 " " + car,
@@ -564,7 +574,7 @@ def attach_conventional_generators(
     caps = ppl.groupby("carrier").p_nom.sum().div(1e3).round(2)
     logger.info(f"Adding {len(ppl)} generators with capacities [GW]pp \n{caps}")
 
-    n.madd(
+    n.add(
         "Generator",
         ppl.index,
         carrier=ppl.carrier,
@@ -636,7 +646,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
             )
 
     if "ror" in carriers and not ror.empty:
-        n.madd(
+        n.add(
             "Generator",
             ror.index,
             carrier="ror",
@@ -657,7 +667,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         # assume no natural inflow due to lack of data
         max_hours = params.get("PHS_max_hours", 6)
         phs = phs.replace({"max_hours": {0: max_hours, np.nan: max_hours}})
-        n.madd(
+        n.add(
             "StorageUnit",
             phs.index,
             carrier="PHS",
@@ -721,7 +731,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         else:
             p_max_pu = 1
 
-        n.madd(
+        n.add(
             "StorageUnit",
             hydro.index,
             carrier="hydro",
@@ -840,7 +850,7 @@ def estimate_renewable_capacities(
 def attach_storageunits(n, costs, extendable_carriers, max_hours):
     carriers = extendable_carriers["StorageUnit"]
 
-    n.madd("Carrier", carriers)
+    n.add("Carrier", carriers)
 
     buses_i = n.buses.index
 
@@ -850,7 +860,7 @@ def attach_storageunits(n, costs, extendable_carriers, max_hours):
     for carrier in carriers:
         roundtrip_correction = 0.5 if carrier == "battery" else 1
 
-        n.madd(
+        n.add(
             "StorageUnit",
             buses_i,
             " " + carrier,
@@ -871,14 +881,14 @@ def attach_storageunits(n, costs, extendable_carriers, max_hours):
 def attach_stores(n, costs, extendable_carriers):
     carriers = extendable_carriers["Store"]
 
-    n.madd("Carrier", carriers)
+    n.add("Carrier", carriers)
 
     buses_i = n.buses.index
 
     if "H2" in carriers:
-        h2_buses_i = n.madd("Bus", buses_i + " H2", carrier="H2", location=buses_i)
+        h2_buses_i = n.add("Bus", buses_i + " H2", carrier="H2", location=buses_i)
 
-        n.madd(
+        n.add(
             "Store",
             h2_buses_i,
             bus=h2_buses_i,
@@ -888,7 +898,7 @@ def attach_stores(n, costs, extendable_carriers):
             capital_cost=costs.at["hydrogen storage underground", "capital_cost"],
         )
 
-        n.madd(
+        n.add(
             "Link",
             h2_buses_i + " Electrolysis",
             bus0=buses_i,
@@ -900,7 +910,7 @@ def attach_stores(n, costs, extendable_carriers):
             marginal_cost=costs.at["electrolysis", "marginal_cost"],
         )
 
-        n.madd(
+        n.add(
             "Link",
             h2_buses_i + " Fuel Cell",
             bus0=h2_buses_i,
@@ -915,11 +925,11 @@ def attach_stores(n, costs, extendable_carriers):
         )
 
     if "battery" in carriers:
-        b_buses_i = n.madd(
+        b_buses_i = n.add(
             "Bus", buses_i + " battery", carrier="battery", location=buses_i
         )
 
-        n.madd(
+        n.add(
             "Store",
             b_buses_i,
             bus=b_buses_i,
@@ -930,9 +940,9 @@ def attach_stores(n, costs, extendable_carriers):
             marginal_cost=costs.at["battery", "marginal_cost"],
         )
 
-        n.madd("Carrier", ["battery charger", "battery discharger"])
+        n.add("Carrier", ["battery charger", "battery discharger"])
 
-        n.madd(
+        n.add(
             "Link",
             b_buses_i + " charger",
             bus0=buses_i,
@@ -945,7 +955,7 @@ def attach_stores(n, costs, extendable_carriers):
             marginal_cost=costs.at["battery inverter", "marginal_cost"],
         )
 
-        n.madd(
+        n.add(
             "Link",
             b_buses_i + " discharger",
             bus0=b_buses_i,

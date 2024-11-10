@@ -1,0 +1,168 @@
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: Test workflows
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  schedule:
+  - cron: "0 5 * * *"
+
+# Cancel any in-progress runs when a new run is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  run-tests:
+    name: OS
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+        include:
+        - os: ubuntu
+          env_file: envs/linux-pinned.yaml
+        - os: macos
+          env_file: envs/macos-pinned.yaml
+        - os: windows
+          env_file: envs/windows-pinned.yaml
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup secrets & cache dates
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+        echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          data
+          cutouts
+        key: data-cutouts-${{ env.week }}
+
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: pypsa-eur
+
+    - name: Cache Conda env
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', matrix.env_file)) }}
+      id: cache-env
+
+    - name: Update environment
+      if: steps.cache-env.outputs.cache-hit != 'true'
+      run: conda env update -n pypsa-eur -f ${{ matrix.env_file }}
+
+    - name: Run snakemake test workflows
+      run: |
+        make test
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: results-${{ matrix.os }}
+        path: |
+          logs
+          .snakemake/log
+          results
+        retention-days: 3
+
+  run-tests-on-dev-deps:
+    name: Inhouse
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        inhouse:
+        - pypsa
+        - atlite
+        - powerplantmatching
+        - linopy
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Only run checks if package is not pinned
+    - name: Check if inhouse package is pinned
+      run: |
+        grep_line=$(grep -- '- ${{ matrix.inhouse }}' envs/environment.yaml)
+        if [[ $grep_line == *"<"* || $grep_line == *"=="* ]]; then
+            echo "pinned=true" >> $GITHUB_ENV
+        else
+            echo "pinned=false" >> $GITHUB_ENV
+        fi
+
+    - name: Setup secrets & cache dates
+      if: env.pinned == 'false'
+      run: |
+        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
+        echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_ENV # env
+
+    - uses: actions/cache@v4
+      if: env.pinned == 'false'
+      with:
+        path: |
+          data
+          cutouts
+        key: data-cutouts-${{ env.week }}
+
+    - uses: conda-incubator/setup-miniconda@v3
+      if: env.pinned == 'false'
+      with:
+        activate-environment: pypsa-eur
+
+    - name: Cache Conda env
+      if: env.pinned == 'false'
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-hashFiles("envs/linux-pinned.yaml")
+      id: cache-env
+
+    - name: Update environment
+      if: env.pinned == 'false' && steps.cache-env.outputs.cache-hit != 'true'
+      run: conda env update -n pypsa-eur -f envs/linux-pinned.yaml
+
+    - name: Install inhouse packages from master
+      if: env.pinned == 'false'
+      run: |
+        python -m pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master
+
+    - name: Run snakemake test workflows
+      if: env.pinned == 'false'
+      run: |
+        make test
+
+    - name: Upload artifacts
+      if: env.pinned == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: results-inhouse-${{ matrix.inhouse }}
+        path: |
+          logs
+          .snakemake/log
+          results
+        retention-days: 3

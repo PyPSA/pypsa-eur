@@ -57,14 +57,14 @@ Execution
 
 To run an overnight / greenfiled scenario with the specifications above, run
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call all --configfile config/test/config.overnight.yaml
+    $ snakemake all --configfile config/test/config.overnight.yaml
 
 which will result in the following jobs ``snakemake`` wants to run, some of
 which were already included in the electricity-only tutorial:
 
-.. code:: bash
+.. code:: console
 
     job                                                 count
     ------------------------------------------------  -------
@@ -494,9 +494,9 @@ Execution
 
 To run a myopic foresight scenario with the specifications above, run
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call all --configfile config/test/config.myopic.yaml
+    $ snakemake all --configfile config/test/config.myopic.yaml
 
 which will result in additional jobs ``snakemake`` wants to run, which
 translates to the following workflow diagram which nicely outlines how the
@@ -980,16 +980,16 @@ spatial scope, clean-up the repository and after modifying the ``config/config.y
 target the collection rule ``all`` again without providing the test
 configuration file.
 
-.. code:: bash
+.. code:: console
 
-    snakemake -call purge
-    snakemake -call all
+    $ snakemake purge
+    $ snakemake all
 
 .. note::
 
     It is good practice to perform a dry-run using the option `-n`, before you
     commit to a run:
 
-    .. code:: bash
+    .. code:: console
 
-        snakemake -call all -n
+        $ snakemake all -n

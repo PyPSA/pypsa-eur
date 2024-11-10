@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
@@ -214,23 +214,23 @@ rule build_temperature_profiles:
 
 rule build_central_heating_temperature_profiles:
     params:
-        max_forward_temperature_central_heating=config_provider(
+        max_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "max_forward_temperature",
+            "max_forward_temperature_baseyear",
         ),
-        min_forward_temperature_central_heating=config_provider(
+        min_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "min_forward_temperature",
+            "min_forward_temperature_baseyear",
         ),
-        return_temperature_central_heating=config_provider(
+        return_temperature_central_heating_baseyear=config_provider(
             "sector",
             "district_heating",
             "supply_temperature_approximation",
-            "return_temperature",
+            "return_temperature_baseyear",
         ),
         snapshots=config_provider("snapshots"),
         lower_threshold_ambient_temperature=config_provider(
@@ -251,22 +251,33 @@ rule build_central_heating_temperature_profiles:
             "supply_temperature_approximation",
             "rolling_window_ambient_temperature",
         ),
+        relative_annual_temperature_reduction=config_provider(
+            "sector",
+            "district_heating",
+            "supply_temperature_approximation",
+            "relative_annual_temperature_reduction",
+        ),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}.nc"
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}.nc"
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=20000,
     log:
-        logs("build_central_heating_temperature_profiles_s_{clusters}.log"),
+        logs(
+            "build_central_heating_temperature_profiles_s_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_central_heating_temperature_profiles/s_{clusters}")
+        benchmarks(
+            "build_central_heating_temperature_profiles/s_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -288,22 +299,22 @@ rule build_cop_profiles:
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}.nc"
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}.nc"
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     resources:
         mem_mb=20000,
     log:
-        logs("build_cop_profiles_s_{clusters}.log"),
+        logs("build_cop_profiles_s_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("build_cop_profiles/s_{clusters}")
+        benchmarks("build_cop_profiles/s_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -716,6 +727,7 @@ rule build_industrial_energy_demand_per_country_today:
     params:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
+        ammonia=config_provider("sector", "ammonia", default=False),
     input:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
@@ -941,15 +953,15 @@ rule time_aggregation:
         ),
     output:
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
-        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}.log"),
+        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.log"),
     benchmark:
-        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}")
+        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1021,7 +1033,7 @@ rule prepare_sector_network:
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
         retro_cost=lambda w: (
             resources("retro_cost_base_s_{clusters}.csv")
@@ -1059,13 +1071,8 @@ rule prepare_sector_network:
         dsm_profile=resources("dsm_profile_s_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
-        biomass_potentials=lambda w: (
-            resources(
-                "biomass_potentials_s_{clusters}_"
-                + "{}.csv".format(config_provider("biomass", "year")(w))
-            )
-            if config_provider("foresight")(w) == "overnight"
-            else resources("biomass_potentials_s_{clusters}_{planning_horizons}.csv")
+        biomass_potentials=resources(
+            "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
         costs=lambda w: (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
@@ -1091,7 +1098,7 @@ rule prepare_sector_network:
         heating_efficiencies=resources("heating_efficiencies.csv"),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)

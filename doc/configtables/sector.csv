@@ -10,12 +10,13 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 -- supply_temperature_approximation,,,
--- -- max_forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
--- -- min_forward_temperature,°C,Dictionary with country codes as keys. One key must be 'default'., Min. forward temperature in district heating (if ambient temperature higher-or-equal `upper_threshold_ambient_temperature`)
--- -- return_temperature,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating. Must be lower than forward temperature
+-- -- max_forward_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating in baseyear (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
+-- -- min_forward_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'., Min. forward temperature in district heating in baseyear (if ambient temperature higher-or-equal `upper_threshold_ambient_temperature`)
+-- -- return_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating in baseyear . Must be lower than forward temperature
 -- -- lower_threshold_ambient_temperature,°C,float, Assume `max_forward_temperature` if ambient temperature is below this threshold
 -- -- upper_threshold_ambient_temperature,°C,float, Assume `min_forward_temperature` if ambient temperature is above this threshold
 -- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
+-- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
 -- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
@@ -92,8 +93,10 @@ biomass_boiler,--,"{true, false}",Add option for transforming biomass into heat 
 overdimension_heat_generators,,,Add option for overdimensioning heating systems by a certain factor. This allows them to cover heat demand peaks e.g. 10% higher than those in the data with a setting of 1.1.
 -- decentral,--,float,The factor for overdimensioning (increasing CAPEX) decentral heating systems
 -- central,--,float,The factor for overdimensioning (increasing CAPEX) central heating systems
-chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
-micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
+chp,--,,
+-- enable,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
+-- fuel,--,list of fuels,"Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"" as well as ""solid biomass"". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added."
+-- micro_chp,--,"{true, false}",Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_storage,"currency/MWh ",float,The marginal cost of discharging batteries in distributed grids
@@ -101,7 +104,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
-allam_cycle,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
+allam_cycle_gas,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs
 SMR,--,"{true, false}",Add option for transforming natural gas into hydrogen and CO2 using Steam Methane Reforming (SMR)
@@ -131,7 +134,6 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- methanol_reforming,--,"{true, false}"," Add methanol reforming"
 -- methanol_reforming_cc,--,"{true, false}"," Add methanol reforming with carbon capture"
 -- methanol_to_kerosene,--,"{true, false}"," Add methanol to kerosene"
--- methanol_to_olefins,--,"{true, false}"," Add methanol to olefins"
 -- methanol_to_power,--,--," Add different methanol to power technologies"
 -- -- ccgt,--,"{true, false}"," Add combined cycle gas turbine (CCGT) using methanol"
 -- -- ccgt_cc,--,"{true, false}"," Add combined cycle gas turbine (CCGT) with carbon capture using methanol"
@@ -168,7 +170,9 @@ biomass_transport,--,"{true, false}",Add option for transporting solid biomass b
 biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
 conventional_generation,,,Add a more detailed description of conventional carriers. Any power generation requires the consumption of fuel from nodes representing that fuel.
 biomass_to_liquid,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil
+biomass_to_liquid_cc,--,"{true, false}",Add option for transforming solid biomass into liquid fuel with the same properties as oil with carbon capture
 biosng,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas
+biosng_cc,--,"{true, false}",Add option for transforming solid biomass into synthesis gas with the same properties as natural gas with carbon capture
 bioH2,--,"{true, false}",Add option for transforming solid biomass into hydrogen with carbon capture
 municipal_solid_waste,--,"{true, false}",Add option for municipal solid waste
 limit_max_growth,,,

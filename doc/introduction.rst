@@ -33,9 +33,9 @@ scripts were modified.
 
 For instance, an invocation to
 
-.. code:: bash
+.. code:: console
 
-    .../pypsa-eur % snakemake -call results/networks/base_s_128_elec_lvopt_.nc
+    $ snakemake results/networks/base_s_128_elec_lvopt_.nc
 
 follows this dependency graph
 
