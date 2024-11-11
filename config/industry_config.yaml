@@ -596,8 +596,12 @@ sector:
   overdimension_heat_generators:
     decentral: 1.1  #to cover demand peaks bigger than data
     central: 1.0
-  chp: true
-  micro_chp: false
+  chp:
+    enable: true
+    fuel:
+    - solid biomass # For solid biomass, CHP with and without CC are added
+    - gas # For all other fuels the same techno economic data from gas CHP is taken
+    micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4

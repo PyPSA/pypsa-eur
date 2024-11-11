@@ -726,7 +726,7 @@ def add_steel_industry_existing_gem(n):
         marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
         efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
-        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron
+        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heat per kt iron
         efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
         efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
         lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
