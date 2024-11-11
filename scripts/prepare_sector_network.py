@@ -2184,8 +2184,15 @@ def add_heat(
 
                 costs_name_heat_source = heat_system.heat_source_costs_name(heat_source)
                 if heat_source in snakemake.params.direct_utilisation_heat_sources:
-                    capital_cost = costs.at[heat_system.heat_source_costs_name(heat_source), "fixed"] * overdim_factor
-                    lifetime = costs.at[heat_system.heat_source_costs_name(heat_source), "lifetime"]
+                    capital_cost = (
+                        costs.at[
+                            heat_system.heat_source_costs_name(heat_source), "fixed"
+                        ]
+                        * overdim_factor
+                    )
+                    lifetime = costs.at[
+                        heat_system.heat_source_costs_name(heat_source), "lifetime"
+                    ]
                 else:
                     capital_cost = 0.0
                     lifetime = np.inf
@@ -2196,7 +2203,7 @@ def add_heat(
                     bus=nodes + f" {heat_carrier}",
                     carrier=heat_carrier,
                     p_nom_extendable=True,
-                    capital_cost=capital_cost, 
+                    capital_cost=capital_cost,
                     lifetime=lifetime,
                     p_nom_max=p_max_source,
                 )
@@ -2214,7 +2221,7 @@ def add_heat(
                     efficiency2=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                     * costs.at[costs_name_heat_pump, "fixed"]
-                    * overdim_factor,  
+                    * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )

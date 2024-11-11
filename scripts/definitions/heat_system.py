@@ -244,7 +244,6 @@ class HeatSystem(Enum):
         """
         return f"{self.central_or_decentral} {heat_source} heat source"
 
-
     @property
     def resistive_heater_costs_name(self) -> str:
         """
