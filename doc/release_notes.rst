@@ -11,6 +11,8 @@ Release Notes
 ariadne2 Branch
 ================
 
+* Added option to specify emissions from gas compressing with setting ``industry: gas_compression_losses:``.
+
 * Created a separate namespace for biogas and split it form the gas namespace
 
 * Existing Bioenergy plants from powerplantmatching are now split into biogas and solid biomass power plants. This heuristically assumes that all bioenergy power plants with a capacity smaller than 2 MW consume biogas, all bigger plants consume solid biomass. Should be further refined in the future.
@@ -24,6 +26,8 @@ ariadne2 Branch
 * New config ``industry: steam_biomass_fraction``, ``industry: steam_hydrogen_fraction``, ``industry: steam_electricity_fraction`` to specify the fraction of steam produced from biomass, hydrogen, and electricity, respectively. This is used to calculate custom industry sector ratios.
 
 * Add investment period dependent CO2 sequestration potentials
+
+* bugfix: correct co2 intensity of unsustainable bioliquids
 
 Upcoming Release
 ================
@@ -94,6 +98,8 @@ Upcoming Release
 * Resolved a problem where excluding certain countries from `countries` configuration led to clustering errors.
 
 * Bugfix: demand for ammonia was double-counted at current/near-term planning horizons when ``sector['ammonia']`` was set to ``True``.
+
+* Bugfix: Bug when multiple DC links are connected to the same DC bus and the DC bus is connected to an AC bus via converter. In this case, the DC links were wrongly simplified, completely dropping the shared DC bus. Bug fixed by adding preceding converter removal. Other functionalities are not impacted.
 
 * Added options ``biosng_cc`` and ``biomass_to_liquid_cc`` to separate the base
   technology from the option to capture carbon from it.
