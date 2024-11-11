@@ -481,9 +481,10 @@ sector:
       heat_loss: 0.0
     fraunhofer_heat_utilisation_potentials:
       geothermal:
-        key: hydrothermal_65
         # activate for 85C hydrothermal
         # key: hydrothermal_85
+        # constant_temperature_celsius: 85
+        key: hydrothermal_65
         constant_temperature_celsius: 65
         column_name: Energy_TWh
         unit: TWh
@@ -1235,11 +1236,11 @@ plotting:
     services urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
-    urban central geothermal heat pump: '#48f74f'
-    geothermal heat pump: '#48f74f'
-    geothermal direct utilisation: '#2fb541'
+    urban central geothermal heat pump: '#4f2144'
+    geothermal heat pump: '#4f2144'
+    geothermal heat direct utilisation: '#ba91b1'
     ground heat pump: '#2fb537'
-    residential rural ground heat pump: '#48f74f'
+    residential rural ground heat pump: '#4f2144'
     residential rural air heat pump: '#48f74f'
     services rural ground heat pump: '#5af95d'
     Ambient: '#98eb9d'
