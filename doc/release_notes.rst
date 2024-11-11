@@ -99,7 +99,7 @@ Upcoming Release
   - Substation interior point now based on Pole of Inaccessibility (doi.org/10.1080/14702540801897809)
   - Substation radius sharpened to 500 meters
   - Single transformers for each combination of voltage level per substation. Transformers now have a capacity s_nom based on connected lines
-  - Use of OSM relations where available and unambigious (Overwriting all lines that are members of the respective relation to avoid duplicates)
+  - Use of OSM relations where available and unambiguous (Overwriting all lines that are members of the respective relation to avoid duplicates)
 
 * Updated osm-prebuilt base network to version 0.5, for changelog, see https://zenodo.org/records/13981528
 
