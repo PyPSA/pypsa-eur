@@ -249,6 +249,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
+
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
     offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)

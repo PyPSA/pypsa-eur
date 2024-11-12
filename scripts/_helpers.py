@@ -390,6 +390,8 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    # Hotfix - Bug, tqdm not working with disable=False
+    disable = True
 
     if disable:
         response = requests.get(url, headers=headers, stream=True)
