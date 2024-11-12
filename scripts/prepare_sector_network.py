@@ -255,8 +255,8 @@ def define_spatial(nodes, options, endo_industry):
         spatial.co2.cement_cc_locations = nodes
 
         # Adding CO2 for tracking CCS in steel industry
-        spatial.co2.steel = nodes + " steel process emissions"
-        spatial.co2.steel_locations = nodes
+        spatial.co2.dri = nodes + " dri process emissions"
+        spatial.co2.dri_locations = nodes
         spatial.co2.bof = nodes + " bof process emissions"
         spatial.co2.bof_locations = nodes
 
@@ -4125,6 +4125,26 @@ def add_steel_industry(n, investment_year, options):
         bus=spatial.steel.nodes,
     )
 
+    # add CO2 process from steel industry
+    n.add("Carrier", "steel process emissions")
+    n.add("Carrier", "steel process emissions CC")
+
+    n.add(
+        "Bus",
+        spatial.co2.dri,
+        location=spatial.co2.dri_locations,
+        carrier="steel process emissions",
+        unit="t_co2",
+    )
+
+    n.add(
+        "Bus",
+        spatial.co2.bof,
+        location=spatial.co2.bof_locations,
+        carrier="steel process emissions",
+        unit="t_co2",
+    )
+    
     ########### Add carriers for new capacity for steel production ############
     # Blast furnace assuming with natural gas
 
@@ -4133,6 +4153,7 @@ def add_steel_industry(n, investment_year, options):
     iron_to_steel_bof = 1.429
     iron_to_steel_eaf_ng = 1.36
     iron_to_steel_eaf_h2 = 1.39
+    em_factor_bof = 668.2 # tCO2/kt steel
 
     # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     lifetime_bof = 100
@@ -4144,9 +4165,11 @@ def add_steel_industry(n, investment_year, options):
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
     capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
-    capex_tgr = 135 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf
+    capex_tgr = 135 * 1e3 / nhours / em_factor_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
+
     opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
     opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_tgr = 10 *1e3 /nhours / em_factor_bof  # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
 
     n.add(
         "Link",
@@ -4170,7 +4193,7 @@ def add_steel_industry(n, investment_year, options):
         efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
         efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
         efficiency4=-488.9 / iron_to_steel_bof,  # MWh electricity per kt iron
-        efficiency5=668.2 / iron_to_steel_bof, # t CO2 per kt iron
+        efficiency5= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=lifetime_bof,  
     )
 
@@ -4183,7 +4206,7 @@ def add_steel_industry(n, investment_year, options):
         bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=spatial.heat4industry.nodes,
         bus4=nodes,
-        bus5=spatial.co2.steel,
+        bus5=spatial.co2.dri,
         carrier="NG-DRI-EAF",
         p_nom_extendable=True,
         p_nom_max = max_cap * iron_to_steel_eaf_ng,
@@ -4243,27 +4266,45 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" steel to total proc emis",
-        bus0=spatial.co2.steel,
+        suffix=" steel dri process emis to atmosphere",
+        bus0=spatial.co2.dri,
         bus1="co2 atmosphere",
         carrier="steel process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=0,
+        marginal_cost=-0.01,
         efficiency=1,
     )
 
     n.add(
         "Link",
         nodes,
-        suffix=" bof to steel proc emis",
-        bus0=spatial.co2.steel,
-        bus1=spatial.co2.steel,
+        suffix=" steel bof process emis to atmosphere",
+        bus0=spatial.co2.bof,
+        bus1="co2 atmosphere",
         carrier="steel process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=0,
+        marginal_cost=-0.01,
         efficiency=1,
+    )
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" steel bof process emis to atmosphere CC",
+        bus0=spatial.co2.bof,
+        bus1="co2 atmosphere",
+        bus2=spatial.co2.nodes,
+        bus3=spatial.heat4industry.nodes,
+        carrier="steel process emissions CC",
+        p_nom_extendable=True,
+        capital_cost= capex_tgr ,
+        efficiency= 1- costs.at["cement capture", "capture_rate"],
+        efficiency2=costs.at["cement capture", "capture_rate"],
+        efficiency3= - 0.6457 / 3.6 * costs.at["cement capture", "capture_rate"], # https://www.sciencedirect.com/science/article/pii/S0921344915300410 
+        # https://www.sciencedirect.com/science/article/pii/S138358661100445X 645.7 kJ/kgCO2 *1e3 / (3.6*1e6) I think it's CO2 output so divide by the efficiency
+        lifetime=100, 
     )
 
 
@@ -4378,13 +4419,13 @@ def add_cement_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" cement to total proc emis",
+        suffix=" cement process emis to atmosphere",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         carrier="cement process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=0,
+        marginal_cost=-0.01,
         efficiency=1,
     )
 
@@ -4393,14 +4434,14 @@ def add_cement_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" cement to total proc emis CC",
+        suffix=" cement process emis to atmosphere CC",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
         bus3=spatial.heat4industry.nodes,
         carrier="cement process emissions CC",
         p_nom_extendable=True,
-        capital_cost=80 / costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
+        capital_cost=80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
         efficiency=1- costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
         efficiency3= - 3.0 / 3.6 * costs.at["cement capture", "capture_rate"],
