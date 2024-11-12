@@ -10,6 +10,7 @@ __pycache__
 *dconf
 gurobi.log
 .vscode
+.idea
 *.orig
 
 /bak

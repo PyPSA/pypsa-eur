@@ -30,3 +30,7 @@ License: CC0-1.0
 Files: borg-it
 Copyright: 2017-2024 The PyPSA-Eur Authors
 License: CC0-1.0
+
+Files: report/*
+Copyright: Open Energy Transition gGmbH
+License: MIT
