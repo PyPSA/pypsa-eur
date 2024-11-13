@@ -150,7 +150,7 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: enable:
+   :start-after: #enable
    :end-before: # docs
 
 .. csv-table::
