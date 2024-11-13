@@ -815,6 +815,8 @@ if config["electricity"]["base_network"] == "osm-raw":
             converters_geojson=resources("osm-raw/build/geojson/converters.geojson"),
             transformers_geojson=resources("osm-raw/build/geojson/transformers.geojson"),
             substations_geojson=resources("osm-raw/build/geojson/buses.geojson"),
+            stations_polygon=resources("osm-raw/build/geojson/stations_polygon.geojson"),
+            buses_polygon=resources("osm-raw/build/geojson/buses_polygon.geojson"),
         log:
             logs("build_osm_network.log"),
         benchmark:
