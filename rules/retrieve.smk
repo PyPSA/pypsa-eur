@@ -567,12 +567,16 @@ if config["enable"]["retrieve"] and (
             transformers=storage(
                 f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
             ),
+            map=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/map.html"
+            ),
         output:
             buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
             converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
             lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
             links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
             transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
+            map=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/map.html",
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
