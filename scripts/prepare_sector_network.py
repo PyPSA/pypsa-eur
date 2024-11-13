@@ -1887,7 +1887,7 @@ def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
         suffix=" land transport fuel cell",
         bus=spatial.h2.nodes,
         carrier="land transport fuel cell",
-        p_set=profile,
+        p_set=profile.loc[n.snapshots],
     )
 
 
@@ -1926,7 +1926,7 @@ def add_ice_cars(n, p_set, ice_share, temperature):
         spatial.oil.land_transport,
         bus=spatial.oil.land_transport,
         carrier="land transport oil",
-        p_set=profile,
+        p_set=profile.loc[n.snapshots],
     )
 
     n.add(
@@ -4486,10 +4486,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 efficiency=efficiency_dh,
                 p_nom_extendable=True,
                 lifetime=costs.at["geothermal", "lifetime"],
-            )
-        elif as_chp and not bus + " urban central heat" in n.buses.index:
-            n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = (
-                efficiency_orc
             )
 
         if egs_config["flexible"]:
