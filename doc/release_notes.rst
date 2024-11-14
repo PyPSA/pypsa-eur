@@ -103,6 +103,8 @@ Upcoming Release
 
 * Updated osm-prebuilt base network to version 0.5, for changelog, see https://zenodo.org/records/13981528
 
+* Bugfix: vehicle-to-grid dispatch capacity is now limited by the fraction of vehicles participating in demand-side-management, halving the dispatch capacity under the default demand-side management participation rate of 0.5.
+
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
