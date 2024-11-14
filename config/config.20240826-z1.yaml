@@ -1,0 +1,667 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "20240826-z1"
+  shared_resources:
+    policy: false
+  disable_progressbar: true
+
+remote:
+  ssh: "z1"
+  path: "SCRATCH/projects/import-benefits/pypsa-eur"
+
+scenario:
+  simpl:
+  - ''
+  ll:
+  - vopt
+  clusters:
+  - 115
+  opts:
+  - ''
+  # test sets
+  # sector_opts:
+  # - ""
+  # - imp
+  # - norelocation
+  sector_opts:
+  - ""
+  - imp
+  # subsets of carriers
+  - imp+AC
+  - imp+H2
+  - imp+CH4
+  - imp+NH3
+  - imp+FT
+  - imp+MeOH
+  - imp+HBI+St # products
+  - imp+H2+CH4+NH3+FT+MeOH  # molecules
+  - imp+H2+CH4+NH3+FT+MeOH+HBI+St  # molecules + products
+  - imp+CH4+NH3+FT+MeOH  # hydrogen derivatives
+  - imp+CH4+NH3+FT+MeOH+HBI+St  # hydrogen derivatives + products
+  - imp+MeOH+FT # liquid carbonaceous fuels
+  - imp+CH4+FT+MeOH  # carbonaceous fuels
+  # subsets of carriers (+20%)
+  - imp+AC1.2
+  - imp+H21.2
+  - imp+CH41.2
+  - imp+NH31.2
+  - imp+FT1.2
+  - imp+MeOH1.2
+  - imp+HBI1.2+St1.2 # products
+  - imp+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2  # molecules
+  - imp+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2  # molecules + products
+  - imp+CH41.2+NH31.2+FT1.2+MeOH1.2  # hydrogen derivatives
+  - imp+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2  # hydrogen derivatives + products
+  - imp+MeOH1.2+FT1.2 # liquid carbonaceous fuels
+  - imp+CH41.2+FT1.2+MeOH1.2  # carbonaceous fuels
+  # subsets of carriers (+10%)
+  - imp+AC1.1
+  - imp+H21.1
+  - imp+CH41.1
+  - imp+NH31.1
+  - imp+FT1.1
+  - imp+MeOH1.1
+  - imp+HBI1.1+St1.1 # products
+  - imp+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1  # molecules
+  - imp+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1  # molecules + products
+  - imp+CH41.1+NH31.1+FT1.1+MeOH1.1  # hydrogen derivatives
+  - imp+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1  # hydrogen derivatives + products
+  - imp+MeOH1.1+FT1.1 # liquid carbonaceous fuels
+  - imp+CH41.1+FT1.1+MeOH1.1  # carbonaceous fuels
+  # subsets of carriers (-10%)
+  - imp+AC0.9
+  - imp+H20.9
+  - imp+CH40.9
+  - imp+NH30.9
+  - imp+FT0.9
+  - imp+MeOH0.9
+  - imp+HBI0.9+St0.9 # products
+  - imp+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9  # molecules
+  - imp+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9  # molecules + products
+  - imp+CH40.9+NH30.9+FT0.9+MeOH0.9  # hydrogen derivatives
+  - imp+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9  # hydrogen derivatives + products
+  - imp+MeOH0.9+FT0.9 # liquid carbonaceous fuels
+  - imp+CH40.9+FT0.9+MeOH0.9  # carbonaceous fuels
+  # subsets of carriers (-20%)
+  - imp+AC0.8
+  - imp+H20.8
+  - imp+CH40.8
+  - imp+NH30.8
+  - imp+FT0.8
+  - imp+MeOH0.8
+  - imp+HBI0.8+St0.8 # products
+  - imp+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8  # molecules
+  - imp+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8  # molecules + products
+  - imp+CH40.8+NH30.8+FT0.8+MeOH0.8  # hydrogen derivatives
+  - imp+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8  # hydrogen derivatives + products
+  - imp+MeOH0.8+FT0.8 # liquid carbonaceous fuels
+  - imp+CH40.8+FT0.8+MeOH0.8  # carbonaceous fuels
+  # lower/higher import costs of molecules
+  - imp+AC+H22.0+CH42.0+NH32.0+FT2.0+MeOH2.0+HBI2.0+St2.0
+  - imp+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp+AC+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - imp+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # higher/lower import costs of everything
+  - imp+AC2.0+H22.0+CH42.0+NH32.0+FT2.0+MeOH2.0+HBI2.0+St2.0
+  - imp+AC1.5+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp+AC1.3+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp+AC1.2+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp+AC1.1+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp+AC0.9+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp+AC0.8+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp+AC0.7+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp+AC0.6+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - imp+AC0.5+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # lower import costs of electricity
+  - imp+AC0.9+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp+AC0.8+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp+AC0.7+H2+CH4+NH3+FT+MeOH+HBI+St
+  # lower/higher import costs of carbonaceous fuels
+  - imp+AC+H2+CH42.0+NH3+FT2.0+MeOH2.0+HBI+St
+  - imp+AC+H2+CH41.5+NH3+FT1.5+MeOH1.5+HBI+St
+  - imp+AC+H2+CH41.3+NH3+FT1.3+MeOH1.3+HBI+St
+  - imp+AC+H2+CH41.2+NH3+FT1.2+MeOH1.2+HBI+St
+  - imp+AC+H2+CH41.1+NH3+FT1.1+MeOH1.1+HBI+St
+  - imp+AC+H2+CH40.9+NH3+FT0.9+MeOH0.9+HBI+St
+  - imp+AC+H2+CH40.8+NH3+FT0.8+MeOH0.8+HBI+St
+  - imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
+  - imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
+  - imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
+  # import volume sensitivity (all)
+  - imp10000
+  - imp9000
+  - imp8000
+  - imp7000
+  - imp6000
+  - imp5000
+  - imp4000
+  - imp3000
+  - imp2000
+  - imp1500
+  - imp1000
+  - imp500
+  # import volume sensitivity (AC)
+  - imp7000+AC
+  - imp6000+AC
+  - imp5000+AC
+  - imp4000+AC
+  - imp3000+AC
+  - imp2000+AC
+  - imp1000+AC
+  # - imp500+AC
+  # import volume sensitivity (H2)
+  - imp7000+H2
+  - imp6000+H2
+  - imp5000+H2
+  - imp4000+H2
+  - imp3000+H2
+  - imp2000+H2
+  - imp1000+H2
+  - imp500+H2
+  # import volume sensitivity (CH4)
+  - imp5000+CH4
+  - imp4000+CH4
+  - imp3000+CH4
+  - imp2000+CH4
+  - imp1000+CH4
+  - imp500+CH4
+  # import volume sensitivity (FT+MeOH)
+  - imp1500+FT+MeOH
+  - imp1000+FT+MeOH
+  - imp500+FT+MeOH
+  # import volume sensitivity (NH3)
+  - imp1500+NH3
+  - imp1000+NH3
+  - imp500+NH3
+  # import volume sensitivity (chemicals & products)
+  - imp7000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp6000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp5000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp4000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp3000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp2000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp1000+H2+CH4+NH3+FT+MeOH+HBI+St
+  - imp500+H2+CH4+NH3+FT+MeOH+HBI+St
+  # import volume sensitivity (50%, cheap chemicals)
+  - imp10000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp9000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp8000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp7000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp6000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp5000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp4000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp3000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp2000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp1500+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp1000+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  - imp500+AC+H21.5+CH41.5+NH31.5+FT1.5+MeOH1.5+HBI1.5+St1.5
+  # import volume sensitivity (130%, expensive chemicals)
+  - imp10000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp9000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp8000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp7000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp6000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp5000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp4000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp3000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp2000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp1500+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp1000+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - imp500+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  # import volume sensitivity (120%, expensive chemicals)
+  - imp10000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp9000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp8000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp7000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp6000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp5000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp4000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp3000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp2000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp1500+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp1000+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - imp500+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  # import volume sensitivity (110%, expensive chemicals)
+  - imp10000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp9000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp8000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp7000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp6000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp5000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp4000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp3000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp2000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp1500+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp1000+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - imp500+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  # import volume sensitivity (90%, cheap chemicals)
+  - imp10000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp9000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp8000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp7000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp6000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp5000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp4000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp3000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp2000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp1500+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp1000+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - imp500+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  # import volume sensitivity (80%, cheap chemicals)
+  - imp10000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp9000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp8000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp7000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp6000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp5000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp4000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp3000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp2000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp1500+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp1000+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - imp500+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  # import volume sensitivity (70%, cheap chemicals)
+  - imp10000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp9000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp8000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp7000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp6000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp5000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp4000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp3000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp2000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp1500+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp1000+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - imp500+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  # import volume sensitivity (50%, cheap chemicals)
+  - imp10000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp9000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp8000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp7000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp6000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp5000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp4000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp3000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp2000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp1500+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp1000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  - imp500+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # additional scenario: no hydrogen network
+  - noH2network
+  - noH2network-imp
+  - noH2network-imp+AC+CH4+NH3+FT+MeOH+HBI+St # no hydrogen imports
+  # additional scenario: no wasteheat
+  - nowasteheat
+  # - nowasteheat-imp
+  # additional scenario: all wasteheat
+  - allwasteheat
+  - allwasteheat-imp
+  # additional scenario: all waste heat, no relocation
+  - allwasteheat-norelocation-imp
+  - allwasteheat-norelocation
+  # no steel+ammonia industry relocation
+  - norelocation
+  - norelocation-imp
+  # no power-to-X flexibility
+  - noPtXflex
+  - noPtXflex-imp
+  # no shipping import flexibility
+  # - noshipflex-imp
+  # onwind expansion to 3 MW/km2
+  - onwind+p2
+  - onwind+p2-imp
+  # unlimited land usage for utility-scale techs (10x)
+  - onwind+p10-solar+p10
+  - onwind+p10-solar+p10-imp
+  planning_horizons:
+  - 2050
+
+enable:
+  retrieve: true
+
+atlite:
+  nprocesses: 12
+
+clustering:
+  focus_weights:
+    RO: 0.025 # tuned for 115 regions
+    GR: 0.015 # tuned for 115 regions
+    PT: 0.018 # tuned for 115 regions
+    BG: 0.015 # tuned for 115 regions
+    CZ: 0.015 # tuned for 115 regions
+    HU: 0.015 # tuned for 115 regions
+    IE: 0.012 # tuned for 115 regions
+    NL: 0.015 # tuned for 115 regions
+    PL: 0.06 # tuned for 115 regions
+    FR: 0.2 # tuned for 115 regions
+    DE: 0.14 # tuned for 115 regions
+    CH: 0.01 # tuned for 115 regions
+    RS: 0.015 # tuned for 115 regions
+    BE: 0.015 # tuned for 115 regions
+  temporal:
+    resolution_sector: 2190SEG
+  simplify_network:
+    remove_stubs_across_borders: false
+
+electricity:
+  base_network: osm-prebuilt
+  extendable_carriers:
+    Generator:
+    - solar
+    - onwind
+    - offwind-ac
+    - offwind-dc
+    - offwind-float
+    - nuclear
+  conventional_carriers: 
+  - nuclear
+  renewable_carriers:
+  - solar
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - offwind-float
+  - hydro
+
+  powerplants_filter: Fueltype == 'Hydro' # only take hydro from powerplantmatching
+  custom_powerplants: true # take all from data/custom_powerplants.csv
+
+  estimate_renewable_capacities:
+    enable: false
+
+conventional:
+  nuclear:
+    p_max_pu: "data/nuclear_p_max_pu.csv"
+    p_min_pu: "data/nuclear_p_max_pu.csv"
+
+renewable:
+  solar:
+    capacity_per_sqkm: 5.1
+  onwind:
+    capacity_per_sqkm: 1.5
+  hydro:
+    flatten_dispatch: true
+  offwind-ac:
+    landfall_length: 30
+  offwind-dc:
+    landfall_length: 35
+  offwind-floating:
+    landfall_length: 40
+
+lines:
+  max_extension: 15000
+  dynamic_line_rating:
+    activate: true
+    max_voltage_difference: 45.
+    max_line_rating: 1.3
+
+links:
+  max_extension: 15000
+
+transmission_projects:
+  status:
+  - under_construction
+  - in_permitting
+  - confirmed
+  - planned_not_yet_permitted
+
+biomass:
+  year: 2050
+
+adjustments:
+  electricity: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 2
+
+sector:
+  land_transport_fuel_cell_share: 0.
+  land_transport_electric_share: 1.
+  land_transport_ice_share: 0.
+  endogenous_steel: true
+  relocation_steel: true
+  relocation_ammonia: true
+  solar_thermal: true
+  ammonia: true
+  gas_network: false
+  H2_retrofit: true
+  biomass_boiler: true
+  hydrogen_turbine: true
+  biosng: false
+  biosng_cc: false
+  electrobiofuels: true
+  biomass_to_liquid: false
+  biomass_to_liquid_cc: false
+  biogas_upgrading_cc: true
+  methanol:
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: true
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: true
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
+  municipal_solid_waste: false
+  use_fuel_cell_waste_heat: 1
+  import:
+    capacity_boost: 2.5
+    limit: false # bool or number in TWh
+    limit_sense: "=="
+    options:
+    - pipeline-h2
+    - shipping-lh2
+    - shipping-lch4
+    - shipping-lnh3
+    - shipping-ftfuel
+    - shipping-meoh
+    - shipping-steel
+    - shipping-hbi
+    - hvdc-to-elec
+    exporters:
+    - AR-South
+    - AR-North
+    - AU-West
+    - AU-East
+    - BR-Northeast
+    - BR-Southeast
+    - CA-East
+    - CL
+    - CN-Northeast
+    - CN-Southeast
+    - CN-West
+    - DZ
+    - EG
+    - KZ
+    - LY
+    - MA
+    - EH
+    - NA
+    - OM
+    - SA
+    - TN
+    - TR
+    - UA
+    - US-Northeast
+    - US-Southeast
+    - US-Northwest
+    - US-South
+    - US-Southwest
+    - US-Alaska
+    - MX
+    - TM
+    - UZ
+    - MN
+    - PK
+    - TH
+    - ZA
+    - KE
+    - TZ
+    - NG
+    - AO
+    - ET
+    - MZ
+    - ER
+    - MR
+    - SN
+    - UY
+    - CO
+    - PE
+    - IN-Northwest
+    - IN-South
+    - IN-East
+    - MG
+    - BO
+    p_nom_max:
+      pipeline-h2: 50700 # EHB 3 parallel 48" pipelines
+    min_part_load_shipping_imports: 0
+    min_part_load_pipeline_imports: 0.9
+    endogenous_hvdc_import:
+      enable: true
+      exporters:
+      - CN-West
+      - OM
+      - EH
+      - MA
+      - DZ
+      - TN
+      - LY
+      - EG
+      - TR
+      - SA
+      - UA
+      - KZ
+      - UZ
+      - TM
+      - MN
+      - MR
+      extra_connections: []
+      xlinks:
+        MA:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 3800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 4000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 3200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 1800
+        MR:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 5300
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 5500
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 4700
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 3300
+        EH:
+        # Plymouth
+        - x: -4.14
+          y: 50.39
+          length: 4800
+        # Cork
+        - x: -8.52
+          y: 51.92
+          length: 5000
+        # Brest
+        - x: -4.49
+          y: 48.43
+          length: 4200
+        # Vigo
+        - x: -8.70
+          y: 42.31
+          length: 2800
+        DZ:
+        # Barcelona
+        - x: 2.37
+          y: 41.57
+          length: 1300
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1800
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1400
+        TN:
+        # Genoa
+        - x: 8.93
+          y: 44.41
+          length: 1500
+        # Marseille
+        - x: 5.30
+          y: 43.38
+          length: 1500
+        LY:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+        EG:
+        # Venice
+        - x: 12.39
+          y: 45.56
+          length: 2500
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977 # p.u./km
+      length_factor: 1.25
+      distance_threshold: 0.04 # quantile
+      p_nom_max: 25000 # MW
+      share_of_p_nom_max_available: 1
+
+industry:
+  HVC_primary_fraction: 0.45
+  HVC_mechanical_recycling_fraction: 0.3
+  HVC_chemical_recycling_fraction: 0.15
+  HVC_environment_sequestration_fraction: 0.2
+  waste_to_energy: false
+  waste_to_energy_cc: false
+
+costs:
+  year: 2040
+  version: 40675bf
+
+solving:
+  options:
+    skip_iterations: true
+    transmission_losses: 2
+    linearized_unit_commitment: false
+
+  solver_options:
+    gurobi-default:
+      threads: 4
+      BarConvTol: 5.e-5
+
+  mem_mb: 150000
+  runtime: 96h

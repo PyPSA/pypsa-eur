@@ -46,7 +46,7 @@ def rename_techs(label):
         # "H2 Electrolysis": "hydrogen storage",
         # "H2 Fuel Cell": "hydrogen storage",
         # "H2 pipeline": "hydrogen storage",
-        "battery": "battery storage",
+        # "battery": "battery storage",
         "external H2": "external H2",
         "external battery": "external battery",
         "external offwind": "external offwind",

@@ -106,7 +106,7 @@ def plot_energy_balance_timeseries(
     pos = df.where(df > 0).fillna(0.0)
     neg = df.where(df < 0).fillna(0.0)
 
-    fig, ax = plt.subplots(figsize=(10, 4), layout="constrained")
+    fig, ax = plt.subplots(figsize=(10, 4.5), layout="constrained")
 
     plot_stacked_area_steplike(ax, pos, colors)
     plot_stacked_area_steplike(ax, neg, colors)
@@ -134,7 +134,7 @@ def plot_energy_balance_timeseries(
     # half the labels because pos and neg create duplicate labels
     handles, labels = ax.get_legend_handles_labels()
     half = int(len(handles) / 2)
-    fig.legend(handles=handles[:half], labels=labels[:half], loc="outside right upper")
+    fig.legend(handles=handles[:half], labels=labels[:half], loc="outside right upper", fontsize=6)
 
     ax.axhline(0, color="grey", linewidth=0.5)
 
@@ -172,12 +172,12 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_balance_timeseries",
             simpl="",
-            clusters=100,
-            ll="v1.5",
+            clusters=115,
+            ll="vopt",
             opts="",
-            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A",
+            sector_opts="imp",
             planning_horizons=2050,
-            configfiles="../../config/config.100n-seg.yaml",
+            configfiles="config/config.20240826-z1.yaml",
         )
 
     ensure_output_dir_exists(snakemake)
@@ -191,10 +191,11 @@ if __name__ == "__main__":
         formatter=lambda x: x.strftime("%Y-%m")
     )
 
-    balance = n.statistics.energy_balance(aggregate_time=False)
+    balance = n.statistics.energy_balance(aggregate_time=False, nice_names=False)
 
     n.carriers.color.update(snakemake.config["plotting"]["tech_colors"])
-    colors = n.carriers.color.rename(n.carriers.nice_name)
+    colors = n.carriers.color#.rename(n.carriers.nice_name)
+    colors = colors.replace("", "grey")
 
     # wrap in function for multiprocessing
     def process_group(group, carriers, balance, months, colors):

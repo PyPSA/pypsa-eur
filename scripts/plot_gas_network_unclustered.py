@@ -14,14 +14,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from build_gas_input_locations import build_gas_input_locations
-from matplotlib.ticker import LogFormatter
 from shapely import wkt
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_gas_network_unclustered")
+        snakemake = mock_snakemake(
+            "plot_gas_network_unclustered",
+            configfiles="config/config.20240826-z1.yaml",
+        )
 
     plt.style.use(snakemake.input.rc)
 
@@ -68,8 +70,8 @@ if __name__ == "__main__":
 
     df.plot(
         ax=ax,
-        column=df["p_nom"].div(1e3).fillna(0.0),
-        linewidths=np.log(df.p_nom.div(df.p_nom.min())).fillna(0.0).div(3),
+        column=df["p_nom_diameter"].div(1e3).fillna(0.0),
+        linewidths=np.log(df.p_nom_diameter.div(df.p_nom_diameter.min())).fillna(0.0).div(3),
         cmap="Spectral_r",
         vmax=vmax,
         legend=True,

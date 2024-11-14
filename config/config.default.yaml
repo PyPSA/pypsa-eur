@@ -677,6 +677,9 @@ sector:
     H2 pipeline:
       efficiency_per_1000km: 1 # 0.982
       compression_per_1000km: 0.018
+    # H2 pipeline retrofitted:
+    #   efficiency_per_1000km: 1 # 0.982
+    #   compression_per_1000km: 0.018
     gas pipeline:
       efficiency_per_1000km: 1 #0.977
       compression_per_1000km: 0.01
@@ -1222,22 +1225,56 @@ plotting:
   energy_threshold: 50.
 
   nice_names:
-    OCGT: "Open-Cycle Gas"
-    CCGT: "Combined-Cycle Gas"
-    offwind-ac: "Offshore Wind (AC)"
-    offwind-dc: "Offshore Wind (DC)"
-    offwind-float: "Offshore Wind (Floating)"
-    onwind: "Onshore Wind"
-    solar: "Solar"
-    PHS: "Pumped Hydro Storage"
-    hydro: "Reservoir & Dam"
-    battery: "Battery Storage"
+    H2 Fuel Cell: "hydrogen fuel cell"
+    H2 turbine: "hydrogen turbine"
+    OCGT: "open-cycle gas turbine"
+    CCGT: "closed-cycle gas turbine"
+    offwind-ac: "offshore wind (AC)"
+    offwind-dc: "offshore wind (DC)"
+    offwind-float: "offshore wind (floating)"
+    onwind: "onshore wind"
+    solar: "utility-scale solar"
+    solar rooftop: "rooftop solar"
+    nuclear: "nuclear"
+    PHS: "pumped-hydro storage"
+    hydro: "reservoir & dam"
+    battery: "battery storage"
+    battery inverter: "battery storage"
+    SMR: "steam methane reforming"
+    SMR CC: "steam methane reforming (CC)"
+    DRI: "direct reduced iron"
+    EAF: "electric arc furnace"
     H2: "Hydrogen Storage"
+    H2 Electrolysis: "electrolysis"
+    H2 for industry: "chlor-alkali electrolysis"
+    H2 pipeline: "hydrogen pipeline"
     lines: "Transmission Lines"
-    ror: "Run of River"
-    load: "Load Shedding"
-    ac: "AC"
-    dc: "DC"
+    ror: "run of river"
+    load: "load shedding"
+    AC: "HVAC line"
+    DC: "HVDC link"
+    import pipeline-h2: "hydrogen import (pipeline)"
+    import infrastructure pipeline-h2: "hydrogen import (pipeline)"
+    import shipping-lh2: "hydrogen import (ship)"
+    import shipping-lch4: "methane import (ship)"
+    import shipping-lnh3: "ammonia import (ship)"
+    import shipping-ftfuel: "Fischer-Tropsch import (ship)"
+    import shipping-meoh: "methanol import (ship)"
+    import shipping-steel: "steel import (ship)"
+    import shipping-hbi: "HBI import (ship)"
+    import hvdc-to-elec: "electricity import (HVDC)"
+    pipeline-h2: "hydrogen import (pipeline)"
+    infrastructure pipeline-h2: "hydrogen import (pipeline)"
+    shipping-lh2: "hydrogen import (ship)"
+    shipping-lch4: "methane import (ship)"
+    shipping-lnh3: "ammonia import (ship)"
+    shipping-ftfuel: "Fischer-Tropsch import (ship)"
+    shipping-meoh: "methanol import (ship)"
+    shipping-steel: "steel import (ship)"
+    shipping-hbi: "HBI import (ship)"
+    hvdc-to-elec: "electricity import (HVDC)"
+    external onwind: "onshore wind (external)"
+    external solar-utility: "solar photovoltaics (external)"
 
   tech_colors:
     # wind
@@ -1301,6 +1338,7 @@ plotting:
     gas for industry co2 to stored: '#8a3400'
     gas for industry: '#853403'
     gas for industry CC: '#692e0a'
+    pipeline: '#ebbca0'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
     # oil
@@ -1357,7 +1395,7 @@ plotting:
     biomass to liquid CC: '#32CDaa'
     unsustainable solid biomass: '#998622'
     unsustainable bioliquids: '#32CD32'
-    electrobiofuels: 'red'
+    electrobiofuels: '#7a6d26'
     BioSNG: '#123456'
     BioSNG CC: '#123456'
     solid biomass to hydrogen: '#654321'
@@ -1377,7 +1415,7 @@ plotting:
     battery: '#ace37f'
     battery storage: '#ace37f'
     battery charger: '#88a75b'
-    battery discharger: '#5d4e29'
+    battery discharger: '#ace37f'
     home battery: '#80c944'
     home battery storage: '#80c944'
     home battery charger: '#5e8032'
@@ -1465,7 +1503,7 @@ plotting:
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
     # hydrogen
-    H2 for industry: "#f073da"
+    H2 for industry: "#FFA07A"
     H2 for shipping: "#ebaee0"
     H2: '#bf13a0'
     hydrogen: '#bf13a0'
@@ -1479,9 +1517,9 @@ plotting:
     land transport fuel cell: '#6b3161'
     H2 pipeline: '#f081dc'
     H2 pipeline retrofitted: '#ba99b5'
-    H2 Fuel Cell: '#c251ae'
-    H2 fuel cell: '#c251ae'
-    H2 turbine: '#991f83'
+    H2 Fuel Cell: '#a6a8ed'
+    H2 fuel cell: '#a6a8ed'
+    H2 turbine: '#d5d6f5'
     H2 Electrolysis: '#ff29d9'
     H2 electrolysis: '#ff29d9'
     # ammonia
@@ -1489,7 +1527,7 @@ plotting:
     ammonia: '#46caf0'
     ammonia store: '#00ace0'
     ammonia cracker: '#87d0e6'
-    Haber-Bosch: '#076987'
+    Haber-Bosch: '#c1cf3a'
     # syngas
     Sabatier: '#9850ad'
     methanation: '#c44ce6'
@@ -1503,7 +1541,7 @@ plotting:
     methanol-to-olefins/aromatics: '#FFA07A'
     Methanol steam reforming: '#FFBF00'
     Methanol steam reforming CC: '#A2EA8A'
-    methanolisation: '#00FFBF'
+    methanolisation: '#a1ffe6'
     biomass-to-methanol: '#EAD28A'
     biomass-to-methanol CC: '#EADBAD'
     allam methanol: '#B98F76'
@@ -1517,6 +1555,7 @@ plotting:
     # co2
     CC: '#f29dae'
     CCS: '#f29dae'
+    carbon capture and storage: '#f29dae'
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
     co2 stored: '#f2385a'
@@ -1542,27 +1581,41 @@ plotting:
     power-to-liquid: '#25c49a'
     gas-to-power/heat: '#ee8340'
     waste: '#e3d37d'
-    other: '#000000'
+    other: '#777'
+    Other: '#777'
     geothermal: '#ba91b1'
     geothermal heat: '#ba91b1'
     geothermal district heat: '#d19D00'
     geothermal organic rankine cycle: '#ffbf00'
-    AC: "#70af1d"
-    AC-AC: "#70af1d"
-    AC line: "#70af1d"
-    links: "#8a1caf"
-    HVDC links: "#8a1caf"
-    DC: "#8a1caf"
-    DC-DC: "#8a1caf"
-    DC link: "#8a1caf"
+    AC: "rosybrown"
+    AC-AC: "rosybrown"
+    AC line: "rosybrown"
+    links: "darkseagreen"
+    HVDC links: "darkseagreen"
+    DC: "darkseagreen"
+    DC-DC: "darkseagreen"
+    DC link: "darkseagreen"
     import pipeline-h2: '#db8ccd'
-    import shipping-lh2: '#d9b8d3'
+    import infrastructure pipeline-h2: '#db8ccd'
+    import shipping-lh2: '#e0c5dc'
     import shipping-lch4: '#f7a572'
-    import shipping-lnh3: '#87d0e6'
-    import shipping-ftfuel: '#95decb'
-    import shipping-meoh: '#b7dbdb'
+    import shipping-lnh3: '#e2ed74'
+    import shipping-ftfuel: '#93eda2'
+    import shipping-meoh: '#87d0e6'
     import shipping-steel: '#94a4be'
+    import shipping-hbi: '#d3dceb'
     import hvdc-to-elec: '#91856a'
+    electricity imports (HVDC): '#91856a'
+    pipeline-h2: '#db8ccd'
+    infrastructure pipeline-h2: '#db8ccd'
+    shipping-lh2: '#e0c5dc'
+    shipping-lch4: '#f7a572'
+    shipping-lnh3: '#e2ed74'
+    shipping-ftfuel: '#93eda2'
+    shipping-meoh: '#87d0e6'
+    shipping-steel: '#94a4be'
+    shipping-hbi: '#d3dceb'
+    hvdc-to-elec: '#91856a'
     external H2: '#f7cdf0'
     external H2 Turbine: '#991f83'
     external H2 Electrolysis: '#991f83'

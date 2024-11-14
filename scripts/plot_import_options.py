@@ -25,32 +25,32 @@ from pypsa.plot import add_legend_circles, add_legend_patches
 
 cc = coco.CountryConverter()
 
-# for EU: https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_aind__custom_9900786/default/table?lang=en
-# EUR_2015_TO_2020 = 1.002 * 1.017 * 1.019 * 1.015 * 1.007
 
 NICE_NAMES = {
     "pipeline-h2": r"H$_2$ (pipeline)",
     "shipping-lh2": "H$_2$ (ship)",
     "shipping-lnh3": "ammonia",
-    "shipping-lch4": "methane",
     "shipping-meoh": "methanol",
+    "shipping-lch4": "methane",
     "shipping-ftfuel": "Fischer-Tropsch",
+    "shipping-hbi": "HBI",
     "shipping-steel": "steel",
 }
 
 PALETTE = {
-    "Argentina": "#74acdf",
-    "Algeria": "#d21034",
-    "Namibia": "#003580",
+    "Namibia": "#74acdf",
+    "Western Sahara": "#d21034",
+    "Australia": "#003580",
     "Saudi Arabia": "#006c35",
     "Chile": "darkorange",
-    "Other": "#aaa",
+    "Algeria": "#6accb8",
+    "Other": "#bbb",
 }
 
 
 def create_stripplot(ic, ax):
 
-    order = list(NICE_NAMES.values())[:-1]
+    order = pd.Index(NICE_NAMES.values())[:-1].intersection(ic.esc.unique())
     minimums = (
         ic.groupby("esc").value.min().round(1)[order].reset_index(drop=True).to_dict()
     )
@@ -59,11 +59,23 @@ def create_stripplot(ic, ax):
     )
 
     sns.stripplot(
-        data=ic,
+        data=ic.query("exporter_base == 'Other'"),
         x="esc",
         y="value",
-        alpha=0.6,
-        hue="exporter",
+        alpha=0.3,
+        hue="exporter_base",
+        jitter=0.28,
+        palette=PALETTE,
+        ax=ax,
+        order=order,
+        size=2,
+    )
+    sns.stripplot(
+        data=ic.query("exporter_base != 'Other'"),
+        x="esc",
+        y="value",
+        alpha=0.5,
+        hue="exporter_base",
         jitter=0.28,
         palette=PALETTE,
         ax=ax,
@@ -103,7 +115,7 @@ def create_stripplot(ic, ax):
         ax.text(x, y - 10, str(y), ha="center", va="bottom", fontsize=9)
     for x, y in maximums.items():
         ax.text(x, y + 5, str(y), ha="center", va="bottom", fontsize=9)
-    ax.legend(title="", ncol=1, loc=(0.55, 0.05), labelspacing=0.3, frameon=False)
+    ax.legend(title="", ncol=1, loc=(0.45, 0.05), labelspacing=0.3, frameon=False)
     for spine in ax.spines.values():
         spine.set_visible(False)
 
@@ -116,11 +128,11 @@ if __name__ == "__main__":
             "plot_import_options",
             simpl="",
             opts="",
-            clusters="110",
+            clusters="115",
             ll="vopt",
-            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-imp+AC",
+            sector_opts="imp",
             planning_horizons="2050",
-            configfiles="../../config/config.20231025-zecm.yaml",
+            configfiles="config/config.20240826-z1.yaml",
         )
 
     configure_logging(snakemake)
@@ -128,7 +140,7 @@ if __name__ == "__main__":
     plt.style.use(["bmh", snakemake.input.rc])
 
     # dummy output if no imports considered
-    if "-imp" not in snakemake.wildcards.sector_opts:
+    if "imp" not in snakemake.wildcards.sector_opts:
         import sys
 
         fig, ax = plt.subplots()
@@ -138,11 +150,11 @@ if __name__ == "__main__":
 
     tech_colors = snakemake.config["plotting"]["tech_colors"]
     tech_colors["lng"] = "#e37959"
-    tech_colors["pipeline"] = "#86cfbc"
+    tech_colors["pipeline"] = "#6f84d6"
 
     crs = ccrs.EqualEarth()
 
-    bus_size_factor = 7.5e4
+    bus_size_factor = 6e4
 
     n = pypsa.Network(snakemake.input.network)
     assign_location(n)
@@ -159,12 +171,9 @@ if __name__ == "__main__":
     inputs.loc[inputs.index.str.contains(pattern), "pipeline"] = 0.0
     inputs = inputs.stack()
 
-    # TODO size external nodes according to wind and solar potential
-
-    h2_cost = n.generators.filter(regex="import (pipeline-h2|shipping-lh2)", axis=0)
+    h2_cost = n.links.filter(regex="import (pipeline-h2|shipping-lh2)", axis=0)
     regions["marginal_cost"] = (
-        h2_cost.groupby(h2_cost.bus.map(n.buses.location)).marginal_cost.min()
-        # * EUR_2015_TO_2020
+        h2_cost.groupby(h2_cost.bus1.str.split(" ").str[:2].str.join(" ")).marginal_cost.min()
     )
 
     # patch network
@@ -175,12 +184,28 @@ if __name__ == "__main__":
     if "CN-West" in n.buses.index:
         n.buses.loc["CN-West", "x"] = 79
         n.buses.loc["CN-West", "y"] = 38
-    for ct in n.buses.index.intersection({"MA", "DZ", "TN", "LY", "EG", "SA"}):
+    for ct in n.buses.index.intersection({"DZ", "LY", "EG", "SA"}):
         n.buses.loc[ct, "y"] += 2
+    n.buses.loc["MA", "x"] -= 2.4
+    n.buses.loc["MA", "x"] -= 1
+    to_remove = ["MR", "EH", "OM", "UZ", "CN-West", "TM", "MN"]
+    n.mremove("Link", n.links.query("bus0 in @to_remove").index)
+    # auxiliary buses for xlinks
+    n.add("Bus", "Atlantic", x=-10, y=45)
+    n.add("Bus", "Kaukasus", x=49, y=40.5)
+    n.links.loc[(n.links.bus0 == "MA") & ~(n.links.bus1.str.startswith("ES")) & ~(n.links.bus1.str.startswith("PT")), "bus0"] = "Atlantic"
+    n.links.loc[n.links.bus0 == "KZ", "bus0"] = "Kaukasus"
+    n.madd(
+        "Link",
+        ["Kausasus", "Atlantic"],
+        suffix=" import hvdc-to-elec auxiliary",
+        bus0=["KZ", "MA"],
+        bus1=["Kaukasus", "Atlantic"]
+    )
 
     link_colors = pd.Series(
         n.links.index.map(
-            lambda x: "seagreen" if "import hvdc-to-elec" in x else "#b18ee6"
+            lambda x: "#d257d9" if "import hvdc-to-elec" in x else "#ab97c9"
         ),
         index=n.links.index,
     )
@@ -199,14 +224,13 @@ if __name__ == "__main__":
         [pd.Series(0.4, index=mi), inputs.div(bus_size_factor)], axis=0
     )
 
-    df = pd.read_csv(snakemake.input.imports, sep=";", keep_default_na=False)
+    df = pd.read_parquet(snakemake.input.imports).reset_index().query("scenario == 'default' and year == 2040")
 
-    df["exporter"] = df.exporter.replace("", "NA")
-    ic = df.query("subcategory == 'Cost per MWh delivered' and esc != 'hvdc-to-elec'")
-    ic["exporter"] = ic.exporter.str.split("-").str[0]
+    ic = df.query("subcategory == 'Cost per MWh delivered' and esc != 'hvdc-to-elec'").copy()
+    ic["exporter_base"] = ic.exporter.str.split("-").str[0]
 
-    highlighted_countries = ["DZ", "AR", "SA", "CL"]
-    ic["exporter"] = ic.exporter.apply(
+    highlighted_countries = ["AU", "NA", "SA", "EH", "CL", "DZ"]
+    ic["exporter_base"] = ic.exporter_base.apply(
         lambda x: (
             cc.convert(names=x, to="name_short")
             if x in highlighted_countries
@@ -215,7 +239,6 @@ if __name__ == "__main__":
     )
 
     ic["esc"] = ic.esc.map(NICE_NAMES)
-    # ic["value"] *= EUR_2015_TO_2020
 
     fig, ax = plt.subplots(subplot_kw={"projection": crs}, figsize=(10.5, 14))
 
@@ -224,7 +247,7 @@ if __name__ == "__main__":
         color_geomap={"ocean": "white", "land": "#efefef"},
         bus_sizes=bus_sizes_plain,
         bus_colors=tech_colors,
-        line_colors="#b18ee6",
+        line_colors="#ab97c9",
         line_widths=1,
         link_widths=1,
         link_colors=link_colors,
@@ -235,18 +258,20 @@ if __name__ == "__main__":
     regions.plot(
         ax=ax,
         column="marginal_cost",
-        cmap="Blues_r",
-        edgecolor="#ddd",
+        cmap="viridis_r",
+        edgecolor="#ccc",
         linewidths=0.5,
-        vmin=50,
-        vmax=100,
+        vmin=70,
+        vmax=110,
         legend=True,
         legend_kwds={
             "label": r"H$_2$ import cost [€/MWh]",
             "shrink": 0.53,
             "pad": 0.015,
             "aspect": 35,
+            "extend": "both",
         },
+        missing_kwds=dict(color="#ddd", hatch="..", label="no imports"),
     )
 
     names = {
@@ -262,10 +287,10 @@ if __name__ == "__main__":
         "pipeline entry",
     ]
     colors = [tech_colors[c] for c in names.keys()] + [
-        "seagreen",
-        "#b18ee6",
+        "#d257d9",
+        "#ab97c9",
         "#e37959",
-        "#86cfbc",
+        "#6f84d6",
     ]
 
     legend_kw = dict(
@@ -286,13 +311,13 @@ if __name__ == "__main__":
     )
 
     legend_kw = dict(
-        loc=(0.623, 0.775),
+        loc=(0.6, 0.76),
         frameon=True,
         title="existing gas import capacity",
         ncol=3,
         labelspacing=1.1,
         framealpha=1,
-        borderpad=0.5,
+        borderpad=1,
         facecolor="white",
     )
 
@@ -300,7 +325,7 @@ if __name__ == "__main__":
         ax,
         [10e3 / bus_size_factor, 50e3 / bus_size_factor, 100e3 / bus_size_factor],
         ["10 GW", "50 GW", "100 GW"],
-        patch_kw=dict(facecolor="#86cfbc"),
+        patch_kw=dict(facecolor="#6f84d6"),
         legend_kw=legend_kw,
     )
 

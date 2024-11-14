@@ -40,7 +40,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_industrial_sites", configfiles=["../../config/config.test.yaml"]
+            "plot_industrial_sites", configfiles=["config/config.20240826-z1.yaml"]
         )
 
     plt.style.use(snakemake.input.rc)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     hotmaps = hotmaps.cx[-12:30, 35:72]
     hotmaps = hotmaps.to_crs(crs.proj4_init)
 
-    not_represented = ["AL", "BA", "RS", "MK", "ME"]
+    not_represented = ["AL", "BA", "RS", "MK", "ME", "XK"]
     missing_countries = countries.loc[countries.index.intersection(not_represented)]
 
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": crs})

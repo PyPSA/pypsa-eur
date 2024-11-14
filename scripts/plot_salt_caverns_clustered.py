@@ -66,8 +66,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_salt_caverns_clustered",
-            clusters=128,
-            configfiles=["../../config/config.test.yaml"],
+            clusters=115,
+            configfiles="config/config.20240826-z1.yaml",
         )
 
     plt.style.use(snakemake.input.rc)

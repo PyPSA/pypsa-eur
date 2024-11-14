@@ -8,3 +8,4 @@ figure.autolayout : True
 figure.constrained_layout.use : True
 figure.dpi : 400
 legend.frameon : False
+mathtext.default: regular

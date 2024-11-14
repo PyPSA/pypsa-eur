@@ -24,12 +24,12 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_heatmap_timeseries_resources",
             simpl="",
-            clusters=100,
-            ll="v1.5",
+            clusters=115,
+            ll="vopt",
             opts="",
-            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A",
+            sector_opts="",
             planning_horizons=2050,
-            configfiles="../../config/config.100n-seg.yaml",
+            configfiles="config/config.20240826-z1.yaml",
         )
 
     plt.style.use(["bmh", snakemake.input.rc])

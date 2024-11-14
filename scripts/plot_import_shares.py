@@ -22,6 +22,7 @@ CARRIERS = {
     "gas": "methane (ship)",
     "methanol": "methanol (ship)",
     "oil": "Fischer-Tropsch (ship)",
+    "HBI": "HBI (ship)",
     "steel": "steel (ship)",
 }
 
@@ -33,6 +34,7 @@ COLOR_MAPPING = {
     "methanol (ship)": "import shipping-meoh",
     "Fischer-Tropsch (ship)": "import shipping-ftfuel",
     "steel (ship)": "import shipping-steel",
+    "HBI (ship)": "import shipping-hbi",
 }
 
 THRESHOLD = 1  # MWh
@@ -43,13 +45,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_import_shares",
-            simpl="",
             opts="",
-            clusters="110",
+            clusters="115",
             ll="vopt",
-            sector_opts="Co2L0-2190SEG-T-H-B-I-S-A-onwind+p0.5-imp",
+            sector_opts="imp",
             planning_horizons="2050",
-            configfiles="../../config/config.20231025-zecm.yaml",
+            configfiles="config/config.20240826-z1.yaml",
         )
 
     configure_logging(snakemake)
@@ -60,7 +61,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    eb = n.statistics.energy_balance().groupby(["carrier", "bus_carrier"]).sum()
+    eb = n.statistics.energy_balance(nice_names=False).groupby(["carrier", "bus_carrier"]).sum()
     eb = (
         eb.unstack(1)
         .groupby(lambda x: "import" if "import" in x or "external" in x else x)
@@ -74,7 +75,7 @@ if __name__ == "__main__":
 
     imp_mix = ie.loc["import"].copy()
     if "steel" in imp_mix.index:
-        imp_mix.loc["steel"] *= 2.1  # kWh/kg
+        imp_mix.loc[["steel", "HBI"]] *= 2.1  # kWh/kg
     imp_mix = pd.DataFrame(
         imp_mix.where(imp_mix > 1e-3)
         .dropna()
@@ -88,12 +89,14 @@ if __name__ == "__main__":
     )
     sel = list(CARRIERS.keys())[::-1]
     ie_rel = ie_rel[sel].rename(columns=CARRIERS).T
+    if ie["HBI"].sum() < 0.5:
+        ie_rel.loc["HBI (ship)"] = 0.
     ie_rel.index = ie_rel.index.str.split(" ").str[0]
-    ie_rel.plot.barh(stacked=True, ax=ax, color=["lightseagreen", "coral"])
+    ie_rel.plot.barh(stacked=True, ax=ax, width=0.8, color=["lightseagreen", "coral"])
 
     ax.set_ylabel("")
     ax.set_xlabel("domestic share [%]", fontsize=11, color="lightseagreen")
-    ax.legend(ncol=2, bbox_to_anchor=(0.3, 1.25))
+    ax.legend(ncol=2, bbox_to_anchor=(0.55, 1.35))
     ax.grid(axis="y")
     ax.set_xlim(0, 100)
 
@@ -101,11 +104,15 @@ if __name__ == "__main__":
         ax=ax_mix,
         stacked=True,
         legend=True,
+        width=0.9,
         color=[tech_colors[COLOR_MAPPING[i]] for i in imp_mix.index],
     )
 
     for i, (carrier, twh) in enumerate(ie_sum[sel].items()):
-        unit = "Mt" if carrier.lower().startswith("steel") else "TWh"
+        if carrier.lower().startswith("steel") or carrier.lower().startswith("hbi"):
+            unit = "Mt"
+        else:
+            unit = "TWh"
         ax.text(119, i, f"{twh} {unit}", va="center", ha="right", color="slateblue")
     ax.text(119, i + 1.5, "total\nsupply", va="center", ha="right", color="slateblue")
 
@@ -117,9 +124,10 @@ if __name__ == "__main__":
         "top", functions=(lambda x: x / total_imp * 100, lambda x: x * total_imp * 100)
     )
 
-    ax_mix.text(total_imp * 1.1, -0.75, "TWh", va="center")
-    ax_mix.text(total_imp * 1.1, 0.75, "%", va="center")
-    ax_mix.legend(ncol=3, bbox_to_anchor=(1.18, -0.3), title="")
+    ax_mix.text(total_imp * 1.03, 0, str(total_imp.astype(int)) + " TWh", va="center", ha="left", color="slateblue")
+    ax_mix.text(total_imp * 1.1, -1.05, "TWh", va="center")
+    ax_mix.text(total_imp * 1.1, 1.05, "%", va="center")
+    ax_mix.legend(ncol=3, bbox_to_anchor=(1.2, -0.4), title="")
 
     ticks = range(10, 100, 20)
     ax.set_xticks(ticks, minor=True)
@@ -142,7 +150,7 @@ if __name__ == "__main__":
         ax.bar_label(container, label_type="center", color="white", fmt=fmt)
 
     def fmt(x):
-        return f"{x:.0f}" if x > 200 else ""
+        return f"{x:.0f}" if x > 80 else ""
 
     for container in ax_mix.containers:
         ax_mix.bar_label(container, label_type="center", color="white", fmt=fmt)
