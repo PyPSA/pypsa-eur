@@ -2843,8 +2843,8 @@ def add_biomass(n, costs):
 
     n.add(
         "Generator",
-        spatial.gas.biogas,
-        bus=spatial.gas.biogas,
+        spatial.biogas.nodes,
+        bus=spatial.biogas.nodes,
         carrier="biogas",
         p_nom=biogas_potentials_spatial,
         marginal_cost=costs.at["biogas", "fuel"],
