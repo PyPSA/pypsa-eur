@@ -634,35 +634,42 @@ if config["enable"]["retrieve"] and (
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_heat_source_utilisation_potentials:
+    def input_heat_source_potentials(w):
+
+        return {
+            heat_source_name: storage(
+                f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{heat_source_features["key"]}.gpkg",
+                keep_local=True,
+            )
+            for heat_source_name, heat_source_features in config_provider(
+                "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+            )(w).items()
+            if heat_source_name
+            in config_provider("sector", "heat_pump_sources", "urban central")(w)
+        }
+
+    def output_heat_source_potentials(w):
+
+        return {
+            heat_source_name: f"data/fraunhofer_heat_utilisation_potentials/{heat_source_name}.gpkg"
+            for heat_source_name in config_provider(
+                "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+            )(w).keys()
+            if heat_source_name
+            in config_provider("sector", "heat_pump_sources", "urban central")(w)
+        }
+
+    rule retrieve_fraunhofer_heat_source_utilisation_potentials:
         input:
-            # TODO: accessing `config` as a dictionary might not work with scenario management!!
-            **{
-                heat_source_name: storage(
-                    f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{heat_source_features["key"]}.gpkg",
-                    keep_local=True,
-                )
-                for heat_source_name, heat_source_features in config["sector"][
-                    "district_heating"
-                ]["fraunhofer_heat_utilisation_potentials"].items()
-                if heat_source_name
-                in config["sector"]["heat_pump_sources"]["urban central"]
-            },
-        output:
-            # TODO: accessing `config` as a dictionary might not work with scenario management!!
-            **{
-                heat_source_name: f"data/fraunhofer_heat_utilisation_potentials/{heat_source_name}.gpkg"
-                for heat_source_name, heat_source_features in config["sector"][
-                    "district_heating"
-                ]["fraunhofer_heat_utilisation_potentials"].items()
-                if heat_source_name
-                in config["sector"]["heat_pump_sources"]["urban central"]
-            },
+            unpack(input_heat_source_potentials),
         log:
             "logs/retrieve_heat_source_utilisation_potentials.log",
         resources:
             mem_mb=500,
-        retries: 2
+        output:
+            geothermal="data/fraunhofer_heat_utilisation_potentials/geothermal.gpkg",
         run:
             for key in input.keys():
+                output_dir = Path(output[key]).parent
+                output_dir.mkdir(parents=True, exist_ok=True)
                 move(input[key], output[key])

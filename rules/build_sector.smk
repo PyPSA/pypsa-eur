@@ -284,33 +284,29 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
+def input_heat_source_potentials(w):
+
+    return {
+        heat_source_name: f"data/fraunhofer_heat_utilisation_potentials/{heat_source_name}.gpkg"
+        for heat_source_name in config_provider(
+            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        )(w).keys()
+        if heat_source_name
+        in config_provider("sector", "heat_pump_sources", "urban central")(w)
+    }
+
+
 rule build_heat_source_potentials:
     params:
         fraunhofer_heat_sources=config_provider(
             "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
         ),
     input:
-        # TODO: accessing `config` as a dictionary might not work with scenario management!!
-        **{
-            heat_source: f"data/fraunhofer_heat_utilisation_potentials/{heat_source}.gpkg"
-            for heat_source in config["sector"]["district_heating"][
-                "fraunhofer_heat_utilisation_potentials"
-            ].keys()
-            if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
-        },
+        unpack(input_heat_source_potentials),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        # dict comprehension gives those Fraunhofer utilisation potentials that are present in sector/district_heating/heat_pump_sources/urban central as input
     output:
-        # TODO: accessing `config` as a dictionary might not work with scenario management!!
-        **{
-            heat_source: resources(
-                "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
-            )
-            for heat_source in config["sector"]["district_heating"][
-                "fraunhofer_heat_utilisation_potentials"
-            ].keys()
-            if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
-        },
+        # TODO: this is a workaround since unpacked functions don't work in output
+        geothermal=resources("heat_source_potential_geothermal_base_s_{clusters}.csv"),
     resources:
         mem_mb=2000,
     log:
@@ -1079,6 +1075,20 @@ rule build_egs_potentials:
         "../scripts/build_egs_potentials.py"
 
 
+def input_heat_source_potentials(w):
+
+    return {
+        heat_source_name: resources(
+            "heat_source_potential_" + heat_source_name + "_base_s_{clusters}.csv"
+        )
+        for heat_source_name in config_provider(
+            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        )(w).keys()
+        if heat_source_name
+        in config_provider("sector", "heat_pump_sources", "urban central")(w)
+    }
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
@@ -1111,17 +1121,18 @@ rule prepare_sector_network:
         ),
     input:
         unpack(input_profile_offwind),
+        unpack(input_heat_source_potentials),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        **{
-            heat_source: resources(
-                "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
-            )
-            for heat_source in config["sector"]["district_heating"][
-                "fraunhofer_heat_utilisation_potentials"
-            ].keys()
-            if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
-        },
+        # **{
+        #     heat_source: resources(
+        #         "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
+        #     )
+        #     for heat_source in config["sector"]["district_heating"][
+        #         "fraunhofer_heat_utilisation_potentials"
+        #     ].keys()
+        #     if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
+        # },
         snapshot_weightings=resources(
             "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),
