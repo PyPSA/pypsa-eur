@@ -61,6 +61,6 @@ reset:
 		rm -r ./benchmarks || true; \
 		rm -r ./results || true; \
 		rm -r ./.snakemake || true; \
-		rm .config/config.yaml || true; \
+		rm ./config/config.yaml || true; \
 		echo "Reset completed." \
 	) || echo "Reset cancelled."
