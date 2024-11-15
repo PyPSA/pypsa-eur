@@ -11,6 +11,8 @@ Base network
 
    <iframe src="base-network-raw.html" width="100%" height="600px"></iframe>
 
+The map might take a moment to load. To view it in full screen, click `here <base-network-raw.html>`__.
+
 ``data/osm-prebuilt``
 
 - **Source:** OpenStreetMap; Xiong, B., Neumann, F., & Brown, T. (2024).
