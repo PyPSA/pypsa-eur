@@ -27,7 +27,7 @@ def get_basemap(app):
     url = "https://zenodo.org/records/14144752/files/map.html?download=1"
     response = requests.get(url)
 
-    build_path = os.path.join(app.builder.outdir, "base_network_raw.html")
+    build_path = os.path.join(app.builder.outdir, "base-network-raw.html")
     with open(build_path, "w") as f:
         f.write(response.text)
 

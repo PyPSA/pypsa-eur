@@ -9,7 +9,7 @@ Base network
 
 .. raw:: html
 
-   <iframe src="base_network_raw.html" width="100%" height="600px"></iframe>
+   <iframe src="base-network-raw.html" width="100%" height="600px"></iframe>
 
 ``data/osm-prebuilt``
 
