@@ -43,25 +43,25 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
+    heat_source_utilisation_potential = gpd.read_file(
+        snakemake.input.utilisation_potential
+    )
 
-    heat_source_technical_potential = {}
-    for (
-        heat_source,
-        heat_source_features,
-    ) in snakemake.params.fraunhofer_heat_sources.items():
-
-        heat_source_utilisation_potential = gpd.read_file(snakemake.input[heat_source])
-
-        heat_source_technical_potential[heat_source] = OnshoreRegionData(
-            onshore_regions=regions_onshore,
-            data=heat_source_utilisation_potential,
-            column_name=heat_source_features["column_name"],
-            scaling_factor=get_unit_conversion_factor(
-                input_unit=heat_source_features["unit"], output_unit="MWh"
-            )
-            / heat_source_features["full_load_hours"],
-        ).data_in_regions_scaled
-
-        heat_source_technical_potential[heat_source].to_csv(
-            snakemake.output[heat_source]
+    heat_source_technical_potential = OnshoreRegionData(
+        onshore_regions=regions_onshore,
+        data=heat_source_utilisation_potential,
+        column_name=snakemake.params.fraunhofer_heat_sources[
+            snakemake.params.heat_source
+        ]["column_name"],
+        scaling_factor=get_unit_conversion_factor(
+            input_unit=snakemake.params.fraunhofer_heat_sources[
+                snakemake.params.heat_source
+            ]["unit"],
+            output_unit="MWh",
         )
+        / snakemake.params.fraunhofer_heat_sources[snakemake.params.heat_source][
+            "full_load_hours"
+        ],
+    ).data_in_regions_scaled
+
+    heat_source_technical_potential.to_csv(snakemake.output[0])

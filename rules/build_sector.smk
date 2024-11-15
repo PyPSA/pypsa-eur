@@ -284,35 +284,23 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
-def input_heat_source_potentials(w):
-
-    return {
-        heat_source_name: f"data/fraunhofer_heat_utilisation_potentials/{heat_source_name}.gpkg"
-        for heat_source_name in config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
-        )(w).keys()
-        if heat_source_name
-        in config_provider("sector", "heat_pump_sources", "urban central")(w)
-    }
-
-
 rule build_heat_source_potentials:
     params:
         fraunhofer_heat_sources=config_provider(
             "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
         ),
+        heat_source="{heat_source}",
     input:
-        unpack(input_heat_source_potentials),
+        utilisation_potential="data/fraunhofer_heat_source_utilisation_potentials/{heat_source}.gpkg",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        # TODO: this is a workaround since unpacked functions don't work in output
-        geothermal=resources("heat_source_potential_geothermal_base_s_{clusters}.csv"),
+        resources("heat_source_potential_{heat_source}_base_s_{clusters}.csv"),
     resources:
         mem_mb=2000,
     log:
-        logs("build_heat_source_potentials_s_{clusters}.log"),
+        logs("build_heat_source_potentials_{heat_source}_s_{clusters}.log"),
     benchmark:
-        benchmarks("build_heat_source_potentials/s_{clusters}")
+        benchmarks("build_heat_source_potentials/{heat_source}_s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1124,15 +1112,6 @@ rule prepare_sector_network:
         unpack(input_heat_source_potentials),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        # **{
-        #     heat_source: resources(
-        #         "heat_source_potential_" + heat_source + "_base_s_{clusters}.csv"
-        #     )
-        #     for heat_source in config["sector"]["district_heating"][
-        #         "fraunhofer_heat_utilisation_potentials"
-        #     ].keys()
-        #     if heat_source in config["sector"]["heat_pump_sources"]["urban central"]
-        # },
         snapshot_weightings=resources(
             "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
         ),

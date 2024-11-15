@@ -23,19 +23,20 @@ if __name__ == "__main__":
         rootpath = "."
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    breakpoint()
 
     # license: https://creativecommons.org/licenses/by/4.0/
-    for heat_source_name, url in snakemake.input.items():
-        # download the data in url
-        filepath = Path(
-            f"data/fraunhofer_heat_utilisation_potentials/{heat_source_name}.gpkg"
-        )
+    # download the data in url
+    heat_source = snakemake.params["heat_source"]
+    filepath = Path(snakemake.output[0])
+    if not filepath.parent.exists():
+        filepath.parent.mkdir(parents=True)
 
-        logger.info(
-            f"Downloading heat source utilisation potential data for {heat_source_name} from '{url}'."
-        )
-        disable_progress = snakemake.config["run"].get("disable_progressbar", False)
-        progress_retrieve(url, filepath, disable=disable_progress)
+    url = f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{snakemake.params.fraunhofer_heat_utilisation_potentials[heat_source]['key']}.gpkg"
 
-        logger.info(f"Data available at at {filepath}")
+    logger.info(
+        f"Downloading heat source utilisation potential data for {heat_source} from '{url}'."
+    )
+    disable_progress = snakemake.config["run"].get("disable_progressbar", False)
+    progress_retrieve(url, filepath, disable=disable_progress)
+
+    logger.info(f"Data available at at {filepath}")
