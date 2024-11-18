@@ -60,7 +60,7 @@ dependencies:
 
 - pip:
   - gurobipy
-  - highspy!=1.8.0 # No conda channel for arm macos
+  - highspy<=1.8
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
