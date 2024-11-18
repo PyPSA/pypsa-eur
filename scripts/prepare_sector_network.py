@@ -220,12 +220,22 @@ def define_spatial(nodes, options, endo_industry):
         spatial.steel.nodes = nodes + " steel"
         spatial.steel.locations = nodes
 
+        # Dri gas
+        spatial.drigas = SimpleNamespace()
+        spatial.drigas.nodes = nodes + " drigas"
+        spatial.drigas.locations = nodes
+
     else:
 
         # steel
         spatial.steel = SimpleNamespace()
         spatial.steel.nodes = ["EU steel"]
         spatial.steel.locations = ["EU"]
+
+        # Dri gas
+        spatial.drigas = SimpleNamespace()
+        spatial.drigas.nodes = ["EU drigas"]
+        spatial.drigas.locations = ["EU"]
 
     if endo_industry:
         # Iron and Steel
@@ -4128,6 +4138,7 @@ def add_steel_industry(n, investment_year, options):
     # add CO2 process from steel industry
     n.add("Carrier", "steel process emissions")
     n.add("Carrier", "steel process emissions CC")
+    n.add("Carrier", "drigas")
 
     n.add(
         "Bus",
@@ -4143,6 +4154,14 @@ def add_steel_industry(n, investment_year, options):
         location=spatial.co2.bof_locations,
         carrier="steel process emissions",
         unit="t_co2",
+    )
+
+    n.add(
+        "Bus",
+        spatial.drigas.nodes,
+        location=spatial.drigas.locations,
+        carrier="drigas",
+        unit="unit",
     )
     
     ########### Add carriers for new capacity for steel production ############
@@ -4196,7 +4215,7 @@ def add_steel_industry(n, investment_year, options):
         efficiency5= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=lifetime_bof,  
     )
-
+    """
     n.add(
         "Link",
         nodes,
@@ -4222,17 +4241,51 @@ def add_steel_industry(n, investment_year, options):
         efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
         lifetime=lifetime_eaf,  
     )
+    """
 
     n.add(
         "Link",
         nodes,
-        suffix=" H2-DRI-EAF",
+        suffix=" CH4 to DRI",
+        bus0=spatial.gas.nodes,
+        bus1=spatial.drigas.nodes,
+        bus2=spatial.co2.dri,
+        carrier="DRI-EAF",
+        p_nom_extendable=True,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
+        efficiency=1 / 2803 , # MWh natural gas per one unit of dri gas
+        efficiency2=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
+    )
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" H2 to DRI",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.drigas.nodes,
+        carrier="DRI-EAF",
+        p_nom_extendable=True,
+        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        ramp_limit_up=ramp_limit,
+        ramp_limit_dowm=ramp_limit,
+        efficiency=1 / 2211 , # MWh hydrogen per one unit of dri gas
+    )
+
+
+
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" DRI-EAF",
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=spatial.h2.nodes,  # in this process is the reducing agent, it is not burnt
+        bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=spatial.heat4industry.nodes,
         bus4=nodes,
-        carrier="H2-DRI-EAF",
+        carrier="DRI-EAF",
         p_nom_extendable=True,
         p_nom_max = max_cap * iron_to_steel_eaf_h2,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
@@ -4241,7 +4294,7 @@ def add_steel_industry(n, investment_year, options):
         capital_cost=capex_eaf, #ADB to be fixed the pricefor h2
         marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_h2,
-        efficiency2= -2211 / iron_to_steel_eaf_h2, # MWh hydrogen per kt iron
+        efficiency2= -1 / iron_to_steel_eaf_h2, # one unit of dri gas per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_h2, # MWh heta per kt iron
         efficiency4= -675.9 / iron_to_steel_eaf_h2, #MWh electricity per kt iron
         lifetime=lifetime_eaf,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
@@ -4434,7 +4487,7 @@ def add_cement_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" cement process emis to atmosphere CC",
+        suffix=" cement CC",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,

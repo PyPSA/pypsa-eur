@@ -688,7 +688,7 @@ def add_steel_industry_existing_gem(n):
         bus2=spatial.coal.nodes,
         bus3=spatial.heat4industry.nodes,
         bus4=nodes,
-        bus5=spatial.co2.process_emissions,
+        bus5=spatial.co2.bof,
         carrier="BF-BOF",
         p_nom=p_nom_bof * iron_to_steel_bof,
         p_nom_extendable=False,
@@ -709,14 +709,13 @@ def add_steel_industry_existing_gem(n):
     n.add(
         "Link",
         nodes,
-        suffix=" NG-DRI-EAF-2020",
+        suffix=" DRI-EAF-2020",
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
+        bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=spatial.heat4industry.nodes,
         bus4=nodes,
-        bus5=spatial.co2.process_emissions,
-        carrier="NG-DRI-EAF",
+        carrier="DRI-EAF",
         p_nom=p_nom_eaf * iron_to_steel_eaf_ng,
         p_nom_extendable=False,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
@@ -725,10 +724,9 @@ def add_steel_industry_existing_gem(n):
         capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
         marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
-        efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
+        efficiency2= -1 / iron_to_steel_eaf_ng, # one unit of dri gas per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heat per kt iron
         efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
-        efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
         lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_eaf,
     )
