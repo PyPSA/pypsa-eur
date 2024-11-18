@@ -923,9 +923,9 @@ def add_cement_industry_existing_sfi(n):
         ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         capital_costs=capex_cement,
-        efficiency=1/1.6,
-        efficiency2= - 3526.82 * 1e3 / 3600 * (1/1.6) , # kJ/kt clinker -> 800 MWh/kt clinker https://www.eeer.org/journal/view.php?number=1175  or 3526.82 kJ/kg https://ijaems.com/upload_images/issue_files/7-IJAEMS-JAN-2019-19-EnergyAudit.pdf
-        efficiency3=500 * (1/1.6), #tCO2/kt cement
+        efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2= - 3420.1 / 3.6 * (1/1.28) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency3=500 * (1/1.28), #tCO2/kt cement
         lifetime=lifetime_cement, 
         build_year=start_dates,
     )

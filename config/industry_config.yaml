@@ -1325,3 +1325,5 @@ plotting:
     cement plant: 'grey'
     cement process emissions: 'grey'
     cement process emissions CC: 'green'
+    steel process emissions: 'grey'
+    steel process emissions CC: 'green'
