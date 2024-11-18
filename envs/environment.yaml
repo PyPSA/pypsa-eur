@@ -60,7 +60,7 @@ dependencies:
 
 - pip:
   - gurobipy
-  - highspy<=1.8
+  - highspy<1.8
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
