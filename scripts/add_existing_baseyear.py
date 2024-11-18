@@ -953,7 +953,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system.value + " gas boiler",
-                efficiency=costs.at[heat_system.gas_boiler_costs_name, "efficiency"],
+                efficiency=efficiency,
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
                     costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
@@ -984,7 +984,7 @@ def add_heating_capacities_installed_before_baseyear(
                 bus1=nodes + " " + heat_system.value + " heat",
                 bus2="co2 atmosphere",
                 carrier=heat_system.value + " oil boiler",
-                efficiency=costs.at[heat_system.oil_boiler_costs_name, "efficiency"],
+                efficiency=efficiency,
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
                 * costs.at[heat_system.oil_boiler_costs_name, "fixed"],
