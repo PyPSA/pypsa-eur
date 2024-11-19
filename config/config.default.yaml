@@ -499,7 +499,7 @@ sector:
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
   bev_dsm: true
-  bev_availability: 0.5
+  bev_dsm_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
   bev_charge_rate: 0.011
