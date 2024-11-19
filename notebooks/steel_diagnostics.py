@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 
-res_directory = "../results/baseline/postnetworks/"
+res_directory = "../results/baseline_eu_dem/postnetworks/"
 
 
 # %% Script to get production in different countries and demand for a single year
 
 n = pypsa.Network(res_directory + "base_s_39_lvopt___2030.nc")
 alinks = n.links
+aloads = n.loads
 # Steel demand
 timestep = n.snapshot_weightings.iloc[0,0]
 steel_dem = n.loads_t.p.filter(like='steel', axis=1).sum().sum()*timestep #Mt steel
@@ -23,14 +24,13 @@ steel_dem = n.loads_t.p.filter(like='steel', axis=1).sum().sum()*timestep #Mt st
 # Steel production
 steel_prod = -n.links_t.p1.filter(regex="EAF|BOF", axis=1)
 steel_prod = steel_prod.loc[:, (steel_prod > 1e-10).any(axis=0)]
-steel_prod_per_country = steel_prod.sum() * timestep / 1e3  # Gt
+steel_prod_per_country = steel_prod.sum() * timestep / 1e3  # Mt
 steel_prod_per_country.index = steel_prod_per_country.index.str[:2]
-steel_prod_per_country = steel_prod_per_country.groupby(
-    steel_prod_per_country.index
-).sum()
+steel_prod_per_country = steel_prod_per_country.groupby(steel_prod_per_country.index).sum()
 steel_prod_per_country = pd.DataFrame(steel_prod_per_country, columns=["Values"])
 
 steel_cap = n.links[n.links.index.str.contains('EAF|BOF', regex=True)]
+existing_steel_cap = n.links[n.links.index.str.contains('BOF-2020', regex=True)]
 
 
 # Create a figure and axis
@@ -46,7 +46,7 @@ ax.plot("Total", steel_dem / 1e3, "ro", label="Steel Dem")
 # Adjust the legend to be in 3 columns
 ax.legend(title="", ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.15))
 # Add labels and title
-ax.set_ylabel("Steel Production (Gt/yr)")
+ax.set_ylabel("Steel Production (Mt/yr)")
 
 # Adjust the layout to fit labels
 plt.tight_layout()
@@ -114,7 +114,7 @@ ax.scatter(
     bar_positions, steel_dem_df.iloc[0], color="black", zorder=3, label="Steel Demand"
 )
 
-ax.set_ylabel("Steel Production (Gt)")
+ax.set_ylabel("Steel Production (Mt)")
 ax.legend(title="Country", loc="upper left", bbox_to_anchor=(1, 1), ncol=1)
 plt.xticks(rotation=45)
 ax.grid(True, axis="y", linestyle="--", alpha=0.7)
