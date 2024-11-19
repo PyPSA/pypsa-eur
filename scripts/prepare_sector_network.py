@@ -4126,7 +4126,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="steel",
         p_set=regional_prod,
     )
-
+    """
     n.add(
         "Store",
         spatial.steel.nodes,
@@ -4134,7 +4134,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="steel",
         bus=spatial.steel.nodes,
     )
-
+    """
     # add CO2 process from steel industry
     n.add("Carrier", "steel process emissions")
     n.add("Carrier", "steel process emissions CC")
@@ -4215,33 +4215,6 @@ def add_steel_industry(n, investment_year, options):
         efficiency5= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=lifetime_bof,  
     )
-    """
-    n.add(
-        "Link",
-        nodes,
-        suffix=" NG-DRI-EAF",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=spatial.heat4industry.nodes,
-        bus4=nodes,
-        bus5=spatial.co2.dri,
-        carrier="NG-DRI-EAF",
-        p_nom_extendable=True,
-        p_nom_max = max_cap * iron_to_steel_eaf_ng,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
-        capital_cost=capex_eaf,
-        marginal_cost=opex_eaf,
-        efficiency=1 / iron_to_steel_eaf_ng,
-        efficiency2= -2803 / iron_to_steel_eaf_ng, # MWh hydrogen per kt iron
-        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heta per kt iron
-        efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
-        efficiency5=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
-        lifetime=lifetime_eaf,  
-    )
-    """
 
     n.add(
         "Link",
@@ -4345,7 +4318,7 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" steel bof process emis to atmosphere CC",
+        suffix=" steel bof CC",
         bus0=spatial.co2.bof,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
@@ -4417,7 +4390,7 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement",
         p_set=hourly_cement_production,
     )
-
+    """
     n.add(
         "Store",
         spatial.cement.nodes + " Cement Store",
@@ -4425,6 +4398,7 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement",
         bus=spatial.cement.nodes,
     )
+    """
 
     # add CO2 process from cement industry
     n.add("Carrier", "cement process emissions")
