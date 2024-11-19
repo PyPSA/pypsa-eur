@@ -101,7 +101,7 @@ Upcoming Release
   - Single transformers for each combination of voltage level per substation. Transformers now have a capacity s_nom based on connected lines
   - Use of OSM relations where available and unambiguous (Overwriting all lines that are members of the respective relation to avoid duplicates)
 
-* Updated osm-prebuilt base network to version 0.5, for changelog, see https://zenodo.org/records/13981528
+* Updated osm-prebuilt base network to version 0.6, for changelog, see https://zenodo.org/records/14144752
 
 * Bugfix: vehicle-to-grid dispatch capacity is now limited by the fraction of vehicles participating in demand-side-management, halving the dispatch capacity under the default demand-side management participation rate of 0.5.
 
