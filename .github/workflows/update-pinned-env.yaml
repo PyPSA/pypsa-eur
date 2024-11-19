@@ -2,8 +2,8 @@ name: Update pinned envs
 
 on:
   push:
-    branches:
-    - master
+    paths:
+    - envs/environment.yaml
   # Run every Sunday at 5:00 UTC
   schedule:
   - cron: "0 5 * * 0"
@@ -14,7 +14,7 @@ env:
 
 jobs:
   update-pinned-environment:
-    if: github.event_name == 'schedule' || contains(github.event.head_commit.modified, 'envs/environment.yaml')
+    if: ${{ github.ref == 'refs/heads/master' }}
     name: Update pinned envs
     runs-on: ${{ matrix.os }}-latest
     strategy:
