@@ -6,9 +6,9 @@
 import logging
 
 import folium
+import geopandas as gpd
 import numpy as np
 import pypsa
-import geopandas as gpd
 from _helpers import configure_logging, set_scenario_config
 from base_network import _get_linetype_by_voltage
 from shapely.wkt import loads
@@ -104,11 +104,7 @@ def export_clean_csv(df, columns, output_file):
 
     df.reset_index().rename(columns=rename_dict).loc[:, columns].replace(
         {True: "t", False: "f"}
-    ).to_csv(
-        output_file, 
-        index=False, 
-        quotechar="'"
-    )
+    ).to_csv(output_file, index=False, quotechar="'")
 
     return None
 
@@ -129,75 +125,93 @@ def create_geometries(network, crs=GEO_CRS):
         - converters (GeoDataFrame): GeoDataFrame containing converter data with geometries.
         - transformers (GeoDataFrame): GeoDataFrame containing transformer data with geometries.
     """
-    buses = network.buses.reset_index()[[
-        "Bus",
-        "v_nom",
-        "dc",
-        "symbol",
-        "under_construction",
-        "tags",
-        "geometry",
-    ]]
+    buses = network.buses.reset_index()[
+        [
+            "Bus",
+            "v_nom",
+            "dc",
+            "symbol",
+            "under_construction",
+            "tags",
+            "geometry",
+        ]
+    ]
     buses["geometry"] = buses.geometry.apply(lambda x: loads(x))
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=crs)
 
-    lines = network.lines.reset_index()[[
-        "Line",
-        "bus0",
-        "bus1",
-        "v_nom",
-        "i_nom",
-        "num_parallel",
-        "s_nom",
-        "r",
-        "x",
-        "b",
-        "length",
-        "underground",
-        "under_construction",
-        "type",
-        "tags",
-        "geometry",
-    ]]
+    lines = network.lines.reset_index()[
+        [
+            "Line",
+            "bus0",
+            "bus1",
+            "v_nom",
+            "i_nom",
+            "num_parallel",
+            "s_nom",
+            "r",
+            "x",
+            "b",
+            "length",
+            "underground",
+            "under_construction",
+            "type",
+            "tags",
+            "geometry",
+        ]
+    ]
     # Create shapely linestring from geometry column
     lines["geometry"] = lines.geometry.apply(lambda x: loads(x))
     lines = gpd.GeoDataFrame(lines, geometry="geometry", crs=crs)
 
-    links = network.links[~is_converter].reset_index().rename(columns={"voltage": "v_nom"})[[
-        "Link",
-        "bus0",
-        "bus1",
-        "v_nom",
-        "p_nom",
-        "length",
-        "underground",
-        "under_construction",
-        "tags",
-        "geometry",
-    ]]
+    links = (
+        network.links[~is_converter]
+        .reset_index()
+        .rename(columns={"voltage": "v_nom"})[
+            [
+                "Link",
+                "bus0",
+                "bus1",
+                "v_nom",
+                "p_nom",
+                "length",
+                "underground",
+                "under_construction",
+                "tags",
+                "geometry",
+            ]
+        ]
+    )
     links["geometry"] = links.geometry.apply(lambda x: loads(x))
     links = gpd.GeoDataFrame(links, geometry="geometry", crs=crs)
 
-    converters = network.links[is_converter].reset_index().rename(columns={"voltage": "v_nom"})[[
-        "Link",
-        "bus0",
-        "bus1",
-        "v_nom",
-        "p_nom",
-        "geometry",
-    ]]
+    converters = (
+        network.links[is_converter]
+        .reset_index()
+        .rename(columns={"voltage": "v_nom"})[
+            [
+                "Link",
+                "bus0",
+                "bus1",
+                "v_nom",
+                "p_nom",
+                "geometry",
+            ]
+        ]
+    )
     converters["geometry"] = converters.geometry.apply(lambda x: loads(x))
     converters = gpd.GeoDataFrame(converters, geometry="geometry", crs=crs)
 
-    transformers = network.transformers.reset_index()[[
-        "Transformer",
-        "bus0",
-        "bus1",
-        "voltage_bus0",
-        "voltage_bus1",
-        "s_nom",
-        "geometry",
-    ]]
+    transformers = network.transformers.reset_index()[
+        [
+            "Transformer",
+            "bus0",
+            "bus1",
+            "voltage_bus0",
+            "voltage_bus1",
+            "s_nom",
+            "geometry",
+        ]
+    ]
     transformers["geometry"] = transformers.geometry.apply(lambda x: loads(x))
     transformers = gpd.GeoDataFrame(transformers, geometry="geometry", crs=crs)
 
@@ -212,7 +226,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
-    
+
     # Params
     line_types = snakemake.params.line_types
 
@@ -223,13 +237,17 @@ if __name__ == "__main__":
     network.lines.loc[:, "type"] = network.lines.v_nom.apply(
         lambda x: _get_linetype_by_voltage(x, line_types)
     )
-    
+
     # Calculate dependent variables (r, x)
     logger.info("Calculating dependent variables for network (r, x).")
     network.calculate_dependent_values()
 
     # i_nom
-    network.lines["i_nom"] = (network.lines.s_nom / network.lines.v_nom / network.lines.num_parallel).div(np.sqrt(3)).round(3) # kA
+    network.lines["i_nom"] = (
+        (network.lines.s_nom / network.lines.v_nom / network.lines.num_parallel)
+        .div(np.sqrt(3))
+        .round(3)
+    )  # kA
 
     # Rounding of dependent values
     network.lines.s_nom = network.lines.s_nom.round(3)
@@ -292,12 +310,16 @@ if __name__ == "__main__":
     )
 
     ### Create interactive map
-    buses, lines, links, converters, transformers = create_geometries(network, crs=GEO_CRS)
+    buses, lines, links, converters, transformers = create_geometries(
+        network, crs=GEO_CRS
+    )
     stations_polygon = gpd.read_file(snakemake.input.stations_polygon)
     buses_polygon = gpd.read_file(snakemake.input.buses_polygon)
 
     # Only keep stations_polygon that contain buses points
-    stations_polygon = gpd.sjoin(stations_polygon, buses, how="left", predicate="contains")
+    stations_polygon = gpd.sjoin(
+        stations_polygon, buses, how="left", predicate="contains"
+    )
     stations_polygon = stations_polygon[stations_polygon.index_right.notnull()]
     stations_polygon = stations_polygon.drop_duplicates(subset=["station_id"])
     stations_polygon = stations_polygon[["station_id", "geometry"]]
@@ -307,31 +329,41 @@ if __name__ == "__main__":
     buses_polygon = buses_polygon.drop_duplicates(subset=["bus_id", "dc_left"])
     buses_polygon.rename(columns={"dc_left": "dc"}, inplace=True)
     buses_polygon = buses_polygon[["bus_id", "dc", "geometry"]]
-    
-    map =None
+
+    map = None
     map = folium.Map(tiles="CartoDB positron", zoom_start=5, location=[53.5, 10])
-    map = stations_polygon.loc[(stations_polygon.station_id.str.startswith("way") | stations_polygon.station_id.str.startswith("relation"))].explore(
+    map = stations_polygon.loc[
+        (
+            stations_polygon.station_id.str.startswith("way")
+            | stations_polygon.station_id.str.startswith("relation")
+        )
+    ].explore(
         color="darkred",
         popup=True,
         m=map,
         name="Clustered substations",
         zindex=100,
+    )
+    map = stations_polygon.loc[
+        ~(
+            stations_polygon.station_id.str.startswith("way")
+            | stations_polygon.station_id.str.startswith("relation")
         )
-    map = stations_polygon.loc[~(stations_polygon.station_id.str.startswith("way") | stations_polygon.station_id.str.startswith("relation"))].explore(
-        color="grey", 
+    ].explore(
+        color="grey",
         popup=True,
         m=map,
         name="Clustered substations (virtual)",
         zindex=101,
     )
-    map = buses_polygon.loc[buses_polygon.dc==False].explore(
+    map = buses_polygon.loc[buses_polygon.dc == False].explore(
         color="yellow",
         popup=True,
         m=map,
         name="Buses (AC)",
         zindex=102,
     )
-    map = buses_polygon.loc[buses_polygon.dc==True].explore(
+    map = buses_polygon.loc[buses_polygon.dc == True].explore(
         color="grey",
         popup=True,
         m=map,
@@ -339,7 +371,7 @@ if __name__ == "__main__":
         zindex=103,
     )
     map = lines.explore(
-        color="rosybrown", 
+        color="rosybrown",
         popup=True,
         m=map,
         name="Lines (AC)",
@@ -366,14 +398,14 @@ if __name__ == "__main__":
         name="Converters",
         zindex=107,
     )
-    map = buses.loc[buses.dc=="f"].explore(
+    map = buses.loc[buses.dc == "f"].explore(
         color="red",
         popup=True,
         m=map,
         name="Buses (AC, Points)",
         zindex=108,
     )
-    map = buses.loc[buses.dc=="t"].explore(
+    map = buses.loc[buses.dc == "t"].explore(
         color="black",
         popup=True,
         m=map,
