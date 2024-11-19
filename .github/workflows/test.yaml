@@ -12,13 +12,16 @@ on:
     branches:
     - master
   schedule:
-  - cron: "0 5 * * *"
+  - cron: "0 5 * * 1-6"
+  - cron: "0 5 * * 0"
 
 # Cancel any in-progress runs when a new run is triggered
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  BASE_ENV: envs/environment.yaml
 
 jobs:
   run-tests:
@@ -27,14 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos, windows]
-        include:
-        - os: ubuntu
-          env_file: envs/linux-pinned.yaml
-        - os: macos
-          env_file: envs/macos-pinned.yaml
-        - os: windows
-          env_file: envs/windows-pinned.yaml
+        # Run windows only on scheduled runs on Sundays, otherwise ignore
+        os: ${{ github.event.schedule == '0 5 * * 0' && fromJson('["ubuntu", "macos", "windows"]') || fromJson('["ubuntu", "macos"]') }}
 
     defaults:
       run:
@@ -43,17 +40,36 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup secrets & cache dates
+    - name: Setup env file path (ubuntu)
+      if: matrix.os == 'ubuntu'
       run: |
-        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
-        echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+        echo "env_file=envs/linux-pinned.yaml" >> $GITHUB_ENV
+
+    - name: Setup env file path (macos and windows)
+      if: matrix.os != 'ubuntu'
+      run: |
+        echo "env_file=envs/${{ matrix.os }}-pinned.yaml" >> $GITHUB_ENV
+
+    - name: Use base env file if it was changed
+      run: |
+        git fetch origin master
+        if git diff --name-only origin/master | grep '${{ env.BASE_ENV }}'; then
+          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of pinned envs."
+          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
+        else
+          echo "Base env ${{ env.BASE_ENV }} not changed. Using pinned envs."
+        fi
+
+    - name: Setup cache keys
+      run: |
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
 
     - uses: actions/cache@v4
       with:
         path: |
           data
           cutouts
-        key: data-cutouts-${{ env.week }}
+        key: data-cutouts-${{ env.WEEK }}
 
     - uses: conda-incubator/setup-miniconda@v3
       with:
@@ -63,12 +79,14 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', matrix.env_file)) }}
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', env.env_file)) }}
       id: cache-env
 
     - name: Update environment
       if: steps.cache-env.outputs.cache-hit != 'true'
-      run: conda env update -n pypsa-eur -f ${{ matrix.env_file }}
+      run: |
+        conda env update -n pypsa-eur -f ${{ env.env_file }}
+        echo "Run conda list" && conda list
 
     - name: Run snakemake test workflows
       run: |
@@ -104,22 +122,31 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Use base env file if it was changed
+      run: |
+        git fetch origin master
+        if git diff --name-only origin/master | grep '${{ env.BASE_ENV }}'; then
+          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of pinned envs."
+          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
+        else
+          echo "Base env ${{ env.BASE_ENV }} not changed. Using pinned envs."
+          echo "env_file=envs/linux-pinned.yaml" >> $GITHUB_ENV
+        fi
+
     # Only run checks if package is not pinned
     - name: Check if inhouse package is pinned
       run: |
-        grep_line=$(grep -- '- ${{ matrix.inhouse }}' envs/environment.yaml)
+        grep_line=$(grep -- '- ${{ matrix.inhouse }}' ${{ env.BASE_ENV }})
         if [[ $grep_line == *"<"* || $grep_line == *"=="* ]]; then
             echo "pinned=true" >> $GITHUB_ENV
         else
             echo "pinned=false" >> $GITHUB_ENV
         fi
 
-    - name: Setup secrets & cache dates
+    - name: Setup cache keys
       if: env.pinned == 'false'
       run: |
-        echo -ne "url: ${CDSAPI_URL}\nkey: ${CDSAPI_TOKEN}\n" > ~/.cdsapirc
-        echo "week=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
-        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_ENV # env
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
 
     - uses: actions/cache@v4
       if: env.pinned == 'false'
@@ -127,7 +154,7 @@ jobs:
         path: |
           data
           cutouts
-        key: data-cutouts-${{ env.week }}
+        key: data-cutouts-${{ env.WEEK }}
 
     - uses: conda-incubator/setup-miniconda@v3
       if: env.pinned == 'false'
@@ -139,12 +166,14 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-hashFiles("envs/linux-pinned.yaml")
+        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-${{ hashFiles(format('{0}', env.env_file)) }}
       id: cache-env
 
     - name: Update environment
       if: env.pinned == 'false' && steps.cache-env.outputs.cache-hit != 'true'
-      run: conda env update -n pypsa-eur -f envs/linux-pinned.yaml
+      run: |
+        conda env update -n pypsa-eur -f ${{ env.env_file }}
+        echo "Run conda list" && conda list
 
     - name: Install inhouse packages from master
       if: env.pinned == 'false'
@@ -157,7 +186,7 @@ jobs:
         make test
 
     - name: Upload artifacts
-      if: env.pinned == 'false'
+      if: env.pinned == 'false' && always()
       uses: actions/upload-artifact@v4
       with:
         name: results-inhouse-${{ matrix.inhouse }}
