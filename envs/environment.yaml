@@ -19,7 +19,7 @@ dependencies:
 # Dependencies of the workflow itself
 - dask
 - xlrd
-- openpyxl!=3.1.1
+- openpyxl
 - seaborn
 - snakemake-minimal>=8.14
 - memory_profiler
@@ -37,6 +37,7 @@ dependencies:
 - glpk
 - shapely>=2.0
 - pyscipopt
+- scip!=9.2.0 # dependency of pyscipopt, temporary fix
 - matplotlib
 - proj
 - fiona
@@ -56,11 +57,11 @@ dependencies:
 # GIS dependencies:
 - cartopy
 - descartes
-- rasterio<1.4
+- rasterio
 
 - pip:
   - gurobipy
-  - highspy!=1.8.0 # No conda channel for arm macos
+  - highspy<1.8
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
