@@ -20,6 +20,22 @@
 import os
 import sys
 
+import requests
+
+
+def get_basemap(app):
+    url = "https://zenodo.org/records/14144752/files/map.html?download=1"
+    response = requests.get(url)
+
+    build_path = os.path.join(app.builder.outdir, "base-network-raw.html")
+    with open(build_path, "w") as f:
+        f.write(response.text)
+
+
+def setup(app):
+    app.connect("builder-inited", get_basemap)
+
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
