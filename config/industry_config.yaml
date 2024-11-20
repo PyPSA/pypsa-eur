@@ -73,8 +73,6 @@ enable:
   retrieve_cutout: true
   custom_busmap: false
   drop_leap_day: true
-  endo_industry: true
-
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -717,7 +715,8 @@ sector:
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
-  endo_industry_options:
+  endo_industry:
+    enable: true
     regional_steel_demand: false
     cement_prod_growth: true
 

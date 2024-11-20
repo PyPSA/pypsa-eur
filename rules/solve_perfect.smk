@@ -11,7 +11,7 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        endo_industry=config_provider("enable", "endo_industry"),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
     input:
         network=RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -31,32 +31,32 @@ rule add_existing_baseyear:
         heating_efficiencies=resources("heating_efficiencies.csv"),
         steel_capacities=lambda w: (
             resources("steel/steel_capacities.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         steel_capacities=lambda w: (
             resources("steel/gem_capacities_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         steel_start_dates=lambda w: (
             resources("steel/gem_start_dates_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         cement_capacities=lambda w: (
             resources("cement/sfi_capacities_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         cement_start_dates=lambda w: (
             resources("cement/sfi_start_dates_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         industrial_distribution_key=lambda w: (
             resources("industrial_distribution_key_base_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
     output:

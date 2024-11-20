@@ -214,7 +214,7 @@ def define_spatial(nodes, options, endo_industry):
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
 
-    if options["endo_industry_options"]["regional_steel_demand"]:
+    if options["endo_industry"]["regional_steel_demand"]:
         # steel
         spatial.steel = SimpleNamespace()
         spatial.steel.nodes = nodes + " steel"
@@ -4114,7 +4114,7 @@ def add_steel_industry(n, investment_year, options):
     ramp_limit = 0
     regional_prod.index = regional_prod.index + ' steel'
 
-    if not options["endo_industry_options"]["regional_steel_demand"]:
+    if not options["endo_industry"]["regional_steel_demand"]:
 
         regional_prod = regional_prod.sum()
 
@@ -4126,15 +4126,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="steel",
         p_set=regional_prod,
     )
-    """
-    n.add(
-        "Store",
-        spatial.steel.nodes,
-        e_nom_extendable=True,
-        carrier="steel",
-        bus=spatial.steel.nodes,
-    )
-    """
+
     # add CO2 process from steel industry
     n.add("Carrier", "steel process emissions")
     n.add("Carrier", "steel process emissions CC")
@@ -4390,15 +4382,6 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement",
         p_set=hourly_cement_production,
     )
-    """
-    n.add(
-        "Store",
-        spatial.cement.nodes + " Cement Store",
-        e_nom_extendable=True,
-        carrier="cement",
-        bus=spatial.cement.nodes,
-    )
-    """
 
     # add CO2 process from cement industry
     n.add("Carrier", "cement process emissions")

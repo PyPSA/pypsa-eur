@@ -529,7 +529,7 @@ rule build_industry_sector_ratios:
     params:
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
-        endo_industry=config_provider("enable", "endo_industry"),
+        endo_industry=config_provider("sector","endo_industry", "enable"),
     input:
         ammonia_production=resources("ammonia_production.csv"),
         idees="data/jrc-idees-2021",
@@ -783,7 +783,7 @@ rule build_industrial_energy_demand_per_node_today:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
 
 
-if config["enable"].get("endo_industry", False):
+if config["sector"]["endo_industry"].get("enable", False):
 
     rule build_industry_steel_production_projections:
         input:
@@ -799,7 +799,7 @@ if config["enable"].get("endo_industry", False):
         script:
             "../scripts/build_industry_steel_production_projections.py"
 
-if config["enable"].get("endo_industry", False) and config["sector"]["endo_industry_options"].get("cement_prod_growth", False): 
+if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["endo_industry"].get("cement_prod_growth", False): 
 
     rule build_industry_cement_production_projections:
         params:
@@ -1075,7 +1075,7 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        endo_industry=config_provider("enable", "endo_industry"),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
         co2_budget_apply=config_provider("co2_budget_apply"),
     input:
         unpack(input_profile_offwind),
@@ -1171,28 +1171,28 @@ rule prepare_sector_network:
         # Steel
         steel_production=lambda w: (
             resources("steel/eu_steel_production.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry","enable")(w)
             else []
         ),
         steel_capacities=lambda w: (
             resources("steel/gem_capacities_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         industrial_distribution_key=lambda w: (
             resources("industrial_distribution_key_base_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         # Cement
         cement_production=lambda w: (
             resources("cement/cement_production_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         cement_capacities=lambda w: (
             resources("cement/sfi_capacities_s_{clusters}.csv")
-            if config_provider("enable", "endo_industry")(w)
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
     output:
