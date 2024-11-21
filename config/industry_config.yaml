@@ -21,9 +21,7 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: 
-  - baseline_eu_dem #'all'
-  - climate_policy_eu_dem
+  name: 'all'
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml
@@ -647,7 +645,7 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
-  min_part_load_fischer_tropsch: 0.5
+  min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
   use_fischer_tropsch_waste_heat: 0.25
