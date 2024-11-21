@@ -920,7 +920,7 @@ def add_cement_industry_existing_sfi(n):
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
-        capital_costs=capex_cement,
+        capital_cost=capex_cement,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.28) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.28), #tCO2/kt cement
