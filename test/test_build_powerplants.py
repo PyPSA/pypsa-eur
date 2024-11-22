@@ -11,6 +11,7 @@ Tests the functionalities of scripts/build_powerplants.py.
 import pathlib
 import sys
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -32,6 +33,9 @@ path_cwd = pathlib.Path.cwd()
     [(False, (131, 18)), (True, (137, 18))],
 )
 def test_add_custom_powerplants(get_config_dict, query_value, expected):
+    """
+    Verify what returned by add_custom_powerplants.
+    """
     config_dict = get_config_dict
     config_dict["electricity"]["custom_powerplants"] = query_value
     custom_powerplants_path = pathlib.Path(
@@ -46,3 +50,105 @@ def test_add_custom_powerplants(get_config_dict, query_value, expected):
     )
     assert ppl_df.shape == (131, 18)
     assert ppl_final.shape == expected
+
+
+def test_replace_natural_gas_technology():
+    """
+    Verify what returned by replace_natural_gas_technology.
+    """
+    input_df = pd.DataFrame(
+        {
+            "Name": [
+                "plant_hydro",
+                "plant_ng_1",
+                "plant_ng_2",
+                "plant_ng_3",
+                "plant_ng_4",
+            ],
+            "Fueltype": [
+                "Hydro",
+                "Natural Gas",
+                "Natural Gas",
+                "Natural Gas",
+                "Natural Gas",
+            ],
+            "Technology": [
+                "Run-Of-River",
+                "Steam Turbine",
+                "Combustion Engine",
+                "Not Found",
+                np.nan,
+            ],
+        }
+    )
+
+    reference_df = pd.DataFrame(
+        {
+            "Name": [
+                "plant_hydro",
+                "plant_ng_1",
+                "plant_ng_2",
+                "plant_ng_3",
+                "plant_ng_4",
+            ],
+            "Fueltype": [
+                "Hydro",
+                "Natural Gas",
+                "Natural Gas",
+                "Natural Gas",
+                "Natural Gas",
+            ],
+            "Technology": ["Run-Of-River", "CCGT", "OCGT", "CCGT", "CCGT"],
+        }
+    )
+    modified_df = input_df.assign(Technology=replace_natural_gas_technology)
+    comparison_df = modified_df.compare(reference_df)
+    assert comparison_df.empty
+
+
+def test_replace_natural_gas_fueltype():
+    """
+    Verify what returned by replace_natural_gas_fueltype.
+    """
+    input_df = pd.DataFrame(
+        {
+            "Name": [
+                "plant_hydro",
+                "plant_ng_1",
+                "plant_ng_2",
+            ],
+            "Fueltype": [
+                "Hydro",
+                "Gas",
+                "Natural",
+            ],
+            "Technology": [
+                "Run-Of-River",
+                "CCGT",
+                "OCGT",
+            ],
+        }
+    )
+
+    reference_df = pd.DataFrame(
+        {
+            "Name": [
+                "plant_hydro",
+                "plant_ng_1",
+                "plant_ng_2",
+            ],
+            "Fueltype": [
+                "Hydro",
+                "Natural Gas",
+                "Natural Gas",
+            ],
+            "Technology": [
+                "Run-Of-River",
+                "CCGT",
+                "OCGT",
+            ],
+        }
+    )
+    modified_df = input_df.assign(Fueltype=replace_natural_gas_fueltype)
+    comparison_df = modified_df.compare(reference_df)
+    assert comparison_df.empty
