@@ -6,6 +6,7 @@
 # coding: utf-8
 
 import pathlib
+
 import pypsa
 import pytest
 import yaml
