@@ -8,11 +8,12 @@
 Tests the functionalities of scripts/build_powerplants.py.
 """
 
+import pathlib
+import sys
+
 import numpy as np
 import pandas as pd
-import pathlib
 import pytest
-import sys
 
 sys.path.append("./scripts")
 
