@@ -695,8 +695,8 @@ def add_steel_industry_existing_gem(n):
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        capital_cost=capex_bof,
-        marginal_cost=opex_bof,
+        #capital_cost=capex_bof,
+        marginal_cost=0,#opex_bof,
         efficiency=1 / iron_to_steel_bof,
         efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
         efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
@@ -721,8 +721,8 @@ def add_steel_industry_existing_gem(n):
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         ramp_limit_up=ramp_limit,
         ramp_limit_dowm=ramp_limit,
-        capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
-        marginal_cost=opex_eaf,
+        #capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
+        marginal_cost=0,#opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
         efficiency2= -1 / iron_to_steel_eaf_ng, # one unit of dri gas per kt iron
         efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heat per kt iron

@@ -4172,9 +4172,9 @@ def add_steel_industry(n, investment_year, options):
 
     # Capex
     discount_rate = 0.04
-    capex_bof = ((211000 + 100000 ) * 0.7551 / nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    capex_bof = ((211000 + 100000 ) * 0.7551 * nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
-    capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
+    capex_eaf = ((145000 + 80000) * 0.7551 * nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
     capex_tgr = 135 * 1e3 / nhours / em_factor_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
 
