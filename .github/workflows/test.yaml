@@ -88,9 +88,13 @@ jobs:
         conda env update -n pypsa-eur -f ${{ env.env_file }}
         echo "Run conda list" && conda list
 
-    - name: Run snakemake test workflows and unit tests
+    - name: Run snakemake test workflows
       run: |
-        make checks
+        make test
+
+    - name: Run unit tests
+      run: |
+        make unit-test
 
     - name: Upload artifacts
       if: always()

@@ -44,7 +44,7 @@ test:
 	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n
 	echo "All tests completed successfully."
 
-checks: test
+unit-test:
 	pytest test
 
 # Cleans all output files from tests

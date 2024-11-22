@@ -8,16 +8,13 @@
 Tests the functionalities of scripts/build_powerplants.py.
 """
 
-import pathlib
-import sys
-
 import numpy as np
 import pandas as pd
+import pathlib
 import pytest
+import sys
 
 sys.path.append("./scripts")
-
-from test.conftest import get_config_dict
 
 from build_powerplants import (
     add_custom_powerplants,
@@ -32,11 +29,11 @@ path_cwd = pathlib.Path.cwd()
     "query_value,expected",
     [(False, (131, 18)), (True, (137, 18))],
 )
-def test_add_custom_powerplants(get_config_dict, query_value, expected):
+def test_add_custom_powerplants(config, query_value, expected):
     """
     Verify what returned by add_custom_powerplants.
     """
-    config_dict = get_config_dict
+    config_dict = config
     config_dict["electricity"]["custom_powerplants"] = query_value
     custom_powerplants_path = pathlib.Path(
         path_cwd, "test", "test_data", "custom_powerplants_DE.csv"
