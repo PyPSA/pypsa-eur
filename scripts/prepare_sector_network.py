@@ -1851,25 +1851,11 @@ def add_EVs(
         efficiency=options["bev_charge_efficiency"],
     )
 
-    if options["v2g"]:
-        n.add(
-            "Link",
-            spatial.nodes,
-            suffix=" V2G",
-            bus1=spatial.nodes,
-            bus0=spatial.nodes + " EV battery",
-            p_nom=p_nom,
-            carrier="V2G",
-            p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
-            lifetime=1,
-            efficiency=options["bev_charge_efficiency"],
-        )
-
     if options["bev_dsm"]:
         e_nom = (
             number_cars
             * options["bev_energy"]
-            * options["bev_availability"]
+            * options["bev_dsm_availability"]
             * electric_share
         )
 
@@ -1884,6 +1870,20 @@ def add_EVs(
             e_max_pu=1,
             e_min_pu=dsm_profile.loc[n.snapshots, spatial.nodes],
         )
+
+        if options["v2g"]:
+            n.add(
+                "Link",
+                spatial.nodes,
+                suffix=" V2G",
+                bus1=spatial.nodes,
+                bus0=spatial.nodes + " EV battery",
+                p_nom=p_nom * options["bev_dsm_availability"],
+                carrier="V2G",
+                p_max_pu=avail_profile.loc[n.snapshots, spatial.nodes],
+                lifetime=1,
+                efficiency=options["bev_charge_efficiency"],
+            )
 
 
 def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
@@ -1907,7 +1907,7 @@ def add_fuel_cell_cars(n, p_set, fuel_cell_share, temperature):
         suffix=" land transport fuel cell",
         bus=spatial.h2.nodes,
         carrier="land transport fuel cell",
-        p_set=profile,
+        p_set=profile.loc[n.snapshots],
     )
 
 
@@ -1946,7 +1946,7 @@ def add_ice_cars(n, p_set, ice_share, temperature):
         spatial.oil.land_transport,
         bus=spatial.oil.land_transport,
         carrier="land transport oil",
-        p_set=profile,
+        p_set=profile.loc[n.snapshots],
     )
 
     n.add(
@@ -2303,10 +2303,11 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             )
 
         if options["chp"]["enable"] and heat_system == HeatSystem.URBAN_CENTRAL:
-            # add gas CHP; biomass CHP is added in biomass section
-            fuels = options["chp"]["fuel"]
-            fuels = np.atleast_1d(fuels)
-            for fuel in fuels:
+            # add non-biomass CHP; biomass CHP is added in biomass section
+            for fuel in options["chp"]["fuel"]:
+                if fuel == "solid biomass":
+                    # Solid biomass CHP is added in add_biomass
+                    continue
                 fuel_nodes = getattr(spatial, fuel).df
                 n.add(
                     "Link",
@@ -2366,8 +2367,8 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
                 )
 
         if (
-            options["chp"]
-            and options["micro_chp"]
+            options["chp"]["enable"]
+            and options["chp"]["micro_chp"]
             and heat_system.value != "urban central"
         ):
             n.add(
@@ -2929,7 +2930,11 @@ def add_biomass(n, costs):
 
     # AC buses with district heating
     urban_central = n.buses.index[n.buses.carrier == "urban central heat"]
-    if not urban_central.empty and options["chp"]:
+    if (
+        not urban_central.empty
+        and options["chp"]["enable"]
+        and ("solid biomass" in options["chp"]["fuel"])
+    ):
         urban_central = urban_central.str[: -len(" urban central heat")]
 
         key = "central solid biomass CHP"
@@ -4501,10 +4506,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
                 efficiency=efficiency_dh,
                 p_nom_extendable=True,
                 lifetime=costs.at["geothermal", "lifetime"],
-            )
-        elif as_chp and not bus + " urban central heat" in n.buses.index:
-            n.links.at[bus + " geothermal organic rankine cycle", "efficiency"] = (
-                efficiency_orc
             )
 
         if egs_config["flexible"]:

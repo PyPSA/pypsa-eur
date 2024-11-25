@@ -40,13 +40,13 @@ EV_lower_degree_factor,--,float,Share increase in energy demand in electric vehi
 EV_upper_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the hot environment and the maximum temperature.
 bev_dsm,--,"{true, false}",Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM)
 ,,,
-bev_availability,--,float,The share for battery electric vehicles (BEV) that are able to do demand side management (DSM)
+bev_dsm_availability,--,float,The share for battery electric vehicles (BEV) that are able to do demand side management (DSM)
 bev_energy,--,float,The average size of battery electric vehicles (BEV) in MWh
 bev_charge_efficiency,--,float,Battery electric vehicles (BEV) charge and discharge efficiency
 bev_charge_rate,MWh,float,The power consumption for one electric vehicle (EV) in MWh. Value derived from 3-phase charger with 11 kW.
 bev_avail_max,--,float,The maximum share plugged-in availability for passenger electric vehicles.
 bev_avail_mean,--,float,The average share plugged-in availability for passenger electric vehicles.
-v2g,--,"{true, false}",Allows feed-in to grid from EV battery
+v2g,--,"{true, false}","Allows feed-in to grid from EV battery. This is only enabled if BEV demand-side management is enabled, and the share of vehicles participating is V2G is given by `bev_dsm_availability`."
 land_transport_fuel_cell _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses fuel cells in a given year
 land_transport_electric _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses electric vehicles (EV) in a given year
 land_transport_ice _share,--,Dictionary with planning horizons as keys.,The share of vehicles that uses internal combustion engines (ICE) in a given year. What is not EV or FCEV is oil-fuelled ICE.
@@ -95,8 +95,8 @@ overdimension_heat_generators,,,Add option for overdimensioning heating systems 
 -- central,--,float,The factor for overdimensioning (increasing CAPEX) central heating systems
 chp,--,,
 -- enable,--,"{true, false}",Add option for using Combined Heat and Power (CHP)
--- fuel,--,string or list of fuels,"Possible options are all fuels which have an exisitng bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"". For all fuels, the techno-economic data from gas CHP is used."
-micro_chp,--,"{true, false}",Add option for using Combined Heat and Power (CHP) for decentral areas.
+-- fuel,--,list of fuels,"Possible options are all fuels which have an existing bus and their CO2 intensity is given in the technology data. Currently possible are ""gas"", ""oil"", ""methanol"", ""lignite"", ""coal"" as well as ""solid biomass"". For all fuels except solid biomass, the techno-economic data from gas CHP is used. For the special case of solid biomass fuel, both CHP plants with and without carbon capture are added."
+-- micro_chp,--,"{true, false}",Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_storage,"currency/MWh ",float,The marginal cost of discharging batteries in distributed grids

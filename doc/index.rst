@@ -219,7 +219,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Getting Started
 
    introduction
@@ -229,7 +229,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Configuration
 
    wildcards
@@ -239,7 +239,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Rules Overview
 
    retrieve
@@ -251,7 +251,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Implementation details for sector-coupled systems
 
    spatial_resolution
@@ -259,7 +259,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: References
 
    release_notes

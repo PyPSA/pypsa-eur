@@ -84,9 +84,9 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [200., 220., 300., 380., 500., 750.]
+  voltages: [220., 300., 330., 380., 400., 500., 750.]
   base_network: osm-prebuilt
-  osm-prebuilt-version: 0.4
+  osm-prebuilt-version: 0.5
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -278,10 +278,11 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
+    330.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    400.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 380.0"
     750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
@@ -498,7 +499,7 @@ sector:
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
   bev_dsm: true
-  bev_availability: 0.5
+  bev_dsm_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
   bev_charge_rate: 0.011
@@ -599,8 +600,10 @@ sector:
     central: 1.0
   chp:
     enable: true
-    fuel: gas # for all fuels the same techno economic data from gas CHP is taken
-  micro_chp: false
+    fuel:
+    - solid biomass # For solid biomass, CHP with and without CC are added
+    - gas # For all other fuels the same techno economic data from gas CHP is taken
+    micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4

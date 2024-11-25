@@ -545,6 +545,7 @@ if config["enable"]["retrieve"] and (
         0.2: "13342577",
         0.3: "13358976",
         0.4: "13759222",
+        0.5: "13981528",
     }
 
     # update rule to use the correct version
@@ -592,7 +593,7 @@ if config["enable"]["retrieve"] and (
         output:
             cables_way="data/osm-raw/{country}/cables_way.json",
             lines_way="data/osm-raw/{country}/lines_way.json",
-            links_relation="data/osm-raw/{country}/links_relation.json",
+            routes_relation="data/osm-raw/{country}/routes_relation.json",
             substations_way="data/osm-raw/{country}/substations_way.json",
             substations_relation="data/osm-raw/{country}/substations_relation.json",
         log:
@@ -619,7 +620,7 @@ if config["enable"]["retrieve"] and (
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/links_relation.json",
+                "data/osm-raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             expand(
