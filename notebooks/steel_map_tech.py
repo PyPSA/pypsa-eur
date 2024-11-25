@@ -160,7 +160,7 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from matplotlib.patches import Wedge
 import yaml
-with open(root_dir + res_dir + scenario + "configs/config.base_s_39_lvopt___2030.yaml") as config_file: config = yaml.safe_load(config_file)
+with open(root_dir + res_dir + "baseline_eu_dem/configs/config.base_s_39_lvopt___2030.yaml") as config_file: config = yaml.safe_load(config_file)
     
 regions = gpd.read_file(regions_fn).set_index("name")
 map_opts = config["plotting"]["map"]
@@ -172,7 +172,7 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
-scenarios = ["baseline", "climate_policy"]
+scenarios = ["baseline_eu_dem", "climate_policy_eu_dem"]
 
 fig, axes = plt.subplots(len(scenarios), len(years), figsize=(3*len(years), 3*len(scenarios)), subplot_kw={"projection": proj})
 
@@ -186,5 +186,5 @@ for i, year in enumerate(years):
 
 plt.tight_layout()
 
-plt.savefig("graphs/steel_prod_per_country_pie_chart.png", bbox_inches='tight')
+plt.savefig("graphs/steel_prod_per_country_pie_chart_eu_dem.png", bbox_inches='tight')
 plt.show()

@@ -45,6 +45,7 @@ def plot_steel_map(n, regions, year, ax=None):
     #n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
     
     regions = regions.to_crs(proj.proj4_init)
+    max_value = max(steel_prod_df.steel_prod.groupby(level=0).sum().div(1e3) * timestep)*1.1
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
@@ -55,7 +56,7 @@ def plot_steel_map(n, regions, year, ax=None):
         cmap="Blues",
         linewidths=0,
         legend=True,
-        vmax=10,
+        vmax=max_value,
         vmin=0,
         legend_kwds={
             "label": "Steel production [Mt steel/yr]",
@@ -69,6 +70,7 @@ def plot_steel_map(n, regions, year, ax=None):
 
     # Add a title and subtitle (if provided)
     ax.set_title(year, fontsize=14, loc="center")  # Main title
+
 
 
 # %%
@@ -87,7 +89,7 @@ import pypsa
 import yaml
 
 with open(
-    root_dir + res_dir + scenario + "configs/config.base_s_39_lvopt___2030.yaml"
+    root_dir + res_dir + "baseline_eu_dem/configs/config.base_s_39_lvopt___2030.yaml"
 ) as config_file:
     config = yaml.safe_load(config_file)
 
@@ -101,7 +103,7 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
-scenarios = ["baseline", "climate_policy"]
+scenarios = ["baseline_eu_dem", "climate_policy_eu_dem"]
 
 fig, axes = plt.subplots(
     len(scenarios),
@@ -124,6 +126,36 @@ for i, year in enumerate(years):
         plot_steel_map(n, regions, year, ax=ax)
 
 plt.tight_layout()
+fig.suptitle('European demand', fontsize=16, y=1.02)
+plt.savefig("graphs/steel_prod_per_country_eu_dem.png", bbox_inches="tight")
+plt.show()
 
-plt.savefig("graphs/steel_prod_per_country.png", bbox_inches="tight")
+
+
+years = [2030, 2040, 2050]
+scenarios = ["baseline_regional_dem", "climate_policy_regional_dem"]
+
+fig, axes = plt.subplots(
+    len(scenarios),
+    len(years),
+    figsize=(3 * len(years), 3 * len(scenarios)),
+    subplot_kw={"projection": proj},
+)
+
+
+for i, year in enumerate(years):
+    for j, scenario in enumerate(scenarios):
+        fn = (
+            root_dir
+            + "results/"
+            + scenario
+            + f"/postnetworks/base_s_39_lvopt___{year}.nc"
+        )
+        ax = axes[j, i]
+        n = pypsa.Network(fn)
+        plot_steel_map(n, regions, year, ax=ax)
+
+plt.tight_layout()
+fig.suptitle('Regional demand', fontsize=16, y=1.02)
+plt.savefig("graphs/steel_prod_per_country_regional_dem.png", bbox_inches="tight")
 plt.show()
