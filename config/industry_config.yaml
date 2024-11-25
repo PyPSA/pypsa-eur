@@ -863,7 +863,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: 2920h
+    resolution_sector: 1460h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

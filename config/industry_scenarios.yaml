@@ -16,11 +16,8 @@ baseline_eu_dem:
   sector:
     endo_industry:
       regional_steel_demand: false
-#    co2_sequestration_potential:
-#      2030: 50
-#      2040: 200
-#      2050: 350
     ammonia: true
+    H2_network: true
 
 climate_policy_eu_dem:
   co2_budget_apply: true
@@ -28,6 +25,7 @@ climate_policy_eu_dem:
     endo_industry:
       regional_steel_demand: false
     ammonia: true
+    H2_network: true
 
 baseline_regional_dem:
   co2_budget_apply: false
@@ -35,6 +33,7 @@ baseline_regional_dem:
     endo_industry:
       regional_steel_demand: true
     ammonia: regional
+    H2_network: false
     
 
 climate_policy_regional_dem:
@@ -43,7 +42,4 @@ climate_policy_regional_dem:
     endo_industry:
       regional_steel_demand: true
     ammonia: regional
-#    co2_sequestration_potential:
-#      2030: 50
-#      2040: 200
-#      2050: 300
+    H2_network: false
