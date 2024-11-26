@@ -147,26 +147,73 @@ def adjust_EVs(n, n_p, year):
                     #pnom = (p_set.divide(eff)).max()
                     pu=n.links_t.p_min_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] #p_set.divide(eff)/pnom
                     n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
-                    print(n.links_t.p_max_pu[(n.links.filter(like=cartype +"-"+str(int(year-lifetime_EV+i)),axis=0)).index])
                     #n.links_t.p_max_pu[(n.links.filter(like="land transpo-"+str(int(year-lifetime_EV+i)),axis=0)).index] = pu.values
                 i = i+1   
     
     #Get existing capacity of EV batteries
     ev_battery_storage = n.stores[n.stores.carrier.str.contains("Li ion|EV battery storage")]
     sum_ev_battery = ev_battery_storage.groupby("bus")["e_nom"].sum()
+    print("EV battery storage",ev_battery_storage.groupby("bus")["e_nom"].sum())
+    sum_ev_battery.index = sum_ev_battery.index.str.replace(' EV battery','',regex=False)
 
-    #Set e_nom_max to remaining capacity in relation to maximum capacity of fully electric car fleet of 2025
+    #Set e_nom_max to remaining capacity in relation to maximum capacity of fully electric car fleet of 2015
     ev_store = n.stores.carrier.str.contains('Li ion|EV battery storage') 
     ev_store_ext = n.stores[ev_store].query("e_nom_extendable").index
+
+    #Caclulate existing EV land transport capacity 
+    ev_land_transport = n.links[n.links.carrier.str.contains("land transport EV")]
+    sum_ev_transport = ev_land_transport.groupby("bus0")["p_nom"].sum()
+    sum_ev_transport.index = sum_ev_transport.index.str.replace(' EV battery', '', regex=False)
+    print("sum ev transport",sum_ev_transport)
+
+    bev_availability = snakemake.config['sector']["bev_availability"]
+    for o in opts:
+
+        if "bevavail" not in o:
+            continue
+        oo = o.split("+")
+        bev_availability = float(oo[1])
+    ev_transport_to_store = sum_ev_transport/snakemake.config['sector']['EV_consumption_1car']*snakemake.config['sector']['bev_energy']*snakemake.config['sector']['bev_charge_avail']*bev_availability
     print(sum_ev_battery)
+    
     if sum(sum_ev_battery):
         enommax = n.stores.loc[ev_store_ext,'e_nom_max']
+        enommax.index = enommax.index.str.replace(' EV battery storage-'+str(year), '', regex=False) 
         print(enommax)
-        enommax.index = enommax.index.str.rstrip(' storage-'+str(year)) 
-        newpnommax = enommax-sum_ev_battery
-        newpnommax[newpnommax < 0] = 0
-        print(newpnommax)
-        n.stores.loc[ev_store_ext,'e_nom_max'] = newpnommax.values
+        #subtract existing battery capacity but add capacity if more EVs are used in land transport than is reflected in EV battery capacity
+        add_enommax = ev_transport_to_store-sum_ev_battery
+        add_enommax[add_enommax<0] = 0
+        newenommax = enommax-sum_ev_battery+add_enommax
+        newenommax[newenommax < 0] = 0
+        n.stores.loc[ev_store_ext,'e_nom_max'] = newenommax.values
+
+    BEV_charger = n.links[n.links.carrier.str.contains("BEV charger")]
+    sum_bev_charger = BEV_charger.groupby("bus0")["p_nom"].sum()
+    print("sum bev charger",sum_bev_charger)
+   
+    sum_bev_charger.index = sum_bev_charger.index.str.replace(' low voltage', '', regex=False)
+
+    print("sum bev charger",sum_bev_charger)
+   
+    
+
+    ev_transport_to_bev = sum_ev_transport/snakemake.config['sector']['EV_consumption_1car']*snakemake.config['sector']['bev_charge_rate']*snakemake.config['sector']['bev_charge_avail']
+    print("ev transport to bev",ev_transport_to_bev)
+    bev_charger_ext = n.links[n.links.carrier.str.contains("BEV charger")].query("p_nom_extendable").index
+    pnommax = n.links.loc[bev_charger_ext,"p_nom_max"]
+    pnommax.index = pnommax.index.str.replace(' BEV charger-'+str(year), '', regex=False)
+    add_pnommax = ev_transport_to_bev-sum_bev_charger
+    print("add pnomax",add_pnommax)
+    add_pnommax[add_pnommax < 0] = 0
+    newpnommax = pnommax - sum_bev_charger + add_pnommax
+    print(pnommax, sum_bev_charger, add_pnommax)
+    newpnommax[newpnommax < 0] = 0
+    print(newpnommax)
+    print(len(newpnommax.values))
+    print(newpnommax.values.shape)
+    n.links.loc[bev_charger_ext,'p_nom_max'] = newpnommax.values
+    print(newpnommax)
+
 
 
 def disable_grid_expansion_if_LV_limit_hit(n):

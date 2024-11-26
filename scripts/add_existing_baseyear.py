@@ -660,16 +660,18 @@ def add_land_transport_installed_before_baseyear(
     p_set = p_set.add_suffix(' oil')
     eff_ICE.index = eff_ICE.index.str.rstrip('-'+str(grouping_year))
     split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1
+    print(grouping_year)
     year = range(int(grouping_year-split_years), int(grouping_year),1)
+    print(year)
     pnom = (p_set/eff_ICE).max()/(len(year)+1)
     #pnom = ((p_set/(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))).max()) / len(year) 
     pnom.index = pnom.index.str.rstrip('-'+str(grouping_year))
-    set_p_nom = pnom 
+    set_p_nom_ICE = pnom * 0.96
     p_set_year = p_set/(len(year))
     #profile = p_set_year.divide(eff_ICE/(1+dd_ICE.add_suffix(" land transport oil")))/pnom/(1+dd_ICE.add_suffix(" land transport oil"))
     profile = n.links_t.p_min_pu.loc[:,ice_index]
     
-    set_p_nom.index = set_p_nom.index.str.rstrip('land transport oil')
+    set_p_nom_ICE.index = set_p_nom_ICE.index.str.rstrip('land transport oil')
     profile.columns = profile.columns.str.rstrip('-'+str(grouping_year))
     profile.columns = profile.columns.str.rstrip('land transport oil')
     eff_ICE.index = eff_ICE.index.str.rstrip('land transport oil')
@@ -688,17 +690,138 @@ def add_land_transport_installed_before_baseyear(
         efficiency = eff_ICE,
         efficiency2 = costs.at['oil', 'CO2 intensity'], 
         lifetime = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'], 
-        p_nom = set_p_nom, 
+        p_nom = set_p_nom_ICE, 
         p_min_pu = profile, 
         p_max_pu = profile, 
         build_year = year
         )
         print(year)
-    #print(eff_ICE)
-    #print(n.links_t.p_max_pu[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
+
+
+
+    p_set.columns = p_set.columns.str.rstrip(' oil')
+
+    split_years = costs.at['Liquid fuels ICE (passenger cars)', 'lifetime'] - 1 
+    split_years = 4
+    year = range(int(grouping_year-split_years), int(grouping_year),1)
+
+    ev_index = n.links.carrier=='land transport EV'
+    #eff = n.links_t.efficiency.loc[:, ev_index]
+    eff_EV = n.links.efficiency.loc[ev_index]
+    eff_EV.index = eff_EV.index.str.rstrip('-'+str(grouping_year))
+    #eff = eff/(1+dd_EV.add_suffix(" land transport EV"))
+    
+    pset = p_set.add_suffix(' EV')
+    pnom = (pset.divide(eff_EV)).max()/(len(year)+1)
+    ev_share = 0.04
+    set_p_nom = pnom *ev_share
+    set_p_nom.index = pnom.index.str.rstrip('-'+str(grouping_year))
+    set_p_nom.index = set_p_nom.index.str.rstrip('land transport EV')
+
+    eff_EV.index = eff_EV.index.str.rstrip('land transport EV')
+    bev_availability = options["bev_availability"]
+    for o in opts:
+
+        if "bevavail" not in o:
+            continue
+        oo = o.split("+")
+
+        bev_availability = float(oo[1])
+    pnom_BEV_charger = set_p_nom*options['bev_charge_avail']/options['EV_consumption_1car']*options['bev_charge_rate']
+    pnom_V2G = pnom_BEV_charger*bev_availability
+    enom_EV_storage = set_p_nom*options['bev_charge_avail']/options['EV_consumption_1car']*(options['bev_energy'])*bev_availability
+    availprofile = n.links_t.p_max_pu.loc[:,n.links.carrier=='land transport EV']
+    ev_battery_storage = n.stores[n.stores.carrier.str.contains("Li ion|EV battery storage")]
+    ev_battery_storage_index = ev_battery_storage.index
+    dsmprofile = n.stores_t.e_min_pu.loc[:,ev_battery_storage_index]
+    dsmprofile.columns = dsmprofile.columns.str.rstrip('-'+str(grouping_year))
+    dsmmax = n.stores.e_nom_max.loc[ev_battery_storage_index]
+    dsmmax.index = dsmmax.index.str.rstrip('-'+str(grouping_year))
+    p_nom_max = n.links.p_nom_max.loc[n.links.carrier=='BEV charger']
+    p_nom_max.index = p_nom_max.index.str.replace(' BEV charger-'+str(grouping_year),"",regex=False)
+    p_nom_max_V2G = p_nom_max
+
+    for o in opts:
+        if o=="V2G+p0":
+            p_nom_max_V2G = p_nom_max_V2G*0
+            pnom_V2G = pnom_V2G*0
+        if o=="EV battery storage+x0":
+            enom_EV_storage = enom_EV_storage*0
+    for year in year:
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" land transport EV-{year}",
+            bus0=nodes + " EV battery",                              
+            bus1 =nodes + " land transport",
+            carrier="land transport EV",
+            lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
+            capital_cost = costs.at["Battery electric (passenger cars)", "fixed"]/options['EV_consumption_1car'],
+            efficiency = eff_EV,     
+            p_nom = set_p_nom, 
+            p_min_pu = profile, 
+            p_max_pu = profile, 
+            build_year = year
+        )
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=f" BEV charger-{year}",
+            bus0=nodes + " low voltage",
+            bus1=nodes + " EV battery",
+            p_nom= pnom_BEV_charger,
+            p_nom_max = p_nom_max,
+            carrier="BEV charger",
+            p_max_pu=availprofile,
+            efficiency=options.get("bev_charge_efficiency", 0.9),
+            lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
+            build_year = year
+        )
+
+        if options["bev_dsm"]:
+            
+
+            n.madd(
+                "Store",
+                nodes,
+                suffix=f" EV battery storage-{year}",
+                bus=nodes + " EV battery",
+                carrier="EV battery storage", #"Li ion",
+                e_cyclic=True,
+                e_max_pu=1,
+                e_min_pu=dsmprofile.values,
+                e_nom = enom_EV_storage,
+                e_nom_max = dsmmax,
+                lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
+                build_year = year
+            )
+
+        if options["v2g"]:
+            n.madd(
+                "Link",
+                nodes,
+                suffix=f" V2G-{year}",
+                bus1=nodes + " low voltage",
+                bus0=nodes + " EV battery",
+                carrier="V2G",
+                p_nom = pnom_V2G,
+                p_nom_max =p_nom_max_V2G*bev_availability,
+                p_max_pu = availprofile,
+                efficiency=options.get("bev_charge_efficiency", 0.9),
+                lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
+                build_year = year
+            )
+
+
     print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'])
-    #print(n.links_t.efficiency[(n.links.filter(like="land transport oil" +"-"+str(int(year)),axis=0)).index])
-    n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'] = set_p_nom.values
+
+    n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'] = set_p_nom_ICE.values
+    n.links.loc[(n.links.filter(like="land transport EV-"+str(year+1),axis=0)).index,'p_nom'] = set_p_nom.values
+    n.links.loc[(n.links.filter(like="BEV charger-"+str(year+1),axis=0)).index,'p_nom'] = pnom_BEV_charger.values
+    n.links.loc[(n.links.filter(like="V2G-"+str(year+1),axis=0)).index,'p_nom'] = pnom_V2G.values
+    n.stores.loc[n.stores.filter(like="EV battery storage"+str(year+1),axis=0).index, 'e_nom'] = enom_EV_storage
     print(n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom'])
     n.links.loc[(n.links.filter(like="land transport oil-"+str(year+1),axis=0)).index,'p_nom_extendable'] = False
     n.links.loc[(n.links.filter(like="land transport EV-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
@@ -715,7 +838,11 @@ def add_land_transport_installed_before_baseyear(
     ]
 
     print(n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom'])
-    #n.stores.loc[n.stores.filter(like="EV battery storage",axis=0).index, 'e_nom_max'] = number_cars.values*options.get('bev_energy')*options.get("bev_availability"),
+    print(n.links.p_nom_max.loc[n.links.carrier=="V2G"])
+    print(n.links.p_nom[n.links.carrier.str.contains("transport oil")].sum()*0.3)
+    print(n.links.p_nom[n.links.carrier.str.contains("transport EV")].sum()*0.99)
+    print(n.loads_t.p_set[n.loads[n.loads.carrier.str.contains("land ")].index].sum(axis=1))
+
     n.links.loc[(n.links.filter(like="land transport fuel cell-"+str(year+1),axis=0)).index, 'p_nom_extendable'] = False
     
     logger.info(f"The model only assumes the minimum number of ICE vehicles to supply the transport demand which represents {round(int(snakemake.config['scenario']['clusters'][0])*p_set.max(axis=0).sum()/number_cars.sum()*100,2)}% of the existing ICE vehicle fleet in 2020")

@@ -289,10 +289,14 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
         year=2018,
     )
 
+
     planning_horizons = snakemake.params.planning_horizons
     if not isinstance(planning_horizons, list):
         planning_horizons = [planning_horizons]
     t_0 = planning_horizons[0]
+    if  t_0 > 2020 :
+        print('changing emissions at beginning of path from', e_0, ' to', 3.2)    
+        e_0 = 3.2
 
     if "be" in o:
         # final year in the path
@@ -318,6 +322,9 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, report_year):
         co2_cap = pd.Series(
             {t: exponential_decay(t) for t in planning_horizons}, name=o
         )
+
+    if 2050 in co2_cap.index:
+        co2_cap.loc[2050] = 0
 
     # TODO log in Snakefile
     csvs_folder = fn.rsplit("/", 1)[0]
@@ -505,14 +512,14 @@ def add_carrier_buses(n, carrier, nodes=None):
         carrier=carrier,
         capital_cost=capital_cost,
     )
-
+    
     n.madd(
         "Generator",
         nodes,
         bus=nodes,
         p_nom_extendable=True,
         carrier=carrier,
-        marginal_cost=costs.at[carrier, "fuel"],
+        marginal_cost= costs.at[carrier, "fuel"]*margoil if carrier=="oil" else costs.at[carrier, "fuel"],
     )
 
 
@@ -1573,9 +1580,9 @@ def add_land_transport(n, costs):
             suffix=" BEV charger",
             bus0=nodes,
             bus1=nodes + " EV battery",
-            #p_nom_extendable = True,
-            #p_nom_max = p_availEV,
-            p_nom = p_availEV,
+            p_nom_extendable = True,
+            p_nom_max = p_availEV*3.3,
+            #p_nom = p_availEV,
             carrier="BEV charger",
             p_max_pu=avail_profile[nodes],
             efficiency=options.get("bev_charge_efficiency", 0.9),
@@ -1590,11 +1597,11 @@ def add_land_transport(n, costs):
                 suffix=" V2G",
                 bus1=nodes,
                 bus0=nodes + " EV battery",
-                #p_nom_extendable = True,
+                p_nom_extendable = True,
                 carrier="V2G",
                 p_max_pu=avail_profile[nodes],
-                #p_nom_max = p_availEV,
-                p_nom = p_availEV,
+                p_nom_max = p_availEV*3.3*bev_availability,
+                #p_nom = p_availEV,
                 efficiency=options.get("bev_charge_efficiency", 0.9),
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
@@ -1614,7 +1621,7 @@ def add_land_transport(n, costs):
                 e_nom_extendable=True,
                 e_max_pu=1,
                 e_min_pu=dsm_profile[nodes],
-                e_nom_max = number_cars.values*options.get('bev_energy')* bev_availability,  #options.get("bev_availability"),
+                e_nom_max = number_cars.values*options.get('bev_energy')*3.3,  #options.get("bev_availability"),
                 lifetime = costs.at['Battery electric (passenger cars)', 'lifetime'], 
             )
         
@@ -3474,7 +3481,7 @@ def remove_h2_network(n):
 
 def maybe_adjust_costs_and_potentials(n, opts):
     for o in opts:
-        flags = ["+e", "+p", "+m", "+c", "+n", "+l", "+x"]
+        flags = ["+e", "+p", "+m", "+c", "+n", "+l", "+x", "+k","+q"]
         if all(flag not in o for flag in flags):
             continue
         oo = o.split("+")
@@ -3495,24 +3502,26 @@ def maybe_adjust_costs_and_potentials(n, opts):
                 "e": "e_nom_max",
                 "c": "capital_cost",
                 "m": "marginal_cost",
+                "k": "efficiency",
                 "n": "efficiency2",
                 "l": "efficiency3",
+                "q": "p_nom",
                 "x": "e_nom_extendable"
             }
             attr = attr_lookup[oo[1][0]]
-           
+
             factor = float(oo[1][1:])
             # beware if factor is 0 and p_nom_max is np.inf, 0*np.inf is nan
             if carrier == "AC":  # lines do not have carrier
                 n.lines[attr] *= factor
             else:
-                if attr == "p_nom_max":
+                if attr == "p_nom_max" or attr=="p_nom":
                     comps = {"Generator", "Link", "StorageUnit"}
-                elif attr == "e_nom_max" or "e_nom_extendable":
+                elif attr == "e_nom_max" or attr == "e_nom_extendable":
                     comps = {"Store"}
                     if attr == "e_nom_extendable":
                         factor = bool(factor)
-                elif attr == "efficiency2" or "efficiency3":
+                elif attr == "efficiency2" or attr == "efficiency3" or attr == "efficiency":
                     comps = {"Link"}
                 else:
                     comps = {"Generator", "Link", "StorageUnit", "Store"}
@@ -3800,7 +3809,11 @@ if __name__ == "__main__":
     options = snakemake.params.sector
 
     opts = snakemake.wildcards.sector_opts.split("-")
-
+    margoil = 1
+    for o in opts:
+        if "oilmarg" in o:
+            oo = o.split("+")
+            margoil = float(oo[1])
     investment_year = int(snakemake.wildcards.planning_horizons[-4:])
 
     n = pypsa.Network(snakemake.input.network)
@@ -3956,7 +3969,7 @@ if __name__ == "__main__":
         insert_electricity_distribution_grid(n, costs)
 
     maybe_adjust_costs_and_potentials(n, opts)
-
+    print(n.links.capital_cost[n.links.carrier.str.contains("land transport oil")])
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)
 

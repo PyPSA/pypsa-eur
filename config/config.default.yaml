@@ -393,6 +393,7 @@ sector:
   bev_charge_rate: 0.011
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
+  bev_charge_avail: 5
   v2g: true
   endogenous_transport: false
   EV_consumption_1car: 0.01 

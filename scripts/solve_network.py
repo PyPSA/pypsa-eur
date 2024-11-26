@@ -899,15 +899,13 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_v2g_constraint(n):
+def add_v2g_constraint(n, bev_availability):
     bev_charger = n.links.carrier.str.contains('BEV charger')
     bev_charger_ext = n.links[bev_charger].query("p_nom_extendable").index
-    lhs1 = n.model["Link-p_nom"].loc[bev_charger_ext]
+    lhs1 = n.model["Link-p_nom"].loc[bev_charger_ext]*bev_availability
     v2g = n.links.carrier.str.contains('V2G')
     v2g_ext = n.links[v2g].query("p_nom_extendable").index
     lhs2 = n.model["Link-p_nom"].loc[v2g_ext]
-    lhs = lhs1 - lhs2
-    rhs = 0
     n.model.add_constraints(lhs1==lhs2, name="constraint_v2g")
 
 
@@ -922,7 +920,7 @@ def add_test_storage_constraint(n):
     lhs1 = n.model["Link-p_nom"].loc[ev_ext]/n.config['sector']['EV_consumption_1car']
     n.model.add_constraints(lhs2==1000, name="test_store")
 
-
+#constrains EV battery in relation to parking cars based on land transport EV installed
 def add_EV_storage_constraint(n, bev_availability, ev_ext, ev_store_ext, i):
 
 
@@ -936,6 +934,65 @@ def add_EV_storage_constraint(n, bev_availability, ev_ext, ev_store_ext, i):
     rhs = lhs1*factor/n.config['sector']['EV_consumption_1car']
 
     n.model.add_constraints(lhs2==rhs, name="constraint_EV_storage"+str(i))
+
+
+def add_BEV_charger_constraint(n, i):
+
+    bev = n.links.carrier.str.contains('BEV charger') 
+    bev_links = n.links[bev].index[i]
+    bus = n.links.bus0[bev_links]
+    indexBEV = n.links[(n.links.bus0==bus)].index.intersection(n.links[bev].index)
+    existing_link_BEV = n.links.p_nom[indexBEV].sum()
+    bev_charger = n.links.carrier.str.contains('BEV charger')
+    bev_charger_ext = n.links[bev_charger].query("p_nom_extendable").index[i]
+    lhs = (n.model["Link-p_nom"].loc[bev_charger_ext]+existing_link_BEV)/n.config['sector']['bev_charge_rate']
+
+
+
+    ev = n.links.carrier.str.contains('land transport EV') 
+    ev_links = n.links[ev].index[i]
+    bus = n.links.bus0[ev_links]
+    indexEV = n.links[(n.links.bus0==bus)].index.intersection(n.links[ev].index)
+    existing_link_EV = n.links.p_nom[indexEV].sum()
+    ev = n.links.carrier.str.contains('land transport EV')
+    ev_ext = n.links[ev].query("p_nom_extendable").index[i]
+    rhs2 = (n.model["Link-p_nom"].loc[ev_ext]+existing_link_EV)/n.config['sector']['EV_consumption_1car']
+
+    #factor = n.config["sector"]["bev_avail_max"]/(1-n.config["sector"]["bev_avail_max"])*bev_availability
+    factor  = n.config["sector"]["bev_charge_avail"]
+
+    #factor = n.config["sector"]["bev_availability"]*n.config["sector"]["bev_avail_max"]/(1-n.config["sector"]["bev_avail_max"])*(n.config['sector']['bev_energy'])
+    rhs = rhs2*factor
+
+    n.model.add_constraints(lhs==rhs, name="constraint_BEV_charger"+str(i))
+
+#important for myopic: makes sure that the overall capacity of EV batteries is at least as much as land transport used
+def add_EV_storage_constraint2(n, bev_availability, ev_ext, ev_store_ext, i):
+
+
+    rhs1 = n.model["Link-p_nom"].loc[ev_ext]
+
+    ev = n.links.carrier.str.contains('land transport EV') 
+    ev_links = n.links[ev].index[i]
+    bus = n.links.bus0[ev_links]
+    indexEV = n.links[(n.links.bus0==bus)].index.intersection(n.links[ev].index)
+    existing_link = n.links.p_nom[indexEV].sum()
+
+    lhs2 = n.model.variables['Store-e_nom'].loc[ev_store_ext]
+
+    store = n.stores.carrier.str.contains('Li ion|EV battery storage') 
+    ev_store = n.stores[store].index[i]
+    bus = n.stores.bus[ev_store]
+    indexstore = n.stores[(n.stores.bus==bus)].index
+    existing_store = n.stores.e_nom[indexstore].sum()
+
+    lhs = (lhs2 + existing_store)/(n.config['sector']['bev_energy'])
+
+    #factor = n.config["sector"]["bev_avail_max"]/(1-n.config["sector"]["bev_avail_max"])
+    factor = 5
+    rhs = (rhs1+existing_link)/n.config['sector']['EV_consumption_1car']*bev_availability*factor
+
+    n.model.add_constraints(lhs==rhs, name="constraint_EV_storage2_"+str(i))
 
 def add_EV_number_constraint(n):
     bev_charger = n.links.carrier.str.contains('BEV charger')
@@ -1001,8 +1058,8 @@ def extra_functionality(n, snapshots):
     current_horizon = int(snakemake.wildcards.planning_horizons)
 
 
-    if config['sector']["land_transport_electric_share"][current_horizon] is None: # and any(n.links.loc[(n.links[n.links.carrier.str.contains("BEV charger")].index),'p_nom_extendable']):   
-
+    if config['sector']["land_transport_electric_share"][current_horizon] is None and any(n.links.loc[(n.links[n.links.carrier.str.contains("BEV charger")].index),'p_nom_extendable']):   
+        print(any(n.links.loc[(n.links[n.links.carrier.str.contains("BEV charger")].index),'p_nom_extendable']))
         bev_availability = n.config["sector"]["bev_availability"]
         for o in opts:
 
@@ -1011,6 +1068,14 @@ def extra_functionality(n, snapshots):
             oo = o.split("+")
 
             bev_availability = float(oo[1])
+        BEV_charger_ext = n.links[n.links.carrier.str.contains("BEV charger")].query("p_nom_extendable").index
+        i = 0
+        while i < len(BEV_charger_ext):
+            BEV_charger_max = n.links.p_nom_max[BEV_charger_ext[i]]
+            if BEV_charger_max > 0.0001:
+                add_BEV_charger_constraint(n, i)
+            i = i+1
+        print(bev_availability)
         if config['sector']["bev_dsm"]:
 
           ev_store = n.stores.carrier.str.contains('Li ion|EV battery storage') 
@@ -1019,15 +1084,18 @@ def extra_functionality(n, snapshots):
           ev_ext = n.links[ev].query("p_nom_extendable").index
           i=0
           while i < len(ev_store_ext):
-               add_EV_storage_constraint(n, bev_availability, ev_ext[i], ev_store_ext[i], i)
+               print(n.stores.e_nom_max[ev_store_ext[i]])
+               if n.stores.e_nom_max[ev_store_ext[i]] > 0.0001:
+                print(n.stores.e_nom_max[ev_store_ext[i]])
+                add_EV_storage_constraint2(n, bev_availability, ev_ext[i], ev_store_ext[i], i)
+                #add_EV_storage_constraint2(n, bev_availability, ev_ext[i], ev_store_ext[i], i)
                i = i+1
 
 
           #add_EV_storage_constraint(n, bev_availability)
-
-        #if config['sector']["v2g"] and sum(n.links.p_nom_max[n.links[n.links.carrier.str.contains("V2G")].index]):
+        if config['sector']["v2g"] and sum(n.links.p_nom_max[n.links[n.links.carrier.str.contains("V2G")].index]):
           #add_EV_number_constraint(n)
-          #add_v2g_constraint(n) 
+          add_v2g_constraint(n, bev_availability) 
     if snakemake.params.custom_extra_functionality:
         source_path = snakemake.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
