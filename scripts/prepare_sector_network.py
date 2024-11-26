@@ -122,7 +122,7 @@ def define_spatial(nodes, options):
             spatial.gas.biogas_to_gas_cc = nodes + " biogas to gas CC"
         else:
             spatial.gas.biogas_to_gas_cc = ["EU biogas to gas CC"]
-        if options.get("co2_spatial", options["co2network"]):
+        if options.get("co2_spatial", options["co2_network"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
             spatial.gas.industry_cc = ["gas for industry CC"]
@@ -3796,7 +3796,7 @@ def add_industry(n, costs):
         unit="t_co2",
     )
 
-    if options["co2_spatial"] or options["co2network"]:
+    if options["co2_spatial"] or options["co2_network"]:
         p_set = (
             -industrial_demand.loc[nodes, "process emission"].rename(
                 index=lambda x: x + " process emissions"
@@ -4612,7 +4612,7 @@ if __name__ == "__main__":
     if not options["H2_network"]:
         remove_h2_network(n)
 
-    if options["co2network"]:
+    if options["co2_network"]:
         add_co2_network(n, costs)
 
     if options["allam_cycle_gas"]:
