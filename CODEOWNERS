@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: : 2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# This file provides an oveirview of code owners for `pypsa-eur`
+# They are responsible for reviewing and approving changes to the codebase.
+# For more informations, see
+# https://help.github.com/articles/about-codeowners/
+
+
+# Global rule:
+# *
+# TODO: Activate when more scripts are assigned
+
+
+scripts/build_central_heating_temperature_profiles              @amos-schledorn
+scripts/build_cop_profiles                                      @amos-schledorn
+scripts/definitions/heat_sector.py                              @amos-schledorn
+scripts/definitions/heat_system_type.py                         @amos-schledorn
+scripts/definitions/heat_system.py                              @amos-schledorn
+
+scripts/build_egs_potentials.py                                 @LukasFrankenQ
+
+scripts/retrieve_eurostat_data.py                               @toniseibold
+
+scripts/build_gdp_pop_non_nuts3.py                              @Irieo
+
+scripts/build_line_rating.py                                    @p-glaum
+scripts/build_ship_raster.py                                    @p-glaum
+scripts/build_transmission_projects.py                          @p-glaum
+
+scripts/build_osm_network.py                                    @bobbyxng
+scripts/clean_osm_data.py                                       @bobbyxng
+scripts/prepare_osm_network_release.py                          @bobbyxng
+scripts/retrieve_osm_data.py                                    @bobbyxng
+
+scripts/build_retro_cost.py                                     @lisazeyen
+scripts/build_monthly_prices.py                                 @lisazeyen
+scripts/retrieve_jrc_idees.py                                   @lisazeyen
+scripts/_benchmark.py                                           @lisazeyen
+scripts/prepare_perfect_foresight.py                            @lisazeyen
+scripts/make_summary_perfect.py                                 @lisazeyen
+
+scripts/plot_validation_electricity_production.py               @fabianhofmann
+scripts/build_electricity_prices.py                             @fabianhofmann
+scripts/build_cross_border_flows.py                             @fabianhofmann
+scripts/retrieve_electricity_demand.py                          @fabianhofmann
+scripts/plot_validation_electricity_prices.py                   @fabianhofmann
+scripts/plot_statistics.py                                      @fabianhofmann
+scripts/build_electricity_production.py                         @fabianhofmann
+rules/validate.smk                                              @fabianhofmann
