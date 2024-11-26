@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-.PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos test clean-tests reset
+.PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos test checks clean-tests reset
 
 # Helper: Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
 _conda_check:
@@ -43,6 +43,9 @@ test:
 	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
 	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n
 	echo "All tests completed successfully."
+
+unit-test:
+	pytest test
 
 # Cleans all output files from tests
 clean-tests:
