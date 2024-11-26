@@ -3683,7 +3683,7 @@ def add_industry(n, costs):
     )
 
     # naphtha
-    demand_factor = options.get("HVC_demand_factor", 1)
+    demand_factor = options["HVC_demand_factor"]
     if demand_factor != 1:
         logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
 
@@ -3849,9 +3849,6 @@ def add_industry(n, costs):
             efficiency2=emitted_co2_per_naphtha * non_sequestered,
             efficiency3=process_co2_per_naphtha,
         )
-
-    if options["methanol"]["methanol_to_olefins"]:
-        add_methanol_to_olefins(n, costs)
 
     # aviation
     demand_factor = options.get("aviation_demand_factor", 1)
