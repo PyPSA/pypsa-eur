@@ -54,6 +54,16 @@ rule add_existing_baseyear:
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
+        chemicals_capacities=lambda w: (
+            resources("chemicals/ecm_capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        chemicals_start_dates=lambda w: (
+            resources("chemicals/ecm_start_dates_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
         industrial_distribution_key=lambda w: (
             resources("industrial_distribution_key_base_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
