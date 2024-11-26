@@ -655,7 +655,7 @@ rule build_industrial_distribution_key:
         steel_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
         cement_capacities=resources("cement/sfi_capacities_s_{clusters}.csv"),
         cement_start_dates=resources("cement/sfi_start_dates_s_{clusters}.csv"),
-        chemicals_plants=resources("chemicals/ecm_capacities_s_{clusters}.csv"),
+        chemicals_capacities=resources("chemicals/ecm_capacities_s_{clusters}.csv"),
         chemicals_start_dates=resources("chemicals/ecm_start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
