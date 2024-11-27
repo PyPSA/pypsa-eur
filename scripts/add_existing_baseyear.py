@@ -1025,6 +1025,7 @@ if __name__ == "__main__":
     if endo_industry:
         add_steel_industry_existing_gem(n)
         add_cement_industry_existing_sfi(n)
+        print(snakemake.input.chemicals_plants)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

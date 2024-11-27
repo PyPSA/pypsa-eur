@@ -643,6 +643,7 @@ rule build_industrial_distribution_key:
         hotmaps="data/Industrial_Database.csv",
         gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         cement_sfi="data/SFI-Global-Cement-Database-July-2021.xlsx",
+        chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx",
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
@@ -654,6 +655,8 @@ rule build_industrial_distribution_key:
         steel_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
         cement_capacities=resources("cement/sfi_capacities_s_{clusters}.csv"),
         cement_start_dates=resources("cement/sfi_start_dates_s_{clusters}.csv"),
+        chemicals_capacities=resources("chemicals/ecm_capacities_s_{clusters}.csv"),
+        chemicals_start_dates=resources("chemicals/ecm_start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,

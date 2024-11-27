@@ -190,7 +190,32 @@ def prepare_cement_database(regions):
 
     return gdf
 
+def prepare_chemicals_database(regions):
+    """
+    Load data from ECM paper "Modelling the market diffusion of hydrogen-based steel and basic chemical production in Europe – A site-specific approach"
+    which in Supplementary Data 2 contains info about ammonia, HVC and chlorine plants and map onto bus regions.
+    https://doi.org/10.1016/j.enconman.2024.119117
+    """
 
+    df = pd.read_excel(f"{snakemake.input.chemicals_ecm}", sheet_name="Database", index_col=0, header=0)
+    df = df[df['Country'].isin(countries)]
+    df = df[df['Product'] != 'Steel, primary'] # Better database for steel plants from GEM
+    df = df.rename(columns={'Production in tons (calibrated)': 'capacity'})
+    df = df.rename(columns={'Year of last modernisation': 'year'})
+    df = df.rename(columns={'Country': 'country'})
+
+    latlon = df.rename(columns={"Latitude": "lat", "Longitude": "lon"})[["lat", "lon"]]
+    geometry = gpd.points_from_xy(latlon["lon"], latlon["lat"])
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
+
+    gdf = gpd.sjoin(gdf, regions, how="inner", predicate="within")
+
+    gdf.rename(columns={"name": "bus"}, inplace=True)
+    gdf = gdf[~gdf.index.duplicated(keep='first')]
+
+    gdf["Country"] = gdf.bus.str[:2]
+
+    return gdf
 
 def prepare_ammonia_database(regions):
     """
@@ -247,7 +272,7 @@ def prepare_refineries_supplement(regions):
 
 
 def build_nodal_distribution_key(
-    hotmaps, gem, sfi_cement, ammonia, cement, refineries, regions, countries
+    hotmaps, gem, sfi_cement, chemicals_ecm, ammonia, cement, refineries, regions, countries
 ):
     """
     Build nodal distribution keys for each sector.
@@ -413,7 +438,6 @@ def build_nodal_distribution_key(
     # add cement plants
     cement_capacities= pd.DataFrame(0,index=regions.index, columns=['capacity'])
     cement_start_dates = pd.DataFrame(0,index=regions.index, columns=['year'])
-    columns_to_keep = ['country','capacity']
 
     for country in countries:
         regions_ct = regions.index[regions.index.str.contains(country)]
@@ -481,7 +505,48 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, "Ammonia"] = key
 
-    return keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates
+    # add chemicals plants
+    chemicals = ['Ammonia','Ethylene','Methanol']
+    chemicals_capacities = pd.DataFrame(0, index = regions.index, columns = chemicals)  
+    chemicals_start_dates = pd.DataFrame(0, index = regions.index, columns = chemicals)
+
+    for country in countries:
+        for chem in chemicals:
+
+            regions_ct = regions.index[regions.index.str.contains(country)]
+
+            facilities = chemicals_ecm.query("country == @country and Product == @chem")
+
+            capacities = facilities['capacity'].dropna()
+            capacities = capacities[capacities != 0]
+            capacities = capacities[~capacities.index.duplicated(keep='first')]
+            capacities = capacities / 1e3 # from Mt/yr to kt/yr (coherent with cement)
+
+            # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
+            capacities_sum = capacities.sum() if not capacities.empty else 0
+            chemicals_capacities.loc[regions_ct, chem] = capacities_sum
+
+            # Calculate the weighted average of start dates using capacities as weights
+            if not capacities.empty:
+                start_dates = facilities.loc[capacities.index, "year"].dropna()
+                start_dates = start_dates[~start_dates.index.duplicated(keep='first')]
+                filtered_capacities = capacities.loc[start_dates.index]
+                filtered_capacities_sum = filtered_capacities.sum()
+                if filtered_capacities_sum > 0:
+                    weighted_sum = (filtered_capacities * start_dates).sum()
+                    weighted_avg = weighted_sum / filtered_capacities_sum
+                    chemicals_start_dates.loc[regions_ct, chem] = weighted_avg
+                else:
+                    # If no valid capacities, assign 0 or NaN
+                    chemicals_start_dates.loc[regions_ct, chem] = 0
+            else:
+                # If capacities are empty, assign 0 or NaN
+                chemicals_start_dates.loc[regions_ct, chem] = 0
+
+            chemicals_start_dates = chemicals_start_dates.fillna(0)
+
+
+    return keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates
 
 
 if __name__ == "__main__":
@@ -505,14 +570,16 @@ if __name__ == "__main__":
 
     cement_sfi = prepare_cement_database(regions)
 
+    chemicals_ecm = prepare_chemicals_database(regions)
+
     ammonia = prepare_ammonia_database(regions)
 
     cement = prepare_cement_supplement(regions)
 
     refineries = prepare_refineries_supplement(regions)
 
-    keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates = build_nodal_distribution_key(
-        hotmaps, steel_gem, cement_sfi, ammonia, cement, refineries, regions, countries
+    keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates = build_nodal_distribution_key(
+        hotmaps, steel_gem, cement_sfi, chemicals_ecm, ammonia, cement, refineries, regions, countries
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
@@ -520,3 +587,5 @@ if __name__ == "__main__":
     steel_start_dates.to_csv(snakemake.output.steel_start_dates)
     cement_capacities.to_csv(snakemake.output.cement_capacities)
     cement_start_dates.to_csv(snakemake.output.cement_start_dates)
+    chemicals_capacities.to_csv(snakemake.output.chemicals_capacities)
+    chemicals_start_dates.to_csv(snakemake.output.chemicals_start_dates)
