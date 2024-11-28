@@ -17,17 +17,17 @@ import pytest
 
 sys.path.append("./scripts")
 
-from base_network import (
-    _get_oid,
-    _get_country
-)
+from base_network import _get_country, _get_oid
 
 path_cwd = pathlib.Path.cwd()
 
 
 @pytest.mark.parametrize(
     "column_name, expected",
-    [("tags", pd.Series(["12", "12345", "9876654"])), ("other", pd.Series([np.nan, np.nan, np.nan]))],
+    [
+        ("tags", pd.Series(["12", "12345", "9876654"])),
+        ("other", pd.Series([np.nan, np.nan, np.nan])),
+    ],
 )
 def test_get_oid(column_name, expected):
     """
@@ -43,7 +43,10 @@ def test_get_oid(column_name, expected):
 
 @pytest.mark.parametrize(
     "column_name, expected",
-    [("tags", pd.Series(["NG", "CH", "AU"])), ("other", pd.Series([np.nan, np.nan, np.nan]))],
+    [
+        ("tags", pd.Series(["NG", "CH", "AU"])),
+        ("other", pd.Series([np.nan, np.nan, np.nan])),
+    ],
 )
 def test_get_country(column_name, expected):
     """
