@@ -1,0 +1,27 @@
+name: Deploy dev-env image
+
+on:
+  push:
+    paths:
+    - envs/linux-pinned.yaml
+  workflow_dispatch:
+
+jobs:
+  push-image:
+    name: Push dev-env image
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@main
+
+    - name: 'Login to GitHub Container Registry'
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.REGISTRY_TOKEN }}
+
+    - name: 'Build Inventory Image'
+      run: |
+        docker build . --tag ghcr.io/${{ github.repository_owner }}/eur-dev-env:latest --file docker/dev-env/Dockerfile
+        docker push ghcr.io/${{ github.repository_owner }}/eur-dev-env:latest
