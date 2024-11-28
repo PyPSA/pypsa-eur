@@ -105,6 +105,8 @@ Upcoming Release
 
 * Bugfix: vehicle-to-grid dispatch capacity is now limited by the fraction of vehicles participating in demand-side-management, halving the dispatch capacity under the default demand-side management participation rate of 0.5.
 
+* Bugfix: Align the naming convention for the CO2 network configuration (from `co2network` to `co2_network`). This may be a small breaking change.
+
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
