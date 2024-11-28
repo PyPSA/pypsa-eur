@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-
+Helper class for matching heat source potentials to onshore regions.
 """
 
 from typing import List

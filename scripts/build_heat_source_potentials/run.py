@@ -3,11 +3,35 @@
 #
 # SPDX-License-Identifier: MIT
 """
+Build heat source potentials for a given heat source.
+
+This script maps and aggregates heat source potentials per heat source to `onshore_regions` using `OnshoreRegionData`.
+It scales the heat source utilisation potentials to technical potentials by dividing the utilisation potentials by the full load hours of the heat source, also taking into account the energy unit set for the respective source in the config.
+
+
+Relevant Settings
+-----------------
+.. code:: yaml
+    sector:
+        district_heating:
+            fraunhofer_heat_utilisation_potentials:
+    {heat_source}
+
+
+Inputs
+------
+- `resources/<run_name>/regions_onshore.geojson`
+- `resources/<run_name>/heat_source_utilisation_potentials/<heat_source>.gpkg`
+
+Outputs
+-------
+- `resources/<run_name>/heat_source_technical_potential_{heat_source}_base_s_{clusters}.csv`
 """
 
 import geopandas as gpd
 from _helpers import set_scenario_config
-from OnshoreRegionData import OnshoreRegionData
+
+from scripts.build_heat_source_potentials.onshore_region_data import OnshoreRegionData
 
 
 def get_unit_conversion_factor(
