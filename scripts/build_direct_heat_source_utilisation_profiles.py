@@ -3,20 +3,53 @@
 #
 # SPDX-License-Identifier: MIT
 """
+Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
+When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
 
+Relevant Settings
+-----------------
+
+.. code:: yaml
+    sector:
+        district_heating:
+            fraunhofer_heat_utilisation_potentials:
+            direct_utilisation_heat_sources:
+    snapshots:
+
+Inputs
+------
+- `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles
+
+Outputs
+-------
+- `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
-import sys
 from typing import List
 
-import geopandas as gpd
-import numpy as np
-import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config
 
 
 def get_source_temperature(heat_source_key: str):
+    """
+    Get the constant temperature of a heat source.
+
+    Args:
+    -----
+    heat_source_key: str
+        The key (name) of the heat source.
+
+    Returns:
+    --------
+    float
+        The constant temperature of the heat source in degrees Celsius.
+
+    Raises:
+    -------
+    ValueError
+        If the heat source is unknown (not in `config`).
+    """
 
     if (
         heat_source_key
@@ -34,8 +67,23 @@ def get_source_temperature(heat_source_key: str):
 
 def get_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
-):
+) -> xr.DataArray | float:
+    """
+    Get the direct heat source utilisation profile.
 
+    Args:
+    -----
+    source_temperature: float | xr.DataArray
+        The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `forward_temperature`.
+    forward_temperature: xr.DataArray
+        The central heating forward temperature profiles. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
+
+    Returns:
+    --------
+    xr.DataArray | float
+        The direct heat source utilisation profile.
+
+    """
     return xr.where(source_temperature >= forward_temperature, 1.0, 0.0)
 
 

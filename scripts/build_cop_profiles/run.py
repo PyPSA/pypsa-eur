@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 """
 Approximate heat pump coefficient-of-performance (COP) profiles for different
-heat sources and systems.
+heat sources and systems. Returns zero where source temperature higher than sink temperature.
 
 For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
 

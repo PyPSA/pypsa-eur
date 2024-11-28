@@ -3,12 +3,27 @@
 #
 # SPDX-License-Identifier: MIT
 """
+Retrieve heat source utilisation potentials from Fraunhofer Fordatis.
+
+Source
+------
+Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
+
+Relevant Settings
+-----------------
+.. code:: yaml
+    sector:
+        district_heating:
+            fraunhofer_heat_utilisation_potentials:
+
+Outputs
+------
+- `resources/<run_name>/heat_source_utilisation_potentials/<heat_source>.gpkg`
 """
 
 import logging
 from pathlib import Path
 
-import requests
 from _helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
