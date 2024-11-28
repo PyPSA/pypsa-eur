@@ -4,9 +4,8 @@ on:
   push:
     paths:
     - envs/environment.yaml
-  # Run every Sunday at 5:00 UTC
   schedule:
-  - cron: "0 5 * * 0/2"    # Bi-weekly
+  - cron: "0 8 1,16 * *" # Bi-weekly
   workflow_dispatch:
 
 env:
