@@ -11,11 +11,8 @@ def load_projection(plotting_params):
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
-def steel_preprocessing(excel_dir, scenario, config):
-    eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "EAF_Prod", index_col="Bus")
-    bof_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "BOF_Prod", index_col="Bus")
-    ng_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "NG_EAF", index_col="Bus")
-    h2_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "H2_EAF", index_col="Bus")
+def ammonia_preprocessing(excel_dir, scenario, config):
+    ammonia_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "Ammonia_Prod", index_col="Bus")
     
     # Hydrogen
     elec_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "Elec_H2Prod", index_col="Bus")
@@ -23,8 +20,6 @@ def steel_preprocessing(excel_dir, scenario, config):
     smr_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "SMR_H2Prod", index_col="Bus")
     nh3crack_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "NH3crack_H2Prod", index_col="Bus")
     
-    eaf_share = (eaf_prod / (eaf_prod + bof_prod)).fillna(0)
-    h2_share = (h2_eaf_prod / (h2_eaf_prod + ng_eaf_prod)).fillna(0)
     green_h2_share = ((elec_h2prod + smrcc_h2prod) / ( elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)).fillna(0)
     
     if config['sector']['H2_network']:
@@ -33,10 +28,9 @@ def steel_preprocessing(excel_dir, scenario, config):
         green_h2_prod = green_h2_share * h2_prod
         green_h2_share = round(green_h2_prod.sum() / h2_prod.sum(),1)
     
-    green_share = round((eaf_share * h2_share * green_h2_share)*100)
-    steel_prod = eaf_prod + bof_prod   
+    green_share = round((ammonia_prod / ammonia_prod) * green_h2_share*100)
     
-    return steel_prod, green_share
+    return ammonia_prod, green_share
 
 
 def assign_location(n):
@@ -63,7 +57,7 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
     
     df.drop(columns=["prefix"], inplace=True)
     
-    regions["data"] = df["data"]/1e3 #kt to Mt
+    regions["data"] = df["data"]
     regions["data"] = regions["data"].where(regions["data"] > 0.1, 0)
     regions["data"] = regions["data"].fillna(0)
     regions["share"] = df["share"]
@@ -71,7 +65,7 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
     regions["share"] = regions["share"].fillna(0)
     
     regions = regions.to_crs(proj.proj4_init)
-    max_value = excel_data.values.max()/1e3
+    max_value = excel_data.values.max()
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
@@ -82,11 +76,11 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
         cmap="Blues",
         linewidths=0.5,  # Thickness of the black border
         edgecolor="black",  # Black border for the shapes
-        legend=True,
+        legend=(i == len(years) - 1),
         vmax=max_value,
         vmin=0,
         legend_kwds={
-            "label": title,
+            "label": title if i == len(years) - 1 else "",
             "shrink": 0.5,
             "extend": "max",
         },
@@ -102,17 +96,17 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
         else:
             centroid = region['geometry'].centroid
             if region["data"] > 1:
+                color = "white" if region["data"] > (2/3) * max_value else "black"
                 ax.annotate(
                     text=f"{int(region['share'])}",  # Format share as a percentage
                     xy=(centroid.x, centroid.y),  # Use centroid coordinates
                     fontsize=9,
                     ha="center",
-                    color="black",
+                    color=color,
                 )
             prev_idx = idx[:2]
             
 
-    # Add a title and subtitle (if provided)
     ax.set_title(year, fontsize=14, loc="center")  # Main title
 
 
@@ -148,11 +142,11 @@ proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
 
-excel_dir = "excels/"
+excel_dir = "excels_24h/"
 # Plotting the green share of steel production
-title = "Steel prod [Mt/yr]"
+title = "Ammonia prod [Mt/yr]"
 
-scenarios = ["baseline_eu_dem", "climate_policy_eu_dem"]
+scenarios = ["baseline_eu_dem", "policy_eu_dem"]
 
 fig, axes = plt.subplots(
     len(scenarios),
@@ -166,22 +160,32 @@ n = pypsa.Network(fn)
 
 for j, scenario in enumerate(scenarios):
     
-    steel_prod, green_share = steel_preprocessing(excel_dir, scenario, config)
+    ammonia_prod, green_share = ammonia_preprocessing(excel_dir, scenario, config)
 
     for i, year in enumerate(years):
         
-        #fn = (root_dir + "results/" + scenario + f"/postnetworks/base_s_39_lvopt___{year}.nc")
         ax = axes[j, i]
-        #n = pypsa.Network(fn)
-        plot_map(n, steel_prod, green_share, regions, year, title, ax=ax)
+        plot_map(n, ammonia_prod, green_share, regions, year, title, ax=ax)
+        
+        if i == 0:
+            if j == 0:
+                ax.annotate(
+                    "BASELINE", xy=(-0.15, 0.5), xycoords='axes fraction',
+                    ha='center', va='center', fontsize=12, rotation=90
+                )
+            elif j == 1:
+                ax.annotate(
+                    "POLICY", xy=(-0.15, 0.5), xycoords='axes fraction',
+                    ha='center', va='center', fontsize=12, rotation=90
+                )
 
 plt.tight_layout()
 fig.suptitle('European demand', fontsize=16, y=1.02)
-plt.savefig("graphs/steel_eu_dem.png", bbox_inches="tight")
+plt.savefig("graphs/ammonia_eu_dem.png", bbox_inches="tight")
 plt.show()
 
 
-scenarios = ["baseline_regional_dem", "climate_policy_regional_dem"]
+scenarios = ["baseline_regional_dem", "policy_regional_dem"]
 
 fig, axes = plt.subplots(
     len(scenarios),
@@ -190,19 +194,31 @@ fig, axes = plt.subplots(
     subplot_kw={"projection": proj},
 )
 
-fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc")
+fn = (root_dir + "results_24h/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc")
 n = pypsa.Network(fn)
 
 for j, scenario in enumerate(scenarios):
     
-    steel_prod, green_share = steel_preprocessing(excel_dir, scenario, config)
+    ammonia_prod, green_share = ammonia_preprocessing(excel_dir, scenario, config)
 
     for i, year in enumerate(years):
         
         ax = axes[j, i]
-        plot_map(n, steel_prod, green_share, regions, year, title, ax=ax)
+        plot_map(n, ammonia_prod, green_share, regions, year, title, ax=ax)
+        
+        if i == 0:
+            if j == 0:
+                ax.annotate(
+                    "BASELINE", xy=(-0.15, 0.5), xycoords='axes fraction',
+                    ha='center', va='center', fontsize=12, rotation=90
+                )
+            elif j == 1:
+                ax.annotate(
+                    "POLICY", xy=(-0.15, 0.5), xycoords='axes fraction',
+                    ha='center', va='center', fontsize=12, rotation=90
+                )
 
 plt.tight_layout()
 fig.suptitle('Regional demand', fontsize=16, y=1.02)
-plt.savefig("graphs/steel_regional_dem.png", bbox_inches="tight")
+plt.savefig("graphs/ammonia_regional_dem.png", bbox_inches="tight")
 plt.show()

@@ -31,3 +31,6 @@ for scenario in scenarios:
     
     
 share_change = (costs["climate_policy_regional_dem"] / costs["climate_policy_eu_dem"] -1 ) *100
+
+# %% Let's try to get costs by country
+
