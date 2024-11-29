@@ -462,7 +462,7 @@ def build_nodal_distribution_key(
             if filtered_capacities_sum > 0:
                 weighted_sum = (filtered_capacities * start_dates).sum()
                 weighted_avg = weighted_sum / filtered_capacities_sum
-                cement_start_dates.loc[regions_ct, 'year'] = weighted_avg
+                cement_start_dates.loc[regions_ct, 'year'] = round(weighted_avg)
             else:
                 # If no valid capacities, assign 0 or NaN
                 cement_start_dates.loc[regions_ct, 'year'] = 0
@@ -520,7 +520,7 @@ def build_nodal_distribution_key(
             capacities = facilities['capacity'].dropna()
             capacities = capacities[capacities != 0]
             capacities = capacities[~capacities.index.duplicated(keep='first')]
-            capacities = capacities / 1e3 # from Mt/yr to kt/yr (coherent with cement)
+            capacities = capacities / 1e3 # from t/yr to kt/yr (coherent with cement)
 
             # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
             capacities_sum = capacities.sum() if not capacities.empty else 0
@@ -535,7 +535,7 @@ def build_nodal_distribution_key(
                 if filtered_capacities_sum > 0:
                     weighted_sum = (filtered_capacities * start_dates).sum()
                     weighted_avg = weighted_sum / filtered_capacities_sum
-                    chemicals_start_dates.loc[regions_ct, chem] = weighted_avg
+                    chemicals_start_dates.loc[regions_ct, chem] = round(weighted_avg)
                 else:
                     # If no valid capacities, assign 0 or NaN
                     chemicals_start_dates.loc[regions_ct, chem] = 0

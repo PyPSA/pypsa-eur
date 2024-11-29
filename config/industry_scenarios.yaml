@@ -17,7 +17,8 @@ baseline_eu_dem:
     endo_industry:
       regional_steel_demand: false
     ammonia: true
-    H2_network: true
+    european_hydrogen: true
+    H2_network: false
 
 policy_eu_dem:
   co2_budget_apply: true
@@ -25,7 +26,8 @@ policy_eu_dem:
     endo_industry:
       regional_steel_demand: false
     ammonia: true
-    H2_network: true
+    european_hydrogen: true
+    H2_network: false
 
 baseline_regional_dem:
   co2_budget_apply: false
@@ -33,6 +35,7 @@ baseline_regional_dem:
     endo_industry:
       regional_steel_demand: true
     ammonia: regional
+    european_hydrogen: true
     H2_network: false
     
 
@@ -42,4 +45,5 @@ policy_regional_dem:
     endo_industry:
       regional_steel_demand: true
     ammonia: regional
+    european_hydrogen: true
     H2_network: false

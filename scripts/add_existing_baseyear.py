@@ -929,6 +929,54 @@ def add_cement_industry_existing_sfi(n):
     )
 
 
+def add_chemicals_industry_existing_ecm(n):
+
+    # Chemicals capacities in Europe in kton of cement products per year
+    capacities = pd.read_csv(snakemake.input.chemicals_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.chemicals_start_dates, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    # Ammonia
+    capacities = capacities['Ammonia']
+    start_dates = start_dates['Ammonia']
+    capacities = capacities * keys["Ammonia"]
+
+    start_dates = round(start_dates)
+    start_dates = start_dates.where((start_dates >= 1000) & np.isfinite(start_dates), 2000)
+
+    nodes = pop_layout.index
+    p_nom = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom = capacities / nhours  # get the hourly production capacity
+
+    # Should steel be produced at a constant rate during the year or not? 1 or 0
+    #prod_constantly = 0
+    #ramp_limit = 0
+
+    ########### Add existing ammonia production capacities ############
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Haber-Bosch-2020",
+        bus0=nodes,
+        bus1=spatial.ammonia.nodes,
+        bus2= spatial.h2.nodes, #nodes + " H2",
+        p_nom_extendable=False,
+        p_nom=p_nom,
+        #p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
+        carrier="Haber-Bosch",
+        efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
+        efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        capital_cost=costs.at["Haber-Bosch", "fixed"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        marginal_cost=costs.at["Haber-Bosch", "VOM"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        lifetime=costs.at["Haber-Bosch", "lifetime"],
+        build_year=start_dates,
+    )
+
 def set_defaults(n):
     """
     Set default values for missing values in the network.
@@ -1022,10 +1070,11 @@ if __name__ == "__main__":
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
-    if endo_industry:
+    if endo_industry.get("enable"):
         add_steel_industry_existing_gem(n)
         add_cement_industry_existing_sfi(n)
-        print(snakemake.input.chemicals_plants)
+        if endo_industry.get("endo_chemicals"):
+            add_chemicals_industry_existing_ecm(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

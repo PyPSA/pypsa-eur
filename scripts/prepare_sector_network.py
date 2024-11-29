@@ -144,8 +144,12 @@ def define_spatial(nodes, options, endo_industry):
 
     # hydrogen
     spatial.h2 = SimpleNamespace()
-    spatial.h2.nodes = nodes + " H2"
-    spatial.h2.locations = nodes
+    if options.get("european_hydrogen"):
+        spatial.h2.nodes = ["EU H2"]
+        spatial.h2.locations = ["EU"]
+    else:
+        spatial.h2.nodes = nodes + " H2"
+        spatial.h2.locations = nodes
 
     # methanol
 
@@ -1285,7 +1289,7 @@ def add_ammonia(n, costs):
         suffix=" Haber-Bosch",
         bus0=nodes,
         bus1=spatial.ammonia.nodes,
-        bus2=nodes + " H2",
+        bus2= spatial.h2.nodes, #nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
@@ -1303,7 +1307,7 @@ def add_ammonia(n, costs):
         nodes,
         suffix=" ammonia cracker",
         bus0=spatial.ammonia.nodes,
-        bus1=nodes + " H2",
+        bus1= spatial.h2.nodes, #nodes + " H2",
         p_nom_extendable=True,
         carrier="ammonia cracker",
         efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"],
@@ -1508,13 +1512,13 @@ def add_storage_and_grids(n, costs):
 
     n.add("Carrier", "H2")
 
-    n.add("Bus", nodes + " H2", location=nodes, carrier="H2", unit="MWh_LHV")
+    n.add("Bus", spatial.h2.nodes, location=spatial.h2.locations, carrier="H2", unit="MWh_LHV")
 
     n.add(
         "Link",
         nodes + " H2 Electrolysis",
-        bus1=nodes + " H2",
         bus0=nodes,
+        bus1=spatial.h2.nodes, #nodes + " H2",
         p_nom_extendable=True,
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
@@ -1528,7 +1532,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Link",
             nodes + " H2 Fuel Cell",
-            bus0=nodes + " H2",
+            bus0=spatial.h2.nodes, #nodes + " H2",
             bus1=nodes,
             p_nom_extendable=True,
             carrier="H2 Fuel Cell",
@@ -1547,7 +1551,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Link",
             nodes + " H2 turbine",
-            bus0=nodes + " H2",
+            bus0=spatial.h2.nodes, #nodes + " H2",
             bus1=nodes,
             p_nom_extendable=True,
             carrier="H2 turbine",
@@ -1584,7 +1588,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Store",
             h2_caverns.index + " H2 Store",
-            bus=h2_caverns.index + " H2",
+            bus=spatial.h2.nodes, #h2_caverns.index + " H2",
             e_nom_extendable=True,
             e_nom_max=h2_caverns.values,
             e_cyclic=True,
@@ -1810,7 +1814,7 @@ def add_storage_and_grids(n, costs):
             "Link",
             spatial.nodes,
             suffix=" Sabatier",
-            bus0=nodes + " H2",
+            bus0=spatial.h2.nodes, #nodes + " H2",
             bus1=spatial.gas.nodes,
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1854,7 +1858,7 @@ def add_storage_and_grids(n, costs):
             spatial.nodes,
             suffix=" SMR CC",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " H2",
+            bus1=spatial.h2.nodes, #nodes + " H2",
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1871,7 +1875,7 @@ def add_storage_and_grids(n, costs):
             "Link",
             nodes + " SMR",
             bus0=spatial.gas.nodes,
-            bus1=nodes + " H2",
+            bus1=spatial.h2.nodes, #nodes + " H2",
             bus2="co2 atmosphere",
             p_nom_extendable=True,
             carrier="SMR",
@@ -3431,7 +3435,7 @@ def add_industry(n, costs):
         "Load",
         nodes,
         suffix=" H2 for industry",
-        bus=nodes + " H2",
+        bus=spatial.h2.nodes, #nodes + " H2",
         carrier="H2 for industry",
         p_set=industrial_demand.loc[nodes, "hydrogen"] / nhours,
     )
@@ -3476,7 +3480,7 @@ def add_industry(n, costs):
 
     n.add(
         "Link",
-        spatial.h2.locations + " methanolisation",
+        nodes + " methanolisation", #ADB modified for EU H2 node
         bus0=spatial.h2.nodes,
         bus1=spatial.methanol.nodes,
         bus2=nodes,
@@ -3536,8 +3540,8 @@ def add_industry(n, costs):
             n.add(
                 "Link",
                 nodes + " H2 liquefaction",
-                bus0=nodes + " H2",
-                bus1=nodes + " H2 liquid",
+                bus0=spatial.h2.nodes, #nodes + " H2",
+                bus1=spatial.h2.nodes + " liquid", #nodes + " H2 liquid",
                 carrier="H2 liquefaction",
                 efficiency=costs.at["H2 liquefaction", "efficiency"],
                 capital_cost=costs.at["H2 liquefaction", "fixed"],
@@ -3545,9 +3549,9 @@ def add_industry(n, costs):
                 lifetime=costs.at["H2 liquefaction", "lifetime"],
             )
 
-            shipping_bus = nodes + " H2 liquid"
+            shipping_bus = spatial.h2.nodes + " liquid" # nodes + " H2 liquid"
         else:
-            shipping_bus = nodes + " H2"
+            shipping_bus = spatial.h2.nodes # nodes + " H2"
 
         efficiency = (
             options["shipping_oil_efficiency"] / costs.at["fuel cell", "efficiency"]
@@ -3666,7 +3670,7 @@ def add_industry(n, costs):
     n.add(
         "Link",
         nodes + " Fischer-Tropsch",
-        bus0=nodes + " H2",
+        bus0=spatial.h2.nodes, #nodes + " H2",
         bus1=spatial.oil.nodes,
         bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",

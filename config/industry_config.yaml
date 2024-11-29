@@ -645,6 +645,7 @@ sector:
   - nearshore    # within 50 km of sea
     # - offshore
   ammonia: false
+  european_hydrogen: true #ADB to have a EU H2 bus
   min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -670,7 +671,7 @@ sector:
       compression_per_1000km: 0.01
     electricity distribution grid:
       efficiency_static: 0.97
-  H2_network: true
+  H2_network: false
   gas_network: false
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
@@ -717,6 +718,7 @@ sector:
     enable: true
     regional_steel_demand: false
     cement_prod_growth: true
+    endo_chemicals: true
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
@@ -863,7 +865,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: 1460h
+    resolution_sector: 2920h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
