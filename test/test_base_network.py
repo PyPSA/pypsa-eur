@@ -17,7 +17,12 @@ import pytest
 
 sys.path.append("./scripts")
 
-from base_network import _get_country, _get_linetypes_config, _get_linetype_by_voltage, _get_oid
+from base_network import (
+    _get_country,
+    _get_linetype_by_voltage,
+    _get_linetypes_config,
+    _get_oid,
+)
 
 path_cwd = pathlib.Path.cwd()
 
@@ -62,7 +67,7 @@ def test_get_linetype_by_voltage(config):
         "Al/St 240/40 4-bundle 380.0",
         "Al/St 240/40 4-bundle 380.0",
         "Al/St 240/40 4-bundle 380.0",
-        "Al/St 560/50 4-bundle 750.0"
+        "Al/St 560/50 4-bundle 750.0",
     ]
 
     v_nom_list = [
@@ -78,9 +83,7 @@ def test_get_linetype_by_voltage(config):
     line_type_list = []
 
     for v_nom in v_nom_list:
-        line_type_list.append(
-            _get_linetype_by_voltage(v_nom, config["lines"]["types"])
-        )
+        line_type_list.append(_get_linetype_by_voltage(v_nom, config["lines"]["types"]))
     assert len(line_type_list) == len(reference_list)
     assert all([x == y for x, y in zip(line_type_list, reference_list)])
 
