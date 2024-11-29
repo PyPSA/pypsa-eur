@@ -641,7 +641,7 @@ sector:
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
-  co2network: false
+  co2_network: false
   co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
