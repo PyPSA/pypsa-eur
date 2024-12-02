@@ -75,15 +75,15 @@ if __name__ == "__main__":
         onshore_regions=regions_onshore,
         data=heat_source_utilisation_potential,
         column_name=snakemake.params.heat_utilisation_potentials[
-            snakemake.params.heat_source
+            snakemake.wildcards.heat_source
         ]["column_name"],
         scaling_factor=get_unit_conversion_factor(
             input_unit=snakemake.params.heat_utilisation_potentials[
-                snakemake.params.heat_source
+                snakemake.wildcards.heat_source
             ]["unit"],
             output_unit="MWh",
         )
-        / snakemake.params.heat_utilisation_potentials[snakemake.params.heat_source][
+        / snakemake.params.heat_utilisation_potentials[snakemake.wildcards.heat_source][
             "full_load_hours"
         ],
     ).data_in_regions_scaled

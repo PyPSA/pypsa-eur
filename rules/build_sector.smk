@@ -289,7 +289,6 @@ rule build_heat_source_potentials:
         heat_utilisation_potentials=config_provider(
             "sector", "district_heating", "heat_utilisation_potentials"
         ),
-        heat_source="{heat_source}",
     input:
         utilisation_potential="data/heat_source_utilisation_potentials/{heat_source}.gpkg",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
