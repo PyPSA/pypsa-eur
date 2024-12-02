@@ -24,7 +24,8 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
 -- fraunhofer_heat_utilisation_potentials,--,Dictionary with names of heat sources for which data by Fraunhofer ISI (Manz et al. 2024) should be used,
--- -- geothermal,-,Name of the heat source. Must be the same as in `heat_pump_sources,
+-- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
+
 -- -- -- key,-,string used to complete URL for data download,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
 -- -- -- column_name,-,name of the data column in retrieved geoDataFrame,
