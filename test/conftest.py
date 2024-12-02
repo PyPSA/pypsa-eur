@@ -5,9 +5,9 @@
 
 # coding: utf-8
 
-import pandas as pd
 import pathlib
 
+import pandas as pd
 import pypsa
 import pytest
 import yaml

@@ -23,7 +23,7 @@ from base_network import (
     _get_linetypes_config,
     _get_oid,
     _load_buses,
-    _load_converters_from_osm
+    _load_converters_from_osm,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -44,6 +44,7 @@ df_converters_reference = pd.DataFrame(
     },
     index=[0],
 ).set_index("converter_id")
+
 
 @pytest.mark.parametrize(
     "column_name, expected",
@@ -156,15 +157,16 @@ def test_load_buses(tmpdir, config, buses_dataframe):
             "y": [45.6783, 45.6793],
             "country": ["IT", "IT"],
             "geometry": ["POINT (6.8884 45.6783)", "POINT (6.8894 45.6793)"],
-            "carrier": ["AC", "AC"]
+            "carrier": ["AC", "AC"],
         },
     )
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
     europe_shape = pathlib.Path(path_cwd, "resources", "europe_shape.geojson")
-    df_buses_output = _load_buses(buses_path, europe_shape, countries, config).reset_index()
+    df_buses_output = _load_buses(
+        buses_path, europe_shape, countries, config
+    ).reset_index()
     pathlib.Path.unlink(buses_path)
     df_comparison = df_buses_output.compare(df_buses_reference)
     assert df_comparison.empty
-
