@@ -121,10 +121,10 @@ if __name__ == "__main__":
                 )
             elif (
                 heat_source
-                in snakemake.params.fraunhofer_heat_utilisation_potentials.keys()
+                in snakemake.params.heat_utilisation_potentials.keys()
             ):
                 source_inlet_temperature_celsius = (
-                    snakemake.params.fraunhofer_heat_utilisation_potentials[
+                    snakemake.params.heat_utilisation_potentials[
                         heat_source
                     ]["constant_temperature_celsius"]
                 )

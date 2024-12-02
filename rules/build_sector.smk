@@ -286,12 +286,12 @@ rule build_central_heating_temperature_profiles:
 
 rule build_heat_source_potentials:
     params:
-        fraunhofer_heat_sources=config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_utilisation_potentials"
         ),
         heat_source="{heat_source}",
     input:
-        utilisation_potential="data/fraunhofer_heat_source_utilisation_potentials/{heat_source}.gpkg",
+        utilisation_potential="data/heat_source_utilisation_potentials/{heat_source}.gpkg",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         resources("heat_source_potential_{heat_source}_base_s_{clusters}.csv"),
@@ -319,8 +319,8 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        fraunhofer_heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_utilisation_potentials"
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -352,8 +352,8 @@ rule build_direct_heat_source_utilisation_profiles:
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
-        fraunhofer_heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_utilisation_potentials"
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -1070,7 +1070,7 @@ def input_heat_source_potentials(w):
             "heat_source_potential_" + heat_source_name + "_base_s_{clusters}.csv"
         )
         for heat_source_name in config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+            "sector", "district_heating", "heat_utilisation_potentials"
         )(w).keys()
         if heat_source_name
         in config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -1101,8 +1101,8 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        fraunhofer_heat_sources=config_provider(
-            "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+        heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_utilisation_potentials"
         ),
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"

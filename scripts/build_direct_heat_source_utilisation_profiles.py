@@ -12,7 +12,7 @@ Relevant Settings
 .. code:: yaml
     sector:
         district_heating:
-            fraunhofer_heat_utilisation_potentials:
+            heat_utilisation_potentials:
             direct_utilisation_heat_sources:
     snapshots:
 
@@ -53,9 +53,9 @@ def get_source_temperature(heat_source_key: str):
 
     if (
         heat_source_key
-        in snakemake.params.fraunhofer_heat_utilisation_potentials.keys()
+        in snakemake.params.heat_utilisation_potentials.keys()
     ):
-        return snakemake.params.fraunhofer_heat_utilisation_potentials[heat_source_key][
+        return snakemake.params.heat_utilisation_potentials[heat_source_key][
             "constant_temperature_celsius"
         ]
     else:

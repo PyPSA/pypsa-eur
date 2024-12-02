@@ -14,7 +14,7 @@ Relevant Settings
 .. code:: yaml
     sector:
         district_heating:
-            fraunhofer_heat_utilisation_potentials:
+            heat_utilisation_potentials:
     {heat_source}
 
 
@@ -74,16 +74,16 @@ if __name__ == "__main__":
     heat_source_technical_potential = OnshoreRegionData(
         onshore_regions=regions_onshore,
         data=heat_source_utilisation_potential,
-        column_name=snakemake.params.fraunhofer_heat_sources[
+        column_name=snakemake.params.heat_utilisation_potentials[
             snakemake.params.heat_source
         ]["column_name"],
         scaling_factor=get_unit_conversion_factor(
-            input_unit=snakemake.params.fraunhofer_heat_sources[
+            input_unit=snakemake.params.heat_utilisation_potentials[
                 snakemake.params.heat_source
             ]["unit"],
             output_unit="MWh",
         )
-        / snakemake.params.fraunhofer_heat_sources[snakemake.params.heat_source][
+        / snakemake.params.heat_utilisation_potentials[snakemake.params.heat_source][
             "full_load_hours"
         ],
     ).data_in_regions_scaled

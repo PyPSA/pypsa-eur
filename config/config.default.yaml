@@ -480,7 +480,7 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
-    fraunhofer_heat_utilisation_potentials:
+    heat_utilisation_potentials:
       geothermal:
         # activate for 85C hydrothermal
         # key: hydrothermal_85

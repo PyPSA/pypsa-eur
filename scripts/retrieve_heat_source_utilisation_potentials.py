@@ -14,7 +14,7 @@ Relevant Settings
 .. code:: yaml
     sector:
         district_heating:
-            fraunhofer_heat_utilisation_potentials:
+            heat_utilisation_potentials:
 
 Outputs
 ------
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if not filepath.parent.exists():
         filepath.parent.mkdir(parents=True)
 
-    url = f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{snakemake.params.fraunhofer_heat_utilisation_potentials[heat_source]['key']}.gpkg"
+    url = f"https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/10/{snakemake.params.heat_utilisation_potentials[heat_source]['key']}.gpkg"
 
     logger.info(
         f"Downloading heat source utilisation potential data for {heat_source} from '{url}'."

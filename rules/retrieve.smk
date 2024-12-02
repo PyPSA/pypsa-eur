@@ -635,17 +635,17 @@ if config["enable"]["retrieve"] and (
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_fraunhofer_heat_source_utilisation_potentials:
+    rule retrieve_heat_source_utilisation_potentials:
         params:
             heat_source="{heat_source}",
-            fraunhofer_heat_utilisation_potentials=config_provider(
-                "sector", "district_heating", "fraunhofer_heat_utilisation_potentials"
+            heat_utilisation_potentials=config_provider(
+                "sector", "district_heating", "heat_utilisation_potentials"
             ),
         log:
-            "logs/retrieve_fraunhofer_heat_source_potentials_{heat_source}.log",
+            "logs/retrieve_heat_source_potentials_{heat_source}.log",
         resources:
             mem_mb=500,
         output:
-            "data/fraunhofer_heat_source_utilisation_potentials/{heat_source}.gpkg",
+            "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
         script:
-            "../scripts/retrieve_fraunhofer_heat_source_utilisation_potentials.py"
+            "../scripts/retrieve_heat_source_utilisation_potentials.py"
