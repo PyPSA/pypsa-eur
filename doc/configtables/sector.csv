@@ -28,7 +28,8 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 
 -- -- -- key,-,string used to complete URL for data download,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
--- -- -- column_name,-,name of the data column in retrieved geoDataFrame,
+-- -- -- column_name,-,name of the data column in retrieved GeoDataFrame,
+
 -- -- -- unit,-,unit of heat source potential must be in (K/M/G/T)Wh,
 -- -- -- full_load_hours,h,assumed full-load hours in Manz et al. (used to scale from utilisation to technical potential),
 -- heat_pump_sources,--,,
