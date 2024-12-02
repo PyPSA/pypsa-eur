@@ -13,17 +13,17 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 ``data/fraunhofer_heat_source_utilisation_potentials``
 
 - **Source:** Fraunhofer Fordatis
-- **Link:** https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple
-- **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
-- **Description:** Europe's NUTS administrative regions.
+- **Link:** https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple
+- **License:** `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`__
+- **Description:** Utilisation potentials for different heat sources across Europe, based on Manz et al. 2024<https://doi.org/10.1016/j.renene.2024.120111>.
 
 
 ``data/nuts``
 
 - **Source:** GISCO
 - **Link:** https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/
-- **License:** `CC BY 4.0 <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-unitshttps://creativecommons.org/licenses/by/4.0/>`__
-- **Description:** Utilisation potentials for different heat sources across Europe, based on Manz et al. 2024<https://doi.org/10.1016/j.renene.2024.120111>.
+- **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
+- **Description:** Europe's NUTS administrative regions.
 
 ``data/ENSPRESO_BIOMASS.xlsx``
 
