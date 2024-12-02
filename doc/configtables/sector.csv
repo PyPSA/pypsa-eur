@@ -31,6 +31,7 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 
 -- -- -- unit,-,unit of heat source potential must be in (K/M/G/T)Wh,
 -- -- -- full_load_hours,h,assumed full-load hours in Manz et al. (used to scale from utilisation to technical potential),
+-- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- heat_pump_sources,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
