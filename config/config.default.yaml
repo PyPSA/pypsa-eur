@@ -86,7 +86,7 @@ co2_budget:
 electricity:
   voltages: [220., 300., 330., 380., 400., 500., 750.]
   base_network: osm-prebuilt
-  osm-prebuilt-version: 0.5
+  osm-prebuilt-version: 0.6
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
