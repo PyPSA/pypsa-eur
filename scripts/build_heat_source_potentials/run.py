@@ -70,17 +70,19 @@ if __name__ == "__main__":
     heat_source_utilisation_potential = gpd.read_file(
         snakemake.input.utilisation_potential
     )
-    
-    
-    unit_conversion_factor=get_unit_conversion_factor(
-            input_unit=snakemake.params.heat_utilisation_potentials[
-                snakemake.wildcards.heat_source
-            ]["unit"],
-            output_unit="MWh",
-        )
-    scaling_factor = unit_conversion_factor / snakemake.params.heat_utilisation_potentials[snakemake.wildcards.heat_source][
+
+    unit_conversion_factor = get_unit_conversion_factor(
+        input_unit=snakemake.params.heat_utilisation_potentials[
+            snakemake.wildcards.heat_source
+        ]["unit"],
+        output_unit="MWh",
+    )
+    scaling_factor = (
+        unit_conversion_factor
+        / snakemake.params.heat_utilisation_potentials[snakemake.wildcards.heat_source][
             "full_load_hours"
         ]
+    )
 
     heat_source_technical_potential = OnshoreRegionData(
         onshore_regions=regions_onshore,
