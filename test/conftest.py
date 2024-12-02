@@ -7,6 +7,7 @@
 
 import pathlib
 
+import numpy as np
 import pandas as pd
 import pypsa
 import pytest
@@ -35,17 +36,15 @@ def config():
 def converters_dataframe():
     return pd.DataFrame(
         {
-            "index": 0,
-            "converter_id": "convert_20_41",
-            "bus0": "41",
-            "bus1": "42",
-            "underground": False,
-            "under_construction": False,
-            "country": "US",
-            "geometry": "LINESTRING(-122.3787 37.6821, -122.3777 37.6831)",
+            "converter_id": "convert_5231_5232",
+            "bus0": 5231,
+            "bus1": 5232,
+            "voltage": 380.0,
+            "geometry": "'LINESTRING(6.8884 45.6783 ",
+            "": "6.8894 45.6793)'",
         },
         index=[0],
-    ).set_index("converter_id")
+    )
 
 
 @pytest.fixture(scope="function")
@@ -53,7 +52,7 @@ def buses_dataframe():
     return pd.DataFrame(
         {
             "bus_id": [5231, 5232],
-            "voltage": [380.0, 400.0],
+            "voltage": [380.0, 380.0],
             "dc": ["f", "f"],
             "symbol": ["Substation", "Substation"],
             "under_construction": ["f", "f"],
