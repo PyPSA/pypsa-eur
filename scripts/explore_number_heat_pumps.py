@@ -23,8 +23,8 @@ pumps.index = pumps.index.astype(int)
 to_plot = pd.concat([historical, pumps])
 to_plot.loc[2022] = to_plot.loc[2022].fillna(method="ffill")
 fig, ax = plt.subplots()
-to_plot.plot(ax=ax, color=["black", "green", "red", "blue", "pink"],
-             style = ["-", "--", "--", "--", "--"])
+to_plot.plot(ax=ax, color=["black", "blue", "green", "red",  "pink", "orange"],
+             style = ["-", "--", "--", "--", "--", "--"])
 ax.set_ylabel("Number of heat pumps [millions]")
 ax.set_xlim([2005, 2050])
 
@@ -41,7 +41,9 @@ to_plot_interpolated = to_plot_reindexed.interpolate(method='linear')
 yearly_diff = to_plot_interpolated.diff()
 yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
 
-(yearly_diff.shift(-1)).plot()
+(yearly_diff.shift(-1)).plot(color=["black", "blue", "green", "red",  "pink", "orange"],
+             # style = ["-", "--", "--", "--", "--", "--"]
+             )
 plt.ylabel("Annual additional heat pumps \n [million heat pumps]")
 plt.savefig(snakemake.output.balances[:-19] + "heat_pump_annual_additional.pdf",
             bbox_inches="tight")
@@ -57,8 +59,10 @@ caps = capacities.droplevel(0).loc[renewables].droplevel([1,2,3], axis=1).sum().
 to_plot = pd.concat([historical, caps])
 to_plot.loc[2023] = to_plot.loc[2023].fillna(method="ffill")
 fig, ax = plt.subplots()
-(to_plot/1e3).plot(ax=ax, color=["black", "green", "red", "blue", "pink", "orange"],
-             style = ["-", "--", "--", "--", "--", "--"])
+(to_plot/1e3).plot(ax=ax,
+             color=["black", "blue", "green", "red",  "pink", "orange"],
+             style = ["-", "--", "--", "--", "--", "--"]
+             )
 ax.set_ylabel("Installed renewable capacity [GW]")
 ax.set_xlim([2010, 2050])
 fig.savefig(snakemake.output.balances[:-19] + "res_installation.pdf",
@@ -74,7 +78,11 @@ to_plot_interpolated = to_plot_reindexed.interpolate(method='linear')
 yearly_diff = to_plot_interpolated.diff()
 yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
 
-(yearly_diff.shift(-1)/1e3).plot()
+(yearly_diff.shift(-1)/1e3).plot(
+    color=["black", "blue", "green", "red",  "pink", "orange"],
+                 style = ["-", "--", "--", "--", "--", "--"]
+    
+    )
 plt.ylabel("Annual additional RES capacity [GW]")
 plt.savefig(snakemake.output.balances[:-19] + "res_annual_additional.pdf",
             bbox_inches="tight")
@@ -173,4 +181,75 @@ to_plot = demand.sum().unstack().T
 plt.ylabel("vehicle-km driven [million 100 km]")
 plt.xlabel("")
 plt.savefig(fn + f"total_transport_demand.pdf",
+            bbox_inches="tight")
+#%% 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+# Data from the table
+data = {
+    "Year": [2025, 2030, 2035, 2040, 2050],
+    "Base light duty": [20, 55, 100, 100, 100],
+    "Base heavy duty": [10, 50, 100, 100, 100],
+    "Fast light duty": [50, 100, 100, 100, 100],
+    "Fast heavy duty": [30, 100, 100, 100, 100],
+    "Slow light duty": [16, 30, 50, 90, 100],
+    "Slow heavy duty": [10, 20, 30, 50, 90],
+}
+
+# Convert to DataFrame
+df = pd.DataFrame(data)
+
+# Reshape data for heatmap
+heatmap_data = df.set_index("Year").T
+
+# Parse the rows into separate columns for clarity
+scenarios = ["Base", "Fast", "Slow"]
+vehicle_types = ["light duty", "heavy duty"]
+index = [(scenario, vt) for scenario in scenarios for vt in vehicle_types]
+
+heatmap_data.index = pd.MultiIndex.from_tuples(index, names=["Scenario", "Vehicle Type"])
+
+# Plotting
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.heatmap(
+    heatmap_data,
+    annot=True,
+    fmt=".0f",
+    cmap="YlGnBu",
+    cbar_kws={"label": "%"},
+    linewidths=0.5,
+    ax=ax,
+)
+
+# Add spanning labels for scenarios
+y_positions = [1, 3, 5]  # Vertical center for each scenario group
+for y_pos, scenario in zip(y_positions, scenarios):
+    ax.text(
+        -1.0,  # Further left of the heatmap
+        y_pos,  # Center of the grouped rows
+        scenario,
+        ha="center",
+        va="center",
+        rotation=90,
+        fontsize=12,
+        fontweight="bold",
+    )
+
+# Draw stronger horizontal gray lines every second row
+x_min, x_max = ax.get_xlim()
+for i in range(2, len(heatmap_data), 2):
+    ax.hlines(i, x_min - 0.5, x_max, linewidth=4, color="black",
+              # linestyles="--"
+              )
+
+# Clean up axis labels
+ax.set_yticklabels([vt for _, vt in heatmap_data.index], rotation=0)
+ax.set_ylabel("")
+ax.set_xlabel("Year")
+ax.set_title("Maximum Zero-Emission Vehicle Share of New Registered Cars")
+plt.tight_layout()
+
+plt.savefig("/home/lisa/Documents/own_projects/endogenous_transport/graphics/new_car_reg_scenarios.pdf",
             bbox_inches="tight")

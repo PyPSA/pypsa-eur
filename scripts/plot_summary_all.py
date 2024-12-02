@@ -279,6 +279,21 @@ def plot_costs(cost_df, drop=None):
     plt.savefig(snakemake.output.costs.split(".pdf")[0]+"-total.pdf",
                 bbox_inches="tight")
     
+    # together = df.sum().unstack().T
+    # wished_scenarios = ["base", "fast", "slow"]
+    # fig, ax = plt.subplots()
+    # for sc in wished_scenarios:
+    #     together[sc].plot(ax=ax)
+    #     area = together.loc[:,together.columns.str.contains(sc)&~together.columns.str.contains("lock")
+    #                         &~together.columns.str.contains("2")]
+        
+    #     lower_bound = area.min(axis=1)
+    #     upper_bound = area.max(axis=1)
+    #     ax.fill_between(area.index, lower_bound, upper_bound, alpha=0.2, label=f"{sc} range")
+        
+    # ax.set_ylabel("System Cost [EUR billion per year]")
+    # ax.set_xlabel("planning horizon")
+    
 
 
 def split_positive_negative(df):
@@ -386,7 +401,7 @@ def plot_balances(balances, drop=None):
                         
                 diff = co2_b[scenario] - co2_b[scenario1].values
                 diff = diff.groupby(level=0).sum()
-                heatmap_data = diff.loc[bool_index]
+                heatmap_data = diff.loc[bool_index].drop("2025", axis=1)
     
                 plt.figure(figsize=(12, 8))
                 sns.heatmap(heatmap_data, cmap='coolwarm',
@@ -396,7 +411,7 @@ def plot_balances(balances, drop=None):
                             cbar=False,
                             #cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
                             )
-                axes[i].set_title(f'Difference in Emissions ({scenario} vs {scenario1[0]})')
+                axes[i].set_title(f'{scenario} vs {scenario1[0]}')
                 axes[i].set_xlabel('')
                 i += 1
             
@@ -564,8 +579,16 @@ def plot_balances(balances, drop=None):
 
 def plot_shares_area(balances, shares):
 
-
-    for v in [["land transport demand light"], ["land transport demand heavy"]]:
+    
+    fig, axes = plt.subplots(
+                nrows=2,
+                ncols=3, 
+                sharex=True,
+                figsize=(14, 10), 
+                sharey=True  # This ensures that all subplots share the same y-axis
+                )
+    carriers = ["land transport demand light"], ["land transport demand heavy"]
+    for row, v in enumerate(carriers):
         df = balances.loc[v]
         df = df.groupby(df.index.get_level_values(2)).sum()
 
@@ -626,13 +649,11 @@ def plot_shares_area(balances, shares):
         color = ['g','b', 'r']
         line_styles = ["-", "--", ":", "-."]
         
-        fig, axes = plt.subplots(
-                    nrows=1, ncols=len(share.index), 
-                    figsize=(14, 5), 
-                    sharey=True  # This ensures that all subplots share the same y-axis
-                    )
+
         for i in range(len(share.index)):
-            share.iloc[i].reindex(wished_scenarios, level=0).unstack().T.plot(title=share.index[i], ax=axes[i],
+            title = share.index[i].replace("land transport ", "").replace(" light", "") if row==0 else ""
+            share.iloc[i].reindex(wished_scenarios, level=0).unstack().T.plot(title=title,
+                                                                              ax=axes[row, i],
                                            legend=False,
                                            style=line_styles[:len(wished_scenarios)],
                                            color=color)
@@ -645,11 +666,11 @@ def plot_shares_area(balances, shares):
                 a=(exogen_share.reindex(columns=wished_scenarios)
                    .dropna(how="all", axis=1)
                    .rename(columns = lambda x: x + " exogen"))
-                (a*100).plot(ax=axes[i], legend=False, style=line_styles[:len(wished_scenarios)],
+                (a*100).plot(ax=axes[row, i], legend=False, style=line_styles[:len(wished_scenarios)],
                              color="gray",
                              linewidth=2, alpha=0.5)
                 
-                axes[i].text(
+                axes[row, i].text(
                         x=a.index[-1],  # Position near the end of the x-axis
                         y=90, # (a * 100).iloc[-1].values[0],  # Position based on the last data point value
                         s="exogenous", 
@@ -662,19 +683,19 @@ def plot_shares_area(balances, shares):
             for j, sc in enumerate(wished_scenarios):
                 # larger variation
                 area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
-                axes[i].fill_between(
+                axes[row, i].fill_between(
                         area.unstack().columns,
                         area.unstack().min(),
                         area.unstack().max(),
                         color=color[j],
                         alpha=0.05,
-                        label="+/-20% CAPEX" if j==0 else "",
+                        label="+/-20% CAPEX" if (j==0 and row==0) else "",
                     )
                 # smaller variation
                 filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
                 ~share.columns.get_level_values(0).str.contains("2"))
                 area = share.loc[:,filter_b].iloc[i]
-                axes[i].fill_between(
+                axes[row, i].fill_between(
                         area.unstack().columns,
                         area.unstack().min(),
                         area.unstack().max(),
@@ -682,18 +703,21 @@ def plot_shares_area(balances, shares):
                         alpha=0.1,
                         label="+/-10% CAPEX" if j==0 else "",
                     )
-            axes[i].set_xlabel("")
-            axes[i].grid(axis="x")
-        axes[0].set_ylabel("share [%]")
+            axes[row, i].set_xlabel("")
+            axes[row, i].grid(axis="x")
+        axes[row, 0].set_ylabel("share [%]")
         
-        axes[1].legend(
+        axes[row, 1].legend(
             ncol=1,
             loc="upper left",
             frameon=False,
             )
-        
-        fig.savefig(snakemake.output.balances[:-19] + f"area-share-{v[0].replace(" ", "-")}.pdf",
-                    bbox_inches="tight")
+    
+    # Add row titles for "light" and "heavy"
+    fig.text(0.5, 0.95, "Light", ha='center', va='center', fontsize=16, weight='bold')
+    fig.text(0.5, 0.5, "Heavy", ha='center', va='center', fontsize=16, weight='bold')
+    fig.savefig(snakemake.output.balances[:-19] + "area-share.pdf",
+                bbox_inches="tight")
             
 
 def plot_prices(prices, drop=True):

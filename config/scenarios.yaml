@@ -29,7 +29,52 @@ fast:
         2035: 1.0
         2040: 1.0
         2050: 1.0
- 
+
+fast-no-lockin:
+  sector:
+    early_ice_retirement: true
+    car_reg_factor:
+      light:
+        2025: 0.5  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 1.0
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
+      heavy:
+        2025: 0.3  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+        2030: 1.0
+        2035: 1.0
+        2040: 1.0
+        2050: 1.0
+    vary:
+      Link:
+        land transport oil heavy:
+          p_nom_extendable:
+            2025: True
+            2030: False
+            2035: False
+            2040: False
+            2050: False
+          p_nom:
+            2025: 1
+            2030: 0
+            2035: 0
+            2040: 0
+            2050: 0
+        land transport oil light:
+          p_nom_extendable:
+            2025: True
+            2030: False
+            2035: False
+            2040: False
+            2050: False
+          p_nom:
+            2025: 1
+            2030: 0
+            2035: 0
+            2040: 0
+            2050: 0
+
 
 fast-p2:
   sector:
@@ -155,6 +200,37 @@ base:
   sector:
     logistic_curve: false
 
+base-no-lockin:
+  sector:
+    logistic_curve: false
+    vary:
+        Link:
+          land transport oil heavy:
+            p_nom_extendable:
+              2025: true
+              2030: false
+              2035: false
+              2040: false
+              2050: false
+            p_nom:
+              2025: 1
+              2030: 0
+              2035: 0
+              2040: 0
+              2050: 0
+          land transport oil light:
+            p_nom_extendable:
+              2025: true
+              2030: false
+              2035: false
+              2040: false
+              2050: false
+            p_nom:
+              2025: 1
+              2030: 0
+              2035: 0
+              2040: 0
+              2050: 0
 
 base-m1:
   sector:
@@ -216,6 +292,11 @@ base-p2:
 dsm:
   sector:
     bev_dsm: true
+
+v2g:
+  sector:
+    bev_dsm: true
+    v2g: true
 
 
 slow:
@@ -347,43 +428,113 @@ slow-m1:
           
 high-demand:
   sector:
-      vary_demand:
-        land transport demand heavy:
-          2020: 1.111
-          2025: 1.166 # compared to 2019 from Eurostat
-          2030: 1.221
-          2035: 1.276
-          2040: 1.331
-          2045: 1.386
-          2050: 1.441
-        land transport demand light:
-          2020: 1.1154
-          2025: 1.17524 # compared to 2019 from Eurostat
-          2030: 1.222694
-          2035: 1.278464
-          2040: 1.334234
-          2045: 1.3900084
-          2050: 1.668854
+    vary_demand:
+      land transport demand heavy:
+        2020: 1.01
+        2025: 1.113
+        2030: 1.221
+        2035: 1.333
+        2040: 1.452
+        2045: 1.575
+        2050: 1.703
+      land transport demand light:
+        2020: 1.014
+        2025: 1.12182
+        2030: 1.22269
+        2035: 1.33658
+        2040: 1.45553
+        2045: 1.579555
+        2050: 1.972282
+
+    # vary_demand:
+    #   land transport demand heavy:
+    #     2020: 1.313
+    #     2025: 1.3
+    #     2030: 1.443
+    #     2035: 1.508
+    #     2040: 1.573
+    #     2045: 1.638
+    #     2050: 1.703
+    #   land transport demand light:
+    #     2020: 1.3182
+    #     2025: 1.38892
+    #     2030: 1.445002
+    #     2035: 1.510912
+    #     2040: 1.576822
+    #     2045: 1.6427372
+    #     2050: 1.972282
+      # vary_demand:
+      #   land transport demand heavy:
+      #     2020: 1.111
+      #     2025: 1.166 # compared to 2019 from Eurostat
+      #     2030: 1.221
+      #     2035: 1.276
+      #     2040: 1.331
+      #     2045: 1.386
+      #     2050: 1.441
+      #   land transport demand light:
+      #     2020: 1.1154
+      #     2025: 1.17524 # compared to 2019 from Eurostat
+      #     2030: 1.222694
+      #     2035: 1.278464
+      #     2040: 1.334234
+      #     2045: 1.3900084
+      #     2050: 1.668854
 
 low-demand:
   sector:
     vary_demand:
       land transport demand heavy:
-        2020: 1.0
-        2025: 1.0 # compared to 2019 from Eurostat
-        2030: 0.9
-        2035: 0.85
-        2040: 0.8
-        2045: 0.75
-        2050: 0.7
+        2020: 1.01
+        2025: 1.007
+        2030: 0.999
+        2035: 0.986
+        2040: 0.968
+        2045: 0.945
+        2050: 0.917
       land transport demand light:
-        2020: 1.0
-        2025: 1.0 # compared to 2019 from Eurostat
-        2030: 0.9
-        2035: 0.85
-        2040: 0.8
-        2045: 0.75
-        2050: 0.7
+        2020: 1.014
+        2025: 1.01528
+        2030: 1.000386
+        2035: 0.988904
+        2040: 0.971032
+        2045: 0.947733
+        2050: 0.911998
+
+    # vary_demand:
+    #   land transport demand heavy:
+    #     2020: 0.707
+    #     2025: 0.742
+    #     2030: 0.777
+    #     2035: 0.812
+    #     2040: 0.847
+    #     2045: 0.882
+    #     2050: 0.917
+    #   land transport demand light:
+    #     2020: 0.7098
+    #     2025: 0.74888
+    #     2030: 0.778078
+    #     2035: 0.813568
+    #     2040: 0.849058
+    #     2045: 0.8845508
+    #     2050: 1.062
+    # vary_demand:
+    #   land transport demand heavy:
+    #     2020: 1.0
+    #     2025: 1.0 # compared to 2019 from Eurostat
+    #     2030: 0.9
+    #     2035: 0.85
+    #     2040: 0.8
+    #     2045: 0.75
+    #     2050: 0.7
+    #   land transport demand light:
+    #     2020: 1.0
+    #     2025: 1.0 # compared to 2019 from Eurostat
+    #     2030: 0.9
+    #     2035: 0.85
+    #     2040: 0.8
+    #     2045: 0.75
+    #     2050: 0.7
 
 high-elec-efficiency:
   sector:
