@@ -163,9 +163,9 @@ def test_load_buses(tmpdir, config, buses_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    europe_shape = pathlib.Path(path_cwd, "resources", "europe_shape.geojson")
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses_output = _load_buses(
-        buses_path, europe_shape, countries, config
+        buses_path, italy_shape, countries, config
     ).reset_index()
     pathlib.Path.unlink(buses_path)
     df_comparison = df_buses_output.compare(df_buses_reference)
