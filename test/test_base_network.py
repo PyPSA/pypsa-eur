@@ -23,7 +23,9 @@ from base_network import (
     _get_linetypes_config,
     _get_oid,
     _load_buses,
+    _load_converters_from_eg,
     _load_converters_from_osm,
+    _load_transformers,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -137,6 +139,38 @@ def test_load_buses(tmpdir, config, buses_dataframe):
     assert df_comparison.empty
 
 
+def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dataframe):
+    """
+    Verify what returned by _load_converters_from_eg.
+    """
+    df_converters_reference = pd.DataFrame(
+        {
+            "converter_id": "convert_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "B2B",
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
+    converters_dataframe.to_csv(converters_path, index=False)
+    df_converters_output = (
+        _load_converters_from_eg(df_buses, converters_path)
+        .drop("Unnamed: 5", axis=1)
+        .reset_index()
+    )
+    df_converters_comparison = df_converters_output.compare(df_converters_reference)
+    pathlib.Path.unlink(converters_path)
+    assert df_converters_comparison.empty
+
+
 def test_load_converters_from_osm(
     tmpdir, buses_dataframe, config, converters_dataframe
 ):
@@ -169,3 +203,36 @@ def test_load_converters_from_osm(
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
+
+
+def test_load_transformers(tmpdir, buses_dataframe, config, transformers_dataframe):
+    """
+    Verify what returned by _load_transformers.
+    """
+    df_transformers_reference = pd.DataFrame(
+        {
+            "transformer_id": "transf_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    transformers_path = pathlib.Path(tmpdir, "transformers_exercise.csv")
+    transformers_dataframe.to_csv(transformers_path, index=False)
+    df_transformers_output = (
+        _load_transformers(df_buses, transformers_path)
+        .drop("Unnamed: 5", axis=1)
+        .reset_index()
+    )
+    df_transformers_comparison = df_transformers_output.compare(
+        df_transformers_reference
+    )
+    pathlib.Path.unlink(transformers_path)
+    assert df_transformers_comparison.empty
