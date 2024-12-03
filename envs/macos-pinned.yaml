@@ -30,7 +30,7 @@ dependencies:
   - aws-c-s3=0.7.2
   - aws-c-sdkutils=0.2.1
   - aws-checksums=0.2.2
-  - aws-crt-cpp=0.29.5
+  - aws-crt-cpp=0.29.6
   - aws-sdk-cpp=1.11.449
   - azure-core-cpp=1.14.0
   - azure-identity-cpp=1.10.0
@@ -47,13 +47,12 @@ dependencies:
   - brotli-python=1.1.0
   - bzip2=1.0.8
   - c-ares=1.34.3
-  - c-blosc2=2.15.1
+  - c-blosc2=2.15.2
   - ca-certificates=2024.8.30
-  - cads-api-client=1.5.4
   - cairo=1.18.0
   - capnproto=1.0.2
   - cartopy=0.24.0
-  - cdsapi=0.7.4
+  - cdsapi=0.7.5
   - certifi=2024.8.30
   - cffi=1.17.1
   - cfgv=3.3.1
@@ -83,6 +82,7 @@ dependencies:
   - dask=2024.11.2
   - dask-core=2024.11.2
   - dask-expr=1.1.19
+  - datapi=0.1.1
   - datrie=0.8.2
   - dav1d=1.2.1
   - decorator=5.1.1
@@ -148,7 +148,7 @@ dependencies:
   - importlib_resources=6.4.5
   - iniconfig=2.0.0
   - ipopt=3.14.16
-  - ipython=8.29.0
+  - ipython=8.30.0
   - jedi=0.19.2
   - jinja2=3.1.4
   - joblib=1.4.2
@@ -231,7 +231,7 @@ dependencies:
   - libssh2=1.11.1
   - libthrift=0.21.0
   - libtiff=4.7.0
-  - libutf8proc=2.8.0
+  - libutf8proc=2.9.0
   - libwebp-base=1.4.0
   - libxcb=1.17.0
   - libxml2=2.13.5
@@ -289,7 +289,7 @@ dependencies:
   - plac=1.4.3
   - platformdirs=4.3.6
   - pluggy=1.5.0
-  - polars=1.15.0
+  - polars=1.16.0
   - poppler=24.11.0
   - poppler-data=0.4.12
   - postgresql=17.2
@@ -320,7 +320,7 @@ dependencies:
   - pytest=8.3.3
   - python=3.12.7
   - python-dateutil=2.9.0.post0
-  - python-fastjsonschema=2.20.0
+  - python-fastjsonschema=2.21.0
   - python-tzdata=2024.2
   - python-utils=3.9.1
   - python_abi=3.12
@@ -351,7 +351,7 @@ dependencies:
   - snakemake-interface-executor-plugins=9.3.2
   - snakemake-interface-report-plugins=1.1.0
   - snakemake-interface-storage-plugins=3.3.0
-  - snakemake-minimal=8.25.4
+  - snakemake-minimal=8.24.1
   - snappy=1.2.1
   - snuggs=1.4.7
   - sortedcontainers=2.4.0
@@ -368,7 +368,7 @@ dependencies:
   - throttler=1.2.2
   - tiledb=2.26.2
   - tk=8.6.13
-  - tomli=2.1.0
+  - tomli=2.2.1
   - toolz=1.0.0
   - tornado=6.4.2
   - tqdm=4.67.1
