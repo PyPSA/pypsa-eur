@@ -15,11 +15,11 @@ The map might take a moment to load. To view it in full screen, click `here <bas
 
 ``data/osm-prebuilt``
 
-- **Source:** OpenStreetMap; Xiong, B., Neumann, F., & Brown, T. (2024).
+- **Source:** OpenStreetMap; Xiong, B., Fioriti, D., Neumann, F., Riepin I. & Brown, T. (2024).
   Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data (0.5)
-  [Data set]. Zenodo. https://doi.org/10.5281/zenodo.13981528
-- **Link:** https://zenodo.org/records/13981528
-- **License:** ODbL (`reference <https://zenodo.org/records/13981528>`)
+  [Data set]. Zenodo. https://doi.org/10.5281/zenodo.14144752
+- **Link:** https://zenodo.org/records/14144752
+- **License:** ODbL (`reference <https://zenodo.org/records/14144752>`)
 - **Description:** Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.
 
 This dataset contains a topologically connected representation of the European

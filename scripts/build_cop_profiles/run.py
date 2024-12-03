@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 """
 Approximate heat pump coefficient-of-performance (COP) profiles for different
-heat sources and systems.
+heat sources and systems. Returns zero where source temperature higher than sink temperature.
 
 For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
 
@@ -27,11 +27,8 @@ Relevant Settings
                 urban central:
                 urban decentral:
                 rural:
-    snapshots:
-
 Inputs
 ------
-- `resources/<run_name>/regions_onshore.geojson`: Onshore regions
 - `resources/<run_name>/temp_soil_total`: Ground temperature
 - `resources/<run_name>/temp_air_total`: Air temperature
 
@@ -94,10 +91,6 @@ def get_cop(
         ).approximate_cop()
 
 
-def get_country_from_node_name(node_name: str) -> str:
-    return node_name[:2]
-
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -109,9 +102,6 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    # map forward and return temperatures specified on country-level to onshore regions
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
     )
@@ -123,9 +113,23 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            source_inlet_temperature_celsius = xr.open_dataarray(
-                snakemake.input[f"temp_{heat_source.replace('ground', 'soil')}_total"]
-            )
+            if heat_source in ["ground", "air"]:
+                source_inlet_temperature_celsius = xr.open_dataarray(
+                    snakemake.input[
+                        f"temp_{heat_source.replace('ground', 'soil')}_total"
+                    ]
+                )
+            elif heat_source in snakemake.params.heat_utilisation_potentials.keys():
+                source_inlet_temperature_celsius = (
+                    snakemake.params.heat_utilisation_potentials[heat_source][
+                        "constant_temperature_celsius"
+                    ]
+                )
+            else:
+                raise ValueError(
+                    f"Unknown heat source {heat_source}. Must be one of [ground, air] or {snakemake.params.heat_sources.keys()}."
+                )
+
             cop_da = get_cop(
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
