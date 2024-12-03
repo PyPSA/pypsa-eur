@@ -29,6 +29,7 @@ from base_network import (
     _load_links_from_eg,
     _load_links_from_osm,
     _load_transformers,
+    _reconnect_crimea,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -170,6 +171,7 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
         .reset_index()
     )
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
 
@@ -204,6 +206,7 @@ def test_load_converters_from_osm(
         .reset_index()
     )
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
 
@@ -238,6 +241,7 @@ def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
         _load_lines(df_buses, lines_path).drop("Unnamed: 9", axis=1).reset_index()
     )
     df_lines_comparison = df_lines_output.compare(df_lines_reference)
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(lines_path)
     assert df_lines_comparison.empty
 
@@ -274,6 +278,7 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
         .reset_index()
     )
     df_links_comparison = df_links_output.compare(df_links_reference)
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(links_path)
     assert df_links_comparison.empty
 
@@ -310,6 +315,7 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
         .reset_index()
     )
     df_links_comparison = df_links_output.compare(df_links_reference)
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(links_path)
     assert df_links_comparison.empty
 
@@ -343,5 +349,52 @@ def test_load_transformers(tmpdir, buses_dataframe, config, transformers_datafra
     df_transformers_comparison = df_transformers_output.compare(
         df_transformers_reference
     )
+    pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(transformers_path)
     assert df_transformers_comparison.empty
+
+
+def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
+    """
+    Verify what returned by _reconnect_crimea.
+    """
+    df_lines_crimea_reference = pd.DataFrame(
+        {
+            "index": [
+                "line_5231_5232",
+                "Melitopol",
+                "Liubymivka left",
+                "Luibymivka right",
+            ],
+            "bus0": ["5231", "3065", "3181", "3181"],
+            "bus1": ["5232", "3057", "3055", "3057"],
+            "v_nom": [380.0, 300.0, 300.0, 300.0],
+            "num_parallel": [1.0, 1.0, 1.0, 1.0],
+            "length": [1.0, 140.0, 120.0, 140.0],
+            "underground": [True, False, False, False],
+            "under_construction": [False, False, False, False],
+            "geometry": [
+                "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+                np.nan,
+                np.nan,
+                np.nan,
+            ],
+            "carrier": ["AC", "AC", "AC", "AC"],
+        },
+        index=[0, 1, 2, 3],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
+    lines_dataframe.to_csv(lines_path, index=False)
+    df_lines = _load_lines(df_buses, lines_path).drop("Unnamed: 9", axis=1)
+    df_lines_crimea_output = _reconnect_crimea(df_lines).reset_index()
+    df_lines_crimea_comparison = df_lines_crimea_output.compare(
+        df_lines_crimea_reference
+    )
+    pathlib.Path.unlink(buses_path)
+    pathlib.Path.unlink(lines_path)
+    assert df_lines_crimea_comparison.empty
