@@ -25,6 +25,8 @@ from base_network import (
     _load_buses,
     _load_converters_from_eg,
     _load_converters_from_osm,
+    _load_links_from_eg,
+    _load_links_from_osm,
     _load_transformers,
 )
 
@@ -203,6 +205,78 @@ def test_load_converters_from_osm(
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
+
+
+def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
+    """
+    Verify what returned by _load_links_from_eg.
+    """
+    df_links_reference = pd.DataFrame(
+        {
+            "link_id": "link_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "p_nom": 600.0,
+            "length": 1.0,
+            "underground": True,
+            "under_construction": False,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "DC",
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    links_path = pathlib.Path(tmpdir, "links_exercise.csv")
+    links_dataframe.to_csv(links_path, index=False)
+    df_links_output = (
+        _load_links_from_eg(df_buses, links_path)
+        .drop("Unnamed: 9", axis=1)
+        .reset_index()
+    )
+    df_links_comparison = df_links_output.compare(df_links_reference)
+    pathlib.Path.unlink(links_path)
+    assert df_links_comparison.empty
+
+
+def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
+    """
+    Verify what returned by _load_links_from_osm.
+    """
+    df_links_reference = pd.DataFrame(
+        {
+            "link_id": "link_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "p_nom": 600.0,
+            "length": 1.0,
+            "underground": True,
+            "under_construction": False,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "DC",
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    links_path = pathlib.Path(tmpdir, "links_exercise.csv")
+    links_dataframe.to_csv(links_path, index=False)
+    df_links_output = (
+        _load_links_from_osm(df_buses, links_path)
+        .drop("Unnamed: 9", axis=1)
+        .reset_index()
+    )
+    df_links_comparison = df_links_output.compare(df_links_reference)
+    pathlib.Path.unlink(links_path)
+    assert df_links_comparison.empty
 
 
 def test_load_transformers(tmpdir, buses_dataframe, config, transformers_dataframe):
