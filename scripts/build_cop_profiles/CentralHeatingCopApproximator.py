@@ -144,11 +144,17 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         """
         Calculate the coefficient of performance (COP) for the system.
 
+        Notes:
+        ------
+        Returns 0 where the source inlet temperature is greater than the sink outlet temperature.
+
         Returns:
         --------
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
-        return (
+        return xr.where(
+            self.t_source_in_kelvin > self.t_sink_out_kelvin,
+            0,
             self.ideal_lorenz_cop
             * (
                 (
@@ -170,7 +176,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             * (1 - self.ratio_evaporation_compression_work)
             + 1
             - self.isentropic_efficiency_compressor_kelvin
-            - self.heat_loss
+            - self.heat_loss,
         )
 
     @property

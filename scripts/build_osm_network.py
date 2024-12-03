@@ -1429,7 +1429,7 @@ def _finalise_network(all_buses, converters, lines, links, transformers):
     lines_all["voltage"] = lines_all["voltage"] / 1000
     lines_all["length"] = lines_all["length"].round(2)
     lines_all["under_construction"] = False
-    lines_all["tags"] = lines_all["contains_lines"]
+    lines_all["tags"] = lines_all["contains_lines"].apply(lambda x: ";".join(x))
     lines_all["underground"] = lines_all["underground"].replace({True: "t", False: "f"})
     lines_all["under_construction"] = lines_all["under_construction"].replace(
         {True: "t", False: "f"}
@@ -1581,12 +1581,33 @@ def build_network(
     lines["length"] = lines.to_crs(DISTANCE_CRS).length
     links["length"] = links.to_crs(DISTANCE_CRS).length
 
+    # Shapes
+    stations_polygon = stations[["station_id", "geometry"]].copy()
+    all_buses_polygon = buses_polygon.copy()
+    all_buses_polygon["dc"] = False
+    all_buses_polygon = pd.concat(
+        [
+            all_buses_polygon,
+            dc_buses[["bus_id", "polygon", "dc"]].rename(
+                columns={"polygon": "geometry"}
+            ),
+        ]
+    )
+
     ### Saving outputs to PyPSA-compatible format
     buses_final, converters_final, lines_final, links_final, transformers_final = (
         _finalise_network(all_buses, converters, lines, links, transformers)
     )
 
-    return buses_final, converters_final, lines_final, links_final, transformers_final
+    return (
+        buses_final,
+        converters_final,
+        lines_final,
+        links_final,
+        transformers_final,
+        stations_polygon,
+        all_buses_polygon,
+    )
 
 
 if __name__ == "__main__":
@@ -1604,16 +1625,18 @@ if __name__ == "__main__":
     country_shapes = gpd.read_file(snakemake.input["country_shapes"]).set_index("name")
 
     # Build network
-    buses, converters, lines, links, transformers = build_network(
-        snakemake.input,
-        country_shapes,
-        voltages,
-        line_types,
+    buses, converters, lines, links, transformers, stations_polygon, buses_polygon = (
+        build_network(
+            snakemake.input,
+            country_shapes,
+            voltages,
+            line_types,
+        )
     )
 
     # Export to csv for base_network
     buses.to_csv(snakemake.output["substations"], quotechar="'")
-    lines.drop(columns=["tags"]).to_csv(snakemake.output["lines"], quotechar="'")
+    lines.to_csv(snakemake.output["lines"], quotechar="'")
     links.to_csv(snakemake.output["links"], quotechar="'")
     converters.to_csv(snakemake.output["converters"], quotechar="'")
     transformers.to_csv(snakemake.output["transformers"], quotechar="'")
@@ -1624,3 +1647,7 @@ if __name__ == "__main__":
     links.to_file(snakemake.output["links_geojson"])
     converters.to_file(snakemake.output["converters_geojson"])
     transformers.to_file(snakemake.output["transformers_geojson"])
+
+    # Export polygons for visualisation
+    stations_polygon.to_file(snakemake.output["stations_polygon"])
+    buses_polygon.to_file(snakemake.output["buses_polygon"])
