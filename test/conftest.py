@@ -66,6 +66,25 @@ def converters_dataframe():
 
 
 @pytest.fixture(scope="function")
+def lines_dataframe():
+    return pd.DataFrame(
+        {
+            "line_id": "line_5231_5232",
+            "bus0": 5231,
+            "bus1": 5232,
+            "voltage": 380.0,
+            "circuits": 1.0,
+            "length": 1000.0,
+            "underground": "t",
+            "under_construction": "f",
+            "geometry": "'LINESTRING(6.8884 45.6783 ",
+            "": "6.8894 45.6793)'",
+        },
+        index=[0],
+    )
+
+
+@pytest.fixture(scope="function")
 def links_dataframe():
     return pd.DataFrame(
         {
