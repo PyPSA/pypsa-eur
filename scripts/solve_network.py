@@ -563,7 +563,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     each node to produce on average at least 70% of its consumption.
     """
     # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
+    float_regex = r"[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
         ggrouper = n.generators.bus.map(n.buses.country)
@@ -1099,6 +1099,25 @@ def solve_network(n, config, params, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+        kwargs["solver_options"]['OptimalityTol'] = 1e-4
+        kwargs["solver_options"]['threads'] = 8
+        kwargs["solver_options"]['BarHomogenous'] = 1
+        kwargs["solver_options"]['ObjScale'] = -0.5
+        logger.info(f"resolving with new solver settings {kwargs["solver_options"]}")
+        
+        status, condition = n.optimize(**kwargs)
+        
+        if status != "ok" and not rolling_horizon:
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+            
+            kwargs["solver_options"]['NumericFocus'] = 3
+            
+            logger.info(f"resolving with new solver settings {kwargs["solver_options"]}")
+            
+            status, condition = n.optimize(**kwargs)
+            
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
@@ -1114,14 +1133,14 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",
             simpl="",
             opts="",
-            clusters="5",
+            clusters="39",
             ll="v1.0",
             sector_opts="",
-            # planning_horizons="2030",
+            planning_horizons="2025",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
