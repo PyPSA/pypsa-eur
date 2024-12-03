@@ -1276,6 +1276,7 @@ rule prepare_sector_network:
             resources("cement/sfi_capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
+        ),
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
