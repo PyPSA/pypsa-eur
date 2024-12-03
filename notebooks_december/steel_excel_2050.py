@@ -16,6 +16,8 @@ def steel_preprocessing(excel_dir, scenario, config):
     bof_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "BOF_Prod", index_col="Bus")
     ng_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "NG_EAF", index_col="Bus")
     h2_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "H2_EAF", index_col="Bus")
+    h2_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "H2_EAF", index_col="Bus")
+
     
     # Hydrogen
     elec_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "Elec_H2Prod", index_col="Bus")

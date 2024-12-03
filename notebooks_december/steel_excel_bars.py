@@ -40,13 +40,13 @@ def steel_preprocessing(excel_dir, scenario, config):
     return steel_prod, steel_shares
 
 
-def plot_bar(n, excel_data, regions, year, title,i,j,ncol, ax=None):
+def plot_bar(n, excel_data, steel_countries, regions, year, title,i,j,ncol, ax=None):
 
     
     # Plot the stacked bar chart
        if ax is None:
-           fig, ax = plt.subplots(figsize=(10, 6))
-       
+           fig, ax = plt.subplots(figsize=(15, 10))
+       excel_data = excel_data.reindex(steel_countries).fillna(0)
        # Plot the stacked bar chart
        excel_data.plot(kind='bar', stacked=True, ax=ax, legend=False, width=1.0)
     
@@ -55,9 +55,17 @@ def plot_bar(n, excel_data, regions, year, title,i,j,ncol, ax=None):
        ax.set_xlabel('Country', fontsize=12)
        ax.set_ylabel('Percentage (%)', fontsize=12)
        #ax.legend(title='Categories', fontsize=10)
+       
+       # Customize tick positions to avoid overlap
+       ax.set_xticks(range(len(excel_data.index)))  # Ensure correct tick positions
+       ax.set_xticklabels(excel_data.index, fontsize=10, rotation=45)
+        
+        # Add padding between bars if needed
+       ax.set_xlim(-0.5, len(excel_data.index) - 0.5)  # Adjust limits if necessary
     
        # Display the plot
        plt.tight_layout()
+       plt.show()
 
 
 # %%
@@ -98,14 +106,20 @@ title = "Steel prod [Mt/yr]"
 
 scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
 cool_names = ["Baseline European", "Policy European", "Baseline Regional", "Policy Regional"]
+
+eaf_prod = pd.read_excel(excel_dir + "baseline_regional_dem.xlsx", sheet_name = "EAF_Prod", index_col="Bus")
+bof_prod = pd.read_excel(excel_dir + "baseline_regional_dem.xlsx", sheet_name = "BOF_Prod", index_col="Bus")
+steel_prod = eaf_prod[2050] + bof_prod[2050]
+steel_countries = steel_prod[steel_prod > 1].index
+
 ncol = int(len(scenarios)/2)
 
 fig, axes = plt.subplots(
     ncol, ncol,
-    figsize=(3 * ncol, 3 * ncol),
+    figsize=(8 * ncol, 4 * ncol),
     constrained_layout=False,
     subplot_kw={"projection": proj},
-    gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }
+    #gridspec_kw={'wspace': 0.3, 'hspace': 0.3 }
 )
 
 fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
@@ -114,12 +128,15 @@ n = pypsa.Network(fn)
 j = 0  # row index
 i = 0  # column index
 
+
 for scenario in scenarios:
     
     steel_prod, steel_shares = steel_preprocessing(excel_dir, scenario, config)
+    
+    steel_prod = steel_prod.loc[steel_prod.index.isin(steel_countries)]
 
     ax = axes[j, i]
-    plot_bar(n, steel_shares,  regions, year, title, i,j,ncol, ax=ax)
+    plot_bar(n, steel_shares, steel_countries, regions, year, title, i,j,ncol, ax=ax)
     
     if i == 0:
         if j == 0:

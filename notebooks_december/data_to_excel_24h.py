@@ -63,11 +63,13 @@ for scenario in scenarios:
         bof_capacity_df = df.copy()
         h2_eaf_df = df.copy()
         ng_eaf_df = df.copy()
+        tgr_capacity_df = df.copy()
         eaf_prod_df = df.copy()
         bof_prod_df = df.copy()
         elec_prices_df = df.copy()
         ammonia_prod_df = df.copy()
         steel_proc_emis_df = df.copy()
+        bofcc_emis_capt_df = df.copy()
         cement_proc_emis_df = df.copy()
         
         # Hydrogen
@@ -109,6 +111,11 @@ for scenario in scenarios:
             ng_eaf = n.links_t.p0.filter(like="CH4 to DRI", axis=1).sum() * timestep  # MWh CH4 / year
             ng_eaf = country_values(ng_eaf)
             ng_eaf_df[year] = ng_eaf.reindex(ng_eaf_df.index).fillna(0)
+            
+            # Steel TGR capacity
+            tgr_capacity = n.links.p_nom_opt[n.links.index.str.contains("steel bof CC")] * 8760  # kton steel / year
+            tgr_capacity = country_values(tgr_capacity)
+            tgr_capacity_df[year] = tgr_capacity.reindex(tgr_capacity_df.index).fillna(0)
             
             # EAF production
             eaf_prod = -n.links_t.p1.filter(like="EAF", axis=1).sum() * timestep  # kt steel / year
@@ -187,6 +194,10 @@ for scenario in scenarios:
             steel_proc_emis = dri_emis + bof_emis + bofcc_emis
             steel_proc_emis_df[year] = steel_proc_emis.reindex(steel_proc_emis_df.index).fillna(0)
             
+            bofcc_emis_capt = -n.links_t.p2.filter(like="bof CC", axis=1).sum() * timestep / 1e3 # from t to kt per year
+            bofcc_emis_capt = country_values(bofcc_emis_capt)
+            bofcc_emis_capt_df[year] = bofcc_emis_capt.reindex(bofcc_emis_capt_df.index).fillna(0)
+            
             cement_emis = -n.links_t.p1.filter(like="cement process", axis=1).sum() * timestep / 1e3 # from t to kt per year
             cement_emis = country_values(cement_emis)
             cementcc_emis = -n.links_t.p1.filter(like="cement CC", axis=1).sum() * timestep / 1e3 # from t to kt per year
@@ -195,11 +206,14 @@ for scenario in scenarios:
             cement_proc_emis_df[year] = cement_proc_emis.reindex(cement_proc_emis_df.index).fillna(0)
             
             
+            
+            
         # Write all DataFrames to separate sheets
         eaf_capacity_df.to_excel(writer, sheet_name="EAF_Capacity")
         bof_capacity_df.to_excel(writer, sheet_name="BOF_Capacity")
         h2_eaf_df.to_excel(writer, sheet_name="H2_EAF")
         ng_eaf_df.to_excel(writer, sheet_name="NG_EAF")
+        tgr_capacity_df.to_excel(writer, sheet_name="TGR_Capacity")
         eaf_prod_df.to_excel(writer, sheet_name="EAF_Prod")
         bof_prod_df.to_excel(writer, sheet_name="BOF_Prod")
         steel_load_df.to_excel(writer, sheet_name="Steel_Load")
@@ -215,6 +229,7 @@ for scenario in scenarios:
         
         # Emissions
         steel_proc_emis_df.to_excel(writer, sheet_name="Steel_Proc_Emis")
+        bofcc_emis_capt_df.to_excel(writer, sheet_name="Steel_Capt_Emis")
         cement_proc_emis_df.to_excel(writer, sheet_name="Cement_Proc_Emis")
     
     print(f"Data saved to {output_filename}")
