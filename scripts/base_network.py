@@ -90,7 +90,7 @@ from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
-from shapely.geometry import LineString, Point
+from shapely.geometry import Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
