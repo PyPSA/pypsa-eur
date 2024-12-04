@@ -30,7 +30,11 @@ from base_network import (
     _load_links_from_osm,
     _load_transformers,
     _reconnect_crimea,
+    _set_electrical_parameters_converters,
     _set_electrical_parameters_lines_eg,
+    _set_electrical_parameters_lines_osm,
+    _set_electrical_parameters_links_osm,
+    _set_electrical_parameters_transformers,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -148,7 +152,7 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
     """
     Verify what returned by _load_converters_from_eg.
     """
-    df_converters_reference = pd.DataFrame(
+    df_converters_eg_reference = pd.DataFrame(
         {
             "converter_id": "convert_5231_5232",
             "bus0": "5231",
@@ -171,7 +175,7 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
         .reset_index()
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
-    df_converters_comparison = df_converters_output.compare(df_converters_reference)
+    df_converters_comparison = df_converters_output.compare(df_converters_eg_reference)
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
@@ -183,7 +187,7 @@ def test_load_converters_from_osm(
     """
     Verify what returned by _load_converters_from_osm.
     """
-    df_converters_reference = pd.DataFrame(
+    df_converters_osm_reference = pd.DataFrame(
         {
             "converter_id": "convert_5231_5232",
             "bus0": "5231",
@@ -206,7 +210,7 @@ def test_load_converters_from_osm(
         .reset_index()
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
-    df_converters_comparison = df_converters_output.compare(df_converters_reference)
+    df_converters_comparison = df_converters_output.compare(df_converters_osm_reference)
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(converters_path)
     assert df_converters_comparison.empty
@@ -267,7 +271,7 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
     """
     Verify what returned by _load_links_from_eg.
     """
-    df_links_reference = pd.DataFrame(
+    df_links_eg_reference = pd.DataFrame(
         {
             "link_id": "link_5231_5232",
             "bus0": "5231",
@@ -308,7 +312,7 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
             ),
         ]
     )
-    df_links_comparison = df_links_output.compare(df_links_reference)
+    df_links_comparison = df_links_output.compare(df_links_eg_reference)
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(links_path)
     assert df_links_comparison.empty
@@ -318,7 +322,7 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
     """
     Verify what returned by _load_links_from_osm.
     """
-    df_links_reference = pd.DataFrame(
+    df_links_osm_reference = pd.DataFrame(
         {
             "link_id": "link_5231_5232",
             "bus0": "5231",
@@ -359,7 +363,7 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
             ),
         ]
     )
-    df_links_comparison = df_links_output.compare(df_links_reference)
+    df_links_comparison = df_links_output.compare(df_links_osm_reference)
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(links_path)
     assert df_links_comparison.empty
@@ -435,7 +439,20 @@ def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
-    df_lines = _load_lines(df_buses, lines_path).drop("Unnamed: 9", axis=1)
+    df_lines = _load_lines(df_buses, lines_path).loc[
+        :,
+        (
+            "bus0",
+            "bus1",
+            "v_nom",
+            "num_parallel",
+            "length",
+            "underground",
+            "under_construction",
+            "geometry",
+            "carrier",
+        ),
+    ]
     df_lines_crimea_output = _reconnect_crimea(df_lines).reset_index()
     df_lines_crimea_comparison = df_lines_crimea_output.compare(
         df_lines_crimea_reference
@@ -451,7 +468,7 @@ def test_set_electrical_parameters_lines_eg(
     """
     Verify what returned by _set_electrical_parameters_lines_eg.
     """
-    df_lines_reference = pd.DataFrame(
+    df_lines_parameters_reference = pd.DataFrame(
         {
             "line_id": "line_5231_5232",
             "bus0": "5231",
@@ -497,5 +514,162 @@ def test_set_electrical_parameters_lines_eg(
     df_lines_output = _set_electrical_parameters_lines_eg(df_lines, config)
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(lines_path)
-    df_lines_comparison = df_lines_output.compare(df_lines_reference)
+    df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
     assert df_lines_comparison.empty
+
+
+def test_set_electrical_parameters_lines_osm(
+    tmpdir, buses_dataframe, config, lines_dataframe
+):
+    """
+    Verify what returned by _set_electrical_parameters_lines_osm.
+    """
+    df_lines_parameters_reference = pd.DataFrame(
+        {
+            "line_id": "line_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "v_nom": 380.0,
+            "num_parallel": 1.0,
+            "length": 1.0,
+            "underground": True,
+            "under_construction": False,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "AC",
+            "dc": False,
+            "type": "Al/St 240/40 4-bundle 380.0",
+            "s_max_pu": 0.7,
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
+    lines_dataframe.to_csv(lines_path, index=False)
+    df_lines = (
+        _load_lines(df_buses, lines_path)
+        .reset_index()
+        .loc[
+            :,
+            (
+                "line_id",
+                "bus0",
+                "bus1",
+                "v_nom",
+                "num_parallel",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
+    )
+    df_lines_output = _set_electrical_parameters_lines_osm(df_lines, config)
+    pathlib.Path.unlink(buses_path)
+    pathlib.Path.unlink(lines_path)
+    df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
+    assert df_lines_comparison.empty
+
+
+def test_set_electrical_parameters_links_osm(
+    tmpdir, buses_dataframe, config, links_dataframe
+):
+    """
+    Verify what returned by _set_electrical_parameters_links_osm.
+    """
+    df_links_parameters_reference = pd.DataFrame(
+        {
+            "link_id": "link_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "p_nom": 600.0,
+            "length": 1.0,
+            "underground": True,
+            "under_construction": False,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "DC",
+            "p_max_pu": 1.0,
+            "p_min_pu": -1.0,
+            "dc": True,
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    links_path = pathlib.Path(tmpdir, "links_exercise.csv")
+    links_dataframe.to_csv(links_path, index=False)
+    df_links = (
+        _load_links_from_eg(df_buses, links_path)
+        .reset_index()
+        .loc[
+            :,
+            (
+                "link_id",
+                "bus0",
+                "bus1",
+                "voltage",
+                "p_nom",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
+    )
+    df_links_output = _set_electrical_parameters_links_osm(df_links, config)
+    df_links_comparison = df_links_output.compare(df_links_parameters_reference)
+    pathlib.Path.unlink(buses_path)
+    pathlib.Path.unlink(links_path)
+    assert df_links_comparison.empty
+
+
+def test_set_electrical_parameters_converters(
+    tmpdir, buses_dataframe, config, converters_dataframe
+):
+    """
+    Verify what returned by _set_electrical_parameters_converters.
+    """
+    df_converters_parameters_reference = pd.DataFrame(
+        {
+            "converter_id": "convert_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "voltage": 380.0,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "B2B",
+            "p_max_pu": 1.0,
+            "p_min_pu": -1.0,
+            "p_nom": 2000,
+            "under_construction": False,
+            "underground": False,
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
+    converters_dataframe.to_csv(converters_path, index=False)
+    df_converters = (
+        _load_converters_from_eg(df_buses, converters_path)
+        .reset_index()
+        .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
+    )
+    df_converters_output = _set_electrical_parameters_converters(df_converters, config)
+    df_converters_comparison = df_converters_output.compare(
+        df_converters_parameters_reference
+    )
+    pathlib.Path.unlink(buses_path)
+    pathlib.Path.unlink(converters_path)
+    assert df_converters_comparison.empty
