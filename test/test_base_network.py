@@ -30,6 +30,7 @@ from base_network import (
     _load_links_from_osm,
     _load_transformers,
     _reconnect_crimea,
+    _set_electrical_parameters_lines_eg,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -167,8 +168,8 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters_output = (
         _load_converters_from_eg(df_buses, converters_path)
-        .drop("Unnamed: 5", axis=1)
         .reset_index()
+        .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
     pathlib.Path.unlink(buses_path)
@@ -202,8 +203,8 @@ def test_load_converters_from_osm(
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters_output = (
         _load_converters_from_osm(df_buses, converters_path)
-        .drop("Unnamed: 5", axis=1)
         .reset_index()
+        .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
     df_converters_comparison = df_converters_output.compare(df_converters_reference)
     pathlib.Path.unlink(buses_path)
@@ -238,7 +239,23 @@ def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
     df_lines_output = (
-        _load_lines(df_buses, lines_path).drop("Unnamed: 9", axis=1).reset_index()
+        _load_lines(df_buses, lines_path)
+        .reset_index()
+        .loc[
+            :,
+            (
+                "line_id",
+                "bus0",
+                "bus1",
+                "v_nom",
+                "num_parallel",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
     )
     df_lines_comparison = df_lines_output.compare(df_lines_reference)
     pathlib.Path.unlink(buses_path)
@@ -274,8 +291,22 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
     links_dataframe.to_csv(links_path, index=False)
     df_links_output = (
         _load_links_from_eg(df_buses, links_path)
-        .drop("Unnamed: 9", axis=1)
         .reset_index()
+        .loc[
+            :,
+            (
+                "link_id",
+                "bus0",
+                "bus1",
+                "voltage",
+                "p_nom",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
     )
     df_links_comparison = df_links_output.compare(df_links_reference)
     pathlib.Path.unlink(buses_path)
@@ -311,8 +342,22 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
     links_dataframe.to_csv(links_path, index=False)
     df_links_output = (
         _load_links_from_osm(df_buses, links_path)
-        .drop("Unnamed: 9", axis=1)
         .reset_index()
+        .loc[
+            :,
+            (
+                "link_id",
+                "bus0",
+                "bus1",
+                "voltage",
+                "p_nom",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
     )
     df_links_comparison = df_links_output.compare(df_links_reference)
     pathlib.Path.unlink(buses_path)
@@ -343,8 +388,8 @@ def test_load_transformers(tmpdir, buses_dataframe, config, transformers_datafra
     transformers_dataframe.to_csv(transformers_path, index=False)
     df_transformers_output = (
         _load_transformers(df_buses, transformers_path)
-        .drop("Unnamed: 5", axis=1)
         .reset_index()
+        .loc[:, ("transformer_id", "bus0", "bus1", "voltage", "geometry")]
     )
     df_transformers_comparison = df_transformers_output.compare(
         df_transformers_reference
@@ -398,3 +443,59 @@ def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
     pathlib.Path.unlink(buses_path)
     pathlib.Path.unlink(lines_path)
     assert df_lines_crimea_comparison.empty
+
+
+def test_set_electrical_parameters_lines_eg(
+    tmpdir, buses_dataframe, config, lines_dataframe
+):
+    """
+    Verify what returned by _set_electrical_parameters_lines_eg.
+    """
+    df_lines_reference = pd.DataFrame(
+        {
+            "line_id": "line_5231_5232",
+            "bus0": "5231",
+            "bus1": "5232",
+            "v_nom": 380.0,
+            "num_parallel": 1.0,
+            "length": 1.0,
+            "underground": True,
+            "under_construction": False,
+            "geometry": "LINESTRING(6.8884 45.6783 ,6.8894 45.6793)",
+            "carrier": "AC",
+            "type": "Al/St 240/40 4-bundle 380.0",
+            "s_max_pu": 0.7,
+        },
+        index=[0],
+    )
+    buses_path = pathlib.Path(tmpdir, "buses.csv")
+    buses_dataframe.to_csv(buses_path, index=False)
+    countries = config["countries"]
+    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
+    df_buses = _load_buses(buses_path, italy_shape, countries, config)
+    lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
+    lines_dataframe.to_csv(lines_path, index=False)
+    df_lines = (
+        _load_lines(df_buses, lines_path)
+        .reset_index()
+        .loc[
+            :,
+            (
+                "line_id",
+                "bus0",
+                "bus1",
+                "v_nom",
+                "num_parallel",
+                "length",
+                "underground",
+                "under_construction",
+                "geometry",
+                "carrier",
+            ),
+        ]
+    )
+    df_lines_output = _set_electrical_parameters_lines_eg(df_lines, config)
+    pathlib.Path.unlink(buses_path)
+    pathlib.Path.unlink(lines_path)
+    df_lines_comparison = df_lines_output.compare(df_lines_reference)
+    assert df_lines_comparison.empty
