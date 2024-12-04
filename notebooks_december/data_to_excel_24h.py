@@ -70,6 +70,7 @@ for scenario in scenarios:
         ammonia_prod_df = df.copy()
         steel_proc_emis_df = df.copy()
         bofcc_emis_capt_df = df.copy()
+        bof_prod_cc_df = df.copy()
         cement_proc_emis_df = df.copy()
         
         # Hydrogen
@@ -198,6 +199,14 @@ for scenario in scenarios:
             bofcc_emis_capt = country_values(bofcc_emis_capt)
             bofcc_emis_capt_df[year] = bofcc_emis_capt.reindex(bofcc_emis_capt_df.index).fillna(0)
             
+            bofcc_emis_tgr = n.links_t.p0.filter(like="bof CC", axis=1).sum() * timestep / 1e3 # from t to kt per year
+            bofcc_emis_tgr = country_values(bofcc_emis_tgr)
+            share_steel_capt = bofcc_emis_tgr / (bofcc_emis + bofcc_emis_tgr)
+            bof_prod_cc = bof_prod * share_steel_capt
+            bof_prod_cc_df[year] = bof_prod_cc.reindex(bof_prod_cc_df.index).fillna(0)
+            
+            
+            
             cement_emis = -n.links_t.p1.filter(like="cement process", axis=1).sum() * timestep / 1e3 # from t to kt per year
             cement_emis = country_values(cement_emis)
             cementcc_emis = -n.links_t.p1.filter(like="cement CC", axis=1).sum() * timestep / 1e3 # from t to kt per year
@@ -216,10 +225,12 @@ for scenario in scenarios:
         tgr_capacity_df.to_excel(writer, sheet_name="TGR_Capacity")
         eaf_prod_df.to_excel(writer, sheet_name="EAF_Prod")
         bof_prod_df.to_excel(writer, sheet_name="BOF_Prod")
+        bof_prod_cc_df.to_excel(writer, sheet_name="BOF_CC_Prod")
         steel_load_df.to_excel(writer, sheet_name="Steel_Load")
         elec_prices_df.to_excel(writer, sheet_name="Elec_Prices")
         ammonia_prod_df.to_excel(writer, sheet_name="Ammonia_Prod")
         ammonia_load_df.to_excel(writer, sheet_name="Ammonia_Load")
+
         
         # Hydrogen
         elec_h2prod_df.to_excel(writer, sheet_name="Elec_H2Prod")
@@ -231,7 +242,7 @@ for scenario in scenarios:
         steel_proc_emis_df.to_excel(writer, sheet_name="Steel_Proc_Emis")
         bofcc_emis_capt_df.to_excel(writer, sheet_name="Steel_Capt_Emis")
         cement_proc_emis_df.to_excel(writer, sheet_name="Cement_Proc_Emis")
-    
+
     print(f"Data saved to {output_filename}")
 
 

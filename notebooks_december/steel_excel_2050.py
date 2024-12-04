@@ -16,7 +16,6 @@ def steel_preprocessing(excel_dir, scenario, config):
     bof_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "BOF_Prod", index_col="Bus")
     ng_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "NG_EAF", index_col="Bus")
     h2_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "H2_EAF", index_col="Bus")
-    h2_eaf_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "H2_EAF", index_col="Bus")
 
     
     # Hydrogen
@@ -84,7 +83,7 @@ def plot_map(n, excel_data, emis_data, regions, year, title,i,j,ncol, ax=None):
     regions.plot(
         ax=ax,
         column="data",
-        cmap="Blues",
+        cmap="tab10",
         linewidths=0.5,  # Thickness of the black border
         edgecolor="black",  # Black border for the shapes
         legend=(i == ncol - 1),
