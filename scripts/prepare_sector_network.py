@@ -4367,7 +4367,6 @@ def add_steel_industry(n, investment_year, options):
         carrier="steel process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=-0.01,
         efficiency=1,
     )
 
@@ -4380,7 +4379,6 @@ def add_steel_industry(n, investment_year, options):
         carrier="steel process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=-0.01,
         efficiency=1,
     )
 
@@ -4512,7 +4510,6 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement process emissions",
         p_nom_extendable=True,
         capital_cost = 0,
-        marginal_cost=-0.01,
         efficiency=1,
     )
 
