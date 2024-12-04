@@ -1334,12 +1334,6 @@ def insert_electricity_distribution_grid(n, costs):
     # TODO pop_layout?
     # TODO options?
 
-    cost_factor = options["electricity_distribution_grid_cost_factor"]
-
-    logger.info(
-        f"Inserting electricity distribution grid with investment cost factor of {cost_factor:.2f}"
-    )
-
     nodes = pop_layout.index
 
     n.add(
@@ -1360,7 +1354,7 @@ def insert_electricity_distribution_grid(n, costs):
         carrier="electricity distribution grid",
         efficiency=1,
         lifetime=costs.at["electricity distribution grid", "lifetime"],
-        capital_cost=costs.at["electricity distribution grid", "fixed"] * cost_factor,
+        capital_cost=costs.at["electricity distribution grid", "fixed"],
     )
 
     # deduct distribution losses from electricity demand as these are included in total load
@@ -1398,13 +1392,7 @@ def insert_electricity_distribution_grid(n, costs):
     # set existing solar to cost of utility cost rather the 50-50 rooftop-utility
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "fixed"]
-    if snakemake.wildcards.clusters[-1:] == "m":
-        simplified_pop_layout = pd.read_csv(
-            snakemake.input.simplified_pop_layout, index_col=0
-        )
-        pop_solar = simplified_pop_layout.total.rename(index=lambda x: x + " solar")
-    else:
-        pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
+    pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
 
     # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
     # i.e. 2 kW/person (population data is in thousands of people) so we get MW
@@ -4265,11 +4253,11 @@ def add_steel_industry(n, investment_year, options):
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
     capex_eaf = ((145000 + 80000) * 0.7551 * nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
-    capex_tgr = 135 * 1e3 / nhours / em_factor_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
+    capex_tgr = 135 * 1e3 * nhours / em_factor_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
 
-    opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
-    opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
-    opex_tgr = 10 *1e3 /nhours / em_factor_bof  # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
+    opex_bof = 90 * 1e3 * 0.7551 * nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_eaf = (13+32) * 1e3 * 0.7551 * nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_tgr = 10 *1e3 * nhours / em_factor_bof  # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
 
     n.add(
         "Link",
