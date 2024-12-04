@@ -1336,6 +1336,7 @@ def add_storage_and_grids(n, costs):
         )
 
         # TODO Add efficiency losses
+        cost_factor = snakemake.config["sector"]["H2_network_cost_factor"]
         n.madd(
             "Link",
             h2_pipes.index,
@@ -1344,7 +1345,7 @@ def add_storage_and_grids(n, costs):
             p_min_pu=-1,
             p_nom_extendable=True,
             length=h2_pipes.length.values,
-            capital_cost=costs.at["H2 (g) pipeline", "fixed"] * h2_pipes.length.values,
+            capital_cost=costs.at["H2 (g) pipeline", "fixed"] * h2_pipes.length.values * cost_factor,
             carrier="H2 pipeline",
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
