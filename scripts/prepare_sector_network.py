@@ -2266,14 +2266,6 @@ def add_heat(
                 heat_system.central_or_decentral
             ]
 
-#            n.add(
-#                "Bus",
-#                nodes + f" {heat_system} water tanks",
-#                location=nodes,
-#                carrier=f"{heat_system} water tanks",
-#                unit="MWh_th",
-#            )
-
             n.add(
                 "StorageUnit",
                 nodes + f" {heat_system} water tanks",
@@ -2294,54 +2286,9 @@ def add_heat(
                 e_cyclic=True,
             )
 
-#            n.add(
-#                "Link",
-#                nodes + f" {heat_system} water tanks charger",
-#                bus0=nodes + f" {heat_system} heat",
-#                bus1=nodes + f" {heat_system} water tanks",
-#                efficiency=costs.at["water tank charger", "efficiency"],
-#                carrier=f"{heat_system} water tanks charger",
-#                p_nom_extendable=True,
-#            )
-
-#            n.add(
-#                "Link",
-#                nodes + f" {heat_system} water tanks discharger",
-#                bus0=nodes + f" {heat_system} water tanks",
-#                bus1=nodes + f" {heat_system} heat",
-#                carrier=f"{heat_system} water tanks discharger",
-#                efficiency=costs.at["water tank discharger", "efficiency"],
-#                p_nom_extendable=True,
-#            )
-
-
-#            n.add(
-#                "Store",
-#                nodes + f" {heat_system} water tanks",
-#                bus=nodes + f" {heat_system} water tanks",
-#                e_cyclic=True,
-#                e_nom_extendable=True,
-#                carrier=f"{heat_system} water tanks",
-#                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-#                capital_cost=costs.at[
-#                    heat_system.central_or_decentral + " water tank storage", "fixed"
-#                ],
-#                lifetime=costs.at[
-#                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-#                ],
-#            )
-
             if heat_system == HeatSystem.URBAN_CENTRAL:
 
                 n.add("Carrier", f"{heat_system} water pits")
-
-#                n.add(
-#                    "Bus",
-#                    nodes + f" {heat_system} water pits",
-#                    location=nodes,
-#                    carrier=f"{heat_system} water pits",
-#                    unit="MWh_th",
-#                )
 
                 n.add(
                     "StorageUnit",
@@ -2362,42 +2309,6 @@ def add_heat(
                     e_nom_extendable=True,
                     e_cyclic=True,
                 )
-
-#                n.add(
-#                    "Link",
-#                    nodes + f" {heat_system} water pits charger",
-#                    bus0=nodes + f" {heat_system} heat",
-#                    bus1=nodes + f" {heat_system} water pits",
-#                    efficiency=costs.at["water pit charger", "efficiency"],
-#                    carrier=f"{heat_system} water pits charger",
-#                    p_nom_extendable=True,
-#                )
-
-#                n.add(
-#                    "Link",
-#                    nodes + f" {heat_system} water pits discharger",
-#                    bus0=nodes + f" {heat_system} water pits",
-#                    bus1=nodes + f" {heat_system} heat",
-#                    carrier=f"{heat_system} water pits discharger",
-#                    efficiency=costs.at["water pit discharger", "efficiency"],
-#                    p_nom_extendable=True,
-#                )
-
-#                n.add(
-#                    "Store",
-#                    nodes + f" {heat_system} water pits",
-#                    bus=nodes + f" {heat_system} water pits",
-#                    e_cyclic=True,
-#                    e_nom_extendable=True,
-#                    carrier=f"{heat_system} water pits",
-#                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-#                    capital_cost=costs.at[
-#                        "central water pit storage", "fixed"
-#                    ],
-#                    lifetime=costs.at[
-#                        "central water pit storage", "lifetime"
-#                    ],
-#                )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
@@ -4688,10 +4599,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-
-# dies am Ende auf keinen Fall pushen, dirty work!!!
-        import os
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
