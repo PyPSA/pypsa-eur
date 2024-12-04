@@ -11,7 +11,7 @@ rule add_existing_baseyear:
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        endo_industry=config_provider("sector", "endo_industry", "enable"),
+        endo_industry=config_provider("sector", "endo_industry"),
     input:
         network=RESULTS
         + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -29,7 +29,7 @@ rule add_existing_baseyear:
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
-        steel_capacities=lambda w: (
+        old_steel_capacities=lambda w: (
             resources("steel/steel_capacities.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
@@ -51,6 +51,16 @@ rule add_existing_baseyear:
         ),
         cement_start_dates=lambda w: (
             resources("cement/sfi_start_dates_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        chemicals_capacities=lambda w: (
+            resources("chemicals/ecm_capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        chemicals_start_dates=lambda w: (
+            resources("chemicals/ecm_start_dates_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
