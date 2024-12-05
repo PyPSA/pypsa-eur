@@ -1,0 +1,6 @@
+How to get results for industry project
+
+1) Run pypsa-eur-adb/industry_project branch
+2) Get the results from the cluster in case
+3) Run "notebook_december/data_to_excel_24h.py" to save all the values for the 4 scenarios in 4 excels, so you don't need to retrieve the network all the times
+4) Run the script for the graph you prefer (usually has the word "excel" in the name)
