@@ -24,6 +24,7 @@ def steel_pie_preprocessing(excel_dir, scenario, config, year):
     
     bof_cc_prod = read_year(excel_dir, scenario, "BOF_CC_Prod", year)
     bof_prod = bof_prod - bof_cc_prod
+    bof_prod[bof_prod < 0] = 0
     ng_eaf_prod = read_year(excel_dir, scenario, "NG_EAF", year)
     h2_eaf_prod = read_year(excel_dir, scenario, "H2_EAF", year)
     
@@ -36,10 +37,11 @@ def steel_pie_preprocessing(excel_dir, scenario, config, year):
     
     green_h2_share = ((elec_h2prod + smrcc_h2prod) / ( elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)).fillna(0)
     green_h2_eaf_prod = green_h2_share * h2_eaf_prod
-    grey_h2_eaf_prod = (1-green_h2_eaf_prod) * h2_eaf_prod
+    grey_h2_eaf_prod = (1-green_h2_share) * h2_eaf_prod
 
     steel_tech = pd.concat([bof_prod, ng_eaf_prod, grey_h2_eaf_prod, bof_cc_prod, green_h2_eaf_prod ], axis = 1)
     steel_tech.columns = ['BOF','NG EAF', 'Grey H2 EAF','BOF CC','Green H2 EAF']
+    steel_tech = steel_tech[steel_tech.sum(axis=1) >= 1]
     
     return steel_prod, steel_tech
 
@@ -55,7 +57,7 @@ def assign_location(n):
             c.df.loc[names, "location"] = names.str[:i]
 
 
-def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, ax=None): 
+def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, piecolors, ax=None): 
     
     assign_location(n)
     
@@ -65,7 +67,7 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, ax=None):
     
     
     row_sums = steel_tech.sum(axis=1)
-    steel_prod_shares = round(steel_tech.div(row_sums, axis=0),1)
+    steel_prod_shares = round(steel_tech.div(row_sums, axis=0),2)
 
     regions = regions.to_crs(proj.proj4_init)
     max_value = steel_prod.values.max()
@@ -77,14 +79,14 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, ax=None):
     regions.plot(
         ax=ax,
         column="data",
-        cmap="Blues",
+        cmap="Reds",
         linewidths=0.5,
         edgecolor='black',
         legend=(i == ncol - 1),
         vmax=max_value,
         vmin=0,
         legend_kwds={
-            "label": "Steel production [Mt steel/yr]",
+            "label": "Steel prod\n[Mt steel/yr]",
             #"fontsize": 12,
             "shrink": 0.5,
             "extend": "max",
@@ -92,7 +94,6 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, ax=None):
     )
     
     # Adjust the colors for the five items
-    piecolors = ['#000000', '#636161', '#A09F9F', '#090C9B', '#42CF05']
     idx_prefix = None
     
     for idx, region in regions.iterrows():
@@ -165,7 +166,8 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, ax=None):
     ax.set_facecolor("white")
     
     # Add a title and subtitle (if provided)
-    ax.set_title(year, fontsize=14, loc="center")  # Main title
+    if j == 0:
+        ax.set_title(year, fontsize=14, loc="center")  # Main title
 
 # %%
 
@@ -198,23 +200,26 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
+piecolors = ['#000000', '#636161', '#A09F9F', '#090C9B', '#42CF05']
+pielabels = ['BOF', 'NG EAF', 'Grey H2 EAF', 'BOF CC', 'Green H2 EAF']
 
 excel_dir = "excels_24h/"
 # Plotting the green share of steel production
 title = "Steel prod [Mt/yr]"
 
 scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
-cool_names = ["Baseline European", "Policy European", "Baseline Regional", "Policy Regional"]
 nrows = int(len(scenarios))
 ncol = int(len(years))
 
 fig, axes = plt.subplots(
     nrows, ncol,
-    figsize=(3 * nrows, 3 * ncol),
+    figsize=(2.5 * nrows, 2.5 * ncol),
     constrained_layout=False,
     subplot_kw={"projection": proj},
-    gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }
+    #gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }
 )
+
+fig.subplots_adjust(wspace=-0.40, hspace=0)
 
 fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
 n = pypsa.Network(fn)
@@ -228,7 +233,8 @@ for j, scenario in enumerate(scenarios):
         steel_prod, steel_shares = steel_pie_preprocessing(excel_dir, scenario, config, year)
     
         ax = axes[j, i]
-        plot_pie_map(n, steel_prod, steel_shares, regions, year, i, j, ax=ax)
+        plot_pie_map(n, steel_prod, steel_shares, regions, year, i, j, piecolors, ax=ax)
+        ax.axis('off')
         
         if i == 0:
             if j == 0:
@@ -251,11 +257,27 @@ for j, scenario in enumerate(scenarios):
                     "POLICY\nREG. DEM", xy=(-0.1, 0.5), xycoords='axes fraction',
                     ha='center', va='center', fontsize=12, rotation=90
                 )
-   
-            
-            
-plt.tight_layout()
-fig.suptitle('Year 2050', fontsize=16, y=1.02)
+
+patches = [plt.Line2D([0], [0], marker='o', color=color, markersize=10, linestyle='None') for color in piecolors]
+fig.legend(patches, pielabels, loc="lower center", ncol=len(piecolors), fontsize=10, frameon=False,
+           bbox_to_anchor=(0.5, 0.05))
+
+"""
+fig.legend(
+    handles=[
+        plt.Line2D([0], [0], marker='o', color=color, markersize=10, linestyle='None')
+        for color in piecolors
+    ],
+    labels=pielabels,
+    loc='center right',  # Position legend on the right
+    bbox_to_anchor=(1.1, 0.5),  # Adjust position (x, y)
+    title='Steel Production Technologies',
+    title_fontsize=12,
+    fontsize=10
+)
+"""          
+#plt.constrained_layout()
+#fig.suptitle('Year 2050', fontsize=16, y=1.02)
 plt.savefig("graphs/steel_pie_charts_years.png", bbox_inches="tight")
 plt.show()
 
