@@ -384,46 +384,90 @@ def plot_balances(balances, drop=None):
         
             import seaborn as sns
             scenarios = ["base", "fast", "slow"]
-            scenario1 = [scenarios[0]]
-            diff = (co2_b.stack()[scenarios]-co2_b.stack()[scenario1].values)
-            diff = diff.groupby(level=[0,1]).sum()
-            bool_index = (abs(diff)>2).any(axis=1).groupby(level=0).any()
-            # Calculate the global min and max for the colormap
-            global_min = diff.min().min()
-            global_max = diff.max().max()
+            if all([sc in co2_b.stack().columns for sc in scenarios]):
+                scenario1 = [scenarios[0]]
+                diff = (co2_b.stack()[scenarios]-co2_b.stack()[scenario1].values)
+                diff = diff.groupby(level=[0,1]).sum()
+                bool_index = (abs(diff)>2).any(axis=1).groupby(level=0).any()
+                # Calculate the global min and max for the colormap
+                global_min = diff.min().min()
+                global_max = diff.max().max()
+                    
+                fig, axes = plt.subplots(
+                    nrows=len(scenarios)-1, ncols=1, 
+                    figsize=(8, 12), sharex=True)
+                i = 0
+                for scenario in scenarios:
+                    if scenario in scenario1: continue
+                            
+                    diff = co2_b[scenario] - co2_b[scenario1].values
+                    diff = diff.groupby(level=0).sum()
+                    heatmap_data = diff.loc[bool_index].drop("2025", axis=1)
+        
+                    plt.figure(figsize=(12, 8))
+                    sns.heatmap(heatmap_data, cmap='coolwarm',
+                                annot=True, fmt=".0f", linewidths=.5,
+                                center=0, ax=axes[i],
+                                vmin=global_min, vmax=global_max,
+                                cbar=False,
+                                #cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
+                                )
+                    axes[i].set_title(f'{scenario} vs {scenario1[0]}')
+                    axes[i].set_xlabel('')
+                    i += 1
                 
-            fig, axes = plt.subplots(
-                nrows=len(scenarios)-1, ncols=1, 
-                figsize=(8, 12), sharex=True)
-            i = 0
-            for scenario in scenarios:
-                if scenario in scenario1: continue
-                        
-                diff = co2_b[scenario] - co2_b[scenario1].values
-                diff = diff.groupby(level=0).sum()
-                heatmap_data = diff.loc[bool_index].drop("2025", axis=1)
+                cbar_ax = fig.add_axes([0.92, 0.3, 0.02, 0.4])  # Position of the colorbar [left, bottom, width, height]
+                norm = plt.Normalize(vmin=global_min, vmax=global_max)
+                sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=norm)
+                sm.set_array([])  # Only needed for matplotlib < 3.1
+                cbar = fig.colorbar(sm, cbar_ax, orientation='vertical')
+                cbar.set_label('Difference in CO$_2$ emissions [MtCO$_2$/a]')
     
-                plt.figure(figsize=(12, 8))
-                sns.heatmap(heatmap_data, cmap='coolwarm',
-                            annot=True, fmt=".0f", linewidths=.5,
-                            center=0, ax=axes[i],
-                            vmin=global_min, vmax=global_max,
-                            cbar=False,
-                            #cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
-                            )
-                axes[i].set_title(f'{scenario} vs {scenario1[0]}')
-                axes[i].set_xlabel('')
-                i += 1
+                fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.pdf",
+                            bbox_inches="tight")
             
-            cbar_ax = fig.add_axes([0.92, 0.3, 0.02, 0.4])  # Position of the colorbar [left, bottom, width, height]
-            norm = plt.Normalize(vmin=global_min, vmax=global_max)
-            sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=norm)
-            sm.set_array([])  # Only needed for matplotlib < 3.1
-            cbar = fig.colorbar(sm, cbar_ax, orientation='vertical')
-            cbar.set_label('Difference in CO$_2$ emissions [MtCO$_2$/a]')
-
-            fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap.pdf",
-                        bbox_inches="tight")
+            scenarios = ["base", "low-demand", "high-demand"]
+            if all([sc in co2_b.stack().columns for sc in scenarios]):
+                scenario1 = [scenarios[0]]
+                diff = (co2_b.stack()[scenarios]-co2_b.stack()[scenario1].values)
+                diff = diff.groupby(level=[0,1]).sum()
+                bool_index = (abs(diff)>2).any(axis=1).groupby(level=0).any()
+                # Calculate the global min and max for the colormap
+                global_min = diff.min().min()
+                global_max = diff.max().max()
+                    
+                fig, axes = plt.subplots(
+                    nrows=len(scenarios)-1, ncols=1, 
+                    figsize=(8, 12), sharex=True)
+                i = 0
+                for scenario in scenarios:
+                    if scenario in scenario1: continue
+                            
+                    diff = co2_b[scenario] - co2_b[scenario1].values
+                    diff = diff.groupby(level=0).sum()
+                    heatmap_data = diff.loc[bool_index].drop("2025", axis=1)
+        
+                    plt.figure(figsize=(12, 8))
+                    sns.heatmap(heatmap_data, cmap='coolwarm',
+                                annot=True, fmt=".0f", linewidths=.5,
+                                center=0, ax=axes[i],
+                                vmin=global_min, vmax=global_max,
+                                cbar=False,
+                                #cbar_kws={'label': 'Difference in CO$_2$ emissions [MtCO$_2$/a]'}
+                                )
+                    axes[i].set_title(f'{scenario} vs {scenario1[0]}')
+                    axes[i].set_xlabel('')
+                    i += 1
+                
+                cbar_ax = fig.add_axes([0.92, 0.3, 0.02, 0.4])  # Position of the colorbar [left, bottom, width, height]
+                norm = plt.Normalize(vmin=global_min, vmax=global_max)
+                sm = plt.cm.ScalarMappable(cmap='coolwarm', norm=norm)
+                sm.set_array([])  # Only needed for matplotlib < 3.1
+                cbar = fig.colorbar(sm, cbar_ax, orientation='vertical')
+                cbar.set_label('Difference in CO$_2$ emissions [MtCO$_2$/a]')
+    
+                fig.savefig(snakemake.output.balances[:-19] + "co2-heatmap-demand.pdf",
+                            bbox_inches="tight")
 
             
      
@@ -818,7 +862,7 @@ def plot_comparison(balances, capacities, drop=True):
     
     nrows = 4
     ncols = len(planning_horizons[1:])
-   
+ 
     fig, axes = plt.subplots(
     nrows=nrows, ncols=ncols, 
     figsize=(12, 8), 
@@ -943,8 +987,8 @@ def plot_comparison(balances, capacities, drop=True):
                 # Position the text slightly above the top of the bar
                 axes[2, i].text(
                     bar.get_x() + bar.get_width() / 2, 
-                    produced.max().max()*1.,
-                    #height + (0.02 * height),  # Adjust the vertical position
+                    produced[wished_scenarios].max().max()*.9,
+                    # height + (0.2 * height),  # Adjust the vertical position
                     label,
                     ha='center', va='bottom',
                     fontsize=10, color='black'
@@ -1076,12 +1120,15 @@ def plot_scenarios(balances, shares):
         
         # Create secondary y-axis for exogen_share
         ax2 = axes[row].twinx()
-        (exogen_share[["fast", "base", "slow"]]*100).plot(ax=ax2,
+        ((1-exogen_share[["fast", "base", "slow"]])*100).plot(ax=ax2,
                                                           style=["--", "-", ":"],
                                                           color="black",
                                                            legend=legend
                                                           )
-        ax2.set_ylabel("Existing ICE share \n [%]")
+        # Adjust the legend position
+        if legend:  
+            ax2.legend(loc="upper left")
+        ax2.set_ylabel("Maximum zero emission \n vehicles share \n [%]")
         
         # Optionally, format secondary y-axis label on the right side
         ax2.yaxis.label.set_color("gray")
@@ -1095,7 +1142,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
+                                   configfiles="/home/lisa/mnt/pypsa-eur-transport/config/config.transport_zecm_v2.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
