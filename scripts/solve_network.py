@@ -942,7 +942,9 @@ def add_endogenous_transport_constraints(n, snapshots):
     bev_i = link_ext[link_ext.carrier.str.contains("BEV charger")].index
     v2g_i = link_ext[link_ext.carrier.str.contains("V2G")].index
     bev_dsm_i = n.stores[
-        (n.stores.carrier.str.contains("Li ion") & n.stores.e_nom_extendable)
+        ((n.stores.carrier.str.contains("Li ion")
+          |n.stores.carrier.str.contains("battery storage"))
+          & n.stores.e_nom_extendable)
     ].index
     
     if ev_i.empty:
@@ -971,7 +973,7 @@ def add_endogenous_transport_constraints(n, snapshots):
     if not bev_dsm_i.empty:
         # factor
         f = (
-            n.links.loc[ev_light, "p_nom"]
+            n.links.loc[ev_i, "p_nom"]
             .rename(n.links.bus0)
             .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.stores.bus))
         )

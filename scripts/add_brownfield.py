@@ -293,6 +293,42 @@ def adjust_transport(n, ref_year=2024):
     
     n.mremove("Link", to_drop.index)
     
+    
+def scale_transport_capacities(n, n_p):
+    """
+    if the total number of cars should stay constant but the demand increases or
+    decreases, the vehicle km driven per car are changing. This requires an
+    adjustment of the p_nom and capital_costs of the transport links.
+    """
+    logger.info("scaling transport capacities since constant number of vehicles assumed")
+    load_p =  n_p.loads_t.p_set.sum().groupby(n_p.loads.carrier).sum()
+    load = n.loads_t.p_set.sum().groupby(n.loads.carrier).sum()
+    factor = load/load_p
+    
+    transport_types = ["light", "heavy"]
+    for transport_type in transport_types:
+        
+        # links
+        carrier = f"land transport demand {transport_type}"
+        links_i = n.links[(
+                            (n.links.bus1.map(n.buses.carrier)==carrier)    # all power engine types
+                           |(n.links.carrier==f"BEV charger {transport_type}")   # BEV charger
+                           |(n.links.bus0.str.contains(f"EV battery {transport_type}"))  # V2G
+                           )
+                          &(~n.links.p_nom_extendable)].index
+        n.links.loc[links_i, "p_nom"] *= factor.loc[carrier]
+        n.links.loc[links_i, "p_nom_opt"] *= factor.loc[carrier]
+        n.links.loc[links_i, "capital_cost"] /= factor.loc[carrier]
+        
+        
+        # stores
+        bev_dsm_i = n.stores[
+            (n.stores.index.str.contains(f"battery storage {transport_type}")
+              & (~n.stores.e_nom_extendable))
+        ].index
+        n.stores.loc[bev_dsm_i, "e_nom"] *= factor
+        n.stores.loc[bev_dsm_i, "e_nom_opt"] *= factor
+        
 #%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -300,7 +336,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="37",
+            clusters="39",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_mocksnakemake.yaml",
             opts="",
             ll="v1.0",
             sector_opts="",
@@ -333,6 +370,7 @@ if __name__ == "__main__":
     disable_grid_expansion_if_limit_hit(n)
     
     if options["endogenous_transport"]:
+        scale_transport_capacities(n, n_p)
         adjust_transport(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

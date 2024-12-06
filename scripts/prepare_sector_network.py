@@ -2021,9 +2021,9 @@ def add_EVs(
         n.add(
             "Store",
             nodes,
-            suffix=" battery storage",
+            suffix=f" battery storage {transport_type}",
             bus=nodes + f" EV battery {transport_type}",
-            carrier="battery storage",
+            carrier="battery storage {transport_type}",
             e_cyclic=True,
             e_nom=e_nom,
             e_max_pu=1,
@@ -2238,6 +2238,7 @@ def add_land_transport(n, costs):
         if carrier in options["vary_demand"].keys():
             factor = get(options["vary_demand"][carrier], investment_year)
             logger.info(f"Vary {carrier} by factor {factor} in {investment_year}")
+            p_set *= factor
 
         # add demand
         n.add(
@@ -2246,7 +2247,7 @@ def add_land_transport(n, costs):
             suffix=f" land transport {transport_type}",
             bus=nodes + f" land transport {transport_type}",
             carrier=carrier,
-            p_set=factor*p_set,
+            p_set=p_set,
         )
         
         # electric vehicles
@@ -2260,7 +2261,7 @@ def add_land_transport(n, costs):
                 nodes,
                 avail_profile,
                 dsm_profile,
-                transport[transport_type],
+                p_set,
                 shares.loc["electric", transport_type],
                 number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
                 temperature,
@@ -2274,7 +2275,8 @@ def add_land_transport(n, costs):
         if shares.loc["fuel_cell", transport_type] > 0:
             
             car_efficiency = car_efficiencies.loc["fuel_cell", transport_type]
-            add_fuel_cell_cars(n, nodes, transport[transport_type],
+            add_fuel_cell_cars(n, nodes,
+                                p_set,
                                 shares.loc["fuel_cell", transport_type],
                                 number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
                                 temperature,
@@ -2288,7 +2290,8 @@ def add_land_transport(n, costs):
         if shares.loc["ice", transport_type]>0:
             
             car_efficiency = car_efficiencies.loc["ice", transport_type]
-            add_ice_cars(n, nodes, transport[transport_type],
+            add_ice_cars(n, nodes,
+                          p_set,
                           shares.loc["ice", transport_type],
                           number_cars[[f"Number {col}" for col in cols]].sum(axis=1),
                           temperature, car_efficiency,
@@ -4963,7 +4966,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",
+            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_mocksnakemake.yaml",
             simpl="",
             opts="",
             clusters="39",

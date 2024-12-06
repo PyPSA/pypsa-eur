@@ -1142,7 +1142,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/mnt/pypsa-eur-transport/config/config.transport_zecm_v2.yaml",)
+                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
