@@ -235,6 +235,9 @@ plt.savefig("graphs/steel_vs_change_outliers.png", bbox_inches="tight")
 plt.show()
 
 
+# WHAT IF THE COLOR OF THE DOTS IS THE YEAR
+
+
 # %%
 
 # Irland check

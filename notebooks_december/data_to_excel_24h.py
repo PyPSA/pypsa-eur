@@ -72,6 +72,7 @@ for scenario in scenarios:
         bofcc_emis_capt_df = df.copy()
         bof_prod_cc_df = df.copy()
         cement_proc_emis_df = df.copy()
+        methanolisation_df = df.copy()
         
         # Hydrogen
         elec_h2prod_df = df.copy()
@@ -82,9 +83,11 @@ for scenario in scenarios:
         if 'eu' in scenario:
             steel_load_df = pd.DataFrame(0, index=['EU'], columns = years)
             ammonia_load_df = pd.DataFrame(0, index=['EU'], columns = years)
+            methanol_load_df = pd.DataFrame(0, index=['EU'], columns = years)
         else:
             steel_load_df = df.copy()
             ammonia_load_df = df.copy()
+            methanol_load_df = df.copy()
             
         for year in years:
             
@@ -160,7 +163,7 @@ for scenario in scenarios:
             ammonia_prod_df[year] = ammonia_prod.reindex(ammonia_prod_df.index).fillna(0)
             
             # Ammonia load
-            ammonia_load = n.loads_t.p.filter(like="NH3", axis=1).sum() * timestep  # kt NH3 / year
+            ammonia_load = n.loads_t.p.filter(like="NH3", axis=1).sum() * timestep  # MWh NH3 / year
             ammonia_load = country_values(ammonia_load)
             ammonia_load_df[year] = ammonia_load.reindex(ammonia_load_df.index).fillna(0)
             
@@ -184,6 +187,15 @@ for scenario in scenarios:
             nh3crack_h2prod = -n.links_t.p1.filter(like="ammonia cracker", axis=1).sum() * timestep
             nh3crack_h2prod = country_values(nh3crack_h2prod)
             nh3crack_h2prod_df[year] = nh3crack_h2prod.reindex(nh3crack_h2prod_df.index).fillna(0)
+            
+            # Methanol
+            methanol_prod = -n.links_t.p1.filter(like="methanolisation", axis=1).sum() * timestep
+            methanol_prod = country_values(methanol_prod)
+            methanolisation_df[year] = methanol_prod.reindex(methanolisation_df.index).fillna(0)
+            
+            methanol_load = n.loads_t.p.filter(like="methanol", axis=1).sum()*timestep #MWh methanol per year per node
+            methanol_load = country_values(methanol_load)
+            methanol_load_df[year] = methanol_load.reindex(methanol_load_df.index).fillna(0)
             
             # Emissions
             dri_emis = -n.links_t.p1.filter(like="dri process", axis=1).sum() * timestep / 1e3 # from t to kt per year
@@ -230,6 +242,8 @@ for scenario in scenarios:
         elec_prices_df.to_excel(writer, sheet_name="Elec_Prices")
         ammonia_prod_df.to_excel(writer, sheet_name="Ammonia_Prod")
         ammonia_load_df.to_excel(writer, sheet_name="Ammonia_Load")
+        methanolisation_df.to_excel(writer, sheet_name="Methanol_Prod")
+        methanol_load_df.to_excel(writer, sheet_name="Methanol_Load")
 
         
         # Hydrogen
