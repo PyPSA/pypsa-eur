@@ -4169,7 +4169,7 @@ def add_steel_industry(n, investment_year, options):
         bus=spatial.iron.nodes,
         p_nom_extendable=True,
         carrier="iron",
-        marginal_cost=costs.at["iron", "fuel"],
+        marginal_cost=costs.at["iron ore DRI-ready", "commodity"]*1e3, # €/kt of iron
     )
 
     for carrier in ["steel","heat4industry"]:
@@ -4352,7 +4352,7 @@ def add_steel_industry(n, investment_year, options):
         bus2="co2 atmosphere",
         p_nom_extendable=True,
         carrier="heat4industry",
-        capital_cost=0.1,
+        #capital_cost=0.1,
         efficiency=0.75,
         efficiency2=costs.at["gas", "CO2 intensity"],
         lifetime=100,
@@ -4432,7 +4432,7 @@ def add_cement_industry(n, investment_year, options):
         bus=spatial.limestone.nodes,
         p_nom_extendable=True,
         carrier="limestone",
-        marginal_cost=costs.at["limestone", "fuel"],
+        marginal_cost=40*1e3 * 0.877, #€/kt of limestone https://thundersaidenergy.com/downloads/cement-costs-and-energy-economics/
     )
 
     n.add("Carrier", "cement")
