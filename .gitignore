@@ -76,3 +76,5 @@ d1gam3xoknrgr2.cloudfront.net/
 merger-todos.md
 
 *.html
+# private dev folder
+dev/*

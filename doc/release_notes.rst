@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Feature: Introduce geothermal district heating (direct utilisation and heat pumps). Potentials are based on `Manz et al. 2024: Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`.
+
 * Feature: Allow CHPs to use different fuel sources such as gas, oil, coal, and methanol. Note that the cost assumptions are based on a gas CHP (except for solid biomass-fired CHP).
 
 * Improve `sanitize_carrier`` function by filling in colors of missing carriers with colors mapped after using the function `rename_techs`.
@@ -101,9 +103,11 @@ Upcoming Release
   - Single transformers for each combination of voltage level per substation. Transformers now have a capacity s_nom based on connected lines
   - Use of OSM relations where available and unambiguous (Overwriting all lines that are members of the respective relation to avoid duplicates)
 
-* Updated osm-prebuilt base network to version 0.5, for changelog, see https://zenodo.org/records/13981528
+* Updated osm-prebuilt base network to version 0.6, for changelog, see https://zenodo.org/records/14144752
 
 * Bugfix: vehicle-to-grid dispatch capacity is now limited by the fraction of vehicles participating in demand-side-management, halving the dispatch capacity under the default demand-side management participation rate of 0.5.
+
+* Bugfix: Align the naming convention for the CO2 network configuration (from `co2network` to `co2_network`). This may be a small breaking change.
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)

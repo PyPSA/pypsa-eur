@@ -23,6 +23,15 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
+-- heat_utilisation_potentials,--,Dictionary with names of heat sources for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) should be used,
+-- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
+-- -- -- key,-,string used to complete URL for data download - e.g. `geothermal_65` or `geothermal_85`","i.e file names in `Fordatis <https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple>`,
+-- -- -- constant_temperature_celsius,°C,heat source temperature,
+-- -- -- column_name,-,name of the data column in retrieved GeoDataFrame,
+
+-- -- -- unit,-,unit of heat source potential must be in (K/M/G/T)Wh,
+-- -- -- full_load_hours,h,assumed full-load hours in Manz et al. (used to scale from utilisation to technical potential),
+-- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- heat_pump_sources,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
@@ -122,7 +131,7 @@ co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
 co2_sequestration_lifetime,years,int,The lifetime of a CO2 sequestration site
 co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
 ,,,
-co2network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
+co2_network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
 co2_network_cost_factor,p.u.,float,The cost factor for the capital cost of the carbon dioxide transmission network
 ,,,
 cc_fraction,--,float,The default fraction of CO2 captured with post-combustion capture
