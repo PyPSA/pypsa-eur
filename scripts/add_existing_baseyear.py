@@ -693,8 +693,6 @@ def add_steel_industry_existing_gem(n):
         p_nom=p_nom_bof * iron_to_steel_bof,
         p_nom_extendable=False,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         #capital_cost=capex_bof,
         marginal_cost=0,#opex_bof,
         efficiency=1 / iron_to_steel_bof,
@@ -719,8 +717,6 @@ def add_steel_industry_existing_gem(n):
         p_nom=p_nom_eaf * iron_to_steel_eaf_ng,
         p_nom_extendable=False,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         #capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
         marginal_cost=0,#opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
@@ -917,8 +913,6 @@ def add_cement_industry_existing_sfi(n):
         carrier="cement plant",
         p_nom=p_nom,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         p_nom_extendable=False,
         capital_cost=capex_cement,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974

@@ -671,7 +671,6 @@ sector:
     biomass_to_methanol: false
     biomass_to_methanol_cc: false
   ammonia: false
-  european_hydrogen: true #ADB to have a EU H2 bus
   min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3

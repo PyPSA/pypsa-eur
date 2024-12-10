@@ -144,12 +144,8 @@ def define_spatial(nodes, options, endo_industry):
 
     # hydrogen
     spatial.h2 = SimpleNamespace()
-    if options.get("european_hydrogen"):
-        spatial.h2.nodes = ["EU H2"]
-        spatial.h2.locations = ["EU"]
-    else:
-        spatial.h2.nodes = nodes + " H2"
-        spatial.h2.locations = nodes
+    spatial.h2.nodes = nodes + " H2"
+    spatial.h2.locations = nodes
 
     # methanol
 
@@ -1576,7 +1572,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Store",
             h2_caverns.index + " H2 Store",
-            bus=spatial.h2.nodes, #h2_caverns.index + " H2",
+            bus=h2_caverns.index + " H2",
             e_nom_extendable=True,
             e_nom_max=h2_caverns.values,
             e_cyclic=True,
@@ -4275,8 +4271,6 @@ def add_steel_industry(n, investment_year, options):
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         capital_cost=capex_bof,
         marginal_cost=opex_bof,
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         efficiency=1 / iron_to_steel_bof,
         efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
         efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
@@ -4295,8 +4289,6 @@ def add_steel_industry(n, investment_year, options):
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         efficiency=1 / 2803 , # MWh natural gas per one unit of dri gas
         efficiency2=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
     )
@@ -4310,8 +4302,6 @@ def add_steel_industry(n, investment_year, options):
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         efficiency=1 / 2211 , # MWh hydrogen per one unit of dri gas
     )
 
@@ -4331,8 +4321,6 @@ def add_steel_industry(n, investment_year, options):
         p_nom_extendable=True,
         p_nom_max = max_cap * iron_to_steel_eaf_h2,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         capital_cost=capex_eaf, #ADB to be fixed the pricefor h2
         marginal_cost=opex_eaf,
         efficiency=1 / iron_to_steel_eaf_h2,
@@ -4492,8 +4480,6 @@ def add_cement_industry(n, investment_year, options):
         carrier="cement plant",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        ramp_limit_up=ramp_limit,
-        ramp_limit_dowm=ramp_limit,
         capital_cost=capex_cement, 
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.28) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974

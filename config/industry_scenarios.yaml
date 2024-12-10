@@ -19,8 +19,7 @@ baseline_eu_dem:
     methanol:
       regional_methanol_demand: false
     ammonia: true
-    european_hydrogen: true
-    H2_network: false
+    H2_network: true
 
 policy_eu_dem:
   co2_budget_apply: true
@@ -30,8 +29,7 @@ policy_eu_dem:
     methanol:
       regional_methanol_demand: false
     ammonia: true
-    european_hydrogen: true
-    H2_network: false
+    H2_network: true
 
 baseline_regional_dem:
   co2_budget_apply: false
@@ -41,8 +39,7 @@ baseline_regional_dem:
     methanol:
       regional_methanol_demand: true
     ammonia: regional
-    european_hydrogen: true
-    H2_network: false
+    H2_network: true
     
 
 policy_regional_dem:
@@ -53,5 +50,4 @@ policy_regional_dem:
     methanol:
       regional_methanol_demand: true
     ammonia: regional
-    european_hydrogen: true
-    H2_network: false
+    H2_network: true
