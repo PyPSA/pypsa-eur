@@ -4,7 +4,7 @@ SPDX-License-Identifier: CC-BY-4.0
 -->
 
 
-# PyPSA-Spain: An extension of PyPSA-Eur to model the Spanish Energy System with high spatio-temporal resolution
+# PyPSA-Spain: An extension of PyPSA-Eur to model the Spanish Energy System
 
 The primary motivation behind the development of PyPSA-Spain was to leverage the
 benefits of a national energy model over a regional one, like the availability of specific
@@ -18,7 +18,13 @@ optimisation of the European energy system.
 
 PyPSA-Spain is an up-to-date fork of PyPSA-Eur, ensuring that advancements
 and bug fixes made to PyPSA-Eur are integrated. In addition, PyPSA-Spain includes a number of novel functionalities that enhance the representation
-of the Spanish energy system, as compared with PyPSA-Eur. Stay tuned, as the description of these functionalities will be provided soon..
+of the Spanish energy system, as compared with PyPSA-Eur. 
+
+Find more details in [https://pypsa-spain.readthedocs.io/en/latest/](https://pypsa-spain.readthedocs.io/en/latest/)
+
+A description of the new functionalities implemented in PyPSA-Spain is now available in this preprint: [https://arxiv.org/abs/2412.06571](https://arxiv.org/abs/2412.06571).
+
+
 
 
 ![PyPSA-Spain Grid Model](docs/img/base.jpg)
