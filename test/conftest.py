@@ -6,8 +6,6 @@
 # coding: utf-8
 
 import pathlib
-
-import numpy as np
 import pandas as pd
 import pypsa
 import pytest
@@ -24,7 +22,7 @@ def ac_dc_network():
     return pypsa.examples.ac_dc_meshed(from_master=True)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def config():
     path_config = pathlib.Path(pathlib.Path.cwd(), "config", "config.default.yaml")
     with open(path_config, "r") as file:
