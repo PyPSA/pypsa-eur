@@ -143,7 +143,7 @@ def test_load_buses(tmpdir, config, buses_dataframe):
     df_buses_output = _load_buses(
         buses_path, italy_shape, countries, config
     ).reset_index()
-    pathlib.Path.unlink(buses_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
     df_comparison = df_buses_output.compare(df_buses_reference)
     assert df_comparison.empty
 
@@ -176,8 +176,8 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
     df_converters_comparison = df_converters_output.compare(df_converters_eg_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(converters_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(converters_path).unlink(missing_ok=True)
     assert df_converters_comparison.empty
 
 
@@ -211,8 +211,8 @@ def test_load_converters_from_osm(
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
     df_converters_comparison = df_converters_output.compare(df_converters_osm_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(converters_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(converters_path).unlink(missing_ok=True)
     assert df_converters_comparison.empty
 
 
@@ -262,8 +262,8 @@ def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
         ]
     )
     df_lines_comparison = df_lines_output.compare(df_lines_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(lines_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(lines_path).unlink(missing_ok=True)
     assert df_lines_comparison.empty
 
 
@@ -313,8 +313,8 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
         ]
     )
     df_links_comparison = df_links_output.compare(df_links_eg_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(links_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(links_path).unlink(missing_ok=True)
     assert df_links_comparison.empty
 
 
@@ -364,8 +364,8 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
         ]
     )
     df_links_comparison = df_links_output.compare(df_links_osm_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(links_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(links_path).unlink(missing_ok=True)
     assert df_links_comparison.empty
 
 
@@ -398,8 +398,8 @@ def test_load_transformers(tmpdir, buses_dataframe, config, transformers_datafra
     df_transformers_comparison = df_transformers_output.compare(
         df_transformers_reference
     )
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(transformers_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(transformers_path).unlink(missing_ok=True)
     assert df_transformers_comparison.empty
 
 
@@ -457,8 +457,8 @@ def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
     df_lines_crimea_comparison = df_lines_crimea_output.compare(
         df_lines_crimea_reference
     )
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(lines_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(lines_path).unlink(missing_ok=True)
     assert df_lines_crimea_comparison.empty
 
 
@@ -512,8 +512,8 @@ def test_set_electrical_parameters_lines_eg(
         ]
     )
     df_lines_output = _set_electrical_parameters_lines_eg(df_lines, config)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(lines_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(lines_path).unlink(missing_ok=True)
     df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
     assert df_lines_comparison.empty
 
@@ -569,8 +569,8 @@ def test_set_electrical_parameters_lines_osm(
         ]
     )
     df_lines_output = _set_electrical_parameters_lines_osm(df_lines, config)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(lines_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(lines_path).unlink(missing_ok=True)
     df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
     assert df_lines_comparison.empty
 
@@ -627,8 +627,8 @@ def test_set_electrical_parameters_links_osm(
     )
     df_links_output = _set_electrical_parameters_links_osm(df_links, config)
     df_links_comparison = df_links_output.compare(df_links_parameters_reference)
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(links_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(links_path).unlink(missing_ok=True)
     assert df_links_comparison.empty
 
 
@@ -670,6 +670,6 @@ def test_set_electrical_parameters_converters(
     df_converters_comparison = df_converters_output.compare(
         df_converters_parameters_reference
     )
-    pathlib.Path.unlink(buses_path)
-    pathlib.Path.unlink(converters_path)
+    pathlib.Path(buses_path).unlink(missing_ok=True)
+    pathlib.Path(converters_path).unlink(missing_ok=True)
     assert df_converters_comparison.empty
