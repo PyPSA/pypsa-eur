@@ -6,6 +6,7 @@
 # coding: utf-8
 
 import pathlib
+
 import pandas as pd
 import pypsa
 import pytest
