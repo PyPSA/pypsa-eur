@@ -2711,32 +2711,6 @@ def add_methanol(n, costs):
         add_methanol_reforming_cc(n, costs)
 
 
-def add_methanol(n, costs):
-
-    methanol_options = options["methanol"]
-    if not any(methanol_options.values()):
-        return
-
-    logger.info("Add methanol")
-    add_carrier_buses(n, "methanol")
-
-    if options["biomass"]:
-        if methanol_options["biomass_to_methanol"]:
-            add_biomass_to_methanol(n, costs)
-
-        if methanol_options["biomass_to_methanol"]:
-            add_biomass_to_methanol_cc(n, costs)
-
-    if methanol_options["methanol_to_power"]:
-        add_methanol_to_power(n, costs, types=methanol_options["methanol_to_power"])
-
-    if methanol_options["methanol_reforming"]:
-        add_methanol_reforming(n, costs)
-
-    if methanol_options["methanol_reforming_cc"]:
-        add_methanol_reforming_cc(n, costs)
-
-
 def add_biomass(n, costs):
     logger.info("Add biomass")
 
