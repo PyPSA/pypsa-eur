@@ -202,7 +202,7 @@ ncol = int(len(years))
 
 fig, axes = plt.subplots(
     nrows, ncol,
-    figsize=(2.5 * nrows, 2.5 * ncol),
+    figsize=(2.5 * nrows, 3.5 * ncol),
     constrained_layout=False,
     subplot_kw={"projection": proj},
     #gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }

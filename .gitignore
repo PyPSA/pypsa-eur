@@ -16,7 +16,7 @@ gurobi.log
 /resources
 /resources*
 /results
-/results_24h
+/results_*h
 /networks
 /benchmarks
 /logs

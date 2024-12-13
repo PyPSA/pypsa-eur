@@ -223,9 +223,9 @@ for idx, row in df_outliers.iterrows():
         )
 """
 # Add axis labels
-ax.set_xlabel("Steel Production (Mtons)", fontsize=12)
-ax.set_ylabel("Change in Costs (€/person)", fontsize=12)
-ax.set_title("Steel Production vs. Change in Costs (Outliers Highlighted)", fontsize=14)
+ax.set_xlabel("Change in steel production (Mtons)", fontsize=12)
+ax.set_ylabel("Change in costs (€/person)", fontsize=12)
+ax.set_title("Change in steel production vs. Change in costs", fontsize=14)
 
 # Add grid for readability
 ax.grid(visible=True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)

@@ -169,7 +169,7 @@ if ax is None:
 regions.plot(
     ax=ax,
     column="change",
-    cmap="seismic",
+    cmap="Blues",
     linewidths=0.5,  # Thickness of the black border
     edgecolor="black",  # Black border for the shapes
     legend=True,

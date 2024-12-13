@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Dec  4 15:25:49 2024
+Created on Tue Dec 10 11:23:41 2024
 
 @author: alice
 """
@@ -16,19 +16,11 @@ def read_year(excel_dir, scenario, sheet, year):
     
     return df
 
-def steel_pie_preprocessing(excel_dir, scenario, config, year):
+def methanol_pie_preprocessing(excel_dir, scenario, config, year):
     
-    eaf_prod = read_year(excel_dir, scenario, 'EAF_Prod', year)
-    bof_prod = read_year(excel_dir, scenario, "BOF_Prod", year)
-    steel_prod = eaf_prod + bof_prod
-    
-    bof_cc_prod = read_year(excel_dir, scenario, "BOF_CC_Prod", year)
-    bof_prod = bof_prod - bof_cc_prod
-    bof_prod[bof_prod < 0] = 0
-    ng_eaf_prod = read_year(excel_dir, scenario, "NG_EAF", year)
-    h2_eaf_prod = read_year(excel_dir, scenario, "H2_EAF", year)
-    
-    
+    methanol_prod = read_year(excel_dir, scenario, 'Methanol_Prod', year)
+    meth_lhv = 5.54 #MWh/t methanol
+    methanol_prod = methanol_prod / meth_lhv / 1e3 # kt NH3
     # Hydrogen
     elec_h2prod = read_year(excel_dir, scenario, "Elec_H2Prod", year)
     smrcc_h2prod = read_year(excel_dir, scenario, "SMRCC_H2Prod", year)
@@ -36,14 +28,14 @@ def steel_pie_preprocessing(excel_dir, scenario, config, year):
     nh3crack_h2prod = read_year(excel_dir, scenario, "NH3crack_H2Prod", year)
     
     green_h2_share = ((elec_h2prod + smrcc_h2prod) / ( elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)).fillna(0)
-    green_h2_eaf_prod = green_h2_share * h2_eaf_prod
-    grey_h2_eaf_prod = (1-green_h2_share) * h2_eaf_prod
+    green_meth_share = green_h2_share * methanol_prod
+    nongreen_meth_share = (1- green_h2_share) * methanol_prod
 
-    steel_tech = pd.concat([bof_prod, ng_eaf_prod, grey_h2_eaf_prod, bof_cc_prod, green_h2_eaf_prod ], axis = 1)
-    steel_tech.columns = ['BOF','NG EAF', 'Grey H2 EAF','BOF CC','Green H2 EAF']
-    steel_tech = steel_tech[steel_tech.sum(axis=1) >= 1]
+    methanol_tech = pd.concat([green_meth_share, nongreen_meth_share], axis=1)
+    methanol_tech.columns = ['Green H2 Meth.', 'Grey H2 Meth.']
+    methanol_tech = methanol_tech[methanol_tech.sum(axis=1) >= 1]
     
-    return steel_prod, steel_tech
+    return methanol_prod, methanol_tech
 
 
 def assign_location(n):
@@ -57,21 +49,21 @@ def assign_location(n):
             c.df.loc[names, "location"] = names.str[:i]
 
 
-def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, piecolors, ax=None): 
+def plot_pie_map(n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=None): 
     
     assign_location(n)
     
-    regions["data"] = regions.index.str[:2].map(steel_prod) 
+    regions["data"] = regions.index.str[:2].map(methanol_prod) 
     regions["data"] = regions["data"].where(regions["data"] > 0.1, 0)
     regions["data"] = regions["data"].fillna(0)
     
     
-    row_sums = steel_tech.sum(axis=1)
-    steel_prod_shares = round(steel_tech.div(row_sums, axis=0),2)
+    row_sums = methanol_tech.sum(axis=1)
+    methanol_prod_shares = round(methanol_tech.div(row_sums, axis=0),2)
 
     regions = regions.to_crs(proj.proj4_init)
     #max_value = steel_prod.values.max()
-    max_value=80
+    max_value=30
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
     
@@ -79,14 +71,14 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, piecolors, ax=N
     regions.plot(
         ax=ax,
         column="data",
-        cmap="Reds",
+        cmap="Oranges",
         linewidths=0.5,
         edgecolor='black',
         legend=(i == ncol - 1),
         vmax=max_value,
         vmin=0,
         legend_kwds={
-            "label": "Steel prod\n[Mt steel/yr]",
+            "label": "Methanol prod\n[kt CH3OH/yr]",
             #"fontsize": 12,
             "shrink": 0.5,
             "extend": "max",
@@ -105,13 +97,10 @@ def plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, piecolors, ax=N
         # Get the centroid of each region
         centroid = region['geometry'].centroid
     
-        if idx_prefix in steel_prod_shares.index:
+        if idx_prefix in methanol_prod_shares.index:
             pie_values = [
-                steel_prod_shares.loc[idx_prefix, 'BOF'],
-                steel_prod_shares.loc[idx_prefix, 'NG EAF'],
-                steel_prod_shares.loc[idx_prefix, 'Grey H2 EAF'],
-                steel_prod_shares.loc[idx_prefix, 'BOF CC'],
-                steel_prod_shares.loc[idx_prefix, 'Green H2 EAF']
+                methanol_prod_shares.loc[idx_prefix, 'Green H2 Meth.'],
+                methanol_prod_shares.loc[idx_prefix, 'Grey H2 Meth.'],
             ]
     
             # If all values are 0, skip plotting
@@ -200,12 +189,10 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
-piecolors = ['#000000', '#636161', '#E5D546', '#787AF7', '#42CF05']
-pielabels = ['BOF', 'NG EAF', 'Grey H2 EAF', 'BOF CC', 'Green H2 EAF']
+piecolors = ['#42CF05', '#636161']
+pielabels = ['Green H2 Meth.', 'Grey H2 Meth.']
 
-excel_dir = "excels_3h/"
-# Plotting the green share of steel production
-title = "Steel prod [Mt/yr]"
+excel_dir = "excels_24h/"
 
 scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
 nrows = int(len(scenarios))
@@ -221,7 +208,7 @@ fig, axes = plt.subplots(
 
 fig.subplots_adjust(wspace=-0.40, hspace=0)
 
-fn = (root_dir + "results_3h/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
+fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
 n = pypsa.Network(fn)
 
 j = 0  # row index
@@ -230,10 +217,10 @@ i = 0  # column index
 for j, scenario in enumerate(scenarios):
     for i, year in enumerate(years):
         
-        steel_prod, steel_tech = steel_pie_preprocessing(excel_dir, scenario, config, year)
+        methanol_prod, methanol_tech = methanol_pie_preprocessing(excel_dir, scenario, config, year)
     
         ax = axes[j, i]
-        plot_pie_map(n, steel_prod, steel_tech, regions, year, i, j, piecolors, ax=ax)
+        plot_pie_map(n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=ax)
         ax.axis('off')
         
         if i == 0:
@@ -278,6 +265,6 @@ fig.legend(
 """          
 #plt.constrained_layout()
 #fig.suptitle('Year 2050', fontsize=16, y=1.02)
-plt.savefig("graphs/steel_pie_charts_years.png", bbox_inches="tight")
+plt.savefig("graphs/methanol_pie_charts_years.png", bbox_inches="tight")
 plt.show()
 

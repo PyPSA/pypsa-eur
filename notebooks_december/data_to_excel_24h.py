@@ -35,7 +35,7 @@ def retrieve_links(df, suffix):
     return filtered_df
 
 
-n = pypsa.Network("../results_24h/baseline_eu_dem/postnetworks/base_s_39_lvopt___2030.nc")
+n = pypsa.Network("../results_3h/baseline_eu_dem/postnetworks/base_s_39_lvopt___2030.nc")
 
 timestep = n.snapshot_weightings.iloc[0,0]
 
@@ -51,12 +51,12 @@ df = pd.DataFrame(0, index=countries,columns=years)
 
 # Initialize Excel writer
 scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
-os.makedirs("excels_24h", exist_ok=True)
+os.makedirs("excels_3h", exist_ok=True)
 
 for scenario in scenarios:
     
     output_filename = scenario + ".xlsx"
-    with pd.ExcelWriter("excels_24h/" + output_filename, engine="xlsxwriter") as writer:
+    with pd.ExcelWriter("excels_3h/" + output_filename, engine="xlsxwriter") as writer:
         
         # Create empty DataFrames for each type of data
         eaf_capacity_df = df.copy()
@@ -84,14 +84,17 @@ for scenario in scenarios:
             steel_load_df = pd.DataFrame(0, index=['EU'], columns = years)
             ammonia_load_df = pd.DataFrame(0, index=['EU'], columns = years)
             methanol_load_df = pd.DataFrame(0, index=['EU'], columns = years)
+            steel_price_df = pd.DataFrame(0, index=['EU'], columns = years)
+            
         else:
             steel_load_df = df.copy()
             ammonia_load_df = df.copy()
             methanol_load_df = df.copy()
+            steel_price_df = df.copy()
             
         for year in years:
             
-            n = pypsa.Network(f"../results_24h/{scenario}/postnetworks/base_s_39_lvopt___{year}.nc")
+            n = pypsa.Network(f"../results/{scenario}/postnetworks/base_s_39_lvopt___{year}.nc")
             timestep = n.snapshot_weightings.iloc[0,0]
             
             # EAF capacity
@@ -135,6 +138,12 @@ for scenario in scenarios:
             steel_load = n.loads_t.p.filter(like="steel", axis=1).sum()*timestep #kton steel per year per node
             steel_load = country_values(steel_load)
             steel_load_df[year] = steel_load.reindex(steel_load_df.index).fillna(0)
+            
+            # Steel price
+            steel_price = n.buses_t.marginal_price.filter(like="steel", axis=1).T
+            steel_price = country_values(steel_price)
+            column_averages = steel_price.mean(axis=1)
+            steel_price_df[year] = column_averages.reindex(steel_price_df.index).fillna(0)
             
             # Electricity price     
             mprice = n.buses_t.marginal_price
@@ -244,6 +253,8 @@ for scenario in scenarios:
         ammonia_load_df.to_excel(writer, sheet_name="Ammonia_Load")
         methanolisation_df.to_excel(writer, sheet_name="Methanol_Prod")
         methanol_load_df.to_excel(writer, sheet_name="Methanol_Load")
+        steel_price_df.to_excel(writer, sheet_name="Steel_Price")
+
 
         
         # Hydrogen
