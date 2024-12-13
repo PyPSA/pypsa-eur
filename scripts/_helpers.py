@@ -418,7 +418,7 @@ def progress_retrieve(url, file, disable=False):
                     t.update(len(data))
 
 
-def retry(retries: int = 3, delay=1) -> Callable:
+def retry(func: Callable) -> Callable:
     """
     Retry decorator to run retry function on specific exceptions, before raising them.
 
@@ -440,6 +440,8 @@ def retry(retries: int = 3, delay=1) -> Callable:
     callable
         A decorator function that can be used to wrap the function to be retried.
     """
+    retries = 3
+    delay = 5
 
     def decorator(func):
         @wraps(func)
