@@ -443,23 +443,20 @@ def retry(func: Callable) -> Callable:
     retries = 3
     delay = 5
 
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            for attempt in range(retries):
-                try:
-                    return func(*args, **kwargs)
-                except fiona.errors.DriverError as e:
-                    logger.warning(
-                        f"Attempt {attempt + 1} failed: {type(e).__name__} - {e}. "
-                        f"Retrying..."
-                    )
-                    time.sleep(delay)
-            raise Exception("Retrieval retries exhausted.")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for attempt in range(retries):
+            try:
+                return func(*args, **kwargs)
+            except fiona.errors.DriverError as e:
+                logger.warning(
+                    f"Attempt {attempt + 1} failed: {type(e).__name__} - {e}. "
+                    f"Retrying..."
+                )
+                time.sleep(delay)
+        raise Exception("Retrieval retries exhausted.")
 
-        return wrapper
-
-    return decorator
+    return wrapper
 
 
 def mock_snakemake(
