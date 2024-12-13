@@ -14,7 +14,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, rename_techs, set_scenario_config
+from _helpers import configure_logging, rename_techs, retry, set_scenario_config
 from plot_summary import preferred_order
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
@@ -62,6 +62,7 @@ def load_projection(plotting_params):
     return proj_func(**proj_kwargs)
 
 
+@retry
 def plot_map(
     n,
     components=["links", "stores", "storage_units", "generators"],
