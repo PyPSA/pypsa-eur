@@ -11,7 +11,7 @@ from build_energy_totals import car_types
 from build_transport_demand import transport_cols
 import numpy as np
 # heat pumps
-wished_scenarios = ["base", "fast", "slow", "low-demand", "high-demand"]
+wished_scenarios = ["base", "fast", "slow", "low-demand", "high-demand", "mandate"]
 fn = "/home/lisa/Documents/endogenous_transport/data/statistic_id1434431_total-stock-of-heat-pumps-in-europe-2005-2022.xlsx"
 historical = pd.read_excel(fn, index_col=[1], sheet_name="Data")
 pumps = (heat_df/typical_generation).reindex(columns=wished_scenarios, level=0).iloc[:2].sum().unstack().T
@@ -41,8 +41,8 @@ to_plot_interpolated = to_plot_reindexed.interpolate(method='linear')
 yearly_diff = to_plot_interpolated.diff()
 yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
 
-(yearly_diff.shift(-1)).plot(color=["black", "blue", "green", "red",  "pink", "orange"],
-             # style = ["-", "--", "--", "--", "--", "--"]
+(yearly_diff.shift(-1)).plot(color=["black", "blue", "green", "red",  "pink", "orange", "cyan"],
+              style = ["-", "--", "--", "--", "--", "--", "--"]
              )
 plt.ylabel("Annual additional heat pumps \n [million heat pumps]")
 plt.savefig(snakemake.output.balances[:-19] + "heat_pump_annual_additional.pdf",
@@ -60,8 +60,8 @@ to_plot = pd.concat([historical, caps])
 to_plot.loc[2023] = to_plot.loc[2023].fillna(method="ffill")
 fig, ax = plt.subplots()
 (to_plot/1e3).plot(ax=ax,
-             color=["black", "blue", "green", "red",  "pink", "orange"],
-             style = ["-", "--", "--", "--", "--", "--"]
+             color=["black", "blue", "green", "red",  "pink", "orange", "cyan"],
+             style = ["-", "--", "--", "--", "--", "--", "--"]
              )
 ax.set_ylabel("Installed renewable capacity [GW]")
 ax.set_xlim([2010, 2050])
@@ -79,8 +79,8 @@ yearly_diff = to_plot_interpolated.diff()
 yearly_diff.loc[historical.reindex(new_index).isna(), "historical"] = np.nan
 
 (yearly_diff.shift(-1)/1e3).plot(
-    color=["black", "blue", "green", "red",  "pink", "orange"],
-                 style = ["-", "--", "--", "--", "--", "--"]
+    color=["black", "blue", "green", "red",  "pink", "orange", "cyan"],
+                 style = ["-", "--", "--", "--", "--", "--", "--"]
     
     )
 plt.ylabel("Annual additional RES capacity [GW]")
@@ -191,7 +191,7 @@ import pandas as pd
 data = {
     "Year": [2025, 2030, 2035, 2040, 2050],
     "Base light duty": [20, 55, 100, 100, 100],
-    "Base heavy duty": [10, 50, 100, 100, 100],
+    "Base heavy duty": [15, 45, 65, 90, 100],
     "Fast light duty": [50, 100, 100, 100, 100],
     "Fast heavy duty": [30, 100, 100, 100, 100],
     "Slow light duty": [16, 30, 50, 90, 100],

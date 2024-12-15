@@ -343,6 +343,69 @@ def plot_balances(balances, drop=None):
             for i in df.index
         ]
         
+        # if k=="AC":
+        #     to_plot = df.droplevel([1,2,3], axis=1)[["base", "dsm", "v2g"]]
+        #     diff = to_plot.subtract(to_plot.base, axis=0)
+        #     gens = ["offwind-ac", "offwind-dc", "offwind-float", "onwind", "solar", "solar-hsat"]
+            
+        #     fig, ax = plt.subplots(nrows=1, ncols=len(gens), sharey=True,
+        #                            figsize=(10,2.5))
+        #     for col, gen in enumerate(gens):
+        #         legend=True if col==0 else False
+        #         diff.loc[gen].unstack().T.iloc[1:,1:].plot(kind="bar", title=gen,
+        #                                                    ax=ax[col], legend=legend)
+        #         ax[col].set_xlabel("")
+        #     ax[0].set_ylabel("change in generation [TWh]")
+        #     ax[2].set_xlabel("planning horizon")
+            
+        #     fig.savefig(snakemake.output.balances[:-19] + "gen-diff-dsm-v2g.pdf",
+        #                 bbox_inches="tight")
+        
+            # dist = to_plot.loc["electricity distribution grid"].sum().unstack().T
+            
+            # caps = capacities.xs("electricity distribution grid", level=1).droplevel([1,2,3], axis=1)[["base", "dsm", "v2g"]].iloc[0,:].unstack().T
+            
+            # fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(8,3), sharex=True)
+            # ((dist.divide(dist.base, axis=0)[["dsm", "v2g"]]-1)*100).plot(kind="bar", ax=ax[0], title="Difference in flow", legend=False)
+            # ((caps.divide(caps.base, axis=0)[["dsm", "v2g"]]-1)*100).plot(kind="bar", ax=ax[1], title="Difference in installed capacity")
+            # ax[1].set_xlabel("planning horizon")
+            # ax[0].set_ylabel("Difference \n [%]")
+            # ax[1].set_ylabel("Difference \n [%]")
+            # fig.savefig(snakemake.output.balances[:-19] + "elec-dist-diff-dsm-v2g.pdf",
+            #                 bbox_inches="tight")
+            
+            # # Compute the data to plot
+            # to_plot = costs.sum().droplevel([1, 2, 3]).loc[["base", "dsm", "v2g"]].unstack().T / 1e9
+            # percentage = ((to_plot.divide(to_plot.base, axis=0) - 1) * 100)
+            
+            # # Plot the bar chart
+            # ax = to_plot.subtract(to_plot.base, axis=0).iloc[1:, 1:].plot(kind="bar")
+            # plt.ylabel("Cost difference \n [bn Euro/a]")
+            # plt.xlabel("Planning horizon")
+            
+            # # Add percentage text to each bar
+            # j = 0
+            # for container in ax.containers:  # Iterate through the bar groups
+            #     for i, bar in enumerate(container):  # Iterate through individual bars
+            #         x = bar.get_x() + bar.get_width() / 2  # X-coordinate (center of the bar)
+            #         y = bar.get_height()  # Height of the bar
+            #         if abs(y) > 1:  # Skip bars with zero height
+            #             # Get the corresponding percentage value
+            #             percentage_value = percentage.iloc[1:, 1:].iloc[i, j]
+            #             # Annotate the bar
+            #             ax.annotate(
+            #                 f"{percentage_value:.1f}%",  # Format as percentage
+            #                 (x, y),  # Position above the bar
+            #                 ha="center", va="bottom", fontsize=9  # Styling
+            #             )
+            #         if i==3: j+=1
+
+            
+            # plt.ylabel("cost difference \n [bn Euro/a]")
+            # plt.xlabel("planning horizon")
+            # plt.savefig(snakemake.output.balances[:-19] + "cost-diff-dsm-v2g.pdf",
+            #                 bbox_inches="tight")
+            
         if k =="co2":
             
             co2_b = df.rename(index=grouper).groupby(level=0).sum()
@@ -623,6 +686,9 @@ def plot_balances(balances, drop=None):
 
 def plot_shares_area(balances, shares):
 
+    rename_dict = {"EV": "BEV",
+                   "fuel cell": "FCEV",
+                   "oil": "ICE"}
     
     fig, axes = plt.subplots(
                 nrows=2,
@@ -696,6 +762,8 @@ def plot_shares_area(balances, shares):
 
         for i in range(len(share.index)):
             title = share.index[i].replace("land transport ", "").replace(" light", "") if row==0 else ""
+            if title!="":
+                title = rename_dict[title]
             share.iloc[i].reindex(wished_scenarios, level=0).unstack().T.plot(title=title,
                                                                               ax=axes[row, i],
                                            legend=False,
@@ -725,16 +793,7 @@ def plot_shares_area(balances, shares):
                     )
                 
             for j, sc in enumerate(wished_scenarios):
-                # larger variation
-                area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
-                axes[row, i].fill_between(
-                        area.unstack().columns,
-                        area.unstack().min(),
-                        area.unstack().max(),
-                        color=color[j],
-                        alpha=0.05,
-                        label="+/-20% CAPEX" if (j==0 and row==0) else "",
-                    )
+               
                 # smaller variation
                 filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
                 ~share.columns.get_level_values(0).str.contains("2"))
@@ -745,18 +804,30 @@ def plot_shares_area(balances, shares):
                         area.unstack().max(),
                         color=color[j],
                         alpha=0.1,
-                        label="+/-10% CAPEX" if j==0 else "",
+                        label="+/-10% CAPEX" if (j==0 and row==0) else "",
                     )
+                
+                # larger variation
+                area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
+                axes[row, i].fill_between(
+                        area.unstack().columns,
+                        area.unstack().min(),
+                        area.unstack().max(),
+                        color=color[j],
+                        alpha=0.05,
+                        label="+/-20% CAPEX" if (j==0 and row==0) else "",
+                    )
+                
             axes[row, i].set_xlabel("")
             axes[row, i].grid(axis="x")
         axes[row, 0].set_ylabel("share [%]")
         
-        axes[row, 1].legend(
+        axes[0, 1].legend(
             ncol=1,
             loc="upper left",
             frameon=False,
             )
-    
+
     # Add row titles for "light" and "heavy"
     fig.text(0.5, 0.95, "Light", ha='center', va='center', fontsize=16, weight='bold')
     fig.text(0.5, 0.5, "Heavy", ha='center', va='center', fontsize=16, weight='bold')
@@ -849,7 +920,7 @@ def plot_comparison(balances, capacities, drop=True):
     LHV_H2 = 33.33 # kWh/kg
     renewables = ['offwind-ac', 'offwind-dc', "offwind-float", 
                    "onwind", "solar", "solar rooftop", "solar-hsat"]
-    wished_scenarios = ["fast", "slow", "low-demand", "high-demand"]
+    wished_scenarios = ["fast", "slow", "low-demand", "high-demand", "mandate"]
     res = capacities.droplevel(0).loc[renewables].droplevel([1,2,3], axis=1)
     electrolysis = capacities.droplevel(0).loc["H2 Electrolysis"].droplevel([1,2,3])
     dac = balances.loc["co2"].droplevel(0).loc["DAC2"].droplevel([1,2,3])
@@ -979,20 +1050,20 @@ def plot_comparison(balances, capacities, drop=True):
                 fontsize=10  # Adjust the font size as needed
             )
             
-            caps_labels = [f"{c:.0f} GW" for c in caps]
+        #     caps_labels = [f"{c:.0f} GW" for c in caps]
             
-            # Add text annotations on each bar
-            for bar, label in zip(bars.patches, caps_labels):
-                height = bar.get_height()
-                # Position the text slightly above the top of the bar
-                axes[2, i].text(
-                    bar.get_x() + bar.get_width() / 2, 
-                    produced[wished_scenarios].max().max()*.9,
-                    # height + (0.2 * height),  # Adjust the vertical position
-                    label,
-                    ha='center', va='bottom',
-                    fontsize=10, color='black'
-                )
+        #     # Add text annotations on each bar
+        #     for bar, label in zip(bars.patches, caps_labels):
+        #         height = bar.get_height()
+        #         # Position the text slightly above the top of the bar
+        #         axes[2, i].text(
+        #             bar.get_x() + bar.get_width() / 2, 
+        #             produced[wished_scenarios].max().max()*.9,
+        #             # height + (0.2 * height),  # Adjust the vertical position
+        #             label,
+        #             ha='center', va='bottom',
+        #             fontsize=10, color='black'
+        #         )
                 
         y_value =  produced.loc[year, "base"]
         axes[2,i].axhline(y=y_value, 
@@ -1030,9 +1101,11 @@ def plot_comparison(balances, capacities, drop=True):
         # )
         
         # total system costs ------------------------------------------------
+        # cost_df.drop(to_drop, errors="ignore", inplace=True)
         diff = (cost_df-cost_df["base"])[wished_scenarios].xs(year, level=1, axis=1)
         diff = diff.rename(index=rename_techs).groupby(level=0).sum()/1e9
         diff = diff[(abs(diff)>1).any(axis=1)]
+        
         # diff.T.plot(kind="bar", stacked=True, ax=axes[2,i],
         #           color = [snakemake.config["plotting"]["tech_colors"][i] for i in diff.index],
         #           legend=False
@@ -1085,6 +1158,73 @@ def plot_comparison(balances, capacities, drop=True):
                 bbox_inches="tight")
 
 
+
+def plot_sensi_dsm():
+    rename_dict = {"battery": "battery",
+                   "home battery": "battery",
+                   "rural water tanks": "water tanks",
+                   "urban central water tanks": "water tanks",
+                   "urban decentral water tanks": "water tanks",
+                   }
+    stores = ["H2 Store", "battery", "water tanks"]
+    generators = ["solar", "solar rooftop", 'solar-hsat', "onwind", "offwind-ac",
+                  "offwind-dc"]
+    
+    caps = capacities.loc["stores"].droplevel([1,2,3],axis=1)[["base", "dsm", "v2g"]]
+    to_plot = caps.rename(index=rename_dict).groupby(level=0).sum().loc[stores]
+    diff = to_plot.subtract(to_plot.base, axis=0)
+    percentage = (to_plot.div(to_plot.base, axis=0)-1)*100
+    period = ['2030', '2035', '2040', '2050']
+    
+    fig, ax = plt.subplots(nrows=1, ncols=len(diff.index),
+                           figsize=(12, 2.5), sharex=True)
+    for col, store in enumerate(diff.index):
+        legend=True if col==2 else False
+        (percentage.loc[store].unstack().T.loc[period, ["dsm", "v2g"]]).plot(kind="bar", title=store,
+                                                         ax=ax[col],
+                                                         legend=legend)
+        # write absolute nuumbers on top of the bars
+        absolute = diff.loc[store].unstack().T.loc[period, ["dsm", "v2g"]]/1e3
+        data_to_plot = percentage.loc[store].unstack().T.loc[period, ["dsm", "v2g"]]
+        text = round(absolute).values.flatten(order="K")
+        # Add text on top of each bar
+        for i, bar in enumerate(ax[col].patches):
+            if abs(bar.get_height()) > 2:
+                # Add absolute value text
+                ax[col].annotate(
+                    f'{text[i]} GWh',
+                    (bar.get_x() + bar.get_width() / 2, bar.get_height()),  # Position at the top of the bar
+                    ha='center', va='bottom', fontsize=9, color='black'  # Styling
+                )
+            
+    ax[0].set_ylabel("difference in energy capacity [%]")
+    ax[1].set_xlabel("planning horizon")
+    ax[0].set_xlabel("")
+    ax[2].set_xlabel("")
+    
+    fig.savefig(snakemake.output.balances[:-19] + "stores_dsm_v2g.pdf",
+                bbox_inches="tight")
+    
+    
+    gens = capacities.loc["generators"].droplevel([1,2,3], axis=1)[["base", "dsm", "v2g"]]
+    diff = gens.subtract(gens.base, axis=0)
+    to_plot = diff.loc[generators][["dsm", "v2g"]]
+    
+    fig, ax = plt.subplots(nrows=1, ncols=len(to_plot.index),
+                           figsize=(10, 3), sharex=True)
+    for col, gen in enumerate(to_plot.index):
+        (diff.loc[store].unstack().T.loc[period, ["dsm", "v2g"]]).plot(kind="bar", title=store,
+                                                         ax=ax[col])
+
+    ax[0].set_ylabel("difference in energy capacity [%]")
+    ax[1].set_xlabel("planning horizon")
+    ax[0].set_xlabel("")
+    ax[2].set_xlabel("")
+    
+    fig.savefig(snakemake.output.balances[:-19] + "stores_dsm_v2g.pdf",
+                bbox_inches="tight")
+    
+    
 def plot_scenarios(balances, shares):
     carriers = ["land transport demand light", "land transport demand heavy"]
     wished_scenarios = ["low-demand", "base", "high-demand"]
