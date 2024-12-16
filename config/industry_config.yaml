@@ -21,7 +21,8 @@ remote:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: 'all'
+  name: 
+  - baseline_eu_dem
   scenarios:
     enable: true
     file: config/industry_scenarios.yaml
@@ -1362,7 +1363,6 @@ plotting:
     #ADB
     BF-BOF: 'blue'
     DRI-EAF: 'blue'
-    heat4industry: 'r'
     iron: 'green'
     cement: 'grey'
     limestone: 'yellow'

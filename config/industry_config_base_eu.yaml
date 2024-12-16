@@ -1363,7 +1363,6 @@ plotting:
     #ADB
     BF-BOF: 'blue'
     DRI-EAF: 'blue'
-    heat4industry: 'r'
     iron: 'green'
     cement: 'grey'
     limestone: 'yellow'

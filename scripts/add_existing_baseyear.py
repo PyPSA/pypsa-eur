@@ -665,6 +665,7 @@ def add_steel_industry_existing_gem(n):
 
     iron_to_steel_bof = 1.429
     iron_to_steel_eaf_ng = 1.36
+    em_factor_bof = 668.2 # tCO2/kt steel
 
     # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     lifetime_bof = 100
@@ -679,6 +680,23 @@ def add_steel_industry_existing_gem(n):
     opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
     opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
 
+    # Energy input data BF BOF
+    coal4bfobf = 4415.6 # MWh coal per kt steel
+    coal4bfbof_harvey = 1306 + 130 # MWh coal per kt steel
+
+    elec4bfbof = 488.9 # MWh electricity per kt steel
+    elec4bfbof_harvey = 75 + 303 # MWh electricity per kt steel
+
+    # Energy input data NG DRI EAF
+    ng4dri = 2803 # MWh natural gas per kt steel
+    ng4dri_harvey = 2733 # MWh natural gas per kt steel
+
+    hy4dri = 2211 # MWh natural gas per kt steel
+
+    elec4eaf = 675.9 # MWh electricity per kt steel
+    elec4eaf_harvey = 588 # MWh electricity per kt steel
+
+
     n.add(
         "Link",
         nodes,
@@ -686,9 +704,8 @@ def add_steel_industry_existing_gem(n):
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=spatial.coal.nodes,
-        bus3=spatial.heat4industry.nodes,
-        bus4=nodes,
-        bus5=spatial.co2.bof,
+        bus3=nodes,
+        bus4=spatial.co2.bof,
         carrier="BF-BOF",
         p_nom=p_nom_bof * iron_to_steel_bof,
         p_nom_extendable=False,
@@ -696,10 +713,9 @@ def add_steel_industry_existing_gem(n):
         #capital_cost=capex_bof,
         marginal_cost=0,#opex_bof,
         efficiency=1 / iron_to_steel_bof,
-        efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
-        efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
-        efficiency4=-488.9 / iron_to_steel_bof,  # MWh electricity per kt iron
-        efficiency5=668.2 / iron_to_steel_bof, # t CO2 per kt iron
+        efficiency2= - coal4bfbof_harvey / iron_to_steel_bof,  # MWhth coal per kt iron
+        efficiency3= - elec4bfbof_harvey / iron_to_steel_bof,  # MWh electricity per kt iron
+        efficiency4= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_bof,
     )
@@ -711,8 +727,7 @@ def add_steel_industry_existing_gem(n):
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=spatial.heat4industry.nodes,
-        bus4=nodes,
+        bus3=nodes,
         carrier="DRI-EAF",
         p_nom=p_nom_eaf * iron_to_steel_eaf_ng,
         p_nom_extendable=False,
@@ -721,151 +736,9 @@ def add_steel_industry_existing_gem(n):
         marginal_cost=0,#opex_eaf,
         efficiency=1 / iron_to_steel_eaf_ng,
         efficiency2= -1 / iron_to_steel_eaf_ng, # one unit of dri gas per kt iron
-        efficiency3= -333.4 / iron_to_steel_eaf_ng, # MWh heat per kt iron
-        efficiency4= -675.9 / iron_to_steel_eaf_ng, #MWh electricity per kt iron
+        efficiency3= - elec4eaf_harvey / iron_to_steel_eaf_ng, #MWh electricity per kt iron
         lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_eaf,
-    )
-
-
-def add_steel_industry_existing_jrc(n):
-
-    # Steel capacities in Europe in kton of steel products per year
-    capacities = pd.read_csv(snakemake.input.steel_capacities)
-
-    # Retrieve BOF capacities
-    capacities_bof = capacities[capacities["tech"] == "BOF"]
-    capacities_bof = capacities_bof.drop(columns=["Unnamed: 0", "tech"])
-    capacities_bof.set_index("country", inplace=True)
-
-    # Retrieve EAF capacities
-    capacities_eaf = capacities[capacities["tech"] == "EAF"]
-    capacities_eaf = capacities_eaf.drop(columns=["Unnamed: 0", "tech"])
-    capacities_eaf.set_index("country", inplace=True)
-
-    # Retrieve countries that have two nodes
-    nodes = pop_layout.index
-    nodes2 = [value[:2] for value in nodes]
-    duplicated = [value for value, count in Counter(nodes2).items() if count > 1]
-
-    # ADB for now assign half capacity per node in countries with 2 nodes
-
-    for i in duplicated:
-        if i == "GB":  # No values for United Kingdom
-            pass
-        else:
-            capacities_bof.loc[i, "value"] /= 2
-            capacities_eaf.loc[i, "value"] /= 2
-
-    p_nom_bof = pd.DataFrame(index=nodes, columns=(["value"]))
-    p_nom_eaf = pd.DataFrame(index=nodes, columns=(["value"]))
-
-    for i in p_nom_bof.index:  # index and missing countries should be the same
-        if i[:2] not in capacities_bof.index:
-            p_nom_bof.loc[i, "value"] = 0
-            p_nom_eaf.loc[i, "value"] = 0
-        else:
-            p_nom_bof.loc[i, "value"] = capacities_bof.loc[i[:2], "value"]
-            p_nom_eaf.loc[i, "value"] = capacities_eaf.loc[i[:2], "value"]
-
-    p_nom_bof = p_nom_bof["value"] / nhours  # get the hourly production capacity
-    p_nom_eaf = p_nom_eaf["value"] / nhours  # get the hourly production capacity
-
-    # Consider the replacement of old existing capacities: average age 13 years
-    # Average lifetime 40 years -> replace 1/3 per decade so since this runs for the 2030 I remove 1/3 of the existing capacities
-
-    p_nom_bof = p_nom_bof * 2 / 3
-    p_nom_eaf = p_nom_eaf * 2 / 3
-
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 0
-
-    ########### Add existing steel production capacities ############
-    # Blast furnace assuming with natural gas
-
-    # BOF
-
-    n.add(
-        "Link",
-        nodes,
-        suffix=" Blast Furnaces-2020",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.pig_iron.nodes,
-        bus2=spatial.coal.nodes,
-        bus3=spatial.co2.process_emissions,
-        carrier="blast furnaces",
-        p_nom=p_nom_bof * 1.429,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        p_nom_extendable=False,
-        # then conversion $ to € from https://www.exchangerates.org.uk/USD-EUR-spot-exchange-rates-history-2010.html
-        efficiency=1 / 1.429,
-        efficiency2=-5.054 / 1.429,  # -3758.27/1.429,
-        efficiency3=216.4 / 1.429,
-        lifetime=40* 2 / 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-        build_year=2020,
-    )
-
-    n.add(
-        "Link",
-        nodes,
-        suffix=" DRI-2020",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.sponge_iron.nodes,
-        bus2=spatial.gas.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=spatial.co2.process_emissions,
-        carrier="direct reduced iron",
-        p_nom=p_nom_eaf
-        * 1.36,  # ADB -> high value for now, need to be retrieve from resources/steel_capacities.csv
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        p_nom_extendable=False,
-        efficiency=1 / 1.36,
-        efficiency2=-2.8 * 1000 / 1.36,
-        efficiency3=28 / 1.36,
-        lifetime=40 * 2/ 3,  # 25, # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-        build_year=2020,
-    )
-
-    # Blast Furnace + Basic Oxygen Furnace -> BOF
-    n.add(
-        "Link",
-        nodes,
-        suffix=" BOF-2020",
-        bus0=spatial.pig_iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=nodes,
-        bus3=spatial.heat4industry.nodes,
-        carrier="basic oxygen furnace",
-        p_nom=p_nom_bof,  # capacities_bof.loc[],
-        p_min_pu=prod_constantly,  #  hot elements cannot be turned off easily
-        p_nom_extendable=False,
-        efficiency=1,  # ADB 0.7 kt coke for 1 kt steel
-        efficiency2=-524,  # MWh electricity per kt coke
-        efficiency3=-615,  # MWh heat per kt coke
-        lifetime=40 * 2 / 3,
-        build_year=2020,
-    )
-
-    # EAF
-
-    # Electric Arc Furnace
-    n.add(
-        "Link",
-        nodes,
-        suffix=" EAF-2020",
-        bus0=spatial.sponge_iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=nodes,
-        bus3=spatial.heat4industry.nodes,  # This heat is mainly from side processes in the refinery
-        carrier="electric arc furnaces",
-        p_nom=p_nom_eaf,
-        p_min_pu=prod_constantly,  # electrical stuff can be switched on and off
-        p_nom_extendable=False,
-        # p_nom_max = p_nom_eaf*(1.2**((investment_year - 2020)/10)),
-        efficiency=1 / 1,  # ADB 1 kt sponge iron for 1 kt steel
-        efficiency2=-861 / 1,  # MWh electricity per kt sponge iron
-        efficiency3=-305.6 / 1,  # MWh thermal energy per kt sponge iron
-        lifetime=40 * 2 / 3,
-        build_year=2020,
     )
 
 
@@ -908,7 +781,7 @@ def add_cement_industry_existing_sfi(n):
         suffix=" Cement Plant-2020",
         bus0=spatial.limestone.nodes,
         bus1=spatial.cement.nodes,
-        bus2=spatial.heat4industry.nodes,
+        bus2=spatial.gas.nodes,
         bus3=spatial.co2.cement,
         carrier="cement plant",
         p_nom=p_nom,
@@ -916,7 +789,7 @@ def add_cement_industry_existing_sfi(n):
         p_nom_extendable=False,
         capital_cost=capex_cement,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
-        efficiency2= - 3420.1 / 3.6 * (1/1.28) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2= - 3420.1 / 3.6 * (1/1.28) / 0.5, # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.28), #tCO2/kt cement
         lifetime=lifetime_cement, 
         build_year=start_dates,

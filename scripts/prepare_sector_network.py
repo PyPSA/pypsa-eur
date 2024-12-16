@@ -253,11 +253,6 @@ def define_spatial(nodes, options, endo_industry):
         spatial.limestone.nodes = ["EU limestone"]
         spatial.limestone.locations = ["EU"]
 
-        # high temperature heat for all industries
-        spatial.heat4industry = SimpleNamespace()
-        spatial.heat4industry.nodes = ["EU heat for industry"]
-        spatial.heat4industry.locations = ["EU"]
-
         # Adding CO2 for tracking CCS in cement industry
         spatial.co2.cement = nodes + " cement process emissions"
         spatial.co2.cement_locations = nodes
@@ -4168,19 +4163,26 @@ def add_steel_industry(n, investment_year, options):
         marginal_cost=costs.at["iron ore DRI-ready", "commodity"]*1e3, # €/kt of iron
     )
 
-    for carrier in ["steel","heat4industry"]:
+    n.add("Carrier", "steel")
+    location_value = getattr(spatial, "steel").nodes
+    unit = "kt/yr"
 
-        n.add("Carrier", carrier)
-        location_value = getattr(spatial, carrier).nodes
-        unit = "kt/yr" if carrier != "heat4industry" else "MWh_th"
+    n.add(
+        "Bus",
+        location_value,
+        location=location_value,
+        carrier="steel",
+        unit=unit,
+    )
 
-        n.add(
-            "Bus",
-            location_value,
-            location=location_value,
-            carrier=carrier,
-            unit=unit,
-        )
+    n.add(
+        "Store",
+        location_value,
+        bus = location_value,
+        e_nom_extendable = True,
+        e_cyclic = True,
+        carrier=carrier,
+    )
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 0
@@ -4246,14 +4248,43 @@ def add_steel_industry(n, investment_year, options):
     # Capex
     discount_rate = 0.04
     capex_bof = ((211000 + 100000 ) * 0.7551 * nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
-    capex_eaf = ((145000 + 80000) * 0.7551 * nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
+    capex_eaf = ((145000 + 80000) * 0.7551 * nhours / iron_to_steel_eaf_ng) * calculate_annuity(lifetime_eaf, discount_rate)
     # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
     capex_tgr = 135 * 1e3 * nhours / em_factor_bof # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
 
     opex_bof = 90 * 1e3 * 0.7551 * nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
-    opex_eaf = (13+32) * 1e3 * 0.7551 * nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
+    opex_eaf = (13+32) * 1e3 * 0.7551 * nhours / iron_to_steel_eaf_ng # $/t/yr -> €/kt iron/hour
     opex_tgr = 10 *1e3 * nhours / em_factor_bof  # https://www.estep.eu/assets/Projects/GreenSteel4Europe/GreenSteel_Publication/D2.2-Investment-Needs.pdf €/tCO2 entering TGR
+
+    # COST DATA IN MPP https://github.com/missionpossiblepartnership/mpp-steel-model
+
+    capex_bof = (1066.851 * 1e3 * nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    capex_tgr = ((1230.094 - 1066.851) *1e3 * nhours / em_factor_bof ) * calculate_annuity(lifetime_bof, discount_rate)
+    opex_bof = 129.74 * 1e3 * nhours / iron_to_steel_bof
+    opex_tgr = (183.80 - 129.74) * 1e3 * nhours / em_factor_bof
+
+    capex_bof = capex_bof + opex_bof # Treating opex as FOM
+    capex_eaf = capex_eaf + opex_eaf # Treating opex as FOM
+    capex_tgr = capex_tgr + opex_tgr # Treating opex as FOM
+
+    # Energy input data BF BOF
+    coal4bfobf = 4415.6 # MWh coal per kt steel
+    coal4bfbof_harvey = 1306 + 130 # MWh coal per kt steel
+
+    elec4bfbof = 488.9 # MWh electricity per kt steel
+    elec4bfbof_harvey = 75 + 303 # MWh electricity per kt steel
+
+    # Energy input data NG DRI EAF
+    ng4dri = 2803 # MWh natural gas per kt steel
+    ng4dri_harvey = 2733 # MWh natural gas per kt steel
+
+    hy4dri = 2211 # MWh natural gas per kt steel
+
+    elec4eaf = 675.9 # MWh electricity per kt steel
+    elec4eaf_harvey = 588 # MWh electricity per kt steel
+
 
     n.add(
         "Link",
@@ -4262,22 +4293,19 @@ def add_steel_industry(n, investment_year, options):
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=spatial.coal.nodes,
-        bus3=spatial.heat4industry.nodes,
-        bus4=nodes,
-        bus5=spatial.co2.bof,
+        bus3=nodes,
+        bus4=spatial.co2.bof,
         carrier="BF-BOF",
         p_nom_extendable=True,
         p_nom_max=max_cap * iron_to_steel_bof,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         capital_cost=capex_bof,
-        marginal_cost=opex_bof,
         efficiency=1 / iron_to_steel_bof,
-        efficiency2=-4415.8 / iron_to_steel_bof,  # MWhth coal per kt iron
-        efficiency3=-683.3 / iron_to_steel_bof,  # MWh heat per kt iron
-        efficiency4=-488.9 / iron_to_steel_bof,  # MWh electricity per kt iron
-        efficiency5= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
+        efficiency2= - coal4bfbof_harvey / iron_to_steel_bof,  # MWhth coal per kt iron
+        efficiency3= - elec4bfbof_harvey / iron_to_steel_bof,  # MWh electricity per kt iron
+        efficiency4= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
         lifetime=lifetime_bof,  
-    )
+    )  
 
     n.add(
         "Link",
@@ -4289,7 +4317,7 @@ def add_steel_industry(n, investment_year, options):
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        efficiency=1 / 2803 , # MWh natural gas per one unit of dri gas
+        efficiency=1 / ng4dri_harvey , # MWh natural gas per one unit of dri gas
         efficiency2=29.5 / iron_to_steel_eaf_ng, # t CO2 per kt iron
     )
 
@@ -4302,11 +4330,8 @@ def add_steel_industry(n, investment_year, options):
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        efficiency=1 / 2211 , # MWh hydrogen per one unit of dri gas
+        efficiency=1 / hy4dri , # MWh hydrogen per one unit of dri gas
     )
-
-
-
 
     n.add(
         "Link",
@@ -4315,35 +4340,16 @@ def add_steel_industry(n, investment_year, options):
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
         bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=spatial.heat4industry.nodes,
-        bus4=nodes,
+        bus3=nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_nom_max = max_cap * iron_to_steel_eaf_h2,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        capital_cost=capex_eaf, #ADB to be fixed the pricefor h2
-        marginal_cost=opex_eaf,
+        capital_cost=costs.at["electric arc furnace", "fixed"] + costs.at["direct iron reduction furnace", "fixed"],
         efficiency=1 / iron_to_steel_eaf_h2,
         efficiency2= -1 / iron_to_steel_eaf_h2, # one unit of dri gas per kt iron
-        efficiency3= -333.4 / iron_to_steel_eaf_h2, # MWh heta per kt iron
-        efficiency4= -675.9 / iron_to_steel_eaf_h2, #MWh electricity per kt iron
+        efficiency3= - elec4eaf_harvey / iron_to_steel_eaf_h2, #MWh electricity per kt iron
         lifetime=lifetime_eaf,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-    )
-
-    # Link to produce heat for industry processes at high temperature, not only for steel
-    n.add(
-        "Link",
-        spatial.heat4industry.locations,
-        suffix=" heat for industry",
-        bus0=spatial.gas.nodes,
-        bus1=spatial.heat4industry.nodes,
-        bus2="co2 atmosphere",
-        p_nom_extendable=True,
-        carrier="heat4industry",
-        #capital_cost=0.1,
-        efficiency=0.75,
-        efficiency2=costs.at["gas", "CO2 intensity"],
-        lifetime=100,
     )
 
     n.add(
@@ -4377,14 +4383,14 @@ def add_steel_industry(n, investment_year, options):
         bus0=spatial.co2.bof,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
-        bus3=spatial.heat4industry.nodes,
+        bus3=nodes,
         carrier="steel process emissions CC",
         p_nom_extendable=True,
         capital_cost= capex_tgr ,
         efficiency= 1- costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3= - 0.6457 / 3.6 * costs.at["cement capture", "capture_rate"], # https://www.sciencedirect.com/science/article/pii/S0921344915300410 
-        # https://www.sciencedirect.com/science/article/pii/S138358661100445X 645.7 kJ/kgCO2 *1e3 / (3.6*1e6) I think it's CO2 output so divide by the efficiency
+        efficiency3= - 645.7 / 3600 * costs.at["cement capture", "capture_rate"], # https://www.sciencedirect.com/science/article/pii/S0921344915300410 POWER CONSUMPTION
+        # https://www.sciencedirect.com/science/article/pii/S138358661100445X 645.7 MJ/tCO2 / 3600 I think it's CO2 output so divide by the efficiency
         lifetime=100, 
     )
 
@@ -4472,17 +4478,17 @@ def add_cement_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" Cement Plant",
+        suffix = " Cement Plant",
         bus0=spatial.limestone.nodes,
         bus1=spatial.cement.nodes,
-        bus2=spatial.heat4industry.nodes,
+        bus2=spatial.gas.nodes,
         bus3=spatial.co2.cement,
         carrier="cement plant",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         capital_cost=capex_cement, 
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
-        efficiency2= - 3420.1 / 3.6 * (1/1.28) , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2= - 3420.1 / 3.6 * (1/1.28) /0.5 , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974 divided by 0.5 because I don't have heat
         efficiency3=500 * (1/1.28) , #tCO2/kt cement
         lifetime=lifetime_cement, 
     )
@@ -4500,22 +4506,32 @@ def add_cement_industry(n, investment_year, options):
     )
 
     # Cement plant retrofitted with post-combustion capture using amines (methylethanol amine MEA)
+    electricity_input = (
+        costs.at["cement capture", "electricity-input"]
+        + costs.at["cement capture", "compression-electricity-input"]
+    )  # MWh_el / tCO2
+    heat_input = (
+        costs.at["cement capture", "heat-input"]
+        - costs.at["cement capture", "compression-heat-output"]
+    )  # MWh_th / tCO2
 
     n.add(
         "Link",
         nodes,
-        suffix=" cement CC",
+        suffix = " cement CC",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
-        bus3=spatial.heat4industry.nodes,
+        bus3=spatial.gas.nodes,
+        bus4=nodes,
         carrier="cement process emissions CC",
         p_nom_extendable=True,
-        capital_cost=80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
+        capital_cost=costs.at["cement capture", "investment"], #80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
         efficiency=1- costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3= - 3.0 / 3.6 * costs.at["cement capture", "capture_rate"],
-        lifetime=100, 
+        efficiency3= -heat_input * costs.at["cement capture", "capture_rate"] / 0.5,
+        efficiency4= -electricity_input * costs.at["cement capture", "capture_rate"],
+        lifetime=costs.at["cement capture", "lifetime"], 
     )
 
 

@@ -9,12 +9,15 @@ import hashlib
 import logging
 import os
 import re
+import time
 import urllib
-from functools import partial
+from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
+from typing import Callable
 
+import fiona
 import pandas as pd
 import pytz
 import requests
@@ -413,6 +416,47 @@ def progress_retrieve(url, file, disable=False):
                 for data in response.iter_content(chunk_size=chunk_size):
                     f.write(data)
                     t.update(len(data))
+
+
+def retry(func: Callable) -> Callable:
+    """
+    Retry decorator to run retry function on specific exceptions, before raising them.
+
+    Can for example be used for debugging issues which are hard to replicate or
+    for for handling retrieval errors.
+
+    Currently catches:
+    - fiona.errors.DriverError
+
+    Parameters
+    ----------
+    retries : int
+        Number of retries before raising the exception.
+    delay : int
+        Delay between retries in seconds.
+
+    Returns
+    -------
+    callable
+        A decorator function that can be used to wrap the function to be retried.
+    """
+    retries = 3
+    delay = 5
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for attempt in range(retries):
+            try:
+                return func(*args, **kwargs)
+            except fiona.errors.DriverError as e:
+                logger.warning(
+                    f"Attempt {attempt + 1} failed: {type(e).__name__} - {e}. "
+                    f"Retrying..."
+                )
+                time.sleep(delay)
+        raise Exception("Retrieval retries exhausted.")
+
+    return wrapper
 
 
 def mock_snakemake(
