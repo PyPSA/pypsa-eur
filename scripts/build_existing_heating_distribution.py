@@ -143,7 +143,10 @@ def build_existing_heating():
         ] += nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
         nodal_heat_name_tech[(f"{sector} rural", "air heat pump")] = 0.0
 
-    nodal_heat_name_tech[("urban central", "ground heat pump")] = 0.0
+    for heat_pump_source in snakemake.params.sector["heat_pump_sources"][
+        "urban central"
+    ]:
+        nodal_heat_name_tech[("urban central", f"{heat_pump_source} heat pump")] = 0.0
 
     nodal_heat_name_tech.to_csv(snakemake.output.existing_heating_distribution)
 
