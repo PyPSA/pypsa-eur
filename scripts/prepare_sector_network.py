@@ -4610,7 +4610,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="6",
+            clusters="38",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",
