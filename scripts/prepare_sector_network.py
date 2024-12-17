@@ -2271,11 +2271,15 @@ def add_heat(
                 nodes + f" {heat_system} water tanks",
                 bus=nodes + f" {heat_system} heat",
                 carrier=f"{heat_system} water tanks",
-                efficiency_store=costs.at["water tank charger", "efficiency"],
-                max_hours=costs.at[
-                    "central water tank storage", "energy to power ratio"
+                efficiency_store=costs.at[
+                    heat_system.central_or_decentral + " water tank charger", "efficiency"
                 ],
-                efficiency_dispatch=costs.at["water tank discharger", "efficiency"],
+                max_hours=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "energy to power ratio"
+                ],
+                efficiency_dispatch=costs.at[
+                    heat_system.central_or_decentral + " water tank discharger", "efficiency"
+                ],
                 p_nom_extendable=True,
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 capital_cost=costs.at[
@@ -2284,8 +2288,7 @@ def add_heat(
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
                 ],
-                e_nom_extendable=True,
-                e_cyclic=True,
+                cyclic_state_of_charge=True,
             )
 
             if heat_system == HeatSystem.URBAN_CENTRAL:
@@ -2297,17 +2300,18 @@ def add_heat(
                     nodes + f" {heat_system} water pits",
                     bus=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} water pits",
-                    efficiency_store=costs.at["water pit charger", "efficiency"],
-                    max_hours=costs.at[
-                        "central water pit storage", "energy to power ratio"
-                    ],
-                    efficiency_dispatch=costs.at["water pit discharger", "efficiency"],
+                    efficiency_store=costs.at["central water pit charger", "efficiency"],
+                    max_hours=costs.at["central water pit storage", "energy to power ratio"],
+                    efficiency_dispatch=costs.at["central water pit discharger", "efficiency"],
                     p_nom_extendable=True,
                     standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                    capital_cost=costs.at["central water pit storage", "fixed"],
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                    e_nom_extendable=True,
-                    e_cyclic=True,
+                    capital_cost=costs.at[
+                        "central water pit storage", "fixed"
+                    ],
+                    lifetime=costs.at[
+                        "central water pit storage", "lifetime"
+                    ],
+                    cyclic_state_of_charge=True,
                 )
 
         if options["resistive_heaters"]:
@@ -4601,7 +4605,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="38",
+            clusters="6",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",
