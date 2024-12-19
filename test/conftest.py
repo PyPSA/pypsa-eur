@@ -11,6 +11,9 @@ import pandas as pd
 import pypsa
 import pytest
 import yaml
+import zipfile
+
+from urllib.request import urlretrieve
 
 
 @pytest.fixture(scope="function")
@@ -115,3 +118,16 @@ def transformers_dataframe():
         },
         index=[0],
     )
+
+
+@pytest.fixture(scope="function")
+def download_natural_earth(tmpdir):
+    url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+    zipped_filename = "ne_10m_admin_0_countries_deu.zip"
+    path_to_zip_file, headers = urlretrieve(url, zipped_filename)
+    directory_to_extract_to = pathlib.Path(tmpdir, "folder")
+    with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
+        zip_ref.extractall(directory_to_extract_to)
+    natural_earth_shape_file_path = pathlib.Path(directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp")
+    yield natural_earth_shape_file_path
+    pathlib.Path(natural_earth_shape_file_path).unlink(missing_ok=True)

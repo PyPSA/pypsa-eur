@@ -16,10 +16,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+
+
 sys.path.append("./scripts")
 
 from build_shapes import (
-    _simplify_polys
+    _simplify_polys,
+    countries,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -49,3 +52,15 @@ def test_simplify_polys(tolerance, expected_tuple):
     print(output_tuple)
     assert len(output_tuple) == len(expected_tuple)
     assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
+
+
+@pytest.mark.parametrize(
+    "country_list",
+    [
+        ["MK"], ["IT"]],
+)
+def test_countries(config, download_natural_earth, country_list):
+    natural_earth = download_natural_earth
+    country_shapes_df = countries(natural_earth, country_list)
+    assert country_shapes_df.shape == (1,)
+    assert country_shapes_df.index.unique().tolist() == country_list
