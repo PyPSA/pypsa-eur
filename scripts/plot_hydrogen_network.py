@@ -13,7 +13,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, retry, set_scenario_config
 from plot_power_network import assign_location, load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
@@ -43,6 +43,7 @@ def group_pipes(df, drop_direction=False):
     )
 
 
+@retry
 def plot_h2_map(n, regions):
     # if "H2 pipeline" not in n.links.carrier.unique():
     #     return

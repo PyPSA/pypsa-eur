@@ -34,8 +34,7 @@ def test_add_custom_powerplants(config, query_value, expected):
     """
     Verify what returned by add_custom_powerplants.
     """
-    config_dict = config
-    config_dict["electricity"]["custom_powerplants"] = query_value
+    config["electricity"]["custom_powerplants"] = query_value
     custom_powerplants_path = pathlib.Path(
         path_cwd, "test", "test_data", "custom_powerplants_DE.csv"
     )
@@ -44,7 +43,7 @@ def test_add_custom_powerplants(config, query_value, expected):
     ppl_final = add_custom_powerplants(
         ppl_df,
         custom_powerplants_path,
-        config_dict["electricity"]["custom_powerplants"],
+        config["electricity"]["custom_powerplants"],
     )
     assert ppl_df.shape == (131, 18)
     assert ppl_final.shape == expected
