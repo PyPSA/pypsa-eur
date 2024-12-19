@@ -7,12 +7,12 @@
 # Helper: Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
 _conda_check:
 	@# Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
-	@if command -v conda &> /dev/null; then \
-		echo "Conda detected, using Conda..."; \
-		$(eval CONDA_OR_MAMBA := conda) \
-	elif command -v mamba &> /dev/null; then \
-		echo "Conda not found, but Mamba detected. Using Mamba..."; \
+	@if command -v mamba &> /dev/null; then \
+		echo "Mamba detected, using Mamba..."; \
 		$(eval CONDA_OR_MAMBA := mamba) \
+	elif command -v conda &> /dev/null; then \
+		echo "Mamba not found, but Conda detected. Using Conda..."; \
+		$(eval CONDA_OR_MAMBA := conda) \
 	else \
 		echo "Neither Conda nor Mamba is installed. Please install one of them and retry."; \
 		exit 1; \
@@ -20,19 +20,20 @@ _conda_check:
 
 # Install environment
 install: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/environment.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	@$(CONDA_OR_MAMBA) env create -f envs/environment.yaml -n $(or $(name), pypsa-eur)
+	@$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 
 # Install pinned environment
 install-pinned-linux: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml -n $(or $(name), pypsa-eur)
+	@$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-windows: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml -n $(or $(name), pypsa-eur)
+	@$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-macos: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	@$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml -n $(or $(name), pypsa-eur)
+	@$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
 
 # Run default tests
 test:
