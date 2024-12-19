@@ -26,6 +26,7 @@ gurobi.log
 /tmp
 doc/_build
 
+
 /scripts/old
 /scripts/create_scenarios.py
 /config/create_scenarios.py
@@ -56,6 +57,14 @@ data/costs_*.csv
 dask-worker-space/
 publications.jrc.ec.europa.eu/
 d1gam3xoknrgr2.cloudfront.net/
+
+#latex files in report/
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.out
+report/*.toc
 
 *.org
 
