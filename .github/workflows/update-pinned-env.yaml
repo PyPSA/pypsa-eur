@@ -35,11 +35,12 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: ${{ github.event.repository.name }}
-        environment-file: envs/environment.yaml
+        channels: bioconda,conda-forge,defaults
+        environment-file: ${{ env.BASE_ENV }}
 
     - name: Update pinned environment per OS
       run: |
-        conda env export --name ${{ github.event.repository.name }} --no-builds > envs/${{ matrix.suffix }}-pinned.yaml
+        conda env export --name ${{ github.event.repository.name }} --no-builds -c conda-forge -c bioconda --override-channels > envs/${{ matrix.suffix }}-pinned.yaml
 
     - name: Add SPDX header
       if: ${{ matrix.suffix != 'windows' }}
