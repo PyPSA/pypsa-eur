@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 # Inhouse packages
-- pypsa>=0.31
+- pypsa>=0.32
 - atlite>=0.2.9
 - linopy
 - powerplantmatching>=0.5.15,<0.6
@@ -57,7 +57,8 @@ dependencies:
 # GIS dependencies:
 - cartopy
 - descartes
-- rasterio
+- rasterio==1.4.1
+- libgdal-core<3.10.0 # rasterio>=1.4.2 needed for GDAL 3.10
 
 - pip:
   - gurobipy
