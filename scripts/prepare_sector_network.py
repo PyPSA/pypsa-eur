@@ -2195,7 +2195,7 @@ def add_heat(
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
-                n.madd(
+                n.add(
                     "Bus",
                     nodes,
                     suffix=f" {heat_carrier}",
@@ -2216,7 +2216,7 @@ def add_heat(
                 else:
                     capital_cost = 0.0
                     lifetime = np.inf
-                n.madd(
+                n.add(
                     "Generator",
                     nodes,
                     suffix=f" {heat_carrier}",
@@ -2229,7 +2229,7 @@ def add_heat(
                 )
 
                 # add heat pump converting source heat + electricity to urban central heat
-                n.madd(
+                n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
@@ -2257,7 +2257,7 @@ def add_heat(
                         .reindex(index=n.snapshots)
                     )
                     # add link for direct usage of heat source when source temperature exceeds forward temperature
-                    n.madd(
+                    n.add(
                         "Link",
                         nodes,
                         suffix=f" {heat_system} {heat_source} heat direct utilisation",
@@ -2268,7 +2268,7 @@ def add_heat(
                         p_nom_extendable=True,
                     )
             else:
-                n.madd(
+                n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
