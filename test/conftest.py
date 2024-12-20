@@ -7,8 +7,10 @@
 
 import pathlib
 import zipfile
+from functools import reduce
 from urllib.request import urlretrieve
 
+import geopandas as gpd
 import pandas as pd
 import pypsa
 import pytest
@@ -131,4 +133,19 @@ def download_natural_earth(tmpdir):
         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
     )
     yield natural_earth_shape_file_path
-    pathlib.Path(natural_earth_shape_file_path).unlink(missing_ok=True)
+
+
+@pytest.fixture(scope="function")
+def italy_shape(download_natural_earth, tmpdir):
+    shape_file = gpd.read_file(download_natural_earth)
+    fieldnames = (
+        shape_file[x].where(lambda s: s != "-99")
+        for x in ("ISO_A2", "WB_A2", "ADM0_A3")
+    )
+    shape_file["name"] = reduce(
+        lambda x, y: x.fillna(y), fieldnames, next(fieldnames)
+    ).str[:2]
+    italy_shape_file = shape_file.loc[shape_file.name.isin(["IT"])]
+    italy_shape_file_path = pathlib.Path(tmpdir, "italy_shape.geojson")
+    italy_shape_file.to_file(italy_shape_file_path, driver="GeoJSON")
+    yield italy_shape_file_path
