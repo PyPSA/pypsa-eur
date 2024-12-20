@@ -5,11 +5,18 @@
 
 # coding: utf-8
 
+import os
 import pathlib
+import zipfile
+from functools import reduce
+from urllib.request import urlretrieve
+from uuid import uuid4
 
+import geopandas as gpd
 import pandas as pd
 import pypsa
 import pytest
+import requests
 import yaml
 
 
@@ -115,3 +122,67 @@ def transformers_dataframe():
         },
         index=[0],
     )
+
+
+@pytest.fixture(scope="function")
+def download_natural_earth(tmpdir):
+    url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+    zipped_filename = "ne_10m_admin_0_countries_deu.zip"
+    path_to_zip_file, headers = urlretrieve(url, zipped_filename)
+    directory_to_extract_to = pathlib.Path(tmpdir, "folder")
+    with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
+        zip_ref.extractall(directory_to_extract_to)
+    natural_earth_shape_file_path = pathlib.Path(
+        directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
+    )
+    yield natural_earth_shape_file_path
+
+
+# @pytest.fixture(scope="function")
+# def download_eez(tmpdir):
+#     name = str(uuid4())[:8]
+#     org = str(uuid4())[:8]
+#     response = requests.post(
+#         "https://www.marineregions.org/download_file.php",
+#         params={"name": "World_EEZ_v12_20231025_LR.zip"},
+#         data={
+#             "name": name,
+#             "organisation": org,
+#             "email": f"{name}@{org}.org",
+#             "country": "Germany",
+#             "user_category": "academia",
+#             "purpose_category": "Research",
+#             "agree": "1",
+#         },
+#     )
+#     zipped_filename = "World_EEZ_v12_20231025_LR.zip"
+#     directory_to_extract_to = pathlib.Path(tmpdir, )
+#     with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
+#         zip_ref.extractall(directory_to_extract_to)
+#     natural_earth_shape_file_path = pathlib.Path(
+#         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
+#     )
+#     yield natural_earth_shape_file_path
+#
+#     "World_EEZ_v12_20231025_LR.zip"
+#     with open(params["zip"], "wb") as f:
+#         f.write(response.content)
+#     output_folder = Path(params["zip"]).parent
+#     unpack_archive(params["zip"], output_folder)
+#     os.remove(params["zip"])
+
+
+@pytest.fixture(scope="function")
+def italy_shape(download_natural_earth, tmpdir):
+    shape_file = gpd.read_file(download_natural_earth)
+    fieldnames = (
+        shape_file[x].where(lambda s: s != "-99")
+        for x in ("ISO_A2", "WB_A2", "ADM0_A3")
+    )
+    shape_file["name"] = reduce(
+        lambda x, y: x.fillna(y), fieldnames, next(fieldnames)
+    ).str[:2]
+    italy_shape_file = shape_file.loc[shape_file.name.isin(["IT"])]
+    italy_shape_file_path = pathlib.Path(tmpdir, "italy_shape.geojson")
+    italy_shape_file.to_file(italy_shape_file_path, driver="GeoJSON")
+    yield italy_shape_file_path
