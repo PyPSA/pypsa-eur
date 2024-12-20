@@ -26,6 +26,6 @@ if config["electricity"]["base_network"] == "osm-raw":
         resources:
             mem_mb=1000,
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/prepare_osm_network_release.py"

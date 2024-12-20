@@ -90,7 +90,7 @@ jobs:
 
     - name: Run snakemake test workflows
       run: |
-        make test
+        make test env=pinned # TODO: Remove custom env handling
 
     - name: Run unit tests
       run: |
