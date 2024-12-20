@@ -12,8 +12,6 @@ import pathlib
 import sys
 
 import geopandas as gpd
-import numpy as np
-import pandas as pd
 import pytest
 
 sys.path.append("./scripts")
@@ -29,29 +27,28 @@ path_cwd = pathlib.Path.cwd()
         (
             None,
             (
-                837421026967.6136,
-                "POINT (1222256.2540812986 4769376.881403567)",
-                5958197.627333247,
+                301184483954.051,
+                "POINT (1170973.133650994 4959324.697171187)",
+                7715732.183141501,
             ),
         ),
         (
             10.0,
             (
-                837420795181.8837,
-                "POINT (1222256.3488327404 4769376.890839249)",
-                5958195.650234007,
+                301184417650.59454,
+                "POINT (1170973.0551039157 4959324.750552279)",
+                7715728.487943892,
             ),
         ),
     ],
 )
-def test_simplify_polys(tolerance, expected_tuple):
+def test_simplify_polys(tolerance, expected_tuple, italy_shape):
     """
     Verify what is returned by _simplify_polys.
 
     Note:
         - tolerance = None, no simplification takes place
     """
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     gdf_country = gpd.read_file(italy_shape).to_crs(6933)
     simplified_polys = _simplify_polys(gdf_country.geometry, tolerance=tolerance)
     gdf_country_simplified = gpd.GeoDataFrame(geometry=simplified_polys)
@@ -63,6 +60,7 @@ def test_simplify_polys(tolerance, expected_tuple):
         str(gdf_country_simplified["centroid"][0]),
         gdf_country_simplified["perimeter"][0],
     )
+    print(output_tuple)
     assert len(output_tuple) == len(expected_tuple)
     assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
 

@@ -16,6 +16,10 @@ import pypsa
 import pytest
 import yaml
 
+import os
+import requests
+from uuid import uuid4
+
 
 @pytest.fixture(scope="function")
 def scigrid_network():
@@ -133,6 +137,40 @@ def download_natural_earth(tmpdir):
         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
     )
     yield natural_earth_shape_file_path
+
+
+# @pytest.fixture(scope="function")
+# def download_eez(tmpdir):
+#     name = str(uuid4())[:8]
+#     org = str(uuid4())[:8]
+#     response = requests.post(
+#         "https://www.marineregions.org/download_file.php",
+#         params={"name": "World_EEZ_v12_20231025_LR.zip"},
+#         data={
+#             "name": name,
+#             "organisation": org,
+#             "email": f"{name}@{org}.org",
+#             "country": "Germany",
+#             "user_category": "academia",
+#             "purpose_category": "Research",
+#             "agree": "1",
+#         },
+#     )
+#     zipped_filename = "World_EEZ_v12_20231025_LR.zip"
+#     directory_to_extract_to = pathlib.Path(tmpdir, )
+#     with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
+#         zip_ref.extractall(directory_to_extract_to)
+#     natural_earth_shape_file_path = pathlib.Path(
+#         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
+#     )
+#     yield natural_earth_shape_file_path
+#
+#     "World_EEZ_v12_20231025_LR.zip"
+#     with open(params["zip"], "wb") as f:
+#         f.write(response.content)
+#     output_folder = Path(params["zip"]).parent
+#     unpack_archive(params["zip"], output_folder)
+#     os.remove(params["zip"])
 
 
 @pytest.fixture(scope="function")

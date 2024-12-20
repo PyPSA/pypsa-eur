@@ -11,6 +11,7 @@ __pycache__
 gurobi.log
 .vscode
 *.orig
+.idea
 
 /bak
 /resources
