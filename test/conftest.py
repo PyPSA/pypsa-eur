@@ -5,20 +5,19 @@
 
 # coding: utf-8
 
+import os
 import pathlib
 import zipfile
 from functools import reduce
 from urllib.request import urlretrieve
+from uuid import uuid4
 
 import geopandas as gpd
 import pandas as pd
 import pypsa
 import pytest
-import yaml
-
-import os
 import requests
-from uuid import uuid4
+import yaml
 
 
 @pytest.fixture(scope="function")
