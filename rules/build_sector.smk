@@ -468,6 +468,7 @@ rule build_heat_totals:
         "../scripts/build_heat_totals.py"
 
 
+# TODO: update
 rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),

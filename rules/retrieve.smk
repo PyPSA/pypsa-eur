@@ -77,28 +77,56 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_nuts_shapes:
+    rule retrieve_nuts_2021_shapes:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
             ),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+            shapes_level_3="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
         run:
             os.rename(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2"]:
-                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
-                    extracted_file = Path(output.shapes_level_3).parent / filename
+                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
+                    filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
+                    extracted_file = Path(output.shapes_level_0).parent / filename
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
             os.remove(params.zip_file)
 
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_nuts_2024_shapes:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2024-01m.geojson.zip"
+            ),
+        output:
+            shapes_level_3="data/nuts/NUTS_RG_01M_2024_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_01M_2024_4326_LEVL_2.geojson",
+            shapes_level_1="data/nuts/NUTS_RG_01M_2024_4326_LEVL_1.geojson",
+            shapes_level_0="data/nuts/NUTS_RG_01M_2024_4326_LEVL_0.geojson",
+        params:
+            zip_file="data/nuts/ref-nuts-2024-01m.geojson.zip",
+        run:
+            os.rename(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
+                    filename = f"NUTS_RG_01M_2024_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
+                    extracted_file = Path(output.shapes_level_0).parent / filename
+                    extracted_file.rename(
+                        getattr(output, f"shapes_level_{level[-1]}")
+                    )
+            os.remove(params.zip_file)
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
@@ -370,26 +398,33 @@ if config["enable"]["retrieve"]:
                     break
 
 
-
 if config["enable"]["retrieve"]:
 
-    # Download directly from naciscdn.org which is a redirect from naturalearth.com
-    # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
-    # Use point-of-view (POV) variant of Germany so that Crimea is included.
-    rule retrieve_naturalearth_countries:
+    # Retrieve geoBoundaries Comprehensive Global Administrative Zones (CGAZ)
+    # Disputed areas are removed and replaced with polygons following US Department of State definitions. No gaps
+    # https://www.geoboundaries.org/globalDownloads.html
+    rule retrieve_geoboundaries_countries:
         input:
-            storage(
-                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+            adm1_ba=storage(
+                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/BIH/ADM1/geoBoundaries-BIH-ADM1.geojson",
+                keep_local=True,
             ),
-        params:
-            zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
+            adm1_md=storage(
+                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/MDA/ADM1/geoBoundaries-MDA-ADM1.geojson",
+                keep_local=True,
+            ),
+            adm1_ua=storage(
+                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson",
+                keep_local=True,
+            ),
         output:
-            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
+            adm1_ba="data/geoboundaries/geoBoundaries-BIH-ADM1.geojson",
+            adm1_md="data/geoboundaries/geoBoundaries-MDA-ADM1.geojson",
+            adm1_ua="data/geoboundaries/geoBoundaries-UKR-ADM1.geojson",
+        retries: 1
         run:
-            move(input[0], params["zip"])
-            output_folder = Path(output["countries"]).parent
-            unpack_archive(params["zip"], output_folder)
-            os.remove(params["zip"])
+            for key in input.keys():
+                move(input[key], output[key])
 
 
 if config["enable"]["retrieve"]:

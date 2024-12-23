@@ -102,6 +102,11 @@ rule build_shapes:
     params:
         countries=config_provider("countries"),
     input:
+        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+        nuts3_2024="data/nuts/NUTS_RG_01M_2024_4326_LEVL_3.geojson",
+        adm1_ba="data/geoboundaries/geoBoundaries-BIH-ADM1.geojson",
+        adm1_md="data/geoboundaries/geoBoundaries-MDA-ADM1.geojson",
+        adm1_ua="data/geoboundaries/geoBoundaries-UKR-ADM1.geojson",
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
         nuts3=ancient("data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson"),

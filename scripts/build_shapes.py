@@ -79,10 +79,30 @@ import numpy as np
 import pandas as pd
 from _helpers import configure_logging, set_scenario_config
 from shapely.geometry import MultiPolygon, Polygon
+import unicodedata
 
 logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
+
+DROP_REGIONS = [
+    "ES703",
+    "ES704",
+    "ES705",
+    "ES706",
+    "ES707",
+    "ES708",
+    "ES709",
+    "ES630",
+    "ES640",
+    "FRY10",
+    "FRY20",
+    "FRY30",
+    "NO0B1",
+    "NO0B2",
+    "PT200",
+    "PT300",
+]
 
 
 def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
@@ -240,6 +260,137 @@ def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
     return df
 
 
+def normalise_text(text):
+    """
+    Removes diacritics from non-standard Latin letters, converts them to their
+    closest standard 26-letter Latin equivalents, and removes asterisks (*) from the text.
+
+    Args:
+        text (str): Input string to normalize.
+
+    Returns:
+        str: Normalized string with only standard Latin letters and no asterisks.
+    """
+    # Normalize Unicode to decompose characters (e.g., č -> c + ̌)
+    text = unicodedata.normalize('NFD', text)
+    # Remove diacritical marks by filtering out characters of the 'Mn' (Mark, Nonspacing) category
+    text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+    # Remove asterisks
+    text = text.replace('*', '')
+    # Optionally, ensure only ASCII characters remain
+    text = ''.join(char for char in text if char.isascii())
+    return text
+
+
+def create_regions(
+    country_list,
+    nuts3_path,
+    nuts3_old_path,
+    adm1_ba_path,
+    adm1_md_path,
+    adm1_ua_path,
+    offshore_shapes,
+):
+    """
+    Create regions by processing NUTS and non-NUTS geographical shapes.
+
+    Parameters:
+        - country_list (list): List of country codes to include.
+        - nuts3_path (str): Path to the NUTS3 2024 shapefile.
+        - nuts3_old_path (str): Path to the NUTS3 2021 shapefile.
+        - adm1_ba_path (str): Path to the administrative level 1 shapefile for Bosnia and  Herzegovina.
+        - adm1_md_path (str): Path to the administrative level 1 shapefile for Moldova.
+        - adm1_ua_path (str): Path to the administrative level 1 shapefile for Ukraine.
+        - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
+    Returns:
+        geopandas.GeoDataFrame: A GeoDataFrame containing the processed regions with columns:
+            - id: Region identifier.
+            - country: Country code.
+            - name: Region name.
+            - geometry: Geometrical shape of the region.
+            - level1: Level 1 region identifier.
+            - level2: Level 2 region identifier.
+            - level3: Level 3 region identifier.
+    """
+    # Prepare NUTS shapes
+    logger.info("Processing NUTS regions.")
+    nuts3_2024 = gpd.read_file(nuts3_path)
+    nuts3_2024.loc[nuts3_2024.CNTR_CODE == "EL", "CNTR_CODE"] = "GR" # Rename "EL" to "GR
+    nuts3_2024["NUTS_ID"] = nuts3_2024["NUTS_ID"].str.replace("EL", "GR")
+
+    # Only include countries in the config
+    nuts3_2024 = nuts3_2024.query("CNTR_CODE in @country_list")
+
+    # 2021 only needed to extract UK pre-Brexit
+    nuts3_uk_2021 = gpd.read_file(nuts3_old_path).query("CNTR_CODE=='UK'")
+
+    # if nuts3_2024 and nuts3_uk_2021 overlap, keep the parts of nuts3_2024
+    # that are not in nuts3_uk_2021
+    nuts_3_uk_2021_clipped_geoms = nuts3_uk_2021.difference(nuts3_2024.union_all())
+    nuts3_uk_2021.loc[:, "geometry"] = nuts_3_uk_2021_clipped_geoms
+
+    nuts3_2024 = pd.concat([nuts3_2024, nuts3_uk_2021])
+
+    # Create new df
+    regions = nuts3_2024[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
+     
+    # Rename columns and add level columns
+    regions = regions.rename(columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"})
+    
+    # Normalise text
+    regions["id"] = regions["id"].apply(normalise_text)
+    
+    regions["level1"] = regions["id"].str[:3]
+    regions["level2"] = regions["id"].str[:4]
+    regions["level3"] = regions["id"]
+
+    # Non NUTS countries
+    logger.info("Processing non-NUTS regions.")
+    adm1_ba = gpd.read_file(adm1_ba_path)
+    adm1_ba_clipped_geoms = adm1_ba.difference(nuts3_2024.union_all())
+    adm1_ba.loc[:, "geometry"] = adm1_ba_clipped_geoms
+
+    adm1_md = gpd.read_file(adm1_md_path)
+    adm1_nd_clipped_geoms = adm1_md.difference(nuts3_2024.union_all())
+    adm1_md.loc[:, "geometry"] = adm1_nd_clipped_geoms
+
+    adm1_ua = gpd.read_file(adm1_ua_path)
+    adm1_ua_clipped_geoms = adm1_ua.difference(nuts3_2024.union_all())
+    adm1_ua_clipped_geoms = adm1_ua_clipped_geoms.difference(adm1_md.union_all())
+    adm1_ua.loc[:, "geometry"] = adm1_ua_clipped_geoms
+
+    regions_non_nuts = pd.concat([adm1_ba, adm1_md, adm1_ua])
+    regions_non_nuts = regions_non_nuts[["shapeISO", "shapeGroup", "shapeName", "geometry"]]
+    regions_non_nuts = regions_non_nuts.rename(columns={"shapeISO": "id", "shapeGroup": "country", "shapeName": "name"})
+
+    # Three letter country code to two letter
+    regions_non_nuts["country"] = regions_non_nuts["country"].apply(cc.convert, src="ISO3", to="ISO2")
+
+    # Normalise text
+    regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
+    regions_non_nuts["name"] = regions_non_nuts["name"].apply(normalise_text)
+
+    # Add level columns
+    regions_non_nuts["level1"] = regions_non_nuts["id"]
+    regions_non_nuts["level2"] = regions_non_nuts["id"]
+    regions_non_nuts["level3"] = regions_non_nuts["id"]
+
+    # Concatenate NUTS and non-NUTS regions
+    logger.info("Harmonising NUTS and non-NUTS regions.")
+    regions = pd.concat([regions, regions_non_nuts])
+    regions.set_index("id", inplace=True)
+
+    # Drop regions out of geographical scope
+    regions = regions.drop(DROP_REGIONS, errors="ignore")
+
+    # Clip regions by offshore shapes
+    logger.info("Clipping regions by offshore shapes.")
+    regions["geometry"] = regions["geometry"].difference(offshore_shapes.geometry.union_all())
+
+
+    return regions
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -248,12 +399,26 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
-
-    country_shapes.reset_index().to_file(snakemake.output.country_shapes)
-
+    # Offshore regions
     offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
+
+    # Onshore regions
+    regions = create_regions(
+        snakemake.params.countries,
+        snakemake.input.nuts3_2024,
+        snakemake.input.nuts3_2021,
+        snakemake.input.adm1_ba,
+        snakemake.input.adm1_md,
+        snakemake.input.adm1_ua,
+        offshore_shapes,
+    )
+
+    # TODO: remove old code
+    # country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
+    country_shapes = regions.groupby("country")["geometry"].apply(lambda x: x.union_all())
+    country_shapes.crs = regions.crs
+    country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
     europe_shape = gpd.GeoDataFrame(
         geometry=[country_cover(country_shapes, offshore_shapes.geometry)],
