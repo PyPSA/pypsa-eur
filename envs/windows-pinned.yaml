@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
 # SPDX-License-Identifier: CC0-1.0
 
-name: pypsa-eur-adb
+name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
@@ -10,16 +10,14 @@ channels:
   - https://repo.anaconda.com/pkgs/r
   - https://repo.anaconda.com/pkgs/msys2
 dependencies:
-  - _libavif_api=1.1.1
   - _openmp_mutex=4.5
   - affine=2.4.0
   - amply=0.1.6
-  - aom=3.9.1
   - appdirs=1.4.4
   - argparse-dataclass=2.0.0
   - asttokens=3.0.0
   - atlite=0.3.0
-  - attrs=24.2.0
+  - attrs=24.3.0
   - aws-c-auth=0.8.0
   - aws-c-cal=0.8.1
   - aws-c-common=0.10.6
@@ -33,11 +31,15 @@ dependencies:
   - aws-checksums=0.2.2
   - aws-crt-cpp=0.29.7
   - aws-sdk-cpp=1.11.458
+  - azure-core-cpp=1.14.0
+  - azure-identity-cpp=1.10.0
+  - azure-storage-blobs-cpp=12.13.0
+  - azure-storage-common-cpp=12.8.0
   - beautifulsoup4=4.12.3
   - blosc=1.21.6
   - bokeh=3.6.2
   - bottleneck=1.4.2
-  - branca=0.7.2
+  - branca=0.8.1
   - brotli=1.1.0
   - brotli-bin=1.1.0
   - brotli-python=1.1.0
@@ -46,11 +48,13 @@ dependencies:
   - c-blosc2=2.15.2
   - ca-certificates=2024.12.14
   - cairo=1.18.2
+  - capnproto=1.0.2
   - cartopy=0.24.0
   - cdsapi=0.7.5
-  - certifi=2024.8.30
+  - certifi=2024.12.14
   - cffi=1.17.1
   - cfgv=3.3.1
+  - cfitsio=4.4.1
   - cftime=1.6.4
   - charset-normalizer=3.4.0
   - click=8.1.7
@@ -67,17 +71,16 @@ dependencies:
   - cpython=3.12.8
   - cycler=0.12.1
   - cytoolz=1.0.1
-  - dask=2024.12.0
-  - dask-core=2024.12.0
-  - dask-expr=1.1.20
+  - dask=2024.12.1
+  - dask-core=2024.12.1
+  - dask-expr=1.1.21
   - datapi=0.1.1
   - datrie=0.8.2
-  - dav1d=1.2.1
   - decorator=5.1.1
   - deprecation=2.1.0
   - descartes=1.1.0
   - distlib=0.3.9
-  - distributed=2024.12.0
+  - distributed=2024.12.1
   - docutils=0.21.2
   - double-conversion=3.3.0
   - dpath=2.2.0
@@ -87,7 +90,8 @@ dependencies:
   - executing=2.1.0
   - filelock=3.16.1
   - fiona=1.10.1
-  - folium=0.19.0
+  - fmt=11.0.2
+  - folium=0.19.2
   - font-ttf-dejavu-sans-mono=2.37
   - font-ttf-inconsolata=3.000
   - font-ttf-source-code-pro=2.038
@@ -100,6 +104,7 @@ dependencies:
   - freexl=2.0.0
   - fribidi=1.0.10
   - fsspec=2024.10.0
+  - gdal=3.9.3
   - geographiclib=2.0
   - geojson=3.1.0
   - geojson-rewind=1.1.0
@@ -119,7 +124,7 @@ dependencies:
   - h2=4.1.0
   - harfbuzz=9.0.0
   - hdf4=4.2.15
-  - hdf5=1.14.4
+  - hdf5=1.14.3
   - hpack=4.0.0
   - humanfriendly=10.0
   - hyperframe=6.0.1
@@ -139,6 +144,7 @@ dependencies:
   - jsonschema=4.23.0
   - jsonschema-specifications=2024.10.1
   - jupyter_core=5.7.2
+  - kealib=1.6.0
   - kiwisolver=1.4.7
   - krb5=1.21.3
   - lcms2=2.16
@@ -150,31 +156,41 @@ dependencies:
   - libarrow-acero=18.1.0
   - libarrow-dataset=18.1.0
   - libarrow-substrait=18.1.0
-  - libavif16=1.1.1
   - libblas=3.9.0
   - libboost=1.86.0
   - libbrotlicommon=1.1.0
   - libbrotlidec=1.1.0
   - libbrotlienc=1.1.0
   - libcblas=3.9.0
-  - libclang13=19.1.5
+  - libclang13=19.1.6
   - libcrc32c=1.1.2
   - libcurl=8.11.1
-  - libde265=1.0.15
-  - libdeflate=1.22
+  - libdeflate=1.23
   - libevent=2.1.12
   - libexpat=2.6.4
   - libffi=3.4.2
   - libflang=5.0.0
   - libgcc=14.2.0
   - libgd=2.3.3
-  - libgdal-core=3.10.0
+  - libgdal=3.9.3
+  - libgdal-core=3.9.3
+  - libgdal-fits=3.9.3
+  - libgdal-grib=3.9.3
+  - libgdal-hdf4=3.9.3
+  - libgdal-hdf5=3.9.3
+  - libgdal-jp2openjpeg=3.9.3
+  - libgdal-kea=3.9.3
+  - libgdal-netcdf=3.9.3
+  - libgdal-pdf=3.9.3
+  - libgdal-pg=3.9.3
+  - libgdal-postgisraster=3.9.3
+  - libgdal-tiledb=3.9.3
+  - libgdal-xls=3.9.3
   - libglib=2.82.2
   - libgomp=14.2.0
   - libgoogle-cloud=2.32.0
   - libgoogle-cloud-storage=2.32.0
   - libgrpc=1.67.1
-  - libheif=1.18.2
   - libhwloc=2.11.2
   - libiconv=1.17
   - libintl=0.22.5
@@ -186,6 +202,7 @@ dependencies:
   - libopenblas=0.3.28
   - libparquet=18.1.0
   - libpng=1.6.44
+  - libpq=17.2
   - libprotobuf=5.28.2
   - libre2-11=2024.07.02
   - librttopo=1.1.0
@@ -211,8 +228,8 @@ dependencies:
   - lzo=2.10
   - mapclassify=2.8.1
   - markupsafe=3.0.2
-  - matplotlib=3.9.4
-  - matplotlib-base=3.9.4
+  - matplotlib=3.10.0
+  - matplotlib-base=3.10.0
   - matplotlib-inline=0.1.7
   - memory_profiler=0.61.0
   - minizip=4.0.7
@@ -248,6 +265,9 @@ dependencies:
   - plac=1.4.3
   - platformdirs=4.3.6
   - pluggy=1.5.0
+  - poppler=24.12.0
+  - poppler-data=0.4.12
+  - postgresql=17.2
   - powerplantmatching=0.5.19
   - pre-commit=4.0.1
   - progressbar2=4.5.0
@@ -286,8 +306,7 @@ dependencies:
   - pyyaml=6.0.2
   - qhull=2020.2
   - qt6-main=6.8.1
-  - rasterio=1.4.3
-  - rav1e=0.6.6
+  - rasterio=1.4.1
   - re2=2024.07.02
   - referencing=0.35.1
   - requests=2.32.3
@@ -302,7 +321,7 @@ dependencies:
   - setuptools=75.6.0
   - shapely=2.0.6
   - six=1.17.0
-  - smart_open=7.0.5
+  - smart_open=7.1.0
   - smmap=5.0.0
   - snakemake-interface-common=1.17.4
   - snakemake-interface-executor-plugins=9.3.2
@@ -313,15 +332,16 @@ dependencies:
   - snuggs=1.4.7
   - sortedcontainers=2.4.0
   - soupsieve=2.5
+  - spdlog=1.14.1
   - sqlite=3.47.2
   - stack_data=0.6.3
   - statsmodels=0.14.4
-  - svt-av1=2.3.0
   - tabulate=0.9.0
   - tbb=2022.0.0
   - tblib=3.0.0
   - threadpoolctl=3.5.0
   - throttler=1.2.2
+  - tiledb=2.27.0
   - tk=8.6.13
   - tomli=2.2.1
   - toolz=1.0.0
@@ -346,7 +366,6 @@ dependencies:
   - wheel=0.45.1
   - win_inet_pton=1.1.0
   - wrapt=1.17.0
-  - x265=3.5
   - xarray=2024.11.0
   - xerces-c=3.2.5
   - xlrd=2.0.1
@@ -380,5 +399,4 @@ dependencies:
       - snakemake-executor-plugin-slurm-jobstep==0.2.1
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6
-prefix: C:\Miniconda\envs\pypsa-eur-adb
-
+prefix: C:\Miniconda\envs\pypsa-eur
