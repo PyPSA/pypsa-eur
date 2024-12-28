@@ -4481,6 +4481,10 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
         efficiency = pd.read_csv(
             snakemake.input.egs_capacity_factors, parse_dates=True, index_col=0
         )
+        if snakemake.config["clustering"]["temporal"]["resolution_sector"]:
+            efficiency = efficiency.resample(
+                snakemake.config["clustering"]["temporal"]["resolution_sector"]
+            ).mean()
         logger.info("Adding Enhanced Geothermal with time-varying capacity factors.")
     else:
         efficiency = 1.0
