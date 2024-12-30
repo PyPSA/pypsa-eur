@@ -724,7 +724,7 @@ rule prepare_network:
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
-        transmission_limit=config_provider("electricity", "transmission_limit")
+        transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
         tech_costs=lambda w: resources(

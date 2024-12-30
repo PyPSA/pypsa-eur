@@ -77,8 +77,7 @@ rule validate_elec_networks:
             run=config["run"]["name"],
         ),
         expand(
-            RESULTS
-            + "figures/.validation_{kind}_plots_base_s_{clusters}_elec_{opts}",
+            RESULTS + "figures/.validation_{kind}_plots_base_s_{clusters}_elec_{opts}",
             **config["scenario"],
             run=config["run"]["name"],
             kind=["production", "prices", "cross_border"],

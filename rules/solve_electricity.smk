@@ -19,13 +19,10 @@ rule solve_network:
         config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
     log:
         solver=normpath(
-            RESULTS
-            + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"
+            RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"
         ),
-        memory=RESULTS
-        + "logs/solve_network/base_s_{clusters}_elec_{opts}_memory.log",
-        python=RESULTS
-        + "logs/solve_network/base_s_{clusters}_elec_{opts}_python.log",
+        memory=RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_memory.log",
+        python=RESULTS + "logs/solve_network/base_s_{clusters}_elec_{opts}_python.log",
     benchmark:
         (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_{opts}")
     threads: solver_threads
@@ -62,10 +59,7 @@ rule solve_operations_network:
         python=RESULTS
         + "logs/solve_operations_network/base_s_{clusters}_elec_{opts}_op_python.log",
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/solve_operations_network/base_s_{clusters}_elec_{opts}"
-        )
+        (RESULTS + "benchmarks/solve_operations_network/base_s_{clusters}_elec_{opts}")
     threads: 4
     resources:
         mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
