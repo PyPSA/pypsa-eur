@@ -285,10 +285,10 @@ def normalise_text(text):
 def create_regions(
     country_list,
     nuts3_path,
-    nuts3_old_path,
     adm1_ba_path,
     adm1_md_path,
     adm1_ua_path,
+    adm1_xk_path,
     offshore_shapes,
 ):
     """
@@ -296,11 +296,11 @@ def create_regions(
 
     Parameters:
         - country_list (list): List of country codes to include.
-        - nuts3_path (str): Path to the NUTS3 2024 shapefile.
-        - nuts3_old_path (str): Path to the NUTS3 2021 shapefile.
-        - adm1_ba_path (str): Path to the administrative level 1 shapefile for Bosnia and  Herzegovina.
-        - adm1_md_path (str): Path to the administrative level 1 shapefile for Moldova.
-        - adm1_ua_path (str): Path to the administrative level 1 shapefile for Ukraine.
+        - nuts3_path (str): Path to the NUTS3 2021 shapefile.
+        - adm1_ba_path (str): Path to gpkg for Bosnia and  Herzegovina.
+        - adm1_md_path (str): Path to gpkg for Moldova.
+        - adm1_ua_path (str): Path to gpkg for Ukraine.
+        - adm1_xk_path (str): Path to gpkg for Kosovo.
         - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
     Returns:
         geopandas.GeoDataFrame: A GeoDataFrame containing the processed regions with columns:
@@ -314,25 +314,17 @@ def create_regions(
     """
     # Prepare NUTS shapes
     logger.info("Processing NUTS regions.")
-    nuts3_2024 = gpd.read_file(nuts3_path)
-    nuts3_2024.loc[nuts3_2024.CNTR_CODE == "EL", "CNTR_CODE"] = "GR" # Rename "EL" to "GR
-    nuts3_2024["NUTS_ID"] = nuts3_2024["NUTS_ID"].str.replace("EL", "GR")
+    regions = gpd.read_file(nuts3_path)
+    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR" # Rename "EL" to "GR
+    regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("EL", "GR")
+    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB" # Rename "UK" to "GB"
+    regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("UK", "GB")
 
     # Only include countries in the config
-    nuts3_2024 = nuts3_2024.query("CNTR_CODE in @country_list")
-
-    # 2021 only needed to extract UK pre-Brexit
-    nuts3_uk_2021 = gpd.read_file(nuts3_old_path).query("CNTR_CODE=='UK'")
-
-    # if nuts3_2024 and nuts3_uk_2021 overlap, keep the parts of nuts3_2024
-    # that are not in nuts3_uk_2021
-    nuts_3_uk_2021_clipped_geoms = nuts3_uk_2021.difference(nuts3_2024.union_all())
-    nuts3_uk_2021.loc[:, "geometry"] = nuts_3_uk_2021_clipped_geoms
-
-    nuts3_2024 = pd.concat([nuts3_2024, nuts3_uk_2021])
+    regions = regions.query("CNTR_CODE in @country_list")
 
     # Create new df
-    regions = nuts3_2024[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
+    regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
      
     # Rename columns and add level columns
     regions = regions.rename(columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"})
@@ -346,25 +338,33 @@ def create_regions(
 
     # Non NUTS countries
     logger.info("Processing non-NUTS regions.")
-    adm1_ba = gpd.read_file(adm1_ba_path)
-    adm1_ba_clipped_geoms = adm1_ba.difference(nuts3_2024.union_all())
+    adm1_ba = gpd.read_file(adm1_ba_path, layer="ADM_ADM_1")
+    adm1_ba_clipped_geoms = adm1_ba.difference(regions.union_all())
     adm1_ba.loc[:, "geometry"] = adm1_ba_clipped_geoms
 
-    adm1_md = gpd.read_file(adm1_md_path)
-    adm1_nd_clipped_geoms = adm1_md.difference(nuts3_2024.union_all())
+    adm1_md = gpd.read_file(adm1_md_path, layer="ADM_ADM_1")
+    adm1_nd_clipped_geoms = adm1_md.difference(regions.union_all())
     adm1_md.loc[:, "geometry"] = adm1_nd_clipped_geoms
 
-    adm1_ua = gpd.read_file(adm1_ua_path)
-    adm1_ua_clipped_geoms = adm1_ua.difference(nuts3_2024.union_all())
+    adm1_ua = gpd.read_file(adm1_ua_path, layer="ADM_ADM_1")
+    adm1_ua_clipped_geoms = adm1_ua.difference(regions.union_all())
     adm1_ua_clipped_geoms = adm1_ua_clipped_geoms.difference(adm1_md.union_all())
     adm1_ua.loc[:, "geometry"] = adm1_ua_clipped_geoms
 
-    regions_non_nuts = pd.concat([adm1_ba, adm1_md, adm1_ua])
-    regions_non_nuts = regions_non_nuts[["shapeISO", "shapeGroup", "shapeName", "geometry"]]
-    regions_non_nuts = regions_non_nuts.rename(columns={"shapeISO": "id", "shapeGroup": "country", "shapeName": "name"})
+    adm1_xk = gpd.read_file(adm1_xk_path, layer="ADM_ADM_1")
+    adm1_xk_clipped_geoms = adm1_xk.difference(regions.union_all())
+    adm1_xk.loc[:, "geometry"] = adm1_xk_clipped_geoms
+    adm1_xk.loc[adm1_xk.GID_0 == "XKO", "GID_0"] = "XKX"
+    adm1_xk["GID_1"] = adm1_xk["GID_1"].str.replace("XKO", "XKX")
 
-    # Three letter country code to two letter
+    regions_non_nuts = pd.concat([adm1_ba, adm1_md, adm1_ua, adm1_xk])
+    regions_non_nuts = regions_non_nuts[["GID_1", "GID_0", "NAME_1", "geometry"]]
+    regions_non_nuts = regions_non_nuts.rename(columns={"GID_1": "id", "GID_0": "country", "NAME_1": "name"})
+
+    # Cleaning up strings
+    regions_non_nuts["id"] = regions_non_nuts["id"].str[-3:-2]
     regions_non_nuts["country"] = regions_non_nuts["country"].apply(cc.convert, src="ISO3", to="ISO2")
+    regions_non_nuts["id"] = regions_non_nuts["country"] + regions_non_nuts["id"]
 
     # Normalise text
     regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
@@ -387,7 +387,6 @@ def create_regions(
     logger.info("Clipping regions by offshore shapes.")
     regions["geometry"] = regions["geometry"].difference(offshore_shapes.geometry.union_all())
 
-
     return regions
 
 
@@ -406,16 +405,16 @@ if __name__ == "__main__":
     # Onshore regions
     regions = create_regions(
         snakemake.params.countries,
-        snakemake.input.nuts3_2024,
         snakemake.input.nuts3_2021,
         snakemake.input.adm1_ba,
         snakemake.input.adm1_md,
         snakemake.input.adm1_ua,
+        snakemake.input.adm1_xk,
         offshore_shapes,
     )
 
     # TODO: remove old code
-    # country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
+    country_shapes = countries(snakemake.input.naturalearth, snakemake.params.countries)
     country_shapes = regions.groupby("country")["geometry"].apply(lambda x: x.union_all())
     country_shapes.crs = regions.crs
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
@@ -426,6 +425,8 @@ if __name__ == "__main__":
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
 
+    # TODO update 2024 NUTS mapping, double check, create dedicated PR
+    # TODD remove redundant data and update downloader to directly access commission data
     nuts3_shapes = nuts3(
         country_shapes,
         snakemake.input.nuts3,

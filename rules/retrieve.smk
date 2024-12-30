@@ -102,33 +102,6 @@ if config["enable"]["retrieve"]:
             os.remove(params.zip_file)
 
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_nuts_2024_shapes:
-        input:
-            shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2024-01m.geojson.zip"
-            ),
-        output:
-            shapes_level_3="data/nuts/NUTS_RG_01M_2024_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_01M_2024_4326_LEVL_2.geojson",
-            shapes_level_1="data/nuts/NUTS_RG_01M_2024_4326_LEVL_1.geojson",
-            shapes_level_0="data/nuts/NUTS_RG_01M_2024_4326_LEVL_0.geojson",
-        params:
-            zip_file="data/nuts/ref-nuts-2024-01m.geojson.zip",
-        run:
-            os.rename(input.shapes, params.zip_file)
-            with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
-                    filename = f"NUTS_RG_01M_2024_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
-                    extracted_file = Path(output.shapes_level_0).parent / filename
-                    extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[-1]}")
-                    )
-            os.remove(params.zip_file)
-
-
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
@@ -403,24 +376,29 @@ if config["enable"]["retrieve"]:
     # Retrieve geoBoundaries Comprehensive Global Administrative Zones (CGAZ)
     # Disputed areas are removed and replaced with polygons following US Department of State definitions. No gaps
     # https://www.geoboundaries.org/globalDownloads.html
-    rule retrieve_geoboundaries_countries:
+    rule retrieve_gadm_countries:
         input:
             adm1_ba=storage(
-                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/BIH/ADM1/geoBoundaries-BIH-ADM1.geojson",
+                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_BIH.gpkg",
                 keep_local=True,
             ),
             adm1_md=storage(
-                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/MDA/ADM1/geoBoundaries-MDA-ADM1.geojson",
+                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDA.gpkg",
                 keep_local=True,
             ),
             adm1_ua=storage(
-                "https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/UKR/ADM1/geoBoundaries-UKR-ADM1.geojson",
+                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_UKR.gpkg",
+                keep_local=True,
+            ),
+            adm1_xk=storage(
+                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_XKO.gpkg",
                 keep_local=True,
             ),
         output:
-            adm1_ba="data/geoboundaries/geoBoundaries-BIH-ADM1.geojson",
-            adm1_md="data/geoboundaries/geoBoundaries-MDA-ADM1.geojson",
-            adm1_ua="data/geoboundaries/geoBoundaries-UKR-ADM1.geojson",
+            adm1_ba="data/gadm/gadm41_BIH.gpkg",
+            adm1_md="data/gadm/gadm41_MDA.gpkg",
+            adm1_ua="data/gadm/gadm41_UKR.gpkg",
+            adm1_xk="data/gadm/gadm41_XKO.gpkg",
         retries: 1
         run:
             for key in input.keys():
