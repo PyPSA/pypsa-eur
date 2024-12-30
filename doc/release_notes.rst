@@ -111,7 +111,7 @@ Upcoming Release
 
 * Feature: The installation via `make install` now prioritizes mamba over conda for faster installation. Conda is still used as a fallback. The command `make install` now also supports passing the name of the environment, e.g. `make install name=my-project`.
 
-
+* Update locations and capacities of ammonia plants.
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)
