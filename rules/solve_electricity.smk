@@ -13,21 +13,21 @@ rule solve_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
     output:
-        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
-        config=RESULTS + "configs/config.base_s_{clusters}_elec_l{ll}_{opts}.yaml",
+        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
+        config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_solver.log"
+            + "logs/solve_network/base_s_{clusters}_elec_{opts}_solver.log"
         ),
         memory=RESULTS
-        + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_memory.log",
+        + "logs/solve_network/base_s_{clusters}_elec_{opts}_memory.log",
         python=RESULTS
-        + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_python.log",
+        + "logs/solve_network/base_s_{clusters}_elec_{opts}_python.log",
     benchmark:
-        (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_l{ll}_{opts}")
+        (RESULTS + "benchmarks/solve_network/base_s_{clusters}_elec_{opts}")
     threads: solver_threads
     resources:
         mem_mb=memory,
@@ -51,20 +51,20 @@ rule solve_operations_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
     output:
-        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}_op.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}_op.nc",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}_op_solver.log"
+            + "logs/solve_operations_network/base_s_{clusters}_elec_{opts}_op_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}_op_python.log",
+        + "logs/solve_operations_network/base_s_{clusters}_elec_{opts}_op_python.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_operations_network/base_s_{clusters}_elec_l{ll}_{opts}"
+            + "benchmarks/solve_operations_network/base_s_{clusters}_elec_{opts}"
         )
     threads: 4
     resources:

@@ -20,7 +20,7 @@ Relevant Settings
 Inputs
 ------
 
-- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: the network whose
+- ``networks/base_s_{clusters}_elec_{opts}.nc``: the network whose
   snapshots are to be aggregated
 - ``resources/hourly_heat_demand_total_base_s_{clusters}.nc``: the total
   hourly heat demand
@@ -30,7 +30,7 @@ Inputs
 Outputs
 -------
 
-- ``snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv``
+- ``snapshot_weightings_base_s_{clusters}_elec_{opts}.csv``
 
 Description
 -----------

@@ -724,6 +724,7 @@ rule prepare_network:
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        transmission_limit=config_provider("electricity", "transmission_limit")
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
         tech_costs=lambda w: resources(
@@ -731,11 +732,11 @@ rule prepare_network:
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
-        resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        resources("networks/base_s_{clusters}_elec_{opts}.nc"),
     log:
-        logs("prepare_network_base_s_{clusters}_elec_l{ll}_{opts}.log"),
+        logs("prepare_network_base_s_{clusters}_elec_{opts}.log"),
     benchmark:
-        benchmarks("prepare_network_base_s_{clusters}_elec_l{ll}_{opts}")
+        benchmarks("prepare_network_base_s_{clusters}_elec_{opts}")
     threads: 1
     resources:
         mem_mb=4000,
