@@ -126,7 +126,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
 
 
 def countries(naturalearth, country_list):
-
     df = gpd.read_file(naturalearth)
 
     # Names are a hassle in naturalearth, try several fields
@@ -285,10 +284,10 @@ def normalise_text(text):
 def create_regions(
     country_list,
     nuts3_path,
-    adm1_ba_path,
-    adm1_md_path,
-    adm1_ua_path,
-    adm1_xk_path,
+    ba_adm1_path,
+    md_adm1_path,
+    ua_adm1_path,
+    xk_adm1_path,
     offshore_shapes,
 ):
     """
@@ -297,11 +296,12 @@ def create_regions(
     Parameters:
         - country_list (list): List of country codes to include.
         - nuts3_path (str): Path to the NUTS3 2021 shapefile.
-        - adm1_ba_path (str): Path to gpkg for Bosnia and  Herzegovina.
-        - adm1_md_path (str): Path to gpkg for Moldova.
-        - adm1_ua_path (str): Path to gpkg for Ukraine.
-        - adm1_xk_path (str): Path to gpkg for Kosovo.
+        - ba_adm1_path (str): Path to adm1 boundaries for Bosnia and  Herzegovina.
+        - md_adm1_path (str): Path to adm1 boundaries for Moldova.
+        - ua_adm1_path (str): Path to adm1 boundaries for Ukraine.
+        - xk_adm1_path (str): Path to adm1 boundaries for Kosovo.
         - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
+    
     Returns:
         geopandas.GeoDataFrame: A GeoDataFrame containing the processed regions with columns:
             - id: Region identifier.
@@ -338,33 +338,14 @@ def create_regions(
 
     # Non NUTS countries
     logger.info("Processing non-NUTS regions.")
-    adm1_ba = gpd.read_file(adm1_ba_path, layer="ADM_ADM_1")
-    adm1_ba_clipped_geoms = adm1_ba.difference(regions.union_all())
-    adm1_ba.loc[:, "geometry"] = adm1_ba_clipped_geoms
+    
+    ba_adm1 = gpd.read_file(ba_adm1_path)
+    md_adm1 = gpd.read_file(md_adm1_path)
+    ua_adm1 = gpd.read_file(ua_adm1_path)
+    xk_adm1 = gpd.read_file(xk_adm1_path)
 
-    adm1_md = gpd.read_file(adm1_md_path, layer="ADM_ADM_1")
-    adm1_nd_clipped_geoms = adm1_md.difference(regions.union_all())
-    adm1_md.loc[:, "geometry"] = adm1_nd_clipped_geoms
-
-    adm1_ua = gpd.read_file(adm1_ua_path, layer="ADM_ADM_1")
-    adm1_ua_clipped_geoms = adm1_ua.difference(regions.union_all())
-    adm1_ua_clipped_geoms = adm1_ua_clipped_geoms.difference(adm1_md.union_all())
-    adm1_ua.loc[:, "geometry"] = adm1_ua_clipped_geoms
-
-    adm1_xk = gpd.read_file(adm1_xk_path, layer="ADM_ADM_1")
-    adm1_xk_clipped_geoms = adm1_xk.difference(regions.union_all())
-    adm1_xk.loc[:, "geometry"] = adm1_xk_clipped_geoms
-    adm1_xk.loc[adm1_xk.GID_0 == "XKO", "GID_0"] = "XKX"
-    adm1_xk["GID_1"] = adm1_xk["GID_1"].str.replace("XKO", "XKX")
-
-    regions_non_nuts = pd.concat([adm1_ba, adm1_md, adm1_ua, adm1_xk])
-    regions_non_nuts = regions_non_nuts[["GID_1", "GID_0", "NAME_1", "geometry"]]
-    regions_non_nuts = regions_non_nuts.rename(columns={"GID_1": "id", "GID_0": "country", "NAME_1": "name"})
-
-    # Cleaning up strings
-    regions_non_nuts["id"] = regions_non_nuts["id"].str[-3:-2]
-    regions_non_nuts["country"] = regions_non_nuts["country"].apply(cc.convert, src="ISO3", to="ISO2")
-    regions_non_nuts["id"] = regions_non_nuts["country"] + regions_non_nuts["id"]
+    regions_non_nuts = pd.concat([ba_adm1, md_adm1, ua_adm1, xk_adm1])
+    regions_non_nuts = regions_non_nuts.drop(columns=["osm_id"])
 
     # Normalise text
     regions_non_nuts["id"] = regions_non_nuts["id"].apply(normalise_text)
@@ -374,6 +355,9 @@ def create_regions(
     regions_non_nuts["level1"] = regions_non_nuts["id"]
     regions_non_nuts["level2"] = regions_non_nuts["id"]
     regions_non_nuts["level3"] = regions_non_nuts["id"]
+
+    # Clip regions by non-NUTS shapes
+    regions["geometry"] = regions["geometry"].difference(regions_non_nuts.geometry.union_all())
 
     # Concatenate NUTS and non-NUTS regions
     logger.info("Harmonising NUTS and non-NUTS regions.")
@@ -398,6 +382,10 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    # old nuts3
+    old = gpd.read_file("/home/bobby/projects/development/pypsa-eur/resources/shapes/nuts3_shapes.geojson") \
+        .set_index("index")
+
     # Offshore regions
     offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
@@ -406,10 +394,10 @@ if __name__ == "__main__":
     regions = create_regions(
         snakemake.params.countries,
         snakemake.input.nuts3_2021,
-        snakemake.input.adm1_ba,
-        snakemake.input.adm1_md,
-        snakemake.input.adm1_ua,
-        snakemake.input.adm1_xk,
+        snakemake.input.ba_adm1,
+        snakemake.input.md_adm1,
+        snakemake.input.ua_adm1,
+        snakemake.input.xk_adm1,
         offshore_shapes,
     )
 

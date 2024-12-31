@@ -373,40 +373,6 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    # Retrieve geoBoundaries Comprehensive Global Administrative Zones (CGAZ)
-    # Disputed areas are removed and replaced with polygons following US Department of State definitions. No gaps
-    # https://www.geoboundaries.org/globalDownloads.html
-    rule retrieve_gadm_countries:
-        input:
-            adm1_ba=storage(
-                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_BIH.gpkg",
-                keep_local=True,
-            ),
-            adm1_md=storage(
-                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDA.gpkg",
-                keep_local=True,
-            ),
-            adm1_ua=storage(
-                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_UKR.gpkg",
-                keep_local=True,
-            ),
-            adm1_xk=storage(
-                "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_XKO.gpkg",
-                keep_local=True,
-            ),
-        output:
-            adm1_ba="data/gadm/gadm41_BIH.gpkg",
-            adm1_md="data/gadm/gadm41_MDA.gpkg",
-            adm1_ua="data/gadm/gadm41_UKR.gpkg",
-            adm1_xk="data/gadm/gadm41_XKO.gpkg",
-        retries: 1
-        run:
-            for key in input.keys():
-                move(input[key], output[key])
-
-
-if config["enable"]["retrieve"]:
-
     rule retrieve_gem_europe_gas_tracker:
         output:
             "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
@@ -418,7 +384,6 @@ if config["enable"]["retrieve"]:
             response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
-
 
 
 if config["enable"]["retrieve"]:
@@ -649,6 +614,20 @@ if config["enable"]["retrieve"] and (
                 "data/osm-raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_osm_boundaries:
+        output:
+            json="data/osm-boundaries/json/{country}_adm1.json",
+        log:
+            "logs/retrieve_osm_boundaries_{country}_adm1.log",
+        threads: 1
+        conda:
+            "../envs/retrieve.yaml"
+        script:
+            "../scripts/retrieve_osm_boundaries.py"
 
 
 if config["enable"]["retrieve"]:

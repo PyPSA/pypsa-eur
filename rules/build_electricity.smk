@@ -98,15 +98,42 @@ rule base_network:
         "../scripts/base_network.py"
 
 
+rule build_osm_boundaries:
+    params:
+        countries=config_provider("countries"),
+    input:
+        json="data/osm-boundaries/json/{country}_adm1.json",
+        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+    output:
+        boundary="data/osm-boundaries/build/{country}_adm1.geojson",
+    log:
+        logs("build_osm_boundaries_{country}.log"),
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_osm_boundaries.py"
+
+
+rule build_osm_boundaries_all:
+    input:
+        "data/osm-boundaries/build/MD_adm1.geojson",
+        "data/osm-boundaries/build/BA_adm1.geojson",
+        "data/osm-boundaries/build/UA_adm1.geojson",
+        "data/osm-boundaries/build/XK_adm1.geojson",
+
+
 rule build_shapes:
     params:
         countries=config_provider("countries"),
     input:
         nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-        adm1_ba="data/gadm/gadm41_BIH.gpkg",
-        adm1_md="data/gadm/gadm41_MDA.gpkg",
-        adm1_ua="data/gadm/gadm41_UKR.gpkg",
-        adm1_xk="data/gadm/gadm41_XKO.gpkg",
+        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
+        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
+        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
+        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
         nuts3=ancient("data/nuts/NUTS_RG_01M_2024_4326_LEVL_3.geojson"),
