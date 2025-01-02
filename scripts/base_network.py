@@ -90,7 +90,7 @@ from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
-from shapely.geometry import LineString, Point
+from shapely.geometry import Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -456,7 +456,8 @@ def _set_electrical_parameters_transformers(transformers, config):
 
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
-    transformers["s_nom"] = config.get("s_nom", 2000)
+    if "s_nom" not in transformers:
+        transformers["s_nom"] = config.get("s_nom", 2000)
     transformers["type"] = config.get("type", "")
 
     return transformers

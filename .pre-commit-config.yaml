@@ -72,6 +72,7 @@ repos:
   rev: v2.14.0
   hooks:
   - id: pretty-format-yaml
+    exclude: pinned\.yaml$
     args: [--autofix, --indent, "2", --preserve-quotes]
 
   # Format Snakemake rule / workflow files
@@ -89,6 +90,6 @@ repos:
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v4.0.3
+  rev: v5.0.2
   hooks:
   - id: reuse

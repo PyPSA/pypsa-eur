@@ -545,6 +545,8 @@ if config["enable"]["retrieve"] and (
         0.2: "13342577",
         0.3: "13358976",
         0.4: "13759222",
+        0.5: "13981528",
+        0.6: "14144752",
     }
 
     # update rule to use the correct version
@@ -565,12 +567,16 @@ if config["enable"]["retrieve"] and (
             transformers=storage(
                 f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
             ),
+            map=storage(
+                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/map.html"
+            ),
         output:
             buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
             converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
             lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
             links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
             transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
+            map=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/map.html",
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
@@ -592,7 +598,7 @@ if config["enable"]["retrieve"] and (
         output:
             cables_way="data/osm-raw/{country}/cables_way.json",
             lines_way="data/osm-raw/{country}/lines_way.json",
-            links_relation="data/osm-raw/{country}/links_relation.json",
+            routes_relation="data/osm-raw/{country}/routes_relation.json",
             substations_way="data/osm-raw/{country}/substations_way.json",
             substations_relation="data/osm-raw/{country}/substations_relation.json",
         log:
@@ -619,7 +625,7 @@ if config["enable"]["retrieve"] and (
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/links_relation.json",
+                "data/osm-raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             expand(
@@ -630,3 +636,21 @@ if config["enable"]["retrieve"] and (
                 "data/osm-raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_heat_source_utilisation_potentials:
+        params:
+            heat_source="{heat_source}",
+            heat_utilisation_potentials=config_provider(
+                "sector", "district_heating", "heat_utilisation_potentials"
+            ),
+        log:
+            "logs/retrieve_heat_source_potentials_{heat_source}.log",
+        resources:
+            mem_mb=500,
+        output:
+            "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
+        script:
+            "../scripts/retrieve_heat_source_utilisation_potentials.py"

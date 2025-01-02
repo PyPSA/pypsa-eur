@@ -540,76 +540,27 @@ def calculate_prices(n, label, prices):
 
 
 def calculate_weighted_prices(n, label, weighted_prices):
-    # Warning: doesn't include storage units as loads
+    carriers = n.buses.carrier.unique()
 
-    weighted_prices = weighted_prices.reindex(
-        pd.Index(
-            [
-                "electricity",
-                "heat",
-                "space heat",
-                "urban heat",
-                "space urban heat",
-                "gas",
-                "H2",
-            ]
+    for carrier in carriers:
+        load = (
+            n.statistics.withdrawal(
+                groupby=pypsa.statistics.groupers["bus", "carrier"],
+                aggregate_time=False,
+                nice_names=False,
+                bus_carrier=carrier,
+            )
+            .groupby(level="bus")
+            .sum()
+            .T.fillna(0)
         )
-    )
 
-    link_loads = {
-        "electricity": [
-            "heat pump",
-            "resistive heater",
-            "battery charger",
-            "H2 Electrolysis",
-        ],
-        "heat": ["water tanks charger"],
-        "urban heat": ["water tanks charger"],
-        "space heat": [],
-        "space urban heat": [],
-        "gas": ["OCGT", "gas boiler", "CHP electric", "CHP heat"],
-        "H2": ["Sabatier", "H2 Fuel Cell"],
-    }
-
-    for carrier, value in link_loads.items():
-        if carrier == "electricity":
-            suffix = ""
-        elif carrier[:5] == "space":
-            suffix = carrier[5:]
-        else:
-            suffix = " " + carrier
-
-        buses = n.buses.index[n.buses.index.str[2:] == suffix]
-
-        if buses.empty:
-            continue
-
-        if carrier in ["H2", "gas"]:
-            load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
-        else:
-            load = n.loads_t.p_set[buses.intersection(n.loads.index)]
-
-        for tech in value:
-            names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
-
-            if not names.empty:
-                load += (
-                    n.links_t.p0[names].T.groupby(n.links.loc[names, "bus0"]).sum().T
-                )
-
-        # Add H2 Store when charging
-        # if carrier == "H2":
-        #    stores = n.stores_t.p[buses+ " Store"].groupby(n.stores.loc[buses+ " Store", "bus"],axis=1).sum(axis=1)
-        #    stores[stores > 0.] = 0.
-        #    load += -stores
+        price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
+        price = price.reindex(columns=load.columns, fill_value=1)
 
         weighted_prices.loc[carrier, label] = (
-            load * n.buses_t.marginal_price[buses]
+            load * price
         ).sum().sum() / load.sum().sum()
-
-        # still have no idea what this is for, only for debug reasons.
-        if carrier[:5] == "space":
-            logger.debug(load * n.buses_t.marginal_price[buses])
 
     return weighted_prices
 
@@ -749,6 +700,7 @@ def to_csv(df):
         df[key].to_csv(snakemake.output[key])
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
