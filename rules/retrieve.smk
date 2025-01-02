@@ -39,7 +39,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -50,7 +50,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_eurostat_data.py"
 
@@ -70,7 +70,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_eurostat_household_data.py"
 
@@ -133,7 +133,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_cost_data.py"
 
@@ -154,7 +154,7 @@ if config["enable"]["retrieve"]:
             "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -172,7 +172,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_electricity_demand.py"
 
@@ -531,7 +531,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
@@ -605,7 +605,7 @@ if config["enable"]["retrieve"] and (
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
-            "../envs/retrieve.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/retrieve_osm_data.py"
 

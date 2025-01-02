@@ -35,7 +35,7 @@ rule solve_network:
     shadow:
         "shallow"
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/solve_network.py"
 
@@ -73,6 +73,6 @@ rule solve_operations_network:
     shadow:
         "shallow"
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/solve_operations_network.py"

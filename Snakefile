@@ -81,7 +81,7 @@ rule create_scenarios:
     output:
         config["run"]["scenarios"]["file"],
     conda:
-        "envs/retrieve.yaml"
+        conda_env_provider()
     script:
         "config/create_scenarios.py"
 
@@ -110,7 +110,7 @@ rule dag:
         pdf=resources("dag.pdf"),
         png=resources("dag.png"),
     conda:
-        "envs/environment.yaml"
+        conda_env_provider()
     shell:
         r"""
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}

@@ -23,7 +23,7 @@ rule build_electricity_demand:
     resources:
         mem_mb=5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_electricity_demand.py"
 
@@ -47,7 +47,7 @@ rule build_powerplants:
     resources:
         mem_mb=7000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_powerplants.py"
 
@@ -93,7 +93,7 @@ rule base_network:
     resources:
         mem_mb=1500,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/base_network.py"
 
@@ -120,7 +120,7 @@ rule build_shapes:
     resources:
         mem_mb=1500,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_shapes.py"
 
@@ -144,7 +144,7 @@ if config["enable"].get("build_cutout", False):
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/build_cutout.py"
 
@@ -165,7 +165,7 @@ rule build_ship_raster:
     benchmark:
         benchmarks("build_ship_raster")
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_ship_raster.py"
 
@@ -208,7 +208,7 @@ rule determine_availability_matrix_MD_UA:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/determine_availability_matrix_MD_UA.py"
 
@@ -277,7 +277,7 @@ rule determine_availability_matrix:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/determine_availability_matrix.py"
 
@@ -307,7 +307,7 @@ rule build_renewable_profiles:
     wildcard_constraints:
         technology="(?!hydro).*",  # Any technology other than hydro
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_renewable_profiles.py"
 
@@ -325,7 +325,7 @@ rule build_monthly_prices:
     resources:
         mem_mb=5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_monthly_prices.py"
 
@@ -352,7 +352,7 @@ rule build_hydro_profile:
     resources:
         mem_mb=5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_hydro_profile.py"
 
@@ -377,7 +377,7 @@ rule build_line_rating:
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_line_rating.py"
 
@@ -412,7 +412,7 @@ rule build_transmission_projects:
         mem_mb=4000,
     threads: 1
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_transmission_projects.py"
 
@@ -450,7 +450,7 @@ rule add_transmission_projects_and_dlr:
     resources:
         mem_mb=4000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/add_transmission_projects_and_dlr.py"
 
@@ -498,7 +498,7 @@ rule build_gdp_pop_non_nuts3:
     resources:
         mem_mb=8000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_gdp_pop_non_nuts3.py"
 
@@ -521,7 +521,7 @@ rule build_electricity_demand_base:
     resources:
         mem_mb=5000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_electricity_demand_base.py"
 
@@ -547,7 +547,7 @@ rule build_hac_features:
     resources:
         mem_mb=10000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/build_hac_features.py"
 
@@ -577,7 +577,7 @@ rule simplify_network:
     resources:
         mem_mb=12000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/simplify_network.py"
 
@@ -632,7 +632,7 @@ rule cluster_network:
     resources:
         mem_mb=10000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/cluster_network.py"
 
@@ -704,7 +704,7 @@ rule add_electricity:
     resources:
         mem_mb=10000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/add_electricity.py"
 
@@ -740,7 +740,7 @@ rule prepare_network:
     resources:
         mem_mb=4000,
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/prepare_network.py"
 
@@ -785,7 +785,7 @@ if config["electricity"]["base_network"] == "osm-raw":
         resources:
             mem_mb=4000,
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/clean_osm_data.py"
 
@@ -825,6 +825,6 @@ if config["electricity"]["base_network"] == "osm-raw":
         resources:
             mem_mb=4000,
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/build_osm_network.py"

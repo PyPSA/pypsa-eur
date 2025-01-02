@@ -5,7 +5,10 @@
 import copy
 from functools import partial, lru_cache
 
-import os, sys, glob
+import os
+import sys
+import glob
+import platform
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
@@ -76,6 +79,16 @@ def config_provider(*keys, default=None):
         return partial(dynamic_getter, keys=keys, default=default)
     else:
         return partial(static_getter, keys=keys, default=default)
+
+
+def conda_env_provider(path_level: str = "."):
+    os_map = {
+        "Linux": "linux-pinned.yaml",
+        "Darwin": "macos-pinned.yaml",
+        "Windows": "windows-pinned.yaml",
+    }
+    filename = os_map.get(platform.system(), "linux-pinned.yaml")
+    return f"{path_level}/envs/{filename}"
 
 
 def solver_threads(w):

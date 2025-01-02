@@ -19,7 +19,7 @@ if config["foresight"] != "perfect":
         benchmark:
             benchmarks("plot_power_network_clustered/base_s_{clusters}")
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/plot_power_network_clustered.py"
 
@@ -45,7 +45,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_power_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/plot_power_network.py"
 
@@ -72,7 +72,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_hydrogen_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/plot_hydrogen_network.py"
 
@@ -98,7 +98,7 @@ if config["foresight"] != "perfect":
                 + "benchmarks/plot_gas_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/plot_gas_network.py"
 
@@ -126,7 +126,7 @@ if config["foresight"] == "perfect":
         resources:
             mem_mb=10000,
         conda:
-            "../envs/environment.yaml"
+            conda_env_provider("..")
         script:
             "../scripts/plot_power_network_perfect.py"
 
@@ -209,7 +209,7 @@ rule make_summary:
     log:
         RESULTS + "logs/make_summary.log",
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/make_summary.py"
 
@@ -240,7 +240,7 @@ rule plot_summary:
     log:
         RESULTS + "logs/plot_summary.log",
     conda:
-        "../envs/environment.yaml"
+        conda_env_provider("..")
     script:
         "../scripts/plot_summary.py"
 
