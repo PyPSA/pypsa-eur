@@ -85,6 +85,21 @@ logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
+
+POP_YEAR=2019
+
+# REMAP SOURCE: https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2021.xlsx
+NUTS3_2016_2021_REMAP = {
+    "UKK22": "UKK25",   # from 2016 to 2021
+    "UKK21": "UKK24",
+    "UKN10": "UKN0A",
+    "UKN11": "UKN0B", 
+    "UKN12": "UKN0C", 
+    "UKN13": "UKN0D", 
+    "UKN14": "UKN0E", 
+    "UKN15": "UKN0F",
+    "UKN16": "UKN0G",  
+}
 DROP_REGIONS = [
     "ES703",
     "ES704",
@@ -412,6 +427,43 @@ if __name__ == "__main__":
         crs=country_shapes.crs,
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
+
+    # POP
+    eurostat_pop = pd.read_table(snakemake.input.eurostat_pop, na_values=[":"], delimiter=" ?\t", engine="python")
+    eurostat_pop.set_index(
+        pd.MultiIndex.from_tuples(eurostat_pop.pop("freq,unit,sex,age,geo\\TIME_PERIOD").str.split(",")),
+        inplace=True,
+    )
+    eurostat_pop = (
+        eurostat_pop.loc[("A", "NR", "T", "TOTAL")]
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
+    )[str(POP_YEAR)]
+    
+    # Keep only rows with index length equal to 5 digits (referring to NUTS3 regions)
+    eurostat_pop = eurostat_pop[eurostat_pop.index.str.len() == 5]
+
+    # Corrections for select regions, as the provided dataset does not completely match with the map due to changes from 2016 to 2021
+    eurostat_pop = eurostat_pop.rename(NUTS3_2016_2021_REMAP)
+
+    # Replace index strings starting with "UK" with "GB", and "EL" with "GR"
+    eurostat_pop.index = eurostat_pop.index.str.replace("UK", "GB").str.replace("EL", "GR")
+
+    # left_join regions
+    regions["pop"] = eurostat_pop
+
+
+
+
+
+    eurostat_pop = (
+        
+        .loc["THS"]
+        .map(lambda x: pd.to_numeric(x, errors="coerce"))
+        .bfill(axis=1)
+    )["2014"]
+
+
 
     # TODO update 2024 NUTS mapping, double check, create dedicated PR
     # TODD remove redundant data and update downloader to directly access commission data
