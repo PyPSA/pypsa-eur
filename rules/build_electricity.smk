@@ -130,8 +130,8 @@ rule build_shapes:
         countries=config_provider("countries"),
     input:
         nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
         ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
+        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
         ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
