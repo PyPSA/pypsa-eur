@@ -66,29 +66,28 @@ Outputs
 Description
 -----------
 """
+
+import logging
+import unicodedata
 from itertools import takewhile
 from operator import attrgetter
-from rasterio.mask import mask
-from shapely.geometry import box, MultiPolygon, Polygon
 
 import country_converter as coco
 import geopandas as gpd
-import logging
 import numpy as np
 import pandas as pd
 import rasterio
-import unicodedata
 import xarray as xr
-
 from _helpers import configure_logging, set_scenario_config
-
+from rasterio.mask import mask
+from shapely.geometry import MultiPolygon, Polygon, box
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
-GDP_YEAR=2019
-POP_YEAR=2019
+GDP_YEAR = 2019
+POP_YEAR = 2019
 DROP_REGIONS = [
     "ES703",
     "ES704",
@@ -109,17 +108,17 @@ DROP_REGIONS = [
     "PT200",
     "PT300",
 ]
-OTHER_GDP_TOTAL_2019 = {    # in bn. USD
-    "BA": 20.48,            # World Bank
-    "MD": 11.74,            # World Bank
-    "UA": 153.9,            # World Bank
-    "XK": 7.9,              # https://de.statista.com/statistik/daten/studie/415738/umfrage/bruttoinlandsprodukt-bip-des-kosovo/
+OTHER_GDP_TOTAL_2019 = {  # in bn. USD
+    "BA": 20.48,  # World Bank
+    "MD": 11.74,  # World Bank
+    "UA": 153.9,  # World Bank
+    "XK": 7.9,  # https://de.statista.com/statistik/daten/studie/415738/umfrage/bruttoinlandsprodukt-bip-des-kosovo/
 }
-OTHER_POP_2019 = {          # in 1000 persons
-    "BA": 3361,             # World Bank
-    "MD": 2664,             # World Bank
-    "UA": 44470,            # World Bank
-    "XK": 1782,             # World Bank
+OTHER_POP_2019 = {  # in 1000 persons
+    "BA": 3361,  # World Bank
+    "MD": 2664,  # World Bank
+    "UA": 44470,  # World Bank
+    "XK": 1782,  # World Bank
 }
 EXCHANGE_EUR_USD_2019 = 1.1
 
@@ -180,13 +179,13 @@ def normalise_text(text):
         str: Normalized string with only standard Latin letters and no asterisks.
     """
     # Normalize Unicode to decompose characters (e.g., č -> c + ̌)
-    text = unicodedata.normalize('NFD', text)
+    text = unicodedata.normalize("NFD", text)
     # Remove diacritical marks by filtering out characters of the 'Mn' (Mark, Nonspacing) category
-    text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+    text = "".join(char for char in text if unicodedata.category(char) != "Mn")
     # Remove asterisks
-    text = text.replace('*', '')
+    text = text.replace("*", "")
     # Optionally, ensure only ASCII characters remain
-    text = ''.join(char for char in text if char.isascii())
+    text = "".join(char for char in text if char.isascii())
     return text
 
 
@@ -202,7 +201,8 @@ def create_regions(
     """
     Create regions by processing NUTS and non-NUTS geographical shapes.
 
-    Parameters:
+    Parameters
+    ----------
         - country_list (list): List of country codes to include.
         - nuts3_path (str): Path to the NUTS3 2021 shapefile.
         - ba_adm1_path (str): Path to adm1 boundaries for Bosnia and  Herzegovina.
@@ -210,8 +210,9 @@ def create_regions(
         - ua_adm1_path (str): Path to adm1 boundaries for Ukraine.
         - xk_adm1_path (str): Path to adm1 boundaries for Kosovo.
         - offshore_shapes (geopandas.GeoDataFrame): Geographical shapes of the exclusive economic zones.
-    
-    Returns:
+
+    Returns
+    -------
         geopandas.GeoDataFrame: A GeoDataFrame containing the processed regions with columns:
             - id: Region identifier.
             - country: Country code.
@@ -224,9 +225,9 @@ def create_regions(
     # Prepare NUTS shapes
     logger.info("Processing NUTS regions.")
     regions = gpd.read_file(nuts3_path)
-    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR" # Rename "EL" to "GR
+    regions.loc[regions.CNTR_CODE == "EL", "CNTR_CODE"] = "GR"  # Rename "EL" to "GR
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("EL", "GR")
-    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB" # Rename "UK" to "GB"
+    regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB"  # Rename "UK" to "GB"
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("UK", "GB")
 
     # Only include countries in the config
@@ -234,20 +235,22 @@ def create_regions(
 
     # Create new df
     regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
-     
+
     # Rename columns and add level columns
-    regions = regions.rename(columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"})
-    
+    regions = regions.rename(
+        columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"}
+    )
+
     # Normalise text
     regions["id"] = regions["id"].apply(normalise_text)
-    
+
     regions["level1"] = regions["id"].str[:3]
     regions["level2"] = regions["id"].str[:4]
     regions["level3"] = regions["id"]
 
     # Non NUTS countries
     logger.info("Processing non-NUTS regions.")
-    
+
     ba_adm1 = gpd.read_file(ba_adm1_path)
     md_adm1 = gpd.read_file(md_adm1_path)
     ua_adm1 = gpd.read_file(ua_adm1_path)
@@ -266,7 +269,9 @@ def create_regions(
     regions_non_nuts["level3"] = regions_non_nuts["id"]
 
     # Clip regions by non-NUTS shapes
-    regions["geometry"] = regions["geometry"].difference(regions_non_nuts.geometry.union_all())
+    regions["geometry"] = regions["geometry"].difference(
+        regions_non_nuts.geometry.union_all()
+    )
 
     # Concatenate NUTS and non-NUTS regions
     logger.info("Harmonising NUTS and non-NUTS regions.")
@@ -278,7 +283,9 @@ def create_regions(
 
     # Clip regions by offshore shapes
     logger.info("Clipping regions by offshore shapes.")
-    regions["geometry"] = regions["geometry"].difference(offshore_shapes.geometry.union_all())
+    regions["geometry"] = regions["geometry"].difference(
+        offshore_shapes.geometry.union_all()
+    )
 
     return regions
 
@@ -287,7 +294,8 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     """
     Calculate the GDP p.c. and population values for non NUTS3 regions.
 
-    Parameters:
+    Parameters
+    ----------
         - country (str): The two-letter country code of the non-NUTS3 region.
         - regions (GeoDataFrame): A GeoDataFrame containing the regions.
         - gdp_non_nuts3 (str): The file path to the dataset containing the GDP p.c values
@@ -295,7 +303,8 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         - pop_non_nuts3 (str): The file path to the dataset containing the POP values
         for non NUTS3 countries (e.g. MD, UA)
 
-    Returns:
+    Returns
+    -------
     tuple: A tuple containing two GeoDataFrames:
         - gdp: A GeoDataFrame with the mean GDP p.c. values mapped to each bus.
         - pop: A GeoDataFrame with the summed POP values mapped to each bus.
@@ -328,11 +337,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         crs="EPSG:4326",
     )
     gdp_mapped = gpd.sjoin(gdp_raster, region, predicate="within")
-    gdp = (
-        gdp_mapped
-        .groupby(["id"])
-        .agg({"gdp": "mean"})
-    )
+    gdp = gdp_mapped.groupby(["id"]).agg({"gdp": "mean"})
 
     # Population Mapping
     logger.info(f"Mapping summed population to non-NUTS3 region: {country}")
@@ -361,12 +366,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
         crs=src_pop.crs,
     )
     pop_mapped = gpd.sjoin(pop_raster, region, predicate="within")
-    pop = (
-        pop_mapped.groupby(["id"])
-        .agg({"pop": "sum"})
-        .reset_index()
-        .set_index("id")
-    )
+    pop = pop_mapped.groupby(["id"]).agg({"pop": "sum"}).reset_index().set_index("id")
     gdp_pop = region.join(gdp).join(pop).drop(columns="geometry")
     gdp_pop.fillna(0, inplace=True)
 
@@ -375,17 +375,18 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     gdp_pop["pop"] = gdp_pop["pop"].div(1e3).round(0)
 
     gdp_pop["pop"] = (
-        gdp_pop["pop"].div(gdp_pop["pop"].sum()).mul(OTHER_POP_2019[country])
-        .round(0)
+        gdp_pop["pop"].div(gdp_pop["pop"].sum()).mul(OTHER_POP_2019[country]).round(0)
     )
 
     gdp_pop["gdp"] = (
-        gdp_pop["gdp"].mul(1e9).div(gdp_pop["gdp"].sum())
+        gdp_pop["gdp"]
+        .mul(1e9)
+        .div(gdp_pop["gdp"].sum())
         .mul(OTHER_GDP_TOTAL_2019[country])
-        .div(EXCHANGE_EUR_USD_2019) /
-        (1e3*gdp_pop["pop"])
+        .div(EXCHANGE_EUR_USD_2019)
+        / (1e3 * gdp_pop["pop"])
     ).round(0)
-        
+
     return gdp_pop
 
 
@@ -412,7 +413,9 @@ if __name__ == "__main__":
         offshore_shapes,
     )
 
-    country_shapes = regions.groupby("country")["geometry"].apply(lambda x: x.union_all())
+    country_shapes = regions.groupby("country")["geometry"].apply(
+        lambda x: x.union_all()
+    )
     country_shapes.crs = regions.crs
     country_shapes.index.name = "name"
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
@@ -457,9 +460,13 @@ if __name__ == "__main__":
     regions.loc[gdp_pop.index, ["gdp", "pop"]] = gdp_pop[["gdp", "pop"]]
 
     # Resort columns and rename index
-    regions = regions[["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]]
+    regions = regions[
+        ["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]
+    ]
     regions.index.name = "index"
 
     # Export regions including GDP and POP data
-    logger.info(f"Exporting NUTS3 and ADM1 shapes with GDP and POP values to {snakemake.output.nuts3_shapes}.")
+    logger.info(
+        f"Exporting NUTS3 and ADM1 shapes with GDP and POP values to {snakemake.output.nuts3_shapes}."
+    )
     regions.reset_index().to_file(snakemake.output.nuts3_shapes)

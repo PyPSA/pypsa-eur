@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -13,7 +12,6 @@ policy by fetching the needed data once, only.
 
 import json
 import logging
-import os
 import time
 
 import requests
@@ -51,7 +49,7 @@ def retrieve_osm_boundaries(
 
     osm_adm_level = "4"
     if country in adm1_specials:
-        osm_adm_level = adm1_specials[country] # special case e.g. for Kosovo
+        osm_adm_level = adm1_specials[country]  # special case e.g. for Kosovo
 
     retries = 3
     for attempt in range(retries):
@@ -81,7 +79,9 @@ def retrieve_osm_boundaries(
             logger.info(" - Done.")
             break  # Exit the retry loop on success
         except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
-            logger.error(f"Error for retrieving administrative boundaries in country {country}: {e}")
+            logger.error(
+                f"Error for retrieving administrative boundaries in country {country}: {e}"
+            )
             logger.debug(
                 f"Response text: {response.text if response else 'No response'}"
             )
@@ -122,4 +122,3 @@ if __name__ == "__main__":
     output = snakemake.output
 
     retrieve_osm_boundaries(country, ADM1_SPECIALS, output)
-    
