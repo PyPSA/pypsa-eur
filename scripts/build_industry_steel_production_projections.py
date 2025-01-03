@@ -89,13 +89,13 @@ def steel_projections(coeffs, investment_years):
     population.set_index("Region", inplace=True)
 
     # Remove specified columns
-    gdp = gdp.drop(columns=columns2remove, errors="ignore")
-    population = population.drop(columns=columns2remove, errors="ignore")
+    gdp = gdp.drop(columns=columns2remove,) #errors="ignore")
+    population = population.drop(columns=columns2remove,) #errors="ignore")
     gdppc = gdp * 1000 / population  # 2017USD/person
 
     # Convert string column names containing numbers to numeric values
-    gdppc.columns = pd.to_numeric(gdppc.columns, errors="coerce")
-    gdp.columns = pd.to_numeric(gdp.columns, errors="coerce")
+    gdppc.columns = pd.to_numeric(gdppc.columns,) #errors="coerce")
+    gdp.columns = pd.to_numeric(gdp.columns,) #errors="coerce")
 
     steel_prod = calculate_eu_steel_production(
         gdppc, gdp, investment_years

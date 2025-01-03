@@ -318,6 +318,9 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        heat_utilisation_potentials=config_provider(
+            "sector", "district_heating", "heat_utilisation_potentials"
+        ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
