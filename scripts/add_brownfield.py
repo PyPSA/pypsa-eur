@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -19,7 +18,6 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_existing_baseyear import add_build_year_to_new_assets
-from pypsa.clustering.spatial import normed_or_uniform
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice

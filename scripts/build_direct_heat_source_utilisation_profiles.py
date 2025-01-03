@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -25,8 +24,6 @@ Outputs
 - `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
-from typing import List
-
 import xarray as xr
 from _helpers import set_scenario_config
 
@@ -36,17 +33,17 @@ def get_source_temperature(heat_source_key: str):
     Get the constant temperature of a heat source.
 
     Args:
-    -----
+    ----
     heat_source_key: str
         The key (name) of the heat source.
 
     Returns:
-    --------
+    -------
     float
         The constant temperature of the heat source in degrees Celsius.
 
     Raises:
-    -------
+    ------
     ValueError
         If the heat source is unknown (not in `config`).
     """
@@ -57,8 +54,8 @@ def get_source_temperature(heat_source_key: str):
         ]
     else:
         raise ValueError(
-            f"Unknown heat source {heat_source_key}. Must be one of {
-                snakemake.params.heat_sources.keys()}."
+            f"Unknown heat source {heat_source_key}. Must be one of "
+            f"{snakemake.params.heat_sources.keys()}."
         )
 
 
@@ -69,14 +66,14 @@ def get_profile(
     Get the direct heat source utilisation profile.
 
     Args:
-    -----
+    ----
     source_temperature: float | xr.DataArray
         The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `forward_temperature`.
     forward_temperature: xr.DataArray
         The central heating forward temperature profiles. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
 
     Returns:
-    --------
+    -------
     xr.DataArray | float
         The direct heat source utilisation profile.
 
@@ -95,7 +92,7 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    direct_utilisation_heat_sources: List[str] = (
+    direct_utilisation_heat_sources: list[str] = (
         snakemake.params.direct_utilisation_heat_sources
     )
 

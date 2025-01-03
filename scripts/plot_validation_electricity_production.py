@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -129,7 +127,7 @@ if __name__ == "__main__":
 
     diff = optimized - historical
     diff.clip(lower=0).plot.area(
-        ax=axes[2], **kwargs, title="$\Delta$ (Optimized - Historic)"
+        ax=axes[2], **kwargs, title=r"$\Delta$ (Optimized - Historic)"
     )
     lim = axes[2].get_ylim()[1]
     diff.clip(upper=0).plot.area(ax=axes[2], **kwargs)

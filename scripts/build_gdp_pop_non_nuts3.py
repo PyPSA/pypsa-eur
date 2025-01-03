@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -29,7 +28,8 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     """
     Calculate the GDP p.c. and population values for non NUTS3 regions.
 
-    Parameters:
+    Parameters
+    ----------
     country (str): The two-letter country code of the non-NUTS3 region.
     regions (GeoDataFrame): A GeoDataFrame containing the regions.
     gdp_non_nuts3 (str): The file path to the dataset containing the GDP p.c values
@@ -37,7 +37,8 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     pop_non_nuts3 (str): The file path to the dataset containing the POP values
     for non NUTS3 countries (e.g. MD, UA)
 
-    Returns:
+    Returns
+    -------
     tuple: A tuple containing two GeoDataFrames:
         - gdp: A GeoDataFrame with the mean GDP p.c. values mapped to each bus.
         - pop: A GeoDataFrame with the summed POP values mapped to each bus.

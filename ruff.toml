@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+extend-include = ['*.ipynb']
+
+[lint]
+select = [
+    'F',   # pyflakes
+    'E',   # pycodestyle: Error
+    'W',   # pycodestyle: Warning
+    'I',   # isort
+    'D',   # pydocstyle
+    'UP',  # pyupgrade
+    # 'ANN', # flake-8 annotations
+    'TID', # flake8-tidy-imports
+    # 'NPY', # numpy
+    # 'RUF', # ruff
+]
+
+ignore = [
+    'ANN401', # Dynamically typed expressions are forbidden
+    'E712', # comparison to False should be 'if cond is False:' or 'if not cond:'
+    'E741', # ambiguous variable names
+    'D203', # 1 blank line required before class docstring
+    'D212', # Multi-line docstring summary should start at the second line
+    'D401', # First line should be in imperative mood
+    ]
+
+
+[lint.per-file-ignores]
+# pydocstyle ignores, which could be enabled in future when existing
+# issues are fixed
+"!**/{xxx.py}" = [
+    'E501', # line too long
+    'D100', # Missing docstring in public module
+    'D101', # Missing docstring in public class
+    'D102', # Missing docstring in public method
+    'D103', # Missing docstring in public function
+    'D104', # Missing docstring in public package
+    'D105', # Missing docstring in magic method
+    'D107', # Missing docstring in __init__
+    'D200', # One-line docstring should fit on one line with quotes
+    'D202', # No blank lines allowed after function docstring
+    'D205', # 1 blank line required between summary line and description
+    'D400', # First line should end with a period
+    'D404', # First word of the docstring should not be "This
+    'D413', # Missing blank line after last section
+    'D415', # First line should end with a period, question mark, or exclamation point
+    'D417', # Missing argument descriptions in the docstring
+    # Include once available
+    # https://github.com/astral-sh/ruff/issues/2310
+    ]

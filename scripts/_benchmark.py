@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-"""
 
-"""
-
-from __future__ import absolute_import, print_function
 
 import logging
 import os
@@ -44,7 +39,7 @@ class MemTimer(Process):
         self.timestamps = kw.pop("timestamps", True)
         self.include_children = kw.pop("include_children", True)
 
-        super(MemTimer, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
 
     def run(self):
         # get baseline memory usage
@@ -60,7 +55,7 @@ class MemTimer(Process):
 
         if self.filename is not None:
             stream = open(self.filename, "w")
-            stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
+            stream.write("MEM {:.6f} {:.4f}\n".format(*cur_mem))
             stream.flush()
         else:
             stream = None
@@ -76,7 +71,7 @@ class MemTimer(Process):
             )
 
             if stream is not None:
-                stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
+                stream.write("MEM {:.6f} {:.4f}\n".format(*cur_mem))
                 stream.flush()
 
             n_measurements += 1
@@ -97,7 +92,7 @@ class MemTimer(Process):
         self.pipe.send(n_measurements)
 
 
-class memory_logger(object):
+class memory_logger:
     """
     Context manager for taking and reporting memory measurements at fixed
     intervals from a separate process, for the duration of a context.
@@ -187,7 +182,7 @@ class memory_logger(object):
         return False
 
 
-class timer(object):
+class timer:
     level = 0
     opened = False
 
@@ -213,14 +208,14 @@ class timer(object):
 
     def print_usec(self, usec):
         if usec < 1000:
-            print("%.1f usec" % usec)
+            print(f"{usec:.1f} usec")
         else:
             msec = usec / 1000
             if msec < 1000:
-                print("%.1f msec" % msec)
+                print(f"{msec:.1f} msec")
             else:
                 sec = msec / 1000
-                print("%.1f sec" % sec)
+                print(f"{sec:.1f} sec")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.opened and self.verbose:
@@ -241,7 +236,7 @@ class timer(object):
         return False
 
 
-class optional(object):
+class optional:
     def __init__(self, variable, contextman):
         self.variable = variable
         self.contextman = contextman

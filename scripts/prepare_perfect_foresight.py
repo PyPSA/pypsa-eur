@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,7 +6,6 @@ Concats pypsa networks of single investment periods to one network.
 """
 
 import logging
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -33,6 +31,7 @@ def get_missing(df, n, c):
         df: pandas DataFrame, static values of pypsa components
         n : pypsa Network to which new assets should be added
         c : string, pypsa component.list_name (e.g. "generators")
+
     Return:
         pd.DataFrame with static values of missing assets
     """
@@ -487,7 +486,7 @@ def apply_time_segmentation_perfect(
     return n
 
 
-def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
+def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]):
     """
     Update the efficiency of heat pumps from previous years to current year
     (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
@@ -498,7 +497,7 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
     ----------
     n : pypsa.Network
         The concatenated network.
-    years : List[int]
+    years : list[int]
         List of planning horizon years.
 
     Returns
@@ -515,9 +514,9 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
             (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
         ]
         # in <year>, set the efficiency of all heat pumps to the correct efficiency
-        n.links_t["efficiency"].loc[
-            (year, slice(None)), heat_pump_idx
-        ] = correct_efficiency.values
+        n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
+            correct_efficiency.values
+        )
 
 
 if __name__ == "__main__":

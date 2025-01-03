@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -37,10 +36,6 @@ Outputs
 - `resources/<run_name>/cop_profiles.nc`: Heat pump coefficient-of-performance (COP) profiles
 """
 
-import sys
-
-import geopandas as gpd
-import numpy as np
 import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config

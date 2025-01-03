@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Helper class for matching heat source potentials to onshore regions.
 """
-
-from typing import List
 
 import geopandas as gpd
 

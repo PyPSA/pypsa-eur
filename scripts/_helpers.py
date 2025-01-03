@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -10,7 +9,6 @@ import logging
 import os
 import re
 import time
-import urllib
 from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
@@ -189,13 +187,13 @@ def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
     if scenario.get("enable") and "run" in snakemake.wildcards.keys():
         try:
-            with open(scenario["file"], "r") as f:
+            with open(scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
         except FileNotFoundError:
             # fallback for mock_snakemake
             script_dir = Path(__file__).parent.resolve()
             root_dir = script_dir.parent
-            with open(root_dir / scenario["file"], "r") as f:
+            with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
         update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
 
@@ -748,9 +746,9 @@ def update_config_from_wildcards(config, w, inplace=True):
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True
             if dg_factor is not None:
-                config["sector"][
-                    "electricity_distribution_grid_cost_factor"
-                ] = dg_factor
+                config["sector"]["electricity_distribution_grid_cost_factor"] = (
+                    dg_factor
+                )
 
         if "biomasstransport" in opts:
             config["sector"]["biomass_transport"] = True
@@ -883,12 +881,12 @@ def rename_techs(label: str) -> str:
 
     Removes some prefixes and renames if certain conditions defined in function body are met.
 
-    Parameters:
+    Parameters
     ----------
     label: str
         Technology label to be renamed
 
-    Returns:
+    Returns
     -------
     str
         Renamed label
