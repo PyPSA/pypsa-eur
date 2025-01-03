@@ -156,6 +156,7 @@ renewable:
       turbine: Vestas_V112_3MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -176,6 +177,7 @@ renewable:
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -194,6 +196,7 @@ renewable:
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -212,6 +215,7 @@ renewable:
       turbine: NREL_ReferenceTurbine_5MW_offshore
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -234,6 +238,7 @@ renewable:
       orientation:
         slope: 35.
         azimuth: 180.
+    resource_classes: 1
     capacity_per_sqkm: 5.1
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
@@ -250,6 +255,7 @@ renewable:
         slope: 35.
         azimuth: 180.
       tracking: horizontal
+    resource_classes: 1
     capacity_per_sqkm: 4.43 # 15% higher land usage acc. to NREL
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
