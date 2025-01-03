@@ -116,6 +116,9 @@ Upcoming Release
   ``{ll}`` wildcard are also now available within the ``{opts}`` wildcard (e.g.
   as ``-lv1.25-``).
 
+* Update locations and capacities of ammonia plants.
+
+
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
