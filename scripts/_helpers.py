@@ -748,9 +748,9 @@ def update_config_from_wildcards(config, w, inplace=True):
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True
             if dg_factor is not None:
-                config["sector"]["electricity_distribution_grid_cost_factor"] = (
-                    dg_factor
-                )
+                config["sector"][
+                    "electricity_distribution_grid_cost_factor"
+                ] = dg_factor
 
         if "biomasstransport" in opts:
             config["sector"]["biomass_transport"] = True

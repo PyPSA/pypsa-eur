@@ -515,9 +515,9 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: List[int]):
             (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
         ]
         # in <year>, set the efficiency of all heat pumps to the correct efficiency
-        n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
-            correct_efficiency.values
-        )
+        n.links_t["efficiency"].loc[
+            (year, slice(None)), heat_pump_idx
+        ] = correct_efficiency.values
 
 
 if __name__ == "__main__":

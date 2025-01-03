@@ -139,9 +139,9 @@ def build_existing_heating():
         )
         nodal_heat_name_tech[(f"{sector} urban decentral", "ground heat pump")] = 0.0
 
-        nodal_heat_name_tech[(f"{sector} urban decentral", "air heat pump")] += (
-            nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
-        )
+        nodal_heat_name_tech[
+            (f"{sector} urban decentral", "air heat pump")
+        ] += nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
         nodal_heat_name_tech[(f"{sector} rural", "air heat pump")] = 0.0
 
     nodal_heat_name_tech[("urban central", "ground heat pump")] = 0.0

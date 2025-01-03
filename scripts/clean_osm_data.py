@@ -1319,9 +1319,9 @@ def _import_substations(path_substations):
         .reset_index()
     )
     df_substations_relation_members_grouped["geometry"] = (
-        df_substations_relation_members_grouped[
-            "linestring"
-        ].apply(lambda x: x.convex_hull)
+        df_substations_relation_members_grouped["linestring"].apply(
+            lambda x: x.convex_hull
+        )
     )
 
     df_substations_relation = (

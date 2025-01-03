@@ -727,14 +727,11 @@ def base_network(
 ):
     base_network = config["electricity"].get("base_network")
     osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
-    assert (
-        base_network
-        in {
-            "entsoegridkit",
-            "osm-raw",
-            "osm-prebuilt",
-        }
-    ), f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
+    assert base_network in {
+        "entsoegridkit",
+        "osm-raw",
+        "osm-prebuilt",
+    }, f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
     if base_network == "entsoegridkit":
         warnings.warn(
             "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm-raw' or 'osm-prebuilt' instead.",
