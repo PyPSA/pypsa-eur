@@ -26,6 +26,7 @@ if config["foresight"] != "perfect":
     rule plot_power_network:
         params:
             plotting=config_provider("plotting"),
+            transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=RESULTS
             + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",

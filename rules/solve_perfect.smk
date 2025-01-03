@@ -138,7 +138,6 @@ def input_networks_make_summary_perfect(w):
         for clusters in config_provider("scenario", "clusters")(w)
         for opts in config_provider("scenario", "opts")(w)
         for sector_opts in config_provider("scenario", "sector_opts")(w)
-        for ll in config_provider("scenario", "ll")(w)
     }
 
 
