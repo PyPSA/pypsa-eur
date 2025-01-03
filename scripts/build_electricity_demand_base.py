@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -60,7 +59,6 @@ def upsample_load(
     data_arrays = []
 
     for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country):
-
         load_ct = load[cntry]
 
         if cntry in ["UA", "MD"]:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -111,8 +110,6 @@ network with **zero** initial capacity:
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -306,7 +303,6 @@ def load_and_aggregate_powerplants(
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
 ) -> pd.DataFrame:
-
     if not aggregation_strategies:
         aggregation_strategies = {}
 
@@ -408,7 +404,6 @@ def attach_load(
     busmap_fn: str,
     scaling: float = 1.0,
 ) -> None:
-
     load = (
         xr.open_dataarray(load_fn).to_dataframe().squeeze(axis=1).unstack(level="time")
     )
@@ -429,7 +424,6 @@ def set_transmission_costs(
     line_length_factor: float = 1.0,
     link_length_factor: float = 1.0,
 ) -> None:
-
     n.lines["capital_cost"] = (
         n.lines["length"]
         * line_length_factor
@@ -505,9 +499,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
@@ -749,7 +741,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
 
 
-def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
+def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
     """
     Attach renewable capacities from the OPSD dataset to the network.
 

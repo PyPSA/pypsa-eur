@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT

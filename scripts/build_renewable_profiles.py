@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
@@ -118,6 +117,7 @@ the weather data cutout from ``atlite``.
 The maximal installable potential for the node (`p_nom_max`) is computed by
 adding up the installable potentials of the individual grid cells.
 """
+
 import logging
 import time
 
@@ -214,7 +214,6 @@ if __name__ == "__main__":
 
     profiles = []
     for year, model in models.items():
-
         logger.info(
             f"Calculate weighted capacity factor time series for model {model} for technology {technology}..."
         )

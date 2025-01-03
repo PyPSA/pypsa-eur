@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2024- The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -7,9 +6,7 @@ Retrieve and extract JRC IDEES 2021 data.
 """
 
 import logging
-import os
 import zipfile
-from pathlib import Path
 
 from _helpers import configure_logging, progress_retrieve, set_scenario_config
 

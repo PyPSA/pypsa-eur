@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -34,7 +33,6 @@ from base_network import (
     _set_electrical_parameters_lines_eg,
     _set_electrical_parameters_lines_osm,
     _set_electrical_parameters_links_osm,
-    _set_electrical_parameters_transformers,
 )
 
 path_cwd = pathlib.Path.cwd()
