@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -65,7 +65,7 @@ class BaseCopApproximator(ABC):
 
     @staticmethod
     def celsius_to_kelvin(
-        t_celsius: Union[float, xr.DataArray, np.array]
+        t_celsius: Union[float, xr.DataArray, np.array],
     ) -> Union[float, xr.DataArray, np.array]:
         """
         Convert temperature from Celsius to Kelvin.

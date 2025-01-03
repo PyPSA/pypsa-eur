@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,7 +7,6 @@ Create summary CSV files for all scenario runs with perfect foresight including
 costs, capacities, capacity factors, curtailment, energy balances, prices and
 other metrics.
 """
-
 
 import numpy as np
 import pandas as pd

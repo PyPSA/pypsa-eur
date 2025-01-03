@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -339,7 +339,6 @@ def add_unsustainable_potentials(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(

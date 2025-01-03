@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 @LukasFranken, The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -107,11 +107,9 @@ def prepare_capex(prepared_data):
     capex_df = pd.DataFrame(columns=prepared_data.keys())
 
     for year in capex_df.columns:
-
         year_data = prepared_data[year].groupby("geometry").mean().reset_index()
 
         for g in year_data.geometry:
-
             if not g in year_data.geometry.tolist():
                 # weird but apparently necessary
                 continue
@@ -124,7 +122,6 @@ def prepare_capex(prepared_data):
 
     # fill up missing values assuming cost reduction factors similar to existing values
     for sooner, later in zip(capex_df.columns[::-1][1:], capex_df.columns[::-1]):
-
         missing_mask = capex_df[sooner].isna()
         cr_factor = (
             capex_df.loc[~missing_mask, later] / capex_df.loc[~missing_mask, sooner]

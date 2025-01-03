@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -38,6 +38,7 @@ References:
 -----------
 - "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
+
 import country_converter as coco
 import numpy as np
 import pandas as pd
@@ -138,9 +139,9 @@ def build_existing_heating():
         )
         nodal_heat_name_tech[(f"{sector} urban decentral", "ground heat pump")] = 0.0
 
-        nodal_heat_name_tech[
-            (f"{sector} urban decentral", "air heat pump")
-        ] += nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        nodal_heat_name_tech[(f"{sector} urban decentral", "air heat pump")] += (
+            nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        )
         nodal_heat_name_tech[(f"{sector} rural", "air heat pump")] = 0.0
 
     nodal_heat_name_tech[("urban central", "ground heat pump")] = 0.0

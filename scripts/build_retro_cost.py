@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -66,6 +66,7 @@ The script has the following structure:
     (4) get cost savings per retrofitting measures for each sector by weighting
         with heated floor area
 """
+
 import pandas as pd
 import xarray as xr
 from _helpers import set_scenario_config

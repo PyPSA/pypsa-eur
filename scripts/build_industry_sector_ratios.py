@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -1469,7 +1469,6 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-
     sector = "Other industrial sectors"
     idees = load_idees_data(sector)
 

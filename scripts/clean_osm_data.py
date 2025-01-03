@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -1319,9 +1319,9 @@ def _import_substations(path_substations):
         .reset_index()
     )
     df_substations_relation_members_grouped["geometry"] = (
-        df_substations_relation_members_grouped["linestring"].apply(
-            lambda x: x.convex_hull
-        )
+        df_substations_relation_members_grouped[
+            "linestring"
+        ].apply(lambda x: x.convex_hull)
     )
 
     df_substations_relation = (
