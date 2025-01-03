@@ -111,7 +111,10 @@ Upcoming Release
 
 * Feature: The installation via `make install` now prioritizes mamba over conda for faster installation. Conda is still used as a fallback. The command `make install` now also supports passing the name of the environment, e.g. `make install name=my-project`.
 
-* Removed ``{ll}`` wildcard. This is now a configuration option ``electricity: transmission_limit:``, defaulting to ``vopt``.
+* Removed ``{ll}`` wildcard. This is now a configuration option ``electricity:
+  transmission_limit:``, defaulting to ``vopt``. All previous options of the
+  ``{ll}`` wildcard are also now available within the ``{opts}`` wildcard (e.g.
+  as ``-lv1.25-``).
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)
