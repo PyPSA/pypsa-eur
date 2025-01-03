@@ -141,13 +141,13 @@ def calculate_cumulative_cost():
     for r in cumulative_cost.columns:
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
             for sector_opts in cumulative_cost.index.get_level_values(level=1).unique():
-                cumulative_cost.loc[
-                    (cluster, sector_opts, "cumulative cost"), r
-                ] = np.trapz(
-                    cumulative_cost.loc[
-                        idx[cluster, sector_opts, planning_horizons], r
-                    ].values,
-                    x=planning_horizons,
+                cumulative_cost.loc[(cluster, sector_opts, "cumulative cost"), r] = (
+                    np.trapz(
+                        cumulative_cost.loc[
+                            idx[cluster, sector_opts, planning_horizons], r
+                        ].values,
+                        x=planning_horizons,
+                    )
                 )
 
     return cumulative_cost
@@ -675,9 +675,7 @@ outputs = [
 
 
 def make_summaries(networks_dict):
-    columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "opt"]
-    )
+    columns = pd.MultiIndex.from_tuples(networks_dict.keys(), names=["cluster", "opt"])
     df = {}
 
     for output in outputs:
