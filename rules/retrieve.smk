@@ -100,6 +100,7 @@ if config["enable"]["retrieve"]:
             os.remove(params.zip_file)
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_nuts_2021_shapes:
@@ -125,6 +126,7 @@ if config["enable"]["retrieve"]:
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
             os.remove(params.zip_file)
+
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
@@ -396,6 +398,7 @@ if config["enable"]["retrieve"]:
                     break
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_gem_europe_gas_tracker:
@@ -409,6 +412,7 @@ if config["enable"]["retrieve"]:
             response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
