@@ -121,6 +121,8 @@ import time
 
 import atlite
 import geopandas as gpd
+import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
 from build_shapes import _simplify_polys
@@ -199,16 +201,32 @@ if __name__ == "__main__":
     if client is not None:
         resource["dask_kwargs"] = {"scheduler": client}
 
-    logger.info(f"Calculate average capacity factor for technology {technology}...")
+    logger.info(f"Calculate average capacity factor per grid cell for technology {technology}...")
     start = time.time()
 
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    layout = capacity_factor * area * capacity_per_sqkm
 
     duration = time.time() - start
     logger.info(
-        f"Completed average capacity factor calculation for technology {technology} ({duration:2.2f}s)"
+        f"Completed average capacity factor calculation per grid cell for technology {technology} ({duration:2.2f}s)"
     )
+
+    nbins = params.get("resource_classes", 1)
+    logger.info(f"Create masks for {nbins} resource classes for technology {technology}...")
+
+    epsilon = 1e-3
+    cf_min, cf_max = (
+        capacity_factor.min() - epsilon,
+        capacity_factor.max() + epsilon,
+    )
+    bins = np.linspace(cf_min, cf_max, nbins + 1)
+    class_masks = [
+        np.logical_and(bins[i] <= capacity_factor, capacity_factor < bins[i + 1])
+        for i in range(nbins)
+    ]
+    class_masks = xr.concat(class_masks, pd.Index(range(nbins), name="bin"))
+
+    layout = capacity_factor * area * capacity_per_sqkm
 
     profiles = []
     for year, model in models.items():
@@ -219,14 +237,19 @@ if __name__ == "__main__":
 
         resource[tech] = model
 
+        matrix = (availability * class_masks).stack(
+            bus_bin=["bus", "bin"], spatial=["y", "x"]
+        )
+
         profile = func(
-            matrix=availability.stack(spatial=["y", "x"]),
+            matrix=matrix,
             layout=layout,
-            index=buses,
+            index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
             **resource,
         )
+        profile = profile.unstack("bus_bin")
 
         dim = {"year": [year]}
         profile = profile.expand_dims(dim)
@@ -241,23 +264,26 @@ if __name__ == "__main__":
     profiles = xr.merge(profiles)
 
     logger.info(f"Calculating maximal capacity per bus for technology {technology}")
-    p_nom_max = capacity_per_sqkm * availability @ area
+    p_nom_max = capacity_per_sqkm * availability * class_masks @ area
 
     logger.info(f"Calculate average distances for technology {technology}.")
-    layoutmatrix = (layout * availability).stack(spatial=["y", "x"])
+    layoutmatrix = (layout * availability * class_masks).stack(
+        bus_bin=["bus", "bin"], spatial=["y", "x"]
+    )
 
     coords = cutout.grid.representative_point().to_crs(3035)
 
     average_distance = []
-    for bus in buses:
-        row = layoutmatrix.sel(bus=bus).data
+    bus_bins = layoutmatrix.indexes["bus_bin"]
+    for bus, bin in bus_bins:
+        row = layoutmatrix.sel(bus=bus, bin=bin).data
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
         distances = co.distance(regions[bus]).div(1e3)  # km
         average_distance.append((distances * (row / row.sum())).sum())
 
-    average_distance = xr.DataArray(average_distance, [buses])
+    average_distance = xr.DataArray(average_distance, [bus_bins]).unstack("bus_bin")
 
     ds = xr.merge(
         [
@@ -267,14 +293,13 @@ if __name__ == "__main__":
         ]
     )
     # select only buses with some capacity and minimal capacity factor
-    mean_profile = ds["profile"].mean("time")
-    if "year" in ds.indexes:
-        mean_profile = mean_profile.max("year")
+    mean_profile = ds["profile"].mean("time").max(["year", "bin"])
+    sum_potential = ds["p_nom_max"].sum("bin")
 
     ds = ds.sel(
         bus=(
             (mean_profile > params.get("min_p_max_pu", 0.0))
-            & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
+            & (sum_potential > params.get("min_p_nom_max", 0.0))
         )
     )
 
