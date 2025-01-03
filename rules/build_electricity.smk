@@ -129,19 +129,14 @@ rule build_shapes:
     params:
         countries=config_provider("countries"),
     input:
+        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
         nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
         ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
         md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
         ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        eurostat_pop="data/eurostat/demo_r_pjanaggr3.tsv",
-        nuts3=ancient("data/nuts/NUTS_RG_01M_2024_4326_LEVL_3.geojson"),
-        naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
-        nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
-        nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
-        ch_cantons=ancient("data/ch_cantons.csv"),
-        ch_popgdp=ancient("data/bundle/je-e-21.03.02.xls"),
+        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),

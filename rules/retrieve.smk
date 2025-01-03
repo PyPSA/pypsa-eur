@@ -646,17 +646,3 @@ if config["enable"]["retrieve"]:
             "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
         script:
             "../scripts/retrieve_heat_source_utilisation_potentials.py"
-
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_eurostat_gdp_pop:
-        output:
-            eurostat_pop="data/eurostat/demo_r_pjanaggr3.tsv",
-        log:
-            "logs/retrieve_eurostat_gdp_pop.log",
-        retries: 2
-        conda:
-            "../envs/retrieve.yaml"
-        script:
-            "../scripts/retrieve_eurostat_gdp_pop.py"
