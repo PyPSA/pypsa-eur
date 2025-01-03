@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -16,6 +16,7 @@ assuming as an approximation energy content of wood pellets
 
 @author: bw0928
 """
+
 import pandas as pd
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)

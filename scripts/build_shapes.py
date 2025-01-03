@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -106,7 +106,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
 
 
 def countries(naturalearth, country_list):
-
     df = gpd.read_file(naturalearth)
 
     # Names are a hassle in naturalearth, try several fields

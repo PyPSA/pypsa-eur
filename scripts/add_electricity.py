@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -306,7 +306,6 @@ def load_and_aggregate_powerplants(
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
 ) -> pd.DataFrame:
-
     if not aggregation_strategies:
         aggregation_strategies = {}
 
@@ -408,7 +407,6 @@ def attach_load(
     busmap_fn: str,
     scaling: float = 1.0,
 ) -> None:
-
     load = (
         xr.open_dataarray(load_fn).to_dataframe().squeeze(axis=1).unstack(level="time")
     )
@@ -429,7 +427,6 @@ def set_transmission_costs(
     line_length_factor: float = 1.0,
     link_length_factor: float = 1.0,
 ) -> None:
-
     n.lines["capital_cost"] = (
         n.lines["length"]
         * line_length_factor

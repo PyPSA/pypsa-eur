@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -1394,7 +1394,6 @@ def rescale_idees_from_eurostat(
         filling_years = [(2015, slice(2016, 2021)), (2000, slice(1990, 1999))]
 
         for source_year, target_years in filling_years:
-
             slicer_source = idx[country, source_year, :, :]
             slicer_target = idx[country, target_years, :, :]
 
@@ -1493,7 +1492,6 @@ def update_residential_from_eurostat(energy: pd.DataFrame) -> pd.DataFrame:
     }
 
     for nrg_name, (code, siec) in nrg_type.items():
-
         # Select energy balance type, rename columns and countries to match IDEES data,
         # convert TJ to TWh
         col_to_rename = {"geo": "country", "TIME_PERIOD": "year", "OBS_VALUE": nrg_name}
