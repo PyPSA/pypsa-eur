@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-
-# coding: utf-8
 
 import pathlib
 
@@ -26,7 +23,7 @@ def ac_dc_network():
 @pytest.fixture(scope="session")
 def config():
     path_config = pathlib.Path(pathlib.Path.cwd(), "config", "config.default.yaml")
-    with open(path_config, "r") as file:
+    with open(path_config) as file:
         config_dict = yaml.safe_load(file)
     return config_dict
 

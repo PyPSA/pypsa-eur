@@ -1,6 +1,6 @@
 
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -109,7 +109,9 @@ Upcoming Release
 
 * Bugfix: Align the naming convention for the CO2 network configuration (from `co2network` to `co2_network`). This may be a small breaking change.
 
-* Feature: The installation via `make install` now prioritizes mamba over conda for faster installation. Conda is still used as a fallback. The command `make install` now also supports passing the name of the environment, e.g. `make install name=my-project`.
+* Development: The installation via `make install` now prioritizes mamba over conda for faster installation. Conda is still used as a fallback. The command `make install` now also supports passing the name of the environment, e.g. `make install name=my-project`.
+
+* Development: Ruff is now used for linting and formatting. It is used in the pre-commit, so no changes are needed. But you might wanna set it up in your IDE.
 
 * Update locations and capacities of ammonia plants.
 
