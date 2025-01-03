@@ -67,22 +67,24 @@ Outputs
 Description
 -----------
 """
-
-import logging
-from functools import reduce
 from itertools import takewhile
 from operator import attrgetter
+from rasterio.mask import mask
+from shapely.geometry import box, MultiPolygon, Polygon
 
 import country_converter as coco
 import geopandas as gpd
+import logging
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from shapely.geometry import MultiPolygon, Polygon
+import rasterio
 import unicodedata
+import xarray as xr
+
+from _helpers import configure_logging, set_scenario_config
+
 
 logger = logging.getLogger(__name__)
-
 cc = coco.CountryConverter()
 
 
@@ -101,11 +103,26 @@ DROP_REGIONS = [
     "FRY10",
     "FRY20",
     "FRY30",
+    "FRY40",
+    "FRY50",
     "NO0B1",
     "NO0B2",
     "PT200",
     "PT300",
 ]
+OTHER_GDP_TOTAL_2019 = {    # in bn. USD
+    "BA": 20.48,            # World Bank
+    "MD": 11.74,            # World Bank
+    "UA": 153.9,            # World Bank
+    "XK": 7.9,              # https://de.statista.com/statistik/daten/studie/415738/umfrage/bruttoinlandsprodukt-bip-des-kosovo/
+}
+OTHER_POP_2019 = {          # in 1000 persons
+    "BA": 3361,             # World Bank
+    "MD": 2664,             # World Bank
+    "UA": 44470,            # World Bank
+    "XK": 1782,             # World Bank
+}
+EXCHANGE_EUR_USD_2019 = 1.1
 
 
 def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
@@ -126,24 +143,6 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
     if tolerance is not None:
         polys = polys.simplify(tolerance=tolerance)
     return polys
-
-
-def countries(naturalearth, country_list):
-    df = gpd.read_file(naturalearth)
-
-    # Names are a hassle in naturalearth, try several fields
-    fieldnames = (
-        df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
-    )
-    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
-    df.replace({"name": {"KV": "XK"}}, inplace=True)
-
-    df = df.loc[
-        df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
-    ]
-    s = df.set_index("name")["geometry"].map(_simplify_polys).set_crs(df.crs)
-
-    return s
 
 
 def eez(eez, country_list):
@@ -168,98 +167,6 @@ def country_cover(country_shapes, eez_shapes=None):
     if isinstance(europe_shape, MultiPolygon):
         europe_shape = max(europe_shape.geoms, key=attrgetter("area"))
     return Polygon(shell=europe_shape.exterior)
-
-
-def nuts3(country_shapes, nuts3, nuts3pop, nuts3gdp, ch_cantons, ch_popgdp):
-    df = gpd.read_file(nuts3)
-    df["geometry"] = df["geometry"].map(_simplify_polys)
-    df = df.rename(columns={"NUTS_ID": "id"})[["id", "geometry"]].set_index("id")
-
-    pop = pd.read_table(nuts3pop, na_values=[":"], delimiter=" ?\t", engine="python")
-    pop = (
-        pop.set_index(
-            pd.MultiIndex.from_tuples(pop.pop("unit,geo\\time").str.split(","))
-        )
-        .loc["THS"]
-        .map(lambda x: pd.to_numeric(x, errors="coerce"))
-        .bfill(axis=1)
-    )["2014"]
-
-    gdp = pd.read_table(nuts3gdp, na_values=[":"], delimiter=" ?\t", engine="python")
-    gdp = (
-        gdp.set_index(
-            pd.MultiIndex.from_tuples(gdp.pop("unit,geo\\time").str.split(","))
-        )
-        .loc["EUR_HAB"]
-        .map(lambda x: pd.to_numeric(x, errors="coerce"))
-        .bfill(axis=1)
-    )["2014"]
-
-    cantons = pd.read_csv(ch_cantons)
-    cantons = cantons.set_index(cantons["HASC"].str[3:])["NUTS"]
-    cantons = cantons.str.pad(5, side="right", fillchar="0")
-
-    swiss = pd.read_excel(ch_popgdp, skiprows=3, index_col=0)
-    swiss.columns = swiss.columns.to_series().map(cantons)
-
-    swiss_pop = pd.to_numeric(swiss.loc["Residents in 1000", "CH040":])
-    pop = pd.concat([pop, swiss_pop])
-    swiss_gdp = pd.to_numeric(
-        swiss.loc["Gross domestic product per capita in Swiss francs", "CH040":]
-    )
-    gdp = pd.concat([gdp, swiss_gdp])
-
-    df = df.join(pd.DataFrame(dict(pop=pop, gdp=gdp)))
-
-    df["country"] = (
-        df.index.to_series().str[:2].replace(dict(UK="GB", EL="GR", KV="XK"))
-    )
-
-    excludenuts = pd.Index(
-        (
-            "FRA10",
-            "FRA20",
-            "FRA30",
-            "FRA40",
-            "FRA50",
-            "PT200",
-            "PT300",
-            "ES707",
-            "ES703",
-            "ES704",
-            "ES705",
-            "ES706",
-            "ES708",
-            "ES709",
-            "FI2",
-            "FR9",
-        )
-    )
-    excludecountry = pd.Index(("MT", "TR", "LI", "IS", "CY"))
-
-    df = df.loc[df.index.difference(excludenuts)]
-    df = df.loc[~df.country.isin(excludecountry)]
-
-    manual = gpd.GeoDataFrame(
-        [
-            ["BA1", "BA", 3234.0],
-            ["RS1", "RS", 6664.0],
-            ["AL1", "AL", 2778.0],
-            ["XK1", "XK", 1587.0],
-        ],
-        columns=["NUTS_ID", "country", "pop"],
-        geometry=gpd.GeoSeries(),
-        crs=df.crs,
-    )
-    manual["geometry"] = manual["country"].map(country_shapes.to_crs(df.crs))
-    manual = manual.dropna()
-    manual = manual.set_index("NUTS_ID")
-
-    df = pd.concat([df, manual], sort=False)
-
-    df.loc["ME000", "pop"] = 617.0
-
-    return df
 
 
 def normalise_text(text):
@@ -377,6 +284,112 @@ def create_regions(
     return regions
 
 
+def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
+    """
+    Calculate the GDP p.c. and population values for non NUTS3 regions.
+
+    Parameters:
+        - country (str): The two-letter country code of the non-NUTS3 region.
+        - regions (GeoDataFrame): A GeoDataFrame containing the regions.
+        - gdp_non_nuts3 (str): The file path to the dataset containing the GDP p.c values
+          for non NUTS3 countries (e.g. MD, UA)
+        - pop_non_nuts3 (str): The file path to the dataset containing the POP values
+        for non NUTS3 countries (e.g. MD, UA)
+
+    Returns:
+    tuple: A tuple containing two GeoDataFrames:
+        - gdp: A GeoDataFrame with the mean GDP p.c. values mapped to each bus.
+        - pop: A GeoDataFrame with the summed POP values mapped to each bus.
+    """
+    region = regions.loc[regions.country == country, ["geometry"]]
+    # Create a bounding box for UA, MD from region shape, including a buffer of 10000 metres
+    bounding_box = (
+        gpd.GeoDataFrame(geometry=[box(*region.total_bounds)], crs=region.crs)
+        .to_crs(epsg=3857)
+        .buffer(10000)
+        .to_crs(region.crs)
+    )
+
+    # GDP Mapping
+    logger.info(f"Mapping mean GDP p.c. to non-NUTS3 region: {country}")
+    with xr.open_dataset(gdp_non_nuts3) as src_gdp:
+        src_gdp = src_gdp.where(
+            (src_gdp.longitude >= bounding_box.bounds.minx.min())
+            & (src_gdp.longitude <= bounding_box.bounds.maxx.max())
+            & (src_gdp.latitude >= bounding_box.bounds.miny.min())
+            & (src_gdp.latitude <= bounding_box.bounds.maxy.max()),
+            drop=True,
+        )
+        gdp = src_gdp.to_dataframe().reset_index()
+    gdp = gdp.rename(columns={"GDP_per_capita_PPP": "gdp"})
+    gdp = gdp[gdp.time == gdp.time.max()]
+    gdp_raster = gpd.GeoDataFrame(
+        gdp,
+        geometry=gpd.points_from_xy(gdp.longitude, gdp.latitude),
+        crs="EPSG:4326",
+    )
+    gdp_mapped = gpd.sjoin(gdp_raster, region, predicate="within")
+    gdp = (
+        gdp_mapped
+        .groupby(["id"])
+        .agg({"gdp": "mean"})
+    )
+
+    # Population Mapping
+    logger.info(f"Mapping summed population to non-NUTS3 region: {country}")
+    with rasterio.open(pop_non_nuts3) as src_pop:
+        # Mask the raster with the bounding box
+        out_image, out_transform = mask(src_pop, bounding_box, crop=True)
+        out_meta = src_pop.meta.copy()
+        out_meta.update(
+            {
+                "driver": "GTiff",
+                "height": out_image.shape[1],
+                "width": out_image.shape[2],
+                "transform": out_transform,
+            }
+        )
+    masked_data = out_image[0]  # Use the first band (rest is empty)
+    row_indices, col_indices = np.where(masked_data != src_pop.nodata)
+    values = masked_data[row_indices, col_indices]
+
+    # Affine transformation from pixel coordinates to geo coordinates
+    x_coords, y_coords = rasterio.transform.xy(out_transform, row_indices, col_indices)
+    pop_raster = pd.DataFrame({"x": x_coords, "y": y_coords, "pop": values})
+    pop_raster = gpd.GeoDataFrame(
+        pop_raster,
+        geometry=gpd.points_from_xy(pop_raster.x, pop_raster.y),
+        crs=src_pop.crs,
+    )
+    pop_mapped = gpd.sjoin(pop_raster, region, predicate="within")
+    pop = (
+        pop_mapped.groupby(["id"])
+        .agg({"pop": "sum"})
+        .reset_index()
+        .set_index("id")
+    )
+    gdp_pop = region.join(gdp).join(pop).drop(columns="geometry")
+    gdp_pop.fillna(0, inplace=True)
+
+    # Clean and rescale data to 2019 historical values
+    gdp_pop["gdp"] = gdp_pop["gdp"].round(0)
+    gdp_pop["pop"] = gdp_pop["pop"].div(1e3).round(0)
+
+    gdp_pop["pop"] = (
+        gdp_pop["pop"].div(gdp_pop["pop"].sum()).mul(OTHER_POP_2019[country])
+        .round(0)
+    )
+
+    gdp_pop["gdp"] = (
+        gdp_pop["gdp"].mul(1e9).div(gdp_pop["gdp"].sum())
+        .mul(OTHER_GDP_TOTAL_2019[country])
+        .div(EXCHANGE_EUR_USD_2019) /
+        (1e3*gdp_pop["pop"])
+    ).round(0)
+        
+    return gdp_pop
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -414,6 +427,7 @@ if __name__ == "__main__":
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
 
+    # GDP and POP for NUTS3 regions
     # GDP
     logger.info(f"Importing JRC ARDECO GDP data for year {GDP_YEAR}.")
     nuts3_gdp = pd.read_csv(snakemake.input.nuts3_gdp, index_col=[0])
@@ -430,21 +444,26 @@ if __name__ == "__main__":
     nuts3_pop = nuts3_pop[str(POP_YEAR)]
     regions["pop"] = nuts3_pop.div(1e3).round(0)
 
+    # GDP and POP for non-NUTS3 regions
+    other_countries = {"BA", "MD", "UA", "XK"}
+    other_gdp = snakemake.input.other_gdp
+    other_pop = snakemake.input.other_pop
 
-
-
-
-
-
-
-    # TODO update 2024 NUTS mapping, double check, create dedicated PR
-    # TODD remove redundant data and update downloader to directly access commission data
-    nuts3_shapes = nuts3(
-        country_shapes,
-        snakemake.input.nuts3,
-        snakemake.input.nuts3pop,
-        snakemake.input.nuts3gdp,
-        snakemake.input.ch_cantons,
-        snakemake.input.ch_popgdp,
+    gdp_pop = pd.concat(
+        [
+            calc_gdp_pop(country, regions, other_gdp, other_pop)
+            for country in other_countries
+        ],
+        axis=0,
     )
-    nuts3_shapes.reset_index().to_file(snakemake.output.nuts3_shapes)
+
+    # Merge NUTS3 and non-NUTS3 regions
+    regions.loc[gdp_pop.index, ["gdp", "pop"]] = gdp_pop[["gdp", "pop"]]
+
+    # Resort columns and rename index
+    regions = regions[["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]]
+    regions.index.name = "index"
+
+    # Export regions including GDP and POP data
+    logger.info(f"Exporting NUTS3 and ADM1 shapes with GDP and POP values to {snakemake.output.nuts3_shapes}.")
+    regions.reset_index().to_file(snakemake.output.nuts3_shapes)
