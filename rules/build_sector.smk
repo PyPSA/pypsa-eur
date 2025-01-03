@@ -584,13 +584,11 @@ rule build_industry_sector_ratios:
     params:
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
-        endo_industry=config_provider("sector","endo_industry", "enable"),
     input:
         ammonia_production=resources("ammonia_production.csv"),
         idees="data/jrc-idees-2021",
     output:
         industry_sector_ratios=resources("industry_sector_ratios.csv"),
-        steel_capacities=resources("steel/steel_capacities.csv"),  #ADB this output should be optional, but can't in the same rule, mmaybe I need to use this script for two jobs
     threads: 1
     resources:
         mem_mb=1000,

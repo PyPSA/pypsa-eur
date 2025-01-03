@@ -29,11 +29,6 @@ rule add_existing_baseyear:
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
-        old_steel_capacities=lambda w: (
-            resources("steel/steel_capacities.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
         steel_capacities=lambda w: (
             resources("steel/gem_capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)

@@ -1592,7 +1592,7 @@ def other_industrial_sectors():
 
     return df
 
-
+"""
 def steel_capacities():
 
     sector = "Iron and steel"
@@ -1634,7 +1634,7 @@ def steel_capacities():
 
     df.reset_index(drop=True, inplace=True)
     return df
-
+"""
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -1667,7 +1667,3 @@ if __name__ == "__main__":
 
     df.index.name = "MWh/tMaterial"
     df.to_csv(snakemake.output.industry_sector_ratios)
-
-    if endo_industry:
-        cap = steel_capacities()
-        cap.to_csv(snakemake.output.steel_capacities)
