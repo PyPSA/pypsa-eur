@@ -398,10 +398,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    # old nuts3
-    old = gpd.read_file("/home/bobby/projects/development/pypsa-eur/resources/shapes/nuts3_shapes.geojson") \
-        .set_index("index")
-
     # Offshore regions
     offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
