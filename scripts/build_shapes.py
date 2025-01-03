@@ -415,6 +415,7 @@ if __name__ == "__main__":
 
     country_shapes = regions.groupby("country")["geometry"].apply(lambda x: x.union_all())
     country_shapes.crs = regions.crs
+    country_shapes.index.name = "name"
     country_shapes.reset_index().to_file(snakemake.output.country_shapes)
 
     europe_shape = gpd.GeoDataFrame(

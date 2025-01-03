@@ -468,7 +468,9 @@ rule build_heat_totals:
         "../scripts/build_heat_totals.py"
 
 
-# TODO: update
+# TODO: update long-term to only need NUTS2021, nuts3_shapes.geojson
+# However: requires manual updating of NUTS code changes 2016 to 2021:
+# https://ec.europa.eu/eurostat/web/nuts/history
 rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),

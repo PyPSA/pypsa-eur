@@ -502,42 +502,10 @@ def input_conventional(w):
     }
 
 
-# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
-def input_gdp_pop_non_nuts3(w):
-    countries = set(config_provider("countries")(w))
-    if {"UA", "MD"}.intersection(countries):
-        return {"gdp_pop_non_nuts3": resources("gdp_pop_non_nuts3.geojson")}
-    return {}
-
-
-rule build_gdp_pop_non_nuts3:
-    params:
-        countries=config_provider("countries"),
-    input:
-        base_network=resources("networks/base_s.nc"),
-        regions=resources("regions_onshore_base_s.geojson"),
-        gdp_non_nuts3="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        pop_non_nuts3="data/bundle/ppp_2013_1km_Aggregated.tif",
-    output:
-        resources("gdp_pop_non_nuts3.geojson"),
-    log:
-        logs("build_gdp_pop_non_nuts3.log"),
-    benchmark:
-        benchmarks("build_gdp_pop_non_nuts3")
-    threads: 1
-    resources:
-        mem_mb=8000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_gdp_pop_non_nuts3.py"
-
-
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
     input:
-        unpack(input_gdp_pop_non_nuts3),
         base_network=resources("networks/base_s.nc"),
         regions=resources("regions_onshore_base_s.geojson"),
         nuts3=resources("nuts3_shapes.geojson"),
