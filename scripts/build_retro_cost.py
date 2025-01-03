@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
@@ -134,7 +132,8 @@ def get_average_temperature_during_heating_season(temperature, t_threshold=15):
     input:
         temperature : pd.Series(Index=time, values=temperature)
         t_threshold : threshold temperature for heating degree days (HDD)
-    returns:
+
+    Returns:
         average temperature
     """
     t_average_daily = temperature.resample("1D").mean()
@@ -367,11 +366,11 @@ def prepare_building_topology(u_values, same_building_topology=True):
 
     # get total area of building components
     for element in building_elements:
-        elements = ["A_{}_1".format(element), "A_{}_2".format(element)]
+        elements = [f"A_{element}_1", f"A_{element}_2"]
         data_tabula = pd.concat(
             [
                 data_tabula.drop(elements, axis=1),
-                data_tabula[elements].sum(axis=1).rename("A_{}".format(element)),
+                data_tabula[elements].sum(axis=1).rename(f"A_{element}"),
             ],
             axis=1,
         )
@@ -469,7 +468,7 @@ def prepare_building_topology(u_values, same_building_topology=True):
 
     # total buildings envelope surface [m^2]
     data_tabula["A_envelope"] = data_tabula[
-        ["A_{}".format(element) for element in building_elements]
+        [f"A_{element}" for element in building_elements]
     ].sum(axis=1)
 
     return data_tabula

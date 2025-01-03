@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
@@ -41,8 +40,8 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
         import platform
 
         import tabula as tbl
-    except:
-        ImportError("Please install tabula-py and platform")
+    except ImportError as e:
+        raise ImportError("Please install tabula-py and platform") from e
 
     system = platform.system()
     encoding = "cp1252" if system == "Windows" else "utf-8"

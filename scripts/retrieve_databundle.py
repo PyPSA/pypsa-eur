@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-# Copyright 2019-2024 Fabian Hofmann (TUB, FIAS), Fabian Neumann (TUB)
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT

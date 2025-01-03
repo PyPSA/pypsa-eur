@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
@@ -28,7 +27,7 @@ if __name__ == "__main__":
     demand = demand.xs(snakemake.params.energy_totals_year, level=1)
 
     # read port data into GeoDataFrame
-    with open(snakemake.input.ports, "r", encoding="latin_1") as f:
+    with open(snakemake.input.ports, encoding="latin_1") as f:
         ports = json.load(f)
     ports = pd.json_normalize(ports, "features", sep="_")
     coordinates = ports.geometry_coordinates

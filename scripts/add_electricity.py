@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+
 """
 Adds existing electrical generators, hydro-electric plants as well as
 greenfield and battery and hydrogen storage to the clustered network.
@@ -111,8 +111,6 @@ network with **zero** initial capacity:
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -502,9 +500,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
@@ -746,7 +742,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
 
 
-def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
+def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
     """
     Attach renewable capacities from the OPSD dataset to the network.
 

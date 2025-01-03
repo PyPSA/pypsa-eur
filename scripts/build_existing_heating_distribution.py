@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
@@ -28,14 +27,14 @@ Relevant settings:
     sector:
     existing_capacities:
 
-Notes:
-------
+Notes
+-----
 - Data for Albania, Montenegro and Macedonia is not included in input database and assumed 0.
 - Coal and oil boilers are assimilated to oil boilers.
 - All ground-source heat pumps are assumed in rural areas and all air-source heat pumps are assumed to be in urban areas.
 
-References:
------------
+References
+----------
 - "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
 
@@ -139,9 +138,9 @@ def build_existing_heating():
         )
         nodal_heat_name_tech[(f"{sector} urban decentral", "ground heat pump")] = 0.0
 
-        nodal_heat_name_tech[
-            (f"{sector} urban decentral", "air heat pump")
-        ] += nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        nodal_heat_name_tech[(f"{sector} urban decentral", "air heat pump")] += (
+            nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        )
         nodal_heat_name_tech[(f"{sector} rural", "air heat pump")] = 0.0
 
     nodal_heat_name_tech[("urban central", "ground heat pump")] = 0.0

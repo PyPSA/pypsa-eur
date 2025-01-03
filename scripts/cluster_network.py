@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
@@ -105,7 +104,6 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import configure_logging, set_scenario_config
-from base_network import append_bus_shapes
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -320,12 +318,14 @@ def cluster_regions(
     Cluster regions based on busmaps and save the results to a file and to the
     network.
 
-    Parameters:
+    Parameters
+    ----------
     - busmaps (list): A list of busmaps used for clustering.
     - regions (gpd.GeoDataFrame): The regions to cluster.
     - with_country (bool): Whether to keep country column.
 
-    Returns:
+    Returns
+    -------
     None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
@@ -125,8 +124,8 @@ def countries(naturalearth, country_list):
 
 def eez(eez, country_list):
     df = gpd.read_file(eez)
-    iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")
-    pol_type = ["200NM", "Overlapping claim"]
+    iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")  # noqa: F841
+    pol_type = ["200NM", "Overlapping claim"]  # noqa: F841
     df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()
     df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
