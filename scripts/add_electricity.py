@@ -1,6 +1,7 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+
 """
 Adds existing electrical generators, hydro-electric plants as well as
 greenfield and battery and hydrogen storage to the clustered network.
