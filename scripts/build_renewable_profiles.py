@@ -201,7 +201,9 @@ if __name__ == "__main__":
     if client is not None:
         resource["dask_kwargs"] = {"scheduler": client}
 
-    logger.info(f"Calculate average capacity factor per grid cell for technology {technology}...")
+    logger.info(
+        f"Calculate average capacity factor per grid cell for technology {technology}..."
+    )
     start = time.time()
 
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
@@ -212,7 +214,9 @@ if __name__ == "__main__":
     )
 
     nbins = params.get("resource_classes", 1)
-    logger.info(f"Create masks for {nbins} resource classes for technology {technology}...")
+    logger.info(
+        f"Create masks for {nbins} resource classes for technology {technology}..."
+    )
 
     epsilon = 1e-3
     cf_min, cf_max = (
