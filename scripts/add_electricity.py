@@ -126,6 +126,7 @@ from _helpers import (
 )
 from powerplantmatching.export import map_country_bus
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
+from typing import Iterable, Any
 
 idx = pd.IndexSlice
 
@@ -134,6 +135,10 @@ logger = logging.getLogger(__name__)
 
 def normed(s):
     return s / s.sum()
+
+
+def flatten(t: Iterable[Any]) -> str:
+    return ' '.join(map(str, t))
 
 
 def calculate_annuity(n, r):
@@ -483,9 +488,12 @@ def attach_wind_and_solar(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             supcar = car.split("-", 2)[0]
             if supcar == "offwind":
                 distance = ds["average_distance"].to_pandas()
+                distance.index = distance.index.map(flatten)
                 submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
                 underground_cost = costs.at[
                     car + "-connection-underground", "capital_cost"
@@ -505,18 +513,27 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
+            buses = ds.indexes["bus_bin"].get_level_values("bus")
+            bus_bins = ds.indexes["bus_bin"].map(flatten)
+
+            p_nom_max = ds["p_nom_max"].to_pandas()
+            p_nom_max.index = p_nom_max.index.map(flatten)
+
+            p_max_pu = ds["profile"].to_pandas()
+            p_max_pu.columns = p_max_pu.columns.map(flatten)
+
             n.add(
                 "Generator",
-                ds.indexes["bus"],
-                " " + car,
-                bus=ds.indexes["bus"],
+                bus_bins,
+                suffix=" " + car,
+                bus=buses,
                 carrier=car,
                 p_nom_extendable=car in extendable_carriers["Generator"],
-                p_nom_max=ds["p_nom_max"].to_pandas(),
+                p_nom_max=p_nom_max,
                 marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
                 efficiency=costs.at[supcar, "efficiency"],
-                p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
+                p_max_pu=p_max_pu,
                 lifetime=costs.at[supcar, "lifetime"],
             )
 
