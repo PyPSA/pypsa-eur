@@ -760,9 +760,9 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
 
 
-def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
+def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
     """
-    Attach renewable capacities from the OPSD dataset to the network.
+    Attach renewable capacities from the GEM dataset to the network.
 
     Args:
     - n: The PyPSA network to attach the capacities to.
@@ -772,14 +772,14 @@ def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> 
     - None
     """
     tech_string = ", ".join(sum(tech_map.values(), []))
-    logger.info(f"Using OPSD renewable capacities for carriers {tech_string}.")
+    logger.info(f"Using GEM renewable capacities for carriers {tech_string}.")
 
-    df = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
+    df = pm.data.GEM().powerplant.convert_country_to_alpha2()
     technology_b = ~df.Technology.isin(["Onshore", "Offshore"])
     df["Fueltype"] = df.Fueltype.where(technology_b, df.Technology).replace(
         {"Solar": "PV"}
     )
-    df = df.query("Fueltype in @tech_map").powerplant.convert_country_to_alpha2()
+    df = df.query("Fueltype in @tech_map")
     df = df.dropna(subset=["lat", "lon"])
 
     for fueltype, carriers in tech_map.items():
@@ -787,6 +787,7 @@ def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> 
         buses = n.buses.loc[gens.bus.unique()]
         gens_per_bus = gens.groupby("bus").p_nom.count()
 
+        # assuming equal distribution of capacities per generator at each bus
         caps = map_country_bus(df.query("Fueltype == @fueltype"), buses)
         caps = caps.groupby(["bus"]).Capacity.sum()
         caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
@@ -1097,8 +1098,8 @@ if __name__ == "__main__":
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
-            if estimate_renewable_caps["from_opsd"]:
-                attach_OPSD_renewables(n, tech_map)
+            if estimate_renewable_caps["from_gem"]:
+                attach_GEM_renewables(n, tech_map)
 
             estimate_renewable_capacities(
                 n, year, tech_map, expansion_limit, params.countries
