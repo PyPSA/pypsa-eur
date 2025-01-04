@@ -111,6 +111,8 @@ network with **zero** initial capacity:
 """
 
 import logging
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -126,7 +128,6 @@ from _helpers import (
 )
 from powerplantmatching.export import map_country_bus
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
-from typing import Iterable, Any
 
 idx = pd.IndexSlice
 
@@ -138,7 +139,7 @@ def normed(s):
 
 
 def flatten(t: Iterable[Any]) -> str:
-    return ' '.join(map(str, t))
+    return " ".join(map(str, t))
 
 
 def calculate_annuity(n, r):
