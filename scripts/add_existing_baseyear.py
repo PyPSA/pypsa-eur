@@ -21,9 +21,9 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
+from build_energy_totals import cartesian
 from definitions.heat_system import HeatSystem
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
-from build_energy_totals import cartesian
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -87,7 +87,9 @@ def add_existing_renewables(df_agg, costs):
         gen_i = n.generators.query("carrier == @carrier").index
         carrier_gens = n.generators.loc[gen_i]
         res_capacities = []
-        for country, group in carrier_gens.groupby(carrier_gens.bus.map(n.buses.country)):
+        for country, group in carrier_gens.groupby(
+            carrier_gens.bus.map(n.buses.country)
+        ):
             fraction = group.p_nom_max / group.p_nom_max.sum()
             res_capacities.append(cartesian(df.loc[country], fraction))
         res_capacities = pd.concat(res_capacities, axis=1).T

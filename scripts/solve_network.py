@@ -128,11 +128,7 @@ def add_land_use_constraint(n):
     ]:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.split(" ").str[:3].str.join(" ")
-        existing = (
-            n.generators.loc[ext_i, "p_nom"]
-            .groupby(grouper)
-            .sum()
-        )
+        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
         existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 

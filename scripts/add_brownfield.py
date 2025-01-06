@@ -17,8 +17,8 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_existing_baseyear import add_build_year_to_new_assets
 from add_electricity import flatten
+from add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
@@ -207,11 +207,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
                 (y for y in ds.year.values if y <= year), default=min(ds.year.values)
             )
 
-            p_max_pu = (
-                ds["profile"]
-                .sel(year=closest_year)
-                .to_pandas()
-            )
+            p_max_pu = ds["profile"].sel(year=closest_year).to_pandas()
             p_max_pu.columns = p_max_pu.columns.map(flatten) + f" {carrier}"
 
             # temporal_clustering
