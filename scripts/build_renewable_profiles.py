@@ -180,9 +180,9 @@ if __name__ == "__main__":
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
         regions = regions.loc[offshore_regions]
-        regions = regions.map(
-            lambda g: _simplify_polys(g, minarea=1)
-        ).set_crs(regions.crs)
+        regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
+            regions.crs
+        )
     else:
         # for onshore regions, the representative point of the region is used
         regions = regions.representative_point()
