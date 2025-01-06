@@ -122,9 +122,9 @@ import time
 import atlite
 import geopandas as gpd
 import numpy as np
-import pandas as pd
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
+from atlite.gis import ExclusionContainer
 from build_shapes import _simplify_polys
 from dask.distributed import Client
 
@@ -218,17 +218,22 @@ if __name__ == "__main__":
         f"Create masks for {nbins} resource classes for technology {technology}..."
     )
 
+    # indicator matrix for which cells touch which regions
+    I = np.ceil(cutout.availabilitymatrix(regions, ExclusionContainer()))
+    cf_by_bus = capacity_factor * I.where(I > 0)
+
     epsilon = 1e-3
     cf_min, cf_max = (
-        capacity_factor.min() - epsilon,
-        capacity_factor.max() + epsilon,
+        cf_by_bus.min(dim=["x", "y"]) - epsilon,
+        cf_by_bus.max(dim=["x", "y"]) + epsilon,
     )
-    bins = np.linspace(cf_min, cf_max, nbins + 1)
-    class_masks = [
-        np.logical_and(bins[i] <= capacity_factor, capacity_factor < bins[i + 1])
-        for i in range(nbins)
-    ]
-    class_masks = xr.concat(class_masks, pd.Index(range(nbins), name="bin"))
+    normed_bins = xr.DataArray(np.linspace(0, 1, nbins + 1), dims=["bin"])
+    bins = cf_min + (cf_max - cf_min) * normed_bins
+
+    cf_by_bus_bin = cf_by_bus.expand_dims(bin=range(nbins))
+    lower_edges = bins[:, :-1]
+    upper_edges = bins[:, 1:]
+    class_masks = (cf_by_bus_bin >= lower_edges) & (cf_by_bus_bin < upper_edges)
 
     layout = capacity_factor * area * capacity_per_sqkm
 
