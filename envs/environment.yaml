@@ -56,8 +56,7 @@ dependencies:
 # GIS dependencies:
 - cartopy
 - descartes
-- rasterio==1.4.1
-- libgdal-core<3.10.0 # rasterio>=1.4.2 needed for GDAL 3.10
+- rasterio
 
 # Development dependencies
 - pre-commit
