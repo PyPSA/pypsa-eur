@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     profiles = []
     for year, model in models.items():
-    class_regions.to_file(snakemake.output.class_regions)
+        logger.info(
             f"Calculate weighted capacity factor time series for model {model} for technology {technology}..."
         )
         start = time.time()
