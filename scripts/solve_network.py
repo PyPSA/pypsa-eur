@@ -127,9 +127,10 @@ def add_land_use_constraint(n):
         "offwind-float",
     ]:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
+        grouper = n.generators.loc[ext_i].index.str.split(" ").str[:3].str.join(" ")
         existing = (
             n.generators.loc[ext_i, "p_nom"]
-            .groupby(n.generators.bus.map(n.buses.location))
+            .groupby(grouper)
             .sum()
         )
         existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
