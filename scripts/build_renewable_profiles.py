@@ -179,6 +179,9 @@ if __name__ == "__main__":
     )
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
+    # indicator matrix for which cells touch which regions
+    I = np.ceil(cutout.availabilitymatrix(regions, ExclusionContainer()))
+    I = I.where(I > 0)
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
@@ -207,6 +210,7 @@ if __name__ == "__main__":
     start = time.time()
 
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
+    cf_by_bus = capacity_factor * I
 
     duration = time.time() - start
     logger.info(
@@ -217,10 +221,6 @@ if __name__ == "__main__":
     logger.info(
         f"Create masks for {nbins} resource classes for technology {technology}..."
     )
-
-    # indicator matrix for which cells touch which regions
-    I = np.ceil(cutout.availabilitymatrix(regions, ExclusionContainer()))
-    cf_by_bus = capacity_factor * I.where(I > 0)
 
     epsilon = 1e-3
     cf_min, cf_max = (
