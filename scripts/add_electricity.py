@@ -829,8 +829,8 @@ def estimate_renewable_capacities(
         f"\n{capacities.groupby('Technology').sum().div(1e3).round(2)}"
     )
 
-    for ppm_technology, techs in tech_map.items():
-        tech_i = n.generators.query("carrier in @techs").index
+    for ppm_technology, tech in tech_map.items():
+        tech_i = n.generators.query("carrier == @tech").index
         if ppm_technology in capacities.index.get_level_values("Technology"):
             stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
         else:
