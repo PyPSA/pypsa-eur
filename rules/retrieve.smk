@@ -18,7 +18,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     datafiles = [
         "je-e-21.03.02.xls",
         "nama_10r_3popgdp.tsv.gz",
-        "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "emobility/KFZ__count",
