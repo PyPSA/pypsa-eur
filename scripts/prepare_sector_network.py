@@ -22,7 +22,12 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import calculate_annuity, sanitize_carriers, sanitize_locations
+from add_electricity import (
+    calculate_annuity,
+    sanitize_carriers,
+    sanitize_locations,
+    flatten,
+)
 from build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
@@ -440,7 +445,10 @@ def update_wind_solar_costs(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             distance = ds["average_distance"].to_pandas()
+            distance.index = distance.index.map(flatten)
             submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
             underground_cost = costs.at[tech + "-connection-underground", "fixed"]
             connection_cost = line_length_factor * (
@@ -1245,11 +1253,10 @@ def insert_electricity_distribution_grid(n, costs):
     # set existing solar to cost of utility cost rather the 50-50 rooftop-utility
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "fixed"]
-    pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
 
-    # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
-    # i.e. 2 kW/person (population data is in thousands of people) so we get MW
-    potential = 0.1 * 20 * pop_solar
+    fn = snakemake.input.solar_rooftop_potentials
+    potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+    potential.index = potential.index.map(flatten) + " solar"
 
     n.add(
         "Generator",

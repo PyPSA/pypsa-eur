@@ -52,6 +52,28 @@ rule build_clustered_population_layouts:
         "../scripts/build_clustered_population_layouts.py"
 
 
+rule build_clustered_solar_rooftop_potentials:
+    input:
+        pop_layout=resources("pop_layout_total.nc"),
+        class_regions=resources("regions_by_class_{clusters}_solar.geojson"),
+        cutout=lambda w: "cutouts/"
+        + CDIR
+        + config_provider("atlite", "default_cutout")(w)
+        + ".nc",
+    output:
+        potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
+    log:
+        logs("build_clustered_solar_rooftop_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb=10000,
+    benchmark:
+        benchmarks("build_clustered_solar_rooftop_potentials/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_clustered_solar_rooftop_potentials.py"
+
+
 rule build_simplified_population_layouts:
     input:
         pop_layout_total=resources("pop_layout_total.nc"),
@@ -1183,6 +1205,7 @@ rule prepare_sector_network:
             if config_provider("sector", "solar_thermal")(w)
             else []
         ),
+        solar_rooftop_potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
         egs_potentials=lambda w: (
             resources("egs_potentials_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
