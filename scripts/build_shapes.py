@@ -266,7 +266,6 @@ def create_regions(
     ]
     regions.index.name = "index"
 
-
     # Only include countries in the config
     regions = regions.query("country in @country_list")
 
@@ -377,7 +376,9 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_shapes", configfiles="config/test/config.electricity.yaml")
+        snakemake = mock_snakemake(
+            "build_shapes", configfiles="config/test/config.electricity.yaml"
+        )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -398,7 +399,6 @@ if __name__ == "__main__":
         snakemake.input.nuts3_pop,
         snakemake.input.other_gdp,
         snakemake.input.other_pop,
-
     )
 
     country_shapes = regions.groupby("country")["geometry"].apply(
