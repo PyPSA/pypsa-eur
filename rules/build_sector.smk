@@ -1205,7 +1205,11 @@ rule prepare_sector_network:
             if config_provider("sector", "solar_thermal")(w)
             else []
         ),
-        solar_rooftop_potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
+        solar_rooftop_potentials=lambda w: (
+            resources("solar_rooftop_potentials_s_{clusters}.csv")
+            if "solar" in config_provider("electricity", "renewable_carriers")(w)
+            else []
+        ),
         egs_potentials=lambda w: (
             resources("egs_potentials_{clusters}.csv")
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
