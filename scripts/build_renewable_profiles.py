@@ -186,14 +186,26 @@ if __name__ == "__main__":
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
+        dist_regions = regions.loc[offshore_regions]
+        dist_regions = dist_regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
+            dist_regions.crs
         regions = regions.loc[offshore_regions]
         regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             regions.crs
+        dist_regions = regions.loc[offshore_regions]
+        dist_regions = dist_regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
+            dist_regions.crs
         )
     else:
         # for onshore regions, the representative point of the region is used
+        dist_regions = regions.representative_point()
+    dist_regions = dist_regions.geometry.to_crs(3035)
+    regions = regions.geometry
         regions = regions.representative_point()
     regions = regions.geometry.to_crs(3035)
+        dist_regions = regions.representative_point()
+    dist_regions = dist_regions.geometry.to_crs(3035)
+    regions = regions.geometry
     buses = regions.index
 
     area = cutout.grid.to_crs(3035).area / 1e6
@@ -307,7 +319,7 @@ if __name__ == "__main__":
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
-        distances = co.distance(regions[bus]).div(1e3)  # km
+        distances = co.distance(dist_regions[bus]).div(1e3)  # km
         average_distance.append((distances * (row / row.sum())).sum())
 
     average_distance = xr.DataArray(average_distance, [bus_bins]).unstack("bus_bin")
