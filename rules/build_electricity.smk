@@ -137,8 +137,8 @@ rule build_shapes:
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
-        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
+        other_gdp="data/sandbox/GDP_per_capita_PPP_1990_2015_v2.nc", # TODO: update links to data/bundle after data bundle update
+        other_pop="data/sandbox/ppp_2019_1km_Aggregated.tif", # TODO: update links to data/bundle after data bundle update
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
