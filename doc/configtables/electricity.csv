@@ -36,9 +36,9 @@ estimate_renewable_capacities,,,
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."
 -- technology_mapping,,,Mapping between PyPSA-Eur and powerplantmatching technology names
--- -- Offshore,--,"Any subset of {offwind-ac, offwind-dc, offwind-float}","List of PyPSA-Eur carriers that is considered as (IRENA, GEM) onshore technology."
--- -- Offshore,--,{onwind},"List of PyPSA-Eur carriers that is considered as (IRENA, GEM) offshore technology."
--- -- PV,--,{solar},"List of PyPSA-Eur carriers that is considered as (IRENA, GEM) PV technology."
+-- -- Offshore,--,"{onwind}","PyPSA-Eur carrier that is considered for existing onshore wind capacities (IRENA, GEM)."
+-- -- Offshore,--,"Any of {offwind-ac, offwind-dc, offwind-float}","PyPSA-Eur carrier that is considered for existing offshore wind technology (IRENA, GEM)."
+-- -- PV,--,{solar},"PyPSA-Eur carrier that is considered for existing solar PV capacities (IRENA, GEM)."
 autarky,,,
 -- enable,bool,true or false,Require each node to be autarkic by removing all lines and links.
 -- by_country,bool,true or false,Require each country to be autarkic by removing all cross-border lines and links. ``electricity: autarky`` must be enabled.

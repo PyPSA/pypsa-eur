@@ -463,6 +463,13 @@ def input_profile_tech(w):
     }
 
 
+def input_class_regions(w):
+    return {
+        f"class_regions_{tech}": resources(f"regions_by_class_{{clusters}}_{tech}.geojson")
+        for tech in config_provider("electricity", "renewable_carriers")(w)
+    }
+
+
 def input_conventional(w):
     return {
         f"conventional_{carrier}_{attr}": fn
@@ -679,6 +686,7 @@ rule add_electricity:
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
     input:
         unpack(input_profile_tech),
+        unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(

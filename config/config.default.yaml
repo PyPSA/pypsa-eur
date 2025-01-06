@@ -122,9 +122,9 @@ electricity:
     year: 2020
     expansion_limit: false
     technology_mapping:
-      Offshore: [offwind-ac, offwind-dc, offwind-float]
-      Onshore: [onwind]
-      PV: [solar]
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
 
   autarky:
     enable: false

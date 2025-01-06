@@ -116,6 +116,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
@@ -126,7 +127,6 @@ from _helpers import (
     set_scenario_config,
     update_p_nom_max,
 )
-from powerplantmatching.export import map_country_bus
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
 
 idx = pd.IndexSlice
@@ -771,7 +771,7 @@ def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> N
     Returns:
     - None
     """
-    tech_string = ", ".join(sum(tech_map.values(), []))
+    tech_string = ", ".join(tech_map.values())
     logger.info(f"Using GEM renewable capacities for carriers {tech_string}.")
 
     df = pm.data.GEM().powerplant.convert_country_to_alpha2()
@@ -779,21 +779,21 @@ def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> N
     df["Fueltype"] = df.Fueltype.where(technology_b, df.Technology).replace(
         {"Solar": "PV"}
     )
-    df = df.query("Fueltype in @tech_map")
-    df = df.dropna(subset=["lat", "lon"])
 
-    for fueltype, carriers in tech_map.items():
-        gens = n.generators[lambda df: df.carrier.isin(carriers)]
-        buses = n.buses.loc[gens.bus.unique()]
-        gens_per_bus = gens.groupby("bus").p_nom.count()
+    for fueltype, carrier in tech_map.items():
 
-        # assuming equal distribution of capacities per generator at each bus
-        caps = map_country_bus(df.query("Fueltype == @fueltype"), buses)
-        caps = caps.groupby(["bus"]).Capacity.sum()
-        caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
+        fn = snakemake.input.get(f"class_regions_{carrier}")
+        class_regions = gpd.read_file(fn)
 
-        n.generators.update({"p_nom": gens.bus.map(caps).dropna()})
-        n.generators.update({"p_nom_min": gens.bus.map(caps).dropna()})
+        df_fueltype = df.query("Fueltype == @fueltype")
+        geometry = gpd.points_from_xy(df_fueltype.lon, df_fueltype.lat)
+        caps = gpd.GeoDataFrame(df_fueltype, geometry=geometry, crs=4326)
+        caps = caps.sjoin(class_regions)
+        caps = caps.groupby(["bus", "bin"]).Capacity.sum()
+        caps.index = caps.index.map(flatten) + " " + carrier
+
+        n.generators.update({"p_nom": caps.dropna()})
+        n.generators.update({"p_nom_min": caps.dropna()})
 
 
 def estimate_renewable_capacities(
