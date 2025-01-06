@@ -123,6 +123,7 @@ from itertools import product
 import atlite
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
 from atlite.gis import ExclusionContainer
@@ -236,17 +237,25 @@ if __name__ == "__main__":
     upper_edges = bins[:, 1:]
     class_masks = (cf_by_bus_bin >= lower_edges) & (cf_by_bus_bin < upper_edges)
 
-    grid = cutout.grid.set_index(["y", "x"])
-    class_regions = {}
-    for bus, bin_id in product(buses, range(nbins)):
-        bus_bin_mask = (
-            class_masks.sel(bus=bus, bin=bin_id).stack(spatial=["y", "x"]).to_pandas()
+    if nbins == 1:
+        bus_bin_mi = pd.MultiIndex.from_product(
+            [resource_regions.index, [0]], names=["bus", "bin"]
         )
-        grid_cells = grid.loc[bus_bin_mask]
-        geometry = grid_cells.intersection(resource_regions.loc[bus]).union_all()
-        class_regions[(bus, bin_id)] = geometry
-    class_regions = gpd.GeoSeries(class_regions, crs=4326)
-    class_regions.index.names = ["bus", "bin"]
+        class_regions = resource_regions.set_axis(bus_bin_mi)
+    else:
+        grid = cutout.grid.set_index(["y", "x"])
+        class_regions = {}
+        for bus, bin_id in product(buses, range(nbins)):
+            bus_bin_mask = (
+                class_masks.sel(bus=bus, bin=bin_id)
+                .stack(spatial=["y", "x"])
+                .to_pandas()
+            )
+            grid_cells = grid.loc[bus_bin_mask]
+            geometry = grid_cells.intersection(resource_regions.loc[bus]).union_all()
+            class_regions[(bus, bin_id)] = geometry
+        class_regions = gpd.GeoSeries(class_regions, crs=4326)
+        class_regions.index.names = ["bus", "bin"]
     class_regions.to_file(snakemake.output.class_regions)
 
     duration = time.time() - start
