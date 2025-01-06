@@ -15,13 +15,19 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_clustered_solar_rooftop_potentials", clusters=5, configfiles="config/test/config.myopic.yaml")
+        snakemake = mock_snakemake(
+            "build_clustered_solar_rooftop_potentials",
+            clusters=5,
+            configfiles="config/test/config.myopic.yaml",
+        )
 
     set_scenario_config(snakemake)
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 
-    class_regions = gpd.read_file(snakemake.input.class_regions).set_index(["bus", "bin"])
+    class_regions = gpd.read_file(snakemake.input.class_regions).set_index(
+        ["bus", "bin"]
+    )
 
     I = cutout.indicatormatrix(class_regions)  # noqa: E741
 

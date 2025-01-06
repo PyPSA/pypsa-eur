@@ -24,9 +24,9 @@ from _helpers import (
 )
 from add_electricity import (
     calculate_annuity,
+    flatten,
     sanitize_carriers,
     sanitize_locations,
-    flatten,
 )
 from build_energy_totals import (
     build_co2_totals,
