@@ -114,9 +114,9 @@ import logging
 from collections.abc import Iterable
 from typing import Any
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
@@ -781,7 +781,6 @@ def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> N
     )
 
     for fueltype, carrier in tech_map.items():
-
         fn = snakemake.input.get(f"class_regions_{carrier}")
         class_regions = gpd.read_file(fn)
 
