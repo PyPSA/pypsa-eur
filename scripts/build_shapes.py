@@ -137,6 +137,10 @@ def create_regions(
     ua_adm1_path,
     xk_adm1_path,
     offshore_shapes,
+    nuts3_gdp,
+    nuts3_pop,
+    other_gdp,
+    other_pop,
 ):
     """
     Create regions by processing NUTS and non-NUTS geographical shapes.
@@ -169,9 +173,6 @@ def create_regions(
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("EL", "GR")
     regions.loc[regions.CNTR_CODE == "UK", "CNTR_CODE"] = "GB"  # Rename "UK" to "GB"
     regions["NUTS_ID"] = regions["NUTS_ID"].str.replace("UK", "GB")
-
-    # Only include countries in the config
-    regions = regions.query("CNTR_CODE in @country_list")
 
     # Create new df
     regions = regions[["NUTS_ID", "CNTR_CODE", "NAME_LATN", "geometry"]]
@@ -226,6 +227,48 @@ def create_regions(
     regions["geometry"] = regions["geometry"].difference(
         offshore_shapes.geometry.union_all()
     )
+
+    # GDP and POP for NUTS3 regions
+    # GDP
+    logger.info(f"Importing JRC ARDECO GDP data for year {GDP_YEAR}.")
+    nuts3_gdp = pd.read_csv(nuts3_gdp, index_col=[0])
+    nuts3_gdp = nuts3_gdp.query("LEVEL_ID == 3 and UNIT == 'EUR'")
+    nuts3_gdp.index = nuts3_gdp.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_gdp = nuts3_gdp[str(GDP_YEAR)]
+    regions["gdp"] = nuts3_gdp
+
+    # Population
+    logger.info(f"Importing JRC ARDECO population data for year {POP_YEAR}.")
+    nuts3_pop = pd.read_csv(nuts3_pop, index_col=[0])
+    nuts3_pop = nuts3_pop.query("LEVEL_ID == 3")
+    nuts3_pop.index = nuts3_pop.index.str.replace("UK", "GB").str.replace("EL", "GR")
+    nuts3_pop = nuts3_pop[str(POP_YEAR)]
+    regions["pop"] = nuts3_pop.div(1e3).round(0)
+
+    # GDP and POP for non-NUTS3 regions
+    other_countries = {"BA", "MD", "UA", "XK"}
+
+    if any(country in country_list for country in other_countries):
+        gdp_pop = pd.concat(
+            [
+                calc_gdp_pop(country, regions, other_gdp, other_pop)
+                for country in other_countries
+            ],
+            axis=0,
+        )
+
+        # Merge NUTS3 and non-NUTS3 regions
+        regions.loc[gdp_pop.index, ["gdp", "pop"]] = gdp_pop[["gdp", "pop"]]
+
+    # Resort columns and rename index
+    regions = regions[
+        ["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]
+    ]
+    regions.index.name = "index"
+
+
+    # Only include countries in the config
+    regions = regions.query("country in @country_list")
 
     return regions
 
@@ -334,7 +377,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_shapes")
+        snakemake = mock_snakemake("build_shapes", configfiles="config/test/config.electricity.yaml")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -351,6 +394,11 @@ if __name__ == "__main__":
         snakemake.input.ua_adm1,
         snakemake.input.xk_adm1,
         offshore_shapes,
+        snakemake.input.nuts3_gdp,
+        snakemake.input.nuts3_pop,
+        snakemake.input.other_gdp,
+        snakemake.input.other_pop,
+
     )
 
     country_shapes = regions.groupby("country")["geometry"].apply(
@@ -365,45 +413,6 @@ if __name__ == "__main__":
         crs=country_shapes.crs,
     )
     europe_shape.reset_index().to_file(snakemake.output.europe_shape)
-
-    # GDP and POP for NUTS3 regions
-    # GDP
-    logger.info(f"Importing JRC ARDECO GDP data for year {GDP_YEAR}.")
-    nuts3_gdp = pd.read_csv(snakemake.input.nuts3_gdp, index_col=[0])
-    nuts3_gdp = nuts3_gdp.query("LEVEL_ID == 3 and UNIT == 'EUR'")
-    nuts3_gdp.index = nuts3_gdp.index.str.replace("UK", "GB").str.replace("EL", "GR")
-    nuts3_gdp = nuts3_gdp[str(GDP_YEAR)]
-    regions["gdp"] = nuts3_gdp
-
-    # Population
-    logger.info(f"Importing JRC ARDECO population data for year {POP_YEAR}.")
-    nuts3_pop = pd.read_csv(snakemake.input.nuts3_pop, index_col=[0])
-    nuts3_pop = nuts3_pop.query("LEVEL_ID == 3")
-    nuts3_pop.index = nuts3_pop.index.str.replace("UK", "GB").str.replace("EL", "GR")
-    nuts3_pop = nuts3_pop[str(POP_YEAR)]
-    regions["pop"] = nuts3_pop.div(1e3).round(0)
-
-    # GDP and POP for non-NUTS3 regions
-    other_countries = {"BA", "MD", "UA", "XK"}
-    other_gdp = snakemake.input.other_gdp
-    other_pop = snakemake.input.other_pop
-
-    gdp_pop = pd.concat(
-        [
-            calc_gdp_pop(country, regions, other_gdp, other_pop)
-            for country in other_countries
-        ],
-        axis=0,
-    )
-
-    # Merge NUTS3 and non-NUTS3 regions
-    regions.loc[gdp_pop.index, ["gdp", "pop"]] = gdp_pop[["gdp", "pop"]]
-
-    # Resort columns and rename index
-    regions = regions[
-        ["name", "level1", "level2", "level3", "gdp", "pop", "country", "geometry"]
-    ]
-    regions.index.name = "index"
 
     # Export regions including GDP and POP data
     logger.info(
