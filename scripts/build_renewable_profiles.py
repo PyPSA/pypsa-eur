@@ -124,6 +124,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
+from itertools import product
 from atlite.gis import ExclusionContainer
 from build_shapes import _simplify_polys
 from dask.distributed import Client
@@ -221,6 +222,7 @@ if __name__ == "__main__":
     logger.info(
         f"Create masks for {nbins} resource classes for technology {technology}..."
     )
+    start = time.time()
 
     epsilon = 1e-3
     cf_min, cf_max = (
@@ -234,6 +236,22 @@ if __name__ == "__main__":
     lower_edges = bins[:, :-1]
     upper_edges = bins[:, 1:]
     class_masks = (cf_by_bus_bin >= lower_edges) & (cf_by_bus_bin < upper_edges)
+
+    grid = cutout.grid.set_index(["y", "x"])
+    class_regions = {}
+    for bus, bin_id in product(buses, range(nbins)):
+        bus_bin_mask = class_masks.sel(bus=bus, bin=bin_id).stack(spatial=["y", "x"]).to_pandas()
+        grid_cells = grid.loc[bus_bin_mask]
+        geometry = grid_cells.intersection(regions.loc[bus]).union_all()
+        class_regions[(bus, bin_id)] = geometry
+    class_regions = gpd.GeoSeries(class_regions, crs=4326)
+    class_regions.index.names = ["bus", "bin"]
+    class_regions.to_netcdf(snakemake.output.class_regions)
+
+    duration = time.time() - start
+    logger.info(
+        f"Completed resource class calculation for technology {technology} ({duration:2.2f}s)"
+    )
 
     layout = capacity_factor * area * capacity_per_sqkm
 
