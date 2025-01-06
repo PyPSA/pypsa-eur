@@ -118,13 +118,13 @@ adding up the installable potentials of the individual grid cells.
 
 import logging
 import time
+from itertools import product
 
 import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
-from itertools import product
 from atlite.gis import ExclusionContainer
 from build_shapes import _simplify_polys
 from dask.distributed import Client
@@ -240,7 +240,9 @@ if __name__ == "__main__":
     grid = cutout.grid.set_index(["y", "x"])
     class_regions = {}
     for bus, bin_id in product(buses, range(nbins)):
-        bus_bin_mask = class_masks.sel(bus=bus, bin=bin_id).stack(spatial=["y", "x"]).to_pandas()
+        bus_bin_mask = (
+            class_masks.sel(bus=bus, bin=bin_id).stack(spatial=["y", "x"]).to_pandas()
+        )
         grid_cells = grid.loc[bus_bin_mask]
         geometry = grid_cells.intersection(regions.loc[bus]).union_all()
         class_regions[(bus, bin_id)] = geometry
