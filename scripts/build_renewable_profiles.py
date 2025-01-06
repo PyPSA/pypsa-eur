@@ -189,20 +189,9 @@ if __name__ == "__main__":
         dist_regions = regions.loc[offshore_regions]
         dist_regions = dist_regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             dist_regions.crs
-        regions = regions.loc[offshore_regions]
-        regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
-            regions.crs
-        dist_regions = regions.loc[offshore_regions]
-        dist_regions = dist_regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
-            dist_regions.crs
         )
     else:
         # for onshore regions, the representative point of the region is used
-        dist_regions = regions.representative_point()
-    dist_regions = dist_regions.geometry.to_crs(3035)
-    regions = regions.geometry
-        regions = regions.representative_point()
-    regions = regions.geometry.to_crs(3035)
         dist_regions = regions.representative_point()
     dist_regions = dist_regions.geometry.to_crs(3035)
     regions = regions.geometry
@@ -260,7 +249,7 @@ if __name__ == "__main__":
         class_regions[(bus, bin_id)] = geometry
     class_regions = gpd.GeoSeries(class_regions, crs=4326)
     class_regions.index.names = ["bus", "bin"]
-    class_regions.to_netcdf(snakemake.output.class_regions)
+    class_regions.to_file(snakemake.output.class_regions)
 
     duration = time.time() - start
     logger.info(
@@ -271,7 +260,7 @@ if __name__ == "__main__":
 
     profiles = []
     for year, model in models.items():
-        logger.info(
+    class_regions.to_file(snakemake.output.class_regions)
             f"Calculate weighted capacity factor time series for model {model} for technology {technology}..."
         )
         start = time.time()
