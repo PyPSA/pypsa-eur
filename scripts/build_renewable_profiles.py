@@ -173,28 +173,20 @@ if __name__ == "__main__":
 
     availability = xr.open_dataarray(snakemake.input.availability_matrix)
 
-    regions = gpd.read_file(snakemake.input.regions)
-    assert not regions.empty, (
-        f"List of regions in {snakemake.input.regions} is empty, please "
-        "disable the corresponding renewable technology"
-    )
+    regions = gpd.read_file(snakemake.input.distance_regions)
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
-    # indicator matrix for which cells touch which regions
-    I = np.ceil(cutout.availabilitymatrix(regions, ExclusionContainer()))
-    I = I.where(I > 0)
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
-        dist_regions = regions.loc[offshore_regions]
-        dist_regions = dist_regions.map(
+        regions = regions.loc[offshore_regions]
+        regions = regions.map(
             lambda g: _simplify_polys(g, minarea=1)
-        ).set_crs(dist_regions.crs)
+        ).set_crs(regions.crs)
     else:
         # for onshore regions, the representative point of the region is used
-        dist_regions = regions.representative_point()
-    dist_regions = dist_regions.geometry.to_crs(3035)
-    regions = regions.geometry
+        regions = regions.representative_point()
+    regions = regions.geometry.to_crs(3035)
     buses = regions.index
 
     area = cutout.grid.to_crs(3035).area / 1e6
@@ -212,7 +204,6 @@ if __name__ == "__main__":
     start = time.time()
 
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    cf_by_bus = capacity_factor * I
 
     duration = time.time() - start
     logger.info(
@@ -224,6 +215,13 @@ if __name__ == "__main__":
         f"Create masks for {nbins} resource classes for technology {technology}..."
     )
     start = time.time()
+
+    fn = snakemake.input.resource_regions
+    resource_regions = gpd.read_file(fn).set_index("name").rename_axis("bus").geometry
+
+    # indicator matrix for which cells touch which regions
+    I = np.ceil(cutout.availabilitymatrix(resource_regions, ExclusionContainer()))
+    cf_by_bus = capacity_factor * I.where(I > 0)
 
     epsilon = 1e-3
     cf_min, cf_max = (
@@ -245,7 +243,7 @@ if __name__ == "__main__":
             class_masks.sel(bus=bus, bin=bin_id).stack(spatial=["y", "x"]).to_pandas()
         )
         grid_cells = grid.loc[bus_bin_mask]
-        geometry = grid_cells.intersection(regions.loc[bus]).union_all()
+        geometry = grid_cells.intersection(resource_regions.loc[bus]).union_all()
         class_regions[(bus, bin_id)] = geometry
     class_regions = gpd.GeoSeries(class_regions, crs=4326)
     class_regions.index.names = ["bus", "bin"]
@@ -310,7 +308,7 @@ if __name__ == "__main__":
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
-        distances = co.distance(dist_regions[bus]).div(1e3)  # km
+        distances = co.distance(regions[bus]).div(1e3)  # km
         average_distance.append((distances * (row / row.sum())).sum())
 
     average_distance = xr.DataArray(average_distance, [bus_bins]).unstack("bus_bin")
