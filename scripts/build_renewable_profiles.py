@@ -46,17 +46,17 @@ Outputs
 
 - ``resources/profile_{technology}.nc`` with the following structure
 
-    ===================  ==========  =========================================================
-    Field                Dimensions  Description
-    ===================  ==========  =========================================================
-    profile              bus, time   the per unit hourly availability factors for each bus
-    -------------------  ----------  ---------------------------------------------------------
-    p_nom_max            bus         maximal installable capacity at the bus (in MW)
-    -------------------  ----------  ---------------------------------------------------------
-    average_distance     bus         average distance of units in the region to the
-                                     grid bus for onshore technologies and to the shoreline
-                                     for offshore technologies (in km)
-    ===================  ==========  =========================================================
+    ===================  ====================  =========================================================
+    Field                Dimensions            Description
+    ===================  ====================  =========================================================
+    profile              year, bus, bin, time  the per unit hourly availability factors for each bus
+    -------------------  --------------------  ---------------------------------------------------------
+    p_nom_max            bus, bin              maximal installable capacity at the bus (in MW)
+    -------------------  --------------------  ---------------------------------------------------------
+    average_distance     bus, bin              average distance of units in the region to the
+                                               grid bus for onshore technologies and to the shoreline
+                                               for offshore technologies (in km)
+    ===================  ====================  =========================================================
 
     - **profile**
 
@@ -92,6 +92,9 @@ technology can be installed at each cutout grid cell. To compute the layout of
 generators in each clustered region, the installable potential in each grid cell
 is multiplied with the capacity factor at each grid cell. This is done since we
 assume more generators are installed at cells with a higher capacity factor.
+
+Based on the average capacity factor, the potentials are further divided into a
+configurable number of resource classes (bins).
 
 .. image:: img/offwinddc-gridcell.png
     :scale: 50 %
