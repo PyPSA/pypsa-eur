@@ -506,7 +506,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_monthly_co2_prices:
         input:
             storage(
-                "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
+                "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
                 keep_local=True,
             ),
         output:
