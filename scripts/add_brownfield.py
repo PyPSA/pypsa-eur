@@ -259,6 +259,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
         n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
     )
 
+    # Change efficiency2 for heat pumps that use an explicitly modelled heat source
+    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+        n_p.links_t["efficiency2"].columns
+    )
+    current_iteration_columns = corresponding_idx_this_iteration.intersection(
+        n.links_t["efficiency2"].columns
+    )
+    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+    )
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
