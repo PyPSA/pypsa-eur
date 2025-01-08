@@ -28,7 +28,44 @@ cc = coco.CountryConverter()
 
 GDP_YEAR = 2019
 POP_YEAR = 2019
-EUROPE_COUNTRIES = ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK', 'UA', 'MD']
+EUROPE_COUNTRIES = [
+    "AL",
+    "AT",
+    "BA",
+    "BE",
+    "BG",
+    "CH",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "GB",
+    "GR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "ME",
+    "MK",
+    "NL",
+    "NO",
+    "PL",
+    "PT",
+    "RO",
+    "RS",
+    "SE",
+    "SI",
+    "SK",
+    "XK",
+    "UA",
+    "MD",
+]
 DROP_REGIONS = [
     "ES703",
     "ES704",
@@ -377,9 +414,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_shapes"
-        )
+        snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
