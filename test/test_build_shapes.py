@@ -14,7 +14,7 @@ import pytest
 
 sys.path.append("./scripts")
 
-from build_shapes import _simplify_polys, countries
+from build_shapes import _simplify_polys, countries, eez
 
 path_cwd = pathlib.Path.cwd()
 
@@ -74,6 +74,13 @@ def test_countries(config, download_natural_earth, country_list):
     assert country_shapes_df.index.unique().tolist() == country_list
 
 
-def test_eez(config, download_eez):
+@pytest.mark.parametrize(
+    "country_list",
+    [["DE"], ["IT"]],
+)
+def test_eez(config, country_list, download_eez):
     eez_path = download_eez
-    assert False
+    offshore_shapes_gdf = eez(eez_path, country_list)
+    offshore_shapes_gdf.head(1)
+    assert offshore_shapes_gdf.shape == (1,1)
+    assert offshore_shapes_gdf.index == country_list[0]
