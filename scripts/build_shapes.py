@@ -28,6 +28,7 @@ cc = coco.CountryConverter()
 
 GDP_YEAR = 2019
 POP_YEAR = 2019
+EUROPE_COUNTRIES = ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK', 'UA', 'MD']
 DROP_REGIONS = [
     "ES703",
     "ES704",
@@ -83,7 +84,7 @@ def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
     return polys
 
 
-def eez(eez, country_list):
+def eez(eez, country_list=EUROPE_COUNTRIES):
     df = gpd.read_file(eez)
     iso3_list = cc.convert(country_list, src="ISO2", to="ISO3")  # noqa: F841
     pol_type = ["200NM", "Overlapping claim"]  # noqa: F841
@@ -377,7 +378,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_shapes", configfiles="config/test/config.electricity.yaml"
+            "build_shapes"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

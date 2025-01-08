@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     country = snakemake.wildcards.country
     adm1_path = snakemake.input.json
-    offshore_shapes = eez(snakemake.input.eez, snakemake.params.countries)
+    offshore_shapes = eez(snakemake.input.eez)
 
     boundaries = build_osm_boundaries(country, adm1_path, offshore_shapes)
 

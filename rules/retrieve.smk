@@ -676,6 +676,28 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_heat_source_utilisation_potentials.py"
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_jrc_ardeco:
+        output:
+            ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+            ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv"
+        run:
+            import requests
+
+            urls = {
+                "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
+                "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
+            }
+            
+            for key, url in urls.items():
+                response = requests.get(url)
+                output_path = output[key] if key in urls else None
+                if output_path:
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+
+
 # TODO: Remove before merging into master and after updating databundle on Zenodo:
 if config["enable"]["retrieve"]:
 
