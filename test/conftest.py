@@ -124,15 +124,17 @@ def transformers_dataframe():
 @pytest.fixture(scope="function")
 def download_natural_earth(tmpdir):
     url = "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
+    directory_to_extract_to = pathlib.Path(tmpdir, "folder")
     zipped_filename = "ne_10m_admin_0_countries_deu.zip"
     path_to_zip_file, headers = urlretrieve(url, zipped_filename)
-    directory_to_extract_to = pathlib.Path(tmpdir, "folder")
     with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
         zip_ref.extractall(directory_to_extract_to)
     natural_earth_shape_file_path = pathlib.Path(
         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
     )
     yield natural_earth_shape_file_path
+    pathlib.Path(zipped_filename).unlink(missing_ok=True)
+    pathlib.Path(natural_earth_shape_file_path).unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="function")
@@ -157,7 +159,11 @@ def download_eez(tmpdir):
     with open(zipped_filename_path, "wb") as f:
         f.write(response.content)
     unpack_archive(zipped_filename_path, tmpdir)
-    yield pathlib.Path(tmpdir, "World_EEZ_v12_20231025_LR", "eez_v12_lowres.gpkg")
+    output_path = pathlib.Path(
+        tmpdir, "World_EEZ_v12_20231025_LR", "eez_v12_lowres.gpkg"
+    )
+    yield output_path
+    pathlib.Path(output_path).unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="function")
