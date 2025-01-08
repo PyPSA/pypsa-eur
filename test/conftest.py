@@ -5,15 +5,15 @@
 import pathlib
 import zipfile
 from functools import reduce
+from shutil import unpack_archive
 from urllib.request import urlretrieve
 from uuid import uuid4
-from shutil import unpack_archive
-import requests
 
 import geopandas as gpd
 import pandas as pd
 import pypsa
 import pytest
+import requests
 import yaml
 
 
