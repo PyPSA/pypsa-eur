@@ -2273,20 +2273,21 @@ def add_heat(
                 carrier=f"{heat_system} water tanks",
                 efficiency_store=costs.at[
                     heat_system.central_or_decentral + " water tank charger",
-                    "efficiency",
+                    "efficiency"
                 ],
                 max_hours=costs.at[
                     heat_system.central_or_decentral + " water tank storage",
-                    "energy to power ratio",
+                    "energy to power ratio"
                 ],
                 efficiency_dispatch=costs.at[
                     heat_system.central_or_decentral + " water tank discharger",
-                    "efficiency",
+                    "efficiency"
                 ],
                 p_nom_extendable=True,
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 capital_cost=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "fixed"
+                    heat_system.central_or_decentral + " water tank storage", "fixed"] * costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "energy to power ratio"
                 ],
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
@@ -2314,7 +2315,9 @@ def add_heat(
                     ],
                     p_nom_extendable=True,
                     standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                    capital_cost=costs.at["central water pit storage", "fixed"],
+                    capital_cost=costs.at["central water pit storage", "fixed"] * costs.at[
+                        "central water pit storage", "energy to power ratio"
+                    ],
                     lifetime=costs.at["central water pit storage", "lifetime"],
                     cyclic_state_of_charge=True,
                 )
@@ -4609,10 +4612,13 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
+        import os
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="38",
+            clusters="6",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",
