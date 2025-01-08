@@ -6,6 +6,9 @@ import pathlib
 import zipfile
 from functools import reduce
 from urllib.request import urlretrieve
+from uuid import uuid4
+from shutil import unpack_archive
+import requests
 
 import geopandas as gpd
 import pandas as pd
@@ -132,38 +135,29 @@ def download_natural_earth(tmpdir):
     yield natural_earth_shape_file_path
 
 
-# @pytest.fixture(scope="function")
-# def download_eez(tmpdir):
-#     name = str(uuid4())[:8]
-#     org = str(uuid4())[:8]
-#     response = requests.post(
-#         "https://www.marineregions.org/download_file.php",
-#         params={"name": "World_EEZ_v12_20231025_LR.zip"},
-#         data={
-#             "name": name,
-#             "organisation": org,
-#             "email": f"{name}@{org}.org",
-#             "country": "Germany",
-#             "user_category": "academia",
-#             "purpose_category": "Research",
-#             "agree": "1",
-#         },
-#     )
-#     zipped_filename = "World_EEZ_v12_20231025_LR.zip"
-#     directory_to_extract_to = pathlib.Path(tmpdir, )
-#     with zipfile.ZipFile(path_to_zip_file, "r") as zip_ref:
-#         zip_ref.extractall(directory_to_extract_to)
-#     natural_earth_shape_file_path = pathlib.Path(
-#         directory_to_extract_to, "ne_10m_admin_0_countries_deu.shp"
-#     )
-#     yield natural_earth_shape_file_path
-#
-#     "World_EEZ_v12_20231025_LR.zip"
-#     with open(params["zip"], "wb") as f:
-#         f.write(response.content)
-#     output_folder = Path(params["zip"]).parent
-#     unpack_archive(params["zip"], output_folder)
-#     os.remove(params["zip"])
+@pytest.fixture(scope="function")
+def download_eez(tmpdir):
+    name = str(uuid4())[:8]
+    org = str(uuid4())[:8]
+    zipped_filename = "World_EEZ_v12_20231025_LR.zip"
+    response = requests.post(
+        "https://www.marineregions.org/download_file.php",
+        params={"name": zipped_filename},
+        data={
+            "name": name,
+            "organisation": org,
+            "email": f"{name}@{org}.org",
+            "country": "Germany",
+            "user_category": "academia",
+            "purpose_category": "Research",
+            "agree": "1",
+        },
+    )
+    zipped_filename_path = pathlib.Path(tmpdir, zipped_filename)
+    with open(zipped_filename_path, "wb") as f:
+        f.write(response.content)
+    unpack_archive(zipped_filename_path, tmpdir)
+    yield pathlib.Path(tmpdir, "World_EEZ_v12_20231025_LR", "eez_v12_lowres.gpkg")
 
 
 @pytest.fixture(scope="function")

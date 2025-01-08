@@ -72,3 +72,8 @@ def test_countries(config, download_natural_earth, country_list):
     country_shapes_df = countries(natural_earth, country_list)
     assert country_shapes_df.shape == (1,)
     assert country_shapes_df.index.unique().tolist() == country_list
+
+
+def test_eez(config, download_eez):
+    eez_path = download_eez
+    assert False
