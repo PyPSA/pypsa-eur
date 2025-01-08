@@ -69,9 +69,16 @@ def add_existing_renewables(df_agg, costs):
     power plants.
     """
     tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-ac": "Offshore"}
-
+    config_data = {
+        'IRENA': {
+            'net_capacity': True,
+            'aggregated_units': True,
+            'fn': 'IRENASTAT_capacities_2000-2023.csv',
+            'url': 'https://zenodo.org/records/10952917/files/IRENASTAT_capacities_2000-2023.csv'
+        }
+    }
     countries = snakemake.config["countries"]  # noqa: F841
-    irena = pm.data.IRENASTAT().powerplant.convert_country_to_alpha2()
+    irena = pm.data.IRENASTAT(config=config_data).powerplant.convert_country_to_alpha2()
     irena = irena.query("Country in @countries")
     irena = irena.groupby(["Technology", "Country", "Year"]).Capacity.sum()
 
