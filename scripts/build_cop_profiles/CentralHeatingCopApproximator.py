@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -21,7 +20,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     a thermodynamic heat pump model with some hard-to-know parameters
     being approximated.
 
-    Attributes:
+    Attributes
     ----------
     forward_temperature_celsius : Union[xr.DataArray, np.array]
         The forward temperature in Celsius.
@@ -38,7 +37,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     heat_loss : float, optional
         The heat loss, by default 0.0.
 
-    Methods:
+    Methods
     -------
     __init__(
         forward_temperature_celsius: Union[xr.DataArray, np.array],
@@ -105,7 +104,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         """
         Initializes the CentralHeatingCopApproximator object.
 
-        Parameters:
+        Parameters
         ----------
         forward_temperature_celsius : Union[xr.DataArray, np.array]
             The forward temperature in Celsius.
@@ -144,12 +143,12 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         """
         Calculate the coefficient of performance (COP) for the system.
 
-        Notes:
-        ------
+        Notes
+        -----
         Returns 0 where the source inlet temperature is greater than the sink outlet temperature.
 
-        Returns:
-        --------
+        Returns
+        -------
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
         return xr.where(
@@ -319,7 +318,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         Approximates the temperature difference between the refrigerant and
         heat sink.
 
-        Parameters:
+        Parameters
         ----------
         refrigerant : str, optional
             The refrigerant used in the system. Either 'isobutane' or 'ammonia. Default is 'ammonia'.
@@ -330,13 +329,13 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         c : float, optional
             Constant term, default is 0.016.
 
-        Returns:
+        Returns
         -------
         Union[xr.DataArray, np.array]
             The approximate temperature difference between the refrigerant and heat sink.
 
-        Notes:
-        ------
+        Notes
+        -----
         This function assumes ammonia as the refrigerant.
 
         The approximate temperature difference at the refrigerant sink is calculated using the following formula:
@@ -363,7 +362,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         """
         Calculate the ratio of evaporation to compression work approximation.
 
-        Parameters:
+        Parameters
         ----------
         refrigerant : str, optional
             The refrigerant used in the system. Either 'isobutane' or 'ammonia. Default is 'ammonia'.
@@ -374,13 +373,13 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         c : float, optional
             Coefficient 'c' in the approximation equation. Default is 0.039.
 
-        Returns:
+        Returns
         -------
         Union[xr.DataArray, np.array]
             The approximated ratio of evaporation to compression work.
 
-        Notes:
-        ------
+        Notes
+        -----
         This function assumes ammonia as the refrigerant.
 
         The approximation equation used is:

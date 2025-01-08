@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020 @JanFrederickUnnewehr, 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -163,15 +162,15 @@ def manual_adjustment(load, fn_load, countries):
     electricity consumption data from Croatia (HR) for the year 2019, scaled by the
     factors derived from https://energy.at-site.be/eurostat-2021/
 
-     Parameters
-     ----------
+    Parameters
+    ----------
      load : pd.DataFrame
          Load time-series with UTC timestamps x ISO-2 countries
     load_fn: str
          File name or url location (file format .csv)
 
-     Returns
-     -------
+    Returns
+    -------
      load : pd.DataFrame
          Manual adjusted and interpolated load time-series with UTC
          timestamps x ISO-2 countries

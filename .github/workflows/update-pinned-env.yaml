@@ -45,13 +45,13 @@ jobs:
     - name: Add SPDX header
       if: ${{ matrix.suffix != 'windows' }}
       run: |
-        SPDX_HEADER="# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors\n# SPDX-License-Identifier: CC0-1.0\n"
+        SPDX_HEADER="# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n# SPDX-License-Identifier: CC0-1.0\n"
         echo -e "$SPDX_HEADER" | cat - envs/${{ matrix.suffix }}-pinned.yaml > temp && mv temp envs/${{ matrix.suffix }}-pinned.yaml
 
     - name: Add SPDX header (windows)
       if: ${{ matrix.suffix == 'windows' }}
       run: |
-        $SPDX_HEADER = "# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
+        $SPDX_HEADER = "# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
         $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml" -Raw
         $NewContent = $SPDX_HEADER + $CurrentContent
         $NewContent | Set-Content "envs/${{ matrix.suffix }}-pinned.yaml"
