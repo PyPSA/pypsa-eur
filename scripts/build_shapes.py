@@ -267,6 +267,9 @@ def create_regions(
     ]
     regions.index.name = "index"
 
+    # Simplify geometries
+    regions["geometry"] = regions["geometry"].apply(_simplify_polys)
+
     # Only include countries in the config
     regions = regions.query("country in @country_list")
 
