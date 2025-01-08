@@ -159,6 +159,9 @@ def build_osm_boundaries(country, adm1_path, offshore_shapes):
     # Clip gdf by offshore shapes
     gdf = gpd.overlay(gdf, offshore_shapes, how="difference")
 
+    # Check if substring in "id" is equal to country, if not, drop
+    gdf = gdf[gdf["id"].str.startswith(country)]
+
     return gdf
 
 
@@ -166,7 +169,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_osm_boundaries", country="UA")
+        snakemake = mock_snakemake("build_osm_boundaries", country="MD")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -105,20 +105,20 @@ if config["enable"]["retrieve"]:
     rule retrieve_nuts_2021_shapes:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-03m.geojson.zip"
             ),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
+            shapes_level_3="data/nuts/NUTS_RG_03M_2021_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_03M_2021_4326_LEVL_2.geojson",
+            shapes_level_1="data/nuts/NUTS_RG_03M_2021_4326_LEVL_1.geojson",
+            shapes_level_0="data/nuts/NUTS_RG_03M_2021_4326_LEVL_0.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
+            zip_file="data/nuts/ref-nuts-2021-03m.geojson.zip",
         run:
             os.rename(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
-                    filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
+                    filename = f"NUTS_RG_03M_2021_4326_{level}.geojson"
                     zip_ref.extract(filename, Path(output.shapes_level_0).parent)
                     extracted_file = Path(output.shapes_level_0).parent / filename
                     extracted_file.rename(
