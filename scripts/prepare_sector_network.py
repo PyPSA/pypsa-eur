@@ -4610,13 +4610,10 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        import os
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="6",
+            clusters="38",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",
