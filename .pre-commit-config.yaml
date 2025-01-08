@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 exclude: "^LICENSES"
@@ -8,25 +8,19 @@ repos:
   rev: v5.0.0
   hooks:
   - id: check-merge-conflict
-  - id: end-of-file-fixer
-  - id: fix-encoding-pragma
-  - id: mixed-line-ending
-  - id: trailing-whitespace
   - id: check-added-large-files
     args: ["--maxkb=2000"]
 
-  # Sort package imports alphabetically
-- repo: https://github.com/PyCQA/isort
-  rev: 5.13.2
+# Run ruff to lint and format
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.8.6
   hooks:
-  - id: isort
-    args: ["--profile", "black", "--filter-files"]
-
-  # Convert relative imports to absolute imports
-- repo: https://github.com/MarcoGorelli/absolufy-imports
-  rev: v0.3.1
-  hooks:
-  - id: absolufy-imports
+    # Run the linter.
+  - id: ruff
+    args: [--fix]
+    # Run the formatter.
+  - id: ruff-format
 
   # Find common spelling mistakes in comments and docstrings
 - repo: https://github.com/codespell-project/codespell
@@ -37,37 +31,15 @@ repos:
     types_or: [python, rst, markdown]
     files: ^(scripts|doc)/
 
-# Make docstrings PEP 257 compliant
-# Broken for pre-commit<=4.0.0
-# See https://github.com/PyCQA/docformatter/issues/293
-# - repo: https://github.com/PyCQA/docformatter
-#   rev: v1.7.5
-#   hooks:
-#   - id: docformatter
-#     args: ["--in-place", "--make-summary-multi-line", "--pre-summary-newline"]
-
-- repo: https://github.com/keewis/blackdoc
-  rev: v0.3.9
-  hooks:
-  - id: blackdoc
-
-  # Formatting with "black" coding style
-- repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.10.0
-  hooks:
-      # Format Python files
-  - id: black
-      # Format Jupyter Python notebooks
-  - id: black-jupyter
-
-  # Remove output from Jupyter notebooks
+# Remove output from Jupyter notebooks
 - repo: https://github.com/aflc/pre-commit-jupyter
   rev: v1.2.1
   hooks:
   - id: jupyter-notebook-cleanup
-    args: ["--remove-kernel-metadata"]
+    args: ['--remove-kernel-metadata']
+    exclude: examples/solve-on-remote.ipynb
 
-  # Do YAML formatting (before the linter checks it for misses)
+  # YAML formatting
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
   rev: v2.14.0
   hooks:
@@ -80,13 +52,6 @@ repos:
   rev: v0.10.2
   hooks:
   - id: snakefmt
-
-  # For cleaning jupyter notebooks
-- repo: https://github.com/aflc/pre-commit-jupyter
-  rev: v1.2.1
-  hooks:
-  - id: jupyter-notebook-cleanup
-    exclude: examples/solve-on-remote.ipynb
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool

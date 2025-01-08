@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -113,11 +112,13 @@ def create_geometries(network, crs=GEO_CRS):
     """
     Create GeoDataFrames for different network components with specified coordinate reference system (CRS).
 
-    Parameters:
+    Parameters
+    ----------
         network (PyPSA Network): The network object containing buses, lines, links, converters, and transformers data.
         crs (str, optional): Coordinate reference system to be used for the GeoDataFrames. Defaults to GEO_CRS.
 
-    Returns:
+    Returns
+    -------
     tuple: A tuple containing the following GeoDataFrames:
         - buses (GeoDataFrame): GeoDataFrame containing bus data with geometries.
         - lines (GeoDataFrame): GeoDataFrame containing line data with geometries.

@@ -1,38 +1,55 @@
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
+
+.ONESHELL:
 
 .PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos test checks clean-tests reset
 
 # Helper: Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
+# mamba is preferred over conda if both are installed, unless PYPSA_PREFER_CONDA is set to true
 _conda_check:
-	@# Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
-	@if command -v conda &> /dev/null; then \
-		echo "Conda detected, using Conda..."; \
-		$(eval CONDA_OR_MAMBA := conda) \
-	elif command -v mamba &> /dev/null; then \
-		echo "Conda not found, but Mamba detected. Using Mamba..."; \
-		$(eval CONDA_OR_MAMBA := mamba) \
+	@# Check prefer_conda environment variable
+	@if [ "$$PYPSA_PREFER_CONDA" = "true" ]; then \
+		if command -v conda &> /dev/null; then \
+			echo "Conda preferred and detected. Using Conda..."; \
+			$(eval CONDA_OR_MAMBA := conda) \
+		elif command -v mamba &> /dev/null; then \
+			echo "Conda preferred but not found. Using Mamba..."; \
+			$(eval CONDA_OR_MAMBA := mamba) \
+		else \
+			echo "Neither Conda nor Mamba is installed. Please install one of them and retry."; \
+			exit 1; \
+		fi \
 	else \
-		echo "Neither Conda nor Mamba is installed. Please install one of them and retry."; \
-		exit 1; \
+		if command -v mamba &> /dev/null; then \
+			echo "Mamba detected, using Mamba..."; \
+			$(eval CONDA_OR_MAMBA := mamba) \
+		elif command -v conda &> /dev/null; then \
+			echo "Mamba not found, but Conda detected. Using Conda..."; \
+			$(eval CONDA_OR_MAMBA := conda) \
+		else \
+			echo "Neither Conda nor Mamba is installed. Please install one of them and retry."; \
+			exit 1; \
+		fi \
 	fi
 
 # Install environment
+# E.g. make install or make install name=myenv
 install: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/environment.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
-
+	$(CONDA_OR_MAMBA) env create -f envs/environment.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 # Install pinned environment
 install-pinned-linux: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-windows: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-macos: _conda_check
-	@$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml
-	@$(CONDA_OR_MAMBA) run -n pypsa-eur pre-commit install
+	$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
 
 # Run default tests
 test:

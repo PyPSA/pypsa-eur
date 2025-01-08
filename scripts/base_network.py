@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -590,15 +589,13 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
             )
             assert (
                 not df.empty
-            ), "No buses with defined country within 200km of bus `{}`".format(b)
+            ), f"No buses with defined country within 200km of bus `{b}`"
             n.buses.at[b, "country"] = df.loc[df.pathlength.idxmin(), "country"]
 
         logger.warning(
-            "{} buses are not in any country or offshore shape,"
-            " {} have been assigned from the tag of the entsoe map,"
-            " the rest from the next bus in terms of pathlength.".format(
-                c_nan_b.sum(), c_nan_b.sum() - c_tag_nan_b.sum()
-            )
+            f"{c_nan_b.sum()} buses are not in any country or offshore shape,"
+            f" {c_nan_b.sum() - c_tag_nan_b.sum()} have been assigned from the tag of the entsoe map,"
+            " the rest from the next bus in terms of pathlength."
         )
 
     return buses
@@ -628,9 +625,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             comp, line = next(iter(G[b0][b1]))
             if comp != "Line":
                 logger.warning(
-                    "Unable to replace B2B `{}` expected a Line, but found a {}".format(
-                        i, comp
-                    )
+                    f"Unable to replace B2B `{i}` expected a Line, but found a {comp}"
                 )
                 continue
 
@@ -646,9 +641,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             n.remove("Bus", b0)
 
             logger.info(
-                "Replacing B2B converter `{}` together with bus `{}` and line `{}` by an HVDC tie-line {}-{}".format(
-                    i, b0, line, linkcntry.at[i], buscntry.at[b1]
-                )
+                f"Replacing B2B converter `{i}` together with bus `{b0}` and line `{line}` by an HVDC tie-line {linkcntry.at[i]}-{buscntry.at[b1]}"
             )
 
 
@@ -727,11 +720,14 @@ def base_network(
 ):
     base_network = config["electricity"].get("base_network")
     osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
-    assert base_network in {
-        "entsoegridkit",
-        "osm-raw",
-        "osm-prebuilt",
-    }, f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
+    assert (
+        base_network
+        in {
+            "entsoegridkit",
+            "osm-raw",
+            "osm-prebuilt",
+        }
+    ), f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
     if base_network == "entsoegridkit":
         warnings.warn(
             "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm-raw' or 'osm-prebuilt' instead.",
@@ -952,12 +948,14 @@ def append_bus_shapes(n, shapes, type):
     Append shapes to the network. If shapes with the same component and type
     already exist, they will be removed.
 
-    Parameters:
+    Parameters
+    ----------
         n (pypsa.Network): The network to which the shapes will be appended.
         shapes (geopandas.GeoDataFrame): The shapes to be appended.
         **kwargs: Additional keyword arguments used in `n.add`.
 
-    Returns:
+    Returns
+    -------
         None
     """
     remove = n.shapes.query("component == 'Bus' and type == @type").index

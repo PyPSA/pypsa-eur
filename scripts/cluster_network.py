@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -105,7 +104,6 @@ import pandas as pd
 import pypsa
 import xarray as xr
 from _helpers import configure_logging, set_scenario_config
-from base_network import append_bus_shapes
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -141,7 +139,6 @@ def get_feature_data_for_hac(fn: str) -> pd.DataFrame:
 
 
 def fix_country_assignment_for_hac(n: pypsa.Network) -> None:
-
     # overwrite country of nodes that are disconnected from their country-topology
     for country in n.buses.country.unique():
         m = n[n.buses.country == country].copy()
@@ -293,7 +290,6 @@ def clustering_for_n_clusters(
     line_length_factor: float = 1.25,
     aggregation_strategies: dict | None = None,
 ) -> pypsa.clustering.spatial.Clustering:
-
     if aggregation_strategies is None:
         aggregation_strategies = dict()
 
@@ -322,12 +318,14 @@ def cluster_regions(
     Cluster regions based on busmaps and save the results to a file and to the
     network.
 
-    Parameters:
+    Parameters
+    ----------
     - busmaps (list): A list of busmaps used for clustering.
     - regions (gpd.GeoDataFrame): The regions to cluster.
     - with_country (bool): Whether to keep country column.
 
-    Returns:
+    Returns
+    -------
     None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
