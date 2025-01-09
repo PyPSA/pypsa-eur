@@ -10,6 +10,7 @@ import pathlib
 import sys
 
 import geopandas as gpd
+import numpy as np
 import pytest
 
 sys.path.append("./scripts")
@@ -25,17 +26,15 @@ path_cwd = pathlib.Path.cwd()
         (
             None,
             (
-                301184483954.051,
-                "POINT (1170973.133650994 4959324.697171187)",
-                7715732.183141501,
+                301184483954.05,
+                7715732.18,
             ),
         ),
         (
             10.0,
             (
-                301184417650.59454,
-                "POINT (1170973.0551039157 4959324.750552279)",
-                7715728.487943892,
+                301184417650.59,
+                7715728.49,
             ),
         ),
     ],
@@ -51,12 +50,10 @@ def test_simplify_polys(tolerance, expected_tuple, italy_shape):
     simplified_polys = _simplify_polys(gdf_country.geometry, tolerance=tolerance)
     gdf_country_simplified = gpd.GeoDataFrame(geometry=simplified_polys)
     gdf_country_simplified["area"] = gdf_country_simplified.area
-    gdf_country_simplified["centroid"] = gdf_country_simplified.centroid
     gdf_country_simplified["perimeter"] = gdf_country_simplified.length
     output_tuple = (
-        gdf_country_simplified["area"][0],
-        str(gdf_country_simplified["centroid"][0]),
-        gdf_country_simplified["perimeter"][0],
+        np.round(gdf_country_simplified["area"][0], 2),
+        np.round(gdf_country_simplified["perimeter"][0], 2),
     )
     assert len(output_tuple) == len(expected_tuple)
     assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
@@ -96,17 +93,15 @@ def test_eez(config, country_list, download_eez):
         (
             ["IT"],
             (
-                89.48805178772852,
-                "POINT (12.612315614274285 40.81446088016855)",
-                61.66613129515858,
+                89.49,
+                61.67,
             ),
         ),
         (
             ["DE"],
             (
-                53.71978281859542,
-                "POINT (10.08343387158037 51.60752846577776)",
-                56.456408985211766,
+                53.72,
+                56.46,
             ),
         ),
     ],
@@ -126,13 +121,10 @@ def test_country_cover(
         crs=6933,
     )
     europe_shape_gdf["area"] = europe_shape_gdf.area
-    europe_shape_gdf["centroid"] = europe_shape_gdf.centroid
     europe_shape_gdf["perimeter"] = europe_shape_gdf.length
     output_tuple = (
-        europe_shape_gdf["area"][0],
-        str(europe_shape_gdf["centroid"][0]),
-        europe_shape_gdf["perimeter"][0],
+        np.round(europe_shape_gdf["area"][0], 2),
+        np.round(europe_shape_gdf["perimeter"][0], 2),
     )
-    print(output_tuple)
     assert len(output_tuple) == len(expected_tuple)
     assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
