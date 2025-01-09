@@ -1,13 +1,10 @@
-# SPDX-FileCopyrightText: 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 # SPDX-License-Identifier: CC0-1.0
 
 name: pypsa-eur
 channels:
   - conda-forge
   - bioconda
-  - defaults
-  - https://repo.anaconda.com/pkgs/main
-  - https://repo.anaconda.com/pkgs/r
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
@@ -15,6 +12,7 @@ dependencies:
   - alsa-lib=1.2.13
   - ampl-asl=1.0.0
   - amply=0.1.6
+  - aom=3.9.1
   - appdirs=1.4.4
   - argparse-dataclass=2.0.0
   - asttokens=3.0.0
@@ -52,16 +50,14 @@ dependencies:
   - c-blosc2=2.15.2
   - ca-certificates=2024.12.14
   - cairo=1.18.2
-  - capnproto=1.0.2
   - cartopy=0.24.0
   - cdsapi=0.7.5
   - certifi=2024.12.14
   - cffi=1.17.1
   - cfgv=3.3.1
-  - cfitsio=4.4.1
   - cftime=1.6.4
   - charset-normalizer=3.4.0
-  - click=8.1.7
+  - click=8.1.8
   - click-plugins=1.1.1
   - cligj=0.7.2
   - cloudpickle=3.1.0
@@ -86,6 +82,7 @@ dependencies:
   - dask-expr=1.1.21
   - datapi=0.1.1
   - datrie=0.8.2
+  - dav1d=1.2.1
   - dbus=1.13.6
   - decorator=5.1.1
   - deprecation=2.1.0
@@ -102,8 +99,7 @@ dependencies:
   - expat=2.6.4
   - filelock=3.16.1
   - fiona=1.10.1
-  - fmt=11.0.2
-  - folium=0.19.2
+  - folium=0.19.3
   - font-ttf-dejavu-sans-mono=2.37
   - font-ttf-inconsolata=3.000
   - font-ttf-source-code-pro=2.038
@@ -115,11 +111,10 @@ dependencies:
   - freetype=2.12.1
   - freexl=2.0.0
   - fribidi=1.0.10
-  - fsspec=2024.10.0
-  - gdal=3.9.3
+  - fsspec=2024.12.0
   - gdk-pixbuf=2.42.12
   - geographiclib=2.0
-  - geojson=3.1.0
+  - geojson=3.2.0
   - geojson-rewind=1.1.0
   - geopandas=1.0.1
   - geopandas-base=1.0.1
@@ -128,7 +123,7 @@ dependencies:
   - geotiff=1.7.3
   - gflags=2.2.2
   - giflib=5.2.2
-  - gitdb=4.0.11
+  - gitdb=4.0.12
   - gitpython=3.1.43
   - glog=0.7.1
   - glpk=5.0
@@ -138,30 +133,29 @@ dependencies:
   - gtk2=2.24.33
   - gts=0.7.6
   - h2=4.1.0
-  - harfbuzz=9.0.0
+  - harfbuzz=10.1.0
   - hdf4=4.2.15
-  - hdf5=1.14.3
+  - hdf5=1.14.4
   - hpack=4.0.0
   - humanfriendly=10.0
   - hyperframe=6.0.1
   - icu=75.1
-  - identify=2.6.3
+  - identify=2.6.4
   - idna=3.10
   - immutables=0.21
   - importlib-metadata=8.5.0
   - importlib_resources=6.4.5
   - iniconfig=2.0.0
   - ipopt=3.14.16
-  - ipython=8.30.0
+  - ipython=8.31.0
   - jedi=0.19.2
-  - jinja2=3.1.4
+  - jinja2=3.1.5
   - joblib=1.4.2
   - jpype1=1.5.1
   - json-c=0.18
   - jsonschema=4.23.0
   - jsonschema-specifications=2024.10.1
   - jupyter_core=5.7.2
-  - kealib=1.6.0
   - keyutils=1.6.1
   - kiwisolver=1.4.7
   - krb5=1.21.3
@@ -175,6 +169,7 @@ dependencies:
   - libarrow-acero=18.1.0
   - libarrow-dataset=18.1.0
   - libarrow-substrait=18.1.0
+  - libavif16=1.1.1
   - libblas=3.9.0
   - libbrotlicommon=1.1.0
   - libbrotlidec=1.1.0
@@ -185,6 +180,7 @@ dependencies:
   - libcrc32c=1.1.2
   - libcups=2.3.3
   - libcurl=8.11.1
+  - libde265=1.0.15
   - libdeflate=1.23
   - libdrm=2.4.124
   - libedit=3.1.20191231
@@ -196,20 +192,7 @@ dependencies:
   - libgcc=14.2.0
   - libgcc-ng=14.2.0
   - libgd=2.3.3
-  - libgdal=3.9.3
-  - libgdal-core=3.9.3
-  - libgdal-fits=3.9.3
-  - libgdal-grib=3.9.3
-  - libgdal-hdf4=3.9.3
-  - libgdal-hdf5=3.9.3
-  - libgdal-jp2openjpeg=3.9.3
-  - libgdal-kea=3.9.3
-  - libgdal-netcdf=3.9.3
-  - libgdal-pdf=3.9.3
-  - libgdal-pg=3.9.3
-  - libgdal-postgisraster=3.9.3
-  - libgdal-tiledb=3.9.3
-  - libgdal-xls=3.9.3
+  - libgdal-core=3.10.0
   - libgfortran=14.2.0
   - libgfortran-ng=14.2.0
   - libgfortran5=14.2.0
@@ -218,9 +201,10 @@ dependencies:
   - libglvnd=1.7.0
   - libglx=1.7.0
   - libgomp=14.2.0
-  - libgoogle-cloud=2.32.0
-  - libgoogle-cloud-storage=2.32.0
+  - libgoogle-cloud=2.33.0
+  - libgoogle-cloud-storage=2.33.0
   - libgrpc=1.67.1
+  - libheif=1.19.5
   - libhwloc=2.11.2
   - libiconv=1.17
   - libjpeg-turbo=3.0.0
@@ -233,14 +217,14 @@ dependencies:
   - libnetcdf=4.9.2
   - libnghttp2=1.64.0
   - libnsl=2.0.1
-  - libntlm=1.4
+  - libntlm=1.8
   - libopenblas=0.3.28
   - libopengl=1.7.0
   - libparquet=18.1.0
   - libpciaccess=0.18
   - libpng=1.6.44
   - libpq=17.2
-  - libprotobuf=5.28.2
+  - libprotobuf=5.28.3
   - libre2-11=2024.07.02
   - librsvg=2.58.4
   - librttopo=1.1.0
@@ -255,7 +239,7 @@ dependencies:
   - libtiff=4.7.0
   - libutf8proc=2.9.0
   - libuuid=2.38.1
-  - libwebp-base=1.4.0
+  - libwebp-base=1.5.0
   - libxcb=1.17.0
   - libxcrypt=4.4.36
   - libxkbcommon=1.7.0
@@ -263,7 +247,7 @@ dependencies:
   - libxslt=1.1.39
   - libzip=1.11.2
   - libzlib=1.3.1
-  - linopy=0.4.3
+  - linopy=0.4.4
   - locket=1.0.0
   - lxml=5.3.0
   - lz4=4.3.3
@@ -291,8 +275,6 @@ dependencies:
   - networkx=3.4.2
   - nodeenv=1.9.1
   - nomkl=1.0
-  - nspr=4.36
-  - nss=3.107
   - numexpr=2.10.2
   - numpy=1.26.4
   - openjpeg=2.5.3
@@ -317,15 +299,12 @@ dependencies:
   - platformdirs=4.3.6
   - pluggy=1.5.0
   - polars=1.17.1
-  - poppler=24.12.0
-  - poppler-data=0.4.12
-  - postgresql=17.2
   - powerplantmatching=0.5.19
   - pre-commit=4.0.1
   - progressbar2=4.5.0
   - proj=9.5.1
   - prompt-toolkit=3.0.48
-  - psutil=6.1.0
+  - psutil=6.1.1
   - pthread-stubs=0.4
   - ptyprocess=0.7.0
   - pulp=2.8.0
@@ -337,7 +316,7 @@ dependencies:
   - pycparser=2.22
   - pygments=2.18.0
   - pyogrio=0.10.0
-  - pyparsing=3.2.0
+  - pyparsing=3.2.1
   - pyproj=3.7.0
   - pypsa=0.32.0
   - pyscipopt=5.2.1
@@ -357,7 +336,8 @@ dependencies:
   - pyyaml=6.0.2
   - qhull=2020.2
   - qt6-main=6.8.1
-  - rasterio=1.4.1
+  - rasterio=1.4.3
+  - rav1e=0.6.6
   - re2=2024.07.02
   - readline=8.2
   - referencing=0.35.1
@@ -365,6 +345,7 @@ dependencies:
   - reretry=0.11.8
   - rioxarray=0.17.0
   - rpds-py=0.22.3
+  - ruff=0.8.5
   - s2n=1.5.10
   - scikit-learn=1.6.0
   - scip=9.1.1
@@ -377,7 +358,7 @@ dependencies:
   - smart_open=7.1.0
   - smmap=5.0.0
   - snakemake-interface-common=1.17.4
-  - snakemake-interface-executor-plugins=9.3.2
+  - snakemake-interface-executor-plugins=9.3.3
   - snakemake-interface-report-plugins=1.1.0
   - snakemake-interface-storage-plugins=3.3.0
   - snakemake-minimal=8.24.1
@@ -385,16 +366,15 @@ dependencies:
   - snuggs=1.4.7
   - sortedcontainers=2.4.0
   - soupsieve=2.5
-  - spdlog=1.14.1
   - sqlite=3.47.2
   - stack_data=0.6.3
   - statsmodels=0.14.4
+  - svt-av1=2.3.0
   - tabulate=0.9.0
   - tbb=2022.0.0
   - tblib=3.0.0
   - threadpoolctl=3.5.0
   - throttler=1.2.2
-  - tiledb=2.27.0
   - tk=8.6.13
   - tomli=2.2.1
   - toolz=1.0.0
@@ -403,19 +383,19 @@ dependencies:
   - traitlets=5.14.3
   - typing-extensions=4.12.2
   - typing_extensions=4.12.2
-  - tzcode=2024b
   - tzdata=2024b
   - ukkonen=1.0.1
   - unicodedata2=15.1.0
   - unidecode=1.3.8
   - uriparser=0.9.8
-  - urllib3=2.2.3
+  - urllib3=2.3.0
   - validators=0.34.0
   - virtualenv=20.28.0
   - wayland=1.23.1
   - wcwidth=0.2.13
   - wheel=0.45.1
   - wrapt=1.17.0
+  - x265=3.5
   - xarray=2024.11.0
   - xcb-util=0.4.1
   - xcb-util-cursor=0.1.5
@@ -450,7 +430,7 @@ dependencies:
   - zict=3.0.0
   - zipp=3.21.0
   - zlib=1.3.1
-  - zlib-ng=2.2.2
+  - zlib-ng=2.2.3
   - zstandard=0.23.0
   - zstd=1.5.6
   - pip:
