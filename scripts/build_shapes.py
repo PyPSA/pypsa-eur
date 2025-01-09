@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
 
 
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
 GDP_YEAR = 2019
 POP_YEAR = 2019
 EUROPE_COUNTRIES = [
@@ -99,13 +101,31 @@ OTHER_POP_2019 = {  # in 1000 persons
     "XK": 1782,  # World Bank
 }
 EXCHANGE_EUR_USD_2019 = 1.1
+NUTS3_INCLUDE = [
+    "DE80N",
+    "DK014",
+    "DK050",
+    "GBH34",
+    "GBJ34",
+    "GBJ43",
+    "NL33A",
+    "NL33C",
+    "NL342",
+    "NL411",
+    "NL412",
+    "PL428",
+]
 
 
-def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
+def _simplify_polys(polys, minarea=100*1e6, maxdistance=None, tolerance=None, filterremote=True): # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
         mainlength = np.sqrt(mainpoly.area / (2.0 * np.pi))
+
+        if maxdistance is not None:
+            mainlength=maxdistance
+
         if mainpoly.area > minarea:
             polys = MultiPolygon(
                 [
@@ -128,7 +148,7 @@ def eez(eez, country_list=EUROPE_COUNTRIES):
     df = df.query("ISO_TER1 in @iso3_list and POL_TYPE in @pol_type").copy()
     df["name"] = cc.convert(df.ISO_TER1, src="ISO3", to="ISO2")
     s = df.set_index("name").geometry.map(
-        lambda s: _simplify_polys(s, filterremote=False)
+        lambda s: _simplify_polys(s, minarea=0.1, filterremote=False)
     )
     s = s.to_frame("geometry").set_crs(df.crs)
     s.index.name = "name"
@@ -165,6 +185,38 @@ def normalise_text(text):
     # Optionally, ensure only ASCII characters remain
     text = "".join(char for char in text if char.isascii())
     return text
+
+
+def simplify_europe(regions):    
+    """
+    Simplifies the geometries of European regions by removing small islands and re-adding selected regions manually.
+    
+    Parameters:
+        regions (GeoDataFrame): A GeoDataFrame containing the geometries of European regions.
+    
+    Returns:
+        regions (GeoDataFrame): A simplified GeoDataFrame with updated geometries and dropped entries.
+    """
+    logger.info("Simplifying geometries for Europe by removing small islands smaller than 500 km2 or further than 200 km away.")
+    coverage = regions.to_crs(DISTANCE_CRS).groupby("country")["geometry"].apply(lambda x: x.union_all())
+    coverage = coverage.apply(_simplify_polys, minarea=500*1e6,maxdistance=200*1e3)
+    coverage = gpd.GeoDataFrame(geometry = coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
+
+    # Re-add selected regions manually
+    coverage = pd.concat([coverage, regions.loc[NUTS3_INCLUDE, ["geometry"]]])
+    shape = coverage.union_all()
+
+    regions_polygon = regions.explode()
+    regions_polygon = gpd.sjoin(regions_polygon, gpd.GeoDataFrame(geometry=[shape], crs=GEO_CRS), how="inner", predicate="intersects")
+
+    # Group by level3 and country, and aggregate by union, and name index "index"
+    regions_polygon = regions_polygon.groupby(["level3"])["geometry"].apply(lambda x: x.union_all())
+
+    # Update regions
+    regions = regions.loc[regions.index.isin(regions_polygon.index)]
+    regions.loc[regions_polygon.index, "geometry"] = regions_polygon
+    
+    return regions
 
 
 def create_regions(
@@ -305,7 +357,7 @@ def create_regions(
     regions.index.name = "index"
 
     # Simplify geometries
-    regions["geometry"] = regions["geometry"].apply(_simplify_polys)
+    regions = simplify_europe(regions)
 
     # Only include countries in the config
     regions = regions.query("country in @country_list")
