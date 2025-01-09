@@ -128,7 +128,7 @@ rule build_shapes:
         countries=config_provider("countries"),
     input:
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3_2021="data/nuts/NUTS_RG_03M_2021_4326_LEVL_3.geojson",
+        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
         ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
         md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
         ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
