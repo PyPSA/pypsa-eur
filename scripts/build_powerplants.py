@@ -185,10 +185,8 @@ if __name__ == "__main__":
 
     # Correct bioenergy for countries where possible
     opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
-    opsd = (
-        opsd
-        .replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"})
-        .query('Country in @countries and Fueltype == "Bioenergy"')
+    opsd = opsd.replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"}).query(
+        'Country in @countries and Fueltype == "Bioenergy"'
     )
     opsd["Name"] = "Biomass"
     available_countries = opsd.Country.unique()
