@@ -4,6 +4,8 @@
 
 FROM condaforge/mambaforge
 
+LABEL org.opencontainers.image.source https://github.com/PyPSA/pypsa-eur
+
 RUN conda update -n base conda
 RUN conda install -n base conda-libmamba-solver
 RUN conda config --set solver libmamba
