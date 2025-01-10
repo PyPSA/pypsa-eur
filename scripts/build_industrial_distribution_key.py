@@ -417,10 +417,11 @@ def build_nodal_distribution_key(
                 weighted_avg = weighted_sum / filtered_capacities_sum
                 steel_start_dates.loc[regions_ct, process] = weighted_avg
             else:
-                # If no valid capacities, assign 0 or NaN
+                # If no valid capacities, assign 0
                 steel_start_dates.loc[regions_ct, process] = 0
         else:
-            # If capacities are empty, assign 0 or NaN
+            # If capacities are empty, assign 0
+            logger.warning("steel_start_dates is 0. Check your data input")
             steel_start_dates.loc[regions_ct, process] = 0
 
         if not capacities.empty:
@@ -464,10 +465,11 @@ def build_nodal_distribution_key(
                 weighted_avg = weighted_sum / filtered_capacities_sum
                 cement_start_dates.loc[regions_ct, 'year'] = round(weighted_avg)
             else:
-                # If no valid capacities, assign 0 or NaN
+                # If no valid capacities, assign 0
                 cement_start_dates.loc[regions_ct, 'year'] = 0
         else:
-            # If capacities are empty, assign 0 or NaN
+            # If capacities are empty, assign 0
+            logger.warning("cement_start_dates is 0. Check your data input")
             cement_start_dates.loc[regions_ct, 'year'] = 0
 
         cement_start_dates = cement_start_dates.fillna(0)
@@ -537,10 +539,11 @@ def build_nodal_distribution_key(
                     weighted_avg = weighted_sum / filtered_capacities_sum
                     chemicals_start_dates.loc[regions_ct, chem] = round(weighted_avg)
                 else:
-                    # If no valid capacities, assign 0 or NaN
+                    # If no valid capacities, assign 0
                     chemicals_start_dates.loc[regions_ct, chem] = 0
             else:
-                # If capacities are empty, assign 0 or NaN
+                # If capacities are empty, assign 0
+                logger.warning("chemicals_start_dates is 0. Check your data input")
                 chemicals_start_dates.loc[regions_ct, chem] = 0
 
             chemicals_start_dates = chemicals_start_dates.fillna(0)

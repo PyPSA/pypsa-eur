@@ -185,6 +185,7 @@ def separate_basic_chemicals(demand, production):
     ).T
 
     if snakemake.params.ammonia:
+        print(f"Config files check AMMONIA: {ammonia}")
         ammonia = pd.DataFrame(
             {"ammonia": production["Ammonia"] * params["MWh_NH3_per_tNH3"]}
         ).T

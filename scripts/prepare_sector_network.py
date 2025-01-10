@@ -2503,7 +2503,6 @@ def add_heat(
                     heat_system.central_or_decentral + " solar thermal", "lifetime"
                 ],
             )
-
         if options["chp"]["enable"] and heat_system == HeatSystem.URBAN_CENTRAL:
             # add non-biomass CHP; biomass CHP is added in biomass section
             for fuel in options["chp"]["fuel"]:
@@ -4175,14 +4174,16 @@ def add_steel_industry(n, investment_year, options):
         unit=unit,
     )
 
+    """
     n.add(
         "Store",
         location_value,
         bus = location_value,
         e_nom_extendable = True,
         e_cyclic = True,
-        carrier=carrier,
+        carrier="steel",
     )
+    """
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     prod_constantly = 0

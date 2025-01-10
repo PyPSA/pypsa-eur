@@ -90,13 +90,14 @@ def add_brownfield(n, n_p, year):
             ],
         )
 
-        n_p.mremove(
-            c.name,
-            c.df.index[
-                (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
-                & (c.df[f"{attr}_nom_opt"] < threshold_steel)
-            ],
-        )
+        if c.name == 'Link':
+            n_p.mremove(
+                c.name,
+                c.df.index[
+                    (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
+                    & (c.df[f"{attr}_nom_opt"] < threshold_steel)
+                ],
+            )
 
         # copy over assets but fix their capacity
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
