@@ -33,7 +33,7 @@ jobs:
         password: ${{ secrets.REGISTRY_TOKEN }}
 
     - name: 'Build new image' # only build if the pinned envs file was modified
-      if: ${{ env.hash_last_changed == github.sha }}
+      if: env.hash_last_changed == github.sha || github.event_name == 'workflow_dispatch'
       run: |
         docker build . --file docker/dev-env/Dockerfile --tag ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         docker push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
@@ -45,7 +45,8 @@ jobs:
         fi
 
     - name: 'Add SHA tag to existing image' # when rebuild is not needed
-      if: ${{ env.hash_last_changed != github.sha }}
+      if: env.hash_last_changed != github.sha
       run: |-
-        docker manifest create ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:{{ steps.last-changed.outputs.hash_last_changed }}
-        docker manifest push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker pull ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }}
+        docker tag ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }} ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
