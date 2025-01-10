@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - update-pinned-environment
   pull_request:
     branches:
     - master
