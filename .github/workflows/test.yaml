@@ -4,13 +4,13 @@ on:
   push:
     branches:
     - master
-    - update-pinned-environment
   pull_request:
     branches:
     - master
   schedule:
   - cron: "0 5 * * 1-6"
   - cron: "0 5 * * 0"
+  workflow_dispatch:
 
 # Cancel any in-progress runs when a new run is triggered
 concurrency:
