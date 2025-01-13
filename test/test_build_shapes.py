@@ -15,7 +15,7 @@ import pytest
 
 sys.path.append("./scripts")
 
-from build_shapes import _simplify_polys, create_regions, country_cover, eez
+from build_shapes import _simplify_polys, eez
 
 path_cwd = pathlib.Path.cwd()
 
