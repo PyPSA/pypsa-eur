@@ -117,14 +117,16 @@ NUTS3_INCLUDE = [
 ]
 
 
-def _simplify_polys(polys, minarea=100*1e6, maxdistance=None, tolerance=None, filterremote=True): # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
+def _simplify_polys(
+    polys, minarea=100 * 1e6, maxdistance=None, tolerance=None, filterremote=True
+):  # 100*1e6 = 100 km² if CRS is DISTANCE_CRS
     if isinstance(polys, MultiPolygon):
         polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
         mainpoly = polys[0]
         mainlength = np.sqrt(mainpoly.area / (2.0 * np.pi))
 
         if maxdistance is not None:
-            mainlength=maxdistance
+            mainlength = maxdistance
 
         if mainpoly.area > minarea:
             polys = MultiPolygon(
@@ -187,35 +189,50 @@ def normalise_text(text):
     return text
 
 
-def simplify_europe(regions):    
+def simplify_europe(regions):
     """
     Simplifies the geometries of European regions by removing small islands and re-adding selected regions manually.
-    
-    Parameters:
+
+    Parameters
+    ----------
         regions (GeoDataFrame): A GeoDataFrame containing the geometries of European regions.
-    
-    Returns:
+
+    Returns
+    -------
         regions (GeoDataFrame): A simplified GeoDataFrame with updated geometries and dropped entries.
     """
-    logger.info("Simplifying geometries for Europe by removing small islands smaller than 500 km2 or further than 200 km away.")
-    coverage = regions.to_crs(DISTANCE_CRS).groupby("country")["geometry"].apply(lambda x: x.union_all())
-    coverage = coverage.apply(_simplify_polys, minarea=500*1e6,maxdistance=200*1e3)
-    coverage = gpd.GeoDataFrame(geometry = coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
+    logger.info(
+        "Simplifying geometries for Europe by removing small islands smaller than 500 km2 or further than 200 km away."
+    )
+    coverage = (
+        regions.to_crs(DISTANCE_CRS)
+        .groupby("country")["geometry"]
+        .apply(lambda x: x.union_all())
+    )
+    coverage = coverage.apply(_simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3)
+    coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
 
     # Re-add selected regions manually
     coverage = pd.concat([coverage, regions.loc[NUTS3_INCLUDE, ["geometry"]]])
     shape = coverage.union_all()
 
     regions_polygon = regions.explode()
-    regions_polygon = gpd.sjoin(regions_polygon, gpd.GeoDataFrame(geometry=[shape], crs=GEO_CRS), how="inner", predicate="intersects")
+    regions_polygon = gpd.sjoin(
+        regions_polygon,
+        gpd.GeoDataFrame(geometry=[shape], crs=GEO_CRS),
+        how="inner",
+        predicate="intersects",
+    )
 
     # Group by level3 and country, and aggregate by union, and name index "index"
-    regions_polygon = regions_polygon.groupby(["level3"])["geometry"].apply(lambda x: x.union_all())
+    regions_polygon = regions_polygon.groupby(["level3"])["geometry"].apply(
+        lambda x: x.union_all()
+    )
 
     # Update regions
     regions = regions.loc[regions.index.isin(regions_polygon.index)]
     regions.loc[regions_polygon.index, "geometry"] = regions_polygon
-    
+
     return regions
 
 
