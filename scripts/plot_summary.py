@@ -233,14 +233,14 @@ def plot_balances():
 
         units = "MtCO2/a" if v[0] in co2_carriers else "TWh/a"
         logger.debug(
-            f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold']/10} {units}"
+            f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold'] / 10} {units}"
         )
         logger.debug(df.loc[to_drop])
 
         df = df.drop(to_drop)
 
         logger.debug(
-            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+            f"Total energy balance for {v} of {round(df.sum().iloc[0], 2)} {units}"
         )
 
         if df.empty:
