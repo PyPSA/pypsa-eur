@@ -40,13 +40,13 @@ def get_unit_conversion_factor(
 ) -> float:
     if input_unit not in unit_scaling.keys():
         raise ValueError(
-            f"Input unit {input_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+            f"Input unit {input_unit} not allowed. Must be one of {unit_scaling.keys()}"
         )
     elif output_unit not in unit_scaling.keys():
         raise ValueError(
             f"Output unit {output_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+                unit_scaling.keys()
+            }"
         )
 
     return unit_scaling[input_unit] / unit_scaling[output_unit]

@@ -438,7 +438,7 @@ def apply_time_segmentation_perfect(
         import tsam.timeseriesaggregation as tsam
     except ImportError:
         raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
+            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
         )
 
     # get all time-dependent data

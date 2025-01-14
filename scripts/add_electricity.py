@@ -710,7 +710,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
         if not missing_countries.empty:
             logger.warning(
-                f'Assuming max_hours=6 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
+                f"Assuming max_hours=6 for hydro reservoirs in the countries: {', '.join(missing_countries)}"
             )
         hydro_max_hours = hydro.max_hours.where(
             (hydro.max_hours > 0) & ~hydro.index.isin(missing_mh_single_i),
@@ -833,7 +833,7 @@ def estimate_renewable_capacities(
         if expansion_limit:
             assert np.isscalar(expansion_limit)
             logger.info(
-                f"Reducing capacity expansion limit to {expansion_limit*100:.2f}% of installed capacity."
+                f"Reducing capacity expansion limit to {expansion_limit * 100:.2f}% of installed capacity."
             )
             n.generators.loc[tech_i, "p_nom_max"] = (
                 expansion_limit * n.generators.loc[tech_i, "p_nom_min"]
