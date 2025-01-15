@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
 """
 Tests the functionalities of scripts/base_network.py.
 """
@@ -34,7 +32,6 @@ from base_network import (
     _set_electrical_parameters_lines_eg,
     _set_electrical_parameters_lines_osm,
     _set_electrical_parameters_links_osm,
-    _set_electrical_parameters_transformers,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -119,7 +116,7 @@ def test_get_oid(column_name, expected):
     assert comparison_series.size == 0
 
 
-def test_load_buses(tmpdir, config, buses_dataframe):
+def test_load_buses(buses_dataframe, config, italy_shape, tmpdir):
     """
     Verify what returned by _load_buses.
     """
@@ -139,7 +136,6 @@ def test_load_buses(tmpdir, config, buses_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses_output = _load_buses(
         buses_path, italy_shape, countries, config
     ).reset_index()
@@ -148,7 +144,9 @@ def test_load_buses(tmpdir, config, buses_dataframe):
     assert df_comparison.empty
 
 
-def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dataframe):
+def test_load_converters_from_eg(
+    buses_dataframe, config, converters_dataframe, italy_shape, tmpdir
+):
     """
     Verify what returned by _load_converters_from_eg.
     """
@@ -166,7 +164,6 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
@@ -182,7 +179,7 @@ def test_load_converters_from_eg(tmpdir, buses_dataframe, config, converters_dat
 
 
 def test_load_converters_from_osm(
-    tmpdir, buses_dataframe, config, converters_dataframe
+    buses_dataframe, config, converters_dataframe, italy_shape, tmpdir
 ):
     """
     Verify what returned by _load_converters_from_osm.
@@ -201,7 +198,6 @@ def test_load_converters_from_osm(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
@@ -216,7 +212,7 @@ def test_load_converters_from_osm(
     assert df_converters_comparison.empty
 
 
-def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
+def test_load_lines(buses_dataframe, config, italy_shape, lines_dataframe, tmpdir):
     """
     Verify what returned by _load_lines.
     """
@@ -238,7 +234,6 @@ def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
@@ -267,7 +262,9 @@ def test_load_lines(tmpdir, buses_dataframe, config, lines_dataframe):
     assert df_lines_comparison.empty
 
 
-def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
+def test_load_links_from_eg(
+    buses_dataframe, config, italy_shape, links_dataframe, tmpdir
+):
     """
     Verify what returned by _load_links_from_eg.
     """
@@ -289,7 +286,6 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
@@ -318,7 +314,9 @@ def test_load_links_from_eg(tmpdir, buses_dataframe, config, links_dataframe):
     assert df_links_comparison.empty
 
 
-def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
+def test_load_links_from_osm(
+    buses_dataframe, config, italy_shape, links_dataframe, tmpdir
+):
     """
     Verify what returned by _load_links_from_osm.
     """
@@ -340,7 +338,6 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
@@ -369,7 +366,9 @@ def test_load_links_from_osm(tmpdir, buses_dataframe, config, links_dataframe):
     assert df_links_comparison.empty
 
 
-def test_load_transformers(tmpdir, buses_dataframe, config, transformers_dataframe):
+def test_load_transformers(
+    buses_dataframe, config, italy_shape, tmpdir, transformers_dataframe
+):
     """
     Verify what returned by _load_transformers.
     """
@@ -386,7 +385,6 @@ def test_load_transformers(tmpdir, buses_dataframe, config, transformers_datafra
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     transformers_path = pathlib.Path(tmpdir, "transformers_exercise.csv")
     transformers_dataframe.to_csv(transformers_path, index=False)
@@ -403,7 +401,9 @@ def test_load_transformers(tmpdir, buses_dataframe, config, transformers_datafra
     assert df_transformers_comparison.empty
 
 
-def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
+def test_reconnect_crimea(
+    buses_dataframe, config, italy_shape, lines_dataframe, tmpdir
+):
     """
     Verify what returned by _reconnect_crimea.
     """
@@ -435,7 +435,6 @@ def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
@@ -463,7 +462,7 @@ def test_reconnect_crimea(tmpdir, buses_dataframe, config, lines_dataframe):
 
 
 def test_set_electrical_parameters_lines_eg(
-    tmpdir, buses_dataframe, config, lines_dataframe
+    buses_dataframe, config, italy_shape, lines_dataframe, tmpdir
 ):
     """
     Verify what returned by _set_electrical_parameters_lines_eg.
@@ -488,7 +487,6 @@ def test_set_electrical_parameters_lines_eg(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
@@ -519,7 +517,7 @@ def test_set_electrical_parameters_lines_eg(
 
 
 def test_set_electrical_parameters_lines_osm(
-    tmpdir, buses_dataframe, config, lines_dataframe
+    buses_dataframe, config, italy_shape, lines_dataframe, tmpdir
 ):
     """
     Verify what returned by _set_electrical_parameters_lines_osm.
@@ -545,7 +543,6 @@ def test_set_electrical_parameters_lines_osm(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     lines_path = pathlib.Path(tmpdir, "lines_exercise.csv")
     lines_dataframe.to_csv(lines_path, index=False)
@@ -576,7 +573,7 @@ def test_set_electrical_parameters_lines_osm(
 
 
 def test_set_electrical_parameters_links_osm(
-    tmpdir, buses_dataframe, config, links_dataframe
+    buses_dataframe, config, italy_shape, links_dataframe, tmpdir
 ):
     """
     Verify what returned by _set_electrical_parameters_links_osm.
@@ -602,7 +599,6 @@ def test_set_electrical_parameters_links_osm(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
@@ -633,7 +629,7 @@ def test_set_electrical_parameters_links_osm(
 
 
 def test_set_electrical_parameters_converters(
-    tmpdir, buses_dataframe, config, converters_dataframe
+    buses_dataframe, config, converters_dataframe, italy_shape, tmpdir
 ):
     """
     Verify what returned by _set_electrical_parameters_converters.
@@ -657,7 +653,6 @@ def test_set_electrical_parameters_converters(
     buses_path = pathlib.Path(tmpdir, "buses.csv")
     buses_dataframe.to_csv(buses_path, index=False)
     countries = config["countries"]
-    italy_shape = pathlib.Path(path_cwd, "test", "test_data", "italy_shape.geojson")
     df_buses = _load_buses(buses_path, italy_shape, countries, config)
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)

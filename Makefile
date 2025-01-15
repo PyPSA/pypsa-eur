@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -41,13 +41,13 @@ install: _conda_check
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 # Install pinned environment
 install-pinned-linux: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/linux-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-windows: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/windows-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-macos: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/macos-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 
 
