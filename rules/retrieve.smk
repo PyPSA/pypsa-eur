@@ -558,12 +558,16 @@ if config["enable"]["retrieve"] and (
             [
                 storage(
                     f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{component}.csv"
+                ) if component != "map" else
+                storage(
+                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{component}.html"
                 )
                 for component in OSM_COMPONENTS
             ],
         output:
             [
-                f"data/osm-prebuilt/{OSM_VERSION}/{component}.csv"
+                f"data/osm-prebuilt/{OSM_VERSION}/{component}.csv" if component != "map" else
+                f"data/osm-prebuilt/{OSM_VERSION}/{component}.html"
                 for component in OSM_COMPONENTS
             ],
         log:
