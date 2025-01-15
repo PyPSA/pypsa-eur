@@ -545,8 +545,11 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
-    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
-    osm_prebuilt_version = {
+    OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
+    OSM_COMPONENTS = ["buses", "converters", "lines", "links", "transformers"]
+    if OSM_VERSION >= 0.6:
+        OSM_COMPONENTS.append("map")
+    OSM_ZENODO_IDS = {
         0.1: "12799202",
         0.2: "13342577",
         0.3: "13358976",
@@ -558,37 +561,22 @@ if config["enable"]["retrieve"] and (
     # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
-            ),
-            converters=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
-            ),
-            lines=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
-            ),
-            links=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
-            ),
-            transformers=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
-            ),
-            map=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/map.html"
-            ),
+            [
+                storage(
+                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{component}.csv"
+                )
+                for component in OSM_COMPONENTS
+            ],
         output:
-            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
-            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
-            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
-            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
-            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
-            map=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/map.html",
+            [
+                f"data/osm-prebuilt/{OSM_VERSION}/{component}.csv"
+                for component in OSM_COMPONENTS
+            ],
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
         resources:
             mem_mb=500,
-        retries: 2
         run:
             for key in input.keys():
                 move(input[key], output[key])
