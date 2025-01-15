@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -253,7 +252,8 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     consumption should be attributed to the iron and steel production.
     The default value of 75% is based on https://doi.org/10.1016/j.erss.2022.102565
 
-    Parameters:
+    Parameters
+    ----------
     demand (pd.DataFrame): A pandas DataFrame containing energy demand data
                            with a multi-level column index where one of the
                            levels corresponds to "Integrated steelworks".
@@ -263,7 +263,8 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     factor (float, optional): The proportion of coke ovens energy consumption to add to the
                               integrated steelworks demand. Defaults to 0.75.
 
-    Returns:
+    Returns
+    -------
     pd.DataFrame: The updated `demand` DataFrame with the coke ovens energy
     consumption added to the integrated steelworks energy demand.
     """

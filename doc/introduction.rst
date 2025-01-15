@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -35,7 +35,7 @@ For instance, an invocation to
 
 .. code:: console
 
-    $ snakemake -call results/networks/base_s_128_elec_lvopt_.nc
+    $ snakemake results/networks/base_s_128_elec_lvopt_.nc
 
 follows this dependency graph
 

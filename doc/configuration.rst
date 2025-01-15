@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -80,10 +80,10 @@ facilitate running multiple scenarios through a single command
 .. code:: console
 
    # for electricity-only studies
-   $ snakemake -call solve_elec_networks
+   $ snakemake solve_elec_networks
 
    # for sector-coupling studies
-   $ snakemake -call solve_sector_networks
+   $ snakemake solve_sector_networks
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
@@ -150,7 +150,7 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: enable:
+   :start-after: #enable
    :end-before: # docs
 
 .. csv-table::

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -22,6 +22,8 @@ rule solve_network:
             RESULTS
             + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_solver.log"
         ),
+        memory=RESULTS
+        + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_memory.log",
         python=RESULTS
         + "logs/solve_network/base_s_{clusters}_elec_l{ll}_{opts}_python.log",
     benchmark:
