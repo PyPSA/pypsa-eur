@@ -54,7 +54,7 @@ def retrieve_osm_boundaries(
     retries = 3
     for attempt in range(retries):
         logger.info(
-            f" - Fetching OSM administrative boundaries for {country} (Attempt {attempt+1})..."
+            f" - Fetching OSM administrative boundaries for {country} (Attempt {attempt + 1})..."
         )
 
         # Build the overpass query
