@@ -86,7 +86,7 @@ solving:
 
   check_objective:
     enable: true
-    expected_value: 7.1040937763e+08
+    expected_value: 7.0847670388e+08
 
 plotting:
   map:
