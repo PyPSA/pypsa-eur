@@ -95,7 +95,7 @@ if config["enable"]["retrieve"]:
                     zip_ref.extract(filename, Path(output.shapes_level_3).parent)
                     extracted_file = Path(output.shapes_level_3).parent / filename
                     extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[- 1]}")
+                        getattr(output, f"shapes_level_{level[-1]}")
                     )
             os.remove(params.zip_file)
 
@@ -473,7 +473,7 @@ if config["enable"]["retrieve"]:
                 layer_path = (
                     f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
-                print(f"Adding layer {i + 1} of 3 to combined output file.")
+                print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
     rule download_wdpa_marine:
@@ -496,7 +496,7 @@ if config["enable"]["retrieve"]:
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
-                print(f"Adding layer {i + 1} of 3 to combined output file.")
+                print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
