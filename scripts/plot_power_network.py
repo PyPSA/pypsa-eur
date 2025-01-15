@@ -146,7 +146,7 @@ def plot_map(
 
     title = "added grid"
 
-    if snakemake.wildcards["ll"] == "v1.0":
+    if snakemake.params.transmission_limit == "lv1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
