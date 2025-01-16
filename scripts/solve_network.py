@@ -51,6 +51,10 @@ logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 
 
+class ObjectiveValueError(Exception):
+    pass
+
+
 def add_land_use_constraint_perfect(n):
     """
     Add global constraints for tech capacity limit.
@@ -986,6 +990,19 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
+def check_objective_value(n, solving):
+    check_objective = solving["check_objective"]
+    if check_objective["enable"]:
+        atol = check_objective["atol"]
+        rtol = check_objective["rtol"]
+        expected_value = check_objective["expected_value"]
+        if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
+            raise ObjectiveValueError(
+                f"Objective value {n.objective} differs from expected value "
+                f"{expected_value} by more than {atol}."
+            )
+
+
 def solve_network(n, config, params, solving, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
@@ -1034,10 +1051,13 @@ def solve_network(n, config, params, solving, **kwargs):
             **kwargs
         )
 
-    if status != "ok" and not rolling_horizon:
-        logger.warning(
-            f"Solving status '{status}' with termination condition '{condition}'"
-        )
+    if not rolling_horizon:
+        if status != "ok":
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+        check_objective_value(n, solving)
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")

@@ -89,6 +89,10 @@ solving:
     options: highs-default
   mem: 4000
 
+  check_objective:
+    enable: true
+    expected_value: 1.4427662256e+10
+
 plotting:
   map:
     boundaries:
