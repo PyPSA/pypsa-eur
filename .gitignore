@@ -12,6 +12,7 @@ gurobi.log
 .vscode
 .idea
 *.orig
+.idea
 
 /bak
 /resources

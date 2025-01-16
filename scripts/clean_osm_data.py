@@ -423,7 +423,7 @@ def _import_lines_and_cables(path_lines):
                 country = os.path.basename(os.path.dirname(path_lines[key][idx]))
 
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_lines[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_lines[key])).zfill(2)}: {ip}"
                 )
                 with open(ip) as f:
                     data = json.load(f)
@@ -458,7 +458,7 @@ def _import_lines_and_cables(path_lines):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_lines[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_lines[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
         logger.info("---")
@@ -493,7 +493,7 @@ def _import_routes_relation(path_relation):
                 country = os.path.basename(os.path.dirname(path_relation[key][idx]))
 
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_relation[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_relation[key])).zfill(2)}: {ip}"
                 )
                 with open(ip) as f:
                     data = json.load(f)
@@ -528,7 +528,7 @@ def _import_routes_relation(path_relation):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_relation[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_relation[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
 
@@ -753,9 +753,9 @@ def _clean_substations(df_substations, list_voltages):
     )
 
     df_substations.loc[bool_frequency_len & bool_split, "frequency"] = (
-        df_substations.loc[
-            bool_frequency_len & bool_split,
-        ].apply(lambda row: row["frequency"].split(";")[row["split_count"] - 1], axis=1)
+        df_substations.loc[bool_frequency_len & bool_split,].apply(
+            lambda row: row["frequency"].split(";")[row["split_count"] - 1], axis=1
+        )
     )
 
     df_substations = _split_cells(df_substations, cols=["frequency"])
@@ -1260,7 +1260,7 @@ def _import_substations(path_substations):
             ):  # unpopulated OSM json is about 51 bytes
                 country = os.path.basename(os.path.dirname(path_substations[key][idx]))
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_substations[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_substations[key])).zfill(2)}: {ip}"
                 )
                 with open(ip) as f:
                     data = json.load(f)
@@ -1302,7 +1302,7 @@ def _import_substations(path_substations):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_substations[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_substations[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
         logger.info("---")
@@ -1344,9 +1344,9 @@ def _import_substations(path_substations):
         .reset_index()
     )
     df_substations_relation_members_grouped["geometry"] = (
-        df_substations_relation_members_grouped[
-            "linestring"
-        ].apply(lambda x: x.convex_hull)
+        df_substations_relation_members_grouped["linestring"].apply(
+            lambda x: x.convex_hull
+        )
     )
 
     df_substations_relation = (
@@ -1802,7 +1802,7 @@ if __name__ == "__main__":
     df_links = df_links.dropna(subset=["rating"])
     len_after = len(df_links)
     logger.info(
-        f"Dropped {len_before-len_after} elements without rating. "
+        f"Dropped {len_before - len_after} elements without rating. "
         + f"Imported {len_after} elements."
     )
 
