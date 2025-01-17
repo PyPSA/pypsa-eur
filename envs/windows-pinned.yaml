@@ -48,7 +48,7 @@ dependencies:
   - cffi=1.17.1
   - cfgv=3.3.1
   - cftime=1.6.4
-  - charset-normalizer=3.4.0
+  - charset-normalizer=3.4.1
   - click=8.1.8
   - click-plugins=1.1.1
   - cligj=0.7.2
@@ -66,7 +66,7 @@ dependencies:
   - dask=2024.12.1
   - dask-core=2024.12.1
   - dask-expr=1.1.21
-  - datapi=0.1.1
+  - datapi=0.1.2
   - datrie=0.8.2
   - dav1d=1.2.1
   - decorator=5.1.1
@@ -83,7 +83,7 @@ dependencies:
   - executing=2.1.0
   - filelock=3.16.1
   - fiona=1.10.1
-  - folium=0.19.3
+  - folium=0.19.4
   - font-ttf-dejavu-sans-mono=2.37
   - font-ttf-inconsolata=3.000
   - font-ttf-source-code-pro=2.038
@@ -106,7 +106,7 @@ dependencies:
   - geotiff=1.7.3
   - getopt-win32=0.1
   - gitdb=4.0.12
-  - gitpython=3.1.43
+  - gitpython=3.1.44
   - glpk=5.0
   - gmp=6.3.0
   - graphite2=1.3.13
@@ -120,11 +120,11 @@ dependencies:
   - humanfriendly=10.0
   - hyperframe=6.0.1
   - icu=75.1
-  - identify=2.6.4
+  - identify=2.6.5
   - idna=3.10
   - immutables=0.21
   - importlib-metadata=8.5.0
-  - importlib_resources=6.4.5
+  - importlib_resources=6.5.2
   - iniconfig=2.0.0
   - ipopt=3.14.16
   - ipython=8.31.0
@@ -181,7 +181,7 @@ dependencies:
   - libnetcdf=4.9.2
   - libopenblas=0.3.28
   - libparquet=18.1.0
-  - libpng=1.6.44
+  - libpng=1.6.45
   - libprotobuf=5.28.3
   - libre2-11=2024.07.02
   - librttopo=1.1.0
@@ -231,13 +231,13 @@ dependencies:
   - orc=2.0.3
   - packaging=24.2
   - pandas=2.2.3
-  - pango=1.54.0
+  - pango=1.56.0
   - parso=0.8.4
   - partd=1.4.2
   - patsy=1.0.1
   - pcre2=10.44
   - pickleshare=0.7.5
-  - pillow=11.0.0
+  - pillow=11.1.0
   - pip=24.3.1
   - pixman=0.44.2
   - pkgutil-resolve-name=1.3.10
@@ -258,7 +258,7 @@ dependencies:
   - pyarrow-core=18.1.0
   - pycountry=24.6.1
   - pycparser=2.22
-  - pygments=2.18.0
+  - pygments=2.19.1
   - pyogrio=0.10.0
   - pyparsing=3.2.1
   - pyproj=3.7.0
@@ -268,7 +268,7 @@ dependencies:
   - pyshp=2.3.1
   - pyside6=6.8.1
   - pysocks=1.7.1
-  - pytables=3.10.1
+  - pytables=3.10.2
   - pytest=8.3.4
   - python=3.12.8
   - python-dateutil=2.9.0.post0
@@ -290,13 +290,13 @@ dependencies:
   - reretry=0.11.8
   - rioxarray=0.17.0
   - rpds-py=0.22.3
-  - ruff=0.8.5
-  - scikit-learn=1.6.0
+  - ruff=0.9.0
+  - scikit-learn=1.6.1
   - scip=9.1.1
-  - scipy=1.14.1
+  - scipy=1.15.0
   - seaborn=0.13.2
   - seaborn-base=0.13.2
-  - setuptools=75.6.0
+  - setuptools=75.7.0
   - shapely=2.0.6
   - six=1.17.0
   - smart_open=7.1.0
@@ -337,14 +337,14 @@ dependencies:
   - validators=0.34.0
   - vc=14.3
   - vc14_runtime=14.42.34433
-  - virtualenv=20.28.0
+  - virtualenv=20.28.1
   - vs2015_runtime=14.42.34433
   - wcwidth=0.2.13
   - wheel=0.45.1
   - win_inet_pton=1.1.0
   - wrapt=1.17.0
   - x265=3.5
-  - xarray=2024.11.0
+  - xarray=2025.1.1
   - xerces-c=3.2.5
   - xlrd=2.0.1
   - xorg-libice=1.1.2
@@ -373,7 +373,7 @@ dependencies:
       - pyomo==6.8.2
       - requests-oauthlib==1.3.1
       - snakemake-executor-plugin-cluster-generic==1.0.9
-      - snakemake-executor-plugin-slurm==0.11.2
+      - snakemake-executor-plugin-slurm==0.12.0
       - snakemake-executor-plugin-slurm-jobstep==0.2.1
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6

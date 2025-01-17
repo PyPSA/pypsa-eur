@@ -93,8 +93,7 @@ def fill_large_gaps(ds, shift):
     nhours = shift / np.timedelta64(1, "h")
     if (consecutive_nans(ds) > nhours).any():
         logger.warning(
-            "There exist gaps larger then the time shift used for "
-            "copying time slices."
+            "There exist gaps larger then the time shift used for copying time slices."
         )
     time_shift = pd.Series(ds.values, ds.index + shift)
     return ds.where(ds.notnull(), time_shift.reindex_like(ds))
@@ -301,9 +300,7 @@ if __name__ == "__main__":
     logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
     load = load.interpolate(method="linear", limit=interpolate_limit)
 
-    logger.info(
-        "Filling larger gaps by copying time-slices of period " f"'{time_shift}'."
-    )
+    logger.info(f"Filling larger gaps by copying time-slices of period '{time_shift}'.")
     load = load.apply(fill_large_gaps, shift=time_shift)
 
     if snakemake.params.load["supplement_synthetic"]:
