@@ -2034,7 +2034,7 @@ def add_EVs(
             efficiency=options["bev_charge_efficiency"],
         )
 
-    if options["bev_dsm"]:
+    if options["bev_dsm"][int(snakemake.wildcards.planning_horizons)]:
         e_nom = (
             number_cars
             * options["bev_energy"]
@@ -4826,10 +4826,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="38",
+            clusters="1",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",
+            run="KN2045_Bal_v4_upstream",
         )
 
     configure_logging(snakemake)
