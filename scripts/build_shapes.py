@@ -103,6 +103,7 @@ OTHER_POP_2019 = {  # in 1000 persons
 EXCHANGE_EUR_USD_2019 = 1.1
 NUTS3_INCLUDE = [
     "DE80N",
+    "DEF08",
     "DK014",
     "DK050",
     "GBH34",
@@ -209,7 +210,10 @@ def simplify_europe(regions):
         .groupby("country")["geometry"]
         .apply(lambda x: x.union_all())
     )
+    coverage_dk = coverage.loc[["DK"]]
     coverage = coverage.apply(_simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3)
+    coverage_dk = coverage_dk.apply(_simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3)
+    coverage.loc["DK"] = coverage_dk.values[0]
     coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
 
     # Re-add selected regions manually
