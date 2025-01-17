@@ -839,7 +839,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.10.0
+  version: v0.10.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1221,6 +1221,8 @@ plotting:
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: '#cc826a'
+    urban central hot water pits: '#d96f4c'
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
