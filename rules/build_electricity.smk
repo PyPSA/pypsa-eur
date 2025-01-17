@@ -589,6 +589,8 @@ def input_cluster_network(w):
 
 rule cluster_network:
     params:
+        mode=config_provider("clustering", "mode"),
+        admin=config_provider("clustering", "admin"),
         cluster_network=config_provider("clustering", "cluster_network"),
         aggregation_strategies=config_provider(
             "clustering", "aggregation_strategies", default={}
@@ -604,9 +606,9 @@ rule cluster_network:
     input:
         unpack(input_cluster_network),
         network=resources("networks/base_s.nc"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
-        busmap=ancient(resources("busmap_base_s.csv")),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)

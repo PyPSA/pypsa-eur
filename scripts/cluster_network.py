@@ -344,7 +344,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "cluster_network", 
             clusters=60,
-            configfiles=["config/config.cluster.yaml"]
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -401,7 +400,7 @@ if __name__ == "__main__":
             adm1_countries = list(set(adm1_countries).intersection(buses["country"].unique()))
             if adm1_countries: 
                 logger.info(f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}.")
-                
+
             nuts3_regions = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
             nuts3_regions["column"] = level_map[admin_level]
 
