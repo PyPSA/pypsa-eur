@@ -41,7 +41,6 @@ baseline_regional_dem:
     ammonia: regional
     H2_network: true
     
-
 policy_regional_dem:
   co2_budget_apply: true
   sector:
