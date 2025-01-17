@@ -239,9 +239,14 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
         This function updates the efficiency in place and does not return a value.
     """
 
-    # get names of heat pumps in previous iteration
+    # get names of heat pumps in previous iteration that cannot be replaced by direct utilisation in this iteration
     heat_pump_idx_previous_iteration = n_p.links.index[
         n_p.links.index.str.contains("heat pump")
+        & n_p.links.index.str[:-4].isin(
+            n.links_t.efficiency.columns.str.rstrip(  # sources that can be directly used are no longer represented by heat pumps in the dynamic efficiency dataframe
+                str(year)
+            )
+        )
     ]
     # construct names of same-technology heat pumps in the current iteration
     corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(
@@ -252,6 +257,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
         n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
     )
 
+    # Change efficiency2 for heat pumps that use an explicitly modelled heat source
+    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+        n_p.links_t["efficiency2"].columns
+    )
+    current_iteration_columns = corresponding_idx_this_iteration.intersection(
+        n.links_t["efficiency2"].columns
+    )
+    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+    )
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -259,11 +275,11 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="37",
+            clusters="39",
             opts="",
-            ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
-            planning_horizons=2030,
+            ll="vopt",
+            sector_opts="",
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)
