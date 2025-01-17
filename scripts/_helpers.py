@@ -254,7 +254,7 @@ def configure_logging(snakemake, skip_handlers=False):
 
 def update_p_nom_max(n):
     # if extendable carriers (solar/onwind/...) have capacity >= 0,
-    # e.g. existing assets from the OPSD project are included to the network,
+    # e.g. existing assets from GEM are included to the network,
     # the installed capacity might exceed the expansion limit.
     # Hence, we update the assumptions.
 
