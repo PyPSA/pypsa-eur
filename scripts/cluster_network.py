@@ -112,6 +112,7 @@ from pypsa.clustering.spatial import (
     get_clustering_from_busmap,
 )
 from scipy.sparse.csgraph import connected_components
+import tqdm
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -340,7 +341,11 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake(
+            "cluster_network", 
+            clusters=60,
+            configfiles=["config/config.cluster.yaml"]
+        )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -377,7 +382,66 @@ if __name__ == "__main__":
             ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
-            busmap = custom_busmap
+            busmap = custom_busmap  
+        
+        mode = params.mode
+        if mode == "admin": 
+            level_map = {
+                0: "country",
+                1: "level1",
+                2: "level2",
+                3: "level3",
+            }
+            admin_level = params.admin["level"]
+            logger.info(f"Clustering at administrative level {admin_level}.")
+            # check if BA, MD, UA, or XK are in the network
+            adm1_countries = ["BA", "MD", "UA", "XK"]
+            buses = n.buses[["x", "y", "country"]].copy()
+            # Find the intersection of adm1_countries and n.buses.country
+            adm1_countries = list(set(adm1_countries).intersection(buses["country"].unique()))
+            if adm1_countries: 
+                logger.info(f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}.")
+                
+            nuts3_regions = gpd.read_file(snakemake.input.nuts3_shapes).set_index("index")
+            nuts3_regions["column"] = level_map[admin_level]
+
+            country_level = {k: v for k, v in params.admin.items() if k != "level"}
+            if country_level:
+                country_level_list = "\n".join([f"- {k}: level {v}" for k, v in country_level.items()])
+                logger.info(f"Setting individual administrative levels for:\n{country_level_list}")
+                nuts3_regions.loc[nuts3_regions["country"].isin(country_level.keys()), "column"] = (
+                    nuts3_regions.loc[nuts3_regions["country"].isin(country_level.keys()), "country"]
+                    .map(country_level)
+                    .map(level_map) 
+                )
+            nuts3_regions["busmap"] = nuts3_regions.apply(
+                lambda row: row[row["column"]], axis=1
+            )
+
+            # Group by busmap
+            admin_shapes = nuts3_regions[["busmap", "geometry"]]
+            admin_shapes = admin_shapes.groupby("busmap")["geometry"].apply(
+                lambda x: x.union_all()
+            )
+            admin_shapes = gpd.GeoDataFrame(admin_shapes, geometry="geometry", crs=nuts3_regions.crs)
+            admin_shapes["country"] = admin_shapes.index.str[:2]
+            
+            buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
+            buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
+            buses["busmap"] = ""
+
+            # Map based for each country 
+            for country in tqdm.tqdm(buses["country"].unique()):
+                buses_subset = buses.loc[buses["country"] == country]
+
+                buses.loc[buses_subset.index, "busmap"] = gpd.sjoin_nearest(
+                    buses_subset.to_crs(epsg=3857),
+                    admin_shapes.loc[admin_shapes["country"] == country].to_crs(epsg=3857),
+                    how="left",
+                )["busmap_right"]
+            
+            busmap = buses["busmap"]
+
         else:
             algorithm = params.cluster_network["algorithm"]
             features = None
