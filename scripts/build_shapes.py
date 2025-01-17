@@ -212,7 +212,9 @@ def simplify_europe(regions):
     )
     coverage_dk = coverage.loc[["DK"]]
     coverage = coverage.apply(_simplify_polys, minarea=500 * 1e6, maxdistance=200 * 1e3)
-    coverage_dk = coverage_dk.apply(_simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3)
+    coverage_dk = coverage_dk.apply(
+        _simplify_polys, minarea=65 * 1e6, maxdistance=200 * 1e3
+    )
     coverage.loc["DK"] = coverage_dk.values[0]
     coverage = gpd.GeoDataFrame(geometry=coverage, crs=DISTANCE_CRS).to_crs(GEO_CRS)
 
