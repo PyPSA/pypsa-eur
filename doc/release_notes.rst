@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Restore share policy "base" functionality to share build renewable profiles
+
 * Feature: Introduce geothermal district heating (direct utilisation and heat pumps). Potentials are based on `Manz et al. 2024: Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`.
 
 * Feature: Allow CHPs to use different fuel sources such as gas, oil, coal, and methanol. Note that the cost assumptions are based on a gas CHP (except for solid biomass-fired CHP).
