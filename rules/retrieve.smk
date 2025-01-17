@@ -546,9 +546,15 @@ if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
     OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
-    OSM_COMPONENTS = ["buses", "converters", "lines", "links", "transformers"]
+    OSM_FILES = [
+        "buses.csv",
+        "converters.csv",
+        "lines.csv",
+        "links.csv",
+        "transformers.csv",
+    ]
     if OSM_VERSION >= 0.6:
-        OSM_COMPONENTS.append("map")
+        OSM_FILES.append("map.html")
     OSM_ZENODO_IDS = {
         0.1: "12799202",
         0.2: "13342577",
@@ -561,17 +567,14 @@ if config["enable"]["retrieve"] and (
     # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            [
-                storage(
-                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{component}.csv"
+            **{
+                file: storage(
+                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
                 )
-                for component in OSM_COMPONENTS
-            ],
+                for file in OSM_FILES
+            },
         output:
-            [
-                f"data/osm-prebuilt/{OSM_VERSION}/{component}.csv"
-                for component in OSM_COMPONENTS
-            ],
+            **{file: f"data/osm-prebuilt/{OSM_VERSION}/{file}" for file in OSM_FILES},
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
