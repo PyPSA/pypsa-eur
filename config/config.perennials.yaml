@@ -610,7 +610,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
-  EW: false 
+  EW: false
   perennial: false
   co2_vent: false
   central_heat_vent: false
