@@ -1121,9 +1121,9 @@ def add_perennial(n):
       carrier = "perennial",
       p_nom_extendable=True,
       p_max_pu = p_max_pu,
-      capital_cost= 24411 * perennial_CO2_seq ,#costs.at['perennials gbr', "fixed"] * perennial_CO2_seq , --> hardocoded including FOM!
-      marginal_cost= (52.85 - 0.33 * costs.at['biogas manure', 'fuel']) * perennial_CO2_seq, #(costs.at['perennials gbr', "VOM"] - costs.at['perennials gbr', "biomethane-output"] * costs.at['biogas manure', 'fuel']) * perennial_CO2_seq, # includes avoided cost for biogas feedstock
-      lifetime = 25#costs.at['perennials gbr', "lifetime"],
+      capital_cost= 4894 * perennial_CO2_seq ,#costs.at['perennials gbr', "fixed"] * perennial_CO2_seq , --> hardocoded including FOM!
+      marginal_cost= (57.72 - 0.33 * costs.at['biogas manure', 'fuel']) * perennial_CO2_seq, #(costs.at['perennials gbr', "VOM"] - costs.at['perennials gbr', "biomethane-output"] * costs.at['biogas manure', 'fuel']) * perennial_CO2_seq, # includes avoided cost for biogas feedstock
+      lifetime = 25 #costs.at['perennials gbr', "lifetime"],
     )
     print(n.links_t.p_max_pu[n.links[n.links.carrier=="perennial"].index])
 
