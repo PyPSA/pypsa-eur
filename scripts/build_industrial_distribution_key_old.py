@@ -133,7 +133,7 @@ def prepare_hotmaps_database(regions):
     return gdf
 
 
-def prepare_gem_database(regions):
+def prepare_steel_database(regions):
     """
     Load GEM database of steel plants and map onto bus regions.
     """
@@ -625,7 +625,7 @@ if __name__ == "__main__":
 
     hotmaps = prepare_hotmaps_database(regions)
 
-    steel_gem = prepare_gem_database(regions)
+    steel_gem = prepare_steel_database(regions)
 
     cement_sfi = prepare_cement_database(regions)
 

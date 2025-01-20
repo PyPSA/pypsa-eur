@@ -845,7 +845,7 @@ if config["sector"]["endo_industry"].get("enable", False):
         input:
             ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
         output:
-            steel_demand=resources("steel/eu_steel_production.csv"),
+            steel_demand=resources("endo_industry/eu_steel_production.csv"),
         log:
             logs("build_industry_steel_production_projections.log"),
         resources:
@@ -867,7 +867,7 @@ if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["
             cement_extra_eu="data/cement_production_extra_eu27.xlsx",
             industrial_distribution_key=resources("industrial_distribution_key_base_s_{clusters}.csv"),
         output:
-            cement_prod=resources("cement/cement_production_s_{clusters}.csv"),
+            cement_prod=resources("endo_industry/cement_production_s_{clusters}.csv"),
         log:
             logs("build_industry_cement_production_projections_{clusters}.log"),
         benchmark:
@@ -1249,13 +1249,13 @@ rule prepare_sector_network:
         ),
         # Steel
         steel_production=lambda w: (
-            resources("steel/eu_steel_production.csv")
+            resources("endo_industry/eu_steel_production.csv")
             if config_provider("sector", "endo_industry","enable")(w)
             else []
         ),
         # Cement
         cement_production=lambda w: (
-            resources("cement/cement_production_s_{clusters}.csv")
+            resources("endo_industry/cement_production_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),

@@ -1280,7 +1280,7 @@ def add_ammonia(n, costs):
         suffix=" Haber-Bosch",
         bus0=nodes,
         bus1=spatial.ammonia.nodes,
-        bus2= spatial.h2.nodes, #nodes + " H2",
+        bus2= nodes + " H2",
         p_nom_extendable=True,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
@@ -1298,7 +1298,7 @@ def add_ammonia(n, costs):
         nodes,
         suffix=" ammonia cracker",
         bus0=spatial.ammonia.nodes,
-        bus1= spatial.h2.nodes, #nodes + " H2",
+        bus1= nodes + " H2",
         p_nom_extendable=True,
         carrier="ammonia cracker",
         efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"],
@@ -1491,13 +1491,13 @@ def add_storage_and_grids(n, costs):
 
     n.add("Carrier", "H2")
 
-    n.add("Bus", spatial.h2.nodes, location=spatial.h2.locations, carrier="H2", unit="MWh_LHV")
+    n.add("Bus", nodes + " H2", location=spatial.h2.locations, carrier="H2", unit="MWh_LHV")
 
     n.add(
         "Link",
         nodes + " H2 Electrolysis",
         bus0=nodes,
-        bus1=spatial.h2.nodes, #nodes + " H2",
+        bus1= nodes + " H2",
         p_nom_extendable=True,
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
@@ -1511,7 +1511,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Link",
             nodes + " H2 Fuel Cell",
-            bus0=spatial.h2.nodes, #nodes + " H2",
+            bus0= nodes + " H2",
             bus1=nodes,
             p_nom_extendable=True,
             carrier="H2 Fuel Cell",
@@ -1530,7 +1530,7 @@ def add_storage_and_grids(n, costs):
         n.add(
             "Link",
             nodes + " H2 turbine",
-            bus0=spatial.h2.nodes, #nodes + " H2",
+            bus0= nodes + " H2",
             bus1=nodes,
             p_nom_extendable=True,
             carrier="H2 turbine",
@@ -1793,7 +1793,7 @@ def add_storage_and_grids(n, costs):
             "Link",
             spatial.nodes,
             suffix=" Sabatier",
-            bus0=spatial.h2.nodes, #nodes + " H2",
+            bus0= nodes + " H2",
             bus1=spatial.gas.nodes,
             bus2=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1837,7 +1837,7 @@ def add_storage_and_grids(n, costs):
             spatial.nodes,
             suffix=" SMR CC",
             bus0=spatial.gas.nodes,
-            bus1=spatial.h2.nodes, #nodes + " H2",
+            bus1= nodes + " H2",
             bus2="co2 atmosphere",
             bus3=spatial.co2.nodes,
             p_nom_extendable=True,
@@ -1854,7 +1854,7 @@ def add_storage_and_grids(n, costs):
             "Link",
             nodes + " SMR",
             bus0=spatial.gas.nodes,
-            bus1=spatial.h2.nodes, #nodes + " H2",
+            bus1= nodes + " H2",
             bus2="co2 atmosphere",
             p_nom_extendable=True,
             carrier="SMR",
@@ -3501,7 +3501,7 @@ def add_industry(n, costs):
         "Load",
         nodes,
         suffix=" H2 for industry",
-        bus=spatial.h2.nodes, #nodes + " H2",
+        bus= nodes + " H2",
         carrier="H2 for industry",
         p_set=industrial_demand.loc[nodes, "hydrogen"] / nhours,
     )
@@ -3606,8 +3606,8 @@ def add_industry(n, costs):
             n.add(
                 "Link",
                 nodes + " H2 liquefaction",
-                bus0=spatial.h2.nodes, #nodes + " H2",
-                bus1=spatial.h2.nodes + " liquid", #nodes + " H2 liquid",
+                bus0= nodes + " H2",
+                bus1= nodes + " H2 liquid",
                 carrier="H2 liquefaction",
                 efficiency=costs.at["H2 liquefaction", "efficiency"],
                 capital_cost=costs.at["H2 liquefaction", "fixed"],
@@ -3615,9 +3615,9 @@ def add_industry(n, costs):
                 lifetime=costs.at["H2 liquefaction", "lifetime"],
             )
 
-            shipping_bus = spatial.h2.nodes + " liquid" # nodes + " H2 liquid"
+            shipping_bus = nodes + " H2 liquid"
         else:
-            shipping_bus = spatial.h2.nodes # nodes + " H2"
+            shipping_bus = nodes + " H2"
 
         efficiency = (
             options["shipping_oil_efficiency"] / costs.at["fuel cell", "efficiency"]
@@ -3736,7 +3736,7 @@ def add_industry(n, costs):
     n.add(
         "Link",
         nodes + " Fischer-Tropsch",
-        bus0=spatial.h2.nodes, #nodes + " H2",
+        bus0= nodes + " H2",
         bus1=spatial.oil.nodes,
         bus2=spatial.co2.nodes,
         carrier="Fischer-Tropsch",
@@ -4175,19 +4175,9 @@ def add_steel_industry(n, investment_year, options):
         unit=unit,
     )
 
-    """
-    n.add(
-        "Store",
-        location_value,
-        bus = location_value,
-        e_nom_extendable = True,
-        e_cyclic = True,
-        carrier="steel",
-    )
-    """
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 0
+    prod_constantly = 0 # This is also ensured by the fact that there is no store for steel
     ramp_limit = 0
     regional_prod.index = regional_prod.index + ' steel'
 
@@ -4327,7 +4317,7 @@ def add_steel_industry(n, investment_year, options):
         "Link",
         nodes,
         suffix=" H2 to DRI",
-        bus0=spatial.h2.nodes,
+        bus0=nodes + " H2",
         bus1=spatial.drigas.nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
