@@ -708,13 +708,6 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
-        # Would be nice to have this as optional outputs just in case there is endo industry on
-        steel_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
-        steel_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
-        cement_capacities=resources("cement/sfi_capacities_s_{clusters}.csv"),
-        cement_start_dates=resources("cement/sfi_start_dates_s_{clusters}.csv"),
-        chemicals_capacities=resources("chemicals/ecm_capacities_s_{clusters}.csv"),
-        chemicals_start_dates=resources("chemicals/ecm_start_dates_s_{clusters}.csv"),
         capacities=resources("endo_industry/capacities_s_{clusters}.csv"),
         start_dates=resources("endo_industry/start_dates_s_{clusters}.csv"),
     threads: 1
@@ -727,7 +720,7 @@ rule build_industrial_distribution_key:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_industrial_distribution_key_try2.py"
+        "../scripts/build_industrial_distribution_key.py"
 
 
 rule build_industrial_production_per_node:
@@ -1260,7 +1253,13 @@ rule prepare_sector_network:
             if config_provider("sector", "endo_industry","enable")(w)
             else []
         ),
-        steel_capacities=lambda w: (
+        # Cement
+        cement_production=lambda w: (
+            resources("cement/cement_production_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        endoindustry_capacities=lambda w: (
             #resources("steel/gem_capacities_s_{clusters}.csv")
             resources("endo_industry/capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
@@ -1268,17 +1267,6 @@ rule prepare_sector_network:
         ),
         industrial_distribution_key=lambda w: (
             resources("industrial_distribution_key_base_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        # Cement
-        cement_production=lambda w: (
-            resources("cement/cement_production_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        cement_capacities=lambda w: (
-            resources("cement/sfi_capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),

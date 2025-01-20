@@ -463,17 +463,13 @@ def build_nodal_distribution_key(
 
         keys.loc[regions_ct, process] = key
 
-    # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
-    if (steel_start_dates == 0).all().all():
-        logger.warning("All values in the steel capacities and build year are 0. Check your data input")
-
     ###
     # CEMENT
     # Clean Sustainable Finance Initiative database to get cement plants capacities and build year for each node
 
     # Initialize DataFrames to store cement capacities and build year for each node
-    cement_capacities = pd.DataFrame(0, index=regions.index, columns=['capacity'])
-    cement_start_dates = pd.DataFrame(0, index=regions.index, columns=['year'])
+    cement_capacities = pd.DataFrame(0, index=regions.index, columns=['Cement'])
+    cement_start_dates = pd.DataFrame(0, index=regions.index, columns=['Cement'])
 
     # Iterate through each country to compute cement capacities and start dates
     for country in countries:
@@ -491,7 +487,7 @@ def build_nodal_distribution_key(
 
         # Calculate the total capacity and store it in the corresponding regions
         capacities_sum = capacities.sum() if not capacities.empty else 0
-        cement_capacities.loc[regions_ct, 'capacity'] = capacities_sum
+        cement_capacities.loc[regions_ct, 'Cement'] = capacities_sum
 
         # Calculate the weighted average start date using capacities as weights
         if not capacities.empty:
@@ -507,13 +503,13 @@ def build_nodal_distribution_key(
                 # Calculate weighted average of start dates
                 weighted_sum = (filtered_capacities * start_dates).sum()
                 weighted_avg = weighted_sum / filtered_capacities_sum
-                cement_start_dates.loc[regions_ct, 'year'] = round(weighted_avg)
+                cement_start_dates.loc[regions_ct, 'Cement'] = round(weighted_avg)
             else:
                 # If no valid capacities, assign 0
-                cement_start_dates.loc[regions_ct, 'year'] = 0
+                cement_start_dates.loc[regions_ct, 'Cement'] = 0
         else:
             # If capacities are empty, assign 0
-            cement_start_dates.loc[regions_ct, 'year'] = 0
+            cement_start_dates.loc[regions_ct, 'Cement'] = 0
 
         # Compute keys for cement SFI allocation
         if not capacities.empty:
@@ -526,7 +522,6 @@ def build_nodal_distribution_key(
 
             # Group keys by bus and sum them, filling missing regions with 0
             buses = facilities.loc[capacities.index, "bus"]
-            print(f"Buses {buses}")
             key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
         else:
             # If capacities are empty, fallback to population-based keys
@@ -534,10 +529,6 @@ def build_nodal_distribution_key(
 
     # Store the computed keys in the keys DataFrame
     keys.loc[regions_ct, 'Cement_SFI'] = key
-
-    # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
-    if (cement_start_dates == 0).all().all():
-        logger.warning("All values in the cement capacities and build year are 0. Check your data input")
 
     ###
     # AMMONIA
@@ -582,7 +573,7 @@ def build_nodal_distribution_key(
 
             # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
             capacities_sum = capacities.sum() if not capacities.empty else 0
-            chemicals_capacities.loc[regions_ct, chem] = capacities_sum
+            chemicals_capacities.loc[regions_ct, chem] = int(round(capacities_sum))
 
             # Calculate the weighted average of start dates using capacities as weights
             if not capacities.empty:
@@ -599,13 +590,29 @@ def build_nodal_distribution_key(
                     chemicals_start_dates.loc[regions_ct, chem] = 0
             else:
                 # If capacities are empty, assign 0
-                logger.warning("chemicals_start_dates is 0. Check your data input")
                 chemicals_start_dates.loc[regions_ct, chem] = 0
 
-            chemicals_start_dates = chemicals_start_dates.fillna(0)
+    
+    # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
+    if (steel_start_dates == 0).all().all():
+        logger.warning("All values in the steel capacities and build year are 0. Check your data input")
+    if (cement_start_dates == 0).all().all():
+        logger.warning("All values in the cement capacities and build year are 0. Check your data input")
+    if (chemicals_start_dates == 0).all().all():
+        logger.warning("All values in the chemicals capacities and build year are 0. Check your data input")
 
+    
+    # Combine into single DataFrame
+    capacities = pd.concat(
+        [steel_capacities, cement_capacities, chemicals_capacities],
+        axis=1
+    )
+    start_dates = pd.concat(
+        [steel_start_dates, cement_start_dates, chemicals_start_dates],
+        axis=1
+    )
 
-    return keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates
+    return keys, capacities, start_dates 
 
 
 if __name__ == "__main__":
@@ -637,14 +644,11 @@ if __name__ == "__main__":
 
     refineries = prepare_refineries_supplement(regions)
 
-    keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates = build_nodal_distribution_key(
+    keys, capacities, start_dates= build_nodal_distribution_key(
         hotmaps, steel_gem, cement_sfi, chemicals_ecm, ammonia, cement, refineries, regions, countries
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)
-    steel_capacities.to_csv(snakemake.output.steel_capacities)
-    steel_start_dates.to_csv(snakemake.output.steel_start_dates)
-    cement_capacities.to_csv(snakemake.output.cement_capacities)
-    cement_start_dates.to_csv(snakemake.output.cement_start_dates)
-    chemicals_capacities.to_csv(snakemake.output.chemicals_capacities)
-    chemicals_start_dates.to_csv(snakemake.output.chemicals_start_dates)
+    capacities.to_csv(snakemake.output.capacities)
+    start_dates.to_csv(snakemake.output.start_dates)
+

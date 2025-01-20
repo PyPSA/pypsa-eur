@@ -4126,7 +4126,8 @@ def add_steel_industry(n, investment_year, options):
 
     # Steel production demanded in Europe in kton of steel products per year
     steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
-    capacities = pd.read_csv(snakemake.input.steel_capacities, index_col=0)
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     hourly_steel_production = (steel_production.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
@@ -4400,7 +4401,8 @@ def add_cement_industry(n, investment_year, options):
 
     # Cement production demanded in each country in Europe in kton of cement products per year
     cement_production = pd.read_csv(snakemake.input.cement_production, index_col=0)
-    capacities = pd.read_csv(snakemake.input.cement_capacities, index_col=0)
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities['Cement']
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     hourly_cement_production = (cement_production.loc[:, str(investment_year)] / nhours)  # get the cement that needs to be produced hourly

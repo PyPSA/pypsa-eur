@@ -624,11 +624,13 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
-def add_steel_industry_existing_gem(n):
+def add_steel_industry_existing(n):
 
     # Steel capacities in Europe in kton of steel products per year
-    capacities = pd.read_csv(snakemake.input.steel_capacities, index_col=0)
-    start_dates = pd.read_csv(snakemake.input.steel_start_dates, index_col=0)
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
+    start_dates = start_dates[['EAF','DRI + EAF', 'Integrated steelworks']]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     capacities_bof = capacities["Integrated steelworks"]
@@ -742,16 +744,16 @@ def add_steel_industry_existing_gem(n):
     )
 
 
-def add_cement_industry_existing_sfi(n):
+def add_cement_industry_existing(n):
 
     # Cement capacities in Europe in kton of cement products per year
-    capacities = pd.read_csv(snakemake.input.cement_capacities, index_col=0)
-    start_dates = pd.read_csv(snakemake.input.cement_start_dates, index_col=0)
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities['Cement']
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
+    start_dates = round(start_dates['Cement'])
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    capacities = capacities['capacity'] * keys["Cement_SFI"]
-
-    start_dates = round(start_dates["year"])
+    capacities = capacities * keys["Cement_SFI"]
 
     start_dates = start_dates.where(
         (start_dates >= 1000) & np.isfinite(start_dates), 2000
@@ -799,8 +801,8 @@ def add_cement_industry_existing_sfi(n):
 def add_chemicals_industry_existing_ecm(n):
 
     # Chemicals capacities in Europe in kton of cement products per year
-    capacities = pd.read_csv(snakemake.input.chemicals_capacities, index_col=0)
-    start_dates = pd.read_csv(snakemake.input.chemicals_start_dates, index_col=0)
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     # Ammonia
@@ -881,8 +883,6 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-    gem = snakemake.input.steel_capacities
-    sfi = snakemake.input.cement_capacities
     endo_industry = snakemake.params.endo_industry
 
     baseyear = snakemake.params.baseyear
@@ -938,8 +938,8 @@ if __name__ == "__main__":
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
     if endo_industry.get("enable"):
-        add_steel_industry_existing_gem(n)
-        add_cement_industry_existing_sfi(n)
+        add_steel_industry_existing(n)
+        add_cement_industry_existing(n)
         if endo_industry.get("endo_chemicals"):
             add_chemicals_industry_existing_ecm(n)
 

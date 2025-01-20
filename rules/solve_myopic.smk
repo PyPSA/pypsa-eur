@@ -29,33 +29,13 @@ rule add_existing_baseyear:
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
-        steel_capacities=lambda w: (
-            resources("steel/gem_capacities_s_{clusters}.csv")
+        endoindustry_capacities=lambda w: (
+            resources("endo_industry/capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
-        steel_start_dates=lambda w: (
-            resources("steel/gem_start_dates_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        cement_capacities=lambda w: (
-            resources("cement/sfi_capacities_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        cement_start_dates=lambda w: (
-            resources("cement/sfi_start_dates_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        chemicals_capacities=lambda w: (
-            resources("chemicals/ecm_capacities_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
-            else []
-        ),
-        chemicals_start_dates=lambda w: (
-            resources("chemicals/ecm_start_dates_s_{clusters}.csv")
+        endoindustry_start_dates=lambda w: (
+            resources("endo_industry/start_dates_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
