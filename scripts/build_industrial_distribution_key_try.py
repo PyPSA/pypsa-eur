@@ -271,59 +271,8 @@ def prepare_refineries_supplement(regions):
     return gdf
 
 
-def build_nodal_distribution_key(
-    hotmaps, steel_gem, cement_sfi, chemicals_ecm, ammonia, cement, refineries, regions, countries
-):
-    """
-    Build nodal distribution keys for each sector.
-    """
-    sectors = hotmaps.Subsector.unique()
+def build_nodal_capacities_and_buildyear_endo_industry(steel_gem, cement_sfi, chemicals_ecm, regions, countries):
 
-    keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
-
-    pop = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
-    pop["country"] = pop.index.str[:2]
-    ct_total = pop.total.groupby(pop["country"]).sum()
-    keys["population"] = pop.total / pop.country.map(ct_total)
-
-    for sector, country in product(sectors, countries):
-        regions_ct = regions.index[regions.index.str.contains(country)]
-
-        facilities = hotmaps.query("country == @country and Subsector == @sector")
-
-        if not facilities.empty:
-            emissions = facilities["Emissions_ETS_2014"].fillna(
-                hotmaps["Emissions_EPRTR_2014"].dropna()
-            )
-            if emissions.sum() == 0:
-                key = pd.Series(1 / len(facilities), facilities.index)
-            else:
-                # assume 20% quantile for missing values
-                emissions = emissions.fillna(emissions.quantile(0.2))
-                key = emissions / emissions.sum()
-            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
-        elif sector == "Cement" and country in cement.country.unique():
-            facilities = cement.query("country == @country")
-            production = facilities["Cement [kt/a]"]
-            if production.sum() == 0:
-                key = pd.Series(1 / len(facilities), facilities.index)
-            else:
-                key = production / production.sum()
-            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
-        elif sector == "Refineries" and country in refineries.country.unique():
-            facilities = refineries.query("country == @country")
-            production = facilities["Capacity [bbl/day]"]
-            if production.sum() == 0:
-                key = pd.Series(1 / len(facilities), facilities.index)
-            else:
-                key = production / production.sum()
-            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
-        else:
-            key = keys.loc[regions_ct, "population"]
-
-        keys.loc[regions_ct, sector] = key
-
-    ###
     # STEEL
     # Clean Global Energy Monitor database to get steel plants capacities and build year for each node
 
@@ -434,6 +383,7 @@ def build_nodal_distribution_key(
         
         # Calculate the weighted average of start dates using capacities as weights
         if not capacities.empty:
+            print(f"Process {process}")
             start_dates = facilities.loc[capacities.index, "Start date"].dropna()
             filtering = capacities[(start_dates != 0) & (capacities != 0)].index
             filtered_capacities = capacities.loc[filtering]
@@ -451,23 +401,12 @@ def build_nodal_distribution_key(
             # If capacities are empty, assign 0
             steel_start_dates.loc[regions_ct, process] = 0
 
-        if not capacities.empty:
-            if capacities.sum() == 0:
-                key = pd.Series(1 / len(capacities), capacities.index)
-            else:
-                key = capacities / capacities.sum()
-            buses = facilities.loc[capacities.index, "bus"]
-            key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
-        else:
-            key = keys.loc[regions_ct, "population"]
-
-        keys.loc[regions_ct, process] = key
-
     # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
     if (steel_start_dates == 0).all().all():
         logger.warning("All values in the steel capacities and build year are 0. Check your data input")
 
-    ###
+
+
     # CEMENT
     # Clean Sustainable Finance Initiative database to get cement plants capacities and build year for each node
 
@@ -515,53 +454,12 @@ def build_nodal_distribution_key(
             # If capacities are empty, assign 0
             cement_start_dates.loc[regions_ct, 'year'] = 0
 
-        # Compute keys for cement SFI allocation
-        if not capacities.empty:
-            if capacities.sum() == 0:
-                # If all capacities are zero, assign equal weights
-                key = pd.Series(1 / len(capacities), index=capacities.index)
-            else:
-                # Compute weights based on the proportion of capacities
-                key = capacities / capacities.sum()
-
-            # Group keys by bus and sum them, filling missing regions with 0
-            buses = facilities.loc[capacities.index, "bus"]
-            print(f"Buses {buses}")
-            key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
-        else:
-            # If capacities are empty, fallback to population-based keys
-            key = keys.loc[regions_ct, "population"]
-
-    # Store the computed keys in the keys DataFrame
-    keys.loc[regions_ct, 'Cement_SFI'] = key
-
     # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
     if (cement_start_dates == 0).all().all():
         logger.warning("All values in the cement capacities and build year are 0. Check your data input")
 
-    ###
+
     # AMMONIA
-
-    # OLD CODE: this is overwritten byt the following code, since it contains more accurate data on ammonia plants location and build year
-    # add ammonia
-    for country in countries:
-        regions_ct = regions.index[regions.index.str.contains(country)]
-
-        facilities = ammonia.query("country == @country")
-
-        if not facilities.empty:
-            production = facilities["Ammonia [kt/a]"]
-            if production.sum() == 0:
-                key = pd.Series(1 / len(facilities), facilities.index)
-            else:
-                # assume 50% of the minimum production for missing values
-                production = production.fillna(0.5 * facilities["Ammonia [kt/a]"].min())
-                key = production / production.sum()
-            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
-        else:
-            key = 0.0
-
-        keys.loc[regions_ct, "Ammonia"] = key
 
     # add chemicals plants
     chemicals = ['Ammonia','Ethylene','Methanol']
@@ -582,7 +480,7 @@ def build_nodal_distribution_key(
 
             # Sum capacities and store in the corresponding country and process in steel_capacities dataframe
             capacities_sum = capacities.sum() if not capacities.empty else 0
-            chemicals_capacities.loc[regions_ct, chem] = capacities_sum
+            chemicals_capacities.loc[regions_ct, chem] = int(round(capacities_sum))
 
             # Calculate the weighted average of start dates using capacities as weights
             if not capacities.empty:
@@ -599,13 +497,184 @@ def build_nodal_distribution_key(
                     chemicals_start_dates.loc[regions_ct, chem] = 0
             else:
                 # If capacities are empty, assign 0
-                logger.warning("chemicals_start_dates is 0. Check your data input")
                 chemicals_start_dates.loc[regions_ct, chem] = 0
 
             chemicals_start_dates = chemicals_start_dates.fillna(0)
 
+    # Data input might change, so this warning should highlight if all values of start dates and thus capacities are 0
+    if (chemicals_start_dates == 0).all().all():
+        logger.warning("All values in the chemical capacities and build year are 0. Check your data input")
 
-    return keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates
+    return steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates
+
+# TODO: single dataframe with all capacities and all start dates
+def build_nodal_distribution_key( 
+    hotmaps, gem, ammonia, cement, refineries, regions, countries, cement_capacities, cement_sfi
+):
+    """
+    Build nodal distribution keys for each sector.
+    """
+    sectors = hotmaps.Subsector.unique()
+
+    keys = pd.DataFrame(index=regions.index, columns=sectors, dtype=float)
+
+    pop = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    pop["country"] = pop.index.str[:2]
+    ct_total = pop.total.groupby(pop["country"]).sum()
+    keys["population"] = pop.total / pop.country.map(ct_total)
+
+    for sector, country in product(sectors, countries):
+        regions_ct = regions.index[regions.index.str.contains(country)]
+
+        facilities = hotmaps.query("country == @country and Subsector == @sector")
+
+        if not facilities.empty:
+            emissions = facilities["Emissions_ETS_2014"].fillna(
+                hotmaps["Emissions_EPRTR_2014"].dropna()
+            )
+            if emissions.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                # assume 20% quantile for missing values
+                emissions = emissions.fillna(emissions.quantile(0.2))
+                key = emissions / emissions.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        elif sector == "Cement" and country in cement.country.unique():
+            facilities = cement.query("country == @country")
+            production = facilities["Cement [kt/a]"]
+            if production.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                key = production / production.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        elif sector == "Refineries" and country in refineries.country.unique():
+            facilities = refineries.query("country == @country")
+            production = facilities["Capacity [bbl/day]"]
+            if production.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                key = production / production.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        else:
+            key = keys.loc[regions_ct, "population"]
+
+        keys.loc[regions_ct, sector] = key
+
+    # add specific steel subsectors
+    steel_processes = ["EAF", "DRI + EAF", "Integrated steelworks"]
+    for process, country in product(steel_processes, countries):
+        regions_ct = regions.index[regions.index.str.contains(country)]
+
+        facilities = gem.query("country == @country")
+
+        if process == "EAF":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
+            capacities = facilities.loc[
+                facilities["Capacity operating status"].isin(status_list)
+                & (
+                    facilities["Retired Date"].isna()
+                    | facilities["Retired Date"].gt(2025)
+                ),
+                "Nominal EAF steel capacity (ttpa)",
+            ].dropna()
+        elif process == "DRI + EAF":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+                "announced",
+            ]
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+                "Nominal iron capacity (ttpa)",
+            ]
+            status_filter = facilities["Capacity operating status"].isin(status_list)
+            retirement_filter = facilities["Retired Date"].isna() | facilities[
+                "Retired Date"
+            ].gt(2030)
+            start_filter = (
+                facilities["Start date"].isna()
+                & ~facilities["Capacity operating status"].eq("announced")
+            ) | facilities["Start date"].le(2030)
+            capacities = (
+                facilities.loc[status_filter & retirement_filter & start_filter, sel]
+                .sum(axis=1)
+                .dropna()
+            )
+        elif process == "Integrated steelworks":
+            status_list = [
+                "construction",
+                "operating",
+                "operating pre-retirement",
+                "retired",
+            ]
+            sel = [
+                "Nominal BOF steel capacity (ttpa)",
+                "Nominal OHF steel capacity (ttpa)",
+            ]
+            capacities = (
+                facilities.loc[
+                    facilities["Capacity operating status"].isin(status_list)
+                    & (
+                        facilities["Retired Date"].isna()
+                        | facilities["Retired Date"].gt(2025)
+                    ),
+                    sel,
+                ]
+                .sum(axis=1)
+                .dropna()
+            )
+        else:
+            raise ValueError(f"Unknown process {process}")
+
+        if not capacities.empty:
+            if capacities.sum() == 0:
+                key = pd.Series(1 / len(capacities), capacities.index)
+            else:
+                key = capacities / capacities.sum()
+            buses = facilities.loc[capacities.index, "bus"]
+            key = key.groupby(buses).sum().reindex(regions_ct, fill_value=0.0)
+        else:
+            key = keys.loc[regions_ct, "population"]
+
+        keys.loc[regions_ct, process] = key
+
+    # add ammonia
+    for country in countries:
+        regions_ct = regions.index[regions.index.str.contains(country)]
+
+        facilities = ammonia.query("country == @country")
+
+        if not facilities.empty:
+            production = facilities["Ammonia [kt/a]"]
+            if production.sum() == 0:
+                key = pd.Series(1 / len(facilities), facilities.index)
+            else:
+                # assume 50% of the minimum production for missing values
+                production = production.fillna(0.5 * facilities["Ammonia [kt/a]"].min())
+                key = production / production.sum()
+            key = key.groupby(facilities.bus).sum().reindex(regions_ct, fill_value=0.0)
+        else:
+            key = 0.0
+
+        keys.loc[regions_ct, "Ammonia"] = key
+
+    # CEMENT
+    # Compute keys for cement SFI allocation
+    
+    print(f"Cement cap {cement_capacities}")
+    for country in countries:
+        facilities = cement_sfi.query("country == @country")
+        
+
+    return keys
 
 
 if __name__ == "__main__":
@@ -631,14 +700,18 @@ if __name__ == "__main__":
 
     chemicals_ecm = prepare_chemicals_database(regions)
 
+    steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates = build_nodal_capacities_and_buildyear_endo_industry(
+        steel_gem, cement_sfi, chemicals_ecm, regions, countries
+    )
+
     ammonia = prepare_ammonia_database(regions)
 
     cement = prepare_cement_supplement(regions)
 
     refineries = prepare_refineries_supplement(regions)
 
-    keys, steel_capacities, steel_start_dates, cement_capacities, cement_start_dates, chemicals_capacities, chemicals_start_dates = build_nodal_distribution_key(
-        hotmaps, steel_gem, cement_sfi, chemicals_ecm, ammonia, cement, refineries, regions, countries
+    keys = build_nodal_distribution_key(
+        hotmaps, steel_gem, ammonia, cement, refineries, regions, countries, cement_capacities, cement_sfi
     )
 
     keys.to_csv(snakemake.output.industrial_distribution_key)

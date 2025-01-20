@@ -693,11 +693,12 @@ rule build_industrial_distribution_key:
             "industry", "hotmaps_locate_missing", default=False
         ),
         countries=config_provider("countries"),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
-        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        steel_gem="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         cement_sfi="data/SFI-Global-Cement-Database-July-2021.xlsx",
         chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx",
         ammonia="data/ammonia_plants.csv",
@@ -707,12 +708,15 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
+        # Would be nice to have this as optional outputs just in case there is endo industry on
         steel_capacities=resources("steel/gem_capacities_s_{clusters}.csv"),
         steel_start_dates=resources("steel/gem_start_dates_s_{clusters}.csv"),
         cement_capacities=resources("cement/sfi_capacities_s_{clusters}.csv"),
         cement_start_dates=resources("cement/sfi_start_dates_s_{clusters}.csv"),
         chemicals_capacities=resources("chemicals/ecm_capacities_s_{clusters}.csv"),
         chemicals_start_dates=resources("chemicals/ecm_start_dates_s_{clusters}.csv"),
+        capacities=resources("endo_industry/capacities_s_{clusters}.csv"),
+        start_dates=resources("endo_industry/start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
@@ -723,7 +727,7 @@ rule build_industrial_distribution_key:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_industrial_distribution_key.py"
+        "../scripts/build_industrial_distribution_key_try2.py"
 
 
 rule build_industrial_production_per_node:
@@ -1257,7 +1261,8 @@ rule prepare_sector_network:
             else []
         ),
         steel_capacities=lambda w: (
-            resources("steel/gem_capacities_s_{clusters}.csv")
+            #resources("steel/gem_capacities_s_{clusters}.csv")
+            resources("endo_industry/capacities_s_{clusters}.csv")
             if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
