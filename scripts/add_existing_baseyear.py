@@ -21,7 +21,8 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers, calculate_annuity
+from add_electricity import sanitize_carriers
+from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
