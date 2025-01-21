@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -39,23 +38,21 @@ def get_unit_conversion_factor(
     output_unit: str,
     unit_scaling: dict = {"Wh": 1, "kWh": 1e3, "MWh": 1e6, "GWh": 1e9, "TWh": 1e12},
 ) -> float:
-
     if input_unit not in unit_scaling.keys():
         raise ValueError(
-            f"Input unit {input_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+            f"Input unit {input_unit} not allowed. Must be one of {unit_scaling.keys()}"
         )
     elif output_unit not in unit_scaling.keys():
         raise ValueError(
             f"Output unit {output_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+                unit_scaling.keys()
+            }"
         )
 
     return unit_scaling[input_unit] / unit_scaling[output_unit]
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 

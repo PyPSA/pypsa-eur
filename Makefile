@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -41,24 +41,24 @@ install: _conda_check
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 # Install pinned environment
 install-pinned-linux: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-linux.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/linux-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-windows: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-windows.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/windows-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 install-pinned-macos: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/pinned-macos.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) env create -f envs/macos-pinned.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 
 
 # Run default tests
 test:
 	set -e
-	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime
-	snakemake --configfile config/test/config.overnight.yaml --rerun-triggers=mtime
-	snakemake --configfile config/test/config.myopic.yaml --rerun-triggers=mtime
-	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime
-	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n
+	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml
+	snakemake --configfile config/test/config.overnight.yaml
+	snakemake --configfile config/test/config.myopic.yaml
+	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml
+	snakemake --configfile config/test/config.scenarios.yaml -n
 	echo "All tests completed successfully."
 
 unit-test:
@@ -66,11 +66,11 @@ unit-test:
 
 # Cleans all output files from tests
 clean-tests:
-	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake --configfile config/test/config.overnight.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake --configfile config/test/config.myopic.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --rerun-triggers=mtime --delete-all-output
-	snakemake --configfile config/test/config.scenarios.yaml --rerun-triggers=mtime -n --delete-all-output
+	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml --delete-all-output
+	snakemake --configfile config/test/config.overnight.yaml --delete-all-output
+	snakemake --configfile config/test/config.myopic.yaml --delete-all-output
+	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml --delete-all-output
+	snakemake --configfile config/test/config.scenarios.yaml -n --delete-all-output
 
 # Removes all created files except for large cutout files (similar to fresh clone)
 reset:

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -15,14 +14,14 @@ class BaseCopApproximator(ABC):
     Abstract class for approximating the coefficient of performance (COP) of a
     heat pump.
 
-    Attributes:
+    Attributes
     ----------
     forward_temperature_celsius : Union[xr.DataArray, np.array]
         The forward temperature in Celsius.
     source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
         The source inlet temperature in Celsius.
 
-    Methods:
+    Methods
     -------
     __init__(self, forward_temperature_celsius, source_inlet_temperature_celsius)
         Initialize CopApproximator.
@@ -42,7 +41,7 @@ class BaseCopApproximator(ABC):
         """
         Initialize CopApproximator.
 
-        Parameters:
+        Parameters
         ----------
         forward_temperature_celsius : Union[xr.DataArray, np.array]
             The forward temperature in Celsius.
@@ -56,7 +55,7 @@ class BaseCopApproximator(ABC):
         """
         Approximate heat pump coefficient of performance (COP).
 
-        Returns:
+        Returns
         -------
         Union[xr.DataArray, np.array]
             The calculated COP values.
@@ -65,17 +64,17 @@ class BaseCopApproximator(ABC):
 
     @staticmethod
     def celsius_to_kelvin(
-        t_celsius: Union[float, xr.DataArray, np.array]
+        t_celsius: Union[float, xr.DataArray, np.array],
     ) -> Union[float, xr.DataArray, np.array]:
         """
         Convert temperature from Celsius to Kelvin.
 
-        Parameters:
+        Parameters
         ----------
         t_celsius : Union[float, xr.DataArray, np.array]
             Temperature in Celsius.
 
-        Returns:
+        Returns
         -------
         Union[float, xr.DataArray, np.array]
             Temperature in Kelvin.
@@ -94,14 +93,14 @@ class BaseCopApproximator(ABC):
         """
         Calculate the logarithmic mean temperature difference.
 
-        Parameters:
+        Parameters
         ----------
         t_hot : Union[float, xr.DataArray, np.ndarray]
             Hot temperature.
         t_cold : Union[float, xr.DataArray, np.ndarray]
             Cold temperature.
 
-        Returns:
+        Returns
         -------
         Union[float, xr.DataArray, np.ndarray]
             Logarithmic mean temperature difference.

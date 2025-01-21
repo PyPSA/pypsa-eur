@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -241,7 +240,7 @@ def apply_time_segmentation(n, segments, solver_name="cbc"):
         import tsam.timeseriesaggregation as tsam
     except ImportError:
         raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
+            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
         )
 
     p_max_pu_norm = n.generators_t.p_max_pu.max()

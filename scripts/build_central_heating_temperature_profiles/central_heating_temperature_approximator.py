@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
-import pandas as pd
 import xarray as xr
 
 
@@ -159,30 +157,6 @@ class CentralHeatingTemperatureApproximator:
             Return temperature.
         """
         return self.fixed_return_temperature
-
-    @property
-    def forward_temperature(self) -> xr.DataArray:
-        """
-        Property to get dynamic forward temperature.
-
-        Returns
-        -------
-        xr.DataArray
-            Dynamic forward temperatures.
-        """
-        return self._approximate_forward_temperature()
-
-    @property
-    def return_temperature(self) -> float:
-        """
-        Property to get return temperature.
-
-        Returns
-        -------
-        float
-            Return temperature.
-        """
-        return self._approximate_return_temperature()
 
     def _approximate_forward_temperature(self) -> xr.DataArray:
         """
