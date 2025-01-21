@@ -1012,6 +1012,12 @@ solving:
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
+  check_objective:
+    enable: false
+    expected_value: None
+    atol: 1_000_000
+    rtol: 0.01
+
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
