@@ -728,7 +728,7 @@ def add_steel_industry_existing(n):
         suffix=" DRI-EAF-2020",
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
+        bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=nodes,
         carrier="DRI-EAF",
         p_nom=p_nom_eaf * iron_to_steel_eaf_ng,

@@ -221,9 +221,9 @@ def define_spatial(nodes, options, endo_industry):
         spatial.steel.locations = nodes
 
         # Dri gas
-        spatial.drigas = SimpleNamespace()
-        spatial.drigas.nodes = nodes + " drigas"
-        spatial.drigas.locations = nodes
+        spatial.syngas_dri = SimpleNamespace()
+        spatial.syngas_dri.nodes = nodes + " syn gas for DRI"
+        spatial.syngas_dri.locations = nodes
 
     else:
 
@@ -233,9 +233,9 @@ def define_spatial(nodes, options, endo_industry):
         spatial.steel.locations = ["EU"]
 
         # Dri gas
-        spatial.drigas = SimpleNamespace()
-        spatial.drigas.nodes = ["EU drigas"]
-        spatial.drigas.locations = ["EU"]
+        spatial.syngas_dri = SimpleNamespace()
+        spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
+        spatial.syngas_dri.locations = ["EU"]
 
     if endo_industry:
         # Iron and Steel
@@ -4197,7 +4197,7 @@ def add_steel_industry(n, investment_year, options):
     # add CO2 process from steel industry
     n.add("Carrier", "steel process emissions")
     n.add("Carrier", "steel process emissions CC")
-    n.add("Carrier", "drigas")
+    n.add("Carrier", "syn gas for DRI")
 
     n.add(
         "Bus",
@@ -4217,9 +4217,9 @@ def add_steel_industry(n, investment_year, options):
 
     n.add(
         "Bus",
-        spatial.drigas.nodes,
-        location=spatial.drigas.locations,
-        carrier="drigas",
+        spatial.syngas_dri.nodes,
+        location=spatial.syngas_dri.locations,
+        carrier="syn gas for DRI",
         unit="unit",
     )
     
@@ -4302,9 +4302,9 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" CH4 to DRI",
+        suffix=" CH4 to syn gas DRI",
         bus0=spatial.gas.nodes,
-        bus1=spatial.drigas.nodes,
+        bus1=spatial.syngas_dri.nodes,
         bus2=spatial.co2.dri,
         carrier="DRI-EAF",
         p_nom_extendable=True,
@@ -4318,7 +4318,7 @@ def add_steel_industry(n, investment_year, options):
         nodes,
         suffix=" H2 to DRI",
         bus0=nodes + " H2",
-        bus1=spatial.drigas.nodes,
+        bus1=spatial.syngas_dri.nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
@@ -4331,7 +4331,7 @@ def add_steel_industry(n, investment_year, options):
         suffix=" DRI-EAF",
         bus0=spatial.iron.nodes,
         bus1=spatial.steel.nodes,
-        bus2=spatial.drigas.nodes,  # in this process is the reducing agent, it is not burnt
+        bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
@@ -4347,7 +4347,7 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" steel dri process emis to atmosphere",
+        suffix=" steel DRI process emis to atmosphere",
         bus0=spatial.co2.dri,
         bus1="co2 atmosphere",
         carrier="steel process emissions",
@@ -4359,7 +4359,7 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" steel bof process emis to atmosphere",
+        suffix=" steel BOF process emis to atmosphere",
         bus0=spatial.co2.bof,
         bus1="co2 atmosphere",
         carrier="steel process emissions",
@@ -4371,7 +4371,7 @@ def add_steel_industry(n, investment_year, options):
     n.add(
         "Link",
         nodes,
-        suffix=" steel bof CC",
+        suffix=" steel BOF CC",
         bus0=spatial.co2.bof,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
