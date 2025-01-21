@@ -4144,10 +4144,26 @@ def add_steel_industry(n, investment_year, options):
 
     # BF-BOF
 
-    iron_to_steel_bof = 1.429
+    iron_to_steel_bof = 1.4134
     iron_to_steel_eaf_ng = 1.36
     iron_to_steel_eaf_h2 = 1.39
-    em_factor_bof = 668.2 # tCO2/kt steel
+    em_factor_bof = 1910 # tCO2/kt steel
+
+    # Energy input data BF BOF
+    coal4bfobf = 4328 # MWh coal per kt steel
+    coal4bfbof_harvey = 1306 + 130 # MWh coal per kt steel
+
+    elec4bfbof = 488.9 # MWh electricity per kt steel
+    elec4bfbof_harvey = 75 + 303 # MWh electricity per kt steel
+
+    # Energy input data NG DRI EAF
+    ng4dri = 2803 # MWh natural gas per kt steel
+    ng4dri_harvey = 2733 # MWh natural gas per kt steel
+
+    hy4dri = 2211 # MWh natural gas per kt steel
+
+    elec4eaf = 675.9 # MWh electricity per kt steel
+    elec4eaf_harvey = 588 # MWh electricity per kt steel
 
     # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     lifetime_bof = 100
@@ -4177,21 +4193,9 @@ def add_steel_industry(n, investment_year, options):
     capex_eaf = capex_eaf + opex_eaf # Treating opex as FOM
     capex_tgr = capex_tgr + opex_tgr # Treating opex as FOM
 
-    # Energy input data BF BOF
-    coal4bfobf = 4415.6 # MWh coal per kt steel
-    coal4bfbof_harvey = 1306 + 130 # MWh coal per kt steel
-
-    elec4bfbof = 488.9 # MWh electricity per kt steel
-    elec4bfbof_harvey = 75 + 303 # MWh electricity per kt steel
-
-    # Energy input data NG DRI EAF
-    ng4dri = 2803 # MWh natural gas per kt steel
-    ng4dri_harvey = 2733 # MWh natural gas per kt steel
-
-    hy4dri = 2211 # MWh natural gas per kt steel
-
-    elec4eaf = 675.9 # MWh electricity per kt steel
-    elec4eaf_harvey = 588 # MWh electricity per kt steel
+    # New capex from Raillard–Cazanove et al. https://doi.org/10.1016/j.apenergy.2024.125206
+    capex_bof = 442 * 1e3 / iron_to_steel_bof # €/kt iron
+    capex_eaf = 414 * 1e3 / iron_to_steel_eaf # €/kt iron
 
 
     n.add(

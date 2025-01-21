@@ -139,4 +139,4 @@ plotting:
     steel process emissions: 'grey'
     steel process emissions CC: 'green'
     steel: 'yellow'
-    drigas: 'grey'
+    syn gas for DRI: 'grey'
