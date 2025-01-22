@@ -24,7 +24,7 @@ from _helpers import (
 from add_electricity import sanitize_carriers, calculate_annuity
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs, calculate_steel_parameters
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -658,44 +658,8 @@ def add_steel_industry_existing(n):
     prod_constantly = 0
     ramp_limit = 0
 
-    ########### Add existing steel production capacities ############
-    # Blast furnace assuming with natural gas
-
-    # BOF
-
-    iron_to_steel_bof = 1.429
-    iron_to_steel_eaf_ng = 1.36
-    em_factor_bof = 668.2 # tCO2/kt steel
-
-    # Lifetimes https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-    lifetime_bof = 100
-    lifetime_eaf = 67 
-
-    # Capex
-    discount_rate = 0.04
-    capex_bof = ((211000 + 100000 ) * 0.7551 / nhours / iron_to_steel_bof ) * calculate_annuity(lifetime_bof, discount_rate)
-    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf 2010USD/kt/yr steel, then /nhour for the price in 2010USD/kt steel/timestep, divided by the efficiency to have the value in kt iron
-    capex_eaf = ((145000 + 80000) * 0.7551 / nhours / iron_to_steel_bof) * calculate_annuity(lifetime_eaf, discount_rate)
-    # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price
-    opex_bof = 90 * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
-    opex_eaf = (13+32) * 1e3 * 0.7551 / nhours / iron_to_steel_bof # $/t/yr -> €/kt iron/hour
-
-    # Energy input data BF BOF
-    coal4bfobf = 4415.6 # MWh coal per kt steel
-    coal4bfbof_harvey = 1306 + 130 # MWh coal per kt steel
-
-    elec4bfbof = 488.9 # MWh electricity per kt steel
-    elec4bfbof_harvey = 75 + 303 # MWh electricity per kt steel
-
-    # Energy input data NG DRI EAF
-    ng4dri = 2803 # MWh natural gas per kt steel
-    ng4dri_harvey = 2733 # MWh natural gas per kt steel
-
-    hy4dri = 2211 # MWh natural gas per kt steel
-
-    elec4eaf = 675.9 # MWh electricity per kt steel
-    elec4eaf_harvey = 588 # MWh electricity per kt steel
-
+    # PARAMETERS
+    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters()
 
     n.add(
         "Link",
@@ -709,14 +673,12 @@ def add_steel_industry_existing(n):
         carrier="BF-BOF",
         p_nom=p_nom_bof * iron_to_steel_bof,
         p_nom_extendable=False,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        #capital_cost=capex_bof,
         marginal_cost=0,#opex_bof,
-        efficiency=1 / iron_to_steel_bof,
-        efficiency2= - coal4bfbof_harvey / iron_to_steel_bof,  # MWhth coal per kt iron
-        efficiency3= - elec4bfbof_harvey / iron_to_steel_bof,  # MWh electricity per kt iron
-        efficiency4= em_factor_bof / iron_to_steel_bof, # t CO2 per kt iron
-        lifetime=100,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        efficiency=1 / bof['iron input'],
+        efficiency2= -  bof['coal input'] /  bof['iron input'],  # MWhth coal per kt iron
+        efficiency3= -  bof['elec input'] /  bof['iron input'],  # MWh electricity per kt iron
+        efficiency4=  bof['emission factor'] /  bof['iron input'], # t CO2 per kt iron
+        lifetime= bof['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_bof,
     )
 
@@ -729,15 +691,13 @@ def add_steel_industry_existing(n):
         bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=nodes,
         carrier="DRI-EAF",
-        p_nom=p_nom_eaf * iron_to_steel_eaf_ng,
+        p_nom=p_nom_eaf *  eaf_ng['iron input'],
         p_nom_extendable=False,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
-        #capital_cost=capex_eaf ,  # https://iea-etsap.org/E-TechDS/PDF/I02-Iron&Steel-GS-AD-gct.pdf then /nhours for the price,
         marginal_cost=0,#opex_eaf,
-        efficiency=1 / iron_to_steel_eaf_ng,
-        efficiency2= -1 / iron_to_steel_eaf_ng, # one unit of dri gas per kt iron
-        efficiency3= - elec4eaf_harvey / iron_to_steel_eaf_ng, #MWh electricity per kt iron
-        lifetime=67,  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        efficiency=1 / eaf_ng['iron input'],
+        efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
+        efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
+        lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         build_year=start_dates_eaf,
     )
 
