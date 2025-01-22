@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -30,21 +29,21 @@ Outputs
 
 import geopandas as gpd
 import pandas as pd
-import xarray as xr
-from _helpers import set_scenario_config, get_snapshots
-
-from onshore_region_data import OnshoreRegionData
+from _helpers import get_snapshots, set_scenario_config
 
 ISI_TEMPERATURE_SCENARIOS = {
-        65: "low_temperatures",
-        85: "high_temperatures",
-    }
+    65: "low_temperatures",
+    85: "high_temperatures",
+}
 FULL_LOAD_HOURS = 4000
 # 3000 for petrothermal
 
 PYPSA_EUR_UNIT = "MWh"
 
-GEOTHERMAL_SOURCE = "Hydrothermal "  # trailing space for hydrothermal necessary to get correct column
+GEOTHERMAL_SOURCE = (
+    "Hydrothermal "  # trailing space for hydrothermal necessary to get correct column
+)
+
 
 def get_unit_conversion_factor(
     input_unit: str,
@@ -66,20 +65,19 @@ def get_unit_conversion_factor(
 
     if input_unit not in unit_scaling.keys():
         raise ValueError(
-            f"Input unit {input_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+            f"Input unit {input_unit} not allowed. Must be one of {unit_scaling.keys()}"
         )
     elif output_unit not in unit_scaling.keys():
         raise ValueError(
             f"Output unit {output_unit} not allowed. Must be one of {
-                unit_scaling.keys()}"
+                unit_scaling.keys()
+            }"
         )
 
     return unit_scaling[input_unit] / unit_scaling[output_unit]
 
 
 def get_heat_source_power(
-    snapshots: pd.DatetimeIndex,
     regions_onshore: gpd.GeoDataFrame,
     geothermal_potentials: gpd.GeoDataFrame,
     full_load_hours: float,
@@ -122,20 +120,24 @@ def get_heat_source_power(
     )
     scaling_factor = unit_conversion_factor / full_load_hours
 
+    heat_potentials_in_lau = gpd.GeoDataFrame(
+        geothermal_potentials,
+        geometry=lau_regions.geometry[geothermal_potentials.index],
+    )
 
-    heat_potentials_in_lau = gpd.GeoDataFrame(geothermal_potentials, geometry=lau_regions.geometry[geothermal_potentials.index])
+    heat_potentials_in_onshore_regions = gpd.sjoin(
+        heat_potentials_in_lau, regions_onshore, how="inner", predicate="intersects"
+    )
+    heat_potentials_in_onshore_regions_aggregated = (
+        heat_potentials_in_onshore_regions.groupby("name").sum(numeric_only=True)
+    )
 
-    heat_potentials_in_onshore_regions = gpd.sjoin(heat_potentials_in_lau, regions_onshore, how="inner", predicate="intersects")
-    heat_potentials_in_onshore_regions_aggregated = heat_potentials_in_onshore_regions.groupby("name").sum(numeric_only=True)
-
-    heat_source_power = pd.DataFrame({t: heat_potentials_in_onshore_regions_aggregated.iloc[:, 0] / scaling_factor for t in snapshots}).T
-    heat_source_power.index.name = "time"
+    heat_source_power = heat_potentials_in_onshore_regions_aggregated / scaling_factor
 
     return heat_source_power
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
@@ -145,9 +147,6 @@ if __name__ == "__main__":
         )
 
     set_scenario_config(snakemake)
-    snapshots: pd.DatetimeIndex = get_snapshots(
-        snakemake.params.snapshots, snakemake.params.drop_leap_day
-    )
 
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).to_crs("EPSG:4326")
     regions_onshore.index = regions_onshore.name
@@ -159,8 +158,9 @@ if __name__ == "__main__":
     ).to_crs("EPSG:4326")
     lau_regions.index = lau_regions.GISCO_ID
 
-    
-    this_temperature_scenario = ISI_TEMPERATURE_SCENARIOS[snakemake.params.constant_temperature_celsius]
+    this_temperature_scenario = ISI_TEMPERATURE_SCENARIOS[
+        snakemake.params.constant_temperature_celsius
+    ]
 
     isi_heat_potentials = pd.read_excel(
         snakemake.input.isi_heat_potentials,
@@ -174,15 +174,13 @@ if __name__ == "__main__":
             "Unit",
         )
     ][0]
-    
+
     geothermal_potentials = isi_heat_potentials[
         (
             f"Supply_potentials_{this_temperature_scenario}",
             GEOTHERMAL_SOURCE,
         )
-    ].drop(
-        index="Total"
-    )
+    ].drop(index="Total")
 
     if not geothermal_potentials.index.isin(lau_regions.index).all():
         raise ValueError(
@@ -190,7 +188,6 @@ if __name__ == "__main__":
         )
 
     heat_source_power = get_heat_source_power(
-        snapshots=snapshots,
         regions_onshore=regions_onshore,
         geothermal_potentials=geothermal_potentials,
         full_load_hours=FULL_LOAD_HOURS,
