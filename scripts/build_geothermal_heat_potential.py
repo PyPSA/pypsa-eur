@@ -132,7 +132,7 @@ def get_heat_source_power(
         heat_potentials_in_onshore_regions.groupby("name").sum(numeric_only=True)
     )
 
-    heat_source_power = heat_potentials_in_onshore_regions_aggregated / scaling_factor
+    heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
     return heat_source_power
 
