@@ -659,7 +659,8 @@ def add_steel_industry_existing(n):
     ramp_limit = 0
 
     # PARAMETERS
-    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters()
+    nyears = n.snapshot_weightings.generators.sum() / 8760.0
+    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
 
     n.add(
         "Link",
@@ -671,7 +672,7 @@ def add_steel_industry_existing(n):
         bus3=nodes,
         bus4=spatial.co2.bof,
         carrier="BF-BOF",
-        p_nom=p_nom_bof * iron_to_steel_bof,
+        p_nom=p_nom_bof * bof['iron input'],
         p_nom_extendable=False,
         marginal_cost=0,#opex_bof,
         efficiency=1 / bof['iron input'],

@@ -4038,7 +4038,7 @@ def add_industry(n, costs):
         )
 
 
-def calculate_steel_parameters():
+def calculate_steel_parameters(nyears=1):
 
     # BF-BOF
     # Reference: Raillard-Cazanove et al. https://doi.org/10.1016/j.apenergy.2024.125206
@@ -4228,7 +4228,7 @@ def add_steel_industry(n, investment_year, options):
     
 
     # PARAMETERS
-    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters()
+    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
 
     n.add(
         "Link",
