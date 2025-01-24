@@ -47,8 +47,11 @@ import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import get_snapshots, set_scenario_config, configure_logging
 from dask.distributed import Client, LocalCluster
+
+import logging
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -59,6 +62,7 @@ if __name__ == "__main__":
             scope="total",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)

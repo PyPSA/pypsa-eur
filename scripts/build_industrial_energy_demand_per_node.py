@@ -36,7 +36,10 @@ which can later be used as values for the industry load.
 """
 
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -47,6 +50,7 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2030,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # import ratios

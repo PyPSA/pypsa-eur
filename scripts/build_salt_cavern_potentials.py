@@ -22,7 +22,10 @@ onshore (>50km from sea), offshore (Figure 7).
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):
@@ -74,6 +77,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_salt_cavern_potentials", clusters="37")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     fn_onshore = snakemake.input.regions_onshore

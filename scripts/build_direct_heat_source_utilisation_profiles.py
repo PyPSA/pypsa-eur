@@ -25,7 +25,10 @@ Outputs
 """
 
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def get_source_temperature(heat_source_key: str):
@@ -89,7 +92,7 @@ if __name__ == "__main__":
             "build_cop_profiles",
             clusters=48,
         )
-
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     direct_utilisation_heat_sources: list[str] = (

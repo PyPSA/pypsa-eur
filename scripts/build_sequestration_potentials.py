@@ -9,7 +9,10 @@ database_en>`_.
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def area(gdf):
@@ -39,6 +42,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_sequestration_potentials", clusters="128")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     cf = snakemake.params.sequestration_potential

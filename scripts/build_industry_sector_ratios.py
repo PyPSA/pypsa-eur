@@ -49,7 +49,10 @@ The unit of the specific energy consumption is MWh/t material and tCO2/t materia
 
 import country_converter as coco
 import pandas as pd
-from _helpers import mute_print, set_scenario_config
+from _helpers import mute_print, set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -1530,6 +1533,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industry_sector_ratios")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry

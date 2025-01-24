@@ -10,7 +10,10 @@ import atlite
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -18,6 +21,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_clustered_population_layouts", clusters=48)
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     cutout = atlite.Cutout(snakemake.input.cutout)

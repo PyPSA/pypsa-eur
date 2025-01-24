@@ -23,7 +23,10 @@ This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/cent
 
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -34,6 +37,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_ammonia_production")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     ammonia = pd.read_excel(

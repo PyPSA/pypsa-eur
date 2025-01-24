@@ -64,8 +64,11 @@ from functools import partial
 
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
 from tqdm import tqdm
+
+import logging
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -287,6 +290,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry

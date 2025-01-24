@@ -67,7 +67,10 @@ The script has the following structure:
 
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+
+import logging
+logger = logging.getLogger(__name__)
 
 # (i) --- FIXED PARAMETER / STANDARD VALUES -----------------------------------
 
@@ -1054,6 +1057,7 @@ if __name__ == "__main__":
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     #  ********  config  *********************************************************
