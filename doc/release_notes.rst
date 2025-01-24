@@ -117,7 +117,13 @@ Upcoming Release
 
 * Development: Ruff is now used for linting and formatting. It is used in the pre-commit, so no changes are needed. But you might wanna set it up in your IDE.
 
+* Removed ``{ll}`` wildcard. This is now a configuration option ``electricity:
+  transmission_limit:``, defaulting to ``vopt``. All previous options of the
+  ``{ll}`` wildcard are also now available within the ``{opts}`` wildcard (e.g.
+  as ``-lv1.25-``).
+
 * Update locations and capacities of ammonia plants.
+
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)

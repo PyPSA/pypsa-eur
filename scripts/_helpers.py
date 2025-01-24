@@ -702,6 +702,11 @@ def update_config_from_wildcards(config, w, inplace=True):
                 config["adjustments"]["electricity"], {attr: {carrier: factor}}
             )
 
+        for o in opts:
+            if o.startswith("lv") or o.startswith("lc"):
+                config["electricity"]["transmission_expansion"] = o[1:]
+                break
+
     if w.get("sector_opts"):
         opts = w.sector_opts.split("-")
 
