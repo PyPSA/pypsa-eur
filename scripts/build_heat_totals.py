@@ -20,10 +20,9 @@ import logging
 from itertools import product
 
 import pandas as pd
+from _helpers import configure_logging
 from numpy.polynomial import Polynomial
 
-import logging
-from _helpers import configure_logging
 logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
