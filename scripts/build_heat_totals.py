@@ -6,11 +6,6 @@ Approximate heat demand for all weather years.
 
 :func:`approximate_heat_demand` approximates annual heat demand based on energy totals and heating degree days (HDD) using a regression of heat demand on HDDs.
 
-Inputs
-------
-- `resources/<run_name>/energy_totals.csv`: Energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
-- `data/era5-annual-HDD-per-country.csv`: Number of heating degree days by year (columns) and country (index).
-
 Outputs
 -------
 - `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.

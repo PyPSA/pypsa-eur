@@ -15,38 +15,6 @@ as.
 - reducing the **temporal** resolution by averaging over multiple hours
   or segmenting time series into chunks of varying lengths using ``tsam``.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    costs:
-        year:
-        version:
-        fill_values:
-        emission_prices:
-        marginal_cost:
-        capital_cost:
-
-    electricity:
-        co2limit:
-        max_hours:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`costs_cf`, :ref:`electricity_cf`
-
-Inputs
-------
-
-- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/base_s_{clusters}.nc``: confer :ref:`cluster`
-
-Outputs
--------
-
-- ``networks/base_s_{clusters}_elec_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
-
 Description
 -----------
 

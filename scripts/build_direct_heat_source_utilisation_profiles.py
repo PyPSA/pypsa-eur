@@ -5,16 +5,6 @@
 Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
 When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
 
-Relevant Settings
------------------
-
-.. code:: yaml
-    sector:
-        district_heating:
-            heat_utilisation_potentials:
-            direct_utilisation_heat_sources:
-    snapshots:
-
 Inputs
 ------
 - `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles

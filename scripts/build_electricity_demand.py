@@ -7,31 +7,6 @@ This rule downloads the load data from `Open Power System Data Time series
 the network, the per country load timeseries are extracted from the dataset.
 After filling small gaps linearly and large gaps by copying time-slice of a
 given period, the load data is exported to a ``.csv`` file.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-
-    load:
-        interpolate_limit: time_shift_for_large_gaps: manual_adjustments:
-
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`load_cf`
-
-Inputs
-------
-
-- ``data/electricity_demand_raw.csv``:
-
-Outputs
--------
-
-- ``resources/electricity_demand.csv``:
 """
 
 import logging

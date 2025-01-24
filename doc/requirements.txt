@@ -25,3 +25,4 @@ seaborn
 memory_profiler
 tables
 descartes
+fiona
