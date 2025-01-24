@@ -16,7 +16,12 @@ assuming as an approximation energy content of wood pellets
 @author: bw0928
 """
 
+import logging
+
 import pandas as pd
+from _helpers import configure_logging
+
+logger = logging.getLogger(__name__)
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
@@ -117,5 +122,6 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_biomass_transport_costs")
+    configure_logging(snakemake)
 
     build_biomass_transport_costs()
