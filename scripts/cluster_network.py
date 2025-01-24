@@ -287,7 +287,6 @@ def busmap_for_n_clusters(
 def clustering_for_n_clusters(
     n: pypsa.Network,
     busmap: pd.Series,
-    line_length_factor: float = 1.25,
     aggregation_strategies: dict | None = None,
 ) -> pypsa.clustering.spatial.Clustering:
     if aggregation_strategies is None:
@@ -302,7 +301,6 @@ def clustering_for_n_clusters(
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        line_length_factor=line_length_factor,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
         custom_line_groupers=["build_year"],
@@ -406,7 +404,6 @@ if __name__ == "__main__":
         clustering = clustering_for_n_clusters(
             n,
             busmap,
-            line_length_factor=params.length_factor,
             aggregation_strategies=params.aggregation_strategies,
         )
 

@@ -13,6 +13,10 @@ Upcoming Release
 
 * Bugfix: The missing lifetime attribute was added to hydrogen steel tanks, which is important for pathway planning.
 
+* Bugfix: The length factor on the transmission lines haversine length was
+  applied twice, once when calculating costs and once when clustering the
+  network. Now it is only applied when calculating costs.
+
 * The default configuration for the emission reduction path in myopic pathway planning mode has been changed to align more closely with policy targets (``co2_budget:``).
 
 * Bugfix: Adjusted existing heating data in ``build_existing_heating_distribution`` and the indexing of existing heat pumps for the COP correction in ``add_brownfield`` to make the myopic code work with the geothermal district heating feature.
