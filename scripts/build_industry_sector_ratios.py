@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -1393,9 +1392,8 @@ def textiles_and_leather():
     df.loc["heat", sector] += s_fec["Low-enthalpy heat"]
 
     # Efficiency changes due to electrification
-    key = "Textiles: Electric drying"
     # in new JRC data zero assume old data
-    # eff_elec = s_ued[key] / s_fec[key]
+
     eff_elec = 73.7 / 146.6
     df.loc["elec", sector] += s_ued["Textiles: Drying"] / eff_elec
 
@@ -1469,7 +1467,6 @@ def wood_and_wood_products():
 
 
 def other_industrial_sectors():
-
     sector = "Other industrial sectors"
     idees = load_idees_data(sector)
 

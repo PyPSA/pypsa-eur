@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -80,7 +79,7 @@ if __name__ == "__main__":
         matrix=M_tilde.T,
         index=clustered_regions.index,
         dask_kwargs=dict(scheduler=client),
-        show_progress=False
+        show_progress=False,
     )
 
     solar_thermal.to_netcdf(snakemake.output.solar_thermal)

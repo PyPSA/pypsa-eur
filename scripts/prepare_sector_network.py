@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -33,7 +32,6 @@ from build_energy_totals import (
 from build_transport_demand import transport_degree_factor
 from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
-from definitions.heat_system_type import HeatSystemType
 from networkx.algorithms import complement
 from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
 from prepare_network import maybe_adjust_costs_and_potentials
@@ -456,9 +454,7 @@ def update_wind_solar_costs(
             )
 
             logger.info(
-                "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                    connection_cost.min(), connection_cost.max(), tech
-                )
+                f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
             )
 
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
@@ -1222,7 +1218,7 @@ def insert_electricity_distribution_grid(n, costs):
         .get("efficiency_static")
     ):
         logger.info(
-            f"Deducting distribution losses from electricity demand: {np.around(100*(1-efficiency), decimals=2)}%"
+            f"Deducting distribution losses from electricity demand: {np.around(100 * (1 - efficiency), decimals=2)}%"
         )
         n.loads_t.p_set.loc[:, n.loads.carrier == "electricity"] *= efficiency
 
@@ -1963,7 +1959,7 @@ def add_land_transport(n, costs):
     shares = pd.Series()
     for engine in engine_types:
         shares[engine] = get(options[f"land_transport_{engine}_share"], investment_year)
-        logger.info(f"{engine} share: {shares[engine]*100}%")
+        logger.info(f"{engine} share: {shares[engine] * 100}%")
 
     check_land_transport_shares(shares)
 
@@ -2039,12 +2035,14 @@ def add_heat(
     """
     Add heat sector to the network.
 
-    Parameters:
+    Parameters
+    ----------
         n (pypsa.Network): The PyPSA network object.
         costs (pd.DataFrame): DataFrame containing cost information.
         cop (xr.DataArray): DataArray containing coefficient of performance (COP) values.
 
-    Returns:
+    Returns
+    -------
         None
     """
     logger.info("Add heat sector")
@@ -2075,9 +2073,7 @@ def add_heat(
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    for (
-        heat_system
-    ) in (
+    for heat_system in (
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
         overdim_factor = options["overdimension_heat_generators"][
@@ -2182,7 +2178,6 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                costs_name_heat_source = heat_system.heat_source_costs_name(heat_source)
                 if heat_source in snakemake.params.direct_utilisation_heat_sources:
                     capital_cost = (
                         costs.at[
@@ -3622,7 +3617,7 @@ def add_industry(n, costs):
     # naphtha
     demand_factor = options["HVC_demand_factor"]
     if demand_factor != 1:
-        logger.warning(f"Changing HVC demand by {demand_factor*100-100:+.2f}%.")
+        logger.warning(f"Changing HVC demand by {demand_factor * 100 - 100:+.2f}%.")
 
     p_set_naphtha = (
         demand_factor
@@ -3790,7 +3785,9 @@ def add_industry(n, costs):
     # aviation
     demand_factor = options["aviation_demand_factor"]
     if demand_factor != 1:
-        logger.warning(f"Changing aviation demand by {demand_factor*100-100:+.2f}%.")
+        logger.warning(
+            f"Changing aviation demand by {demand_factor * 100 - 100:+.2f}%."
+        )
 
     all_aviation = ["total international aviation", "total domestic aviation"]
 
@@ -4233,7 +4230,8 @@ def cluster_heat_buses(n):
     """
 
     def define_clustering(attributes, aggregate_dict):
-        """Define how attributes should be clustered.
+        """
+        Define how attributes should be clustered.
         Input:
             attributes    : pd.Index()
             aggregate_dict: dictionary (key: name of attribute, value
@@ -4344,7 +4342,7 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
 
 
 def lossy_bidirectional_links(n, carrier, efficiencies={}):
-    "Split bidirectional links into two unidirectional links to include transmission losses."
+    """Split bidirectional links into two unidirectional links to include transmission losses."""
 
     carrier_i = n.links.query("carrier == @carrier").index
 
@@ -4446,9 +4444,9 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
         * Nyears
     )
 
-    assert (
-        egs_potentials["capital_cost"] > 0
-    ).all(), "Error in EGS cost, negative values found."
+    assert (egs_potentials["capital_cost"] > 0).all(), (
+        "Error in EGS cost, negative values found."
+    )
 
     orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears

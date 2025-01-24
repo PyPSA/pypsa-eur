@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -55,11 +54,13 @@ def _create_polygon(row):
     """
     Create a Shapely Polygon from a list of coordinate dictionaries.
 
-    Parameters:
+    Parameters
+    ----------
         coords (list): List of dictionaries with 'lat' and 'lon' keys
         representing coordinates.
 
-    Returns:
+    Returns
+    -------
         shapely.geometry.Polygon: The constructed polygon object.
     """
     # Extract coordinates as tuples
@@ -227,11 +228,13 @@ def _check_voltage(voltage, list_voltages):
     """
     Check if the given voltage is present in the list of allowed voltages.
 
-    Parameters:
+    Parameters
+    ----------
     voltage (str): The voltage to check.
     list_voltages (list): A list of allowed voltages.
 
-    Returns:
+    Returns
+    -------
     bool: True if the voltage is present in the list of allowed voltages,
     False otherwise.
     """
@@ -359,11 +362,13 @@ def _distribute_to_circuits(row):
     Distributes the number of circuits or cables to individual circuits based
     on the given row data.
 
-    Parameters:
+    Parameters
+    ----------
     - row: A dictionary representing a row of data containing information about
       circuits and cables.
 
-    Returns:
+    Returns
+    -------
     - single_circuit: The number of circuits to be assigned to each individual
       circuit.
     """
@@ -383,11 +388,13 @@ def _import_lines_and_cables(path_lines):
     """
     Import lines and cables from the given input paths.
 
-    Parameters:
+    Parameters
+    ----------
     - path_lines (dict): A dictionary containing the input paths for lines and
       cables data.
 
-    Returns:
+    Returns
+    -------
     - df_lines (DataFrame): A DataFrame containing the imported lines and
       cables data.
     """
@@ -416,9 +423,9 @@ def _import_lines_and_cables(path_lines):
                 country = os.path.basename(os.path.dirname(path_lines[key][idx]))
 
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_lines[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_lines[key])).zfill(2)}: {ip}"
                 )
-                with open(ip, "r") as f:
+                with open(ip) as f:
                     data = json.load(f)
 
                 df = pd.DataFrame(data["elements"])
@@ -451,7 +458,7 @@ def _import_lines_and_cables(path_lines):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_lines[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_lines[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
         logger.info("---")
@@ -463,7 +470,6 @@ def _import_lines_and_cables(path_lines):
 
 
 def _import_routes_relation(path_relation):
-    """ """
     columns = [
         "id",
         "bounds",
@@ -487,9 +493,9 @@ def _import_routes_relation(path_relation):
                 country = os.path.basename(os.path.dirname(path_relation[key][idx]))
 
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_relation[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_relation[key])).zfill(2)}: {ip}"
                 )
-                with open(ip, "r") as f:
+                with open(ip) as f:
                     data = json.load(f)
 
                 df = pd.DataFrame(data["elements"])
@@ -522,7 +528,7 @@ def _import_routes_relation(path_relation):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_relation[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_relation[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
 
@@ -533,10 +539,12 @@ def _create_single_link(row):
     """
     Create a single link from multiple rows within a OSM link relation.
 
-    Parameters:
+    Parameters
+    ----------
     - row: A row of OSM data containing information about the link.
 
-    Returns:
+    Returns
+    -------
     - single_link: A single LineString representing the link.
 
     This function takes a row of OSM data and extracts the relevant information
@@ -592,10 +600,12 @@ def _create_line(row):
     """
     Create a line from multiple rows. Drops closed geometries (substations).
 
-    Parameters:
+    Parameters
+    ----------
     - row: A row of OSM data containing information about the relation/line.
 
-    Returns:
+    Returns
+    -------
     - line: LineString/MultiLineString representing the relation/line.
     """
     df = pd.json_normalize(row["members"])
@@ -618,10 +628,12 @@ def _drop_duplicate_lines(df_lines):
     Drop duplicate lines from the given dataframe. Duplicates are usually lines
     cross-border lines or slightly outside the country border of focus.
 
-    Parameters:
+    Parameters
+    ----------
     - df_lines (pandas.DataFrame): The dataframe containing lines data.
 
-    Returns:
+    Returns
+    -------
     - df_lines (pandas.DataFrame): The dataframe with duplicate lines removed
       and cleaned data.
 
@@ -662,12 +674,14 @@ def _filter_by_voltage(df, min_voltage=220000):
     """
     Filter rows in the DataFrame based on the voltage in V.
 
-    Parameters:
+    Parameters
+    ----------
     - df (pandas.DataFrame): The DataFrame containing the substations or lines data.
     - min_voltage (int, optional): The minimum voltage value to filter the
       rows. Defaults to 220000 [unit: V].
 
-    Returns:
+    Returns
+    -------
     - filtered df (pandas.DataFrame): The filtered DataFrame containing
       the lines or substations above min_voltage.
     - list_voltages (list): A list of unique voltage values above min_voltage.
@@ -708,13 +722,15 @@ def _clean_substations(df_substations, list_voltages):
     - Set remaining invalid frequency values that are not in ['0', '50']
       to '50'.
 
-    Parameters:
+    Parameters
+    ----------
     - df_substations (pandas.DataFrame): The input dataframe containing
       substation data.
     - list_voltages (list): A list of voltages above min_voltage to filter the
     substation data.
 
-    Returns:
+    Returns
+    -------
     - df_substations (pandas.DataFrame): The cleaned substation dataframe.
     """
     df_substations = df_substations.copy()
@@ -736,10 +752,10 @@ def _clean_substations(df_substations, list_voltages):
         == df_substations["split_elements"]
     )
 
-    op_freq = lambda row: row["frequency"].split(";")[row["split_count"] - 1]
-
     df_substations.loc[bool_frequency_len & bool_split, "frequency"] = (
-        df_substations.loc[bool_frequency_len & bool_split,].apply(op_freq, axis=1)
+        df_substations.loc[bool_frequency_len & bool_split,].apply(
+            lambda row: row["frequency"].split(";")[row["split_count"] - 1], axis=1
+        )
     )
 
     df_substations = _split_cells(df_substations, cols=["frequency"])
@@ -944,11 +960,13 @@ def _create_substations_geometry(df_substations):
     """
     Creates geometries.
 
-    Parameters:
+    Parameters
+    ----------
     df_substations (DataFrame): The input DataFrame containing the substations
     data.
 
-    Returns:
+    Returns
+    -------
     df_substations (DataFrame): A new DataFrame with the
     polygons ["polygon"] of the substations geometries.
     """
@@ -965,11 +983,13 @@ def _create_substations_poi(df_substations, tol=BUS_TOL / 2):
     """
     Creates Pole of Inaccessibility (PoI) from geometries and keeps the original polygons.
 
-    Parameters:
+    Parameters
+    ----------
     df_substations (DataFrame): The input DataFrame containing the substations
     data.
 
-    Returns:
+    Returns
+    -------
     df_substations (DataFrame): A new DataFrame with the PoI ["geometry"]
     and polygons ["polygon"] of the substations geometries.
     """
@@ -990,14 +1010,17 @@ def _create_lines_geometry(df_lines):
     """
     Create line geometry for the given DataFrame of lines.
 
-    Parameters:
+    Parameters
+    ----------
     - df_lines (pandas.DataFrame): DataFrame containing lines data.
 
-    Returns:
+    Returns
+    -------
     - df_lines (pandas.DataFrame): DataFrame with transformed 'geometry'
       column (type: shapely LineString).
 
-    Notes:
+    Notes
+    -----
     - This function transforms 'geometry' column in the input DataFrame by
       applying the '_create_linestring' function to each row.
     - It then drops rows where the geometry has equal start and end points,
@@ -1018,11 +1041,13 @@ def _add_bus_poi_to_line(linestring, point):
     Adds the PoI of a substation to a linestring by extending the
     linestring with a new segment.
 
-    Parameters:
+    Parameters
+    ----------
     linestring (LineString): The original linestring to extend.
     point (Point): The PoI of the bus.
 
-    Returns:
+    Returns
+    -------
     merged (LineString): The extended linestring with the new segment.
     """
     start = linestring.coords[0]
@@ -1235,9 +1260,9 @@ def _import_substations(path_substations):
             ):  # unpopulated OSM json is about 51 bytes
                 country = os.path.basename(os.path.dirname(path_substations[key][idx]))
                 logger.info(
-                    f" - Importing {key} {str(idx+1).zfill(2)}/{str(len(path_substations[key])).zfill(2)}: {ip}"
+                    f" - Importing {key} {str(idx + 1).zfill(2)}/{str(len(path_substations[key])).zfill(2)}: {ip}"
                 )
-                with open(ip, "r") as f:
+                with open(ip) as f:
                     data = json.load(f)
 
                 df = pd.DataFrame(data["elements"])
@@ -1277,7 +1302,7 @@ def _import_substations(path_substations):
 
             else:
                 logger.info(
-                    f" - Skipping {key} {str(idx+1).zfill(2)}/{str(len(path_substations[key])).zfill(2)} (empty): {ip}"
+                    f" - Skipping {key} {str(idx + 1).zfill(2)}/{str(len(path_substations[key])).zfill(2)} (empty): {ip}"
                 )
                 continue
         logger.info("---")
@@ -1347,13 +1372,15 @@ def _remove_lines_within_substations(gdf_lines, gdf_substations_polygon):
     GeoDataFrame of lines. These are not needed to create network (e.g. bus
     bars, switchgear, etc.)
 
-    Parameters:
+    Parameters
+    ----------
     - gdf_lines (GeoDataFrame): A GeoDataFrame containing lines with 'line_id'
       and 'geometry' columns.
     - gdf_substations_polygon (GeoDataFrame): A GeoDataFrame containing
       substation polygons.
 
-    Returns:
+    Returns
+    -------
     GeoDataFrame: A new GeoDataFrame without lines within substation polygons.
     """
     logger.info("Identifying and removing lines within substation polygons...")
@@ -1376,11 +1403,13 @@ def _merge_touching_polygons(df):
     """
     Merge touching polygons in a GeoDataFrame.
 
-    Parameters:
+    Parameters
+    ----------
     - df: pandas.DataFrame or geopandas.GeoDataFrame
         The input DataFrame containing the polygons to be merged.
 
-    Returns:
+    Returns
+    -------
     - gdf: geopandas.GeoDataFrame
         The GeoDataFrame with merged polygons.
     """
@@ -1410,11 +1439,13 @@ def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     """
     Adds endpoints to a line by removing any overlapping areas with polygons.
 
-    Parameters:
+    Parameters
+    ----------
     linestring (LineString): The original line to add endpoints to.
     polygon_dict (dict): A dictionary of polygons, where the keys are bus IDs and the values are the corresponding polygons.
 
-    Returns:
+    Returns
+    -------
     LineString: The modified line with added endpoints.
     """
     if not polygon_dict:
@@ -1427,7 +1458,7 @@ def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     # difference with polygon
     linestring_new = linestring.difference(polygon_unary)
 
-    if type(linestring_new) == MultiLineString:
+    if linestring_new is MultiLineString:
         # keep the longest line in the multilinestring
         linestring_new = max(linestring_new.geoms, key=lambda x: x.length)
 
@@ -1441,11 +1472,13 @@ def _get_polygons_at_endpoints(linestring, polygon_dict):
     """
     Get the polygons that contain the endpoints of a given linestring.
 
-    Parameters:
+    Parameters
+    ----------
     linestring (LineString): The linestring for which to find the polygons at the endpoints.
     polygon_dict (dict): A dictionary containing polygons as values, with bus_ids as keys.
 
-    Returns:
+    Returns
+    -------
     dict: A dictionary containing bus_ids as keys and polygons as values, where the polygons contain the endpoints of the linestring.
     """
     # Get the endpoints of the linestring
@@ -1468,11 +1501,13 @@ def _extend_lines_to_substations(gdf_lines, gdf_substations_polygon, tol=BUS_TOL
     the nearest substations represented by the polygons in the
     `gdf_substations_polygon` GeoDataFrame.
 
-    Parameters:
+    Parameters
+    ----------
     gdf_lines (GeoDataFrame): A GeoDataFrame containing the lines to be extended.
     gdf_substations_polygon (GeoDataFrame): A GeoDataFrame containing the polygons representing substations.
 
-    Returns:
+    Returns
+    -------
     GeoDataFrame: A new GeoDataFrame with the lines extended to the substations.
     """
     logger.info(
@@ -1767,7 +1802,7 @@ if __name__ == "__main__":
     df_links = df_links.dropna(subset=["rating"])
     len_after = len(df_links)
     logger.info(
-        f"Dropped {len_before-len_after} elements without rating. "
+        f"Dropped {len_before - len_after} elements without rating. "
         + f"Imported {len_after} elements."
     )
 
