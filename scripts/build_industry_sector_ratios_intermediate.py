@@ -78,9 +78,14 @@ with the following carriers are considered:
 Unit of the output file is MWh/t.
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import get
+
+logger = logging.getLogger(__name__)
 
 
 def build_industry_sector_ratios_intermediate():
@@ -147,6 +152,8 @@ if __name__ == "__main__":
             "build_industry_sector_ratios_intermediate",
             planning_horizons="2030",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     year = int(snakemake.wildcards.planning_horizons)
 

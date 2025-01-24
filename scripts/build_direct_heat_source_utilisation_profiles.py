@@ -24,8 +24,12 @@ Outputs
 - `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
+import logging
+
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def get_source_temperature(heat_source_key: str):
@@ -89,7 +93,7 @@ if __name__ == "__main__":
             "build_cop_profiles",
             clusters=48,
         )
-
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     direct_utilisation_heat_sources: list[str] = (

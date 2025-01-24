@@ -29,11 +29,19 @@ Outputs
 - ``resources/hourly_heat_demand_total_base_s<simpl>_<clusters>.nc``:
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    get_snapshots,
+    set_scenario_config,
+)
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -44,6 +52,7 @@ if __name__ == "__main__":
             scope="total",
             clusters=5,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     snapshots = get_snapshots(

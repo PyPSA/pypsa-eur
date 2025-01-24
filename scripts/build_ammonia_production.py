@@ -21,9 +21,13 @@ This functions takes data from the `Minerals Yearbook <https://www.usgs.gov/cent
  (July 2024) published by the US Geological Survey (USGS) and the National Minerals Information Center and extracts the annual ammonia production per country in ktonN/a. The data is converted to ktonNH3/a.
 """
 
+import logging
+
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -34,6 +38,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_ammonia_production")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     ammonia = pd.read_excel(

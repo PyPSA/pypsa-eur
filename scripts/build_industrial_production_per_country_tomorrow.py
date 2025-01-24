@@ -58,15 +58,20 @@ If not already present, the information is added as new column in the output fil
 The unit of the production is kt/a.
 """
 
+import logging
+
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import get
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country_tomorrow")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
