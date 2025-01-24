@@ -85,6 +85,8 @@ rule build_gas_network:
         mem_mb=4000,
     log:
         logs("build_gas_network.log"),
+    benchmark:
+        benchmarks("build_gas_network")
     conda:
         "../envs/environment.yaml"
     script:
@@ -107,6 +109,8 @@ rule build_gas_input_locations:
         mem_mb=2000,
     log:
         logs("build_gas_input_locations_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_gas_input_locations/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -124,6 +128,8 @@ rule cluster_gas_network:
         mem_mb=4000,
     log:
         logs("cluster_gas_network_{clusters}.log"),
+    benchmark:
+        benchmarks("cluster_gas_network/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -877,6 +883,8 @@ rule build_population_weighted_energy_totals:
         mem_mb=2000,
     log:
         logs("build_population_weighted_{kind}_totals_{clusters}.log"),
+    benchmark:
+        benchmarks("build_population_weighted_{kind}_totals_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -898,6 +906,8 @@ rule build_shipping_demand:
         mem_mb=2000,
     log:
         logs("build_shipping_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_shipping_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -929,6 +939,8 @@ rule build_transport_demand:
         mem_mb=2000,
     log:
         logs("build_transport_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transport_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -951,6 +963,8 @@ rule build_district_heat_share:
         mem_mb=1000,
     log:
         logs("build_district_heat_share_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_district_heat_share_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1056,6 +1070,8 @@ rule build_egs_potentials:
         mem_mb=2000,
     log:
         logs("build_egs_potentials_{clusters}.log"),
+    benchmark:
+        benchmarks("build_egs_potentials_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:

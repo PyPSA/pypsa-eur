@@ -20,6 +20,8 @@ rule build_electricity_demand:
         resources("electricity_demand.csv"),
     log:
         logs("build_electricity_demand.log"),
+    benchmark:
+        benchmarks("build_electricity_demand"),
     resources:
         mem_mb=5000,
     conda:
@@ -116,6 +118,8 @@ rule build_shapes:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
     log:
         logs("build_shapes.log"),
+    benchmark:
+        benchmarks("build_shapes")
     threads: 1
     resources:
         mem_mb=1500,
@@ -204,6 +208,8 @@ rule determine_availability_matrix_MD_UA:
         ),
     log:
         logs("determine_availability_matrix_MD_UA_{clusters}_{technology}.log"),
+    benchmark:
+        benchmarks("determine_availability_matrix_MD_UA_{clusters}_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -321,6 +327,8 @@ rule build_monthly_prices:
         fuel_price=resources("monthly_fuel_price.csv"),
     log:
         logs("build_monthly_prices.log"),
+    benchmark:
+        benchmarks("build_monthly_prices"),
     threads: 1
     resources:
         mem_mb=5000,
@@ -349,6 +357,8 @@ rule build_hydro_profile:
         profile=resources("profile_hydro.nc"),
     log:
         logs("build_hydro_profile.log"),
+    benchmark:
+        benchmarks("build_hydro_profile"),
     resources:
         mem_mb=5000,
     conda:
