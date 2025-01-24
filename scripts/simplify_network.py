@@ -328,7 +328,6 @@ def aggregate_to_substations(
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        line_length_factor=1.0,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
     )
