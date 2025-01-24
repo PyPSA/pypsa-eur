@@ -25,8 +25,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "h2_salt_caverns_GWh_per_sqkm.geojson",
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
-        "GDP_per_capita_PPP_1990_2015_v2.nc",  # TODO: update
-        "ppp_2013_1km_Aggregated.tif",  # TODO: update
+        "GDP_per_capita_PPP_1990_2015_v2.nc",
+        "ppp_2019_1km_Aggregated.tif",
     ]
 
     rule retrieve_databundle:
@@ -689,24 +689,3 @@ if config["enable"]["retrieve"]:
                         f.write(response.content)
 
 
-
-# TODO: Remove before merging into master and after updating databundle on Zenodo:
-if config["enable"]["retrieve"]:
-
-    rule retrieve_sandbox_data:
-        input:
-            gdp_non_nuts3=storage(
-                "https://github.com/bobbyxng/sandbox/raw/refs/heads/main/data/GDP_per_capita_PPP_1990_2015_v2.nc",
-                keep_local=True,
-            ),
-            pop_non_nuts_3=storage(
-                "https://github.com/bobbyxng/sandbox/raw/refs/heads/main/data/ppp_2019_1km_Aggregated.tif",
-                keep_local=True,
-            ),
-        output:
-            gdp_non_nuts3="data/sandbox/GDP_per_capita_PPP_1990_2015_v2.nc",
-            pop_non_nuts_3="data/sandbox/ppp_2019_1km_Aggregated.tif",
-        retries: 1
-        run:
-            for key in input.keys():
-                move(input[key], output[key])
