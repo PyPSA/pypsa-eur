@@ -430,12 +430,11 @@ if __name__ == "__main__":
 
     linetype_380 = snakemake.config["lines"]["types"][380]
     n, trafo_map = simplify_network_to_380(n, linetype_380)
+    busmaps = [trafo_map]
 
     n = remove_converters(n)
-
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
-
-    busmaps = [trafo_map, simplify_links_map]
+    busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
         n, stub_map = remove_stubs(n, params.simplify_network)
