@@ -47,11 +47,12 @@ If the `config["industry"]["ammonia"] <https://pypsa-eur.readthedocs.io/en/lates
 The unit of the specific energy consumption is MWh/t material and tCO2/t material for process emissions.
 """
 
+import logging
+
 import country_converter as coco
 import pandas as pd
-from _helpers import mute_print, set_scenario_config, configure_logging
+from _helpers import configure_logging, mute_print, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()

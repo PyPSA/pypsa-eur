@@ -78,12 +78,13 @@ with the following carriers are considered:
 Unit of the output file is MWh/t.
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import get
-from _helpers import set_scenario_config, configure_logging
 
-import logging
 logger = logging.getLogger(__name__)
 
 

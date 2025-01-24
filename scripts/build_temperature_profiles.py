@@ -35,14 +35,15 @@ Outputs
 - ``resources/temp_air_total_base_s<simpl>_<clusters>.nc`
 """
 
+import logging
+
 import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config, configure_logging
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
 
-import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

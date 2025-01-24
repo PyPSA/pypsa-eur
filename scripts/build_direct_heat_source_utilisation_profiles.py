@@ -24,10 +24,11 @@ Outputs
 - `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
-import xarray as xr
-from _helpers import set_scenario_config, configure_logging
-
 import logging
+
+import xarray as xr
+from _helpers import configure_logging, set_scenario_config
+
 logger = logging.getLogger(__name__)
 
 

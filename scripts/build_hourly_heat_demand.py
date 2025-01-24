@@ -29,13 +29,18 @@ Outputs
 - ``resources/hourly_heat_demand_total_base_s<simpl>_<clusters>.nc``:
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config, configure_logging
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    get_snapshots,
+    set_scenario_config,
+)
 
-import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

@@ -65,11 +65,12 @@ The script has the following structure:
         with heated floor area
 """
 
+import logging
+
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 # (i) --- FIXED PARAMETER / STANDARD VALUES -----------------------------------

@@ -22,8 +22,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import Polygon
 from _helpers import configure_logging, set_scenario_config
+from shapely.geometry import Polygon
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
             "build_egs_potentials",
             clusters=37,
         )
-    
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

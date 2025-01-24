@@ -16,12 +16,12 @@ assuming as an approximation energy content of wood pellets
 @author: bw0928
 """
 
+import logging
+
 import pandas as pd
 
-import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
-
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 

@@ -24,13 +24,13 @@ The energy demand per country is multiplied by the mapping value from the file `
 The unit of the energy demand is TWh/a.
 """
 
+import logging
 from itertools import product
 
 import numpy as np
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist

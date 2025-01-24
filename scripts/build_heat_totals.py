@@ -16,12 +16,12 @@ Outputs
 - `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
 from numpy.polynomial import Polynomial
 
-import logging
 logger = logging.getLogger(__name__)
 from _helpers import configure_logging
 

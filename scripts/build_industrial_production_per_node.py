@@ -24,12 +24,12 @@ The industrial production per country is multiplied by the mapping value to get 
 The unit of the production is kt/a.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist

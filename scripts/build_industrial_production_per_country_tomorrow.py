@@ -58,11 +58,12 @@ If not already present, the information is added as new column in the output fil
 The unit of the production is kt/a.
 """
 
+import logging
+
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import get
 
-import logging
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

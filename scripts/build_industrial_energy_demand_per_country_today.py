@@ -59,15 +59,15 @@ the output file contains the energy demand in TWh/a for the following carriers
 - waste
 """
 
+import logging
 import multiprocessing as mp
 from functools import partial
 
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 from tqdm import tqdm
 
-import logging
 logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()

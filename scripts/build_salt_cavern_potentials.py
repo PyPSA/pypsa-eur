@@ -20,11 +20,12 @@ capacities from the bar chart split by nearshore (<50km from sea),
 onshore (>50km from sea), offshore (Figure 7).
 """
 
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 

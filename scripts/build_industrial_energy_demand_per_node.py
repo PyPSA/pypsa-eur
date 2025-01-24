@@ -35,10 +35,11 @@ For each bus, the following carriers are considered:
 which can later be used as values for the industry load.
 """
 
-import pandas as pd
-from _helpers import set_scenario_config, configure_logging
-
 import logging
+
+import pandas as pd
+from _helpers import configure_logging, set_scenario_config
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

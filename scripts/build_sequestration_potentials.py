@@ -7,11 +7,12 @@ data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_.
 """
 
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config, configure_logging
+from _helpers import configure_logging, set_scenario_config
 
-import logging
 logger = logging.getLogger(__name__)
 
 

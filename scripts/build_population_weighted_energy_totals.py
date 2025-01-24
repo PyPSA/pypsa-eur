@@ -5,10 +5,11 @@
 Distribute country-level energy demands by population.
 """
 
-import pandas as pd
-from _helpers import set_scenario_config, configure_logging
-
 import logging
+
+import pandas as pd
+from _helpers import configure_logging, set_scenario_config
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
