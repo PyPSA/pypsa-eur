@@ -35,7 +35,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_databundle.log",
         benchmark:
-            "benchmarks/retrieve_databundle",
+            "benchmarks/retrieve_databundle"
         resources:
             mem_mb=1000,
         retries: 2

@@ -387,6 +387,9 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     -------
         n (pypsa.Network): The network object with all converters removed.
     """
+    # Initialise converter_map
+    converter_map = n.buses.index.to_series()
+
     # Extract converters
     converters = n.links.query("carrier == ''")[["bus0", "bus1"]]
     converters["bus0_carrier"] = converters["bus0"].map(n.buses.carrier)
@@ -402,6 +405,8 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
     # Dictionary for remapping
     dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
+    # Update converter map
+    converter_map = converter_map.replace(dict_dc_to_ac)
 
     # Remap all buses that were originally connected to the converter to the connected AC bus
     n.links["bus0"] = n.links["bus0"].replace(dict_dc_to_ac)
@@ -411,7 +416,7 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     n.links = n.links.loc[~n.links.index.isin(converters.index)]
     n.buses = n.buses.loc[~n.buses.index.isin(converters["dc_bus"])]
 
-    return n
+    return n, converter_map
 
 
 if __name__ == "__main__":
@@ -432,7 +437,9 @@ if __name__ == "__main__":
     n, trafo_map = simplify_network_to_380(n, linetype_380)
     busmaps = [trafo_map]
 
-    n = remove_converters(n)
+    n, converter_map = remove_converters(n)
+    busmaps.append(converter_map)
+
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
     busmaps.append(simplify_links_map)
 
