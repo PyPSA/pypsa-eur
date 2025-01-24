@@ -473,7 +473,8 @@ def input_class_regions(w):
         f"class_regions_{tech}": resources(
             f"regions_by_class_{{clusters}}_{tech}.geojson"
         )
-        for tech in set(config_provider("electricity", "renewable_carriers")(w)) - {"hydro"}
+        for tech in set(config_provider("electricity", "renewable_carriers")(w))
+        - {"hydro"}
     }
 
 
