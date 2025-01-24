@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Adjusted existing heating data in ``build_existing_heating_distribution`` and the indexing of existing heat pumps for the COP correction in ``add_brownfield`` to make the myopic code work with the geothermal district heating feature.
+
 * Restore share policy "base" functionality to share build renewable profiles
 
 * Feature: Introduce geothermal district heating (direct utilisation and heat pumps). Potentials are based on `Manz et al. 2024: Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`.
