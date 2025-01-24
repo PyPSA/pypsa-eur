@@ -124,6 +124,8 @@ Upcoming Release
 
 * Update locations and capacities of ammonia plants.
 
+* Updating all base shapes (country_shapes, europe_shape, nuts3_shapes, ...). The workflow has been modified to use higher resolution and more harmonised shapes (NUTS3 2021 01M data and OSM administration level 1 for non-NUTS3 countries, such as BA, MD, UA, and XK). Data sources for population and GDP p.c. have been updated to JRC ARDECO https://urban.jrc.ec.europa.eu/ardeco/ -- 2019 values are used. `build_gdp_pop_non_nuts3` (originally created to build regional GDP p.c. and population data for MD and UA) is now integrated into `build_shapes` and extended to build regional values for all non-NUTS3 countries using cutouts of the updated datasets `GDP_per_capita_PPP_1990_2015_v2.nc` and `ppp_2019_1km_Aggregated.tif`,
+
 * Bugfix: Fixed issue where DC bus regions were dropped in `regions_onshore_base_s.geojson` and `regions_onshore_base_s_{clusters}.geojson` due to missing converter busmap.
 
 
