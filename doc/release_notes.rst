@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: The missing lifetime attribute was added to hydrogen steel tanks, which is important for pathway planning.
+
 * Bugfix: The length factor on the transmission lines haversine length was
   applied twice, once when calculating costs and once when clustering the
   network. Now it is only applied when calculating costs.
