@@ -38,10 +38,14 @@ References
 - "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
 
+import logging
+
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -171,6 +175,7 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2050,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     build_existing_heating()
