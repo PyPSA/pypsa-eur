@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -225,6 +224,24 @@ class HeatSystem(Enum):
             The name for the heat pump costs.
         """
         return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
+
+    def heat_source_costs_name(self, heat_source: str) -> str:
+        """
+        Generates the name for direct source utilisation costs based on the heat source and
+        system.
+        Used to retrieve data from `technology-data <https://github.com/PyPSA/technology-data>`.
+
+        Parameters
+        ----------
+        heat_source : str
+            The heat source.
+
+        Returns
+        -------
+        str
+            The name for the technology-data costs.
+        """
+        return f"{self.central_or_decentral} {heat_source} heat source"
 
     @property
     def resistive_heater_costs_name(self) -> str:

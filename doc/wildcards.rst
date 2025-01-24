@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -48,36 +48,6 @@ network model should be reduced to in the rule :mod:`cluster_network`.
 The number of clusters must be lower than the total number of nodes
 and higher than the number of countries. However, a country counts twice if
 it has two asynchronous subnetworks (e.g. Denmark or Italy).
-.. _ll:
-
-The ``{ll}`` wildcard
-=====================
-
-The ``{ll}`` wildcard specifies what limits on
-line expansion are set for the optimisation model.
-It is handled in the rule :mod:`prepare_network`.
-
-The wildcard, in general, consists of two parts:
-
-    1. The first part can be
-       ``v`` (for setting a limit on line volume) or
-       ``c`` (for setting a limit on line cost)
-
-    2. The second part can be
-       ``opt`` or a float bigger than one (e.g. 1.25).
-
-       (a) If ``opt`` is chosen line expansion is optimised
-           according to its capital cost
-           (where the choice ``v`` only considers overhead costs for HVDC transmission lines, while
-           ``c`` uses more accurate costs distinguishing between
-           overhead and underwater sections and including inverter pairs).
-
-       (b) ``v1.25`` will limit the total volume of line expansion
-           to 25 % of currently installed capacities weighted by
-           individual line lengths; investment costs are neglected.
-
-       (c) ``c1.25`` will allow to build a transmission network that
-           costs no more than 25 % more than the current system.
 
 .. _opts:
 

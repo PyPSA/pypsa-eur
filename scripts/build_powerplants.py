@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -181,11 +180,14 @@ if __name__ == "__main__":
         .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
         .assign(Technology=replace_natural_gas_technology)
         .assign(Fueltype=replace_natural_gas_fueltype)
+        .replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"})
     )
 
     # Correct bioenergy for countries where possible
     opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
-    opsd = opsd.query('Country in @countries and Fueltype == "Bioenergy"')
+    opsd = opsd.replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"}).query(
+        'Country in @countries and Fueltype == "Bioenergy"'
+    )
     opsd["Name"] = "Biomass"
     available_countries = opsd.Country.unique()
     ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")')

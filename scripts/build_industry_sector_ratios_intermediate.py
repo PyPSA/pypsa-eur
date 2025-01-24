@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -85,7 +84,6 @@ from prepare_sector_network import get
 
 
 def build_industry_sector_ratios_intermediate():
-
     # in TWh/a
     demand = pd.read_csv(
         snakemake.input.industrial_energy_demand_per_country_today,
