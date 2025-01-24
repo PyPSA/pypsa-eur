@@ -690,4 +690,3 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
-
