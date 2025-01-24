@@ -714,6 +714,9 @@ def add_co2_network(n, costs):
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
+    if not "underwater_fraction" in co2_links.columns:
+        co2_links["underwater_fraction"] = 0.0
+
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
         * costs.at["CO2 pipeline", "fixed"]
@@ -4540,7 +4543,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             p_nom_extendable=True,
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
             capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
-            efficiency=bus_eta,
+            efficiency=bus_eta.loc[n.snapshots],
             lifetime=costs.at["geothermal", "lifetime"],
         )
 

@@ -11,6 +11,11 @@ Release Notes
 Upcoming Release
 ================
 
+- ...
+
+PyPSA-Eur v2025.01.0 (24th January 2025)
+========================================
+
 * Bugfix: The missing lifetime attribute was added to hydrogen steel tanks, which is important for pathway planning.
 
 * Bugfix: The length factor on the transmission lines haversine length was

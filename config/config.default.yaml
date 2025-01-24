@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.13.0
+version: v2025.01.0
 tutorial: false
 
 logging:
