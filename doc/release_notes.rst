@@ -16,6 +16,9 @@ Upcoming Release
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
 
+.. note::
+  With this version, PyPSA-Eur switches to `CalVer <https://calver.org/>`__ versioning.
+
 **Features**
 
 * Introduce geothermal district heating, including direct utilisation and heat
