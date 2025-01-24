@@ -7,14 +7,14 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
-- python>=3.8
+- python>=3.10
 - pip
 
 # Inhouse packages
-- pypsa>=0.32
-- atlite>=0.2.9
-- linopy
-- powerplantmatching>=0.5.15,<0.6
+- pypsa>=0.32.1
+- atlite>=0.3
+- linopy>=0.4.4
+- powerplantmatching>=0.5.15
 
 # Dependencies of the workflow itself
 - dask
@@ -29,9 +29,10 @@ dependencies:
 - numpy
 - pandas>=2.1
 - geopandas>=1
-- xarray>=2023.11.0
+- xarray>=2024.03.0
 - rioxarray
 - netcdf4
+- libgdal-netcdf
 - networkx
 - scipy
 - glpk
