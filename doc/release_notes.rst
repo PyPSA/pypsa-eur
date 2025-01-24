@@ -11,6 +11,14 @@ Release Notes
 Upcoming Release
 ================
 
+* Breaking change: The location of several network files has changed to
+  distinguish more clearly between solved and unsolved networks. Unsolved
+  networks that were previously stored in ``results/{run}/prenetworks`` are now
+  placed in ``resources/{run}/networks``. Solved networks that were previously
+  stored in ``results/{run}/postnetworks`` are now stored in
+  ``results/{run}/networks``. Brownfield networks are identified by a
+  ``_brownfield`` suffix in their filename.
+
 * Bugfix: The missing lifetime attribute was added to hydrogen steel tanks, which is important for pathway planning.
 
 * Bugfix: The length factor on the transmission lines haversine length was

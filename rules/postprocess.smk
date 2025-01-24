@@ -29,7 +29,7 @@ if config["foresight"] != "perfect":
             transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -56,7 +56,7 @@ if config["foresight"] != "perfect":
             foresight=config_provider("foresight"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -82,7 +82,7 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
@@ -119,7 +119,7 @@ if config["foresight"] == "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             unpack(output_map_year),
@@ -143,7 +143,7 @@ rule make_summary:
     input:
         networks=expand(
             RESULTS
-            + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"],
             allow_missing=True,
         ),

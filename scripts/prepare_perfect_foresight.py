@@ -542,7 +542,7 @@ if __name__ == "__main__":
         f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
     )
 
-    # concat prenetworks of planning horizon to single network ------------
+    # concat prepared networks of planning horizon to single network ------------
     n = concat_networks(years)
 
     # temporal aggregate
