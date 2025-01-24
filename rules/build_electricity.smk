@@ -300,7 +300,7 @@ rule build_renewable_profiles:
     log:
         logs("build_renewable_profile_{clusters}_{technology}.log"),
     benchmark:
-        benchmarks("build_renewable_profiles_{clusters}_{technology}")
+        benchmarks("build_renewable_profile_{clusters}_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
