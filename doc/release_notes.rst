@@ -13,6 +13,7 @@ Upcoming Release
 
 - ...
 
+
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
 
@@ -102,6 +103,14 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   transmission_limit:``, defaulting to ``vopt``. All previous options of the
   ``{ll}`` wildcard are also now available within the ``{opts}`` wildcard (e.g.
   as ``-lv1.25-``). (https://github.com/PyPSA/pypsa-eur/pull/1472)
+
+* Breaking change: The location of several network files has changed to
+  distinguish more clearly between solved and unsolved networks. Unsolved
+  networks that were previously stored in ``results/{run}/prenetworks`` are now
+  placed in ``resources/{run}/networks``. Solved networks that were previously
+  stored in ``results/{run}/postnetworks`` are now stored in
+  ``results/{run}/networks``. Brownfield networks are identified by a
+  ``_brownfield`` suffix in their filename.
 
 * Replaced the store representation of biogenic carriers (solid biomass, biogas,
   bioliquids, MSW) in :mod:`prepare_sector_network` with generators using
