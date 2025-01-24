@@ -15,7 +15,7 @@ import pytest
 
 sys.path.append("./scripts")
 
-from build_shapes import _simplify_polys, countries, country_cover, eez
+from build_shapes import _simplify_polys, eez
 
 path_cwd = pathlib.Path.cwd()
 
@@ -61,20 +61,6 @@ def test_simplify_polys(tolerance, expected_tuple, italy_shape):
 
 @pytest.mark.parametrize(
     "country_list",
-    [["MK"], ["IT"]],
-)
-def test_countries(config, download_natural_earth, country_list):
-    """
-    Verify what is returned by countries.
-    """
-    natural_earth = download_natural_earth
-    country_shapes_df = countries(natural_earth, country_list)
-    assert country_shapes_df.shape == (1,)
-    assert country_shapes_df.index.unique().tolist() == country_list
-
-
-@pytest.mark.parametrize(
-    "country_list",
     [["DE"], ["IT"]],
 )
 def test_eez(config, country_list, download_eez):
@@ -85,46 +71,3 @@ def test_eez(config, country_list, download_eez):
     offshore_shapes_gdf = eez(eez_path, country_list)
     assert offshore_shapes_gdf.shape == (1, 1)
     assert offshore_shapes_gdf.index == country_list[0]
-
-
-@pytest.mark.parametrize(
-    "country_list,expected_tuple",
-    [
-        (
-            ["IT"],
-            (
-                89.49,
-                61.67,
-            ),
-        ),
-        (
-            ["DE"],
-            (
-                53.72,
-                56.46,
-            ),
-        ),
-    ],
-)
-def test_country_cover(
-    country_list, download_natural_earth, download_eez, expected_tuple
-):
-    """
-    Verify what is returned by country_cover.
-    """
-    natural_earth = download_natural_earth
-    eez_path = download_eez
-    country_shapes_gdf = countries(natural_earth, country_list).reset_index()
-    offshore_shapes_gdf = eez(eez_path, country_list).reset_index()
-    europe_shape_gdf = gpd.GeoDataFrame(
-        geometry=[country_cover(country_shapes_gdf, offshore_shapes_gdf.geometry)],
-        crs=6933,
-    )
-    europe_shape_gdf["area"] = europe_shape_gdf.area
-    europe_shape_gdf["perimeter"] = europe_shape_gdf.length
-    output_tuple = (
-        np.round(europe_shape_gdf["area"][0], 2),
-        np.round(europe_shape_gdf["perimeter"][0], 2),
-    )
-    assert len(output_tuple) == len(expected_tuple)
-    assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
