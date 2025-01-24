@@ -12,8 +12,6 @@ Reads biomass transport costs for different countries of the JRC report.
 converts them from units 'EUR per km/ton' -> 'EUR/ (km MWh)'
 
 assuming as an approximation energy content of wood pellets
-
-@author: bw0928
 """
 
 import logging

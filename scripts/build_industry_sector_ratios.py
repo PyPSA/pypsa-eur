@@ -4,25 +4,6 @@
 """
 Build best case specific energy consumption by carrier and category.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    industry:
-        ammonia:
-..
-
-Inputs
--------
-- ``resources/ammonia_production.csv``
-- ``data/bundle-sector/jrc-idees-2021``
-
-Outputs
--------
-
-- ``resources/industry_sector_ratios.csv``
-
 Description
 -------
 

@@ -4,18 +4,6 @@
 """
 Build industrial energy demand per model region.
 
-Inputs
-------
-
-- ``resources/industrial_energy_demand_today_base_s_{clusters}.csv``
-- ``resources/industry_sector_ratios_{planning_horizons}.csv``
-- ``resources/industrial_production_base_s_{clusters}_{planning_horizons}.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv``
-
 Description
 -------
 This rule aggregates the energy demand of the industrial sectors per model region.

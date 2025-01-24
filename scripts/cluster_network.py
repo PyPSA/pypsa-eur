@@ -7,36 +7,6 @@
 Creates networks clustered to ``{cluster}`` number of zones with aggregated
 buses and transmission corridors.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-      cluster_network:
-      aggregation_strategies:
-      focus_weights:
-
-    solving:
-        solver:
-            name:
-
-    lines:
-        length_factor:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`toplevel_cf`, :ref:`renewable_cf`, :ref:`solving_cf`, :ref:`lines_cf`
-
-Inputs
-------
-
-- ``resources/regions_onshore_base.geojson``: confer :ref:`simplify`
-- ``resources/regions_offshore_base.geojson``: confer :ref:`simplify`
-- ``resources/busmap_base_s.csv``: confer :ref:`simplify`
-- ``networks/base.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_base_s_{clusters}_{base_network}.csv``: optional input
-
 Outputs
 -------
 

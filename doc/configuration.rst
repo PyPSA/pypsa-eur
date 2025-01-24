@@ -511,7 +511,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: industry:
+   :start-at: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
    :end-before: # docs
 
 .. csv-table::
@@ -550,13 +550,8 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/clustering.csv
 
-.. note::
-   ``feature:`` in ``simplify_network:``
-   are only relevant if ``hac`` were chosen in ``algorithm``.
-
 .. tip::
-   use ``min`` in ``p_nom_max:`` for more `
-   conservative assumptions.
+   use ``min`` in ``p_nom_max:`` for more conservative assumptions.
 
 .. _adjustments_cf:
 

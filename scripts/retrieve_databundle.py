@@ -14,11 +14,6 @@ This rule downloads the data bundle from `zenodo
 <https://doi.org/10.5281/zenodo.3517934>`_ and extracts it in the ``data``
 sub-directory, such that all files of the bundle are stored in the
 ``data/bundle`` subdirectory.
-
-**Outputs**
-
-- ``data/bundle``: input data collected from various sources
-
 """
 
 import logging
