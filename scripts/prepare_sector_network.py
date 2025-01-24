@@ -714,7 +714,7 @@ def add_co2_network(n, costs):
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
-    if not "underwater_fraction" in co2_links.columns:
+    if "underwater_fraction" not in co2_links.columns:
         co2_links["underwater_fraction"] = 0.0
 
     cost_onshore = (
