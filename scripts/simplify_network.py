@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -68,7 +67,6 @@ The rule :mod:`simplify_network` does up to three things:
 
 import logging
 from functools import reduce
-from typing import Tuple
 
 import geopandas as gpd
 import numpy as np
@@ -76,7 +74,6 @@ import pandas as pd
 import pypsa
 import scipy as sp
 from _helpers import configure_logging, set_scenario_config
-from base_network import append_bus_shapes
 from cluster_network import cluster_regions
 from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
@@ -86,7 +83,7 @@ logger = logging.getLogger(__name__)
 
 def simplify_network_to_380(
     n: pypsa.Network, linetype_380: str
-) -> Tuple[pypsa.Network, pd.Series]:
+) -> tuple[pypsa.Network, pd.Series]:
     """
     Fix all lines to a voltage level of 380 kV and remove all transformers.
 
@@ -137,7 +134,7 @@ def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) ->
 
 def simplify_links(
     n: pypsa.Network, p_max_pu: int | float
-) -> Tuple[pypsa.Network, pd.Series]:
+) -> tuple[pypsa.Network, pd.Series]:
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
 
@@ -217,8 +214,8 @@ def simplify_links(
             if len(buses) <= 2:
                 continue
 
-            logger.debug("nodes = {}".format(labels.index[labels == lbl]))
-            logger.debug("b = {}\nbuses = {}\nlinks = {}".format(b, buses, links))
+            logger.debug(f"nodes = {labels.index[labels == lbl]}")
+            logger.debug(f"b = {b}\nbuses = {buses}\nlinks = {links}")
 
             m = sp.spatial.distance_matrix(
                 n.buses.loc[b, ["x", "y"]], n.buses.loc[buses[1:-1], ["x", "y"]]
@@ -228,7 +225,7 @@ def simplify_links(
             all_links = [i for _, i in sum(links, [])]
 
             lengths = n.links.loc[all_links, "length"]
-            name = lengths.idxmax() + "+{}".format(len(links) - 1)
+            name = lengths.idxmax() + f"+{len(links) - 1}"
             params = dict(
                 carrier="DC",
                 bus0=b[0],
@@ -275,7 +272,7 @@ def simplify_links(
 
 def remove_stubs(
     n: pypsa.Network, simplify_network: dict
-) -> Tuple[pypsa.Network, pd.Series]:
+) -> tuple[pypsa.Network, pd.Series]:
     logger.info("Removing stubs")
 
     across_borders = simplify_network["remove_stubs_across_borders"]
@@ -291,7 +288,7 @@ def aggregate_to_substations(
     n: pypsa.Network,
     buses_i: pd.Index | list,
     aggregation_strategies: dict | None = None,
-) -> Tuple[pypsa.Network, pd.Series]:
+) -> tuple[pypsa.Network, pd.Series]:
     # can be used to aggregate a selection of buses to electrically closest neighbors
     logger.info("Aggregating buses to substations")
     if aggregation_strategies is None:
@@ -341,13 +338,16 @@ def aggregate_to_substations(
 def find_closest_bus(n, x, y, tol=2000):
     """
     Find the index of the closest bus to the given coordinates within a specified tolerance.
-    Parameters:
+
+    Parameters
+    ----------
         n (pypsa.Network): The network object.
         x (float): The x-coordinate (longitude) of the target location.
         y (float): The y-coordinate (latitude) of the target location.
         tol (float): The distance tolerance in meters. Default is 2000 meters.
 
-    Returns:
+    Returns
+    -------
         int: The index of the closest bus to the target location within the tolerance.
              Returns None if no bus is within the tolerance.
     """
@@ -379,10 +379,12 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     Remove all converters from the network and remap all buses that were originally connected to the
     converter to the connected AC bus. Preparation step before simplifying links.
 
-    Parameters:
+    Parameters
+    ----------
         n (pypsa.Network): The network object.
 
-    Returns:
+    Returns
+    -------
         n (pypsa.Network): The network object with all converters removed.
     """
     # Extract converters

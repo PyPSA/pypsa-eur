@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -48,7 +48,6 @@ dependencies:
 - jpype1
 - pyxlsb
 - graphviz
-- pre-commit
 - geojson
 
 # Keep in conda environment when calling ipython
@@ -58,6 +57,10 @@ dependencies:
 - cartopy
 - descartes
 - rasterio
+
+# Development dependencies
+- pre-commit
+- ruff
 
 - pip:
   - gurobipy

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -16,6 +15,7 @@ assuming as an approximation energy content of wood pellets
 
 @author: bw0928
 """
+
 import pandas as pd
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
@@ -40,8 +40,8 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
         import platform
 
         import tabula as tbl
-    except:
-        ImportError("Please install tabula-py and platform")
+    except ImportError as e:
+        raise ImportError("Please install tabula-py and platform") from e
 
     system = platform.system()
     encoding = "cp1252" if system == "Windows" else "utf-8"

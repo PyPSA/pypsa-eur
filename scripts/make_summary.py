@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -543,24 +542,22 @@ def calculate_weighted_prices(n, label, weighted_prices):
     carriers = n.buses.carrier.unique()
 
     for carrier in carriers:
-        load = (
-            n.statistics.withdrawal(
-                groupby=pypsa.statistics.groupers["bus", "carrier"],
-                aggregate_time=False,
-                nice_names=False,
-                bus_carrier=carrier,
-            )
-            .groupby(level="bus")
-            .sum()
-            .T.fillna(0)
+        load = n.statistics.withdrawal(
+            groupby=pypsa.statistics.groupers["bus", "carrier"],
+            aggregate_time=False,
+            nice_names=False,
+            bus_carrier=carrier,
         )
 
-        price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
-        price = price.reindex(columns=load.columns, fill_value=1)
+        if not load.empty and load.sum().sum() > 0:
+            load = load.groupby(level="bus").sum().T.fillna(0)
 
-        weighted_prices.loc[carrier, label] = (
-            load * price
-        ).sum().sum() / load.sum().sum()
+            price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
+            price = price.reindex(columns=load.columns, fill_value=1)
+
+            weighted_prices.loc[carrier, label] = (
+                load * price
+            ).sum().sum() / load.sum().sum()
 
     return weighted_prices
 
