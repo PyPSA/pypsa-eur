@@ -11,6 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Adjusted existing heating data in ``build_existing_heating_distribution`` and the indexing of existing heat pumps for the COP correction in ``add_brownfield`` to make the myopic code work with the geothermal district heating feature.
+
+* Restore share policy "base" functionality to share build renewable profiles
+
 * Feature: Introduce geothermal district heating (direct utilisation and heat pumps). Potentials are based on `Manz et al. 2024: Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`.
 
 * Feature: Allow CHPs to use different fuel sources such as gas, oil, coal, and methanol. Note that the cost assumptions are based on a gas CHP (except for solid biomass-fired CHP).
@@ -113,9 +117,15 @@ Upcoming Release
 
 * Development: Ruff is now used for linting and formatting. It is used in the pre-commit, so no changes are needed. But you might wanna set it up in your IDE.
 
+* Removed ``{ll}`` wildcard. This is now a configuration option ``electricity:
+  transmission_limit:``, defaulting to ``vopt``. All previous options of the
+  ``{ll}`` wildcard are also now available within the ``{opts}`` wildcard (e.g.
+  as ``-lv1.25-``).
+
 * Update locations and capacities of ammonia plants.
 
 * Updating all base shapes (country_shapes, europe_shape, nuts3_shapes, ...). The workflow has been modified to use higher resolution and more harmonised shapes (NUTS3 2021 01M data and OSM administration level 1 for non-NUTS3 countries, such as BA, MD, UA, and XK). Data sources for population and GDP p.c. have been updated to JRC ARDECO https://urban.jrc.ec.europa.eu/ardeco/ -- 2019 values are used. `build_gdp_pop_non_nuts3` (originally created to build regional GDP p.c. and population data for MD and UA) is now integrated into `build_shapes` and extended to build regional values for all non-NUTS3 countries using cutouts of the updated datasets `GDP_per_capita_PPP_1990_2015_v2.nc` and `ppp_2019_1km_Aggregated.tif`,
+
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)
