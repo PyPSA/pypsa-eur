@@ -10,7 +10,9 @@ rule add_existing_baseyear:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
-        network=resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
@@ -27,7 +29,9 @@ rule add_existing_baseyear:
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         heating_efficiencies=resources("heating_efficiencies.csv"),
     output:
-        resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"),
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
     wildcard_constraints:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
@@ -69,7 +73,9 @@ rule prepare_perfect_foresight:
             )
         ),
     output:
-        resources("networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"),
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        ),
     threads: 2
     resources:
         mem_mb=10000,
@@ -94,7 +100,9 @@ rule solve_sector_network_perfect:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources("networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        ),
         costs=resources("costs_2030.csv"),
     output:
         network=RESULTS

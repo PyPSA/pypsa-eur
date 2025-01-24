@@ -33,7 +33,9 @@ rule prepare_elec_networks:
 rule prepare_sector_networks:
     input:
         expand(
-            resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"),
+            resources(
+                "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+            ),
             **config["scenario"],
             run=config["run"]["name"],
         ),

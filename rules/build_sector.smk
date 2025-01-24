@@ -1218,14 +1218,20 @@ rule prepare_sector_network:
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     output:
-        resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"),
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        logs("prepare_sector_network_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"),
+        logs(
+            "prepare_sector_network_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("prepare_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}")
+        benchmarks(
+            "prepare_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:

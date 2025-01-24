@@ -12,7 +12,9 @@ rule add_existing_baseyear:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
-        network=resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
@@ -28,7 +30,9 @@ rule add_existing_baseyear:
         ),
         heating_efficiencies=resources("heating_efficiencies.csv"),
     output:
-        resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"),
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
     wildcard_constraints:
         # TODO: The first planning_horizon needs to be aligned across scenarios
         # snakemake does not support passing functions to wildcard_constraints
@@ -38,9 +42,13 @@ rule add_existing_baseyear:
     resources:
         mem_mb=2000,
     log:
-        logs("add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"),
+        logs(
+            "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}")
+        benchmarks(
+            "add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -70,19 +78,27 @@ rule add_brownfield:
         unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_base_s.csv"),
         cluster_busmap=resources("busmap_base_s_{clusters}.csv"),
-        network=resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
         network_p=solved_previous_horizon,  #solved network at previous time step
         costs=resources("costs_{planning_horizons}.csv"),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     output:
-        resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"),
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
     threads: 4
     resources:
         mem_mb=10000,
     log:
-        logs("add_brownfield_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"),
+        logs(
+            "add_brownfield_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("add_brownfield/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}")
+        benchmarks(
+            "add_brownfield/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -102,7 +118,9 @@ rule solve_sector_network_myopic:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=resources("networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
         costs=resources("costs_{planning_horizons}.csv"),
     output:
         network=RESULTS
