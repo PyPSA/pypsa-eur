@@ -328,7 +328,7 @@ rule build_monthly_prices:
     log:
         logs("build_monthly_prices.log"),
     benchmark:
-        benchmarks("build_monthly_prices"),
+        benchmarks("build_monthly_prices")
     threads: 1
     resources:
         mem_mb=5000,
@@ -358,7 +358,7 @@ rule build_hydro_profile:
     log:
         logs("build_hydro_profile.log"),
     benchmark:
-        benchmarks("build_hydro_profile"),
+        benchmarks("build_hydro_profile")
     resources:
         mem_mb=5000,
     conda:
