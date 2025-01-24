@@ -104,12 +104,15 @@ sector:
     2045: 200
     2050: 200
   min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
-  H2_network: false
+  H2_network: true
   endo_industry:
     enable: true
     regional_steel_demand: false
     cement_prod_growth: true
     endo_chemicals: true
+    # Ammonia
+    skip_cracker: true
+    
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:
     enable: true

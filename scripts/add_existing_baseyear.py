@@ -757,7 +757,7 @@ def add_cement_industry_existing(n):
     )
 
 
-def add_chemicals_industry_existing_ecm(n):
+def add_chemicals_industry_existing(n):
 
     # Chemicals capacities in Europe in kton of cement products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
@@ -765,21 +765,17 @@ def add_chemicals_industry_existing_ecm(n):
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     # Ammonia
-    capacities = capacities['Ammonia']
-    start_dates = start_dates['Ammonia']
-    capacities = capacities * keys["Ammonia"]
+    capacities_nh3 = capacities['Ammonia']
+    start_dates_nh3 = start_dates['Ammonia']
+    capacities_nh3 = capacities_nh3 * keys["Ammonia"]
 
-    start_dates = round(start_dates)
-    start_dates = start_dates.where((start_dates >= 1000) & np.isfinite(start_dates), 2000)
+    start_dates_nh3 = round(start_dates_nh3)
+    start_dates_nh3 = start_dates_nh3.where((start_dates_nh3 >= 1000) & np.isfinite(start_dates_nh3), 2000)
 
     nodes = pop_layout.index
-    p_nom = pd.DataFrame(index=nodes, columns=(["value"]))
+    p_nom_nh3 = pd.DataFrame(index=nodes, columns=(["value"]))
 
-    p_nom = capacities / nhours  # get the hourly production capacity
-
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    #prod_constantly = 0
-    #ramp_limit = 0
+    p_nom_nh3 = capacities_nh3 / nhours  # get the hourly production capacity
 
     ########### Add existing ammonia production capacities ############
 
@@ -789,9 +785,9 @@ def add_chemicals_industry_existing_ecm(n):
         suffix=" Haber-Bosch-2020",
         bus0=nodes,
         bus1=spatial.ammonia.nodes,
-        bus2= spatial.h2.nodes, #nodes + " H2",
+        bus2=nodes + " H2",
         p_nom_extendable=False,
-        p_nom=p_nom,
+        p_nom=p_nom_nh3,
         #p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
@@ -802,8 +798,49 @@ def add_chemicals_industry_existing_ecm(n):
         marginal_cost=costs.at["Haber-Bosch", "VOM"]
         / costs.at["Haber-Bosch", "electricity-input"],
         lifetime=costs.at["Haber-Bosch", "lifetime"],
-        build_year=start_dates,
+        build_year=start_dates_nh3,
     )
+
+    # Methanol
+
+    capacities_meth = capacities['Methanol']
+    start_dates_meth = start_dates['Methanol']
+    capacities_meth = capacities_meth * keys["Chemical industry"] #ADB fix this with real methanol
+
+    start_dates_meth = round(start_dates_meth)
+    start_dates_meth = start_dates_meth.where((start_dates_meth >= 1000) & np.isfinite(start_dates_meth), 2000)
+
+    nodes = pop_layout.index
+    p_nom_meth = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom_meth = capacities_meth / nhours  # get the hourly production capacity
+
+    ########### Add existing methanol production capacities ############
+
+    n.add(
+        "Link",
+        nodes,
+        suffix = " methanolisation-2020",
+        #spatial.h2.locations + " methanolisation-2020",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.methanol.nodes,
+        bus2=nodes,
+        bus3=spatial.co2.nodes,
+        carrier="methanolisation",
+        p_nom_extendable=False,
+        p_nom=p_nom_meth,
+        p_min_pu=options["min_part_load_methanolisation"],
+        capital_cost=costs.at["methanolisation", "fixed"]
+        * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+        marginal_cost=options["MWh_MeOH_per_MWh_H2"]
+        * costs.at["methanolisation", "VOM"],
+        lifetime=costs.at["methanolisation", "lifetime"],
+        efficiency=options["MWh_MeOH_per_MWh_H2"],
+        efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
+        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+        build_year=start_dates_meth,
+    )
+
 
 def set_defaults(n):
     """
@@ -903,7 +940,7 @@ if __name__ == "__main__":
         add_steel_industry_existing(n)
         add_cement_industry_existing(n)
         if endo_industry.get("endo_chemicals"):
-            add_chemicals_industry_existing_ecm(n)
+            add_chemicals_industry_existing(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

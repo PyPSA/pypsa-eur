@@ -701,7 +701,7 @@ rule build_industrial_distribution_key:
         hotmaps="data/Industrial_Database.csv",
         steel_gem="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         cement_sfi="data/SFI-Global-Cement-Database-July-2021.xlsx",
-        chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx",
+        chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx", # Reference Neuwirth et al., https://doi.org/10.1016/j.enconman.2024.119117 
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
@@ -1152,6 +1152,8 @@ rule prepare_sector_network:
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
         endo_industry=config_provider("sector", "endo_industry", "enable"),
+        skip_cracker=config_provider("sector", "endo_industry","skip_cracker"),
+        endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
         co2_budget_apply=config_provider("co2_budget_apply"),
     input:
         unpack(input_profile_offwind),
@@ -1217,7 +1219,7 @@ rule prepare_sector_network:
         ),
         industrial_production=resources(
             "industrial_production_base_s_{clusters}_{planning_horizons}.csv"
-        ),
+        ), #ADB then use the one not projected for the future
         district_heat_share=resources(
             "district_heat_share_base_s_{clusters}_{planning_horizons}.csv"
         ),
