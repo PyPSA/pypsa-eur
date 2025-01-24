@@ -64,7 +64,7 @@ rule prepare_perfect_foresight:
         unpack(input_network_year),
         brownfield_network=lambda w: (
             resources("networks/base_s_{clusters}_{opts}_{sector_opts}_")
-            + "{}.nc".format(
+            + "{}_brownfield.nc".format(
                 str(config_provider("scenario", "planning_horizons", 0)(w))
             )
         ),
