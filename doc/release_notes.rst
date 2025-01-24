@@ -124,6 +124,7 @@ Upcoming Release
 
 * Update locations and capacities of ammonia plants.
 
+* Bugfix: Fixed issue where DC bus regions were dropped in `regions_onshore_base_s.geojson` and `regions_onshore_base_s_{clusters}.geojson` due to missing converter busmap.
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)
