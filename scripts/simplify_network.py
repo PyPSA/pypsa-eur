@@ -423,7 +423,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("simplify_network", configfiles=["config/config.fixregions.yaml"])
+        snakemake = mock_snakemake("simplify_network")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -438,6 +438,7 @@ if __name__ == "__main__":
     busmaps = [trafo_map]
 
     n, converter_map = remove_converters(n)
+    busmaps.append(converter_map)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
     busmaps.append(simplify_links_map)
