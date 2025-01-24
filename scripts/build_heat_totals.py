@@ -22,8 +22,9 @@ from itertools import product
 import pandas as pd
 from numpy.polynomial import Polynomial
 
-logger = logging.getLogger(__name__)
+import logging
 from _helpers import configure_logging
+logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
 

@@ -20,8 +20,9 @@ import logging
 
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+import logging
 from _helpers import configure_logging
+logger = logging.getLogger(__name__)
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
