@@ -100,17 +100,37 @@ rule base_network:
         "../scripts/base_network.py"
 
 
+rule build_osm_boundaries:
+    input:
+        json="data/osm-boundaries/json/{country}_adm1.json",
+        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+    output:
+        boundary="data/osm-boundaries/build/{country}_adm1.geojson",
+    log:
+        "logs/build_osm_boundaries_{country}.log",
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_osm_boundaries.py"
+
+
 rule build_shapes:
     params:
         countries=config_provider("countries"),
     input:
-        naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3=ancient("data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson"),
-        nuts3pop=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
-        nuts3gdp=ancient("data/bundle/nama_10r_3gdp.tsv.gz"),
-        ch_cantons=ancient("data/ch_cantons.csv"),
-        ch_popgdp=ancient("data/bundle/je-e-21.03.02.xls"),
+        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
+        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
+        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
+        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
+        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -482,42 +502,10 @@ def input_conventional(w):
     }
 
 
-# Optional input when having Ukraine (UA) or Moldova (MD) in the countries list
-def input_gdp_pop_non_nuts3(w):
-    countries = set(config_provider("countries")(w))
-    if {"UA", "MD"}.intersection(countries):
-        return {"gdp_pop_non_nuts3": resources("gdp_pop_non_nuts3.geojson")}
-    return {}
-
-
-rule build_gdp_pop_non_nuts3:
-    params:
-        countries=config_provider("countries"),
-    input:
-        base_network=resources("networks/base_s.nc"),
-        regions=resources("regions_onshore_base_s.geojson"),
-        gdp_non_nuts3="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        pop_non_nuts3="data/bundle/ppp_2013_1km_Aggregated.tif",
-    output:
-        resources("gdp_pop_non_nuts3.geojson"),
-    log:
-        logs("build_gdp_pop_non_nuts3.log"),
-    benchmark:
-        benchmarks("build_gdp_pop_non_nuts3")
-    threads: 1
-    resources:
-        mem_mb=8000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_gdp_pop_non_nuts3.py"
-
-
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
     input:
-        unpack(input_gdp_pop_non_nuts3),
         base_network=resources("networks/base_s.nc"),
         regions=resources("regions_onshore_base_s.geojson"),
         nuts3=resources("nuts3_shapes.geojson"),
