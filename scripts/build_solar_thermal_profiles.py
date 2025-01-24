@@ -34,18 +34,23 @@ Outputs
 - ``resources/solar_thermal_<scope>_base_s<simpl>_<clusters>.nc``:
 """
 
+import logging
+
 import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_solar_thermal_profiles", clusters=48)
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)

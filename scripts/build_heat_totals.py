@@ -16,10 +16,14 @@ Outputs
 - `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
+from _helpers import configure_logging
 from numpy.polynomial import Polynomial
+
+logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
 
@@ -103,6 +107,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_heat_totals")
+
+    configure_logging(snakemake)
 
     hdd = pd.read_csv(snakemake.input.hdd, index_col=0).T
     hdd.index = hdd.index.astype(int)
