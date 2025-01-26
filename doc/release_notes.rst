@@ -11,7 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
-- ...
+- Add scheme to deprecate config entries. Deprecated entries with eventual renamings are now listed in `config/deprecations.yaml` and will be removed in future releases. Snakemake will raise a warning if deprecated entries are used. (https://github.com/PyPSA/pypsa-eur/pull/1514)
+
+- Snakemake now raises a warning if the user specifies config entries that are not present in the default config. (https://github.com/PyPSA/pypsa-eur/pull/1514)
+
 
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
@@ -199,7 +202,7 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
 * Ensure all links with capital costs have a lifetime. This is important for
   pathway planning. (https://github.com/PyPSA/pypsa-eur/pull/1319)
 
-* Resolved a bug which occured when multiple DC links are connected to the same
+* Resolved a bug which occurred when multiple DC links are connected to the same
   DC bus and the DC bus is connected to an AC bus via a converter. In this case,
   the DC links were wrongly simplified, completely dropping the shared DC bus.
   (https://github.com/PyPSA/pypsa-eur/pull/1381,
