@@ -363,7 +363,7 @@ rule build_hydro_profile:
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
         era5_runoff="data/era5-annual-runoff-per-country.csv",
-        cutout=lambda w: fCDIR
+        cutout=lambda w: CDIR
         + config_provider("renewable", "hydro", "cutout")(w)
         + ".nc",
     output:
