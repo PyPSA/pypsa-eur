@@ -193,6 +193,9 @@ def check_deprecated_config(config: dict, deprecations_file: str) -> None:
             root = root.setdefault(key, {})
         root[keys[-1]] = value
 
+    if deprecations is None:
+        return
+
     for entry in deprecations:
         old_entry = entry["old_entry"]
         current_value = get_by_path(config, old_entry)
