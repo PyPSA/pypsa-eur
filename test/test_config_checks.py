@@ -22,6 +22,22 @@ SAMPLE_DEPRECATIONS = """
 - old_entry: "example:old_key"
   new_entry: "example:new_key"
   message: "Custom warning message"
+
+- old_entry: "clustering:deprecated_option"
+  message: "Custom warning message for deprecated clustering option"
+"""
+
+SAMPLE_SCENARIOS = """
+scenario_1:
+    example:
+        old_key: "test_value"
+    invalid_section:
+        some_key: "value"
+
+scenario_2:
+    clustering:
+        invalid_option: "bad"
+        deprecated_option: "old_value"
 """
 
 
@@ -107,3 +123,63 @@ clustering:
 
     # Verify warning types
     assert all(isinstance(w.message, InvalidConfigWarning) for w in captured_warnings)
+
+
+def test_config_scenario_checks():
+    """Test that configuration checks are performed on scenario files"""
+    config = {
+        "run": {
+            "scenarios": {
+                "enable": True,
+                "file": "scenarios.yaml",
+            }
+        }
+    }
+
+    # Setup mock files
+    mock_files = {
+        "deprecations.yaml": SAMPLE_DEPRECATIONS,
+        "config.default.yaml": """
+            run:
+              scenarios:
+                  enable: true
+                  file: scenarios.yaml
+            example:
+                new_key: "default"
+            clustering:
+                temporal:
+                    resolution: 1
+            """,
+        "scenarios.yaml": SAMPLE_SCENARIOS,
+    }
+
+    def mock_open(filename, *args, **kwargs):
+        return StringIO(mock_files[filename.split("/")[-1]])
+
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        with patch("builtins.open", mock_open):
+            # Check both deprecated and invalid entries in scenarios
+            check_deprecated_config(config, "deprecations.yaml")
+            check_invalid_config(config, "config.default.yaml")
+
+    warning_messages = [str(w.message) for w in captured_warnings]
+
+    # Verify warnings from scenario_1
+    assert any("'example:old_key' is deprecated" in msg for msg in warning_messages)
+    assert any("'invalid_section' is not supported" in msg for msg in warning_messages)
+
+    # Verify warnings from scenario_2
+    assert any(
+        "'clustering:invalid_option' is not supported" in msg
+        for msg in warning_messages
+    )
+
+    # Verify warning types
+    deprecation_warnings = [
+        w for w in captured_warnings if isinstance(w.message, DeprecationConfigWarning)
+    ]
+    invalid_warnings = [
+        w for w in captured_warnings if isinstance(w.message, InvalidConfigWarning)
+    ]
+    assert len(deprecation_warnings) == 2
+    assert len(invalid_warnings) == 4

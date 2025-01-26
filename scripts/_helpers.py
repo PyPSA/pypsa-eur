@@ -175,7 +175,22 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
     )
 
 
-def check_deprecated_config(config: dict, deprecations_file: str) -> None:
+def _check_scenarios(config: dict, check_fn: Callable, fn_kwargs: dict) -> None:
+    """Helper function to check configuration in scenario files"""
+    scenarios = config.get("run", {}).get("scenarios", {})
+    if scenarios.get("enable"):
+        with open(scenarios["file"]) as f:
+            scenario_config = yaml.safe_load(f)
+
+        for run in scenario_config:
+            # Disable recursive scenario checking to avoid infinite loops
+            fn_kwargs["check_scenarios"] = False
+            check_fn(scenario_config[run], **fn_kwargs)
+
+
+def check_deprecated_config(
+    config: dict, deprecations_file: str, check_scenarios: bool = True
+) -> None:
     """Check config against deprecations and warn users"""
 
     with open(deprecations_file) as f:
@@ -219,8 +234,15 @@ def check_deprecated_config(config: dict, deprecations_file: str) -> None:
 
             warnings.warn(msg, DeprecationConfigWarning)
 
+    if check_scenarios:
+        _check_scenarios(
+            config, check_deprecated_config, {"deprecations_file": deprecations_file}
+        )
 
-def check_invalid_config(config: dict, config_default_fn: str) -> None:
+
+def check_invalid_config(
+    config: dict, config_default_fn: str, check_scenarios: bool = True
+) -> None:
     """Check if config contains entries that are not supported by the default config"""
 
     with open(config_default_fn) as f:
@@ -240,6 +262,11 @@ def check_invalid_config(config: dict, config_default_fn: str) -> None:
                     check_keys(config[key], config_default[key], nested_path)
 
     check_keys(config, config_default)
+
+    if check_scenarios:
+        _check_scenarios(
+            config, check_invalid_config, {"config_default_fn": config_default_fn}
+        )
 
 
 def get_opt(opts, expr, flags=None):
