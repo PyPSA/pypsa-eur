@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+# Format: list of deprecation entries with:
+# - old_entry: Dot-separated path to deprecated entry (e.g. "electricity:co2_limit")
+# - new_entry: [optional] New location path for renamed entries
+# - message: [optional] Custom warning message

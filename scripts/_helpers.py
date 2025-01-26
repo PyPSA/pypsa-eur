@@ -6,10 +6,12 @@ import contextlib
 import copy
 import hashlib
 import logging
+import operator
 import os
 import re
 import time
-from functools import partial, wraps
+import warnings
+from functools import partial, reduce, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
@@ -26,6 +28,18 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
+
+
+class DeprecationConfigWarning(Warning):
+    """Warning for use of deprecated configuration entries."""
+
+    pass
+
+
+class InvalidConfigWarning(Warning):
+    """Warning for use of invalid/unsupported configuration entries."""
+
+    pass
 
 
 def copy_default_files(workflow):
@@ -144,6 +158,70 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
         shared_resources=shared_resources,
         exclude_from_shared=exclude_from_shared,
     )
+
+
+def check_deprecated_config(config: dict, deprecations_file: str) -> None:
+    """Check config against deprecations and warn users"""
+
+    with open(deprecations_file) as f:
+        deprecations = yaml.safe_load(f)
+
+    def get_by_path(root, path):
+        try:
+            return reduce(operator.getitem, path.split(":"), root)
+        except KeyError:
+            return None
+
+    def set_by_path(root, path, value):
+        keys = path.split(":")
+        for key in keys[:-1]:
+            root = root.setdefault(key, {})
+        root[keys[-1]] = value
+
+    for entry in deprecations:
+        old_entry = entry["old_entry"]
+        current_value = get_by_path(config, old_entry)
+
+        if current_value is not None:
+            msg = f"Config entry '{old_entry}' is deprecated. "
+
+            if "new_entry" in entry:  # Rename case
+                new_entry = entry["new_entry"]
+                msg += f"Use '{new_entry}' instead."
+
+                if get_by_path(config, new_entry) is not None:
+                    msg += " Both keys present - remove deprecated entry."
+                else:
+                    set_by_path(config, new_entry, current_value)
+            else:  # Removal case
+                msg += "This entry is no longer used and should be removed."
+
+            if "message" in entry:
+                msg += f" Note: {entry['message']}"
+
+            warnings.warn(msg, DeprecationConfigWarning)
+
+
+def check_invalid_config(config: dict, config_default_fn: str) -> None:
+    """Check if config contains entries that are not supported by the default config"""
+
+    with open(config_default_fn) as f:
+        config_default = yaml.safe_load(f)
+
+    def check_keys(config, config_default, path=""):
+        for key in config.keys():
+            nested_path = f"{path}:{key}" if path else key
+            if key not in config_default:
+                warnings.warn(
+                    f"Config entry '{nested_path}' is not supported in {config_default_fn}.",
+                    InvalidConfigWarning,
+                )
+            elif isinstance(config[key], dict):
+                # Only recurse if the key exists in both configs and is a dict in both
+                if isinstance(config_default[key], dict):
+                    check_keys(config[key], config_default[key], nested_path)
+
+    check_keys(config, config_default)
 
 
 def get_opt(opts, expr, flags=None):
