@@ -7,36 +7,6 @@
 Creates networks clustered to ``{cluster}`` number of zones with aggregated
 buses and transmission corridors.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-      cluster_network:
-      aggregation_strategies:
-      focus_weights:
-
-    solving:
-        solver:
-            name:
-
-    lines:
-        length_factor:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`toplevel_cf`, :ref:`renewable_cf`, :ref:`solving_cf`, :ref:`lines_cf`
-
-Inputs
-------
-
-- ``resources/regions_onshore_base.geojson``: confer :ref:`simplify`
-- ``resources/regions_offshore_base.geojson``: confer :ref:`simplify`
-- ``resources/busmap_base_s.csv``: confer :ref:`simplify`
-- ``networks/base.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_base_s_{clusters}_{base_network}.csv``: optional input
-
 Outputs
 -------
 
@@ -287,7 +257,6 @@ def busmap_for_n_clusters(
 def clustering_for_n_clusters(
     n: pypsa.Network,
     busmap: pd.Series,
-    line_length_factor: float = 1.25,
     aggregation_strategies: dict | None = None,
 ) -> pypsa.clustering.spatial.Clustering:
     if aggregation_strategies is None:
@@ -302,7 +271,6 @@ def clustering_for_n_clusters(
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        line_length_factor=line_length_factor,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
         custom_line_groupers=["build_year"],
@@ -406,7 +374,6 @@ if __name__ == "__main__":
         clustering = clustering_for_n_clusters(
             n,
             busmap,
-            line_length_factor=params.length_factor,
             aggregation_strategies=params.aggregation_strategies,
         )
 

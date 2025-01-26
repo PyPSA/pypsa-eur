@@ -4,17 +4,17 @@ heating,--,"{true, false}",Flag to include heating sector.
 biomass,--,"{true, false}",Flag to include biomass sector.
 industry,--,"{true, false}",Flag to include industry sector.
 agriculture,--,"{true, false}",Flag to include agriculture sector.
-fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels ( [""coal"", ""gas"", ""oil"", ""lignite""])"
+fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels."
 district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
 -- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 -- supply_temperature_approximation,,,
--- -- max_forward_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating in baseyear (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
--- -- min_forward_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'., Min. forward temperature in district heating in baseyear (if ambient temperature higher-or-equal `upper_threshold_ambient_temperature`)
--- -- return_temperature_baseyear,°C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating in baseyear . Must be lower than forward temperature
--- -- lower_threshold_ambient_temperature,°C,float, Assume `max_forward_temperature` if ambient temperature is below this threshold
--- -- upper_threshold_ambient_temperature,°C,float, Assume `min_forward_temperature` if ambient temperature is above this threshold
+-- -- max_forward_temperature_baseyear,C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating in baseyear (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
+-- -- min_forward_temperature_baseyear,C,Dictionary with country codes as keys. One key must be 'default'., Min. forward temperature in district heating in baseyear (if ambient temperature higher-or-equal `upper_threshold_ambient_temperature`)
+-- -- return_temperature_baseyear,C,Dictionary with country codes as keys. One key must be 'default'.,Return temperature in district heating in baseyear . Must be lower than forward temperature
+-- -- lower_threshold_ambient_temperature,C,float, Assume `max_forward_temperature` if ambient temperature is below this threshold
+-- -- upper_threshold_ambient_temperature,C,float, Assume `min_forward_temperature` if ambient temperature is above this threshold
 -- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
 -- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
@@ -25,10 +25,9 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
 -- heat_utilisation_potentials,--,Dictionary with names of heat sources for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) should be used,
 -- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
--- -- -- key,-,string used to complete URL for data download - e.g. `geothermal_65` or `geothermal_85`","i.e file names in `Fordatis <https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple>`,
--- -- -- constant_temperature_celsius,°C,heat source temperature,
+-- -- -- key,-,string used to complete URL for data download - e.g. `geothermal_65` or `geothermal_85`","i.e file names in `Fordatis <https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple>`"
+-- -- -- constant_temperature_celsius,C,heat source temperature,
 -- -- -- column_name,-,name of the data column in retrieved GeoDataFrame,
-
 -- -- -- unit,-,unit of heat source potential must be in (K/M/G/T)Wh,
 -- -- -- full_load_hours,h,assumed full-load hours in Manz et al. (used to scale from utilisation to technical potential),
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
@@ -37,18 +36,15 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
 -- -- rural,--,List of heat sources for heat pumps in rural heating,
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
-,,,
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
-transport_heating _deadband_upper,°C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
-transport_heating _deadband_lower,°C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
-,,,
+transport_heating _deadband_upper,C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating _deadband_lower,C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
 ICE_lower_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
 ICE_upper_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
 EV_lower_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the cold environment and the minimum temperature.
 EV_upper_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the hot environment and the maximum temperature.
 bev_dsm,--,"{true, false}",Add the option for battery electric vehicles (BEV) to participate in demand-side management (DSM)
-,,,
 bev_dsm_availability,--,float,The share for battery electric vehicles (BEV) that are able to do demand side management (DSM)
 bev_energy,--,float,The average size of battery electric vehicles (BEV) in MWh
 bev_charge_efficiency,--,float,Battery electric vehicles (BEV) charge and discharge efficiency
@@ -70,16 +66,13 @@ Mwh_MeOH_per_MWh_H2,LHV,float,"The energy amount of the produced methanol per en
 MWh_MeOH_per_tCO2,LHV,float,"The energy amount of the produced methanol per ton of CO2. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 66."
 MWh_MeOH_per_MWh_e,LHV,float,"The energy amount of the produced methanol per energy amount of electricity. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 64."
 shipping_hydrogen _liquefaction,--,"{true, false}",Whether to include liquefaction costs for hydrogen demand in shipping.
-,,,
 shipping_hydrogen_share,--,Dictionary with planning horizons as keys.,The share of ships powered by hydrogen in a given year
 shipping_methanol_share,--,Dictionary with planning horizons as keys.,The share of ships powered by methanol in a given year
 shipping_oil_share,--,Dictionary with planning horizons as keys.,The share of ships powered by oil in a given year
 shipping_methanol _efficiency,--,float,The efficiency of methanol-powered ships in the conversion of methanol to meet shipping needs (propulsion). The efficiency increase from oil can be 10-15% higher according to the `IEA <https://www.iea-amf.org/app/webroot/files/file/Annex%20Reports/AMF_Annex_56.pdf>`_
-,,,
 shipping_oil_efficiency,--,float,The efficiency of oil-powered ships in the conversion of oil to meet shipping needs (propulsion). Base value derived from 2011
 aviation_demand_factor,--,float,The proportion of demand for aviation compared to today's consumption
 HVC_demand_factor,--,float,The proportion of demand for high-value chemicals compared to today's consumption
-,,,
 time_dep_hp_cop,--,"{true, false}",Consider the time dependent coefficient of performance (COP) of the heat pump
 heat_pump_sink_T,°C,float,The temperature heat sink used in heat pumps based on DTU / large area radiators. The value is conservatively high to cover hot water and space heating in poorly-insulated buildings
 reduce_space_heat _exogenously,--,"{true, false}",Influence on space heating demand by a certain factor (applied before losses in district heating).
@@ -130,14 +123,11 @@ co2_sequestration_potential,--,Dictionary with planning horizons as keys.,The po
 co2_sequestration_cost,currency/tCO2,float,The cost of sequestering a ton of CO2
 co2_sequestration_lifetime,years,int,The lifetime of a CO2 sequestration site
 co2_spatial,--,"{true, false}","Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites."
-,,,
 co2_network,--,"{true, false}",Add option for planning a new carbon dioxide transmission network
 co2_network_cost_factor,p.u.,float,The cost factor for the capital cost of the carbon dioxide transmission network
-,,,
 cc_fraction,--,float,The default fraction of CO2 captured with post-combustion capture
 hydrogen_underground _storage,--,"{true, false}",Add options for storing hydrogen underground. Storage potential depends regionally.
 hydrogen_underground _storage_locations,,"{onshore, nearshore, offshore}","The location where hydrogen underground storage can be located. Onshore, nearshore, offshore means it must be located more than 50 km away from the sea, within 50 km of the sea, or within the sea itself respectively."
-,,,
 methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- regional_methanol_demand,--,"{true, false}",Spatially resolve methanol demand. Set to true if regional CO2 constraints needed.
 -- methanol_reforming,--,"{true, false}"," Add methanol reforming"
@@ -148,18 +138,15 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- -- ccgt_cc,--,"{true, false}"," Add combined cycle gas turbine (CCGT) with carbon capture using methanol"
 -- -- ocgt,--,"{true, false}"," Add open cycle gas turbine (OCGT) using methanol"
 -- -- allam,--,"{true, false}"," Add Allam cycle gas power plants using methanol"
-,,,
 ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
 min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
 min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
-,,,
 use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
 use_fuel_cell_waste_heat,--,"{true, false}",Add option for using waste heat of fuel cells in district heating networks
 use_electrolysis_waste _heat,--,"{true, false}",Add option for using waste heat of electrolysis in district heating networks
 electricity_transmission _grid,--,"{true, false}",Switch for enabling/disabling the electricity transmission grid.
 electricity_distribution _grid,--,"{true, false}",Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
-,,,
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
 transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
 -- {carrier},--,str,The carrier of the link.
@@ -173,7 +160,6 @@ H2_retrofit_capacity _per_CH4,--,float,"The ratio for H2 capacity per original C
 "gas_network_connectivity _upgrade ",--,float,The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network
 gas_distribution_grid,--,"{true, false}",Add a gas distribution grid
 gas_distribution_grid _cost_factor,,,Multiplier for the investment cost of the gas distribution grid
-,,,
 biomass_spatial,--,"{true, false}",Add option for resolving biomass demand regionally
 biomass_transport,--,"{true, false}",Add option for transporting solid biomass between nodes
 biogas_upgrading_cc,--,"{true, false}",Add option to capture CO2 from biomass upgrading
@@ -191,7 +177,6 @@ limit_max_growth,,,
 -- -- {carrier},GW,float,The historic maximum growth of a carrier
 -- max_relative_growth,,,
 -- -- {carrier},p.u.,float,The historic maximum relative growth of a carrier
-,,,
 enhanced_geothermal,,,
 -- enable,--,"{true, false}",Add option to include Enhanced Geothermal Systems
 -- flexible,--,"{true, false}",Add option for flexible operation (see Ricks et al. 2024)

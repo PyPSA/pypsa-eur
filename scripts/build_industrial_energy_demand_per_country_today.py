@@ -4,17 +4,6 @@
 """
 Build industrial energy demand per country.
 
-Inputs
--------
-
-- ``data/jrc-idees-2021``
-- ``industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_country_today.csv``
-
 Description
 -------
 
@@ -59,13 +48,16 @@ the output file contains the energy demand in TWh/a for the following carriers
 - waste
 """
 
+import logging
 import multiprocessing as mp
 from functools import partial
 
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -287,6 +279,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
