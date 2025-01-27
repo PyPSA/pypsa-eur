@@ -65,9 +65,13 @@ The script has the following structure:
         with heated floor area
 """
 
+import logging
+
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 # (i) --- FIXED PARAMETER / STANDARD VALUES -----------------------------------
 
@@ -1054,6 +1058,7 @@ if __name__ == "__main__":
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     #  ********  config  *********************************************************

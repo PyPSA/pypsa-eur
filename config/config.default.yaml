@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.13.0
+version: v2025.01.0
 tutorial: false
 
 logging:
@@ -37,8 +37,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  ll:
-  - vopt
   clusters:
   - 39
   - 128
@@ -74,13 +72,13 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
+  2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
+  2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
+  2030: 0.450 # 55% reduction by 2030 (Ff55)
+  2035: 0.250
+  2040: 0.100 # 90% by 2040
+  2045: 0.050
+  2050: 0.000 # climate-neutral by 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -109,7 +107,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
+  powerplants_filter: (DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -129,6 +127,8 @@ electricity:
   autarky:
     enable: false
     by_country: false
+
+  transmission_limit: vopt
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -839,7 +839,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.10.0
+  version: v0.10.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1209,18 +1209,8 @@ plotting:
     services urban decentral water tanks: '#f1b4a4'
     urban central water tanks: '#e9977d'
     hot water storage: '#e69487'
-    hot water charging: '#e8998b'
-    urban central water tanks charger: '#b57a67'
-    residential rural water tanks charger: '#b4887c'
-    residential urban decentral water tanks charger: '#b39995'
-    services rural water tanks charger: '#b3abb0'
-    services urban decentral water tanks charger: '#b3becc'
-    hot water discharging: '#e99c8e'
-    urban central water tanks discharger: '#b9816e'
-    residential rural water tanks discharger: '#ba9685'
-    residential urban decentral water tanks discharger: '#baac9e'
-    services rural water tanks discharger: '#bbc2b8'
-    services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: '#cc826a'
+    urban central water pits: '#d96f4c'
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'

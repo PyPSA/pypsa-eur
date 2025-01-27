@@ -7,16 +7,20 @@ ports.
 """
 
 import json
+import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_shipping_demand", clusters=48)
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     scope = gpd.read_file(snakemake.input.scope).geometry[0]

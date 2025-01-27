@@ -714,6 +714,9 @@ def add_co2_network(n, costs):
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
+    if "underwater_fraction" not in co2_links.columns:
+        co2_links["underwater_fraction"] = 0.0
+
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
         * costs.at["CO2 pipeline", "fixed"]
@@ -1439,9 +1442,7 @@ def add_storage_and_grids(n, costs):
         )
 
     # hydrogen stored overground (where not already underground)
-    h2_capital_cost = costs.at[
-        "hydrogen storage tank type 1 including compressor", "fixed"
-    ]
+    tech = "hydrogen storage tank type 1 including compressor"
     nodes_overground = h2_caverns.index.symmetric_difference(nodes)
 
     n.add(
@@ -1451,7 +1452,8 @@ def add_storage_and_grids(n, costs):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="H2 Store",
-        capital_cost=h2_capital_cost,
+        capital_cost=costs.at[tech, "fixed"],
+        lifetime=costs.at[tech, "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -2261,53 +2263,66 @@ def add_heat(
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
-            n.add(
-                "Bus",
-                nodes + f" {heat_system} water tanks",
-                location=nodes,
-                carrier=f"{heat_system} water tanks",
-                unit="MWh_th",
-            )
-
-            n.add(
-                "Link",
-                nodes + f" {heat_system} water tanks charger",
-                bus0=nodes + f" {heat_system} heat",
-                bus1=nodes + f" {heat_system} water tanks",
-                efficiency=costs.at["water tank charger", "efficiency"],
-                carrier=f"{heat_system} water tanks charger",
-                p_nom_extendable=True,
-            )
-
-            n.add(
-                "Link",
-                nodes + f" {heat_system} water tanks discharger",
-                bus0=nodes + f" {heat_system} water tanks",
-                bus1=nodes + f" {heat_system} heat",
-                carrier=f"{heat_system} water tanks discharger",
-                efficiency=costs.at["water tank discharger", "efficiency"],
-                p_nom_extendable=True,
-            )
-
             tes_time_constant_days = options["tes_tau"][
                 heat_system.central_or_decentral
             ]
 
             n.add(
-                "Store",
+                "StorageUnit",
                 nodes + f" {heat_system} water tanks",
-                bus=nodes + f" {heat_system} water tanks",
-                e_cyclic=True,
-                e_nom_extendable=True,
+                bus=nodes + f" {heat_system} heat",
                 carrier=f"{heat_system} water tanks",
+                efficiency_store=costs.at[
+                    heat_system.central_or_decentral + " water tank charger",
+                    "efficiency",
+                ],
+                max_hours=costs.at[
+                    heat_system.central_or_decentral + " water tank storage",
+                    "energy to power ratio",
+                ],
+                efficiency_dispatch=costs.at[
+                    heat_system.central_or_decentral + " water tank discharger",
+                    "efficiency",
+                ],
+                p_nom_extendable=True,
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 capital_cost=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "fixed"
+                ]
+                * costs.at[
+                    heat_system.central_or_decentral + " water tank storage",
+                    "energy to power ratio",
                 ],
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
                 ],
+                cyclic_state_of_charge=True,
             )
+
+            if heat_system == HeatSystem.URBAN_CENTRAL:
+                n.add("Carrier", f"{heat_system} water pits")
+
+                n.add(
+                    "StorageUnit",
+                    nodes + f" {heat_system} water pits",
+                    bus=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} water pits",
+                    efficiency_store=costs.at[
+                        "central water pit charger", "efficiency"
+                    ],
+                    max_hours=costs.at[
+                        "central water pit storage", "energy to power ratio"
+                    ],
+                    efficiency_dispatch=costs.at[
+                        "central water pit discharger", "efficiency"
+                    ],
+                    p_nom_extendable=True,
+                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                    capital_cost=costs.at["central water pit storage", "fixed"]
+                    * costs.at["central water pit storage", "energy to power ratio"],
+                    lifetime=costs.at["central water pit storage", "lifetime"],
+                    cyclic_state_of_charge=True,
+                )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
@@ -4252,7 +4267,7 @@ def cluster_heat_buses(n):
         return agg
 
     logger.info("Cluster residential and service heat buses.")
-    components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
+    components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store", "StorageUnit"]
 
     for c in n.iterate_components(components):
         df = c.df
@@ -4541,7 +4556,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             p_nom_extendable=True,
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
             capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
-            efficiency=bus_eta,
+            efficiency=bus_eta.loc[n.snapshots],
             lifetime=costs.at["geothermal", "lifetime"],
         )
 

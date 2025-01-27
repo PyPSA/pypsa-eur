@@ -244,7 +244,6 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
    retrieve
    preparation
-   simplification
    sector
    solving
    plotting
