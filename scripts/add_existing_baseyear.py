@@ -757,7 +757,7 @@ def add_cement_industry_existing(n):
     )
 
 
-def add_chemicals_industry_existing(n):
+def add_chemicals_industry_existing(n, options):
 
     # Chemicals capacities in Europe in kton of cement products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
@@ -810,7 +810,6 @@ def add_chemicals_industry_existing(n):
     start_dates_meth = round(start_dates_meth)
     start_dates_meth = start_dates_meth.where((start_dates_meth >= 1000) & np.isfinite(start_dates_meth), 2000)
 
-    nodes = pop_layout.index
     p_nom_meth = pd.DataFrame(index=nodes, columns=(["value"]))
 
     p_nom_meth = capacities_meth / nhours  # get the hourly production capacity
@@ -840,6 +839,44 @@ def add_chemicals_industry_existing(n):
         efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
         build_year=start_dates_meth,
     )
+
+    # HVC (Ethylene)
+
+    if options["endo_industry"]["endo_hvc"]:
+        capacities_hvc = capacities['Ethylene']
+        start_dates_hvc = start_dates['Methanol']
+        capacities_hvc = capacities_hvc * keys["Chemical industry"] #ADB fix this with real hvc
+
+        start_dates_hvc = round(start_dates_hvc)
+        start_dates_hvc = start_dates_meth.where((start_dates_meth >= 1000) & np.isfinite(start_dates_meth), 2000)
+
+        p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
+
+        p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity
+
+        ########### Add existing HVC production capacities ############
+
+        naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+
+        n.add(
+            "Link",
+            spatial.hvc.locations,
+            suffix = " naphtha steam cracker-2020",
+            bus0=spatial.oil.nodes,
+            bus1=spatial.hvc.nodes,
+            bus2=nodes + " H2",
+            bus3="co2 atmosphere",
+            bus4=nodes,
+            carrier="naphtha steam cracker",
+            p_nom_extendable=False,
+            capital_cost=725 * 1e3, #€/kt HVC
+            efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
+            efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
+            efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC
+            efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
+            lifetime=30, 
+            build_year=start_dates_hvc,
+        )
 
 
 def set_defaults(n):
@@ -882,14 +919,13 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
-    endo_industry = snakemake.params.endo_industry
 
     baseyear = snakemake.params.baseyear
 
     n = pypsa.Network(snakemake.input.network)
 
     # define spatial resolution of carriers
-    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options, endo_industry)
+    spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.0
@@ -936,11 +972,11 @@ if __name__ == "__main__":
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
     nhours = n.snapshot_weightings.generators.sum()
-    if endo_industry.get("enable"):
+    if options["endo_industry"].get("enable"):
         add_steel_industry_existing(n)
         add_cement_industry_existing(n)
-        if endo_industry.get("endo_chemicals"):
-            add_chemicals_industry_existing(n)
+        if options["endo_industry"].get("endo_chemicals"):
+            add_chemicals_industry_existing(n, options)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

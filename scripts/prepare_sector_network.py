@@ -43,7 +43,7 @@ spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
 
 
-def define_spatial(nodes, options, endo_industry):
+def define_spatial(nodes, options):
     """
     Namespace for spatial.
 
@@ -143,9 +143,9 @@ def define_spatial(nodes, options, endo_industry):
 
     # HVC
 
-    if snakemake.params.endo_hvc:
+    if options["endo_industry"]["endo_hvc"]:
         spatial.hvc = SimpleNamespace()
-        if options["regional_hvc"]:
+        if options["endo_industry"]["regional_hvc"]:
             spatial.hvc.nodes = nodes + " HVC"
             spatial.hvc.locations = nodes
         else:
@@ -249,7 +249,7 @@ def define_spatial(nodes, options, endo_industry):
         spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
         spatial.syngas_dri.locations = ["EU"]
 
-    if endo_industry:
+    if options["endo_industry"]["enable"]:
         # Iron and Steel
         # iron
         spatial.iron = SimpleNamespace()
@@ -984,7 +984,7 @@ def add_methanol_to_power(n, costs, types=None):
         )
 
 
-def add_methanol_to_olefinsand_hvc_prod(n, costs):
+def add_methanol_to_olefins(n, costs):
     nodes = spatial.nodes
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
@@ -993,10 +993,15 @@ def add_methanol_to_olefinsand_hvc_prod(n, costs):
 
     logger.info(f"Adding {tech}.")
 
+    co2_release = (
+        costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
+        + costs.at["methanolisation", "carbondioxide-input"]
+    )
+
     n.add(
         "Link",
         nodes,
-        suffix=f" {tech}",
+        suffix=" methanol-to-olefins",
         carrier=tech,
         capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
         marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
@@ -1006,7 +1011,6 @@ def add_methanol_to_olefinsand_hvc_prod(n, costs):
         bus2=nodes,
         bus3="co2 atmosphere",
         p_min_pu=1,
-        p_nom_max=p_nom_max.values,
         efficiency=1 / costs.at[tech, "methanol-input"],
         efficiency2=-costs.at[tech, "electricity-input"]
         / costs.at[tech, "methanol-input"],
@@ -1221,7 +1225,7 @@ def add_generation(n, costs):
         )
 
 
-def add_ammonia(n, costs, skip_cracker=False):
+def add_ammonia(n, costs, skip_crackers=False):
     logger.info("Adding ammonia carrier with synthesis, cracking and storage")
 
     nodes = pop_layout.index
@@ -1251,7 +1255,7 @@ def add_ammonia(n, costs, skip_cracker=False):
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
 
-    if not skip_cracker:
+    if not skip_crackers:
         n.add(
             "Link",
             nodes,
@@ -4578,7 +4582,7 @@ def add_hvc(n, options):
     industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # HVC production is in kt/yr
 
     # Determine the HVC production load based on the specified option
-    if options["regional_hvc"]:
+    if options["endo_industry"]["regional_hvc"]:
         # Calculate regional HVC production load (ktHVC/yr) and normalize by hours in a year
         p_set = (industrial_production.loc[spatial.hvc.locations, "HVC"].rename(index=lambda x: x + " HVC") / nhours)
 
@@ -4593,14 +4597,7 @@ def add_hvc(n, options):
 
     # Add the new HVC load to the network
     n.add("Carrier", "HVC")
-    n.add(
-        "Load",
-        spatial.hvc.nodes,
-        bus=spatial.hvc.nodes,
-        carrier="HVC",
-        p_set=p_set,
-    )
-
+    
     n.add(
         "Bus",
         spatial.hvc.nodes,
@@ -4608,7 +4605,15 @@ def add_hvc(n, options):
         carrier="HVC",
         unit="kt_HVC",
     )
-    
+
+    n.add(
+        "Load",
+        spatial.hvc.nodes,
+        bus=spatial.hvc.nodes,
+        carrier="HVC",
+        p_set=p_set,
+    )
+  
     naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
 
     n.add(
@@ -4623,15 +4628,14 @@ def add_hvc(n, options):
         carrier="naphtha steam cracker",
         p_nom_extendable=True,
         capital_cost=725 * 1e3, #€/kt HVC
-        efficiency=1/ naphta_to_hvc, # MWh oil / kt HVC
+        efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
         efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
         efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC
         efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
         lifetime=30, 
     )
+
     
-
-
 
 
 def add_waste_heat(n):
@@ -5297,7 +5301,7 @@ if __name__ == "__main__":
     heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
     endo_industry = snakemake.params.endo_industry
 
-    spatial = define_spatial(pop_layout.index, options, endo_industry)
+    spatial = define_spatial(pop_layout.index, options)
 
     if snakemake.params.foresight in ["myopic", "perfect"]:
         add_lifetime_wind_solar(n, costs)
@@ -5337,15 +5341,16 @@ if __name__ == "__main__":
         add_industry(n, costs)
 
     if options["ammonia"]:
-        add_ammonia(n, costs, snakemake.params.skip_cracker)
-        if snakemake.params.skip_cracker:
+        add_ammonia(n, costs, snakemake.params.skip_crackers)
+        if snakemake.params.skip_crackers:
             add_ammonia_load(n, options)
 
     if endo_industry:
         add_steel_industry(n, investment_year, options)
         add_cement_industry(n, investment_year, options)
-        if snakemake.params.endo_hvc: #ADB could I do options["endo_industry"]["endo_hvc"] instead?
+        if options["endo_industry"]["endo_hvc"]:
             add_hvc(n, options)
+            add_methanol_to_olefins(n, costs)
 
     if options["heating"]:
         add_waste_heat(n)

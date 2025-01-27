@@ -111,7 +111,7 @@ sector:
     cement_prod_growth: true
     endo_chemicals: true
     # Ammonia
-    skip_cracker: true
+    skip_crackers: true
     
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:

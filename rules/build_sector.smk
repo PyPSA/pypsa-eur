@@ -1152,7 +1152,7 @@ rule prepare_sector_network:
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
         endo_industry=config_provider("sector", "endo_industry", "enable"),
-        skip_cracker=config_provider("sector", "endo_industry","skip_cracker"),
+        skip_crackers=config_provider("sector", "endo_industry","skip_crackers"),
         endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
         co2_budget_apply=config_provider("co2_budget_apply"),
     input:

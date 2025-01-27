@@ -111,9 +111,9 @@ sector:
     cement_prod_growth: true
     endo_chemicals: true
     # Ammonia
-    skip_cracker: true
-    endo_hvc: true # I need to remove the energy demand
-  regional_hvc: true
+    skip_crackers: true
+    endo_hvc: true
+    regional_hvc: true
 
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:
@@ -145,3 +145,5 @@ plotting:
     steel process emissions CC: 'green'
     steel: 'yellow'
     syn gas for DRI: 'grey'
+    HVC: 'yellow'
+    naphtha steam cracker: 'grey'
