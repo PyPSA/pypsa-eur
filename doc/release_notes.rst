@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
+
 * Bugfix: The missing lifetime attribute was added to hydrogen steel tanks, which is important for pathway planning.
 
 * Bugfix: The length factor on the transmission lines haversine length was
