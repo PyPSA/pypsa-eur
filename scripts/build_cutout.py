@@ -13,25 +13,6 @@ For this rule to work you must have
     For details on the weather data read the `atlite documentation <https://atlite.readthedocs.io/en/latest/>`_.
     If you need help specifically for creating cutouts `the corresponding section in the atlite documentation <https://atlite.readthedocs.io/en/latest/examples/create_cutout.html>`_ should be helpful.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    atlite:
-        nprocesses:
-        cutouts:
-            {cutout}:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`atlite_cf`
-
-Inputs
-------
-
-*None*
-
 Outputs
 -------
 
@@ -85,8 +66,6 @@ A **SARAH-3 cutout** can be used to amend the fields ``temperature``, ``influx_t
     .. image:: img/sarah.png
         :scale: 40 %
 
-Description
------------
 """
 
 import logging

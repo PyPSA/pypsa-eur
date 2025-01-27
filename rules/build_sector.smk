@@ -85,6 +85,8 @@ rule build_gas_network:
         mem_mb=4000,
     log:
         logs("build_gas_network.log"),
+    benchmark:
+        benchmarks("build_gas_network")
     conda:
         "../envs/environment.yaml"
     script:
@@ -107,6 +109,8 @@ rule build_gas_input_locations:
         mem_mb=2000,
     log:
         logs("build_gas_input_locations_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_gas_input_locations/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -124,6 +128,8 @@ rule cluster_gas_network:
         mem_mb=4000,
     log:
         logs("cluster_gas_network_{clusters}.log"),
+    benchmark:
+        benchmarks("cluster_gas_network/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -923,6 +929,8 @@ rule build_population_weighted_energy_totals:
         mem_mb=2000,
     log:
         logs("build_population_weighted_{kind}_totals_{clusters}.log"),
+    benchmark:
+        benchmarks("build_population_weighted_{kind}_totals_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -944,6 +952,8 @@ rule build_shipping_demand:
         mem_mb=2000,
     log:
         logs("build_shipping_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_shipping_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -975,6 +985,8 @@ rule build_transport_demand:
         mem_mb=2000,
     log:
         logs("build_transport_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transport_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -997,6 +1009,8 @@ rule build_district_heat_share:
         mem_mb=1000,
     log:
         logs("build_district_heat_share_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_district_heat_share_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1044,7 +1058,7 @@ rule time_aggregation:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         solver_name=config_provider("solving", "solver", "name"),
     input:
-        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
         hourly_heat_demand_total=lambda w: (
             resources("hourly_heat_demand_total_base_s_{clusters}.nc")
             if config_provider("sector", "heating")(w)
@@ -1057,15 +1071,15 @@ rule time_aggregation:
         ),
     output:
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
-        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.log"),
+        logs("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}.log"),
     benchmark:
-        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}")
+        benchmarks("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1102,6 +1116,8 @@ rule build_egs_potentials:
         mem_mb=2000,
     log:
         logs("build_egs_potentials_{clusters}.log"),
+    benchmark:
+        benchmarks("build_egs_potentials_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1161,7 +1177,7 @@ rule prepare_sector_network:
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
         retro_cost=lambda w: (
             resources("retro_cost_base_s_{clusters}.csv")
@@ -1186,7 +1202,7 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
         eurostat="data/eurostat/Balances-April2023",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s_{clusters}.csv"
@@ -1274,18 +1290,19 @@ rule prepare_sector_network:
             else []
         ),
     output:
-        RESULTS
-        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        RESULTS
-        + "logs/prepare_sector_network_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        logs(
+            "prepare_sector_network_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/prepare_sector_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        benchmarks(
+            "prepare_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

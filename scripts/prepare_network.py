@@ -15,38 +15,6 @@ as.
 - reducing the **temporal** resolution by averaging over multiple hours
   or segmenting time series into chunks of varying lengths using ``tsam``.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    costs:
-        year:
-        version:
-        fill_values:
-        emission_prices:
-        marginal_cost:
-        capital_cost:
-
-    electricity:
-        co2limit:
-        max_hours:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`costs_cf`, :ref:`electricity_cf`
-
-Inputs
-------
-
-- ``resources/costs.csv``: The database of cost assumptions for all included technologies for specific years from various sources; e.g. discount rate, lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide intensity.
-- ``networks/base_s_{clusters}.nc``: confer :ref:`cluster`
-
-Outputs
--------
-
-- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: Complete PyPSA network that will be handed to the ``solve_network`` rule.
-
 Description
 -----------
 
@@ -173,7 +141,7 @@ def set_line_s_max_pu(n, s_max_pu=0.7):
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
-def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
+def set_transmission_limit(n, kind, factor, costs, Nyears=1):
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
 
     _lines_s_nom = (
@@ -184,7 +152,7 @@ def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
     )
     lines_s_nom = n.lines.s_nom.where(n.lines.type == "", _lines_s_nom)
 
-    col = "capital_cost" if ll_type == "c" else "length"
+    col = "capital_cost" if kind == "c" else "length"
     ref = (
         lines_s_nom @ n.lines[col]
         + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
@@ -200,11 +168,11 @@ def set_transmission_limit(n, ll_type, factor, costs, Nyears=1):
         n.links.loc[links_dc_b, "p_nom_extendable"] = True
 
     if factor != "opt":
-        con_type = "expansion_cost" if ll_type == "c" else "volume_expansion"
+        con_type = "expansion_cost" if kind == "c" else "volume_expansion"
         rhs = float(factor) * ref
         n.add(
             "GlobalConstraint",
-            f"l{ll_type}_limit",
+            f"l{kind}_limit",
             type=f"transmission_{con_type}_limit",
             sense="<=",
             constant=rhs,
@@ -374,8 +342,9 @@ if __name__ == "__main__":
             n, dict(co2=snakemake.params.costs["emission_prices"]["co2"])
         )
 
-    ll_type, factor = snakemake.wildcards.ll[0], snakemake.wildcards.ll[1:]
-    set_transmission_limit(n, ll_type, factor, costs, Nyears)
+    kind = snakemake.params.transmission_limit[0]
+    factor = snakemake.params.transmission_limit[1:]
+    set_transmission_limit(n, kind, factor, costs, Nyears)
 
     set_line_nom_max(
         n,

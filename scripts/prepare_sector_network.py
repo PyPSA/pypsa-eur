@@ -779,6 +779,9 @@ def add_co2_network(n, costs):
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
+    if "underwater_fraction" not in co2_links.columns:
+        co2_links["underwater_fraction"] = 0.0
+
     cost_onshore = (
         (1 - co2_links.underwater_fraction)
         * costs.at["CO2 pipeline", "fixed"]
@@ -1540,9 +1543,7 @@ def add_storage_and_grids(n, costs):
         )
 
     # hydrogen stored overground (where not already underground)
-    h2_capital_cost = costs.at[
-        "hydrogen storage tank type 1 including compressor", "fixed"
-    ]
+    tech = "hydrogen storage tank type 1 including compressor"
     nodes_overground = h2_caverns.index.symmetric_difference(nodes)
 
     n.add(
@@ -1552,7 +1553,8 @@ def add_storage_and_grids(n, costs):
         e_nom_extendable=True,
         e_cyclic=True,
         carrier="H2 Store",
-        capital_cost=h2_capital_cost,
+        capital_cost=costs.at[tech, "fixed"],
+        lifetime=costs.at[tech, "lifetime"],
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
@@ -5193,7 +5195,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             p_nom_extendable=True,
             p_nom_max=p_nom_max.set_axis(well_name) / efficiency_orc,
             capital_cost=capital_cost.set_axis(well_name) * efficiency_orc,
-            efficiency=bus_eta,
+            efficiency=bus_eta.loc[n.snapshots],
             lifetime=costs.at["geothermal", "lifetime"],
         )
 
