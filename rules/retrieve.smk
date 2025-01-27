@@ -650,25 +650,6 @@ if config["enable"]["retrieve"]:
         script:
             "../scripts/retrieve_osm_boundaries.py"
 
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_heat_source_utilisation_potentials:
-        params:
-            heat_source="{heat_source}",
-            heat_utilisation_potentials=config_provider(
-                "sector", "district_heating", "heat_utilisation_potentials"
-            ),
-        log:
-            "logs/retrieve_heat_source_potentials_{heat_source}.log",
-        resources:
-            mem_mb=500,
-        output:
-            "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
-        script:
-            "../scripts/retrieve_heat_source_utilisation_potentials.py"
-
-
 if config["enable"]["retrieve"]:
 
     rule retrieve_jrc_ardeco:
