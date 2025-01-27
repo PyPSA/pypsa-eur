@@ -7,25 +7,6 @@
 Gets the transmission projects defined in the config file, concatenates and
 deduplicates them. Projects are later included in :mod:`add_electricity.py`.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-transmission_projects:
-  include:
-    #tyndp: true # For later, when other TYNDP projects are combined with new version
-    nep: true
-  status:
-  - confirmed
-  - in_permitting
-  - under_construction
-    #- under_consideration
-  link_under_construction: zero
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`transmission_projects`
 Inputs
 ------
 

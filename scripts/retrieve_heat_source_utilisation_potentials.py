@@ -8,16 +8,6 @@ Source
 ------
 Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
 
-Relevant Settings
------------------
-.. code:: yaml
-    sector:
-        district_heating:
-            heat_utilisation_potentials:
-
-Outputs
-------
-- `resources/<run_name>/heat_source_utilisation_potentials/<heat_source>.gpkg`
 """
 
 import logging

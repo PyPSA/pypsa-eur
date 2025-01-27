@@ -4,18 +4,6 @@
 """
 Build industrial energy demand per model region.
 
-Inputs
-------
-
-- ``resources/industrial_energy_demand_today_base_s_{clusters}.csv``
-- ``resources/industry_sector_ratios_{planning_horizons}.csv``
-- ``resources/industrial_production_base_s_{clusters}_{planning_horizons}.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv``
-
 Description
 -------
 This rule aggregates the energy demand of the industrial sectors per model region.
@@ -35,8 +23,12 @@ For each bus, the following carriers are considered:
 which can later be used as values for the industry load.
 """
 
+import logging
+
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -47,6 +39,7 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2030,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # import ratios
