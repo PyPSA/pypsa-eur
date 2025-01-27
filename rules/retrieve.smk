@@ -650,6 +650,7 @@ if config["enable"]["retrieve"]:
         script:
             "../scripts/retrieve_osm_boundaries.py"
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_jrc_ardeco:
