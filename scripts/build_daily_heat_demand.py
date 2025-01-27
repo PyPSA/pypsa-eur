@@ -9,38 +9,9 @@ Snapshots are resampled to daily time resolution and ``Atlite.convert.heat_deman
 
 Heat demand is distributed by population to clustered onshore regions.
 
-The rule is executed in ``build_sector.smk``.
-
 .. seealso::
     `Atlite.Cutout.heat_demand <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-
-Inputs
-------
-
-- ``resources/<run_name>/pop_layout_<scope>.nc``: Population layout (spatial population distribution).
-- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``: Onshore region shapes.
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/daily_heat_demand_<scope>_base_s<simpl>_<clusters>.nc``:
-
-Relevant settings
------------------
-
-.. code:: yaml
-
-    atlite:
-        default_cutout``:
 """
 
 import logging

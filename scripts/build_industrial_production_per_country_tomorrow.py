@@ -4,32 +4,6 @@
 """
 Build future industrial production per country.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    industry:
-        St_primary_fraction:
-        DRI_fraction:
-        Al_primary_fraction:
-        HVC_primary_fraction:
-        HVC_mechanical_recycling_fraction:
-        HVC_chemical_recycling_fraction:
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`industry`
-
-Inputs
--------
-
-- ``resources/industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
-
 Description
 -------
 

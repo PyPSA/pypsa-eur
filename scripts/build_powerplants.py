@@ -11,26 +11,6 @@ powerplant database with custom entries provided in
 ``data/custom_powerplants.csv``.
 Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    electricity:
-      powerplants_filter:
-      custom_powerplants:
-      everywhere_powerplants:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`electricity`
-
-Inputs
-------
-
-- ``networks/base.nc``: confer :ref:`base`.
-- ``data/custom_powerplants.csv``: custom powerplants in the same format as `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`_ provides
-
 Outputs
 -------
 

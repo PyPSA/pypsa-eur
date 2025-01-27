@@ -4,16 +4,6 @@
 """
 Build historical annual ammonia production per country in ktonNH3/a.
 
-Inputs
--------
-
-- ``data/bundle-sector/myb1-2017-nitro.xls``
-
-Outputs
--------
-
-- ``resources/ammonia_production.csv``
-
 Description
 -------
 

@@ -6,27 +6,6 @@ Build specific energy consumption by carrier and industries and by country,
 that interpolates between the current average energy consumption (from
 2015-2020) and the ideal future best-in-class consumption.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    industry:
-        sector_ratios_fraction_future:
-        ammonia:
-
-Inputs
-------
-
-- ``resources/industry_sector_ratios.csv``
-- ``resources/industrial_energy_demand_per_country_today.csv``
-- ``resources/industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industry_sector_ratios_{planning_horizons}.csv``
-
 Description
 -------
 

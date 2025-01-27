@@ -11,28 +11,6 @@ Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute 
     `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
     `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-    atlite:
-        default_cutout:
-
-Inputs
-------
-
-- ``resources/<run_name>/pop_layout_total.nc``:
-- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``:
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/temp_soil_total_base_s<simpl>_<clusters>.nc``:
-- ``resources/temp_air_total_base_s<simpl>_<clusters>.nc`
 """
 
 import logging

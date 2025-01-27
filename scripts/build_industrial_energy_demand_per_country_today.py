@@ -4,17 +4,6 @@
 """
 Build industrial energy demand per country.
 
-Inputs
--------
-
-- ``data/jrc-idees-2021``
-- ``industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_country_today.csv``
-
 Description
 -------
 

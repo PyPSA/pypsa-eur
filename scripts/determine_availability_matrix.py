@@ -8,22 +8,6 @@ The script uses the `atlite <https://github.com/pypsa/atlite>`_ library and
 several GIS datasets like the CORINE land use data, LUISA land use data,
 Natura2000 nature reserves, GEBCO bathymetry data, and shipping lanes.
 
-Relevant settings
------------------
-
-.. code:: yaml
-
-    atlite:
-        nprocesses:
-
-    renewable:
-        {technology}:
-            cutout: corine: luisa: grid_codes: distance: natura: max_depth:
-            min_depth: max_shore_distance: min_shore_distance: resource:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`atlite_cf`, :ref:`renewable_cf`
 
 Inputs
 ------

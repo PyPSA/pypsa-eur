@@ -10,25 +10,6 @@ eurostat, and EEA data.
 - :func:`build_district_heat_share` calculates the share of district heating for each country from IDEES data.
 - Historical CO2 emissions are calculated in :func:`build_eea_co2` and :func:`build_eurostat_co2` and combined in :func:`build_co2_totals`.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-    countries:
-    energy:
-
-Inputs
-------
-
-- `resources/<run_name>/nuts3_shapes.gejson`: NUTS3 shapes.
-- `data/bundle/eea_UNFCCC_v23.csv`: CO2 emissions data from EEA.
-- `data/switzerland-new_format-all_years.csv`: Swiss energy data.
-- `data/gr-e-11.03.02.01.01-cc.csv`: Swiss transport data
-- `data/jrc-idees`: JRC IDEES data.
-- `data/district_heat_share.csv`: District heating shares.
-- `data/eurostat/Balances-April2023`: Eurostat energy balances.
-- `data/eurostat/eurostat-household_energy_balances-february_2024.csv`: Eurostat household energy balances.
-
 Outputs
 -------
 - `resources/<run_name>/energy_totals.csv`: Energy totals per country, sector and year.

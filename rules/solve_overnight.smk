@@ -13,11 +13,12 @@ rule solve_sector_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=RESULTS
-        + "prenetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
     output:
         network=RESULTS
-        + "postnetworks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:

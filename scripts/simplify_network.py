@@ -8,32 +8,6 @@ Lifts electrical transmission network to a single 380 kV voltage layer, removes
 dead-ends of the network, and reduces multi-hop HVDC connections to a single
 link.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-      simplify_network:
-      cluster_network:
-      aggregation_strategies:
-
-    links:
-        p_max_pu:
-
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`electricity_cf`, :ref:`renewable_cf`,
-    :ref:`lines_cf`, :ref:`links_cf`
-
-Inputs
-------
-
-- ``resources/regions_onshore.geojson``: confer :ref:`busregions`
-- ``resources/regions_offshore.geojson``: confer :ref:`busregions`
-- ``networks/base.nc``
-
 Outputs
 -------
 

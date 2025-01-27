@@ -724,7 +724,7 @@ if __name__ == "__main__":
     networks_dict = {
         (clusters, opts + sector_opts): "results/"
         + run
-        + f"postnetworks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        + f"networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         for clusters in snakemake.config["scenario"]["clusters"]
         for opts in snakemake.config["scenario"]["opts"]
         for sector_opts in snakemake.config["scenario"]["sector_opts"]

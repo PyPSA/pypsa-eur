@@ -4,25 +4,6 @@
 """
 This rule builds the historical industrial production per country.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries:
-..
-
-Inputs
--------
-- ``resources/ammonia_production.csv``
-- ``data/bundle-sector/jrc-idees-2021``
-- ``data/eurostat``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_country.csv``
-
 Description
 -------
 

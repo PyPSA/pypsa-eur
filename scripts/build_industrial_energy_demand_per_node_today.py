@@ -4,17 +4,6 @@
 """
 Build industrial energy demand per model region.
 
-Inputs
--------
-
-- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
-- ``resources/industrial_energy_demand_per_country_today.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_node_today_base_s_{clusters}.csv``
-
 Description
 -------
 
