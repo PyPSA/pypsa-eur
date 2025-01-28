@@ -13,14 +13,6 @@ Outputs:
 --------
 - `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
 
-Relevant settings:
-------------------
-.. code:: yaml
-    sector:
-        district_heating:
-    energy:
-        energy_totals_year:
-
 Notes
 -----
 - The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.

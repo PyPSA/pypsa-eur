@@ -82,6 +82,9 @@ solving:
     name: highs
     options: highs-default
 
+  check_objective:
+    enable: false
+    expected_value: 3.8120188094e+07
 
 plotting:
   map:
