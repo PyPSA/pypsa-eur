@@ -636,6 +636,11 @@ PyPSA-Eur 0.12.0 (30th August 2024)
 * Address various deprecations.
 
 
+* Allow running the sector model for isolated non-EU28 countries, by filling missing sectoral
+  data with defaults, average EU values or zeros, if not available.
+
+* Enable retaining exisiting conventional capacities added in the power only model for sector coupeled applications.
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 

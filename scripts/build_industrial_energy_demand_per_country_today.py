@@ -198,12 +198,14 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
         return demand
 
     eu27_production = production.loc[countries.intersection(eu27)].sum()
+    if eu27_production.sum() == 0:
+        logger.info("EU production is zero. Fallback: Filling non EU28 countries with zeros.")
     eu27_energy = demand.groupby(level=1).sum()
     eu27_averages = eu27_energy / eu27_production
 
     demand_non_eu27 = pd.concat(
         {k: v * eu27_averages for k, v in production.loc[non_eu27].iterrows()}
-    )
+    ).fillna(0)
 
     return pd.concat([demand, demand_non_eu27])
 
@@ -286,7 +288,14 @@ if __name__ == "__main__":
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu27), year)
+    if len(countries.intersection(eu27)) > 0:
+        demand = industrial_energy_demand(countries.intersection(eu27), year)
+    else:
+        # e.g. only UA or MD
+        logger.info(
+            f"No industrial energy demand available for {countries}. Filling with average values of EU."
+        )
+        demand = industrial_energy_demand(eu27, year)
 
     # output in MtMaterial/a
     production = (
