@@ -1080,8 +1080,11 @@ if __name__ == "__main__":
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
     )
 
+    logging_frequency = snakemake.config.get("solving", {}).get(
+        "mem_logging_frequency", 30
+    )
     with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=30.0
+        filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
         n = solve_network(
             n,
