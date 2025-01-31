@@ -2263,66 +2263,53 @@ def add_heat(
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} water tanks",
+                location=nodes,
+                carrier=f"{heat_system} water tanks",
+                unit="MWh_th",
+            )
+
+            n.add(
+                "Link",
+                nodes + f" {heat_system} water tanks charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water tanks",
+                efficiency=costs.at["water tank charger", "efficiency"],
+                carrier=f"{heat_system} water tanks charger",
+                p_nom_extendable=True,
+            )
+
+            n.add(
+                "Link",
+                nodes + f" {heat_system} water tanks discharger",
+                bus0=nodes + f" {heat_system} water tanks",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} water tanks discharger",
+                efficiency=costs.at["water tank discharger", "efficiency"],
+                p_nom_extendable=True,
+            )
+
             tes_time_constant_days = options["tes_tau"][
                 heat_system.central_or_decentral
             ]
 
             n.add(
-                "StorageUnit",
+                "Store",
                 nodes + f" {heat_system} water tanks",
-                bus=nodes + f" {heat_system} heat",
+                bus=nodes + f" {heat_system} water tanks",
+                e_cyclic=True,
+                e_nom_extendable=True,
                 carrier=f"{heat_system} water tanks",
-                efficiency_store=costs.at[
-                    heat_system.central_or_decentral + " water tank charger",
-                    "efficiency",
-                ],
-                max_hours=costs.at[
-                    heat_system.central_or_decentral + " water tank storage",
-                    "energy to power ratio",
-                ],
-                efficiency_dispatch=costs.at[
-                    heat_system.central_or_decentral + " water tank discharger",
-                    "efficiency",
-                ],
-                p_nom_extendable=True,
                 standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                 capital_cost=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "fixed"
-                ]
-                * costs.at[
-                    heat_system.central_or_decentral + " water tank storage",
-                    "energy to power ratio",
                 ],
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
                 ],
-                cyclic_state_of_charge=True,
             )
-
-            if heat_system == HeatSystem.URBAN_CENTRAL:
-                n.add("Carrier", f"{heat_system} water pits")
-
-                n.add(
-                    "StorageUnit",
-                    nodes + f" {heat_system} water pits",
-                    bus=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} water pits",
-                    efficiency_store=costs.at[
-                        "central water pit charger", "efficiency"
-                    ],
-                    max_hours=costs.at[
-                        "central water pit storage", "energy to power ratio"
-                    ],
-                    efficiency_dispatch=costs.at[
-                        "central water pit discharger", "efficiency"
-                    ],
-                    p_nom_extendable=True,
-                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                    capital_cost=costs.at["central water pit storage", "fixed"]
-                    * costs.at["central water pit storage", "energy to power ratio"],
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                    cyclic_state_of_charge=True,
-                )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
@@ -4267,7 +4254,7 @@ def cluster_heat_buses(n):
         return agg
 
     logger.info("Cluster residential and service heat buses.")
-    components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store", "StorageUnit"]
+    components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
 
     for c in n.iterate_components(components):
         df = c.df
