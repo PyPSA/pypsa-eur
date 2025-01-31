@@ -23,7 +23,7 @@ options,,,
 -- -- -- {carrier},,,
 -- -- link_threshold,,float,The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).
 -- -- -- {carrier},,,
--- -- fractional_last_unit_size,bool,"{'true','false'}",When true, links and lines can be built up to p_nom_max. When false, they can only be built up to a multiple of the unit size.
+-- -- fractional_last_unit_size,bool,"{'true','false'}","When true, links and lines can be built up to p_nom_max. When false, they can only be built up to a multiple of the unit size."
 agg_p_nom_limits,,,Configure per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard.
 -- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint. Default is false.
 -- include_existing,bool,"{'true','false'}",Take existing capacities into account when writing the constraint. Default is false.

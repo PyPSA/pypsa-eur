@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -10,43 +9,25 @@ The rule is executed in ``build_sector.smk``.
 
 .. seealso::
     `Atlite.Cutout.solar_thermal <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-    solar_thermal:
-    atlite:
-        default_cutout:
-
-Inputs
-------
-
-- ``resources/<run_name/pop_layout_<scope>.nc``:
-- ``resources/<run_name/regions_onshore_base_s<simpl>_<clusters>.geojson``:
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/solar_thermal_<scope>_base_s<simpl>_<clusters>.nc``:
 """
+
+import logging
 
 import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_solar_thermal_profiles", clusters=48)
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
@@ -80,7 +61,7 @@ if __name__ == "__main__":
         matrix=M_tilde.T,
         index=clustered_regions.index,
         dask_kwargs=dict(scheduler=client),
-        show_progress=False
+        show_progress=False,
     )
 
     solar_thermal.to_netcdf(snakemake.output.solar_thermal)

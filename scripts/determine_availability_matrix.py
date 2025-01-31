@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,22 +8,6 @@ The script uses the `atlite <https://github.com/pypsa/atlite>`_ library and
 several GIS datasets like the CORINE land use data, LUISA land use data,
 Natura2000 nature reserves, GEBCO bathymetry data, and shipping lanes.
 
-Relevant settings
------------------
-
-.. code:: yaml
-
-    atlite:
-        nprocesses:
-
-    renewable:
-        {technology}:
-            cutout: corine: luisa: grid_codes: distance: natura: max_depth:
-            min_depth: max_shore_distance: min_shore_distance: resource:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`atlite_cf`, :ref:`renewable_cf`
 
 Inputs
 ------
@@ -72,6 +53,7 @@ Outputs
 
 - ``resources/availability_matrix_{clusters_{technology}.nc``
 """
+
 import functools
 import logging
 import time

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -26,23 +26,24 @@ if config["foresight"] != "perfect":
     rule plot_power_network:
         params:
             plotting=config_provider("plotting"),
+            transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS
-            + "logs/plot_power_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+            + "logs/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
                 RESULTS
-                + "benchmarks/plot_power_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "benchmarks/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -55,21 +56,21 @@ if config["foresight"] != "perfect":
             foresight=config_provider("foresight"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS
-            + "logs/plot_hydrogen_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+            + "logs/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
                 RESULTS
-                + "benchmarks/plot_hydrogen_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "benchmarks/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -81,21 +82,21 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS
-            + "logs/plot_gas_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+            + "logs/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
         benchmark:
             (
                 RESULTS
-                + "benchmarks/plot_gas_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+                + "benchmarks/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
             )
         conda:
             "../envs/environment.yaml"
@@ -108,7 +109,7 @@ if config["foresight"] == "perfect":
     def output_map_year(w):
         return {
             f"map_{year}": RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_"
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
             + f"{year}.pdf"
             for year in config_provider("scenario", "planning_horizons")(w)
         }
@@ -118,7 +119,7 @@ if config["foresight"] == "perfect":
             plotting=config_provider("plotting"),
         input:
             network=RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             unpack(output_map_year),
@@ -142,7 +143,7 @@ rule make_summary:
     input:
         networks=expand(
             RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             **config["scenario"],
             allow_missing=True,
         ),
@@ -162,14 +163,14 @@ rule make_summary:
         ),
         costs_plot=expand(
             RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
             allow_missing=True,
         ),
         h2_plot=lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
                 if config_provider("sector", "H2_network")(w)
                 else []
             ),
@@ -179,7 +180,7 @@ rule make_summary:
         ch4_plot=lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
                 if config_provider("sector", "gas_network")(w)
                 else []
             ),
@@ -263,14 +264,14 @@ rule plot_base_statistics:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
     input:
-        network=RESULTS + "networks/base_s_{clusters}_elec_l{ll}_{opts}.nc",
+        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
     output:
         **{
             f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_base_s_{{clusters}}_elec_l{{ll}}_{{opts}}.pdf"
+            + f"figures/statistics_{plot}_bar_base_s_{{clusters}}_elec_{{opts}}.pdf"
             for plot in STATISTICS_BARPLOTS
         },
         barplots_touch=RESULTS
-        + "figures/.statistics_plots_base_s_{clusters}_elec_l{ll}_{opts}",
+        + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
     script:
         "../scripts/plot_statistics.py"

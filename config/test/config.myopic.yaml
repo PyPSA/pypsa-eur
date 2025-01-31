@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -14,8 +14,6 @@ run:
 foresight: myopic
 
 scenario:
-  ll:
-  - v1.5
   clusters:
   - 5
   sector_opts:

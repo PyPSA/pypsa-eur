@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,9 +7,13 @@ data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_.
 """
 
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def area(gdf):
@@ -40,6 +43,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_sequestration_potentials", clusters="128")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     cf = snakemake.params.sequestration_potential

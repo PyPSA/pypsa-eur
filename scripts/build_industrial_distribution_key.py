@@ -1,20 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
 Build spatial distribution of industries from Hotmaps database.
-
-Inputs
--------
-
-- ``resources/regions_onshore_base_s_{clusters}.geojson``
-- ``resources/pop_layout_base_s_{clusters}.csv``
-
-Outputs
--------
-
-- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
 
 Description
 -------

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -13,8 +13,6 @@ run:
 
 
 scenario:
-  ll:
-  - v1.5
   clusters:
   - 5
   sector_opts:
@@ -83,6 +81,10 @@ solving:
     name: highs
     options: highs-default
   mem: 4000
+
+  check_objective:
+    enable: false
+    expected_value: 7.0847670388e+08
 
 plotting:
   map:

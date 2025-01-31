@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -26,6 +25,7 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
     the workflow for all scenarios in the configuration file (``scenario:``)
     based on the rule :mod:`solve_network`.
 """
+
 import importlib
 import logging
 import os
@@ -49,6 +49,10 @@ from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
+
+
+class ObjectiveValueError(Exception):
+    pass
 
 
 def add_land_use_constraint_perfect(n):
@@ -126,7 +130,6 @@ def add_land_use_constraint(n):
         "offwind-dc",
         "offwind-float",
     ]:
-
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
@@ -155,6 +158,7 @@ def add_land_use_constraint(n):
 def add_solar_potential_constraints(n, config):
     """
     Add constraint to make sure the sum capacity of all solar technologies (fixed, tracking, ets. ) is below the region potential.
+
     Example:
     ES1 0: total solar potential is 10 GW, meaning:
            solar potential : 10 GW
@@ -193,7 +197,7 @@ def add_solar_potential_constraints(n, config):
         n.generators.loc[solar_today, "p_nom_max"]
         .groupby(n.generators.loc[solar_today].bus.map(location))
         .sum()
-        - n.generators.loc[solar_hsat, "p_nom_opt"]
+        - n.generators.loc[solar_hsat, "p_nom"]
         .groupby(n.generators.loc[solar_hsat].bus.map(location))
         .sum()
         * land_use_factors["solar-hsat"]
@@ -228,7 +232,7 @@ def add_co2_sequestration_limit(n, limit_dict):
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
 
-    n.madd(
+    n.add(
         "GlobalConstraint",
         names,
         sense=">=",
@@ -389,7 +393,7 @@ def prepare_network(
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
             load_shedding = 1e2  # Eur/kWh
 
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             " load",
@@ -404,7 +408,7 @@ def prepare_network(
         n.add("Carrier", "curtailment", color="#fedfed", nice_name="Curtailment")
         n.generators_t.p_min_pu = n.generators_t.p_max_pu
         buses_i = n.buses.query("carrier == 'AC'").index
-        n.madd(
+        n.add(
             "Generator",
             buses_i,
             suffix=" curtailment",
@@ -562,7 +566,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     each node to produce on average at least 70% of its consumption.
     """
     # TODO: Generalize to cover myopic and other sectors?
-    float_regex = "[0-9]*\.?[0-9]+"
+    float_regex = r"[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
         ggrouper = n.generators.bus.map(n.buses.country)
@@ -986,6 +990,19 @@ def extra_functionality(n, snapshots):
         custom_extra_functionality(n, snapshots, snakemake)
 
 
+def check_objective_value(n, solving):
+    check_objective = solving["check_objective"]
+    if check_objective["enable"]:
+        atol = check_objective["atol"]
+        rtol = check_objective["rtol"]
+        expected_value = check_objective["expected_value"]
+        if not np.isclose(n.objective, expected_value, atol=atol, rtol=rtol):
+            raise ObjectiveValueError(
+                f"Objective value {n.objective} differs from expected value "
+                f"{expected_value} by more than {atol}."
+            )
+
+
 def solve_network(n, config, params, solving, **kwargs):
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
@@ -1034,10 +1051,13 @@ def solve_network(n, config, params, solving, **kwargs):
             **kwargs
         )
 
-    if status != "ok" and not rolling_horizon:
-        logger.warning(
-            f"Solving status '{status}' with termination condition '{condition}'"
-        )
+    if not rolling_horizon:
+        if status != "ok":
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+        check_objective_value(n, solving)
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")

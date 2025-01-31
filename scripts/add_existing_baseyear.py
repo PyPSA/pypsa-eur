@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -22,9 +21,7 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from add_electricity import sanitize_carriers
-from definitions.heat_sector import HeatSector
 from definitions.heat_system import HeatSystem
-from definitions.heat_system_type import HeatSystemType
 from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
 
 logger = logging.getLogger(__name__)
@@ -271,7 +268,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             p_max_pu = n.generators_t.p_max_pu[capacity.index + name_suffix_by]
 
             if not new_build.empty:
-                n.madd(
+                n.add(
                     "Generator",
                     new_capacity.index,
                     suffix=name_suffix,
@@ -295,7 +292,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             missing_bus = pd.Index(bus0).difference(n.buses.index)
             if not missing_bus.empty:
                 logger.info(f"add buses {bus0}")
-                n.madd(
+                n.add(
                     "Bus",
                     bus0,
                     carrier=generator,
@@ -317,7 +314,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
                 if generator != "urban central solid biomass CHP":
-                    n.madd(
+                    n.add(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
@@ -344,7 +341,7 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                         lambda i: i + " urban central heat" if i in central_heat else ""
                     )
 
-                    n.madd(
+                    n.add(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
@@ -380,8 +377,8 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     Computes the heating system efficiency based on the sector and carrier
     type.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     heat_system : object
     carrier : str
         The type of fuel or energy carrier (e.g., 'gas', 'oil').
@@ -392,14 +389,14 @@ def get_efficiency(heat_system, carrier, nodes, heating_efficiencies, costs):
     costs : pandas.DataFrame
         A DataFrame containing boiler cost and efficiency data for different heating systems.
 
-    Returns:
-    --------
+    Returns
+    -------
     efficiency : pandas.Series or float
         A pandas Series mapping the efficiencies based on nodes for residential and services sectors, or a single
         efficiency value for other heating systems (e.g., urban central).
 
-    Notes:
-    ------
+    Notes
+    -----
     - For residential and services sectors, efficiency is mapped based on the nodes.
     - For other sectors, the default boiler efficiency is retrieved from the `costs` database.
     """
@@ -504,7 +501,7 @@ def add_heating_capacities_installed_before_baseyear(
                     else costs.at[costs_name, "efficiency"]
                 )
 
-                n.madd(
+                n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
@@ -524,7 +521,7 @@ def add_heating_capacities_installed_before_baseyear(
                 )
 
             # add resistive heater, gas boilers and oil boilers
-            n.madd(
+            n.add(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} resistive heater-{grouping_year}",
@@ -551,7 +548,7 @@ def add_heating_capacities_installed_before_baseyear(
                 heat_system, "gas", nodes, heating_efficiencies, costs
             )
 
-            n.madd(
+            n.add(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} gas boiler-{grouping_year}",
@@ -578,7 +575,7 @@ def add_heating_capacities_installed_before_baseyear(
                 heat_system, "oil", nodes, heating_efficiencies, costs
             )
 
-            n.madd(
+            n.add(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} oil boiler-{grouping_year}",
@@ -602,7 +599,7 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
             # delete links with p_nom=nan corresponding to extra nodes in country
-            n.mremove(
+            n.remove(
                 "Link",
                 [
                     index
@@ -613,7 +610,7 @@ def add_heating_capacities_installed_before_baseyear(
 
             # delete links with capacities below threshold
             threshold = snakemake.params.existing_capacities["threshold_capacity"]
-            n.mremove(
+            n.remove(
                 "Link",
                 [
                     index
@@ -627,9 +624,12 @@ def set_defaults(n):
     """
     Set default values for missing values in the network.
 
-    Parameters:
+    Parameters
+    ----------
         n (pypsa.Network): The network object.
-    Returns:
+
+    Returns
+    -------
         None
     """
     if "Link" in n.components:
@@ -683,7 +683,6 @@ if __name__ == "__main__":
     )
 
     if options["heating"]:
-
         # one could use baseyear here instead (but dangerous if no data)
         fn = snakemake.input.heating_efficiencies
         year = int(snakemake.params["energy_totals_year"])

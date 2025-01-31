@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -28,11 +27,11 @@ def attach_transmission_projects(
         if df.empty:
             continue
         if "new_buses" in path.name:
-            n.madd("Bus", df.index, **df)
+            n.add("Bus", df.index, **df)
         elif "new_lines" in path.name:
-            n.madd("Line", df.index, **df)
+            n.add("Line", df.index, **df)
         elif "new_links" in path.name:
-            n.madd("Link", df.index, **df)
+            n.add("Link", df.index, **df)
         elif "adjust_lines" in path.name:
             n.lines.update(df)
         elif "adjust_links" in path.name:
@@ -82,11 +81,9 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
 
     if params["transmission_projects"]["enable"]:
-
         attach_transmission_projects(n, snakemake.input.transmission_projects)
 
     if params["dlr"]["activate"]:
-
         rating = xr.open_dataarray(snakemake.input.dlr).to_pandas().transpose()
 
         s_max_pu = params["s_max_pu"]

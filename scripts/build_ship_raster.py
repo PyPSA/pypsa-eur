@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,26 +7,6 @@ Transforms the global ship density data from the `World Bank Data Catalogue.
 <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_
 to the size of the considered cutout. The global ship density raster is later
 used for the exclusion when calculating the offshore potentials.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    renewable:
-        {technology}:
-            cutout:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`renewable_cf`
-
-Inputs
-------
-
-- ``data/bundle/shipdensity/shipdensity_global.zip``: Global shipping traffic
-  density from `World Bank Data Catalogue
-  <https://datacatalog.worldbank.org/search/dataset/0037580/>`_.
 
 Outputs
 -------

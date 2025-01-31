@@ -1,0 +1,52 @@
+name: Push images
+
+on:
+  push:
+
+    branches:
+    - master
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: pypsa/eur-dev-env
+  BASE_ENV: envs/linux-pinned.yaml
+
+jobs:
+  push-image:
+    name: dev-env
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 'Get relevant env'
+      run: |
+        hash_last_changed=$(git log -1 --pretty=format:%H -- ${{ env.BASE_ENV }})
+        echo "hash_last_changed=$hash_last_changed" >> $GITHUB_ENV
+
+    - name: 'Login to GitHub Container Registry'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.REGISTRY_TOKEN }}
+
+    - name: 'Build new image' # only build if the pinned envs file was modified
+      if: env.hash_last_changed == github.sha || github.event_name == 'workflow_dispatch'
+      run: |
+        docker build . --file docker/dev-env/Dockerfile --tag ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+        # Add latest tag if on main branch
+        if [ "${{ github.ref }}" == "refs/heads/master" ]; then
+          docker tag ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} ghcr.io/${{ env.IMAGE_NAME }}:latest
+          docker push ghcr.io/${{ env.IMAGE_NAME }}:latest
+        fi
+
+    - name: 'Add SHA tag to existing image' # when rebuild is not needed
+      if: env.hash_last_changed != github.sha
+      run: |-
+        docker pull ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }}
+        docker tag ghcr.io/${{ env.IMAGE_NAME }}:${{ env.hash_last_changed }} ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}

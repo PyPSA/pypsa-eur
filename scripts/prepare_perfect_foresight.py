@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -18,7 +17,6 @@ from _helpers import (
 )
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
-from pypsa.io import import_components_from_dataframe
 from six import iterkeys
 
 logger = logging.getLogger(__name__)
@@ -33,6 +31,7 @@ def get_missing(df, n, c):
         df: pandas DataFrame, static values of pypsa components
         n : pypsa Network to which new assets should be added
         c : string, pypsa component.list_name (e.g. "generators")
+
     Return:
         pd.DataFrame with static values of missing assets
     """
@@ -92,7 +91,7 @@ def hvdc_transport_model(n):
 
     logger.info("Convert AC lines to DC links to perform multi-decade optimisation.")
 
-    n.madd(
+    n.add(
         "Link",
         n.lines.index,
         bus0=n.lines.bus0,
@@ -111,7 +110,7 @@ def hvdc_transport_model(n):
     # Remove AC lines
     logger.info("Removing AC lines")
     lines_rm = n.lines.index
-    n.mremove("Line", lines_rm)
+    n.remove("Line", lines_rm)
 
     # Set efficiency of all DC links to include losses depending on length
     n.links.loc[n.links.carrier == "DC", "efficiency"] = (
@@ -182,7 +181,7 @@ def concat_networks(years):
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
 
-            import_components_from_dataframe(n, missing, component.name)
+            n.add(component.name, missing.index, **missing)
 
         # time variant --------------------------------------------------
         network_sns = pd.MultiIndex.from_product([[year], network.snapshots])
@@ -221,7 +220,7 @@ def concat_networks(years):
         # (3) global constraints
         for component in network.iterate_components(["GlobalConstraint"]):
             add_year_to_constraints(network, year)
-            import_components_from_dataframe(n, component.df, component.name)
+            n.add(component.name, component.df.index, **component.df)
 
     # set investment periods
     n.investment_periods = n.snapshots.levels[0]
@@ -304,7 +303,7 @@ def set_all_phase_outs(n):
         set_phase_out(n, carrier, ct, phase_out_year)
     # remove assets which are already phased out
     remove_i = n.links[n.links[["build_year", "lifetime"]].sum(axis=1) < years[0]].index
-    n.mremove("Link", remove_i)
+    n.remove("Link", remove_i)
 
 
 def set_carbon_constraints(n):
@@ -328,7 +327,7 @@ def set_carbon_constraints(n):
 
         # drop other CO2 limits
         drop_i = n.global_constraints[n.global_constraints.type == "co2_limit"].index
-        n.mremove("GlobalConstraint", drop_i)
+        n.remove("GlobalConstraint", drop_i)
 
         n.add(
             "GlobalConstraint",
@@ -375,8 +374,8 @@ def adjust_lvlimit(n):
         glc = n.df(c)[n.df(c).type == glc_type][cols].iloc[[0]]
         glc.index = pd.Index(["lv_limit"])
         remove_i = n.df(c)[n.df(c).type == glc_type].index
-        n.mremove(c, remove_i)
-        import_components_from_dataframe(n, glc, c)
+        n.remove(c, remove_i)
+        n.add(c, glc.index, **glc)
 
     return n
 
@@ -418,7 +417,7 @@ def add_H2_boilers(n):
     df["p_nom"] = 0
     df["p_nom_extendable"] = True
     # add H2 boilers to network
-    import_components_from_dataframe(n, df, c)
+    n.add(c, df.index, **df)
 
 
 def apply_time_segmentation_perfect(
@@ -439,7 +438,7 @@ def apply_time_segmentation_perfect(
         import tsam.timeseriesaggregation as tsam
     except ImportError:
         raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found." "Install via 'pip install tsam'"
+            "Optional dependency 'tsam' not found.Install via 'pip install tsam'"
         )
 
     # get all time-dependent data
@@ -487,6 +486,39 @@ def apply_time_segmentation_perfect(
     return n
 
 
+def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]):
+    """
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+
+    Note: this also updates the efficiency of heat pumps in preceding years for previous years, which should have no effect (e.g. 2040 heat pumps receive 2030 COPs in 2030).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The concatenated network.
+    years : list[int]
+        List of planning horizon years.
+
+    Returns
+    -------
+    None
+        This function updates the efficiency in place and does not return a value.
+    """
+
+    # get names of all heat pumps
+    heat_pump_idx = n.links.index[n.links.index.str.contains("heat pump")]
+    for year in years:
+        # for each heat pump type, correct efficiency is the efficiency of that technology built in <year>
+        correct_efficiency = n.links_t["efficiency"].loc[
+            (year, slice(None)), heat_pump_idx.str[:-4] + str(year)
+        ]
+        # in <year>, set the efficiency of all heat pumps to the correct efficiency
+        n.links_t["efficiency"].loc[(year, slice(None)), heat_pump_idx] = (
+            correct_efficiency.values
+        )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -510,7 +542,7 @@ if __name__ == "__main__":
         f"Concat networks of investment period {years} with social discount rate of {social_discountrate * 100}%"
     )
 
-    # concat prenetworks of planning horizon to single network ------------
+    # concat prepared networks of planning horizon to single network ------------
     n = concat_networks(years)
 
     # temporal aggregate
@@ -537,6 +569,9 @@ if __name__ == "__main__":
 
     # update meta
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    # update heat pump efficiency
+    update_heat_pump_efficiency(n=n, years=years)
 
     # export network
     n.export_to_netcdf(snakemake.output[0])

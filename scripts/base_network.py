@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -10,63 +9,6 @@ Creates the network topology from a `ENTSO-E map extract.
 or `OpenStreetMap data <https://www.openstreetmap.org/>`_ (Aug 2024)
 as a PyPSA
 network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries:
-
-    electricity:
-        voltages:
-
-    lines:
-        types:
-        s_max_pu:
-        under_construction:
-
-    links:
-        p_max_pu:
-        under_construction:
-
-    transformers:
-        x:
-        s_nom:
-        type:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`snapshots_cf`, :ref:`toplevel_cf`, :ref:`electricity_cf`, :ref:`load_cf`,
-    :ref:`lines_cf`, :ref:`links_cf`, :ref:`transformers_cf`
-
-Inputs
-------
-
-- ``data/entsoegridkit``:  Extract from the geographical vector data of the online `ENTSO-E Interactive Map <https://www.entsoe.eu/data/map/>`_ by the `GridKit <https://github.com/martacki/gridkit>`_ toolkit dating back to March 2022.
-- ``data/parameter_corrections.yaml``: Corrections for ``data/entsoegridkit``
-- ``data/links_p_nom.csv``: confer :ref:`links`
-- ``resources/country_shapes.geojson``: confer :ref:`shapes`
-- ``resources/offshore_shapes.geojson``: confer :ref:`shapes`
-- ``resources/europe_shape.geojson``: confer :ref:`shapes`
-
-Outputs
--------
-
-- ``networks/base.nc``
-
-    .. image:: img/base.png
-        :scale: 33 %
-
-- ``resources/regions_onshore.geojson``:
-
-    .. image:: img/regions_onshore.png
-        :scale: 33 %
-
-- ``resources/regions_offshore.geojson``:
-
-    .. image:: img/regions_offshore.png
-        :scale: 33 %
 
 Description
 -----------
@@ -90,7 +32,7 @@ from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
-from shapely.geometry import LineString, Point
+from shapely.geometry import Point
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -456,7 +398,8 @@ def _set_electrical_parameters_transformers(transformers, config):
 
     ## Add transformer parameters
     transformers["x"] = config.get("x", 0.1)
-    transformers["s_nom"] = config.get("s_nom", 2000)
+    if "s_nom" not in transformers:
+        transformers["s_nom"] = config.get("s_nom", 2000)
     transformers["type"] = config.get("type", "")
 
     return transformers
@@ -587,17 +530,15 @@ def _set_countries_and_substations(n, config, country_shapes, offshore_shapes):
                 .join(n.buses.country)
                 .dropna()
             )
-            assert (
-                not df.empty
-            ), "No buses with defined country within 200km of bus `{}`".format(b)
+            assert not df.empty, (
+                f"No buses with defined country within 200km of bus `{b}`"
+            )
             n.buses.at[b, "country"] = df.loc[df.pathlength.idxmin(), "country"]
 
         logger.warning(
-            "{} buses are not in any country or offshore shape,"
-            " {} have been assigned from the tag of the entsoe map,"
-            " the rest from the next bus in terms of pathlength.".format(
-                c_nan_b.sum(), c_nan_b.sum() - c_tag_nan_b.sum()
-            )
+            f"{c_nan_b.sum()} buses are not in any country or offshore shape,"
+            f" {c_nan_b.sum() - c_tag_nan_b.sum()} have been assigned from the tag of the entsoe map,"
+            " the rest from the next bus in terms of pathlength."
         )
 
     return buses
@@ -627,9 +568,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             comp, line = next(iter(G[b0][b1]))
             if comp != "Line":
                 logger.warning(
-                    "Unable to replace B2B `{}` expected a Line, but found a {}".format(
-                        i, comp
-                    )
+                    f"Unable to replace B2B `{i}` expected a Line, but found a {comp}"
                 )
                 continue
 
@@ -645,9 +584,7 @@ def _replace_b2b_converter_at_country_border_by_link(n):
             n.remove("Bus", b0)
 
             logger.info(
-                "Replacing B2B converter `{}` together with bus `{}` and line `{}` by an HVDC tie-line {}-{}".format(
-                    i, b0, line, linkcntry.at[i], buscntry.at[b1]
-                )
+                f"Replacing B2B converter `{i}` together with bus `{b0}` and line `{line}` by an HVDC tie-line {linkcntry.at[i]}-{buscntry.at[b1]}"
             )
 
 
@@ -671,7 +608,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
         n.lines.loc[n.lines.under_construction, "num_parallel"] = 0.0
         n.lines.loc[n.lines.under_construction, "s_nom"] = 0.0
     elif lines_mode == "remove":
-        n.mremove("Line", n.lines.index[n.lines.under_construction])
+        n.remove("Line", n.lines.index[n.lines.under_construction])
     elif lines_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `lines: under_construction` = `{}`. Keeping under construction lines."
@@ -681,7 +618,7 @@ def _adjust_capacities_of_under_construction_branches(n, config):
     if links_mode == "zero":
         n.links.loc[n.links.under_construction, "p_nom"] = 0.0
     elif links_mode == "remove":
-        n.mremove("Link", n.links.index[n.links.under_construction])
+        n.remove("Link", n.links.index[n.links.under_construction])
     elif links_mode != "keep":
         logger.warning(
             "Unrecognized configuration for `links: under_construction` = `{}`. Keeping under construction links."
@@ -701,7 +638,7 @@ def _set_shapes(n, country_shapes, offshore_shapes):
     offshore_shapes = gpd.read_file(offshore_shapes).rename(columns={"name": "idx"})
     offshore_shapes["type"] = "offshore"
     all_shapes = pd.concat([country_shapes, offshore_shapes], ignore_index=True)
-    n.madd(
+    n.add(
         "Shape",
         all_shapes.index,
         geometry=all_shapes.geometry,
@@ -724,14 +661,15 @@ def base_network(
     parameter_corrections,
     config,
 ):
-
     base_network = config["electricity"].get("base_network")
     osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
     assert base_network in {
         "entsoegridkit",
         "osm-raw",
         "osm-prebuilt",
-    }, f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
+    }, (
+        f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
+    )
     if base_network == "entsoegridkit":
         warnings.warn(
             "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm-raw' or 'osm-prebuilt' instead.",
@@ -788,11 +726,11 @@ def base_network(
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
 
-    n.import_components_from_dataframe(buses, "Bus")
-    n.import_components_from_dataframe(lines, "Line")
-    n.import_components_from_dataframe(transformers, "Transformer")
-    n.import_components_from_dataframe(links, "Link")
-    n.import_components_from_dataframe(converters, "Link")
+    n.add("Bus", buses.index, **buses)
+    n.add("Line", lines.index, **lines)
+    n.add("Transformer", transformers.index, **transformers)
+    n.add("Link", links.index, **links)
+    n.add("Link", converters.index, **converters)
 
     _set_lines_s_nom_from_linetypes(n)
     if config["electricity"].get("base_network") == "entsoegridkit":
@@ -815,7 +753,7 @@ def base_network(
     carriers = carriers_in_buses.intersection({"AC", "DC"})
 
     if carriers:
-        n.madd("Carrier", carriers)
+        n.add("Carrier", carriers)
 
     return n
 
@@ -952,20 +890,22 @@ def append_bus_shapes(n, shapes, type):
     Append shapes to the network. If shapes with the same component and type
     already exist, they will be removed.
 
-    Parameters:
+    Parameters
+    ----------
         n (pypsa.Network): The network to which the shapes will be appended.
         shapes (geopandas.GeoDataFrame): The shapes to be appended.
-        **kwargs: Additional keyword arguments used in `n.madd`.
+        **kwargs: Additional keyword arguments used in `n.add`.
 
-    Returns:
+    Returns
+    -------
         None
     """
     remove = n.shapes.query("component == 'Bus' and type == @type").index
-    n.mremove("Shape", remove)
+    n.remove("Shape", remove)
 
     offset = n.shapes.index.astype(int).max() + 1 if not n.shapes.empty else 0
     shapes = shapes.rename(lambda x: int(x) + offset)
-    n.madd(
+    n.add(
         "Shape",
         shapes.index,
         geometry=shapes.geometry,

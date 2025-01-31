@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -9,12 +8,14 @@ import hashlib
 import logging
 import os
 import re
-import urllib
-from functools import partial
+import time
+from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
+from typing import Callable
 
+import fiona
 import pandas as pd
 import pytz
 import requests
@@ -107,11 +108,26 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         irrelevant_wildcards = {"technology", "year", "scope", "kind"}
         no_relevant_wildcards = not existing_wildcards - irrelevant_wildcards
         not_shared_rule = (
-            not fn.startswith("networks/elec")
+            not fn.endswith("elec.nc")
             and not fn.startswith("add_electricity")
             and not any(fn.startswith(ex) for ex in exclude_from_shared)
         )
         is_shared = no_relevant_wildcards and not_shared_rule
+        shared_files = (
+            "networks/base_s_{clusters}.nc",
+            "regions_onshore_base_s_{clusters}.geojson",
+            "regions_offshore_base_s_{clusters}.geojson",
+            "busmap_base_s_{clusters}.csv",
+            "linemap_base_s_{clusters}.csv",
+            "cluster_network_base_s_{clusters}",
+            "profile_{clusters}_",
+            "build_renewable_profile_{clusters}",
+            "availability_matrix_",
+            "determine_availability_matrix_",
+            "solar_thermal",
+        )
+        if any(prefix in fn for prefix in shared_files) or is_shared:
+            is_shared = True
         rdir = "" if is_shared else rdir
     elif isinstance(shared_resources, str):
         rdir = shared_resources + "/"
@@ -186,13 +202,13 @@ def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
     if scenario.get("enable") and "run" in snakemake.wildcards.keys():
         try:
-            with open(scenario["file"], "r") as f:
+            with open(scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
         except FileNotFoundError:
             # fallback for mock_snakemake
             script_dir = Path(__file__).parent.resolve()
             root_dir = script_dir.parent
-            with open(root_dir / scenario["file"], "r") as f:
+            with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
         update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
 
@@ -389,17 +405,71 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
 
 def progress_retrieve(url, file, disable=False):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    # Hotfix - Bug, tqdm not working with disable=False
+    disable = True
+
     if disable:
-        urllib.request.urlretrieve(url, file)
+        response = requests.get(url, headers=headers, stream=True)
+        with open(file, "wb") as f:
+            f.write(response.content)
     else:
-        with tqdm(unit="B", unit_scale=True, unit_divisor=1024, miniters=1) as t:
+        response = requests.get(url, headers=headers, stream=True)
+        total_size = int(response.headers.get("content-length", 0))
+        chunk_size = 1024
 
-            def update_to(b=1, bsize=1, tsize=None):
-                if tsize is not None:
-                    t.total = tsize
-                t.update(b * bsize - t.n)
+        with tqdm(
+            total=total_size,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=str(file),
+        ) as t:
+            with open(file, "wb") as f:
+                for data in response.iter_content(chunk_size=chunk_size):
+                    f.write(data)
+                    t.update(len(data))
 
-            urllib.request.urlretrieve(url, file, reporthook=update_to)
+
+def retry(func: Callable) -> Callable:
+    """
+    Retry decorator to run retry function on specific exceptions, before raising them.
+
+    Can for example be used for debugging issues which are hard to replicate or
+    for for handling retrieval errors.
+
+    Currently catches:
+    - fiona.errors.DriverError
+
+    Parameters
+    ----------
+    retries : int
+        Number of retries before raising the exception.
+    delay : int
+        Delay between retries in seconds.
+
+    Returns
+    -------
+    callable
+        A decorator function that can be used to wrap the function to be retried.
+    """
+    retries = 3
+    delay = 5
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for attempt in range(retries):
+            try:
+                return func(*args, **kwargs)
+            except fiona.errors.DriverError as e:
+                logger.warning(
+                    f"Attempt {attempt + 1} failed: {type(e).__name__} - {e}. "
+                    f"Retrying..."
+                )
+                time.sleep(delay)
+        raise Exception("Retrieval retries exhausted.")
+
+    return wrapper
 
 
 def mock_snakemake(
@@ -434,7 +504,7 @@ def mock_snakemake(
     import os
 
     import snakemake as sm
-    from pypsa.descriptors import Dict
+    from pypsa.definitions.structures import Dict
     from snakemake.api import Workflow
     from snakemake.common import SNAKEFILE_CHOICES
     from snakemake.script import Snakemake
@@ -632,6 +702,11 @@ def update_config_from_wildcards(config, w, inplace=True):
                 config["adjustments"]["electricity"], {attr: {carrier: factor}}
             )
 
+        for o in opts:
+            if o.startswith("lv") or o.startswith("lc"):
+                config["electricity"]["transmission_expansion"] = o[1:]
+                break
+
     if w.get("sector_opts"):
         opts = w.sector_opts.split("-")
 
@@ -691,9 +766,9 @@ def update_config_from_wildcards(config, w, inplace=True):
         if dg_enable:
             config["sector"]["electricity_distribution_grid"] = True
             if dg_factor is not None:
-                config["sector"][
-                    "electricity_distribution_grid_cost_factor"
-                ] = dg_factor
+                config["sector"]["electricity_distribution_grid_cost_factor"] = (
+                    dg_factor
+                )
 
         if "biomasstransport" in opts:
             config["sector"]["biomass_transport"] = True
@@ -803,9 +878,9 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
         for chunk in iter(lambda: f.read(65536), b""):  # 64kb chunks
             hasher.update(chunk)
     calculated_checksum = hasher.hexdigest()
-    assert (
-        calculated_checksum == checksum
-    ), "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
+    assert calculated_checksum == checksum, (
+        "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
+    )
 
 
 def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
@@ -818,3 +893,90 @@ def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
         time = time[~((time.month == 2) & (time.day == 29))]
 
     return time
+
+
+def rename_techs(label: str) -> str:
+    """
+    Rename technology labels for better readability.
+
+    Removes some prefixes and renames if certain conditions defined in function body are met.
+
+    Parameters
+    ----------
+    label: str
+        Technology label to be renamed
+
+    Returns
+    -------
+    str
+        Renamed label
+    """
+    prefix_to_remove = [
+        "residential ",
+        "services ",
+        "urban ",
+        "rural ",
+        "central ",
+        "decentral ",
+    ]
+
+    rename_if_contains = [
+        "CHP",
+        "gas boiler",
+        "biogas",
+        "solar thermal",
+        "air heat pump",
+        "ground heat pump",
+        "resistive heater",
+        "Fischer-Tropsch",
+    ]
+
+    rename_if_contains_dict = {
+        "water tanks": "hot water storage",
+        "retrofitting": "building retrofitting",
+        # "H2 Electrolysis": "hydrogen storage",
+        # "H2 Fuel Cell": "hydrogen storage",
+        # "H2 pipeline": "hydrogen storage",
+        "battery": "battery storage",
+        "H2 for industry": "H2 for industry",
+        "land transport fuel cell": "land transport fuel cell",
+        "land transport oil": "land transport oil",
+        "oil shipping": "shipping oil",
+        # "CC": "CC"
+    }
+
+    rename = {
+        "solar": "solar PV",
+        "Sabatier": "methanation",
+        "offwind": "offshore wind",
+        "offwind-ac": "offshore wind (AC)",
+        "offwind-dc": "offshore wind (DC)",
+        "offwind-float": "offshore wind (Float)",
+        "onwind": "onshore wind",
+        "ror": "hydroelectricity",
+        "hydro": "hydroelectricity",
+        "PHS": "hydroelectricity",
+        "NH3": "ammonia",
+        "co2 Store": "DAC",
+        "co2 stored": "CO2 sequestration",
+        "AC": "transmission lines",
+        "DC": "transmission lines",
+        "B2B": "transmission lines",
+    }
+
+    for ptr in prefix_to_remove:
+        if label[: len(ptr)] == ptr:
+            label = label[len(ptr) :]
+
+    for rif in rename_if_contains:
+        if rif in label:
+            label = rif
+
+    for old, new in rename_if_contains_dict.items():
+        if old in label:
+            label = new
+
+    for old, new in rename.items():
+        if old == label:
+            label = new
+    return label

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -142,7 +142,7 @@ def solved_previous_horizon(w):
 
     return (
         RESULTS
-        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_"
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_"
         + planning_horizon_p
         + ".nc"
     )
