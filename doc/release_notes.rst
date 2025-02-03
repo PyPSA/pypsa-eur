@@ -11,7 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Added PTES and transitioned LTES stores to storage units to implement an energy-to-power ratio in ``prepare_sector_network``.
+- ...
 
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
@@ -199,7 +199,7 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
 * Ensure all links with capital costs have a lifetime. This is important for
   pathway planning. (https://github.com/PyPSA/pypsa-eur/pull/1319)
 
-* Resolved a bug which occured when multiple DC links are connected to the same
+* Resolved a bug which occurred when multiple DC links are connected to the same
   DC bus and the DC bus is connected to an AC bus via a converter. In this case,
   the DC links were wrongly simplified, completely dropping the shared DC bus.
   (https://github.com/PyPSA/pypsa-eur/pull/1381,
