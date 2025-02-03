@@ -418,7 +418,6 @@ def add_H2_boilers(n):
     # set existing capacity to zero
     df["p_nom"] = 0
     df["p_nom_extendable"] = True
-    df["reversed"] = False
     # add H2 boilers to network
     n.add(c, df.index, **df)
 

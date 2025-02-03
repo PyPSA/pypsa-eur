@@ -85,8 +85,7 @@ def plot_map_perfect(
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
-    if not costs.empty:
-        costs.index = pd.MultiIndex.from_tuples(costs.index.values)
+    costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     # PDF has minimum width, so set these to zero
     line_lower_threshold = 500.0
