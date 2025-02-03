@@ -784,7 +784,7 @@ def add_battery_constraints(n):
 
 
 def add_lossy_bidirectional_link_constraints(n):
-    if not n.links.p_nom_extendable.any() or "reversed" not in n.links.columns:
+    if not n.links.p_nom_extendable.any() or not any(n.links.get("reversed", [])):
         return
 
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
