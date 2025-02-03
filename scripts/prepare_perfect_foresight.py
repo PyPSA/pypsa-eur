@@ -232,6 +232,9 @@ def concat_networks(years):
         n.investment_period_weightings["years"], social_discountrate
     )
     n.investment_period_weightings["objective"] = objective_w
+    if "reversed" in n.links.columns:
+        # adjust boolean dtype
+        n.links["reversed"] = n.links["reversed"].astype(bool)
     # all former static loads are now time-dependent -> set static = 0
     n.loads["p_set"] = 0
     n.loads_t.p_set.fillna(0, inplace=True)
