@@ -130,7 +130,8 @@ def plot_map(
         costs.drop(to_drop, level=0, inplace=True, axis=0, errors="ignore")
 
     # make sure they are removed from index
-    costs.index = pd.MultiIndex.from_tuples(costs.index.values)
+    if not costs.empty:
+        costs.index = pd.MultiIndex.from_tuples(costs.index.values)
 
     threshold = 100e6  # 100 mEUR/a
     carriers = costs.groupby(level=1).sum()

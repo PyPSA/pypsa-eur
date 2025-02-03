@@ -105,6 +105,7 @@ def hvdc_transport_model(n):
         carrier="DC",
         length=n.lines.length,
         capital_cost=n.lines.capital_cost,
+        reversed=False,
     )
 
     # Remove AC lines
@@ -419,6 +420,7 @@ def add_H2_boilers(n):
     # set existing capacity to zero
     df["p_nom"] = 0
     df["p_nom_extendable"] = True
+    df["reversed"] = False
     # add H2 boilers to network
     n.add(c, df.index, **df)
 
@@ -575,6 +577,5 @@ if __name__ == "__main__":
 
     # update heat pump efficiency
     update_heat_pump_efficiency(n=n, years=years)
-
     # export network
     n.export_to_netcdf(snakemake.output[0])
