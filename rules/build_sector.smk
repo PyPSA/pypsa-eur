@@ -706,7 +706,7 @@ rule build_industrial_distribution_key:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
         steel_gem="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
-        cement_sfi="data/SFI-Global-Cement-Database-July-2021.xlsx",
+        cement_sfi="data/sfi/SFI-Global-Cement-Database-July-2021.xlsx",
         chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx", # Reference Neuwirth et al., https://doi.org/10.1016/j.enconman.2024.119117 
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
@@ -869,7 +869,7 @@ if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["
             countries=config_provider("countries")
         input:
             ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
-            cement_plants="data/SFI-Global-Cement-Database-July-2021.xlsx",
+            cement_plants="data/sfi/SFI-Global-Cement-Database-July-2021.xlsx",
             idees="data/jrc-idees-2021",
             cement_extra_eu="data/cement_production_extra_eu27.xlsx",
             industrial_distribution_key=resources("industrial_distribution_key_base_s_{clusters}.csv"),
