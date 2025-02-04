@@ -963,6 +963,12 @@ solving:
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
       random_seed: 123
+    highs-simplex:
+      solver: "simplex"
+      parallel: "on"
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      random_seed: 123
     gurobi-default:
       threads: 8
       method: 2 # barrier
@@ -1209,8 +1215,18 @@ plotting:
     services urban decentral water tanks: '#f1b4a4'
     urban central water tanks: '#e9977d'
     hot water storage: '#e69487'
-    water pits: '#cc826a'
-    urban central water pits: '#d96f4c'
+    hot water charging: '#e8998b'
+    urban central water tanks charger: '#b57a67'
+    residential rural water tanks charger: '#b4887c'
+    residential urban decentral water tanks charger: '#b39995'
+    services rural water tanks charger: '#b3abb0'
+    services urban decentral water tanks charger: '#b3becc'
+    hot water discharging: '#e99c8e'
+    urban central water tanks discharger: '#b9816e'
+    residential rural water tanks discharger: '#ba9685'
+    residential urban decentral water tanks discharger: '#baac9e'
+    services rural water tanks discharger: '#bbc2b8'
+    services urban decentral water tanks discharger: '#bdd8d3'
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'

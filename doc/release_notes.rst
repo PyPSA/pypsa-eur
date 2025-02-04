@@ -11,7 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Added PTES and transitioned LTES stores to storage units to implement an energy-to-power ratio in ``prepare_sector_network``.
+- ...
 
 
 PyPSA-Eur v2025.01.0 (24th January 2025)

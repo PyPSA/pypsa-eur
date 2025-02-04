@@ -17,6 +17,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -620,25 +621,6 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
-def set_defaults(n):
-    """
-    Set default values for missing values in the network.
-
-    Parameters
-    ----------
-        n (pypsa.Network): The network object.
-
-    Returns
-    -------
-        None
-    """
-    if "Link" in n.components:
-        if "reversed" in n.links.columns:
-            # Replace NA values with default value False
-            n.links.loc[n.links.reversed.isna(), "reversed"] = False
-            n.links.reversed = n.links.reversed.astype(bool)
-
-
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -706,13 +688,12 @@ if __name__ == "__main__":
         )
 
     # Set defaults for missing missing values
-    set_defaults(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
+    sanitize_custom_columns(n)
     sanitize_carriers(n, snakemake.config)
-
     n.export_to_netcdf(snakemake.output[0])
