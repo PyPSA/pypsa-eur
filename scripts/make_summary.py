@@ -341,6 +341,7 @@ def calculate_supply(n, label, supply):
                 if len(items) == 0:
                     continue
 
+                print(c.pnl["p" + end])
                 # lots of sign compensation for direction and to do maximums
                 s = (-1) ** (1 - int(end)) * (
                     (-1) ** int(end) * c.pnl["p" + end][items]
