@@ -61,7 +61,7 @@ dependencies:
 
 - pip:
   - gurobipy
-  - highspy<1.8
+  - highspy
   - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
   - snakemake-storage-plugin-http
