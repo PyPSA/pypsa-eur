@@ -963,6 +963,12 @@ solving:
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
       random_seed: 123
+    highs-simplex:
+      solver: "simplex"
+      parallel: "on"
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      random_seed: 123
     gurobi-default:
       threads: 8
       method: 2 # barrier

@@ -79,7 +79,7 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
   mem: 4000
 
   check_objective:
