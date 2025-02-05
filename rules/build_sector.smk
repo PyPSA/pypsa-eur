@@ -346,6 +346,38 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 
+rule build_tes_storage_temperature_profile:
+    params:
+        max_PTES_temperature=config_provider(
+            "sector", "tes_type", "PTES", "max_storage_temp"
+        ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        ltes_top_layer_temperature_profiles=resources(
+            "ltes_top_layer_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ltes_bottom_layer_temperature_profiles=resources(
+            "ltes_bottom_layer_temperature_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("ltes_top_layer_temperature_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("ltes_top_layer_temperature_s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_TES_temperature_profiles/run.py"
+
+
 rule build_direct_heat_source_utilisation_profiles:
     params:
         direct_utilisation_heat_sources=config_provider(
