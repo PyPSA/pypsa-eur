@@ -1089,7 +1089,7 @@ def prepare_costs(cost_file, params, nyears):
     costs = costs.fillna(params["fill_values"])
 
     for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
-        overwrites = params["costs"].get(attr)
+        overwrites = params.get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
