@@ -11,7 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
-- ...
+- Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
 
 
 PyPSA-Eur v2025.01.0 (24th January 2025)

@@ -17,6 +17,7 @@ from typing import Callable
 
 import fiona
 import pandas as pd
+import pypsa
 import pytz
 import requests
 import yaml
@@ -893,6 +894,24 @@ def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
         time = time[~((time.month == 2) & (time.day == 29))]
 
     return time
+
+
+def sanitize_custom_columns(n: pypsa.Network):
+    """
+    Sanitize non-standard columns used throughout the workflow.
+
+    Parameters
+    ----------
+        n (pypsa.Network): The network object.
+
+    Returns
+    -------
+        None
+    """
+    if "reversed" in n.links.columns:
+        # Replace NA values with default value False
+        n.links.loc[n.links.reversed.isna(), "reversed"] = False
+        n.links.reversed = n.links.reversed.astype(bool)
 
 
 def rename_techs(label: str) -> str:

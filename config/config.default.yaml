@@ -132,6 +132,7 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
+  cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
@@ -963,6 +964,12 @@ solving:
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
       random_seed: 123
+    highs-simplex:
+      solver: "simplex"
+      parallel: "on"
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      random_seed: 123
     gurobi-default:
       threads: 8
       method: 2 # barrier
@@ -1019,6 +1026,7 @@ solving:
     rtol: 0.01
 
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  memory_logging_frequency: 30 # in seconds
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 

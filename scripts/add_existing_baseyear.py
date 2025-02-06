@@ -18,6 +18,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
@@ -965,7 +966,6 @@ if __name__ == "__main__":
         )
 
     # Set defaults for missing missing values
-    set_defaults(n)
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
@@ -980,6 +980,6 @@ if __name__ == "__main__":
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
+    sanitize_custom_columns(n)
     sanitize_carriers(n, snakemake.config)
-
     n.export_to_netcdf(snakemake.output[0])
