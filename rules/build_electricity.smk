@@ -492,16 +492,6 @@ def input_profile_tech(w):
     }
 
 
-def input_conventional(w):
-    return {
-        f"conventional_{carrier}_{attr}": fn
-        for carrier, d in config_provider("conventional", default={None: {}})(w).items()
-        if carrier in config_provider("electricity", "conventional_carriers")(w)
-        for attr, fn in d.items()
-        if str(fn).startswith("data/")
-    }
-
-
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
@@ -647,10 +637,14 @@ def input_profile_tech(w):
 
 
 def input_conventional(w):
+    carriers = [
+        *config_provider("electricity", "conventional_carriers")(w),
+        *config_provider("electricity", "extendable_carriers", "Generator")(w),
+    ]
     return {
         f"conventional_{carrier}_{attr}": fn
-        for carrier, d in config_provider("conventional", default={None: {}})(w).items()
-        if carrier in config_provider("electricity", "conventional_carriers")(w)
+        for carrier, d in config_provider("conventional", default={})(w).items()
+        if carrier in carriers
         for attr, fn in d.items()
         if str(fn).startswith("data/")
     }
