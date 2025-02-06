@@ -11,7 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
-- ...
+- Add scheme to deprecate config entries. Deprecated entries with eventual renamings are now listed in `config/deprecations.yaml` and will be removed in future releases. Snakemake will raise a warning if deprecated entries are used. (https://github.com/PyPSA/pypsa-eur/pull/1514)
+
+- Snakemake now raises a warning if the user specifies config entries that are not present in the default config. (https://github.com/PyPSA/pypsa-eur/pull/1514)
+
 
 
 PyPSA-Eur v2025.01.0 (24th January 2025)

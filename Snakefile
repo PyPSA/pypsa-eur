@@ -10,7 +10,14 @@ from snakemake.utils import min_version
 
 min_version("8.11")
 
-from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
+from scripts._helpers import (
+    path_provider,
+    copy_default_files,
+    get_scenarios,
+    get_rdir,
+    check_deprecated_config,
+    check_invalid_config,
+)
 
 
 copy_default_files(workflow)
@@ -19,6 +26,9 @@ copy_default_files(workflow)
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
 
+
+check_deprecated_config(config, "config/deprecations.yaml")
+check_invalid_config(config, "config/config.default.yaml")
 
 run = config["run"]
 scenarios = get_scenarios(run)
