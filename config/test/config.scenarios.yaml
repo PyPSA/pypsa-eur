@@ -58,4 +58,4 @@ renewable:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
