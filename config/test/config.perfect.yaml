@@ -84,12 +84,12 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
   mem: 4000
 
   check_objective:
-    enable: false
-    expected_value: 1.4427662256e+10
+    enable: true
+    expected_value: 1.3778753459e+10
 
 plotting:
   map:

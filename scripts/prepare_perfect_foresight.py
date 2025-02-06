@@ -12,9 +12,11 @@ import pandas as pd
 import pypsa
 from _helpers import (
     configure_logging,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
+from add_electricity import sanitize_carriers
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from six import iterkeys
@@ -574,4 +576,6 @@ if __name__ == "__main__":
     update_heat_pump_efficiency(n=n, years=years)
 
     # export network
+    sanitize_custom_columns(n)
+    sanitize_carriers(n, snakemake.config)
     n.export_to_netcdf(snakemake.output[0])
