@@ -240,6 +240,9 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     return costs
 
