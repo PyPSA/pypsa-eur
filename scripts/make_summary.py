@@ -9,6 +9,7 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 
 import logging
 import sys
+import gc
 
 import numpy as np
 import pandas as pd
@@ -706,21 +707,21 @@ def calculate_price_statistics(n, label, price_statistics):
 
 def make_summaries(networks_dict):
     outputs = [
-        "nodal_costs",
-        "nodal_capacities",
-        "nodal_cfs",
-        "cfs",
+        # "nodal_costs",
+        # "nodal_capacities",
+        # "nodal_cfs",
+        # "cfs",
         "costs",
-        "capacities",
-        "curtailment",
-        "energy",
-        "supply",
+        # "capacities",
+        # "curtailment",
+        # "energy",
+        # "supply",
         "supply_energy",
-        "nodal_supply_energy",
-        "prices",
-        "weighted_prices",
-        "price_statistics",
-        "market_values",
+        # "nodal_supply_energy",
+        # "prices",
+        # "weighted_prices",
+        # "price_statistics",
+        # "market_values",
         "metrics",
     ]
 
@@ -742,13 +743,14 @@ def make_summaries(networks_dict):
             df[output] = globals()["calculate_" + output](n, label, df[output])
 
         del n
+        gc.collect()
 
     return df
 
 
 def to_csv(df):
     for key in df:
-        df[key].to_csv(snakemake.output[key])
+        df[key].round(3).to_csv(snakemake.output[key])
 
 
 if __name__ == "__main__":
