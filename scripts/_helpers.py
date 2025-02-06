@@ -162,6 +162,16 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
     )
 
 
+def get_shadow(run):
+    """
+    Returns 'shallow' or None depending on the user setting.
+    """
+    shadow_config = run.get("use_shadow_directory", True)
+    if shadow_config:
+        return "shallow"
+    return None
+
+
 def get_opt(opts, expr, flags=None):
     """
     Return the first option matching the regular expression.
