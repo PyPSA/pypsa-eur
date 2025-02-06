@@ -132,89 +132,60 @@ if config["foresight"] == "perfect":
 
 
 rule make_summary:
-    params:
-        foresight=config_provider("foresight"),
-        costs=config_provider("costs"),
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        scenario=config_provider("scenario"),
-        RDIR=RDIR,
     input:
-        networks=expand(
-            RESULTS
-            + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        costs=lambda w: (
-            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
-            if config_provider("foresight")(w) == "overnight"
-            else resources(
-                "costs_{}.csv".format(
-                    config_provider("scenario", "planning_horizons", 0)(w)
-                )
-            )
-        ),
-        ac_plot=expand(
-            resources("maps/power-network-s-{clusters}.pdf"),
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        costs_plot=expand(
-            RESULTS
-            + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        h2_plot=lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
-                if config_provider("sector", "H2_network")(w)
-                else []
-            ),
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        ch4_plot=lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
-                if config_provider("sector", "gas_network")(w)
-                else []
-            ),
-            **config["scenario"],
-            allow_missing=True,
-        ),
+        network=RESULTS
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output:
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
-        cfs=RESULTS + "csvs/cfs.csv",
-        costs=RESULTS + "csvs/costs.csv",
-        capacities=RESULTS + "csvs/capacities.csv",
-        curtailment=RESULTS + "csvs/curtailment.csv",
-        energy=RESULTS + "csvs/energy.csv",
-        supply=RESULTS + "csvs/supply.csv",
-        supply_energy=RESULTS + "csvs/supply_energy.csv",
-        nodal_supply_energy=RESULTS + "csvs/nodal_supply_energy.csv",
-        prices=RESULTS + "csvs/prices.csv",
-        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
-        market_values=RESULTS + "csvs/market_values.csv",
-        price_statistics=RESULTS + "csvs/price_statistics.csv",
-        metrics=RESULTS + "csvs/metrics.csv",
-    threads: 2
+        costs=RESULTS
+        + "csvs/individual/costs_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        supply_energy=RESULTS
+        + "csvs/individual/supply_energy_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        metrics=RESULTS
+        + "csvs/individual/metrics_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+    threads: 1
     resources:
-        mem_mb=20000,
+        mem_mb=4000,
     log:
-        RESULTS + "logs/make_summary.log",
+        RESULTS + "logs/make_summary_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS + "benchmarks/make_summary_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/make_summary.py"
 
 
-rule plot_summary:
+rule make_global_summary:
+    input:
+        expand(
+            RESULTS
+            + "csvs/individual/{kind}_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+    output:
+        RESULTS + "csvs/{kind}.csv",
+    threads: 1
+    resources:
+        mem_mb=16000,
+    log:
+        RESULTS + "logs/make_global_summary_{kind}.log",
+    benchmark:
+        RESULTS + "benchmarks/make_global_summary_{kind}"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/make_global_summary.py"
+
+
+rule make_global_summary_all:
+    input:
+        costs=RESULTS + "csvs/costs.csv",
+        supply_energy=RESULTS + "csvs/supply_energy.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
+
+
+rule plot_global_summary:
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("scenario", "planning_horizons"),
