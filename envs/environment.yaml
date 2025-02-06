@@ -55,6 +55,7 @@ dependencies:
 - rasterio
 
 # Development dependencies
+- ipykernel
 - ipython
 - pre-commit
 - ruff
