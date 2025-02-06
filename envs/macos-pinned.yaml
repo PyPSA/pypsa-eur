@@ -125,7 +125,7 @@ dependencies:
   - graphviz=12.2.1
   - gtk3=3.24.43
   - gts=0.7.6
-  - h2=4.1.0
+  - h2=4.2.0
   - harfbuzz=10.2.0
   - hdf4=4.2.15
   - hdf5=1.14.3
