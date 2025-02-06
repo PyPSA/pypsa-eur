@@ -132,6 +132,7 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
+  cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
