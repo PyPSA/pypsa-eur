@@ -15,7 +15,7 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: self-hosted
     outputs:
-      failed: ${{ steps.error_catcher.outputs.failed }} 
+      failed: ${{ steps.error_catcher.outputs.failed }}
     steps:
     - uses: lkstrp/pypsa-validator@v0.2.5
       id: validation
