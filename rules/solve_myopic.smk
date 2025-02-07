@@ -128,7 +128,7 @@ rule solve_sector_network_myopic:
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
-        "shallow"
+        shadow_config
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_solver.log",

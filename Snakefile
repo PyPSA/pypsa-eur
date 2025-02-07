@@ -10,7 +10,13 @@ from snakemake.utils import min_version
 
 min_version("8.11")
 
-from scripts._helpers import path_provider, copy_default_files, get_scenarios, get_rdir
+from scripts._helpers import (
+    path_provider,
+    copy_default_files,
+    get_scenarios,
+    get_rdir,
+    get_shadow,
+)
 
 
 copy_default_files(workflow)
@@ -23,6 +29,7 @@ configfile: "config/config.yaml"
 run = config["run"]
 scenarios = get_scenarios(run)
 RDIR = get_rdir(run)
+shadow_config = get_shadow(run)
 
 shared_resources = run["shared_resources"]["policy"]
 exclude_from_shared = run["shared_resources"]["exclude"]

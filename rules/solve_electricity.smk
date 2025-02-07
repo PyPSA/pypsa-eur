@@ -30,7 +30,7 @@ rule solve_network:
         mem_mb=memory,
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "shallow"
+        shadow_config
     conda:
         "../envs/environment.yaml"
     script:
@@ -65,7 +65,7 @@ rule solve_operations_network:
         mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "shallow"
+        shadow_config
     conda:
         "../envs/environment.yaml"
     script:
