@@ -265,7 +265,16 @@ def co2_emissions_year(
 
 
 # TODO: move to own rule with sector-opts wildcard?
-def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, options):
+def build_carbon_budget(
+    o,
+    input_eurostat,
+    fn,
+    emissions_scope,
+    input_co2,
+    options,
+    countries,
+    planning_horizons,
+):
     """
     Distribute carbon budget following beta or exponential transition path.
     """
@@ -278,8 +287,6 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, optio
         # exponential decay
         carbon_budget = float(o[o.find("cb") + 2 : o.find("ex")])
         r = float(o[o.find("ex") + 2 :])
-
-    countries = snakemake.params.countries
 
     e_1990 = co2_emissions_year(
         countries,
@@ -300,7 +307,6 @@ def build_carbon_budget(o, input_eurostat, fn, emissions_scope, input_co2, optio
         year=2018,
     )
 
-    planning_horizons = snakemake.params.planning_horizons
     if not isinstance(planning_horizons, list):
         planning_horizons = [planning_horizons]
     t_0 = planning_horizons[0]
@@ -407,12 +413,27 @@ def create_network_topology(
 def update_wind_solar_costs(
     n: pypsa.Network,
     costs: pd.DataFrame,
+    profiles: dict[str, str],
     line_length_factor: int | float = 1,
     landfall_lengths: dict = None,
 ) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
     cost in the planning year.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to update generator costs
+    costs : pd.DataFrame
+        Cost assumptions DataFrame
+    profiles : dict[str, str]
+        Dictionary mapping technology names to profile file paths
+        e.g. {'offwind-dc': 'path/to/profile.nc'}
+    line_length_factor : int | float, optional
+        Factor to multiply line lengths by, by default 1
+    landfall_lengths : dict, optional
+        Dictionary of landfall lengths per technology, by default None
     """
 
     if landfall_lengths is None:
@@ -434,8 +455,12 @@ def update_wind_solar_costs(
         landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
             continue
-        profile = snakemake.input["profile_offwind-" + connection]
-        with xr.open_dataset(profile) as ds:
+
+        profile_key = f"offwind-{connection}"
+        if profile_key not in profiles:
+            continue
+
+        with xr.open_dataset(profiles[profile_key]) as ds:
             # if-statement for compatibility with old profiles
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
@@ -555,14 +580,22 @@ def add_carrier_buses(n, carrier, nodes=None):
 
 
 # TODO: PyPSA-Eur merge issue
-def remove_elec_base_techs(n):
+def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
     """
     Remove conventional generators (e.g. OCGT) and storage units (e.g.
     batteries and H2) from base electricity-only network, since they're added
     here differently using links.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to remove components from
+    carriers_to_keep : dict
+        Dictionary specifying which carriers to keep for each component type
+        e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
     """
-    for c in n.iterate_components(snakemake.params.pypsa_eur):
-        to_keep = snakemake.params.pypsa_eur[c.name]
+    for c in n.iterate_components(carriers_to_keep):
+        to_keep = carriers_to_keep[c.name]
         to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
         if to_remove.empty:
             continue
@@ -582,10 +615,10 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n, costs, landfall_lengths):
-    remove_elec_base_techs(n)
+def patch_electricity_network(n, costs, carriers_to_keep, landfall_lengths, profiles):
+    remove_elec_base_techs(n, carriers_to_keep)
     remove_non_electric_buses(n)
-    update_wind_solar_costs(n, costs, landfall_lengths=landfall_lengths)
+    update_wind_solar_costs(n, costs, profiles, landfall_lengths=landfall_lengths)
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
     n.buses["unit"] = "MWh_el"
@@ -4639,12 +4672,18 @@ if __name__ == "__main__":
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
+    carriers_to_keep = snakemake.params.pypsa_eur
+    profiles = {
+        "offwind-dc": snakemake.input["profile_offwind-dc"],
+        "offwind-ac": snakemake.input["profile_offwind-ac"],
+        "offwind-float": snakemake.input["profile_offwind-float"],
+    }
     landfall_lengths = {
         tech: settings["landfall_length"]
         for tech, settings in snakemake.params.renewable.items()
         if "landfall_length" in settings.keys()
     }
-    patch_electricity_network(n, costs, landfall_lengths)
+    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths)
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
@@ -4730,6 +4769,8 @@ if __name__ == "__main__":
                 emissions_scope,
                 input_co2,
                 options,
+                snakemake.params.countries,
+                snakemake.params.planning_horizons,
             )
         co2_cap = pd.read_csv(fn, index_col=0).squeeze()
         limit = co2_cap.loc[investment_year]
