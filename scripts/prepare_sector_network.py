@@ -2153,9 +2153,11 @@ def add_heat(n: pypsa.Network, costs: pd.DataFrame, cop: xr.DataArray):
             )
 
             heat_dsm_profile = pd.read_csv(
-                snakemake.input.heat_dsm_profile, header=[1], index_col=[0]
-            )[nodes]
-            heat_dsm_profile.index = n.snapshots
+                snakemake.input.heat_dsm_profile,
+                header=[1],
+                index_col=[0],
+                parse_dates=True,
+            )[nodes].reindex(n.snapshots)
 
             e_nom = (
                 heat_demand[["residential space"]]
