@@ -83,3 +83,63 @@ rule validate_elec_networks:
             run=config["run"]["name"],
             kind=["production", "prices", "cross_border"],
         ),
+
+
+rule plot_statistics:
+    input:
+        lambda w: expand(
+            (
+                RESULTS
+                + "statistics/csv/base_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_csv"
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+            country=config_provider("plotting", "statistics")(w).get(
+                "countries", "all"
+            ),
+            carrier=config_provider("plotting", "statistics")(w).get(
+                "carriers", "all"
+            ),
+            allow_missing=True,
+        ),
+        expand(
+            RESULTS
+            + "statistics/figures/single/base_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}/country_{country}/.statistics_{carrier}_plots",
+            **config["scenario"],
+            country=config_provider("plotting", "statistics")(run).get(
+                "countries", "all"
+            ),
+            carrier=config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            ),
+            run=config["run"]["name"],
+        ),
+        expand(
+            RESULTS
+            + "statistics/figures/comparison/country_{country}/.statistics_{carrier}_plots",
+            country=config_provider("plotting", "statistics")(run).get(
+                "countries", "all"
+            ),
+            carrier=config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            ),
+            run=config["run"]["name"],
+        ),
+        expand(
+            "results/statistics/"
+            + config_provider("plotting", "statistics")(run).get(
+                "comparison_folder", "''"
+            )
+            + "/"
+            + "figures/country_{country}/.statistics_{carrier}_plots",
+            country=config_provider("plotting", "statistics")(run).get(
+                "countries", "all"
+            ),
+            carrier=config_provider("plotting", "statistics")(run).get(
+                "carriers", "all"
+            ),
+            run=config["run"]["name"],
+        )
+        if config_provider("plotting", "statistics")(run).get("comparison_folder", "")
+        != ""
+        else [],
