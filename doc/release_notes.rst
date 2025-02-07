@@ -268,6 +268,8 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   (https://github.com/PyPSA/pypsa-eur/pull/1474)
 
 
+* Enable retaining existing conventional capacities added in the power only model for sector-coupeled applications.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
