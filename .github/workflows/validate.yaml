@@ -14,19 +14,29 @@ jobs:
     name: Run validation
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: self-hosted
+    outputs:
+      failed: ${{ steps.error_catcher.outputs.failed }} 
     steps:
     - uses: lkstrp/pypsa-validator@v0.2.5
+      id: validation
       with:
         step: run-self-hosted-validation
         env_file: envs/environment.yaml
         snakemake_config: config/test/config.validator.yaml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Catch failure
+      if: failure()
+      id: error_catcher
+      run: |
+        echo "failed=true" >> $GITHUB_OUTPUT
 
   create-report:
     name: Create report
-    if: github.event.pull_request.head.repo.full_name == github.repository
     needs: run-validation
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository && 
+      needs.run-validation.outputs.failed != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: lkstrp/pypsa-validator@v0.2.5
