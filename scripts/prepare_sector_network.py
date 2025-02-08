@@ -1148,9 +1148,11 @@ def add_ammonia(n, costs):
     nodes = pop_layout.index
     nhours = n.snapshot_weightings.generators.sum()
 
+    tolerance = 1.001  # extra 0.5% to avoid numerical errors
     p_nom = (
         industrial_demand["ammonia"].groupby(level="node").sum().div(nhours)
-        / costs.at["Haber-Bosch", "electricity-input"]
+        * costs.at["Haber-Bosch", "electricity-input"]
+        * tolerance
     )
 
     no_relocation = not options["relocation_ammonia"]
