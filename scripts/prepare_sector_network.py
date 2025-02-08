@@ -638,7 +638,44 @@ def add_eu_bus(n, x=-5.5, y=46):
     n.add("Carrier", "none")
 
 
-def add_co2_tracking(n, costs, options):
+def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
+    """
+    Add CO2 tracking components to the network including atmospheric CO2,
+    CO2 storage, and sequestration infrastructure.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Cost assumptions for different technologies, must include
+        'CO2 storage tank' with 'fixed' cost column
+    options : dict
+        Configuration options containing at least:
+        - regional_co2_sequestration_potential: dict with keys
+            - enable: bool
+            - max_size: float
+            - years_of_storage: float
+        - co2_sequestration_cost: float
+        - co2_sequestration_lifetime: float
+        - co2_vent: bool
+    sequestration_potential_file : str, optional
+        Path to CSV file containing regional CO2 sequestration potentials.
+        Required if options['regional_co2_sequestration_potential']['enable'] is True.
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding CO2-related components.
+
+    Notes
+    -----
+    Adds several components to track CO2:
+    - Atmospheric CO2 store
+    - CO2 storage tanks
+    - CO2 sequestration infrastructure
+    - Optional CO2 venting facilities
+    """
     # minus sign because opposite to how fossil fuels used:
     # CH4 burning puts CH4 down, atmosphere up
     n.add("Carrier", "co2", co2_emissions=-1.0)
@@ -699,13 +736,16 @@ def add_co2_tracking(n, costs, options):
     )
 
     if options["regional_co2_sequestration_potential"]["enable"]:
+        if sequestration_potential_file is None:
+            raise ValueError(
+                "sequestration_potential_file must be provided when "
+                "regional_co2_sequestration_potential is enabled"
+            )
         upper_limit = (
             options["regional_co2_sequestration_potential"]["max_size"] * 1e3
         )  # Mt
         annualiser = options["regional_co2_sequestration_potential"]["years_of_storage"]
-        e_nom_max = pd.read_csv(
-            snakemake.input.sequestration_potential, index_col=0
-        ).squeeze()
+        e_nom_max = pd.read_csv(sequestration_potential_file, index_col=0).squeeze()
         e_nom_max = (
             e_nom_max.reindex(spatial.co2.locations)
             .fillna(0.0)
@@ -743,7 +783,36 @@ def add_co2_tracking(n, costs, options):
         )
 
 
-def add_co2_network(n, costs):
+def add_co2_network(n, costs, co2_network_cost_factor=1.0):
+    """
+    Add CO2 transport network to the PyPSA network.
+
+    Creates a CO2 pipeline network with both onshore and submarine pipeline segments,
+    considering different costs for each type. The network allows bidirectional flow
+    and is extendable.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Cost assumptions for different technologies. Must contain entries for
+        'CO2 pipeline' and 'CO2 submarine pipeline' with 'fixed' and 'lifetime'
+        columns
+    co2_network_cost_factor : float, optional
+        Factor to scale the capital costs of the CO2 network, default 1.0
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding CO2 pipeline links
+
+    Notes
+    -----
+    The function creates bidirectional CO2 pipeline links between nodes, with costs
+    depending on the underwater fraction of the pipeline. The network topology is
+    created using the create_network_topology helper function.
+    """
     logger.info("Adding CO2 network.")
     co2_links = create_network_topology(n, "CO2 pipeline ")
 
@@ -761,8 +830,7 @@ def add_co2_network(n, costs):
         * co2_links.length
     )
     capital_cost = cost_onshore + cost_submarine
-    cost_factor = snakemake.config["sector"]["co2_network_cost_factor"]
-    capital_cost *= cost_factor
+    capital_cost *= co2_network_cost_factor
 
     n.add(
         "Link",
@@ -1073,15 +1141,45 @@ def add_dac(n, costs):
     )
 
 
-def add_co2limit(n, options, nyears=1.0, limit=0.0):
-    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
+def add_co2limit(n, options, co2_totals_file, countries, nyears=1.0, limit=0.0):
+    """
+    Add a global CO2 emissions constraint to the network.
 
-    countries = snakemake.params.countries
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    options : dict
+        Dictionary of options determining which sectors to consider for emissions
+    co2_totals_file : str
+        Path to CSV file containing historical CO2 emissions data in Mt
+        (megatonnes) per country and sector
+    countries : list
+        List of country codes to consider for the CO2 limit
+    nyears : float, optional
+        Number of years for the CO2 budget, by default 1.0
+    limit : float, optional
+        CO2 limit as a fraction of 1990 levels, by default 0.0
+
+    Returns
+    -------
+    None
+        The function modifies the network object in-place by adding a global
+        CO2 constraint.
+
+    Notes
+    -----
+    The function reads historical CO2 emissions data, calculates a total limit
+    based on the specified countries and sectors, and adds a global constraint
+    to the network. The limit is calculated as a fraction of historical emissions
+    multiplied by the number of years.
+    """
+    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
     sectors = determine_emission_sectors(options)
 
     # convert Mt to tCO2
-    co2_totals = 1e6 * pd.read_csv(snakemake.input.co2_totals_name, index_col=0)
+    co2_totals = 1e6 * pd.read_csv(co2_totals_file, index_col=0)
 
     co2_limit = co2_totals.loc[countries, sectors].sum().sum()
 
@@ -1382,7 +1480,74 @@ def add_electricity_grid_connection(n, costs):
     ]
 
 
-def add_storage_and_grids(n, costs):
+def add_storage_and_grids(
+    n,
+    costs,
+    pop_layout,
+    h2_cavern_file,
+    cavern_types,
+    clustered_gas_network_file=None,
+    gas_input_nodes_file=None,
+    spatial=None,
+    options=None,
+):
+    """
+    Add storage and grid infrastructure to the network including hydrogen, gas, and battery systems.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Technology cost assumptions
+    pop_layout : pd.DataFrame
+        Population layout with index of locations/nodes
+    h2_cavern_file : str
+        Path to CSV file containing hydrogen cavern storage potentials
+    cavern_types : list
+        List of underground storage types to consider
+    clustered_gas_network_file : str, optional
+        Path to CSV file containing gas network data
+    gas_input_nodes_file : str, optional
+        Path to CSV file containing gas input nodes data
+    spatial : object, optional
+        Object containing spatial information about nodes and their locations
+    options : dict, optional
+        Dictionary of configuration options. Defaults to empty dict if not provided.
+        Key options include:
+        - hydrogen_fuel_cell : bool
+        - hydrogen_turbine : bool
+        - hydrogen_underground_storage : bool
+        - gas_network : bool
+        - H2_retrofit : bool
+        - H2_network : bool
+        - methanation : bool
+        - coal_cc : bool
+        - SMR_cc : bool
+        - SMR : bool
+        - marginal_cost_storage : float
+        - min_part_load_methanation : float
+        - cc_fraction : float
+    logger : logging.Logger, optional
+        Logger for output messages. If None, no logging is performed.
+
+    Returns
+    -------
+    None
+        The function modifies the network object in-place by adding various
+        storage and grid components.
+
+    Notes
+    -----
+    This function adds multiple types of storage and grid infrastructure:
+    - Hydrogen infrastructure (electrolysis, fuel cells, storage)
+    - Gas network infrastructure
+    - Battery storage systems
+    - Carbon capture and conversion facilities (if enabled in options)
+    """
+    # Set defaults
+    options = options or {}
+
     logger.info("Add hydrogen storage")
 
     nodes = pop_layout.index
@@ -1439,8 +1604,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["OCGT", "lifetime"],
         )
 
-    cavern_types = snakemake.params.sector["hydrogen_underground_storage_locations"]
-    h2_caverns = pd.read_csv(snakemake.input.h2_cavern, index_col=0)
+    h2_caverns = pd.read_csv(h2_cavern_file, index_col=0)
 
     if (
         not h2_caverns.empty
@@ -1490,8 +1654,7 @@ def add_storage_and_grids(n, costs):
     )
 
     if options["gas_network"] or options["H2_retrofit"]:
-        fn = snakemake.input.clustered_gas_network
-        gas_pipes = pd.read_csv(fn, index_col=0)
+        gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
     if options["gas_network"]:
         logger.info(
@@ -1532,8 +1695,7 @@ def add_storage_and_grids(n, costs):
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
 
-        fn = snakemake.input.gas_input_nodes_simplified
-        gas_input_nodes = pd.read_csv(fn, index_col=0)
+        gas_input_nodes = pd.read_csv(gas_input_nodes_file, index_col=0)
 
         unique = gas_input_nodes.index.unique()
         gas_i = n.generators.carrier == "gas"
@@ -1972,36 +2134,86 @@ def add_ice_cars(n, p_set, ice_share, temperature):
     )
 
 
-def add_land_transport(n, costs):
-    logger.info("Add land transport")
+def add_land_transport(
+    n,
+    costs,
+    transport_demand_file,
+    transport_data_file,
+    avail_profile_file,
+    dsm_profile_file,
+    temp_air_total_file,
+    options,
+    investment_year,
+    nodes,
+    logger=None,
+):
+    """
+    Add land transport demand and infrastructure to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Cost assumptions for different technologies
+    transport_demand_file : str
+        Path to CSV file containing transport demand in driven km [100 km]
+    transport_data_file : str
+        Path to CSV file containing number of cars per region
+    avail_profile_file : str
+        Path to CSV file containing availability profiles
+    dsm_profile_file : str
+        Path to CSV file containing demand-side management profiles
+    temp_air_total_file : str
+        Path to netCDF file containing air temperature data
+    options : dict
+        Dictionary containing configuration options, specifically:
+        - land_transport_fuel_cell_share
+        - land_transport_electric_share
+        - land_transport_ice_share
+    investment_year : int
+        Year for which to get the transport shares
+    nodes : list-like
+        List of spatial nodes to consider
+    logger : logging.Logger, optional
+        Logger instance for output. If None, logging is skipped.
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding transport-related
+        components and their properties.
+
+    Notes
+    -----
+    The function adds different types of land transport (electric vehicles,
+    fuel cell vehicles, and internal combustion engines) to the network
+    based on specified shares and profiles.
+    """
+    if logger:
+        logger.info("Add land transport")
 
     # read in transport demand in units driven km [100 km]
-    transport = pd.read_csv(
-        snakemake.input.transport_demand, index_col=0, parse_dates=True
-    )
-    number_cars = pd.read_csv(snakemake.input.transport_data, index_col=0)[
-        "number cars"
-    ]
-    avail_profile = pd.read_csv(
-        snakemake.input.avail_profile, index_col=0, parse_dates=True
-    )
-    dsm_profile = pd.read_csv(
-        snakemake.input.dsm_profile, index_col=0, parse_dates=True
-    )
+    transport = pd.read_csv(transport_demand_file, index_col=0, parse_dates=True)
+    number_cars = pd.read_csv(transport_data_file, index_col=0)["number cars"]
+    avail_profile = pd.read_csv(avail_profile_file, index_col=0, parse_dates=True)
+    dsm_profile = pd.read_csv(dsm_profile_file, index_col=0, parse_dates=True)
 
     # exogenous share of passenger car type
     engine_types = ["fuel_cell", "electric", "ice"]
     shares = pd.Series()
     for engine in engine_types:
-        shares[engine] = get(options[f"land_transport_{engine}_share"], investment_year)
-        logger.info(f"{engine} share: {shares[engine] * 100}%")
+        share_key = f"land_transport_{engine}_share"
+        shares[engine] = get(options[share_key], investment_year)
+        if logger:
+            logger.info(f"{engine} share: {shares[engine] * 100}%")
 
     check_land_transport_shares(shares)
 
-    p_set = transport[spatial.nodes]
+    p_set = transport[nodes]
 
     # temperature for correction factor for heating/cooling
-    temperature = xr.open_dataarray(snakemake.input.temp_air_total).to_pandas()
+    temperature = xr.open_dataarray(temp_air_total_file).to_pandas()
 
     if shares["electric"] > 0:
         add_EVs(
@@ -2021,11 +2233,39 @@ def add_land_transport(n, costs):
         add_ice_cars(n, p_set, shares["ice"], temperature)
 
 
-def build_heat_demand(n):
+def build_heat_demand(
+    n, hourly_heat_demand_file, pop_weighted_energy_totals, heating_efficiencies
+):
+    """
+    Build heat demand time series and adjust electricity load to account for electric heating.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    hourly_heat_demand_file : str
+        Path to netCDF file containing hourly heat demand data
+    pop_weighted_energy_totals : pd.DataFrame
+        Population-weighted energy totals containing columns for total and
+        electricity consumption for different sectors and uses
+    heating_efficiencies : dict
+        Dictionary mapping sector and use combinations to their heating efficiencies
+
+    Returns
+    -------
+    pd.DataFrame
+        Heat demand time series with hierarchical columns for different sectors
+        and uses (residential/services, water/space)
+
+    Notes
+    -----
+    The function:
+    - Constructs heat demand profiles for different sectors and uses
+    - Adjusts the electricity load profiles by subtracting electric heating
+    - Modifies the network object in-place by updating n.loads_t.p_set
+    """
     heat_demand_shape = (
-        xr.open_dataset(snakemake.input.hourly_heat_demand_total)
-        .to_dataframe()
-        .unstack(level=1)
+        xr.open_dataset(hourly_heat_demand_file).to_dataframe().unstack(level=1)
     )
 
     sectors = [sector.value for sector in HeatSector]
@@ -2064,29 +2304,95 @@ def build_heat_demand(n):
 def add_heat(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    cop: xr.DataArray,
-    direct_heat_source_utilisation_profile: xr.DataArray,
+    cop_profiles_file: str,
+    direct_heat_source_utilisation_profile_file: str,
+    hourly_heat_demand_total_file: str,
+    district_heat_share_file: str,
+    solar_thermal_total_file: str,
+    retro_cost_file: str,
+    floor_area_file: str,
+    heat_source_profile_files: dict[str, str],
+    params: dict,
+    pop_weighted_energy_totals: pd.DataFrame,
+    heating_efficiencies: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    spatial: object,
+    options: dict,
+    investment_year: int,
 ):
     """
-    Add heat sector to the network.
+    Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
 
     Parameters
     ----------
-        n (pypsa.Network): The PyPSA network object.
-        costs (pd.DataFrame): DataFrame containing cost information.
-        cop (xr.DataArray): DataArray containing coefficient of performance (COP) values.
+    n : pypsa.Network
+        The PyPSA network object
+    costs : pd.DataFrame
+        DataFrame containing cost information for different technologies
+    cop_profiles_file : str
+        Path to NetCDF file containing coefficient of performance (COP) values for heat pumps
+    direct_heat_source_utilisation_profile_file : str
+        Path to NetCDF file containing direct heat source utilisation profiles
+    hourly_heat_demand_total_file : str
+        Path to CSV file containing hourly heat demand data
+    district_heat_share_file : str
+        Path to CSV file containing district heating share information
+    solar_thermal_total_file : str
+        Path to NetCDF file containing solar thermal generation data
+    retro_cost_file : str
+        Path to CSV file containing retrofitting costs
+    floor_area_file : str
+        Path to CSV file containing floor area data
+    heat_source_profile_files : dict[str, str]
+        Dictionary mapping heat source names to their data file paths
+    params : dict
+        Dictionary containing parameters including:
+        - heat_pump_sources
+        - heat_utilisation_potentials
+        - direct_utilisation_heat_sources
+    pop_weighted_energy_totals : pd.DataFrame
+        Population-weighted energy totals by region
+    heating_efficiencies : pd.DataFrame
+        Heating system efficiencies
+    pop_layout : pd.DataFrame
+        Population layout data with columns for fraction and country
+    spatial : object
+        Object containing spatial data with attributes for different carriers (gas, co2, etc.)
+    options : dict
+        Dictionary containing configuration options for heat sector components
+    investment_year : int
+        Year for which to get the heat sector components and costs
 
     Returns
     -------
-        None
+    None
+        Modifies the network object in-place by adding heat sector components
+
+    Notes
+    -----
+    The function adds various heat sector components to the network including:
+    - Heat demand for different sectors (residential, services)
+    - Heat pumps with different heat sources
+    - Thermal energy storage if enabled
+    - Gas boilers if enabled
+    - Solar thermal if enabled
+    - Combined heat and power (CHP) plants if enabled
+    - Building retrofitting options if enabled
     """
     logger.info("Add heat sector")
 
     sectors = [sector.value for sector in HeatSector]
 
-    heat_demand = build_heat_demand(n)
+    heat_demand = build_heat_demand(
+        n,
+        hourly_heat_demand_total_file,
+        pop_weighted_energy_totals,
+        heating_efficiencies,
+    )
 
-    district_heat_info = pd.read_csv(snakemake.input.district_heat_share, index_col=0)
+    cop = xr.open_dataarray(cop_profiles_file)
+    direct_heat_profile = xr.open_dataarray(direct_heat_source_utilisation_profile_file)
+    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
 
@@ -2101,7 +2407,7 @@ def add_heat(
 
     if options["solar_thermal"]:
         solar_thermal = (
-            xr.open_dataarray(snakemake.input.solar_thermal_total)
+            xr.open_dataarray(solar_thermal_total_file)
             .to_pandas()
             .reindex(index=n.snapshots)
         )
@@ -2180,9 +2486,7 @@ def add_heat(
         )
 
         ## Add heat pumps
-        for heat_source in snakemake.params.heat_pump_sources[
-            heat_system.system_type.value
-        ]:
+        for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
             cop_heat_pump = (
                 cop.sel(
@@ -2196,10 +2500,10 @@ def add_heat(
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )
 
-            if heat_source in snakemake.params.heat_utilisation_potentials:
+            if heat_source in params.heat_utilisation_potentials:
                 # get potential
                 p_max_source = pd.read_csv(
-                    snakemake.input[heat_source],
+                    heat_source_profile_files[heat_source],
                     index_col=0,
                 ).squeeze()[nodes]
 
@@ -2213,7 +2517,7 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in snakemake.params.direct_utilisation_heat_sources:
+                if heat_source in params.direct_utilisation_heat_sources:
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source), "fixed"
@@ -2256,10 +2560,10 @@ def add_heat(
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
-                if heat_source in snakemake.params.direct_utilisation_heat_sources:
+                if heat_source in params.direct_utilisation_heat_sources:
                     # 1 if source temperature exceeds forward temperature, 0 otherwise:
                     efficiency_direct_utilisation = (
-                        direct_heat_source_utilisation_profile.sel(
+                        direct_heat_profile.sel(
                             heat_source=heat_source,
                             name=nodes,
                         )
@@ -2492,13 +2796,13 @@ def add_heat(
         # demand 'dE' [per unit of original heat demand] for each country and
         # different retrofitting strengths [additional insulation thickness in m]
         retro_data = pd.read_csv(
-            snakemake.input.retro_cost,
+            retro_cost_file,
             index_col=[0, 1],
             skipinitialspace=True,
             header=[0, 1],
         )
         # heated floor area [10^6 * m^2] per country
-        floor_area = pd.read_csv(snakemake.input.floor_area, index_col=[0, 1])
+        floor_area_file = pd.read_csv(floor_area_file, index_col=[0, 1])
 
         n.add("Carrier", "retrofitting")
 
@@ -2537,7 +2841,7 @@ def add_heat(
 
             # get floor aread at node and region (urban/rural) in m^2
             floor_area_node = (
-                pop_layout.loc[node].fraction * floor_area.loc[ct, "value"] * 10**6
+                pop_layout.loc[node].fraction * floor_area_file.loc[ct, "value"] * 10**6
             ).loc[sec] * f
             # total heat demand at node [MWh]
             demand = n.loads_t.p_set[name]
@@ -2624,10 +2928,68 @@ def add_methanol(n, costs):
         add_methanol_reforming_cc(n, costs)
 
 
-def add_biomass(n, costs):
+def add_biomass(
+    n,
+    costs,
+    options,
+    spatial,
+    cf_industry,
+    pop_layout,
+    biomass_potentials_file,
+    biomass_transport_costs_file=None,
+):
+    """
+    Add biomass-related components to the PyPSA network.
+
+    This function adds various biomass-related components including biogas,
+    solid biomass, municipal solid waste, biomass transport, and different
+    biomass conversion technologies (CHP, boilers, BtL, BioSNG, etc.).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        DataFrame containing technology cost assumptions
+    options : dict
+        Dictionary of configuration options including keys like:
+        - gas_network : bool
+        - biomass_transport : bool
+        - biomass_spatial : bool
+        - municipal_solid_waste : bool
+        - biomass_to_liquid : bool
+        - etc.
+    spatial : object
+        Object containing spatial information about different carriers (gas, biomass, etc.)
+    cf_industry : dict
+        Dictionary containing industrial sector configuration
+    pop_layout : pd.DataFrame
+        DataFrame containing population layout information
+    biomass_potentials_file : str
+        Path to CSV file containing biomass potentials data
+    biomass_transport_costs_file : str, optional
+        Path to CSV file containing biomass transport costs data.
+        Required if biomass_transport or biomass_spatial options are True.
+
+    Returns
+    -------
+    None
+        The function modifies the network object in-place by adding
+        biomass-related components.
+
+    Notes
+    -----
+    The function adds various types of biomass-related components depending
+    on the options provided, including:
+    - Biogas and solid biomass generators
+    - Municipal solid waste if enabled
+    - Biomass transport infrastructure
+    - Biomass conversion technologies (CHP, boilers, BtL, BioSNG)
+    - Carbon capture options for different processes
+    """
     logger.info("Add biomass")
 
-    biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
+    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0)
 
     # need to aggregate potentials if gas not nodally resolved
     if options["gas_network"]:
@@ -2898,9 +3260,7 @@ def add_biomass(n, costs):
 
     if options["biomass_transport"]:
         # add biomass transport
-        transport_costs = pd.read_csv(
-            snakemake.input.biomass_transport_costs, index_col=0
-        )
+        transport_costs = pd.read_csv(biomass_transport_costs_file, index_col=0)
         transport_costs = transport_costs.squeeze()
         biomass_transport = create_network_topology(
             n, "biomass transport ", bidirectional=False
@@ -2942,9 +3302,7 @@ def add_biomass(n, costs):
 
     elif options["biomass_spatial"]:
         # add artificial biomass generators at nodes which include transport costs
-        transport_costs = pd.read_csv(
-            snakemake.input.biomass_transport_costs, index_col=0
-        )
+        transport_costs = pd.read_csv(biomass_transport_costs_file, index_col=0)
         transport_costs = transport_costs.squeeze()
         bus_transport_costs = spatial.biomass.nodes.to_series().apply(
             lambda x: transport_costs[x[:2]]
@@ -3264,7 +3622,69 @@ def add_biomass(n, costs):
         )
 
 
-def add_industry(n, costs):
+def add_industry(
+    n,
+    costs,
+    industrial_demand_file,
+    shipping_demand_file,
+    pop_layout,
+    pop_weighted_energy_totals,
+    options,
+    spatial,
+    cf_industry,
+    investment_year,
+):
+    """
+    Add industry, shipping, aviation, and their corresponding carrier buses to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object
+    costs : pd.DataFrame
+        Costs data including carbon capture, fuel costs, etc.
+    industrial_demand_file : str
+        Path to CSV file containing industrial demand data
+    shipping_demand_file : str
+        Path to CSV file containing shipping demand data
+    pop_layout : pd.DataFrame
+        Population layout data with index of nodes
+    pop_weighted_energy_totals : pd.DataFrame
+        Population-weighted energy totals including aviation and navigation data
+    options : dict
+        Dictionary of configuration options including:
+        - biomass_spatial
+        - biomass_transport
+        - gas_network
+        - methanol configuration
+        - regional_oil_demand
+        - shipping shares (hydrogen, methanol, oil)
+        - and others
+    spatial : object
+        Object containing spatial configuration for different carriers
+        (biomass, gas, oil, methanol, etc.)
+    cf_industry : dict
+        Industry-specific configuration parameters
+    investment_year : int
+        Year for which investment costs should be considered
+    HeatSystem : Enum
+        Enumeration defining different heat system types
+
+    Returns
+    -------
+    None
+        The function modifies the network object in-place by adding
+        industry-related components.
+
+    Notes
+    -----
+    This function adds multiple components to the network including:
+    - Industrial demand for various carriers
+    - Shipping and aviation infrastructure
+    - Carbon capture facilities
+    - Heat systems
+    - Process emission handling
+    """
     logger.info("Add industrial demand")
     # add oil buses for shipping, aviation and naptha for industry
     add_carrier_buses(n, "oil")
@@ -3276,9 +3696,7 @@ def add_industry(n, costs):
     nyears = nhours / 8760
 
     # 1e6 to convert TWh to MWh
-    industrial_demand = (
-        pd.read_csv(snakemake.input.industrial_demand, index_col=0) * 1e6
-    ) * nyears
+    industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
 
     n.add(
         "Bus",
@@ -3475,8 +3893,7 @@ def add_industry(n, costs):
         nodes, ["total domestic navigation"]
     ].squeeze()
     international_navigation = (
-        pd.read_csv(snakemake.input.shipping_demand, index_col=0).squeeze(axis=1)
-        * nyears
+        pd.read_csv(shipping_demand_file, index_col=0).squeeze(axis=1) * nyears
     )
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / nhours
@@ -4426,13 +4843,62 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
-def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
+def add_enhanced_geothermal(
+    n,
+    costs,
+    costs_config,
+    egs_potentials,
+    egs_overlap,
+    egs_config,
+    egs_capacity_factors=None,
+):
     """
-    Adds EGS potential to model.
+    Add Enhanced Geothermal System (EGS) potential to the network model.
 
-    Built in scripts/build_egs_potentials.py
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network container object.
+    egs_potentials : str
+        Path to CSV file containing EGS potential data.
+    egs_overlap : str
+        Path to CSV file defining overlap between gridded geothermal potential
+        estimation and bus regions.
+    costs : pd.DataFrame
+        Technology cost assumptions including fields for lifetime, FOM, investment,
+        and efficiency parameters.
+    egs_config : dict
+        Configuration for enhanced geothermal systems with keys:
+        - var_cf : bool
+            Whether to use time-varying capacity factors
+        - flexible : bool
+            Whether to add flexible operation using geothermal reservoir
+        - max_hours : float
+            Maximum hours of storage if flexible
+        - max_boost : float
+            Maximum power boost factor if flexible
+    costs_config : dict
+        General cost configuration containing:
+        - fill_values : dict
+            With key 'discount rate' for financial calculations
+    egs_capacity_factors : str, optional
+        Path to CSV file with time-varying capacity factors.
+        Required if egs_config['var_cf'] is True.
+
+    Returns
+    -------
+    None
+        Modifies the network object in-place by adding EGS components.
+
+    Notes
+    -----
+    Implements EGS with 2020 CAPEX from Aghahosseini et al 2021.
+    The function adds various components to the network:
+    - Geothermal heat generators and buses
+    - Organic Rankine Cycle links for electricity generation
+    - District heating links if urban central heat exists
+    - Optional storage units for flexible operation
     """
-
     if len(spatial.geothermal_heat.nodes) > 1:
         logger.warning(
             "'add_enhanced_geothermal' not implemented for multiple geothermal nodes."
@@ -4449,9 +4915,6 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
         "[EGS] electricity generation part -> 'geothermal organic rankine cycle'"
     )
     logger.info("[EGS] district heat distribution part -> 'geothermal district heat'")
-
-    egs_config = snakemake.params["sector"]["enhanced_geothermal"]
-    costs_config = snakemake.config["costs"]
 
     # matrix defining the overlap between gridded geothermal potential estimation, and bus regions
     overlap = pd.read_csv(egs_overlap, index_col=0)
@@ -4511,9 +4974,7 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
     )
 
     if egs_config["var_cf"]:
-        efficiency = pd.read_csv(
-            snakemake.input.egs_capacity_factors, parse_dates=True, index_col=0
-        )
+        efficiency = pd.read_csv(egs_capacity_factors, parse_dates=True, index_col=0)
         logger.info("Adding Enhanced Geothermal with time-varying capacity factors.")
     else:
         efficiency = 1.0
@@ -4700,27 +5161,77 @@ if __name__ == "__main__":
 
     add_eu_bus(n)
 
-    add_co2_tracking(n, costs, options)
+    add_co2_tracking(
+        n,
+        costs,
+        options,
+        sequestration_potential_file=snakemake.input.sequestration_potential,
+    )
 
     add_generation(n, costs)
 
-    add_storage_and_grids(n, costs)
-
+    add_storage_and_grids(
+        n,
+        costs,
+        pop_layout,
+        h2_cavern_file=snakemake.input.h2_cavern,
+        cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
+        clustered_gas_network_file=snakemake.input.clustered_gas_network,
+        gas_input_nodes_file=snakemake.input.gas_input_nodes_simplified,
+        spatial=spatial,
+        options=options,
+    )
     if options["transport"]:
-        add_land_transport(n, costs)
+        add_land_transport(
+            n=n,
+            costs=costs,
+            transport_demand_file=snakemake.input.transport_demand,
+            transport_data_file=snakemake.input.transport_data,
+            avail_profile_file=snakemake.input.avail_profile,
+            dsm_profile_file=snakemake.input.dsm_profile,
+            temp_air_total_file=snakemake.input.temp_air_total,
+            options=options,
+            investment_year=investment_year,
+            nodes=spatial.nodes,
+            logger=logger,
+        )
 
     if options["heating"]:
         add_heat(
             n=n,
             costs=costs,
-            cop=xr.open_dataarray(snakemake.input.cop_profiles),
-            direct_heat_source_utilisation_profile=xr.open_dataarray(
-                snakemake.input.direct_heat_source_utilisation_profiles
-            ),
+            cop_profiles_file=snakemake.input.cop_profiles,
+            direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
+            hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
+            district_heat_share_file=snakemake.input.district_heat_share,
+            solar_thermal_total_file=snakemake.input.solar_thermal_total,
+            retro_cost_file=snakemake.input.retro_cost,
+            floor_area_file=snakemake.input.floor_area,
+            heat_source_profile_files={
+                source: snakemake.input[source]
+                for system_type in snakemake.params.heat_pump_sources
+                for source in snakemake.params.heat_pump_sources[system_type]
+            },
+            params=snakemake.params,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            heating_efficiencies=heating_efficiencies,
+            pop_layout=pop_layout,
+            spatial=spatial,
+            options=options,
+            investment_year=investment_year,
         )
 
     if options["biomass"]:
-        add_biomass(n, costs)
+        add_biomass(
+            n,
+            costs,
+            options,
+            spatial,
+            cf_industry,
+            pop_layout,
+            biomass_potentials_file=snakemake.input.biomass_potentials,
+            biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
+        )
 
     if options["ammonia"]:
         add_ammonia(n, costs)
@@ -4729,7 +5240,18 @@ if __name__ == "__main__":
         add_methanol(n, costs)
 
     if options["industry"]:
-        add_industry(n, costs)
+        add_industry(
+            n,
+            costs,
+            snakemake.input.industry_demand,
+            snakemake.input.shipping_demand,
+            pop_layout,
+            pop_weighted_energy_totals,
+            options,
+            spatial,
+            cf_industry,
+            investment_year,
+        )
 
     if options["heating"]:
         add_waste_heat(n)
@@ -4747,7 +5269,13 @@ if __name__ == "__main__":
         remove_h2_network(n)
 
     if options["co2_network"]:
-        add_co2_network(n, costs)
+        add_co2_network(
+            n,
+            costs,
+            co2_network_cost_factor=snakemake.config["sector"][
+                "co2_network_cost_factor"
+            ],
+        )
 
     if options["allam_cycle_gas"]:
         add_allam_gas(n, costs)
@@ -4776,7 +5304,9 @@ if __name__ == "__main__":
         limit = co2_cap.loc[investment_year]
     else:
         limit = get(co2_budget, investment_year)
-    add_co2limit(n, options, nyears, limit)
+    add_co2limit(
+        n, options, snakemake.input.co2_totals_name, snakemake.params.countries
+    )
 
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:
@@ -4788,7 +5318,13 @@ if __name__ == "__main__":
     if options["enhanced_geothermal"].get("enable", False):
         logger.info("Adding Enhanced Geothermal Systems (EGS).")
         add_enhanced_geothermal(
-            n, snakemake.input["egs_potentials"], snakemake.input["egs_overlap"], costs
+            n,
+            costs=costs,
+            costs_config=snakemake.config["costs"],
+            egs_potentials=snakemake.input["egs_potentials"],
+            egs_overlap=snakemake.input["egs_overlap"],
+            egs_config=snakemake.params["sector"]["enhanced_geothermal"],
+            egs_capacity_factors="path/to/capacity_factors.csv",
         )
 
     if options["gas_distribution_grid"]:
