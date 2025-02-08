@@ -28,31 +28,36 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    kind = snakemake.wildcards.kind
+    for kind in ["costs", "supply_energy", "metrics"]:
 
-    summaries_dict = {
-        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
-        + snakemake.params.RDIR
-        + f"/csvs/individual/{kind}_s_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
-        for cluster in snakemake.params.scenario["clusters"]
-        for opt in snakemake.params.scenario["opts"]
-        for sector_opt in snakemake.params.scenario["sector_opts"]
-        for ll in snakemake.params.scenario["ll"]
-        for planning_horizon in snakemake.params.scenario["planning_horizons"]
-    }
+        logger.info(f"Creating global summary for {kind}")
 
-    columns = pd.MultiIndex.from_tuples(
-        summaries_dict.keys(),
-        names=["cluster", "ll", "opt", "planning_horizon"],
-    )
+        summaries_dict = {
+            (cluster, ll, opt + sector_opt, planning_horizon): "results/"
+            + snakemake.params.RDIR
+            + f"csvs/individual/{kind}_s_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.csv"
+            for cluster in snakemake.params.scenario["clusters"]
+            for opt in snakemake.params.scenario["opts"]
+            for sector_opt in snakemake.params.scenario["sector_opts"]
+            for ll in snakemake.params.scenario["ll"]
+            for planning_horizon in snakemake.params.scenario["planning_horizons"]
+        }
 
-    summaries = []
-    for _, filename in summaries_dict.items():
-        s = pd.read_csv(filename, index_col=INDEX_COLS[kind])
-        summaries.append(s)
+        columns = pd.MultiIndex.from_tuples(
+            summaries_dict.keys(),
+            names=["cluster", "ll", "opt", "planning_horizon"],
+        )
 
-    summaries = pd.concat(summaries, axis=1)
+        summaries = []
+        for _, filename in summaries_dict.items():
+            s = pd.read_csv(filename, index_col=INDEX_COLS[kind])
+            s.index.names = [None] * s.index.nlevels
+            summaries.append(s)
 
-    summaries.columns = columns
+        summaries = pd.concat(summaries, axis=1)
 
-    summaries.to_csv(snakemake.output[kind])
+        summaries.columns = columns
+
+        summaries.sort_index().to_csv(snakemake.output[kind])
+
+        del summaries

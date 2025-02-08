@@ -156,33 +156,43 @@ rule make_summary:
 
 
 rule make_global_summary:
+    params:
+        scenario=config_provider("scenario"),
+        RDIR=RDIR,
     input:
-        expand(
+        costs=expand(
             RESULTS
-            + "csvs/individual/{kind}_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            + "csvs/individual/costs_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        supply_energy=expand(
+            RESULTS
+            + "csvs/individual/supply_energy_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        metrics=expand(
+            RESULTS
+            + "csvs/individual/metrics_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
     output:
-        RESULTS + "csvs/{kind}.csv",
+        costs=RESULTS + "csvs/costs.csv",
+        supply_energy=RESULTS + "csvs/supply_energy.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
     threads: 1
     resources:
         mem_mb=16000,
     log:
-        RESULTS + "logs/make_global_summary_{kind}.log",
+        RESULTS + "logs/make_global_summary.log",
     benchmark:
-        RESULTS + "benchmarks/make_global_summary_{kind}"
+        RESULTS + "benchmarks/make_global_summary"
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/make_global_summary.py"
-
-
-rule make_global_summary_all:
-    input:
-        costs=RESULTS + "csvs/costs.csv",
-        supply_energy=RESULTS + "csvs/supply_energy.csv",
-        metrics=RESULTS + "csvs/metrics.csv",
 
 
 rule plot_global_summary:
