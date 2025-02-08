@@ -5307,6 +5307,12 @@ if __name__ == "__main__":
     capacity_boost = options["import"]["capacity_boost"]
     endogenous_hvdc = options["import"]["endogenous_hvdc_import"]["enable"]
 
+    if not options["relocation_steel"]:
+        import_options = set(import_options) - {"shipping-steel", "shipping-hbi"}
+
+    if not options["relocation_ammonia"]:
+        import_options = set(import_options) - {"shipping-lnh3"}
+
     add_import_options(
         n,
         capacity_boost=capacity_boost,
