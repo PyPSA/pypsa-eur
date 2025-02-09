@@ -414,8 +414,8 @@ def update_wind_solar_costs(
     n: pypsa.Network,
     costs: pd.DataFrame,
     profiles: dict[str, str],
-    line_length_factor: int | float = 1,
     landfall_lengths: dict = None,
+    line_length_factor: int | float = 1,
 ) -> None:
     """
     Update costs for wind and solar generators added with pypsa-eur to those
@@ -427,13 +427,13 @@ def update_wind_solar_costs(
         Network to update generator costs
     costs : pd.DataFrame
         Cost assumptions DataFrame
-    profiles : dict[str, str]
-        Dictionary mapping technology names to profile file paths
-        e.g. {'offwind-dc': 'path/to/profile.nc'}
     line_length_factor : int | float, optional
         Factor to multiply line lengths by, by default 1
     landfall_lengths : dict, optional
         Dictionary of landfall lengths per technology, by default None
+    profiles : dict[str, str]
+        Dictionary mapping technology names to profile file paths
+        e.g. {'offwind-dc': 'path/to/profile.nc'}
     """
 
     if landfall_lengths is None:
@@ -450,17 +450,14 @@ def update_wind_solar_costs(
     ]
 
     # for offshore wind, need to calculated connection costs
-    for connection in ["dc", "ac", "float"]:
-        tech = "offwind-" + connection
+    for key, fn in profiles.items():
+        tech = key[len("profile_") :]
         landfall_length = landfall_lengths.get(tech, 0.0)
+
         if tech not in n.generators.carrier.values:
             continue
 
-        profile_key = f"offwind-{connection}"
-        if profile_key not in profiles:
-            continue
-
-        with xr.open_dataset(profiles[profile_key]) as ds:
+        with xr.open_dataset(fn) as ds:
             # if-statement for compatibility with old profiles
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
@@ -615,10 +612,12 @@ def remove_non_electric_buses(n):
         n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
 
 
-def patch_electricity_network(n, costs, carriers_to_keep, landfall_lengths, profiles):
+def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths):
     remove_elec_base_techs(n, carriers_to_keep)
     remove_non_electric_buses(n)
-    update_wind_solar_costs(n, costs, profiles, landfall_lengths=landfall_lengths)
+    update_wind_solar_costs(
+        n, costs, landfall_lengths=landfall_lengths, profiles=profiles
+    )
     n.loads["carrier"] = "electricity"
     n.buses["location"] = n.buses.index
     n.buses["unit"] = "MWh_el"
@@ -1141,7 +1140,7 @@ def add_dac(n, costs):
     )
 
 
-def add_co2limit(n, options, co2_totals_file, countries, nyears=1.0, limit=0.0):
+def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     """
     Add a global CO2 emissions constraint to the network.
 
@@ -1486,10 +1485,10 @@ def add_storage_and_grids(
     pop_layout,
     h2_cavern_file,
     cavern_types,
-    clustered_gas_network_file=None,
-    gas_input_nodes_file=None,
-    spatial=None,
-    options=None,
+    clustered_gas_network_file,
+    gas_input_nodes_file,
+    spatial,
+    options,
 ):
     """
     Add storage and grid infrastructure to the network including hydrogen, gas, and battery systems.
@@ -5135,9 +5134,9 @@ if __name__ == "__main__":
 
     carriers_to_keep = snakemake.params.pypsa_eur
     profiles = {
-        "offwind-dc": snakemake.input["profile_offwind-dc"],
-        "offwind-ac": snakemake.input["profile_offwind-ac"],
-        "offwind-float": snakemake.input["profile_offwind-float"],
+        key: snakemake.input[key]
+        for key in snakemake.input.keys()
+        if key.startswith("profile")
     }
     landfall_lengths = {
         tech: settings["landfall_length"]
@@ -5171,9 +5170,9 @@ if __name__ == "__main__":
     add_generation(n, costs)
 
     add_storage_and_grids(
-        n,
-        costs,
-        pop_layout,
+        n=n,
+        costs=costs,
+        pop_layout=pop_layout,
         h2_cavern_file=snakemake.input.h2_cavern,
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
@@ -5181,6 +5180,7 @@ if __name__ == "__main__":
         spatial=spatial,
         options=options,
     )
+
     if options["transport"]:
         add_land_transport(
             n=n,
@@ -5209,8 +5209,8 @@ if __name__ == "__main__":
             floor_area_file=snakemake.input.floor_area,
             heat_source_profile_files={
                 source: snakemake.input[source]
-                for system_type in snakemake.params.heat_pump_sources
-                for source in snakemake.params.heat_pump_sources[system_type]
+                for source in snakemake.params.heat_utilisation_potentials
+                if source in snakemake.input.keys()
             },
             params=snakemake.params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
@@ -5223,12 +5223,12 @@ if __name__ == "__main__":
 
     if options["biomass"]:
         add_biomass(
-            n,
-            costs,
-            options,
-            spatial,
-            cf_industry,
-            pop_layout,
+            n=n,
+            costs=costs,
+            options=options,
+            spatial=spatial,
+            cf_industry=cf_industry,
+            pop_layout=pop_layout,
             biomass_potentials_file=snakemake.input.biomass_potentials,
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
         )
@@ -5241,16 +5241,16 @@ if __name__ == "__main__":
 
     if options["industry"]:
         add_industry(
-            n,
-            costs,
-            snakemake.input.industry_demand,
-            snakemake.input.shipping_demand,
-            pop_layout,
-            pop_weighted_energy_totals,
-            options,
-            spatial,
-            cf_industry,
-            investment_year,
+            n=n,
+            costs=costs,
+            industrial_demand_file=snakemake.input.industrial_demand,
+            shipping_demand_file=snakemake.input.shipping_demand,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+            cf_industry=cf_industry,
+            investment_year=investment_year,
         )
 
     if options["heating"]:
@@ -5305,7 +5305,12 @@ if __name__ == "__main__":
     else:
         limit = get(co2_budget, investment_year)
     add_co2limit(
-        n, options, snakemake.input.co2_totals_name, snakemake.params.countries
+        n,
+        options,
+        snakemake.input.co2_totals_name,
+        snakemake.params.countries,
+        nyears,
+        limit,
     )
 
     maxext = snakemake.params["lines"]["max_extension"]

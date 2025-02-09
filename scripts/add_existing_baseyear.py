@@ -767,6 +767,9 @@ if __name__ == "__main__":
             heat_pump_source_types=snakemake.params.heat_pump_sources,
             efficiency_file=snakemake.input.heating_efficiencies,
             energy_totals_year=snakemake.params["energy_totals_year"],
+            capacity_threshold=snakemake.params.existing_capacities[
+                "threshold_capacity"
+            ],
             use_electricity_distribution_grid=options["electricity_distribution_grid"],
         )
 

@@ -160,7 +160,7 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizon: str) -> None:
             .groupby(n.generators.bus.map(n.buses.location))
             .sum()
         )
-        existing.index += " " + carrier + "-" + planning_horizon
+        existing.index += f" {carrier}-{planning_horizon}"
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
     # check if existing capacities are larger than technical potential
@@ -240,7 +240,7 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
 def add_co2_sequestration_limit(
     n: pypsa.Network,
     limit_dict: dict[str, float],
-    planning_horizons: str | list[str],
+    planning_horizons: str,
 ) -> None:
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
@@ -396,9 +396,9 @@ def prepare_network(
     n: pypsa.Network,
     solve_opts: dict,
     foresight: str,
-    planning_horizons: list[str],
+    planning_horizons: str,
     co2_sequestration_potential: dict[str, float],
-    limit_max_growth: dict[str, Any],
+    limit_max_growth: dict[str, Any] | None = None,
 ) -> None:
     """
     Prepare network with various constraints and modifications.
@@ -411,7 +411,7 @@ def prepare_network(
         Dictionary of solving options containing clip_p_max_pu, load_shedding etc.
     foresight : str
         Planning foresight type ('myopic' or 'perfect')
-    planning_horizons : List[str]
+    planning_horizons : str
         List of planning horizon years
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
@@ -488,11 +488,11 @@ def prepare_network(
         n.snapshot_weightings[:] = 8760.0 / nhours
 
     if foresight == "myopic":
-        add_land_use_constraint(n, planning_horizons[0])
+        add_land_use_constraint(n, planning_horizons)
 
     if foresight == "perfect":
         add_land_use_constraint_perfect(n)
-        if limit_max_growth["enable"]:
+        if limit_max_growth is not None and limit_max_growth["enable"]:
             add_max_growth(n, limit_max_growth)
 
     if n.stores.carrier.eq("co2 sequestered").any():
@@ -1174,14 +1174,15 @@ if __name__ == "__main__":
     np.random.seed(solve_opts.get("seed", 123))
 
     n = pypsa.Network(snakemake.input.network)
+    planning_horizons = snakemake.wildcards.get("planning_horizons", None)
 
     prepare_network(
         n,
         solve_opts=snakemake.params.solving["options"],
         foresight=snakemake.params.foresight,
-        planning_horizons=snakemake.params.planning_horizons,
+        planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-        limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
+        limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
     )
 
     logging_frequency = snakemake.config.get("solving", {}).get(

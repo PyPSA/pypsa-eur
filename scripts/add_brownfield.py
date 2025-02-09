@@ -24,7 +24,12 @@ idx = pd.IndexSlice
 
 
 def add_brownfield(
-    n, n_p, year, h2_retrofit=False, h2_retrofit_capacity_per_ch4=None, threshold=None
+    n,
+    n_p,
+    year,
+    h2_retrofit=False,
+    h2_retrofit_capacity_per_ch4=None,
+    capacity_threshold=None,
 ):
     """
     Add brownfield capacity from previous network.
@@ -41,7 +46,7 @@ def add_brownfield(
         Whether to allow hydrogen pipeline retrofitting
     h2_retrofit_capacity_per_ch4 : float
         Ratio of hydrogen to methane capacity for pipeline retrofitting
-    threshold : float
+    capacity_threshold : float
         Threshold for removing assets with low capacity
     """
     logger.info(f"Preparing brownfield for the year {year}")
@@ -71,7 +76,7 @@ def add_brownfield(
 
         if not chp_heat.empty:
             threshold_chp_heat = (
-                threshold
+                capacity_threshold
                 * c.df.efficiency[chp_heat.str.replace("heat", "electric")].values
                 * c.df.p_nom_ratio[chp_heat.str.replace("heat", "electric")].values
                 / c.df.efficiency[chp_heat].values
@@ -85,7 +90,7 @@ def add_brownfield(
             c.name,
             c.df.index[
                 (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
-                & (c.df[f"{attr}_nom_opt"] < threshold)
+                & (c.df[f"{attr}_nom_opt"] < capacity_threshold)
             ],
         )
 
@@ -325,7 +330,7 @@ if __name__ == "__main__":
         year,
         h2_retrofit=snakemake.params.H2_retrofit,
         h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
-        threshold=snakemake.params.threshold,
+        capacity_threshold=snakemake.params.threshold_capacity,
     )
 
     disable_grid_expansion_if_limit_hit(n)

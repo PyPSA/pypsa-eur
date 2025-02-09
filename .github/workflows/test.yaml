@@ -85,9 +85,8 @@ jobs:
         conda env update -n pypsa-eur -f ${{ env.env_file }}
         echo "Run conda list" && conda list
 
-    # Add pylint step here
     - name: Run pylint check on scripts
-    # check for undefined variables to reuse functions across scripts
+      # check for undefined variables to reuse functions across scripts
       run: |
         pylint --disable=all --enable=E0601 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_* scripts/build_*
 
