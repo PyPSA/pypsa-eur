@@ -59,6 +59,7 @@ dependencies:
 - ipython
 - pre-commit
 - ruff
+- pylint
 
 - pip:
   - gurobipy

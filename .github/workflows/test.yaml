@@ -85,6 +85,11 @@ jobs:
         conda env update -n pypsa-eur -f ${{ env.env_file }}
         echo "Run conda list" && conda list
 
+    - name: Run pylint check on scripts
+      # check for undefined variables to reuse functions across scripts
+      run: |
+        pylint --disable=all --enable=E0601 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_* 
+
     - name: Run snakemake test workflows
       run: |
         make test
