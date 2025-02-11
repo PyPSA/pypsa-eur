@@ -658,8 +658,6 @@ if config["enable"]["retrieve"]:
         log:
             "logs/retrieve_geothermal_heat_utilisation_potentials.log",
         threads: 1
-        conda:
-            "../envs/environment.yaml"
         retries: 2
         run:
             move(input[0], output[0])
@@ -674,8 +672,6 @@ if config["enable"]["retrieve"]:
             lau_regions="data/lau_regions.geojson",
         log: "logs/retrieve_lau_regions.log",
         threads: 1
-        conda:
-            "../envs/environment.yaml"
         retries: 2
         run:
             move(input[0], output[0])
