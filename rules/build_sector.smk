@@ -294,13 +294,21 @@ rule build_geothermal_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
-        constant_temperature_celsius=config_provider("sector", "district_heating", "limited_heat_sources", "geothermal", "constant_temperature_celsius"),
+        constant_temperature_celsius=config_provider(
+            "sector",
+            "district_heating",
+            "limited_heat_sources",
+            "geothermal",
+            "constant_temperature_celsius",
+        ),
     input:
         isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         lau_regions="data/lau_regions.geojson",
     output:
-        heat_source_power=resources("heat_source_power_geothermal_base_s_{clusters}.csv"),
+        heat_source_power=resources(
+            "heat_source_power_geothermal_base_s_{clusters}.csv"
+        ),
     resources:
         mem_mb=2000,
     log:
@@ -311,7 +319,6 @@ rule build_geothermal_heat_potential:
         "../envs/environment.yaml"
     script:
         "../scripts/build_geothermal_heat_potential.py"
-
 
 
 rule build_cop_profiles:
@@ -1087,11 +1094,12 @@ def input_heat_source_power(w):
             "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
         )
         for heat_source_name in config_provider(
-            "sector", "heat_pump_sources", "urban central")(w)
+            "sector", "heat_pump_sources", "urban central"
+        )(w)
         if heat_source_name
-        in config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        )(w).keys()
+        in config_provider("sector", "district_heating", "limited_heat_sources")(
+            w
+        ).keys()
     }
 
 
