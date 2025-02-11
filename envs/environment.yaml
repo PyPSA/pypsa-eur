@@ -55,15 +55,18 @@ dependencies:
 - rasterio
 
 # Development dependencies
+- jupyter
 - ipython
 - pre-commit
 - ruff
+- pylint
 
 - pip:
   - gurobipy
-  - highspy<1.8
+  - highspy
   - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
+  - entsoe-py
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic

@@ -23,7 +23,32 @@ logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
-def add_brownfield(n, n_p, year):
+def add_brownfield(
+    n,
+    n_p,
+    year,
+    h2_retrofit=False,
+    h2_retrofit_capacity_per_ch4=None,
+    capacity_threshold=None,
+):
+    """
+    Add brownfield capacity from previous network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to add brownfield to
+    n_p : pypsa.Network
+        Previous network to get brownfield from
+    year : int
+        Planning year
+    h2_retrofit : bool
+        Whether to allow hydrogen pipeline retrofitting
+    h2_retrofit_capacity_per_ch4 : float
+        Ratio of hydrogen to methane capacity for pipeline retrofitting
+    capacity_threshold : float
+        Threshold for removing assets with low capacity
+    """
     logger.info(f"Preparing brownfield for the year {year}")
 
     # electric transmission grid set optimised capacities of previous as minimum
@@ -49,11 +74,9 @@ def add_brownfield(n, n_p, year):
             & c.df.index.str.contains("heat")
         ]
 
-        threshold = snakemake.params.threshold_capacity
-
         if not chp_heat.empty:
             threshold_chp_heat = (
-                threshold
+                capacity_threshold
                 * c.df.efficiency[chp_heat.str.replace("heat", "electric")].values
                 * c.df.p_nom_ratio[chp_heat.str.replace("heat", "electric")].values
                 / c.df.efficiency[chp_heat].values
@@ -67,7 +90,7 @@ def add_brownfield(n, n_p, year):
             c.name,
             c.df.index[
                 (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
-                & (c.df[f"{attr}_nom_opt"] < threshold)
+                & (c.df[f"{attr}_nom_opt"] < capacity_threshold)
             ],
         )
 
@@ -85,7 +108,7 @@ def add_brownfield(n, n_p, year):
             n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
 
     # deal with gas network
-    if snakemake.params.H2_retrofit:
+    if h2_retrofit:
         # subtract the already retrofitted from the maximum capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
@@ -118,7 +141,7 @@ def add_brownfield(n, n_p, year):
             pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
-            CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
+            CH4_per_H2 = 1 / h2_retrofit_capacity_per_ch4
             already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
             remaining_capacity = (
                 pipe_capacity
@@ -301,7 +324,14 @@ if __name__ == "__main__":
 
     update_heat_pump_efficiency(n, n_p, year)
 
-    add_brownfield(n, n_p, year)
+    add_brownfield(
+        n,
+        n_p,
+        year,
+        h2_retrofit=snakemake.params.H2_retrofit,
+        h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
+        capacity_threshold=snakemake.params.threshold_capacity,
+    )
 
     disable_grid_expansion_if_limit_hit(n)
 
