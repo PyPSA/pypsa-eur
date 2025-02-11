@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 
@@ -120,6 +118,7 @@ def cross_border_time_series(countries, data):
             ax[x].set_ylim([neg_min, pos_max])
 
     fig.savefig(snakemake.output.trade_time_series, bbox_inches="tight")
+    plt.close(fig)
 
 
 def cross_border_bar(countries, data):
@@ -173,6 +172,7 @@ def cross_border_bar(countries, data):
     plt.legend(handles=legend_elements, loc="upper right")
 
     fig.savefig(snakemake.output.cross_border_bar, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -181,7 +181,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_electricity_prices",
-            simpl="",
             opts="Ept-12h",
             clusters="37",
             ll="v1.0",

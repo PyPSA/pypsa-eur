@@ -1,20 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
 Build spatial distribution of industries from Hotmaps database.
-
-Inputs
--------
-
-- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``
-- ``resources/pop_layout_elec_s{simpl}_{clusters}.csv``
-
-Outputs
--------
-
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
 
 Description
 -------
@@ -388,7 +376,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",
-            simpl="",
             clusters=128,
         )
     configure_logging(snakemake)

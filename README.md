@@ -1,7 +1,9 @@
 <!--
-SPDX-FileCopyrightText: 2017-2024 The PyPSA-Spain Authors
+SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 SPDX-License-Identifier: CC-BY-4.0
 -->
+
+
 
 
 # PyPSA-Spain: An extension of PyPSA-Eur to model the Spanish Energy System

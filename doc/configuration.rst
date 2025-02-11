@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -77,17 +77,17 @@ The ``scenario`` section is an extraordinary section of the config file
 that is strongly connected to the :ref:`wildcards` and is designed to
 facilitate running multiple scenarios through a single command
 
-.. code:: bash
+.. code:: console
 
    # for electricity-only studies
-   snakemake -call solve_elec_networks
+   $ snakemake solve_elec_networks
 
    # for sector-coupling studies
-   snakemake -call solve_sector_networks
+   $ snakemake solve_sector_networks
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
-``results/networks/elec_s{simpl}_{clusters}_ec_l{ll}_{opts}.nc`` for **all
+``results/networks/base_s_{clusters}_elec_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
 <https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
@@ -150,7 +150,7 @@ Switches for some rules and optional features.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: enable:
+   :start-after: #enable
    :end-before: # docs
 
 .. csv-table::
@@ -236,18 +236,18 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    The default choice for corine ``grid_codes`` was based on Scholz, Y. (2012). Renewable energy based electricity supply at low costs
    development of the REMix model and application for Europe. ( p.42 / p.28)
 
-``offwind-ac``
+``offwind-x``
 --------------
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at:   offwind-ac:
-   :end-before:   offwind-dc:
+   :end-before:   solar:
 
 .. csv-table::
    :header-rows: 1
    :widths: 22,7,22,33
-   :file: configtables/offwind-ac.csv
+   :file: configtables/offwind.csv
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
@@ -259,39 +259,6 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    from 10.1016/j.energy.2018.08.153
    until done more rigorously in #153
 
-``offwind-dc``
----------------
-
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at:   offwind-dc:
-   :end-before:   offwind-float:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/offwind-dc.csv
-
-.. note::
-   Both ``offwind-ac`` and ``offwind-dc`` have the same assumption on
-   ``capacity_per_sqkm`` and ``correction_factor``.
-
-``offwind-float``
----------------
-
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at:   offwind-float:
-   :end-before:   solar:
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/offwind-float.csv
-
-.. note::
-   ``offwind-ac``,  ``offwind-dc`` , ``offwind-float`` have the same assumption on
-   ``capacity_per_sqkm`` and ``correction_factor``.
 ``solar``
 ---------------
 
@@ -380,7 +347,7 @@ overwrite the existing values.
 .. _transformers_cf:
 
 ``transmission projects``
-=======================
+=========================
 
 Allows to define additional transmission projects that will be added to the base network, e.g., from the TYNDP 2020 dataset. The projects are read in from the CSV files in the subfolder of ``data/transmission_projects/``. New transmission projects, e.g. from TYNDP 2024, can be added in a new subfolder of transmission projects, e.g. ``data/transmission_projects/tyndp2024`` while extending the list of ``transmission_projects`` in the ``config.yaml`` by ``tyndp2024``. The CSV files in the project folder should have the same columns as the CSV files in the template folder ``data/transmission_projects/template``.
 
@@ -544,7 +511,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
-   :start-at: industry:
+   :start-at: # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
    :end-before: # docs
 
 .. csv-table::
@@ -583,13 +550,8 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/clustering.csv
 
-.. note::
-   ``feature:`` in ``simplify_network:``
-   are only relevant if ``hac`` were chosen in ``algorithm``.
-
 .. tip::
-   use ``min`` in ``p_nom_max:`` for more `
-   conservative assumptions.
+   use ``min`` in ``p_nom_max:`` for more conservative assumptions.
 
 .. _adjustments_cf:
 

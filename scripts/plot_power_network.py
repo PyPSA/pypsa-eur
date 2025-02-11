@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -14,8 +13,8 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
-from plot_summary import preferred_order, rename_techs
+from _helpers import configure_logging, rename_techs, retry, set_scenario_config
+from plot_summary import preferred_order
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
 logger = logging.getLogger(__name__)
@@ -62,6 +61,7 @@ def load_projection(plotting_params):
     return proj_func(**proj_kwargs)
 
 
+@retry
 def plot_map(
     n,
     components=["links", "stores", "storage_units", "generators"],
@@ -146,7 +146,7 @@ def plot_map(
 
     title = "added grid"
 
-    if snakemake.wildcards["ll"] == "v1.0":
+    if snakemake.params.transmission_limit == "lv1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
@@ -241,6 +241,7 @@ def plot_map(
         )
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -249,7 +250,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network",
-            simpl="",
             opts="",
             clusters="37",
             ll="v1.0",

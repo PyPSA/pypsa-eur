@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,25 +7,6 @@
 Gets the transmission projects defined in the config file, concatenates and
 deduplicates them. Projects are later included in :mod:`add_electricity.py`.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-transmission_projects:
-  include:
-    #tyndp: true # For later, when other TYNDP projects are combined with new version
-    nep: true
-  status:
-  - confirmed
-  - in_permitting
-  - under_construction
-    #- under_consideration
-  link_under_construction: zero
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`transmission_projects`
 Inputs
 ------
 
@@ -44,8 +24,8 @@ Outputs
 - ``transmission_projects/adjust_links.csv``: For links which are upgraded, the decommissioning year of the existing link is adjusted to the build year of the upgraded link.
 - ``transmission_projects/new_buses.csv``: For some links, we have to add new buses (e.g. North Sea Wind Power Hub).
 """
+
 import logging
-import os
 from pathlib import Path
 
 import geopandas as gpd
@@ -65,7 +45,7 @@ def add_new_buses(n, new_ports):
     # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
     duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
     to_add = new_ports[~duplicated]
-    added_buses = n.madd(
+    added_buses = n.add(
         "Bus",
         names=to_add.index,
         suffix=" bus",
@@ -162,12 +142,14 @@ def get_branch_coords_from_geometry(linestring, reversed=False):
     Reduces a linestring to its start and end points. Used to simplify the
     linestring which can have more than two points.
 
-    Parameters:
+    Parameters
+    ----------
     linestring: Shapely linestring
     reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
                                Defaults to False.
 
-    Returns:
+    Returns
+    -------
     numpy.ndarray: Flattened array of start and end coordinates.
     """
     coords = np.asarray(linestring.coords)
@@ -180,12 +162,14 @@ def get_branch_coords_from_buses(line):
     """
     Gets line string for branch component in an pypsa network.
 
-    Parameters:
+    Parameters
+    ----------
     linestring: shapely linestring
     reversed (bool, optional): If True, returns the end and start points instead of the start and end points.
                                Defaults to False.
 
-    Returns:
+    Returns
+    -------
     numpy.ndarray: Flattened array of start and end coordinates.
     """
     start_coords = n.buses.loc[line.bus0, ["x", "y"]].values
@@ -197,11 +181,13 @@ def get_bus_coords_from_port(linestring, port=0):
     """
     Extracts the coordinates of a specified port from a given linestring.
 
-    Parameters:
+    Parameters
+    ----------
     linestring: The shapely linestring.
     port (int): The index of the port to extract coordinates from. Default is 0.
 
-    Returns:
+    Returns
+    -------
     tuple: The coordinates of the specified port as a tuple (x, y).
     """
     coords = np.asarray(linestring.coords)
@@ -215,12 +201,14 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     """
     Find the closest lines in the existing set of lines to a set of new lines.
 
-    Parameters:
+    Parameters
+    ----------
     lines (pandas.DataFrame): DataFrame of the existing lines.
     new_lines (pandas.DataFrame): DataFrame with column geometry containing the new lines.
     distance_upper_bound (float, optional): Maximum distance to consider a line as a match. Defaults to 0.1 which corresponds to approximately 15 km.
 
-    Returns:
+    Returns
+    -------
     pandas.Series: Series containing with index the new lines and values providing closest existing line.
     """
 
@@ -246,11 +234,23 @@ def find_closest_lines(lines, new_lines, distance_upper_bound=0.1, type="new"):
     )
     if type == "new":
         if len(found_i) != 0:
-            logger.warning(
-                "Found new lines similar to existing lines:\n"
-                + str(line_map["existing_line"].to_dict())
-                + "\n Lines are assumed to be duplicated and will be ignored."
+            # compare if attribute of new line and existing line is similar
+            attr = "p_nom" if "p_nom" in lines else "v_nom"
+            # potential duplicates
+            duplicated = line_map["existing_line"]
+            # only if lines are similar in terms of p_nom or v_nom they are kept as duplicates
+            to_keep = is_similar(
+                new_lines.loc[duplicated.index, attr],
+                duplicated.map(lines[attr]),
+                percentage=10,
             )
+            line_map = line_map[to_keep]
+            if not line_map.empty:
+                logger.warning(
+                    "Found new lines similar to existing lines:\n"
+                    + str(line_map["existing_line"].to_dict())
+                    + "\n Lines are assumed to be duplicated and will be ignored."
+                )
     elif type == "upgraded":
         if len(found_i) < len(new_lines):
             not_found = new_lines.index.difference(line_map.index)
@@ -402,17 +402,10 @@ def add_projects(
             duplicate_lines = find_closest_lines(
                 n.lines, new_lines, distance_upper_bound=0.10, type="new"
             )
-            # TODO: think about using build_year instead of v_nom
-            # ignore duplicates where v_nom is not within a tolerance of 10%
-            to_ignore = is_similar(
-                new_lines.loc[duplicate_lines.index, "v_nom"],
-                duplicate_lines.map(n.lines["v_nom"]),
-            )
-            duplicate_lines = duplicate_lines[~to_ignore]
             new_lines = new_lines.drop(duplicate_lines.index, errors="ignore")
             new_lines_df = pd.concat([new_lines_df, new_lines])
             # add new lines to network to be able to find added duplicates
-            n.madd("Line", new_lines.index, **new_lines)
+            n.add("Line", new_lines.index, **new_lines)
         elif key == "new_links":
             new_links, new_buses_df = connect_new_lines(
                 lines,
@@ -425,18 +418,11 @@ def add_projects(
             duplicate_links = find_closest_lines(
                 n.links, new_links, distance_upper_bound=0.10, type="new"
             )
-            # TODO: think about using build_year instead of p_nom
-            # ignore duplicates where p_nom is not within a tolerance of 10%
-            to_ignore = is_similar(
-                new_links.loc[duplicate_links.index, "p_nom"],
-                duplicate_links.map(n.links["p_nom"]),
-            )
-            duplicate_links = duplicate_links[~to_ignore]
             new_links = new_links.drop(duplicate_links.index, errors="ignore")
             set_underwater_fraction(new_links, offshore_shapes)
             new_links_df = pd.concat([new_links_df, new_links])
             # add new links to network to be able to find added duplicates
-            n.madd("Link", new_links.index, **new_links)
+            n.add("Link", new_links.index, **new_links)
         elif key == "upgraded_lines":
             line_map = find_closest_lines(
                 n.lines, lines, distance_upper_bound=0.30, type="upgraded"
@@ -477,11 +463,12 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_transmission_projects", run="all")
+        snakemake = mock_snakemake("build_transmission_projects")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     line_factor = snakemake.params.line_factor
+    s_max_pu = snakemake.params.s_max_pu
 
     n = pypsa.Network(snakemake.input.base_network)
 
@@ -543,6 +530,8 @@ if __name__ == "__main__":
             * new_lines_df["v_nom"]
             * new_lines_df["num_parallel"]
         ).round(2)
+        # set s_max_pu
+        new_lines_df["s_max_pu"] = s_max_pu
     if not new_links_df.empty:
         # Add carrier types of lines and links
         new_links_df["carrier"] = "DC"

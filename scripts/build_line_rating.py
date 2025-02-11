@@ -1,35 +1,10 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
-Adds dynamic line rating timeseries to the base network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    lines:
-        cutout:
-        line_rating:
-
-
-.. seealso::
-    Documentation of the configuration file ``config.yaml`
-Inputs
-------
-
-- ``data/cutouts``:
-- ``networks/base.nc``: confer :ref:`base`
-
-Outputs
--------
-
-- ``resources/line_rating.nc``
-
+Calculates dynamic line rating time series from base network.
 
 Description
 -----------
@@ -50,6 +25,7 @@ With a heat balance considering the maximum temperature threshold of the transmi
 the maximal possible capacity factor "s_max_pu" for each transmission line at each time step is calculated.
 """
 
+import logging
 import re
 
 import atlite
@@ -58,11 +34,14 @@ import numpy as np
 import pypsa
 import xarray as xr
 from _helpers import configure_logging, get_snapshots, set_scenario_config
+from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
 
+logger = logging.getLogger(__name__)
 
-def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
+
+def calculate_resistance(T, R_ref, T_ref: float | int = 293, alpha: float = 0.00403):
     """
     Calculates the resistance at other temperatures than the reference
     temperature.
@@ -84,7 +63,12 @@ def calculate_resistance(T, R_ref, T_ref=293, alpha=0.00403):
     return R_ref * (1 + alpha * (T - T_ref))
 
 
-def calculate_line_rating(n, cutout):
+def calculate_line_rating(
+    n: pypsa.Network,
+    cutout: atlite.Cutout,
+    show_progress: bool = True,
+    dask_kwargs: dict = None,
+) -> xr.DataArray:
     """
     Calculates the maximal allowed power flow in each line for each time step
     considering the maximal temperature.
@@ -97,6 +81,10 @@ def calculate_line_rating(n, cutout):
     -------
     xarray DataArray object with maximal power.
     """
+    if dask_kwargs is None:
+        dask_kwargs = {}
+
+    logger.info("Calculating dynamic line rating.")
     relevant_lines = n.lines[~n.lines["underground"]].copy()
     buses = relevant_lines[["bus0", "bus1"]].values
     x = n.buses.x
@@ -120,7 +108,16 @@ def calculate_line_rating(n, cutout):
         relevant_lines["n_bundle"] = relevant_lines["n_bundle"].fillna(1)
         R *= relevant_lines["n_bundle"]
         R = calculate_resistance(T=353, R_ref=R)
-    Imax = cutout.line_rating(shapes, R, D=0.0218, Ts=353, epsilon=0.8, alpha=0.8)
+    Imax = cutout.line_rating(
+        shapes,
+        R,
+        D=0.0218,
+        Ts=353,
+        epsilon=0.8,
+        alpha=0.8,
+        show_progress=show_progress,
+        dask_kwargs=dask_kwargs,
+    )
     line_factor = relevant_lines.eval("v_nom * n_bundle * num_parallel") / 1e3  # in mW
     return xr.DataArray(
         data=np.sqrt(3) * Imax * line_factor.values.reshape(-1, 1),
@@ -134,21 +131,23 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_line_rating",
-            network="elec",
-            simpl="",
-            clusters="5",
-            ll="v1.0",
-            opts="Co2L-4H",
-        )
+        snakemake = mock_snakemake("build_line_rating")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+
+    nprocesses = int(snakemake.threads)
+    show_progress = not snakemake.config["run"].get("disable_progressbar", True)
+    show_progress = show_progress and snakemake.config["atlite"]["show_progress"]
+    if nprocesses > 1:
+        client = Client(n_workers=nprocesses, threads_per_worker=1)
+    else:
+        client = None
+    dask_kwargs = {"scheduler": client}
 
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
     cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
 
-    da = calculate_line_rating(n, cutout)
+    da = calculate_line_rating(n, cutout, show_progress, dask_kwargs)
     da.to_netcdf(snakemake.output[0])

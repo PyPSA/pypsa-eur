@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.12.0
+version: v2025.01.0
 tutorial: false
 
 logging:
@@ -30,6 +30,7 @@ run:
     policy: false
     exclude: []
   shared_cutouts: true
+  use_shadow_directory: true # Set to false if problems regarding missing directories occur
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
@@ -37,10 +38,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  simpl:
-  - ''
-  ll:
-  - vopt
   clusters:
   - 39
   - 128
@@ -76,18 +73,19 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
+  2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
+  2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
+  2030: 0.450 # 55% reduction by 2030 (Ff55)
+  2035: 0.250
+  2040: 0.100 # 90% by 2040
+  2045: 0.050
+  2050: 0.000 # climate-neutral by 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [200., 220., 300., 380., 500., 750.]
+  voltages: [220., 300., 330., 380., 400., 500., 750.]
   base_network: osm-prebuilt
+  osm-prebuilt-version: 0.6
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -110,7 +108,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
+  powerplants_filter: (DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -131,8 +129,11 @@ electricity:
     enable: false
     by_country: false
 
+  transmission_limit: vopt
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
+  cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
@@ -187,6 +188,7 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-dc:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -204,6 +206,7 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   offwind-float:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -224,6 +227,7 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
+    landfall_length: 10
   solar:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -276,10 +280,11 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    200.: "Al/St 240/40 2-bundle 200.0"
     220.: "Al/St 240/40 2-bundle 220.0"
     300.: "Al/St 240/40 3-bundle 300.0"
+    330.: "Al/St 240/40 3-bundle 300.0"
     380.: "Al/St 240/40 4-bundle 380.0"
+    400.: "Al/St 240/40 4-bundle 380.0"
     500.: "Al/St 240/40 4-bundle 380.0"
     750.: "Al/St 560/50 4-bundle 750.0"
   s_max_pu: 0.7
@@ -300,6 +305,7 @@ links:
   p_max_pu: 1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
+  length_factor: 1.25
   under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
@@ -334,6 +340,9 @@ load:
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
   supplement_synthetic: true
+  distribution_key:
+    gdp: 0.6
+    population: 0.4
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -450,31 +459,41 @@ sector:
       2050: 1.0
     district_heating_loss: 0.15
     supply_temperature_approximation:
-      max_forward_temperature:
-        default: 90
-        DK: 70
-        SE: 70
-        NO: 70
-      min_forward_temperature:
-        default: 68
-        DK: 54
-        SE: 54
-        NO: 54
-      return_temperature:
-        default: 50
-        DK: 40
-        SE: 40
-        NO: 40
-        FI: 40
+      max_forward_temperature_baseyear:
+        FR: 110
+        DK: 75
+        DE: 109
+        CZ: 130
+        FI: 115
+        PL: 130
+        SE: 102
+        IT: 90
+      min_forward_temperature_baseyear:
+        DE: 82
+      return_temperature_baseyear:
+        DE: 58
       lower_threshold_ambient_temperature: 0
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
+      relative_annual_temperature_reduction: 0.01
     heat_source_cooling: 6 #K
     heat_pump_cop_approximation:
       refrigerant: ammonia
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
+    heat_utilisation_potentials:
+      geothermal:
+        # activate for 85C hydrothermal
+        # key: hydrothermal_85
+        # constant_temperature_celsius: 85
+        key: hydrothermal_65
+        constant_temperature_celsius: 65
+        column_name: Energy_TWh
+        unit: TWh
+        full_load_hours: 4000
+    direct_utilisation_heat_sources:
+    - geothermal
   heat_pump_sources:
     urban central:
     - air
@@ -494,7 +513,7 @@ sector:
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
   bev_dsm: true
-  bev_availability: 0.5
+  bev_dsm_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
   bev_charge_rate: 0.011
@@ -593,8 +612,12 @@ sector:
   overdimension_heat_generators:
     decentral: 1.1  #to cover demand peaks bigger than data
     central: 1.0
-  chp: true
-  micro_chp: false
+  chp:
+    enable: true
+    fuel:
+    - solid biomass # For solid biomass, CHP with and without CC are added
+    - gas # For all other fuels the same techno economic data from gas CHP is taken
+    micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
@@ -603,12 +626,11 @@ sector:
   dac: true
   co2_vent: false
   central_heat_vent: false
-  allam_cycle: false
+  allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
-  regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -633,7 +655,7 @@ sector:
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
-  co2network: false
+  co2_network: false
   co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
@@ -641,6 +663,18 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  methanol:
+    regional_methanol_demand: false
+    methanol_reforming: false
+    methanol_reforming_cc: false
+    methanol_to_kerosene: false
+    methanol_to_power:
+      ccgt: false
+      ccgt_cc: false
+      ocgt: false
+      allam: false
+    biomass_to_methanol: false
+    biomass_to_methanol_cc: false
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -653,7 +687,6 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -680,8 +713,10 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
+  biomass_to_liquid_cc: false
   electrobiofuels: false
   biosng: false
+  biosng_cc: false
   bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
@@ -806,7 +841,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.9.1
+  version: v0.10.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -840,16 +875,15 @@ clustering:
   focus_weights: false
   simplify_network:
     to_substations: false
-    algorithm: kmeans # choose from: [hac, kmeans]
-    feature: solar+onwind-time
-    exclude_carriers: []
     remove_stubs: true
-    remove_stubs_across_borders: true
+    remove_stubs_across_borders: false
   cluster_network:
     algorithm: kmeans
-    feature: solar+onwind-time
-    exclude_carriers: []
-    consider_efficiency_classes: false
+    hac_features:
+    - wnd100m
+    - influx_direct
+  exclude_carriers: []
+  consider_efficiency_classes: false
   aggregation_strategies:
     generators:
       committable: any
@@ -862,7 +896,12 @@ clustering:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
   electricity: false
-  sector: false
+  sector:
+    factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 1.0
+    absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
@@ -896,6 +935,7 @@ solving:
         DC: 0.3
         H2 pipeline: 0.3
         gas pipeline: 0.3
+      fractional_last_unit_size: false
 
   agg_p_nom_limits:
     agg_offwind: false
@@ -924,6 +964,12 @@ solving:
       dual_feasibility_tolerance: 1e-5
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
+      random_seed: 123
+    highs-simplex:
+      solver: "simplex"
+      parallel: "on"
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
       random_seed: 123
     gurobi-default:
       threads: 8
@@ -974,7 +1020,14 @@ solving:
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
+  check_objective:
+    enable: false
+    expected_value: None
+    atol: 1_000_000
+    rtol: 0.01
+
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  memory_logging_frequency: 30 # in seconds
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 
@@ -1202,8 +1255,11 @@ plotting:
     services urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
+    urban central geothermal heat pump: '#4f2144'
+    geothermal heat pump: '#4f2144'
+    geothermal heat direct utilisation: '#ba91b1'
     ground heat pump: '#2fb537'
-    residential rural ground heat pump: '#48f74f'
+    residential rural ground heat pump: '#4f2144'
     residential rural air heat pump: '#48f74f'
     services rural ground heat pump: '#5af95d'
     Ambient: '#98eb9d'
@@ -1257,8 +1313,19 @@ plotting:
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
     naphtha for industry: '#57ebc4'
-    methanolisation: '#83d6d5'
-    methanol: '#468c8b'
+    methanol-to-kerosene: '#C98468'
+    methanol-to-olefins/aromatics: '#FFA07A'
+    Methanol steam reforming: '#FFBF00'
+    Methanol steam reforming CC: '#A2EA8A'
+    methanolisation: '#00FFBF'
+    biomass-to-methanol: '#EAD28A'
+    biomass-to-methanol CC: '#EADBAD'
+    allam methanol: '#B98F76'
+    CCGT methanol: '#B98F76'
+    CCGT methanol CC: '#B98F76'
+    OCGT methanol: '#B98F76'
+    methanol: '#FF7B00'
+    methanol transport: '#FF7B00'
     shipping methanol: '#468c8b'
     industry methanol: '#468c8b'
     # co2

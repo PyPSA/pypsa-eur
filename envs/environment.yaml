@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -7,35 +7,36 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
-- python>=3.8
+- python>=3.10
 - pip
 
-- atlite>=0.2.9
-- pypsa>=0.29
-- linopy
-- dask
+# Inhouse packages
+- pypsa>=0.32.1
+- atlite>=0.3
+- linopy>=0.4.4
+- powerplantmatching>=0.5.15
 
-  # Dependencies of the workflow itself
+# Dependencies of the workflow itself
+- dask
 - xlrd
-- openpyxl!=3.1.1
+- openpyxl
 - seaborn
-- snakemake-minimal>=8.14
+- snakemake-minimal<8.25 # See https://github.com/snakemake/snakemake/issues/3202
 - memory_profiler
 - yaml
 - pytables
 - lxml
-- powerplantmatching>=0.5.15
 - numpy
 - pandas>=2.1
 - geopandas>=1
-- xarray>=2023.11.0
+- xarray>=2024.03.0
 - rioxarray
 - netcdf4
+- libgdal-netcdf
 - networkx
 - scipy
 - glpk
 - shapely>=2.0
-- pyscipopt
 - matplotlib
 - proj
 - fiona
@@ -46,22 +47,26 @@ dependencies:
 - jpype1
 - pyxlsb
 - graphviz
-- pre-commit
 - geojson
 
-  # Keep in conda environment when calling ipython
-- ipython
-
-  # GIS dependencies:
+# GIS dependencies:
 - cartopy
 - descartes
-- rasterio!=1.2.10
+- rasterio
 
+# Development dependencies
+- jupyter
+- ipython
+- pre-commit
+- ruff
+- pylint
 
 - pip:
+  - gurobipy
+  - highspy
+  - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
+  - entsoe-py
   - snakemake-storage-plugin-http
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic
-  - highspy
-  - tabula-py

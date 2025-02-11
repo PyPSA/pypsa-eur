@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -10,7 +10,7 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
 .. image:: https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases
     :alt: GitHub release (latest by date including pre-releases)
 
-.. image:: https://github.com/pypsa/pypsa-eur/actions/workflows/ci.yaml/badge.svg
+.. image:: https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg
     :target: https://github.com/PyPSA/pypsa-eur/actions
 
 .. image:: https://readthedocs.org/projects/pypsa-eur/badge/?version=latest
@@ -219,7 +219,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Getting Started
 
    introduction
@@ -229,7 +229,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Configuration
 
    wildcards
@@ -239,19 +239,18 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Rules Overview
 
    retrieve
    preparation
-   simplification
    sector
    solving
    plotting
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Implementation details for sector-coupled systems
 
    spatial_resolution
@@ -259,11 +258,12 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: References
 
    release_notes
    licenses
+   data_sources
    validation
    limitations
    contributing

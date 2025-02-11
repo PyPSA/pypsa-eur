@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -18,7 +16,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_electricity_prices",
-            simpl="",
             opts="Ept-12h",
             clusters="37",
             ll="v1.0",
@@ -50,6 +47,7 @@ if __name__ == "__main__":
     df.plot.barh(ax=ax, xlabel="Electricity Price [€/MWh]", ylabel="")
     ax.grid(axis="y")
     fig.savefig(snakemake.output.price_bar, bbox_inches="tight")
+    plt.close(fig)
 
     fig, ax = plt.subplots()
 
@@ -57,6 +55,7 @@ if __name__ == "__main__":
     df.plot(ax=ax, xlabel="", ylabel="Electricity Price [€/MWh]", alpha=0.8)
     ax.grid(axis="x")
     fig.savefig(snakemake.output.price_line, bbox_inches="tight")
+    plt.close(fig)
 
     # touch file
     with open(snakemake.output.plots_touch, "a"):

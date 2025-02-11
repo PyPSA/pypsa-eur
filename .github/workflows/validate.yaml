@@ -1,0 +1,62 @@
+name: Validator Bot
+
+on:
+  pull_request:
+    branches:
+    - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-validation:
+    name: Run validation
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: self-hosted
+    outputs:
+      validation_failed: ${{ steps.check_validation.outputs.failed }}
+    steps:
+    - uses: lkstrp/pypsa-validator@v0.2.5
+      id: validation
+      continue-on-error: true
+      with:
+        step: run-self-hosted-validation
+        env_file: envs/environment.yaml
+        snakemake_config: config/test/config.validator.yaml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Check validation status
+      id: check_validation
+      run: |
+        if [[ "${{ steps.validation.outcome }}" == "failure" ]]; then
+          echo "failed=true" >> $GITHUB_OUTPUT
+        else
+          echo "failed=false" >> $GITHUB_OUTPUT
+        fi
+
+  create-report:
+    name: Create report
+    needs: run-validation
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository && 
+      needs.run-validation.outputs.validation_failed != 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: lkstrp/pypsa-validator@v0.2.5
+      with:
+        step: create-comment
+        snakemake_config: config/test/config.validator.yaml
+        # The path starting from prefix in config
+        # For plot results/<prefix>/<scenario>/<plot_name>.png pass
+        # <scenario>/<plot_name>.png
+        plots: >
+          "
+          graphs/energy.svg
+          graphs/costs.svg
+          graphs/balances-energy.svg
+          graphs/balances-urban_central_heat.svg
+          graphs/balances-urban_decentral_heat.svg
+          graphs/balances-rural_heat.svg
+          "
+        validator_key: ${{ secrets.VALIDATOR_KEY }}

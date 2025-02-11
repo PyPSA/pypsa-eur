@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# Copyright 2019-2024 Fabian Hofmann (TUB, FIAS), Fabian Neumann (TUB)
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517935.svg
-   :target: https://doi.org/10.5281/zenodo.3517935
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3517934.svg
+   :target: https://doi.org/10.5281/zenodo.3517934
 
 The data bundle contains common GIS datasets like NUTS3 shapes, EEZ shapes,
 CORINE Landcover, Natura 2000 and also electricity specific summary statistics
@@ -13,14 +11,9 @@ like historic per country yearly totals of hydro generation, GDP and population
 data on NUTS3 levels and energy balances.
 
 This rule downloads the data bundle from `zenodo
-<https://doi.org/10.5281/zenodo.3517935>`_ and extracts it in the ``data``
+<https://doi.org/10.5281/zenodo.3517934>`_ and extracts it in the ``data``
 sub-directory, such that all files of the bundle are stored in the
 ``data/bundle`` subdirectory.
-
-**Outputs**
-
-- ``data/bundle``: input data collected from various sources
-
 """
 
 import logging
@@ -48,7 +41,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    url = "https://zenodo.org/records/12760663/files/bundle.tar.xz"
+    url = "https://zenodo.org/records/14732152/files/bundle.tar.xz"
 
     tarball_fn = Path(f"{rootpath}/bundle.tar.xz")
     to_fn = Path(rootpath) / Path(snakemake.output[0]).parent.parent
