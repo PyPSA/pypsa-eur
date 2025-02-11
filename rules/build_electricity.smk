@@ -625,20 +625,6 @@ def input_profile_tech(w):
     }
 
 
-def input_conventional(w):
-    carriers = [
-        *config_provider("electricity", "conventional_carriers")(w),
-        *config_provider("electricity", "extendable_carriers", "Generator")(w),
-    ]
-    return {
-        f"conventional_{carrier}_{attr}": fn
-        for carrier, d in config_provider("conventional", default={})(w).items()
-        if carrier in carriers
-        for attr, fn in d.items()
-        if str(fn).startswith("data/")
-    }
-
-
 rule add_electricity:
     params:
         line_length_factor=config_provider("lines", "length_factor"),

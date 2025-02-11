@@ -67,6 +67,7 @@ include: "rules/development.smk"
 
 if config["foresight"] == "overnight":
 
+    configfile: "config/config.default.overnight.yaml"
     include: "rules/solve_overnight.smk"
 
 

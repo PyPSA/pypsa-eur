@@ -539,7 +539,7 @@ def attach_conventional_generators(
                     {attr: n.generators.loc[idx].bus.map(bus_values).dropna()}
                 )
             else:
-                # Single value affecting all generators of technology k indiscriminantely of country
+                # Single value affecting all generators of technology k indiscriminately of country
                 n.generators.loc[idx, attr] = values
 
 
