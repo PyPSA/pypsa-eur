@@ -5248,6 +5248,52 @@ def add_enhanced_geothermal(n, egs_potentials, egs_overlap, costs):
             )
 
 
+def adjust_renewable_profiles(n,renewable_carriers, zenodo_timeseries):
+    """"
+    manipulating the p_max_pu of all renewable generators to match
+    a synthetic weather year that is expected for a planning_horizon.
+    """
+    countries = set([item[:2] for item in n.buses])
+    year = snakemake.wildcards.planning_horizons
+    for carrier in ['solar']:
+        for country in countries:
+
+            # Define the directory containing the files
+            data_dir = Path(f"{zenodo_timseries}") 
+            print(f"path {data_dir}")
+
+            # Search for files matching the pattern
+            files = list(data_dir.glob(f"{country}_*_{carrier}__capacity_factor_time_series.nc"))
+
+            # Check how many files match
+            if len(files) == 0:
+                raise FileNotFoundError(f"No file found matching pattern: {country}_*_{carrier}__capacity_factor_time_series.nc")
+            elif len(files) > 1:
+                raise ValueError(f"Multiple files found matching pattern: {country}_*_{carrier}__capacity_factor_time_series.nc -> {files}")
+
+            # Open the dataset
+            ds = xr.open_dataset(files[0])
+
+
+        # read in the dataset
+        ds = xr.open_dataset(f"{country}__CORDEX__RCP_2_6__CNRM_CERFACS_CM5__CNRM_ALADIN63__{carrier}__capacity_factor_time_series.nc")
+        # get the profile data for the year
+        profile = ds[f"{carrier.title()} capacity factor"].sel(time=slice(f"{year}-01-01 00:00", f"{year}-12-31 23:00")).to_series()
+        # TODO: what about leap years just cut out 02-29
+        # make sure the profile is having the same size as the generators and a whole year is optimized
+        if n.generators_t.p_max_pu.shape[0] != 8760:
+            logger.error("Adjusting renewable profiles currently only works for full years!")
+        assert(len(profile) == n.generators_t.p_max_pu.shape[0])
+
+        # get all generators
+        index = n.generators[(n.generators.index.str[:2] == country) & (n.generators.carrier == carrier)].index
+        if len(index) == 1:
+            n.generators_t.p_max_pu.loc[:, index] = profile
+        else:
+            # broadcasting
+            n.generators_t.p_max_pu.loc[:, index] = profile.values[:, None]
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -5434,6 +5480,9 @@ if __name__ == "__main__":
     first_year_myopic = (snakemake.params.foresight in ["myopic", "perfect"]) and (
         snakemake.params.planning_horizons[0] == investment_year
     )
+
+    if weather_years:
+        adjust_renewable_profiles(n, snakemake.params.renewable_carriers, zenodo_timeseries)
 
     if options["cluster_heat_buses"] and not first_year_myopic:
         cluster_heat_buses(n)
