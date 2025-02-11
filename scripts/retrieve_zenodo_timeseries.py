@@ -61,17 +61,16 @@ if __name__ == "__main__":
 
         logger.info(f"{key} data available in '{to_fn}'.")
 
+        
         # Remove files that do not contain both rcp and global_regional_models in their names
         # ADB to do this does not work
         extracted_dir = to_fn / key
         for file in extracted_dir.iterdir():
-            if str(rcp) not in file.name:
-                print("True rcp")
-            if global_regional_models not in file.name:
-                print("True models")
+            modified_name = file.name.replace('_', '-')
+            if str(rcp) not in modified_name or global_regional_models not in modified_name:
                 #logger.info(f"Removing file: {file}")
-                #file.unlink()
-
+                file.unlink()
+        
         # Remove the tarball (zip file)
         if tarball_fn.exists():
             logger.info(f"Removing zip file: {tarball_fn}")

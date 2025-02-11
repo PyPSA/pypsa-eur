@@ -5752,7 +5752,7 @@ def adjust_renewable_profiles(n,renewable_carriers, zenodo_timeseries):
         for country in countries:
 
             # Define the directory containing the files
-            data_dir = Path(f"{zenodo_timseries}") 
+            data_dir = zenodo_timeseries 
             print(f"path {data_dir}")
 
             # Search for files matching the pattern
@@ -6056,8 +6056,8 @@ if __name__ == "__main__":
         snakemake.params.planning_horizons[0] == investment_year
     )
 
-    if weather_years:
-        adjust_renewable_profiles(n, snakemake.params.renewable_carriers, zenodo_timeseries)
+    if snakemake.params.weather_years:
+        adjust_renewable_profiles(n, snakemake.params.renewable_carriers, snakemake.input.zenodo_timeseries)
 
     if options["cluster_heat_buses"] and not first_year_myopic:
         cluster_heat_buses(n)
