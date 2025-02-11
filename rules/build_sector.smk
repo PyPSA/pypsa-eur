@@ -296,12 +296,9 @@ rule build_geothermal_heat_potential:
         countries=config_provider("countries"),
         constant_temperature_celsius=config_provider("sector", "district_heating", "limited_heat_sources", "geothermal", "constant_temperature_celsius"),
     input:
-        isi_heat_potentials=storage("https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx", keep_local=True),
+        isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        lau_regions=storage(
-            "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
-            keep_local=True,
-        )
+        lau_regions="data/lau_regions.geojson",
     output:
         heat_source_power=resources("heat_source_power_geothermal_base_s_{clusters}.csv"),
     resources:
