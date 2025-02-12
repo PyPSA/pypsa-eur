@@ -5209,7 +5209,7 @@ if __name__ == "__main__":
             floor_area_file=snakemake.input.floor_area,
             heat_source_profile_files={
                 source: snakemake.input[source]
-                for source in snakemake.params.heat_utilisation_potentials
+                for source in snakemake.params.limited_heat_sources
                 if source in snakemake.input.keys()
             },
             params=snakemake.params,
