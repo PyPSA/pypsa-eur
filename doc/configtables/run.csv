@@ -9,3 +9,4 @@ shared_resources,,,
 -- policy,bool/str,,"Boolean switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared."
 -- exclude,str,"For the case shared_resources=base, specify additional files that should not be shared across runs."
 shared_cutouts,bool,"{true, false}","Switch to select whether cutouts should be shared across runs."
+use_shadow_directory,bool,"{true, false}","Set to ``true`` (default) if snakemake shadow directories (``shallow``) should be used. Set to ``false`` if problems occcur."

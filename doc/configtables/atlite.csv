@@ -1,4 +1,5 @@
 ,Unit,Values,Description
+cutout_directory,--,str,"Directory to store cutouts."
 default_cutout,--,str,"Defines a default cutout."
 nprocesses,--,int,"Number of parallel processes in cutout preparation"
 show_progress,bool,true/false,"Whether progressbar for atlite conversion processes should be shown. False saves time."

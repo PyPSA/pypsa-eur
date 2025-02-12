@@ -159,7 +159,7 @@ if config["enable"].get("build_cutout", False):
             regions_onshore=resources("regions_onshore.geojson"),
             regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected("cutouts/" + CDIR + "{cutout}.nc"),
+            protected(CDIR + "{cutout}.nc"),
         log:
             logs(CDIR + "build_cutout/{cutout}.log"),
         benchmark:
@@ -176,10 +176,7 @@ if config["enable"].get("build_cutout", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
     output:
         resources("shipdensity_raster.tif"),
     log:
@@ -218,8 +215,7 @@ rule determine_availability_matrix_MD_UA:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: "cutouts/"
-        + CDIR
+        cutout=lambda w: CDIR
         + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
@@ -289,8 +285,7 @@ rule determine_availability_matrix:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: "cutouts/"
-        + CDIR
+        cutout=lambda w: CDIR
         + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
@@ -317,8 +312,7 @@ rule build_renewable_profiles:
         availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
+        cutout=lambda w: CDIR
         + config_provider("renewable", w.technology, "cutout")(w)
         + ".nc",
     output:
@@ -369,8 +363,7 @@ rule build_hydro_profile:
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
         era5_runoff="data/era5-annual-runoff-per-country.csv",
-        cutout=lambda w: f"cutouts/"
-        + CDIR
+        cutout=lambda w: CDIR
         + config_provider("renewable", "hydro", "cutout")(w)
         + ".nc",
     output:
@@ -393,8 +386,7 @@ rule build_line_rating:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         base_network=resources("networks/base.nc"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
+        cutout=lambda w: CDIR
         + config_provider("lines", "dynamic_line_rating", "cutout")(w)
         + ".nc",
     output:
@@ -492,16 +484,6 @@ def input_profile_tech(w):
     }
 
 
-def input_conventional(w):
-    return {
-        f"conventional_{carrier}_{attr}": fn
-        for carrier, d in config_provider("conventional", default={None: {}})(w).items()
-        if carrier in config_provider("electricity", "conventional_carriers")(w)
-        for attr, fn in d.items()
-        if str(fn).startswith("data/")
-    }
-
-
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
@@ -530,10 +512,7 @@ rule build_hac_features:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         features=config_provider("clustering", "cluster_network", "hac_features"),
     input:
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
         regions=resources("regions_onshore_base_s.geojson"),
     output:
         resources("hac_features.nc"),
@@ -647,10 +626,14 @@ def input_profile_tech(w):
 
 
 def input_conventional(w):
+    carriers = [
+        *config_provider("electricity", "conventional_carriers")(w),
+        *config_provider("electricity", "extendable_carriers", "Generator")(w),
+    ]
     return {
         f"conventional_{carrier}_{attr}": fn
-        for carrier, d in config_provider("conventional", default={None: {}})(w).items()
-        if carrier in config_provider("electricity", "conventional_carriers")(w)
+        for carrier, d in config_provider("conventional", default={})(w).items()
+        if carrier in carriers
         for attr, fn in d.items()
         if str(fn).startswith("data/")
     }
