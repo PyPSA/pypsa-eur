@@ -649,10 +649,13 @@ if config["enable"]["retrieve"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_boundaries.py"
-    
+
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
-            isi_heat_potentials=storage("https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx", keep_local=True),
+            isi_heat_potentials=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx",
+                keep_local=True,
+            ),
         output:
             "data/isi_heat_utilisation_potentials.xlsx",
         log:
@@ -665,19 +668,19 @@ if config["enable"]["retrieve"]:
     rule retrieve_lau_regions:
         input:
             lau_regions=storage(
-            "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
-            keep_local=True,
-            )
+                "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
+                keep_local=True,
+            ),
         output:
+            lau_regions="data/lau_regions.geojson",
+        log:
+            "logs/retrieve_lau_regions.log",
             lau_regions="data/lau_regions.zip",
         log: "logs/retrieve_lau_regions.log",
         threads: 1
         retries: 2
         run:
             move(input[0], output[0])
-
-
-
 
 
 if config["enable"]["retrieve"]:
