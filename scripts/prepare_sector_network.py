@@ -2271,12 +2271,17 @@ def add_heat(
                 unit="MWh_th",
             )
 
+            etpr_water_tanks = costs.at[heat_system.central_or_decentral + " water tank storage", "energy to power ratio"]
+
             n.add(
                 "Link",
                 nodes + f" {heat_system} water tanks charger",
                 bus0=nodes + f" {heat_system} heat",
                 bus1=nodes + f" {heat_system} water tanks",
-                efficiency=costs.at["water tank charger", "efficiency"],
+                efficiency=costs.at[
+                    heat_system.central_or_decentral + " water tank charger",
+                    "efficiency",
+                ],
                 carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
             )
@@ -2287,9 +2292,14 @@ def add_heat(
                 bus0=nodes + f" {heat_system} water tanks",
                 bus1=nodes + f" {heat_system} heat",
                 carrier=f"{heat_system} water tanks discharger",
-                efficiency=costs.at["water tank discharger", "efficiency"],
+                efficiency=costs.at[
+                    heat_system.central_or_decentral + " water tank discharger",
+                    "efficiency",
+                ],
                 p_nom_extendable=True,
             )
+
+            n.links.loc[nodes + f" {heat_system} water tanks discharger", "etpr"] = etpr_water_tanks
 
             tes_time_constant_days = options["tes_tau"][
                 heat_system.central_or_decentral
@@ -2310,6 +2320,57 @@ def add_heat(
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
                 ],
             )
+
+            if heat_system == HeatSystem.URBAN_CENTRAL:
+                n.add("Carrier", f"{heat_system} water pits")
+
+                n.add(
+                    "Bus",
+                    nodes + f" {heat_system} water pits",
+                    location=nodes,
+                    carrier=f"{heat_system} water pits",
+                    unit="MWh_th",
+                )
+
+                etpr_water_pit = costs.at["central water pit storage", "energy to power ratio"]
+
+                n.add(
+                    "Link",
+                    nodes + f" {heat_system} water pits charger",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes + f" {heat_system} water pits",
+                    efficiency=costs.at[
+                        "central water pit charger", "efficiency",
+                    ],
+                    carrier=f"{heat_system} water pits charger",
+                    p_nom_extendable=True,
+                )
+
+                n.add(
+                    "Link",
+                    nodes + f" {heat_system} water pits discharger",
+                    bus0=nodes + f" {heat_system} water pits",
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} water pits discharger",
+                    efficiency=costs.at[
+                        "central water pit discharger", "efficiency",
+                    ],
+                    p_nom_extendable=True,
+                )
+
+                n.links.loc[nodes + f" {heat_system} water pits discharger", "etpr"] = etpr_water_pit
+
+                n.add(
+                    "Store",
+                    nodes + f" {heat_system} water pits",
+                    bus=nodes + f" {heat_system} water pits",
+                    e_cyclic=True,
+                    e_nom_extendable=True,
+                    carrier=f"{heat_system} water pits",
+                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                    capital_cost=costs.at["central water pit storage", "fixed"],
+                    lifetime=costs.at["central water pit storage", "lifetime"],
+                )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
@@ -4604,7 +4665,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="38",
+            clusters="6",
             ll="vopt",
             sector_opts="",
             planning_horizons="2030",

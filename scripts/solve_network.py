@@ -80,8 +80,8 @@ def add_land_use_constraint_perfect(n):
         p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
         p_nom_min = p_nom_min.reindex(p_nom_max.index)
         check = (
-            p_nom_min.groupby(level=[0, 1]).sum()
-            > p_nom_max.groupby(level=[0, 1]).min()
+                p_nom_min.groupby(level=[0, 1]).sum()
+                > p_nom_max.groupby(level=[0, 1]).min()
         )
         if check.sum():
             logger.warning(
@@ -106,7 +106,7 @@ def add_land_use_constraint_perfect(n):
     df = p_nom_max.reset_index()
     df["name"] = df.apply(
         lambda row: f"nom_max_{row['carrier']}"
-        + (f"_{row['build_year']}" if row["build_year"] is not None else ""),
+                    + (f"_{row['build_year']}" if row["build_year"] is not None else ""),
         axis=1,
     )
 
@@ -142,7 +142,7 @@ def add_land_use_constraint(n):
     # check if existing capacities are larger than technical potential
     existing_large = n.generators[
         n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
+        ].index
     if len(existing_large):
         logger.warning(
             f"Existing capacities larger than technical potential for {existing_large},\
@@ -168,18 +168,18 @@ def add_solar_potential_constraints(n, config):
     """
     land_use_factors = {
         "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
-        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
+                      / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
     }
     rename = {"Generator-ext": "Generator"}
 
     solar_carriers = ["solar", "solar-hsat"]
     solar = n.generators[
         n.generators.carrier.isin(solar_carriers) & n.generators.p_nom_extendable
-    ].index
+        ].index
 
     solar_today = n.generators[
         (n.generators.carrier == "solar") & (n.generators.p_nom_extendable)
-    ].index
+        ].index
     solar_hsat = n.generators[(n.generators.carrier == "solar-hsat")].index
 
     if solar.empty:
@@ -194,13 +194,13 @@ def add_solar_potential_constraints(n, config):
     location = pd.Series(n.buses.index, index=n.buses.index)
     ggrouper = n.generators.loc[solar].bus
     rhs = (
-        n.generators.loc[solar_today, "p_nom_max"]
-        .groupby(n.generators.loc[solar_today].bus.map(location))
-        .sum()
-        - n.generators.loc[solar_hsat, "p_nom"]
-        .groupby(n.generators.loc[solar_hsat].bus.map(location))
-        .sum()
-        * land_use_factors["solar-hsat"]
+            n.generators.loc[solar_today, "p_nom_max"]
+            .groupby(n.generators.loc[solar_today].bus.map(location))
+            .sum()
+            - n.generators.loc[solar_hsat, "p_nom"]
+            .groupby(n.generators.loc[solar_hsat].bus.map(location))
+            .sum()
+            * land_use_factors["solar-hsat"]
     ).clip(lower=0)
 
     lhs = (
@@ -342,7 +342,7 @@ def add_retrofit_gas_boiler_constraint(n, snapshots):
         n.loads_t.p_set.columns.str.contains("heat")
         & ~n.loads_t.p_set.columns.str.contains("industry")
         & ~n.loads_t.p_set.columns.str.contains("agriculture")
-    ]
+        ]
     profile = n.loads_t.p_set[cols].div(
         n.loads_t.p_set[cols].groupby(level=0).max(), level=0
     )
@@ -366,20 +366,20 @@ def add_retrofit_gas_boiler_constraint(n, snapshots):
 
 
 def prepare_network(
-    n,
-    solve_opts=None,
-    config=None,
-    foresight=None,
-    planning_horizons=None,
-    co2_sequestration_potential=None,
+        n,
+        solve_opts=None,
+        config=None,
+        foresight=None,
+        planning_horizons=None,
+        co2_sequestration_potential=None,
 ):
     if "clip_p_max_pu" in solve_opts:
         for df in (
-            n.generators_t.p_max_pu,
-            n.generators_t.p_min_pu,
-            n.links_t.p_max_pu,
-            n.links_t.p_min_pu,
-            n.storage_units_t.inflow,
+                n.generators_t.p_max_pu,
+                n.generators_t.p_min_pu,
+                n.links_t.p_max_pu,
+                n.links_t.p_min_pu,
+                n.storage_units_t.inflow,
         ):
             df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
@@ -426,13 +426,13 @@ def prepare_network(
             #    t.df['capital_cost'] += 1e1 + 2.*(np.random.random(len(t.df)) - 0.5)
             if "marginal_cost" in t.df:
                 t.df["marginal_cost"] += 1e-2 + 2e-3 * (
-                    np.random.random(len(t.df)) - 0.5
+                        np.random.random(len(t.df)) - 0.5
                 )
 
         for t in n.iterate_components(["Line", "Link"]):
             t.df["capital_cost"] += (
-                1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
-            ) * t.df["length"]
+                                            1e-1 + 2e-2 * (np.random.random(len(t.df)) - 0.5)
+                                    ) * t.df["length"]
 
     if solve_opts.get("nhours"):
         nhours = solve_opts["nhours"]
@@ -498,7 +498,7 @@ def add_CCL_constraints(n, config):
         gens_cst = gens_cst[
             (gens_cst["build_year"] + gens_cst["lifetime"])
             >= int(snakemake.wildcards.planning_horizons)
-        ]
+            ]
         if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
             gens_cst = gens_cst.replace(rename_offwind)
         rhs_cst = (
@@ -577,12 +577,12 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         lgrouper = n.loads.bus
         sgrouper = n.storage_units.bus
     load = (
-        n.snapshot_weightings.generators
-        @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
+            n.snapshot_weightings.generators
+            @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
     )
     inflow = (
-        n.snapshot_weightings.stores
-        @ n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
+            n.snapshot_weightings.stores
+            @ n.storage_units_t.inflow.groupby(sgrouper, axis=1).sum()
     )
     inflow = inflow.reindex(load.index).fillna(0.0)
     rhs = scaling * (level * load - inflow)
@@ -722,7 +722,7 @@ def add_operational_reserve_margin(n, sns, config):
             .rename({"Generator-ext": "Generator"})
         )
         lhs = summed_reserve + (
-            p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))
+                p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))
         ).sum("Generator")
 
     # Total demand per t
@@ -760,6 +760,58 @@ def add_operational_reserve_margin(n, sns, config):
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
+def add_tes_etpr_constraints(n):
+    """
+    Add an indexed constraint component that enforces for each TES storage unit that
+    the storage's energy capacity is at least the energy-to-power ratio times the corresponding
+    discharger link's power capacity.
+
+         Store-e_nom - etpr * Link-p_nom >= 0
+    """
+    tes_discharger_bool = n.links.index.str.contains("water tanks discharger|water pits discharger")
+    tes_discharger_ext = n.links[tes_discharger_bool].query("p_nom_extendable").index
+    if len(tes_discharger_ext) == 0:
+        return
+
+    etpr_values = n.links.loc[tes_discharger_ext, "etpr"].values
+
+    ltes_store = [link.replace(" discharger", "") for link in tes_discharger_ext]
+
+    ltes_e_nom = n.model["Store-e_nom"].loc[ltes_store]
+    discharger_pnoms = n.model["Link-p_nom"].loc[tes_discharger_ext]
+
+    lhs = ltes_e_nom - etpr_values * discharger_pnoms
+
+    n.model.add_constraints(lhs >= 0, name="TES_EtPR")
+
+
+def add_tes_charger_discharger_constraints(n):
+    """
+    Add constraints ensuring that for each TES unit, the charger and discharger are sized the same.
+
+        Link-p_nom(charger) - efficiency * Link-p_nom(discharger) == 0
+
+    This assumes that the discharger's efficiency (from n.links.efficiency) is used to scale the discharger power.
+    """
+    if not n.links.p_nom_extendable.any():
+        return
+
+    # Identify TES discharger and charger links using name patterns.
+    discharger_bool = n.links.index.str.contains("water tanks discharger|water pits discharger")
+    charger_bool = n.links.index.str.contains("water tanks charger|water pits charger")
+
+    # Filter only extendable links.
+    dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
+    chargers_ext = n.links[charger_bool].query("p_nom_extendable").index
+
+    # Note: This works if the ordering of `chargers_ext` and `dischargers_ext` matches one-to-one.
+    # If not, you may need to build a mapping based on the names.
+    eff = n.links.efficiency[dischargers_ext].values
+    lhs = n.model["Link-p_nom"].loc[chargers_ext] - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+
+    n.model.add_constraints(lhs == 0, name="tes_charger_discharger_ratio")
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -776,8 +828,8 @@ def add_battery_constraints(n):
 
     eff = n.links.efficiency[dischargers_ext].values
     lhs = (
-        n.model["Link-p_nom"].loc[chargers_ext]
-        - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+            n.model["Link-p_nom"].loc[chargers_ext]
+            - n.model["Link-p_nom"].loc[dischargers_ext] * eff
     )
 
     n.model.add_constraints(lhs == 0, name="Link-charger_ratio")
@@ -799,14 +851,14 @@ def add_lossy_bidirectional_link_constraints(n):
 
 def add_chp_constraints(n):
     electric = (
-        n.links.index.str.contains("urban central")
-        & n.links.index.str.contains("CHP")
-        & n.links.index.str.contains("electric")
+            n.links.index.str.contains("urban central")
+            & n.links.index.str.contains("CHP")
+            & n.links.index.str.contains("electric")
     )
     heat = (
-        n.links.index.str.contains("urban central")
-        & n.links.index.str.contains("CHP")
-        & n.links.index.str.contains("heat")
+            n.links.index.str.contains("urban central")
+            & n.links.index.str.contains("CHP")
+            & n.links.index.str.contains("heat")
     )
 
     electric_ext = n.links[electric].query("p_nom_extendable").index
@@ -822,17 +874,17 @@ def add_chp_constraints(n):
         p_nom = n.model["Link-p_nom"]
 
         lhs = (
-            p_nom.loc[electric_ext]
-            * (n.links.p_nom_ratio * n.links.efficiency)[electric_ext].values
-            - p_nom.loc[heat_ext] * n.links.efficiency[heat_ext].values
+                p_nom.loc[electric_ext]
+                * (n.links.p_nom_ratio * n.links.efficiency)[electric_ext].values
+                - p_nom.loc[heat_ext] * n.links.efficiency[heat_ext].values
         )
         n.model.add_constraints(lhs == 0, name="chplink-fix_p_nom_ratio")
 
         rename = {"Link-ext": "Link"}
         lhs = (
-            p.loc[:, electric_ext]
-            + p.loc[:, heat_ext]
-            - p_nom.rename(rename).loc[electric_ext]
+                p.loc[:, electric_ext]
+                + p.loc[:, heat_ext]
+                - p_nom.rename(rename).loc[electric_ext]
         )
         n.model.add_constraints(lhs <= 0, name="chplink-top_iso_fuel_line_ext")
 
@@ -845,8 +897,8 @@ def add_chp_constraints(n):
     # back-pressure
     if not electric.empty:
         lhs = (
-            p.loc[:, heat] * (n.links.efficiency[heat] * n.links.c_b[electric].values)
-            - p.loc[:, electric] * n.links.efficiency[electric]
+                p.loc[:, heat] * (n.links.efficiency[heat] * n.links.c_b[electric].values)
+                - p.loc[:, electric] * n.links.efficiency[electric]
         )
         n.model.add_constraints(lhs <= rhs, name="chplink-backpressure")
 
@@ -884,7 +936,7 @@ def add_flexible_egs_constraint(n):
     well_index = n.links.loc[n.links.carrier == "geothermal heat"].index
     storage_index = n.storage_units.loc[
         n.storage_units.carrier == "geothermal heat"
-    ].index
+        ].index
 
     p_nom_rhs = n.model["Link-p_nom"].loc[well_index]
     p_nom_lhs = n.model["StorageUnit-p_nom"].loc[storage_index]
@@ -944,12 +996,14 @@ def extra_functionality(n, snapshots):
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
     if {"solar-hsat", "solar"}.issubset(
-        config["electricity"]["renewable_carriers"]
+            config["electricity"]["renewable_carriers"]
     ) and {"solar-hsat", "solar"}.issubset(
         config["electricity"]["extendable_carriers"]["Generator"]
     ):
         add_solar_potential_constraints(n, config)
 
+    add_tes_charger_discharger_constraints(n)
+    add_tes_etpr_constraints(n)
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
@@ -1056,13 +1110,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network",
+            #            configfiles="../config/test/config.perfect.yaml",
             opts="",
-            clusters="5",
-            ll="v1.0",
+            clusters="6",
+            ll="vopt",
             sector_opts="",
-            # planning_horizons="2030",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1084,7 +1138,7 @@ if __name__ == "__main__":
     )
 
     with memory_logger(
-        filename=getattr(snakemake.log, "memory", None), interval=30.0
+            filename=getattr(snakemake.log, "memory", None), interval=30.0
     ) as mem:
         n = solve_network(
             n,
