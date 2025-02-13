@@ -1251,7 +1251,7 @@ rule prepare_sector_network:
         ),
         # Climate
         zenodo_timeseries=lambda w: (
-            "data/zenodo_timeseries/"
+            "data/zenodo_timeseries"
             if config_provider("weather_years", "enable")(w)
             else []
         ),
