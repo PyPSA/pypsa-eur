@@ -757,7 +757,7 @@ def update_config_from_wildcards(config, w, inplace=True):
         }
         for o in opts:
             flags = ["+e", "+p", "+m", "+c"]
-            if all(flag not in o for flag in flags):
+            if all(flag not in o for flag in flags) or o.startswith("CF+"):
                 continue
             carrier, attr_factor = o.split("+")
             attr = attr_lookup[attr_factor[0]]
