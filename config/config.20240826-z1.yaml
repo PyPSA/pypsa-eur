@@ -21,11 +21,6 @@ scenario:
   - 115
   opts:
   - ''
-  # test sets
-  # sector_opts:
-  # - ""
-  # - imp
-  # - norelocation
   sector_opts:
   - ""
   - imp
@@ -43,20 +38,6 @@ scenario:
   - imp+CH4+NH3+FT+MeOH+HBI+St  # hydrogen derivatives + products
   - imp+MeOH+FT # liquid carbonaceous fuels
   - imp+CH4+FT+MeOH  # carbonaceous fuels
-  # subsets of carriers (no relocation)
-  - norelocation-imp+AC
-  - norelocation-imp+H2
-  - norelocation-imp+CH4
-  - norelocation-imp+NH3
-  - norelocation-imp+FT
-  - norelocation-imp+MeOH
-  - norelocation-imp+HBI+St # products
-  - norelocation-imp+H2+CH4+NH3+FT+MeOH  # molecules
-  - norelocation-imp+H2+CH4+NH3+FT+MeOH+HBI+St  # molecules + products
-  - norelocation-imp+CH4+NH3+FT+MeOH  # hydrogen derivatives
-  - norelocation-imp+CH4+NH3+FT+MeOH+HBI+St  # hydrogen derivatives + products
-  - norelocation-imp+MeOH+FT # liquid carbonaceous fuels
-  - norelocation-imp+CH4+FT+MeOH  # carbonaceous fuels
   # subsets of carriers (+20%)
   - imp+AC1.2
   - imp+H21.2
@@ -147,60 +128,6 @@ scenario:
   - imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
   - imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
   - imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
-  # lower/higher import costs of molecules (2030 costs)
-  - CF+costs+year+2030-imp+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
-  - CF+costs+year+2030-imp+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
-  - CF+costs+year+2030-imp+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
-  - CF+costs+year+2030-imp+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
-  - CF+costs+year+2030-imp+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
-  - CF+costs+year+2030-imp+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
-  - CF+costs+year+2030-imp+AC+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
-  - CF+costs+year+2030-imp+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
-  # higher/lower import costs of everything (2030 costs)
-  - CF+costs+year+2030-imp+AC1.3+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
-  - CF+costs+year+2030-imp+AC1.2+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
-  - CF+costs+year+2030-imp+AC1.1+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
-  - CF+costs+year+2030-imp+AC0.9+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
-  - CF+costs+year+2030-imp+AC0.8+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
-  - CF+costs+year+2030-imp+AC0.7+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
-  - CF+costs+year+2030-imp+AC0.6+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
-  - CF+costs+year+2030-imp+AC0.5+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
-  # lower/higher import costs of carbonaceous fuels (2030 costs)
-  - CF+costs+year+2030-imp+AC+H2+CH41.3+NH3+FT1.3+MeOH1.3+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH41.2+NH3+FT1.2+MeOH1.2+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH41.1+NH3+FT1.1+MeOH1.1+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH40.9+NH3+FT0.9+MeOH0.9+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH40.8+NH3+FT0.8+MeOH0.8+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
-  - CF+costs+year+2030-imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
-  # lower/higher import costs of molecules (2050 costs)
-  - CF+costs+year+2050-imp+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
-  - CF+costs+year+2050-imp+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
-  - CF+costs+year+2050-imp+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
-  - CF+costs+year+2050-imp+AC+H20.9+CH40.9+NH30.9+sFT0.9+MeOH0.9+HBI0.9+St0.9
-  - CF+costs+year+2050-imp+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
-  - CF+costs+year+2050-imp+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
-  - CF+costs+year+2050-imp+AC+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
-  - CF+costs+year+2050-imp+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
-  # higher/lower import costs of everything (2050 costs)
-  - CF+costs+year+2050-imp+AC1.3+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
-  - CF+costs+year+2050-imp+AC1.2+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
-  - CF+costs+year+2050-imp+AC1.1+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
-  - CF+costs+year+2050-imp+AC0.9+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
-  - CF+costs+year+2050-imp+AC0.8+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
-  - CF+costs+year+2050-imp+AC0.7+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
-  - CF+costs+year+2050-imp+AC0.6+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
-  - CF+costs+year+2050-imp+AC0.5+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
-  # lower/higher import costs of carbonaceous fuels (2050 costs)
-  - CF+costs+year+2050-imp+AC+H2+CH41.3+NH3+FT1.3+MeOH1.3+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH41.2+NH3+FT1.2+MeOH1.2+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH41.1+NH3+FT1.1+MeOH1.1+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH40.9+NH3+FT0.9+MeOH0.9+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH40.8+NH3+FT0.8+MeOH0.8+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
-  - CF+costs+year+2050-imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
   # import volume sensitivity (all)
   - imp10000
   - imp9000
@@ -360,25 +287,6 @@ scenario:
   - imp1500+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
   - imp1000+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
   - imp500+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
-  # additional scenario: no hydrogen network
-  - noH2network
-  - noH2network-imp
-  - noH2network-imp+AC+CH4+NH3+FT+MeOH+HBI+St # no hydrogen imports
-  # additional scenario: no wasteheat
-  - nowasteheat
-  # - nowasteheat-imp
-  # additional scenario: all wasteheat
-  - allwasteheat
-  - allwasteheat-imp
-  # additional scenario: all waste heat, no relocation
-  - allwasteheat-norelocation-imp
-  - allwasteheat-norelocation
-  # no steel+ammonia industry relocation
-  - norelocation
-  - norelocation-imp
-  # no power-to-X flexibility
-  - noPtXflex
-  - noPtXflex-imp
   # technology-data sensitivity 
   - CF+costs+year+2030
   - CF+costs+year+2050
@@ -412,14 +320,100 @@ scenario:
   - CF+costs+year+2050-imp+CH4+NH3+FT+MeOH+HBI+St
   - CF+costs+year+2050-imp+MeOH+FT
   - CF+costs+year+2050-imp+CH4+FT+MeOH
+  # lower/higher import costs of molecules (2030 costs)
+  - CF+costs+year+2030-imp+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - CF+costs+year+2030-imp+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - CF+costs+year+2030-imp+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - CF+costs+year+2030-imp+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - CF+costs+year+2030-imp+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - CF+costs+year+2030-imp+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - CF+costs+year+2030-imp+AC+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - CF+costs+year+2030-imp+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # higher/lower import costs of everything (2030 costs)
+  - CF+costs+year+2030-imp+AC1.3+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - CF+costs+year+2030-imp+AC1.2+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - CF+costs+year+2030-imp+AC1.1+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - CF+costs+year+2030-imp+AC0.9+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - CF+costs+year+2030-imp+AC0.8+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - CF+costs+year+2030-imp+AC0.7+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - CF+costs+year+2030-imp+AC0.6+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - CF+costs+year+2030-imp+AC0.5+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # lower/higher import costs of carbonaceous fuels (2030 costs)
+  - CF+costs+year+2030-imp+AC+H2+CH41.3+NH3+FT1.3+MeOH1.3+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH41.2+NH3+FT1.2+MeOH1.2+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH41.1+NH3+FT1.1+MeOH1.1+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH40.9+NH3+FT0.9+MeOH0.9+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH40.8+NH3+FT0.8+MeOH0.8+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
+  - CF+costs+year+2030-imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
+  # lower/higher import costs of molecules (2050 costs)
+  - CF+costs+year+2050-imp+AC+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - CF+costs+year+2050-imp+AC+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - CF+costs+year+2050-imp+AC+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - CF+costs+year+2050-imp+AC+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - CF+costs+year+2050-imp+AC+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - CF+costs+year+2050-imp+AC+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - CF+costs+year+2050-imp+AC+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - CF+costs+year+2050-imp+AC+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # higher/lower import costs of everything (2050 costs)
+  - CF+costs+year+2050-imp+AC1.3+H21.3+CH41.3+NH31.3+FT1.3+MeOH1.3+HBI1.3+St1.3
+  - CF+costs+year+2050-imp+AC1.2+H21.2+CH41.2+NH31.2+FT1.2+MeOH1.2+HBI1.2+St1.2
+  - CF+costs+year+2050-imp+AC1.1+H21.1+CH41.1+NH31.1+FT1.1+MeOH1.1+HBI1.1+St1.1
+  - CF+costs+year+2050-imp+AC0.9+H20.9+CH40.9+NH30.9+FT0.9+MeOH0.9+HBI0.9+St0.9
+  - CF+costs+year+2050-imp+AC0.8+H20.8+CH40.8+NH30.8+FT0.8+MeOH0.8+HBI0.8+St0.8
+  - CF+costs+year+2050-imp+AC0.7+H20.7+CH40.7+NH30.7+FT0.7+MeOH0.7+HBI0.7+St0.7
+  - CF+costs+year+2050-imp+AC0.6+H20.6+CH40.6+NH30.6+FT0.6+MeOH0.6+HBI0.6+St0.6
+  - CF+costs+year+2050-imp+AC0.5+H20.5+CH40.5+NH30.5+FT0.5+MeOH0.5+HBI0.5+St0.5
+  # lower/higher import costs of carbonaceous fuels (2050 costs)
+  - CF+costs+year+2050-imp+AC+H2+CH41.3+NH3+FT1.3+MeOH1.3+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH41.2+NH3+FT1.2+MeOH1.2+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH41.1+NH3+FT1.1+MeOH1.1+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH40.9+NH3+FT0.9+MeOH0.9+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH40.8+NH3+FT0.8+MeOH0.8+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH40.7+NH3+FT0.7+MeOH0.7+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH40.6+NH3+FT0.6+MeOH0.6+HBI+St
+  - CF+costs+year+2050-imp+AC+H2+CH40.5+NH3+FT0.5+MeOH0.5+HBI+St
+  # norelocation sensitivities
+  - norelocation
+  - norelocation-imp
+  - norelocation-imp+AC
+  - norelocation-imp+H2
+  - norelocation-imp+CH4
+  - norelocation-imp+NH3
+  - norelocation-imp+FT
+  - norelocation-imp+MeOH
+  - norelocation-imp+HBI+St # products
+  - norelocation-imp+H2+CH4+NH3+FT+MeOH  # molecules
+  - norelocation-imp+H2+CH4+NH3+FT+MeOH+HBI+St  # molecules + products
+  - norelocation-imp+CH4+NH3+FT+MeOH  # hydrogen derivatives
+  - norelocation-imp+CH4+NH3+FT+MeOH+HBI+St  # hydrogen derivatives + products
+  - norelocation-imp+MeOH+FT # liquid carbonaceous fuels
+  - norelocation-imp+CH4+FT+MeOH  # carbonaceous fuels
+    # additional scenario: no hydrogen network
+  - noH2network
+  - noH2network-imp
+  - noH2network-imp+AC+CH4+NH3+FT+MeOH+HBI+St # no hydrogen imports
+  # additional scenario: no wasteheat
+  - nowasteheat
+  # - nowasteheat-imp
+  # additional scenario: all wasteheat
+  - allwasteheat
+  - allwasteheat-imp
+  # additional scenario: all waste heat, no relocation
+  - allwasteheat-norelocation-imp
+  - allwasteheat-norelocation
+  # no power-to-X flexibility
+  - noPtXflex
+  - noPtXflex-imp
   # no shipping import flexibility
   # - noshipflex-imp
   # onwind expansion to 3 MW/km2
-  - onwind+p2
-  - onwind+p2-imp
+  # - onwind+p2
+  # - onwind+p2-imp
   # unlimited land usage for utility-scale techs (10x)
-  - onwind+p10-solar+p10
-  - onwind+p10-solar+p10-imp
+  # - onwind+p10-solar+p10
+  # - onwind+p10-solar+p10-imp
   planning_horizons:
   - 2050
 
@@ -758,8 +752,8 @@ solving:
 
   solver_options:
     gurobi-default:
-      threads: 4
-      BarConvTol: 5.e-5
+      threads: 6
+      BarConvTol: 1.e-5
 
   mem_mb: 150000
-  runtime: 96h
+  runtime: 50h
