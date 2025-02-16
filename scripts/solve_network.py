@@ -1214,13 +1214,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            #configfiles="../config/config.yaml",
+            "solve_sector_network_perfect",
+            configfiles="../config/test/config.perfect.yaml",
             opts="",
-            clusters="6",
+            clusters="5",
             ll="v1.0",
             sector_opts="",
-            planning_horizons="2030",
+            # planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
