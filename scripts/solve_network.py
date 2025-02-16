@@ -33,10 +33,10 @@ import re
 import sys
 from typing import Any
 
-import linopy
 import numpy as np
 import pandas as pd
 import pypsa
+import linopy
 import xarray as xr
 import yaml
 from _benchmark import memory_logger
