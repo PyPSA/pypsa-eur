@@ -48,14 +48,14 @@ dependencies:
   - brotli-python=1.1.0
   - bzip2=1.0.8
   - c-ares=1.34.4
-  - c-blosc2=2.15.2
+  - c-blosc2=2.16.0
   - ca-certificates=2025.1.31
   - cached-property=1.5.2
   - cached_property=1.5.2
   - cairo=1.18.2
   - cartopy=0.24.0
   - cdsapi=0.7.5
-  - certifi=2024.12.14
+  - certifi=2025.1.31
   - cffi=1.17.1
   - cfgv=3.3.1
   - cftime=1.6.4
@@ -71,11 +71,11 @@ dependencies:
   - connection_pool=0.0.3
   - contourpy=1.3.1
   - country_converter=1.2
-  - cpython=3.12.8
+  - cpython=3.12.9
   - cycler=0.12.1
   - cytoolz=1.0.1
-  - dask=2025.1.0
-  - dask-core=2025.1.0
+  - dask=2025.2.0
+  - dask-core=2025.2.0
   - datapi=0.2.0
   - datrie=0.8.2
   - dav1d=1.2.1
@@ -86,9 +86,9 @@ dependencies:
   - descartes=1.1.0
   - dill=0.3.9
   - distlib=0.3.9
-  - distributed=2025.1.0
+  - distributed=2025.2.0
   - docutils=0.21.2
-  - double-conversion=3.3.0
+  - double-conversion=3.3.1
   - dpath=2.2.0
   - entsoe-py=0.6.18
   - et_xmlfile=2.0.0
@@ -187,7 +187,7 @@ dependencies:
   - libcblas=3.9.0
   - libclang13=19.1.7
   - libcrc32c=1.1.2
-  - libcurl=8.11.1
+  - libcurl=8.12.1
   - libde265=1.0.15
   - libdeflate=1.23
   - libevent=2.1.12
@@ -195,14 +195,14 @@ dependencies:
   - libffi=3.4.6
   - libgcc=14.2.0
   - libgd=2.3.3
-  - libgdal-core=3.10.1
-  - libgdal-hdf4=3.10.1
-  - libgdal-hdf5=3.10.1
-  - libgdal-netcdf=3.10.1
+  - libgdal-core=3.10.2
+  - libgdal-hdf4=3.10.2
+  - libgdal-hdf5=3.10.2
+  - libgdal-netcdf=3.10.2
   - libglib=2.82.2
   - libgomp=14.2.0
-  - libgoogle-cloud=2.34.0
-  - libgoogle-cloud-storage=2.34.0
+  - libgoogle-cloud=2.35.0
+  - libgoogle-cloud-storage=2.35.0
   - libgrpc=1.67.1
   - libheif=1.19.5
   - libiconv=1.17
@@ -232,7 +232,7 @@ dependencies:
   - libxslt=1.1.39
   - libzip=1.11.2
   - libzlib=1.3.1
-  - linopy=0.4.4
+  - linopy=0.5.0
   - locket=1.0.0
   - lxml=5.3.1
   - lz4=4.3.3
@@ -264,7 +264,7 @@ dependencies:
   - numpy=1.26.4
   - openjpeg=2.5.3
   - openpyxl=3.1.5
-  - openssl=3.4.0
+  - openssl=3.4.1
   - orc=2.0.3
   - overrides=7.7.0
   - packaging=24.2
@@ -311,7 +311,7 @@ dependencies:
   - pysocks=1.7.1
   - pytables=3.10.2
   - pytest=8.3.4
-  - python=3.12.8
+  - python=3.12.9
   - python-dateutil=2.9.0.post0
   - python-fastjsonschema=2.21.1
   - python-json-logger=2.0.7
@@ -431,7 +431,7 @@ dependencies:
       - pyscipopt==5.3.0
       - requests-oauthlib==1.3.1
       - snakemake-executor-plugin-cluster-generic==1.0.9
-      - snakemake-executor-plugin-slurm==0.15.0
+      - snakemake-executor-plugin-slurm==0.15.1
       - snakemake-executor-plugin-slurm-jobstep==0.2.1
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6
