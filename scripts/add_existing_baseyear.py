@@ -152,9 +152,9 @@ def add_power_capacities_installed_before_baseyear(
     countries: list[str],
     capacity_threshold: float,
     lifetime_values: dict[str, float],
-    conventional_carriers, 
-    conventional_params, 
-    conventional_inputs
+    conventional_carriers: list[str],
+    conventional_params: dict[str, dict[str, str]],
+    conventional_inputs: dict[str, str]
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -177,9 +177,12 @@ def add_power_capacities_installed_before_baseyear(
         Minimum capacity threshold
     lifetime_values : dict
         Default values for missing data
-    conventional_carriers, 
-    conventional_params, 
-    conventional_inputs
+    conventional_carriers : list
+        List of conventional carriers
+    conventional_params : dict
+        Attributes to override per carrier
+    conventional_inputs : dict
+        Input file dictionary
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
