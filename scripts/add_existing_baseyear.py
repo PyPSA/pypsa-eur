@@ -154,7 +154,7 @@ def add_power_capacities_installed_before_baseyear(
     lifetime_values: dict[str, float],
     conventional_carriers: list[str],
     conventional_params: dict[str, dict[str, str]],
-    conventional_inputs: dict[str, str]
+    conventional_inputs: dict[str, str],
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -419,7 +419,8 @@ def add_power_capacities_installed_before_baseyear(
                         # Values affecting links of technology k country-specific
                         # First map link buses to countries; then map countries to p_max_pu
                         values = pd.read_csv(
-                            snakemake.input[f"conventional_{carrier_i}_{attr}"], index_col=0
+                            snakemake.input[f"conventional_{carrier_i}_{attr}"],
+                            index_col=0,
                         ).iloc[:, 0]
                         bus_values = n.buses.country.map(values)
                         n.links.update(
@@ -778,7 +779,7 @@ if __name__ == "__main__":
         lifetime_values=snakemake.params.costs["fill_values"],
         conventional_carriers=snakemake.params.conventional_carriers,
         conventional_params=snakemake.params.conventional,
-        conventional_inputs=conventional_inputs
+        conventional_inputs=conventional_inputs,
     )
 
     if options["heating"]:
