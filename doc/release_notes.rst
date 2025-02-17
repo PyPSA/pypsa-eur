@@ -16,6 +16,7 @@ Upcoming Release
 - ...
 
 - Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
+- Improve consistency of nuclear modelling (https://github.com/PyPSA/pypsa-eur/pull/1540).
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
