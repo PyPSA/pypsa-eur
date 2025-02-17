@@ -2499,7 +2499,7 @@ def add_heat(
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )
 
-            if heat_source in snakemake.params.limited_heat_sources:
+            if heat_source in params.limited_heat_sources:
                 # get potential
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
