@@ -676,7 +676,8 @@ if config["enable"]["retrieve"]:
         log:
             "logs/retrieve_lau_regions.log",
             lau_regions="data/lau_regions.zip",
-        log: "logs/retrieve_lau_regions.log",
+        log:
+            "logs/retrieve_lau_regions.log",
         threads: 1
         retries: 2
         run:

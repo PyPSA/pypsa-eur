@@ -40,7 +40,7 @@ rule add_existing_baseyear:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=3000,
     log:
         logs(
             "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
