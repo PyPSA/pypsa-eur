@@ -482,16 +482,9 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
-    heat_utilisation_potentials:
+    limited_heat_sources:
       geothermal:
-        # activate for 85C hydrothermal
-        # key: hydrothermal_85
-        # constant_temperature_celsius: 85
-        key: hydrothermal_65
         constant_temperature_celsius: 65
-        column_name: Energy_TWh
-        unit: TWh
-        full_load_hours: 4000
     direct_utilisation_heat_sources:
     - geothermal
   heat_pump_sources:
