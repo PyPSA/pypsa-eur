@@ -33,6 +33,7 @@ import re
 import sys
 from typing import Any
 
+import linopy
 import numpy as np
 import pandas as pd
 import pypsa
@@ -794,6 +795,64 @@ def add_operational_reserve_margin(n, sns, config):
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
+def add_TES_etpr_constraints(n):
+    """
+    Add a constraint for each TES storage unit enforcing:
+        Store-e_nom - etpr * Link-p_nom == 0
+    """
+    if not n.links.p_nom_extendable.any():
+        return
+
+    tes_charger_bool = n.links.index.str.contains(
+        "water tanks charger|water pits charger"
+    )
+    tes_store_bool = n.stores.index.str.contains("water tanks|water pits")
+
+    chargers_ext = n.links[tes_charger_bool].query("p_nom_extendable").index
+    tes_ext = n.stores[tes_store_bool].query("e_nom_extendable").index
+    etpr_values = n.links.loc[chargers_ext, "etpr"].values
+
+    linear_expr_list = []
+    for discharger, tes, etpr_value in zip(chargers_ext, tes_ext, etpr_values):
+        char_var = n.model["Link-p_nom"].loc[discharger]
+        store_var = n.model["Store-e_nom"].loc[tes]
+        linear_expr = store_var - etpr_value * char_var
+        linear_expr_list.append(linear_expr)
+
+    # Merge the individual expressions
+    merged_expr = linopy.expressions.merge(
+        linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
+    )
+
+    n.model.add_constraints(merged_expr == 0, name="TES_etpr")
+
+
+def add_TES_charger_ratio_constraints(n):
+    """
+    Add constraints ensuring that for each TES unit, the charger and discharger are sized the same.
+
+        Link-p_nom(charger) - efficiency * Link-p_nom(discharger) == 0
+    """
+    if not n.links.p_nom_extendable.any():
+        return
+
+    discharger_bool = n.links.index.str.contains(
+        "water tanks discharger|water pits discharger"
+    )
+    charger_bool = n.links.index.str.contains("water tanks charger|water pits charger")
+
+    dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
+    chargers_ext = n.links[charger_bool].query("p_nom_extendable").index
+
+    eff = n.links.efficiency[dischargers_ext].values
+    lhs = (
+        n.model["Link-p_nom"].loc[chargers_ext]
+        - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+    )
+
+    n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -997,6 +1056,8 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
+    add_TES_charger_ratio_constraints(n)
+    add_TES_etpr_constraints(n)
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
