@@ -2608,7 +2608,8 @@ def add_heat(
             )
 
             etpr_water_tanks = costs.at[
-                heat_system.central_or_decentral + " water tank storage", "energy to power ratio"
+                heat_system.central_or_decentral + " water tank storage",
+                "energy to power ratio",
             ]
 
             n.add(
@@ -2637,9 +2638,9 @@ def add_heat(
                 p_nom_extendable=True,
             )
 
-            n.links.loc[
-                nodes + f" {heat_system} water tanks charger", "etpr"
-            ] = etpr_water_tanks
+            n.links.loc[nodes + f" {heat_system} water tanks charger", "etpr"] = (
+                etpr_water_tanks
+            )
 
             tes_time_constant_days = options["tes_tau"][
                 heat_system.central_or_decentral
@@ -2682,7 +2683,8 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} water pits",
                     efficiency=costs.at[
-                        "central water pit charger", "efficiency",
+                        "central water pit charger",
+                        "efficiency",
                     ],
                     carrier=f"{heat_system} water pits charger",
                     p_nom_extendable=True,
@@ -2695,14 +2697,15 @@ def add_heat(
                     bus1=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} water pits discharger",
                     efficiency=costs.at[
-                        "central water pit discharger", "efficiency",
+                        "central water pit discharger",
+                        "efficiency",
                     ],
                     p_nom_extendable=True,
                 )
 
-                n.links.loc[
-                    nodes + f" {heat_system} water pits charger", "etpr"
-                ] = etpr_water_pit
+                n.links.loc[nodes + f" {heat_system} water pits charger", "etpr"] = (
+                    etpr_water_pit
+                )
 
                 n.add(
                     "Store",
