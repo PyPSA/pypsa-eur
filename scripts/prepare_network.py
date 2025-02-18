@@ -296,7 +296,7 @@ if __name__ == "__main__":
             ll="v1.0",
             opts="Co2L-4H",
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
