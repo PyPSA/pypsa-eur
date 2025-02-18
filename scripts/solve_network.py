@@ -33,10 +33,10 @@ import re
 import sys
 from typing import Any
 
+import linopy
 import numpy as np
 import pandas as pd
 import pypsa
-import linopy
 import xarray as xr
 import yaml
 from _benchmark import memory_logger
@@ -803,7 +803,9 @@ def add_TES_etpr_constraints(n):
     if not n.links.p_nom_extendable.any():
         return
 
-    tes_charger_bool = n.links.index.str.contains("water tanks charger|water pits charger")
+    tes_charger_bool = n.links.index.str.contains(
+        "water tanks charger|water pits charger"
+    )
     tes_store_bool = n.stores.index.str.contains("water tanks|water pits")
 
     chargers_ext = n.links[tes_charger_bool].query("p_nom_extendable").index
@@ -822,7 +824,7 @@ def add_TES_etpr_constraints(n):
         linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
     )
 
-    n.model.add_constraints(merged_expr == 0, name='TES_etpr')
+    n.model.add_constraints(merged_expr == 0, name="TES_etpr")
 
 
 def add_TES_charger_ratio_constraints(n):
@@ -834,7 +836,9 @@ def add_TES_charger_ratio_constraints(n):
     if not n.links.p_nom_extendable.any():
         return
 
-    discharger_bool = n.links.index.str.contains("water tanks discharger|water pits discharger")
+    discharger_bool = n.links.index.str.contains(
+        "water tanks discharger|water pits discharger"
+    )
     charger_bool = n.links.index.str.contains("water tanks charger|water pits charger")
 
     dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
@@ -842,8 +846,8 @@ def add_TES_charger_ratio_constraints(n):
 
     eff = n.links.efficiency[dischargers_ext].values
     lhs = (
-            n.model["Link-p_nom"].loc[chargers_ext]
-            - n.model["Link-p_nom"].loc[dischargers_ext] * eff
+        n.model["Link-p_nom"].loc[chargers_ext]
+        - n.model["Link-p_nom"].loc[dischargers_ext] * eff
     )
 
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
