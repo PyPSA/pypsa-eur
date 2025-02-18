@@ -829,6 +829,21 @@ rule build_industrial_energy_demand_per_node_today:
 
 if config["sector"]["endo_industry"].get("enable", False):
 
+    rule build_industrial_policies_projections:
+        output:
+            industry_prod_scenarios=resources("endo_industry/eu_industry_prod_scenarios.csv"),
+        log:
+            logs("build_industrial_policies_projections.log"),
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industrial_policies_projections.py"
+
+
+if config["sector"]["endo_industry"].get("enable", False):
+
     rule build_industry_steel_production_projections:
         input:
             ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
@@ -1153,7 +1168,8 @@ rule prepare_sector_network:
         endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
         co2_budget_apply=config_provider("co2_budget_apply"),
         weather_years=config_provider("weather_years","enable"),
-        renewable_carriers=config_provider("electricity","renewable_carriers")
+        renewable_carriers=config_provider("electricity","renewable_carriers"),
+        industrial_policy_scenario=config_provider("sector","endo_industry","policy_scenario")
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_potentials),
@@ -1258,6 +1274,11 @@ rule prepare_sector_network:
         # Steel
         steel_production=lambda w: (
             resources("endo_industry/eu_steel_production.csv")
+            if config_provider("sector", "endo_industry","enable")(w)
+            else []
+        ),
+        industry_production_scenarios=lambda w: (
+            resources("endo_industry/eu_industry_prod_scenarios.csv")
             if config_provider("sector", "endo_industry","enable")(w)
             else []
         ),

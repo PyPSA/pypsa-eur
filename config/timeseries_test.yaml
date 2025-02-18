@@ -6,10 +6,12 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: "all"
+  name: 
+  - old_timeseries
+  - new_timeseries
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios.yaml
+    file: config/timeseries_test_scenarios.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
@@ -17,7 +19,7 @@ run:
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: myopic
+foresight: overnight
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
@@ -27,16 +29,19 @@ scenario:
   ll:
   - vopt
   clusters:
-  - 39
+  - 2
   opts:
   - ''
   sector_opts:
   - ''
   planning_horizons:
   # - 2020
-  - 2030
+  #- 2030
   - 2040
-  - 2050
+  #- 2050
+
+countries: ['IT']
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
@@ -49,24 +54,33 @@ enable:
   drop_leap_day: true
 
 co2_budget_apply: true
+co2_budget:
+  2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
+  2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
+  2030: 0.450 # 55% reduction by 2030 (Ff55)
+  2035: 0.250
+  2040: 0.100 # 90% by 2040
+  2045: 0.050
+  2050: 1000.000 # climate-neutral by 2050
+
+
 weather_years:
-  enable: true
+  enable: false
   rcp: 4-5
 # RCP 2.6 is 2-6, RCP 4.5 is 4-5, RCP 8.5 is 8-5
   global_regional_models: CNRM-CERFACS-CM5--CNRM-ALADIN63
 # Global Climate Models (GCMs): CNRM-CERFACS-CM5, MPI-M-MPI-ESM-LR, MIROC-MIROC5
 # Regional Climate Models (RCMs): CNRM-ALADIN63, ICTP-RegCM4-6, CLMcom-CLM-CCLM4-8-17
 # Global model 1 has to be connected to regional model 1, so e.g. CNRM_CERFACS_CM5__CNRM_ALADIN63 but not CNRM_CERFACS_ICTP-RegCM4-6
-
-
+  
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    Generator: [solar, onwind, offwind-ac, offwind-dc, OCGT, CCGT]
     StorageUnit: [] # battery, H2
     Store: [battery, H2]
     Link: [] # H2 pipeline
-  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, hydro]
 
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
@@ -83,8 +97,6 @@ pypsa_eur:
   - onwind
   - offwind-ac
   - offwind-dc
-  - offwind-float
-  #- solar-hsat
   - solar
   - ror
   - nuclear
@@ -92,6 +104,9 @@ pypsa_eur:
   - PHS
   - hydro
   Store: []
+
+existing_capacities:
+  default_heating_lifetime: 40
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
@@ -111,10 +126,10 @@ sector:
     2040: 200
     2045: 200
     2050: 200
-  min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
-  H2_network: true
+  min_part_load_fischer_tropsch: 0.5
+  H2_network: false
   endo_industry:
-    enable: true
+    enable: false
     regional_steel_demand: false
     cement_prod_growth: true
     endo_chemicals: true
@@ -122,7 +137,6 @@ sector:
     skip_crackers: true
     endo_hvc: true
     regional_hvc: true
-    policy_scenario: maintain
 
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:
@@ -136,23 +150,8 @@ sector:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 2920h
+    resolution_sector: false
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
-plotting:
-  tech_colors:
-    #ADB
-    BF-BOF: 'blue'
-    DRI-EAF: 'blue'
-    iron: 'green'
-    cement: 'grey'
-    limestone: 'yellow'
-    cement plant: 'grey'
-    cement process emissions: 'grey'
-    cement process emissions CC: 'green'
-    steel process emissions: 'grey'
-    steel process emissions CC: 'green'
-    steel: 'yellow'
-    syn gas for DRI: 'grey'
-    HVC: 'yellow'
-    naphtha steam cracker: 'grey'
+transmission_projects:
+  enable: false
+

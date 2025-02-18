@@ -4626,15 +4626,15 @@ def calculate_steel_parameters(nyears=1):
 
 
 
-def add_steel_industry(n, investment_year, options):
+def add_steel_industry(n, investment_year, steel_data, options):
 
     # Steel production demanded in Europe in kton of steel products per year
-    steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
+    #steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    hourly_steel_production = (steel_production.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
+    hourly_steel_production = (steel_data.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
     capacities = capacities.sum(axis = 1)
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -5741,13 +5741,7 @@ def add_enhanced_geothermal(
             )
 
 
-import os
-import xarray as xr
-import logging
-
-logger = logging.getLogger(__name__)
-
-def adjust_renewable_profiles(n, countries, renewable_carriers, zenodo_timeseries):
+def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries):
     """"
     Adjusts the `p_max_pu` (maximum power availability per unit) of all renewable generators
     to match synthetic weather-based capacity factors for a given planning horizon.
@@ -5869,6 +5863,7 @@ def adjust_renewable_profiles(n, countries, renewable_carriers, zenodo_timeserie
                     n.generators_t.p_max_pu.loc[:, index] = profile.values
                 else:
                     for i in index:
+
                         n.generators_t.p_max_pu.loc[:, i] = profile.values
 
 
@@ -6041,8 +6036,14 @@ if __name__ == "__main__":
             add_ammonia_load(n, options)
 
     if endo_industry:
-        add_steel_industry(n, investment_year, options)
-        add_cement_industry(n, investment_year, options)
+        industry_production_scenarios = pd.read_csv(snakemake.input.industry_production_scenarios, index_col=0)
+        steel_data = industry_production_scenarios[industry_production_scenarios['sector'] == 'steel']
+        cement_data = industry_production_scenarios[industry_production_scenarios['sector'] == 'cement']
+
+
+
+        add_steel_industry(n, investment_year, steel_data, options)
+        add_cement_industry(n, investment_year, cement_data, options)
         if options["endo_industry"]["endo_hvc"]:
             add_hvc(n, options)
             add_methanol_to_olefins(n, costs)
@@ -6107,7 +6108,14 @@ if __name__ == "__main__":
     else:
         limit = get(co2_budget, investment_year)
     if snakemake.params.co2_budget_apply:
-        add_co2limit(n, options, nyears, limit)
+        add_co2limit(
+            n,
+            options,
+            snakemake.input.co2_totals_name,
+            snakemake.params.countries,
+            nyears,
+            limit,
+        )
 
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:

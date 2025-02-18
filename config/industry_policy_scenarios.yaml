@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+# This file is used to define the scenarios that are run by snakemake. Each entry on the first level is a scenario. Each scenario can contain configuration overrides with respect to the config/config.yaml settings.
+#
+# Example
+#
+# custom-scenario: # name of the scenario
+#   electricity:
+#       renewable_carriers: [wind, solar] # override the list of renewable carriers
+
+# Climate policy: NO, Relocation: YES, Industrial policy: MAINTAIN
+base_eu_maintain:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: maintain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: MAINTAIN
+policy_eu_maintain:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: maintain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: NO, Relocation: YES, Industrial policy: REGAIN
+base_eu_regain:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
+policy_eu_regain:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: NO, Relocation: YES, Industrial policy: DEINDUSTRIAL
+base_eu_deindustrial:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
+policy_eu_deindustrial:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
