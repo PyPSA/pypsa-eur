@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+- Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
+* Add the options to overwrite investment, lifetime, FOM, VOM, efficiency and fuel attributes from the configuration file. This mimics the existing capital and marginal cost behaviour. (https://github.com/PyPSA/pypsa-eur/pull/1532)
 * Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
 - ...
