@@ -808,7 +808,7 @@ def add_TES_etpr_constraints(n):
 
     chargers_ext = n.links[tes_charger_bool].query("p_nom_extendable").index
     tes_ext = n.stores[tes_store_bool].query("e_nom_extendable").index
-    etpr_values = n.links.etpr[chargers_ext].values
+    etpr_values = n.links.loc[chargers_ext, "etpr"].values
 
     linear_expr_list = []
     for discharger, tes, etpr_value in zip(chargers_ext, tes_ext, etpr_values):
