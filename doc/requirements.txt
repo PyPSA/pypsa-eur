@@ -2,27 +2,29 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-setuptools
-sphinx
-sphinx_book_theme
-sphinxcontrib-bibtex
-myst-parser  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
-
+# Inhouse packages
+atlite
 pypsa
-powerplantmatching>=0.5.5
-atlite>=0.2.9
-dask[distributed]
-matplotlib>3.5.1,<3.6
-tabula-py
+powerplantmatching
+
+setuptools==75.8.0
+sphinx==8.1.3
+sphinx-design==0.6.1
+sphinx_book_theme==1.1.3
+sphinxcontrib-bibtex==2.6.3
+myst-parser==4.0.1  # recommark is deprecated, https://stackoverflow.com/a/71660856/13573820
+sphinx-jsonschema==1.19.1
+dask[distributed]==2025.2.0
+matplotlib==3.10.0
+tabula-py==2.10.0
 
 # HTML map retrieval
-requests
+requests==2.32.3
 
-# cartopy
-scikit-learn
-pyyaml
-seaborn
-memory_profiler
-tables
-descartes
-fiona
+scikit-learn==1.6.1
+pyyaml==6.0.2
+seaborn==0.13.2
+memory_profiler==0.61.0
+tables==3.10.2
+descartes==1.1.0
+fiona==1.10.1

@@ -23,10 +23,27 @@ Top-level configuration
    :start-at: version:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/toplevel.csv
+
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/schemas/general.yaml#/version
+      :lift_description:
+
+   .. jsonschema:: ../config/schemas/general.yaml#/tutorial
+      :lift_description:
+
+   .. jsonschema:: ../config/schemas/general.yaml#/logging
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/schemas/general.yaml#/private
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/schemas/general.yaml#/remote
+      :lift_description:
+      :hide_key: /**/additionalProperties
+      
 
 .. _run_cf:
 
