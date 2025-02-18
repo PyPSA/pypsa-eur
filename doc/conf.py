@@ -63,6 +63,8 @@ extensions = [
     #'sphinxcontrib.tikz',
     #'rinoh.frontend.sphinx',
     "sphinx.ext.imgconverter",  # for SVG conversion
+    "sphinx-jsonschema",
+    "sphinx_design",
 ]
 
 autodoc_mock_imports = [

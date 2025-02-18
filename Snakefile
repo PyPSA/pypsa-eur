@@ -6,10 +6,7 @@ from pathlib import Path
 import yaml
 from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
-from snakemake.utils import min_version
-
-min_version("8.11")
-
+from snakemake.utils import min_version, validate
 from scripts._helpers import (
     path_provider,
     copy_default_files,
@@ -18,12 +15,16 @@ from scripts._helpers import (
     get_shadow,
 )
 
+min_version("8.11")
 
 copy_default_files(workflow)
 
 
 configfile: "config/config.default.yaml"
 configfile: "config/config.yaml"
+
+
+validate(config, "config/schemas/general.yaml")
 
 
 run = config["run"]

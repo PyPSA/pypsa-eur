@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  version:
+    $ref: "#/version"
+  tutorial:
+    $ref: "#/tutorial"
+  logging:
+    $ref: "#/logging"
+  private:
+    $ref: "#/private"
+  remote:
+    $ref: "#/remote"
+
+# Properties
+# ----------
+
+version:
+  title: "Version"
+  $$target: ["#/version"]
+  type: string
+  description: "Version of PyPSA-Eur. Descriptive only."
+  examples: ['v2025.1.0']
+
+tutorial:
+  title: "Tutorial"
+  $$target: ["#/tutorial"]
+  type: boolean
+  description: "Switch to retrieve the tutorial data set instead of the full data set."
+logging:
+  title: "Logging"
+  $$target: ["#/logging"]
+  description: "Logging configuration."
+  additionalProperties: false
+  properties:
+    level:
+      type: string
+      enum: ["DEBUG", "INFO", "WARNING", "ERROR"]
+      description: "Restrict console outputs to all infos, warning or errors only."
+    format:
+      type: string
+      description: "Custom format for log messages. See LogRecord attributes."
+      examples: ["%(levelname)s:%(name)s:%(message)s"]
+
+private:
+  title: "Private"
+  $$target: ["#/private"]
+  additionalProperties: false
+  properties:
+    keys:
+      additionalProperties: false
+      properties:
+        entsoe_api:
+          type: ["string", "null"]
+          description: "Optionally specify the ENTSO-E API key. See the guidelines to get ENTSO-E API key."
+
+remote:
+  title: "Remote"
+  $$target: ["#/remote"]
+  additionalProperties: false
+  properties:
+    ssh:
+      type: string
+      description: "Optionally specify the SSH of a remote cluster to be synchronized."
+    path:
+      type: string
+      description: "Optionally specify the file path within the remote cluster to be synchronized."
+    test_deprecation:
+      type: string
+      description: "Deprecated property. Use 'xx' instead."
+      deprecated: true
+
