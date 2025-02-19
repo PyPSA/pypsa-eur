@@ -1066,8 +1066,16 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
-    add_TES_charger_ratio_constraints(n)
-    add_TES_etpr_constraints(n)
+    if n.config.get("sector", {}).get("tes", False):
+        bus_names = n.buses.index.str.lower()
+        link_names = n.links.index.str.lower()
+        required_pattern = r"urban central heat|urban decentral heat|rural heat"
+        unsupported_pattern = r"pit|tes| charger"
+        if bus_names.str.contains(required_pattern, case=False, na=False).any():
+            add_TES_etpr_constraints(n)
+            add_TES_charger_ratio_constraints(n)
+        elif link_names.str.contains(unsupported_pattern, case=False, na=False).any():
+            raise ValueError("Unsupported network configuration: found pit, tes, or pit/tes charger in link names.")
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
@@ -1228,13 +1236,13 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_network",
+            configfiles="config/test/config.electricity.yaml",
             opts="",
             clusters="5",
             ll="v1.0",
             sector_opts="",
-            # planning_horizons="2030",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
