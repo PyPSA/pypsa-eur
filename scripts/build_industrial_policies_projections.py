@@ -67,7 +67,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
 
     scenarios = ["regain", "maintain", "deindustrial"]
-    years = range(2024, 2050)
+    years = range(2024, 2051)
 
     # Production data dictionary
     production_data = {

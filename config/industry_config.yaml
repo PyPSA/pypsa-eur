@@ -116,10 +116,11 @@ sector:
   endo_industry:
     enable: true
     regional_steel_demand: false
+    regional_cement_demand: false
     cement_prod_growth: true
     endo_chemicals: true
     # Ammonia
-    skip_crackers: true
+    endo_ammonia: true # if true it also skips the ammonia cracker for simplicity
     endo_hvc: true
     regional_hvc: true
     policy_scenario: maintain

@@ -1164,7 +1164,7 @@ rule prepare_sector_network:
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
         endo_industry=config_provider("sector", "endo_industry", "enable"),
-        skip_crackers=config_provider("sector", "endo_industry","skip_crackers"),
+        endo_ammonia=config_provider("sector", "endo_industry","endo_ammonia"),
         endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
         co2_budget_apply=config_provider("co2_budget_apply"),
         weather_years=config_provider("weather_years","enable"),

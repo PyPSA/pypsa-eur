@@ -226,29 +226,6 @@ def define_spatial(nodes, options):
     spatial.geothermal_heat.nodes = ["EU enhanced geothermal systems"]
     spatial.geothermal_heat.locations = ["EU"]
 
-    if options["endo_industry"]["regional_steel_demand"]:
-        # steel
-        spatial.steel = SimpleNamespace()
-        spatial.steel.nodes = nodes + " steel"
-        spatial.steel.locations = nodes
-
-        # Dri gas
-        spatial.syngas_dri = SimpleNamespace()
-        spatial.syngas_dri.nodes = nodes + " syn gas for DRI"
-        spatial.syngas_dri.locations = nodes
-
-    else:
-
-        # steel
-        spatial.steel = SimpleNamespace()
-        spatial.steel.nodes = ["EU steel"]
-        spatial.steel.locations = ["EU"]
-
-        # Dri gas
-        spatial.syngas_dri = SimpleNamespace()
-        spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
-        spatial.syngas_dri.locations = ["EU"]
-
     if options["endo_industry"]["enable"]:
         # Iron and Steel
         # iron
@@ -256,10 +233,41 @@ def define_spatial(nodes, options):
         spatial.iron.nodes = ["EU iron"]
         spatial.iron.locations = ["EU"]
 
-        # Cement
-        spatial.cement = SimpleNamespace()
-        spatial.cement.nodes = nodes + " cement"
-        spatial.cement.locations = nodes
+
+        if options["endo_industry"]["regional_steel_demand"]:
+            # steel
+            spatial.steel = SimpleNamespace()
+            spatial.steel.nodes = nodes + " steel"
+            spatial.steel.locations = nodes
+
+            # Dri gas
+            spatial.syngas_dri = SimpleNamespace()
+            spatial.syngas_dri.nodes = nodes + " syn gas for DRI"
+            spatial.syngas_dri.locations = nodes
+
+        else:
+
+            # steel
+            spatial.steel = SimpleNamespace()
+            spatial.steel.nodes = ["EU steel"]
+            spatial.steel.locations = ["EU"]
+
+            # Dri gas
+            spatial.syngas_dri = SimpleNamespace()
+            spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
+            spatial.syngas_dri.locations = ["EU"]
+
+        if options["endo_industry"]["regional_cement_demand"]:
+            # Cement
+            spatial.cement = SimpleNamespace()
+            spatial.cement.nodes = nodes + " cement"
+            spatial.cement.locations = nodes
+
+        else: 
+
+            spatial.cement = SimpleNamespace()
+            spatial.cement.nodes = ["EU cement"]
+            spatial.cement.locations = ["EU"]
 
         spatial.limestone = SimpleNamespace()
         spatial.limestone.nodes = ["EU limestone"]
@@ -1358,7 +1366,7 @@ def add_generation(n, costs):
         )
 
 
-def add_ammonia(n, costs, skip_crackers=False):
+def add_ammonia(n, costs, endo_ammonia=False):
     logger.info("Adding ammonia carrier with synthesis, cracking and storage")
 
     nodes = pop_layout.index
@@ -1388,7 +1396,7 @@ def add_ammonia(n, costs, skip_crackers=False):
         lifetime=costs.at["Haber-Bosch", "lifetime"],
     )
 
-    if not skip_crackers:
+    if not endo_ammonia:
         n.add(
             "Link",
             nodes,
@@ -4624,17 +4632,25 @@ def calculate_steel_parameters(nyears=1):
 
     return bof, eaf_ng, eaf_h2, tgr
 
+def clean_industry_df(df, sector):
+    df = (
+        df[df['sector'] == sector]
+        .drop(columns=['sector'])
+        .set_index('year')
+    )
+
+    return df
 
 
 def add_steel_industry(n, investment_year, steel_data, options):
 
     # Steel production demanded in Europe in kton of steel products per year
-    #steel_production = pd.read_csv(snakemake.input.steel_production, index_col=0)
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    hourly_steel_production = (steel_data.loc[investment_year, "0"] / nhours)  # get the steel that needs to be produced hourly
+    scenario = options["endo_industry"]["policy_scenario"]
+    hourly_steel_production = (steel_data.loc[investment_year, scenario] * 1e3 / nhours)  # get the steel that needs to be produced hourly ktsteel/h
     capacities = capacities.sum(axis = 1)
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -4846,16 +4862,25 @@ def add_steel_industry(n, investment_year, steel_data, options):
     )
 
 
-def add_cement_industry(n, investment_year, options):
+def add_cement_industry(n, investment_year, cement_data, options):
 
     # Cement production demanded in each country in Europe in kton of cement products per year
-    cement_production = pd.read_csv(snakemake.input.cement_production, index_col=0)
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities['Cement']
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    hourly_cement_production = (cement_production.loc[:, str(investment_year)] / nhours)  # get the cement that needs to be produced hourly
-    hourly_cement_production.index = hourly_cement_production.index + ' cement'
+    scenario = options["endo_industry"]["policy_scenario"]
+    hourly_cement_production = (cement_data.loc[investment_year, scenario] *1e3 / nhours)  # get the cement that needs to be produced hourly kt cement/h
+    #hourly_cement_production.index = hourly_cement_production.index + ' cement'
+
+    # Share of cement production capacities -> assumption: keep producing the same share in the country, changing technology
+    cap_share = capacities / capacities.sum()
+    p_set = cap_share * hourly_cement_production
+    p_set.index = p_set.index + ' cement'
+
+    if not options["endo_industry"]["regional_cement_demand"]:
+
+        p_set = p_set.sum()
 
     # Adding carriers and components
     nodes = pop_layout.index
@@ -4900,7 +4925,7 @@ def add_cement_industry(n, investment_year, options):
         spatial.cement.nodes,
         bus=spatial.cement.nodes,
         carrier="cement",
-        p_set=hourly_cement_production,
+        p_set=p_set,
     )
 
     # add CO2 process from cement industry
@@ -4985,7 +5010,7 @@ def add_cement_industry(n, investment_year, options):
     )
 
 
-def add_ammonia_load(n, options):
+def add_ammonia_load(n, investment_year, ammonia_data, options):
     """
     Adds ammonia load to the network based on industrial production data.
     
@@ -4994,8 +5019,29 @@ def add_ammonia_load(n, options):
     options (dict): Dictionary containing options for ammonia load configuration.
     """
 
+    # Ammonia production demanded in each country in Europe in kton of NH3 products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities['Ammonia']
+
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
-    industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
+    scenario = options["endo_industry"]["policy_scenario"]
+    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e3 / nhours) # ktNH3/h
+    #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
+
+    # Share of ammonia production capacities -> assumption: keep producing the same share in the country, changing technology
+    cap_share = capacities / capacities.sum()
+    p_set = cap_share * hourly_ammonia_production * cf_industry['MWh_NH3_per_tNH3']
+    p_set.index = p_set.index + ' NH3' 
+
+    if not options["ammonia"] == "regional":
+
+        p_set = p_set.sum()
+
+
+    """
+    if not options["endo_industry"]["regional_cement_demand"]:
+
+        regional_prod = regional_prod.sum()
 
     # Determine the ammonia production load based on the specified option
     if options["ammonia"] == "regional":
@@ -5005,8 +5051,9 @@ def add_ammonia_load(n, options):
     else:
         # Calculate total ammonia production load (MWh) for all regions and normalize by hours in a year
         p_set = industrial_production["Ammonia"].sum() * cf_industry["MWh_NH3_per_tNH3"] / nhours
+    """
 
-    # Remove the previous ammonia load, which is based on a different quantification of energy demand
+    # Remove the previous methanol load, which is based on a different quantification of energy demand
     n.loads.drop(n.loads.index[n.loads.carrier == "NH3"], inplace=True)
 
     # Add the new ammonia load to the network
@@ -5015,6 +5062,65 @@ def add_ammonia_load(n, options):
         spatial.ammonia.nodes,
         bus=spatial.ammonia.nodes,
         carrier="NH3",
+        p_set=p_set,
+    )
+
+
+
+def add_methanol_load(n,investment_year, methanol_data, options):
+    """
+    Adds methanol load to the network based on industrial production data.
+    
+    Parameters:
+    n (pypsa.Network): The PyPSA network object.
+    options (dict): Dictionary containing options for ammonia load configuration.
+    """
+
+    # Methanol production demanded in each country in Europe in kton of MeOH products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities['Methanol']
+
+    # Read industrial production data for ammonia in Europe (in ktNH3/yr)
+    scenario = options["endo_industry"]["policy_scenario"]
+    hourly_methanol_production = (menthanol_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
+    #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Methnol production is in ktMeOH/yr
+
+    # Share of methanol production capacities -> assumption: keep producing the same share in the country, changing technology
+    cap_share = capacities / capacities.sum()
+    p_set = cap_share * hourly_methanol_production * cf_industry['MWh_MeOH_per_tMeOH']
+    # To check with regional methanol
+    p_set.index = p_set.index + ' industry methanol' 
+
+    if not options["methanol"]["regional_methanol_demand"]:
+
+        p_set = p_set.sum()
+
+
+    """
+    if not options["endo_industry"]["regional_cement_demand"]:
+
+        regional_prod = regional_prod.sum()
+
+    # Determine the ammonia production load based on the specified option
+    if options["ammonia"] == "regional":
+        # Calculate regional ammonia production load (MWh) and normalize by hours in a year
+        p_set = (industrial_production.loc[spatial.ammonia.locations, "Ammonia"]
+                 .rename(index=lambda x: x + " NH3") * cf_industry['MWh_NH3_per_tNH3'] / nhours)
+    else:
+        # Calculate total ammonia production load (MWh) for all regions and normalize by hours in a year
+        p_set = industrial_production["Ammonia"].sum() * cf_industry["MWh_NH3_per_tNH3"] / nhours
+    """
+
+    # Remove the previous industry methanol load, which is based on a different quantification of energy demand
+    # Methanol load for shipping is added on top of this, and it was 0 in historical years
+    n.loads.drop(n.loads.index[n.loads.carrier == "industry methanol"], inplace=True)
+
+    # Add the new methanol load to the network
+    n.add(
+        "Load",
+        spatial.methanol.industry,
+        bus=spatial.methanol.industry,
+        carrier="industry methanol",
         p_set=p_set,
     )
     
@@ -5822,16 +5928,16 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             # Remove February 29th to handle leap years
             profile = profile.loc[profile.index.strftime('%m-%d') != '02-29']
 
-            # In the case of hydropower inflow, normalize the inflow with the maximum value of the timeseries
-            if carrier in ["hydro", "PHS", "ror"]:
+            # In the case of ror hydropower, normalize the inflow with the maximum value of the timeseries
+            if carrier == "ror":
                 profile = profile / profile.max()
 
             # --- Assign profile to the correct PyPSA table ---
             if carrier in ["hydro", "PHS"]:
                 # Ensure that the storage unit profiles match a full year (8760 hours)
-                if n.storage_units_t.p_max_pu.shape[0] != 8760:
+                if n.storage_units_t.inflow.shape[0] != 8760:
                     logger.error("Adjusting renewable profiles currently only works for full years!")
-                assert len(profile) == n.storage_units_t.p_max_pu.shape[0]
+                assert len(profile) == n.storage_units_t.inflow.shape[0]
 
                 # Select the relevant storage units for the given country and carrier
                 index = n.storage_units[
@@ -6031,19 +6137,25 @@ if __name__ == "__main__":
         )
 
     if options["ammonia"]:
-        add_ammonia(n, costs, snakemake.params.skip_crackers)
-        if snakemake.params.skip_crackers:
-            add_ammonia_load(n, options)
+        add_ammonia(n, costs, snakemake.params.endo_ammonia)
 
     if endo_industry:
+
         industry_production_scenarios = pd.read_csv(snakemake.input.industry_production_scenarios, index_col=0)
-        steel_data = industry_production_scenarios[industry_production_scenarios['sector'] == 'steel']
-        cement_data = industry_production_scenarios[industry_production_scenarios['sector'] == 'cement']
+        steel_data = clean_industry_df(industry_production_scenarios, 'steel')
+        cement_data = clean_industry_df(industry_production_scenarios, 'cement')
+        chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
 
-
+        methanol_data = clean_industry_df(industry_production_scenarios, 'methanol')
+        hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
 
         add_steel_industry(n, investment_year, steel_data, options)
         add_cement_industry(n, investment_year, cement_data, options)
+
+        if options["endo_industry"]["endo_ammonia"]:
+            ammonia_data = clean_industry_df(industry_production_scenarios, 'ammonia')
+            add_ammonia_load(n,investment_year, ammonia_data, options)
+
         if options["endo_industry"]["endo_hvc"]:
             add_hvc(n, options)
             add_methanol_to_olefins(n, costs)
