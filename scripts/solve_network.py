@@ -799,8 +799,13 @@ def add_TES_etpr_constraints(n):
     """
     Add a constraint for each TES storage unit enforcing:
         Store-e_nom - etpr * Link-p_nom == 0
+
+    This constraint is only applied if both:
+      - n.config["sector"]["heating"] is True
+      - n.config["sector"]["tes"] is True
     """
-    if not n.links.p_nom_extendable.any():
+    sector_config = n.config.get("sector", {})
+    if not (sector_config.get("heating", False) and sector_config.get("tes", False)):
         return
 
     tes_charger_bool = n.links.index.str.contains(
@@ -832,8 +837,13 @@ def add_TES_charger_ratio_constraints(n):
     Add constraints ensuring that for each TES unit, the charger and discharger are sized the same.
 
         Link-p_nom(charger) - efficiency * Link-p_nom(discharger) == 0
+
+    This constraint is only applied if both:
+      - n.config["sector"]["heating"] is True
+      - n.config["sector"]["tes"] is True
     """
-    if not n.links.p_nom_extendable.any():
+    sector_config = n.config.get("sector", {})
+    if not (sector_config.get("heating", False) and sector_config.get("tes", False)):
         return
 
     discharger_bool = n.links.index.str.contains(
