@@ -276,26 +276,35 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
-rule build_heat_source_potentials:
+rule build_geothermal_heat_potential:
     params:
-        heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "heat_utilisation_potentials"
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        countries=config_provider("countries"),
+        constant_temperature_celsius=config_provider(
+            "sector",
+            "district_heating",
+            "limited_heat_sources",
+            "geothermal",
+            "constant_temperature_celsius",
         ),
     input:
-        utilisation_potential="data/heat_source_utilisation_potentials/{heat_source}.gpkg",
+        isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        lau_regions="data/lau_regions.zip",
     output:
-        resources("heat_source_potential_{heat_source}_base_s_{clusters}.csv"),
+        heat_source_power=resources(
+            "heat_source_power_geothermal_base_s_{clusters}.csv"
+        ),
     resources:
         mem_mb=2000,
     log:
-        logs("build_heat_source_potentials_{heat_source}_s_{clusters}.log"),
+        logs("build_heat_source_potentials_geothermal_s_{clusters}.log"),
     benchmark:
-        benchmarks("build_heat_source_potentials/{heat_source}_s_{clusters}")
+        benchmarks("build_heat_source_potentials/geothermal_s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_heat_source_potentials/run.py"
+        "../scripts/build_geothermal_heat_potential.py"
 
 
 rule build_cop_profiles:
@@ -310,8 +319,8 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "heat_utilisation_potentials"
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -343,8 +352,8 @@ rule build_direct_heat_source_utilisation_profiles:
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
-        heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "heat_utilisation_potentials"
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -476,7 +485,7 @@ rule build_biomass_potentials:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_biomass_potentials_s_{clusters}_{planning_horizons}.log"),
     benchmark:
@@ -1059,17 +1068,19 @@ rule build_egs_potentials:
         "../scripts/build_egs_potentials.py"
 
 
-def input_heat_source_potentials(w):
+def input_heat_source_power(w):
 
     return {
         heat_source_name: resources(
-            "heat_source_potential_" + heat_source_name + "_base_s_{clusters}.csv"
+            "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
         )
         for heat_source_name in config_provider(
-            "sector", "district_heating", "heat_utilisation_potentials"
-        )(w).keys()
+            "sector", "heat_pump_sources", "urban central"
+        )(w)
         if heat_source_name
-        in config_provider("sector", "heat_pump_sources", "urban central")(w)
+        in config_provider("sector", "district_heating", "limited_heat_sources")(
+            w
+        ).keys()
     }
 
 
@@ -1097,15 +1108,15 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
-        heat_utilisation_potentials=config_provider(
-            "sector", "district_heating", "heat_utilisation_potentials"
-        ),
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
         ),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
     input:
         unpack(input_profile_offwind),
-        unpack(input_heat_source_potentials),
+        unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
