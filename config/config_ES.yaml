@@ -202,8 +202,8 @@ renewable:
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
-  gdp: 0.6
-  population: 0.4
+  gdp: 0.18   ##### 0.6
+  population: 0.82   ##### 0.4
 
 
 
