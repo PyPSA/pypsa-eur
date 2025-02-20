@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 # SPDX-License-Identifier: CC0-1.0
 
-name: pypsa-eur
+name: pypsa-eur-adb
 channels:
   - conda-forge
   - bioconda
@@ -435,5 +435,5 @@ dependencies:
       - snakemake-executor-plugin-slurm-jobstep==0.2.1
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6
-prefix: C:\Miniconda\envs\pypsa-eur
+prefix: C:\Miniconda\envs\pypsa-eur-adb
 
