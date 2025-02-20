@@ -18,8 +18,8 @@ pypsa_spain:
   electricity_demand:
     enable: true
     annual_value: 316.5 # TWh   230 # TWh
-    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS0_by_economicSector_2022.csv
-    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS0_by_economicSector_2022.csv
+    profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS2_by_economicSector_2022.csv
+    percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS2_by_economicSector_2022.csv
   interconnections:
     enable: false
     ic_ES_file: data_ES/interconnections/interconnections.yaml
