@@ -42,8 +42,8 @@ def get_source_temperature(heat_source_key: str):
         If the heat source is unknown (not in `config`).
     """
 
-    if heat_source_key in snakemake.params.heat_utilisation_potentials.keys():
-        return snakemake.params.heat_utilisation_potentials[heat_source_key][
+    if heat_source_key in snakemake.params.limited_heat_sources.keys():
+        return snakemake.params.limited_heat_sources[heat_source_key][
             "constant_temperature_celsius"
         ]
     else:

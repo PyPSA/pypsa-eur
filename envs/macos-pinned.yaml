@@ -339,7 +339,7 @@ dependencies:
   - pyogrio=0.10.0
   - pyparsing=3.2.1
   - pyproj=3.7.0
-  - pypsa=0.33.0
+  - pypsa=0.32.1
   - pyshp=2.3.1
   - pysocks=1.7.1
   - pytables=3.10.2
@@ -377,7 +377,7 @@ dependencies:
   - shapely=2.0.7
   - six=1.17.0
   - smart_open=7.1.0
-  - smmap=5.0.0
+  - smmap=5.0.1
   - snakemake-interface-common=1.17.4
   - snakemake-interface-executor-plugins=9.3.3
   - snakemake-interface-report-plugins=1.1.0
