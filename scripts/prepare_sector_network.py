@@ -5867,6 +5867,10 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
     # Get the target year from the Snakemake wildcards
     year = snakemake.wildcards.planning_horizons
 
+    # To be more robust we take the average of 5 years around the planning year 
+    start_year = year - 2
+    end_year = year + 2
+
     # Include additional renewable carriers relevant for hydropower
     renewable_carriers = renewable_carriers + ['ror', 'PHS']
 
@@ -5923,7 +5927,22 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             ds = xr.open_dataset(os.path.join(dir_path, files[0]))
 
             # Extract the yearly capacity factor profile
-            profile = ds[f"{variable_name}"].sel(time=slice(f"{year}-01-01 00:00", f"{year}-12-31 23:00")).to_series()
+            #profile = ds[f"{variable_name}"].sel(time=slice(f"{year}-01-01 00:00", f"{year}-12-31 23:00")).to_series()
+
+            # Extract the 5-year time series
+            profile_5years = ds[f"{variable_name}"].sel(time=slice(f"{start_year}-01-01 00:00", f"{end_year}-12-31 23:00"))
+
+            # Convert to a pandas DataFrame for easier resampling
+            profile_df = profile_5years.to_dataframe()
+
+            # Extract the hour-of-year for grouping
+            profile_df["hour_of_year"] = profile_df.index.dayofyear * 24 + profile_df.index.hour
+
+            # Compute the mean for each hour-of-year over the 5 years
+            profile = profile_df.groupby("hour_of_year").mean()
+
+            # Convert back to a pandas Series with a DatetimeIndex (assuming non-leap years)
+            profile.index = pd.date_range(start=f"{year}-01-01", periods=8760, freq="H")
 
             # Remove February 29th to handle leap years
             profile = profile.loc[profile.index.strftime('%m-%d') != '02-29']
