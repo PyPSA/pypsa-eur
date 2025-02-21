@@ -83,6 +83,7 @@ def upsample_load(
             )
         )
 
+
     return xr.concat(data_arrays, dim="bus")
 
 
@@ -109,31 +110,60 @@ def upsample_load_vPyPSA_Spain(
 
     data_arrays = []
 
+    # In this loop, "cntry" takes country codes 'ES', ..., and "group" is a geoseries with the geometries of the onshore regions (Voronoi cells)
     for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country):
-        load_ct = load[cntry]
 
+        # This is to do nothing if there is only one region within the country
         if len(group) == 1:
             factors = pd.Series(1.0, index=group.index)
 
         else:
-            nuts3_cntry = nuts3.loc[nuts3.country == cntry]
-            transfer = shapes_to_shapes(group, nuts3_cntry.geometry).T.tocsr()
-            gdp_n = pd.Series(
-                transfer.dot(nuts3_cntry["gdp"].fillna(1.0).values), index=group.index
-            )
-            pop_n = pd.Series(
-                transfer.dot(nuts3_cntry["pop"].fillna(1.0).values), index=group.index
-            )
 
-            factors = normed(gdp_weight * normed(gdp_n) + pop_weight * normed(pop_n))
+            ##### Define a list where data_arrays for specific NUTSx regions will be obtained
+            data_arrays_list = []
 
-        data_arrays.append(
-            xr.DataArray(
-                factors.values * load_ct.values[:, np.newaxis],
-                dims=["time", "bus"],
-                coords={"time": load_ct.index.values, "bus": factors.index.values},
-            )
-        )
+
+            for rr_ID in load.columns:  ##### rr_ID is the NUTSx ID
+
+                load_local = load[rr_ID]
+
+                ##### Take NUTS3 regions in NUTSx 
+                nuts3_rr = nuts3[nuts3.index.str.contains(rr_ID)]
+
+                ##### Get a matrix with area overlap percentages
+                #  rows are ~522 substations, columns are NUTS3 in región 
+                # .tocsr() is to put the sparse matrix in 'Compressed Sparse Row' format.            
+                transfer = shapes_to_shapes(group, nuts3_rr.geometry).T.tocsr() 
+
+                ##### Series with substations, (overlapped area) x (gdp) from corresponding NUTS3 in rr_ID
+                gdp_n = pd.Series(
+                    transfer.dot(nuts3_rr["gdp"].fillna(1.0).values), index=group.index
+                        )
+
+                ##### Series with substations, (overlapped area) x (pop) from corresponding NUTS3 in rr_ID
+                pop_n = pd.Series(
+                    transfer.dot(nuts3_rr["pop"].fillna(1.0).values), index=group.index
+                        )
+
+                factors = normed(gdp_weight * normed(gdp_n) + pop_weight * normed(pop_n))
+
+
+                ##### Add data_array to data_arrays_list
+                data_arrays_list.append(
+                    xr.DataArray(
+                        factors.values * load_local.values[:, np.newaxis],
+                        dims=["time", "bus"],
+                        coords={"time": load_local.index.values, "bus": factors.index.values},
+                    )
+                )
+
+            ##### Sum up all the data_arrays in the list
+            data_arrays_total =  xr.concat(data_arrays_list, dim="new_dim").sum(dim="new_dim")
+
+
+        ##### Finally, append data_arrays_total to data_arrays (the list for countries in the original script)
+        data_arrays.append(data_arrays_total)
+
 
     return xr.concat(data_arrays, dim="bus")
 
@@ -153,13 +183,42 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.base_network)
 
-    load = upsample_load(
-        n,
-        regions_fn=snakemake.input.regions,
-        load_fn=snakemake.input.load,
-        nuts3_fn=snakemake.input.nuts3,
-        distribution_key=params.distribution_key,
-    )
+
+
+    ################################################## PyPSA-Spain
+    #
+    # Attach electricity demand according to PyPSA-Spain customisation
+    #
+
+    electricity_demand = snakemake.params.electricity_demand
+
+
+    if electricity_demand['enable']:
+
+        logger.info(f'##### [PyPSA-Spain] <build_electricity_demand_base>: Using upsample_load_vPyPSA_Spain to add electricity demand in ES.')
+
+        load = upsample_load_vPyPSA_Spain(
+            n,
+            regions_fn=snakemake.input.regions,
+            load_fn=snakemake.input.load,
+            nuts3_fn=snakemake.input.nuts3,
+            distribution_key=params.distribution_key,
+        )
+
+    else:
+        load = upsample_load(
+            n,
+            regions_fn=snakemake.input.regions,
+            load_fn=snakemake.input.load,
+            nuts3_fn=snakemake.input.nuts3,
+            distribution_key=params.distribution_key,
+        )
+
+    #
+    #        
+    ##################################################
+
+
 
     load.name = "electricity demand (MW)"
     comp = dict(zlib=True, complevel=9, least_significant_digit=5)
