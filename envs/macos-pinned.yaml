@@ -338,8 +338,13 @@ dependencies:
   - pyobjc-framework-cocoa=11.0
   - pyogrio=0.10.0
   - pyparsing=3.2.1
+<<<<<<< HEAD
   - pyproj=3.7.1
   - pypsa=0.33.0
+=======
+  - pyproj=3.7.0
+  - pypsa=0.32.1
+>>>>>>> origin/master
   - pyshp=2.3.1
   - pysocks=1.7.1
   - pytables=3.10.2
