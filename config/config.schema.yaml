@@ -1,0 +1,954 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+
+  # ------------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
+  version:
+    title: Version
+    description: Version of PyPSA-Eur. Descriptive only.
+    type: string
+    examples: ['v2025.1.0']
+  tutorial:
+    title: Tutorial
+    description: Switch to retrieve the tutorial data set instead of the full data set.
+    type: boolean
+
+  logging:
+    title: "Logging"
+    description: "Logging configuration."
+    additionalProperties: false
+    properties:
+      level:
+        type: string
+        enum: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        description: Restrict console outputs to all infos, warning or errors only.
+      format:
+        type: string
+        description: Custom format for log messages. See LogRecord attributes.
+        examples: ["%(levelname)s:%(name)s:%(message)s"]
+
+  private:
+    title: Private
+    description: >
+      Personal API keys.
+    additionalProperties: false
+    properties:
+      keys:
+        type: object
+        additionalProperties: false
+        properties:
+          entsoe_api:
+            type: ["string", "null"]
+            description: >
+              Optionally specify the ENTSO-E API key. See the guidelines to get  ENTSO-E API key.
+
+  remote:
+    title: Remote
+    description: >
+      Configuration for remote access.
+    additionalProperties: false
+    properties:
+      ssh:
+        type: string
+        description: Optionally specify the SSH of a remote cluster to be synchronized.
+      path:
+        type: string
+        description: >
+          Optionally specify the file path within the remote cluster to be synchronized.
+      test_deprecation:
+        type: string
+        description: Deprecated property. Use 'xx' instead.
+        deprecated: true
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
+  run:
+    title: "Run"
+    description: >
+      Run scenarios with different configurations which are not covered by Wildcards
+    additionalProperties: false
+    properties:
+      prefix:
+        type: string
+        description: >
+          Prefix for the run name which is used as a top-layer directory name in the
+          results and resources folders.
+      name:
+        type: [string, array]
+        description: "Specify a name for your run. Results will be stored under this name. If ``scenario: enable:`` is set to ``true``, the name must contain a subset of scenario names defined in ``scenario: file:``. If the name is 'all', all defined scenarios will be run."
+      scenarios:
+        type: object
+        additionalProperties: false
+        properties:
+          enable:
+            type: boolean
+            description: "Switch to select whether workflow should generate scenarios based on ``file``."
+          file:
+            type: string
+            description: "Path to the scenario yaml file. The scenario file contains config overrides for each scenario. In order to be taken account, ``run: scenarios`` has to be set to ``true`` and ``run: name`` has to be a subset of top level keys given in the scenario file. In order to automatically create a `scenario.yaml` file based on a combination of settings, alter and use the ``config/create_scenarios.py`` script in the ``config`` directory."
+      disable_progressbar:
+        type: boolean
+        description: "Switch to select whether progressbar should be disabled."
+      shared_resources:
+        additionalProperties: false
+        properties:
+          policy:
+            type: boolean
+            description: "Boolean switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared."
+          exclude:
+            type: array
+            items:
+              type: string
+            description: "For the case shared_resources=base, specify additional files that should not be shared across runs."
+      shared_cutouts:
+        description: "Switch to select whether cutouts should be shared across runs."
+      use_shadow_directory:
+        type: boolean
+        description: "Set to ``true`` (default) if snakemake shadow directories (``shallow``) should be used. Set to ``false`` if problems occcur."
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+  foresight:
+    title: Foresight
+    description: "See :ref:`Foresight Options` for detail explanations."
+    type: string
+    enum: ["overnight", "myopic", "perfect"]
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+  # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
+  scenario:
+    title: Scenario
+    description: Scenario configuration.
+    additionalProperties: false
+    properties:
+      clusters:
+        description: List of ``{clusters}`` wildcards to run. See :ref:`clusters`.
+        type: array
+        items:
+          type: number
+
+      opts:
+        description: List of ``{opts}`` wildcards to run. See :ref:`opts`.
+        type: array
+        items:
+          type: string
+
+      sector_opts:
+        description: >
+          List of ``{sector_opts}`` wildcards to run. See :ref:`sector_opts`.
+        type: array
+        items:
+          type: string
+
+      planning_horizons:
+        description: >
+          List of ``{planning_horizon}`` wildcards to run. See :ref:`planning_horizons`.
+        type: array
+        items:
+          type: number
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+  countries:
+    title: Countries
+    description: >
+      European countries defined by their `Two-letter country codes (ISO 3166-1)  <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_ which should be included in  the energy system model."
+    type: array
+    items:
+      type: string
+      enum: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
+    uniqueItems: true
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
+  snapshots:
+    title: "Snapshots"
+    description: >
+      Snapshots configuration.
+    additionalProperties: false
+    properties:
+      start:
+        title: Start Date
+        description: Left bound of date range (YYYY-MM-DD).
+        examples: 2025-01-01
+        type: string
+        format: date-time
+      end:
+        title: End Date
+        description: Right bound of date range (YYYY-MM-DD).
+        examples: 2025-12-31
+        type: string
+        format: date-time
+      inclusive:
+        description: >
+          Make the time interval closed to the left, right, or both sides both or  neither side.
+        type: string
+        enum:
+        - neither
+        - both
+        - left
+        - right
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
+  enable:
+    additionalProperties: false
+    properties:
+      retrieve:
+        description: >
+          Switch to include (true) or exclude (false) the retrieve_* rules of snakemake  into the workflow; 'auto' sets true|false based on availability of an internet  connection to prevent issues with snakemake failing due to lack of internet  connection.
+        type: string
+        enum:
+        - auto
+        - true
+        - false
+      retrieve_databundle:
+        description: >
+          Switch to retrieve databundle from zenodo via the rule  :mod:`retrieve_databundle` or whether to keep a custom databundle located in
+          the corresponding folder.
+        type: boolean
+      retrieve_cost_data:
+        description: Switch to retrieve technology cost data from `technology-data repository <https://github.com/PyPSA/technology-data>`_.
+        type: boolean
+      build_cutout:
+        description: >
+          Switch to enable the building of cutouts via the rule :mod:`build_cutout`.
+        type: boolean
+      retrieve_cutout:
+        description: >
+          Switch to enable the retrieval of cutouts from zenodo with  :mod:`retrieve_cutout`.
+        type: boolean
+      custom_busmap:
+        description: >
+          Switch to enable the use of custom busmaps in rule :mod:`cluster_network`.  If activated the rule looks for provided busmaps at  ``data/busmaps/base_s_{clusters}_{base_network}.csv`` which should have the  same format as ``resources/busmap_base_s_{clusters}.csv``, i.e. the index  should contain the buses of ``networks/base_s.nc``. {base_network} is the  name of the selected base_network in electricity, e.g. ``gridkit``,  ``osm-prebuilt``, or ``osm-raw``.
+        type: boolean
+      drop_leap_day:
+        description: >
+          Switch to drop February 29 from all time-dependent data in leap years
+        type: boolean
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+  co2_budget:
+    title: CO2 Budget
+    description: >
+      CO2 budget as a fraction of 1990 emissions.  Overwritten if ``Co2Lx`` or ``cb`` are set in ``{sector_opts}``  wildcard"doc/configtables/othertoplevel.csv
+    type: object
+    additionalProperties: {"type": number}
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+  electricity:
+    additionalProperties: false
+    properties:
+
+      voltages:
+        description: Voltage levels to consider
+        type: array
+        items:
+          type: number
+          enum: [220.0, 300.0, 330.0, 380.0, 400.0, 500.0, 750.0]
+
+      base_network:
+        description: "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract, OpenStreetMap (OSM) prebuilt or raw (built from raw OSM data), takes longer."
+        type: string
+        enum: ["entsoegridkit", "osm-prebuilt", "osm-raw"]
+
+      osm-prebuilt-version:
+        description: "Choose the version of the prebuilt OSM network."
+        type: number
+        examples: 0.6
+
+      gaslimit_enable:
+        description: >
+          Add an overall absolute gas limit configured in ``electricity: gaslimit``.
+        type: boolean
+
+      gaslimit:
+        description: Global gas usage limit
+        type: boolean
+
+      co2limit_enable:
+        description: >
+          Add an overall absolute carbon-dioxide emissions limit configured in  ``electricity: co2limit`` in :mod:`prepare_network`.  **Warning:** This option should currently only be used with electricity-only  networks, not for sector-coupled networks."
+        type: boolean
+
+      co2limit:
+        description: >
+          Cap on total annual system carbon dioxide emissions  (in :math:`t_{CO_2-eq}/a`).
+        type: number
+
+      co2base:
+        description: >
+          Reference value of total annual system carbon dioxide emissions if relative  emission reduction target is specified in ``{opts}``  wildcard (in :math:`t_{CO_2-eq}/a`).
+        type: number
+
+      operational_reserve:
+        description: >
+          Settings for reserve requirements following  `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_
+        type: object
+        additionalProperties: false
+        properties:
+          activate:
+            description: >
+              Whether to take operational reserve requirements into account during  optimisation
+            type: boolean
+          epsilon_load:
+            description: >
+              share of total load
+            type: number
+          epsilon_vres:
+            description: >
+              share of total renewable supply
+            type: number
+          contingency:
+            description: >
+              fixed reserve capacity
+            type: integer
+      max_hours:
+        type: object
+        additionalProperties: false
+        properties:
+          battery:
+            description: >
+              Maximum state of charge capacity of the battery in terms of hours at full
+              output capacity ``p_nom``.
+              Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
+            type: integer
+          H2:
+            description: >
+              Maximum state of charge capacity of the hydrogen storage in terms of hours
+              at full output capacity ``p_nom``.  Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
+            type: integer
+      extendable_carriers:
+        type: object
+        additionalProperties: false
+        properties:
+          Generator:
+            description: >
+              Defines existing or non-existing conventional and renewable power plants
+              to be extendable during the optimization. Conventional generators can
+              only be built/expanded where already existent today. If a listed
+              conventional carrier is not included in the ``conventional_carriers``
+              list, the lower limit of the capacity expansion is set to 0.
+            type: array
+            items:
+              description: Any extendable carrier
+              type: string
+          StorageUnit:
+            description: >
+              Adds extendable storage units (battery and/or hydrogen) at every node/bus
+              after clustering without capacity limits and with zero initial capacity.
+            type: array
+            items:
+              type: string
+              enum: [battery, H2]
+            minItems: 0
+          Store:
+            description: >
+              Adds extendable storage units (battery and/or hydrogen) at every node/bus
+              after clustering without capacity limits and with zero initial capacity.
+            type: array
+            items:
+              type: string
+              enum: [battery, H2]
+            minItems: 0
+          Link:
+            description: Adds extendable links (H2 pipelines only) at every connection where there are lines or HVDC links without capacity limits and with zero initial capacity. Hydrogen pipelines require hydrogen storage to be modelled as ``Store``.
+            type: array
+            items:
+              type: string
+      powerplants_filter:
+        description: >
+          Filter query for the default powerplant database. Use  `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_  strings here, e.g. ``Country not in ['Germany']``"
+        type: string
+      custom_powerplants:
+        description: >
+          Filter query for the custom powerplant database. Use  `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_  strings here, e.g. ``Country not in ['Germany']``"
+        type: boolean
+      everywhere_powerplants:
+        description: List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with ``extendable_carriers`` to allow for building conventional powerplants irrespective of existing locations.
+        type: array
+        items:
+          type: string
+          enum: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+        minItems: 0
+      conventional_carriers:
+        description: List of conventional power plants to include in the model from ``resources/powerplants_s_{clusters}.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound.
+        type: array
+        items:
+          type: string
+          enum: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+      renewable_carriers:
+        description: List of renewable generators to include in the model.
+        type: array
+        items:
+          type: string
+          enum: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+      estimate_renewable_capacities:
+        type: object
+        additionalProperties: false
+        properties:
+          enable:
+            description: >
+              Activate routine to estimate renewable capacities in rule  :mod:`add_electricity`. This option should not be used in combination
+              with pathway planning ``foresight: myopic`` or ``foresight: perfect`` as
+              renewable capacities are added differently in
+              :mod:`add_existing_baseyear`.
+            type: boolean
+          from_opsd:
+            descriptions: >
+              Add renewable capacities from `OPSD database  <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_.
+              The value is depreciated but still can be used.
+            type: boolean
+          year:
+            description: >
+              Renewable capacities are based on existing capacities reported by IRENA
+              (IRENASTAT) for the specified year
+            type: integer
+          expansion_limit:
+            description: >
+              Artificially limit maximum IRENA capacities to a factor.  For example,  an ``expansion_limit: 1.1`` means 110% of capacities . If false are
+              chosen, the estimated renewable potentials determine by the workflow are
+              used.
+            type: [boolean, number]
+          technology_mapping:
+            description: >
+              Mapping between PyPSA-Eur and powerplantmatching technology names.
+            type: object
+            additionalProperties: false
+            properties:
+              Offshore:
+                description: >
+                  List of PyPSA-Eur carriers that is considered as (IRENA, OPSD)  onshore technology.
+                type: array
+                items:
+                  type: string
+                  enum: [offwind-ac, offwind-dc, offwind-float]
+              Onshore:
+                description: >
+                  List of PyPSA-Eur carriers that is considered as (IRENA, OPSD)  offshore technology."
+                type: array
+                items:
+                  type: string
+                  enum: [onwind]
+              PV:
+                description: >
+                  List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) PV  technology.
+                type: array
+                items:
+                  type: string
+                  enum: [solar]
+      autarky:
+        type: object
+        additionalProperties: false
+        properties:
+          enable:
+            description: >
+              Require each node to be autarkic by removing all lines and links.
+            type: boolean
+          by_country:
+            description: >
+              Require each country to be autarkic by removing all cross-border lines
+              and links. ``electricity: autarky`` must be enabled.
+            type: boolean
+      transmission_limit:
+        description: >
+          Limit on transmission expansion. The first part can be ``v`` (for setting a  limit on line volume) or ``c`` (for setting a limit on line cost). The second
+          part can be ``opt`` or a float bigger than one (e.g. 1.25). If ``opt`` is
+          chosen line expansion is optimised according to its capital cost (where the
+          choice ``v`` only considers overhead costs for HVDC transmission lines,
+          while ``c`` uses more accurate costs distinguishing between overhead and
+          underwater sections and including inverter pairs). The setting ``v1.25`` will
+          limit the total volume of line expansion to 25% of currently installed
+          capacities weighted by individual line lengths. The setting ``c1.25`` will
+          allow to build a transmission network that costs no more than 25 % more than
+          the current system."
+        type: string
+        examples: ['vopt', 'v1.25', 'copt', 'c1.25']
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
+  atlite:
+    additionalProperties: false
+    properties:
+
+      cutout_directory:
+        description: Directory to store cutouts.
+        type: string
+
+      default_cutout:
+        description: Defines a default cutout.
+        type: string
+
+      nprocesses:
+        description: Number of parallel processes in cutout preparation.
+        type: integer
+
+      show_progress:
+        description: >
+          Whether progressbar for atlite conversion processes should be shown.  False saves time.
+        type: boolean
+
+      cutouts:
+        type: object
+        patternProperties:
+          "^.*$":
+            type: object
+            properties:
+              module:
+                type: array
+                items:
+                  type: string
+                  enum: ['era5', 'sarah']
+              x:
+                description: >
+                  Range of longitudes to download weather data for. If not defined, it  defaults to the spatial bounds of all bus shapes.  Float interval within [-180, 180].
+                type: array
+                items:
+                  type: number
+                minItems: 2
+                maxItems: 2
+              y:
+                description: >
+                  Range of latitudes to download weather data for. If not defined, it  defaults to the spatial bounds of all bus shapes.
+                  Float interval within [-180, 180]. 
+                type: array
+                items:
+                  type: number
+                minItems: 2
+                maxItems: 2
+              dx:
+                description: >
+                  Grid resolution for longitudes. Larger then 0.25.
+                type: number
+                minimum: 0
+                examples: 0.25
+              dy:
+                description: >
+                  Grid resolution for latitudes. Larger then 0.25.
+                type: number
+                minimum: 0
+                examples: 0.25
+              time:
+                description: >
+                  Time span to download weather data for. If not defined, it defaults to  the time interval spanned by the snapshots. Please choose interval  within 1979 and 2018 as valid pandas date time strings.
+                type: array
+                items:
+                  type: string
+                minItems: 2
+                maxItems: 2
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
+  renewable:
+
+    # ------------------------------------
+    onwind:
+      additionalProperties: false
+      properties:
+
+        cutout:
+          description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
+          type: string
+          examples: europe-2013-sarah3-era5
+
+        resource:
+          type: object
+          additionalProperties: false
+          properties:
+            method:
+              description: A superordinate technology type.
+              type: string
+              enum: [wind]
+            turbine:
+              description: Specifies the turbine type and its characteristic power curve. Must be one of turbine types included in `atlite <https://github.com/PyPSA/atlite/tree/master/atlite/resources/windturbine>`_. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available.
+              type: string
+            smooth:
+              description: Switch to apply a gaussian kernel density smoothing to the power curve.
+              type: boolean
+            add_cutout_windspeed:
+              type: boolean
+
+        capacity_per_sqkm:
+          description: Allowable density of wind turbine placement (in :math:`MW/km^2`).
+          type: number
+
+        correction_factor:
+          description: Correction factor for the wind speed. A value of 1.0 means no correction.
+          type: number
+
+        corine:
+          type: object
+          additionalProperties: false
+          properties:
+            grid_codes:
+              description: Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement. Must be any subset of the `CORINE Land Cover code list <http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file>`_.
+              type: array
+              items:
+                type: integer
+            distance:
+              description: Distance to keep from areas specified in ``distance_grid_codes`` (in m).
+              type: integer
+            distance_grid_codes:
+              description: Specifies areas according to CORINE Land Cover codes to which wind turbines must maintain a distance specified in the setting ``distance``. Must be any subset of the `CORINE Land Cover code list <http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file>`_.
+              type: array
+              items:
+                type: integer
+        luisa:
+          type: boolean
+        natura:
+          description: Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if ``true``."
+          type: boolean
+        excluder_resolution:
+          description: Resolution on which to perform geographical elibility analysis (in m).
+          type: integer
+        clip_p_max_pu:
+          description: To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero (in p.u.).
+          type: numberi
+
+    # ------------------------------------
+    offwind-ac:
+      $ref: "#/definitions/offwind-x"
+
+    # ------------------------------------
+    offwind-dc:
+      $ref: "#/definitions/offwind-x"
+
+    # ------------------------------------
+    offwind-float:
+      $ref: "#/definitions/offwind-x"
+
+    # ------------------------------------
+    solar:
+      $ref: "#/definitions/solar-x"
+
+    # ------------------------------------
+    solar-hsat:
+      $ref: "#/definitions/solar-x"
+
+    # ------------------------------------
+    hydro:
+      additionalProperties: false
+      properties:
+
+        cutout:
+          description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
+          type: string
+          examples: europe-2013-sarah3-era5
+
+        carriers:
+          description: Specifies the types of hydro power plants to build per-unit availability time series for. 'ror' stands for run-of-river plants, 'PHS' represents pumped-hydro storage, and 'hydro' stands for hydroelectric dams.
+          type: array
+          items:
+            type: string
+            enum: [ror, PHS, hydro]
+
+        PHS_max_hours:
+          description: Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity ``p_nom`` in h. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
+          type: number
+
+        hydro_max_hours:
+          description: Maximum state of charge capacity of the pumped-hydro storage (PHS) in terms of hours at full output capacity ``p_nom`` or heuristically determined. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
+          oneOf:
+          - type: string
+            enum:
+            - energy_capacity_totals_by_country
+            - estimate_by_large_installations
+          - type: number
+
+        flatten_dispatch:
+          description: Consider an upper limit for the hydro dispatch. The limit is given by the average capacity factor plus the buffer given in  ``flatten_dispatch_buffer``
+          type: boolean
+
+        flatten_dispatch_buffer:
+          description: If ``flatten_dispatch`` is true, specify the value added above the average capacity factor.
+          type: number
+
+        clip_min_inflow:
+          description: To avoid too small values in the inflow time series, values below this threshold are set to zero.
+          type: number
+
+        eia_norm_year:
+          description: Year for which the EIA data is normalized. If set to ``None``, no normalization is applied.
+          type: boolean, integer
+
+        eia_correct_by_capacity:
+          description: Correct EIA annual hydro generation data by installed capacity.
+          type: boolean
+
+        eia_approximate_missing:
+          description: Approximate hydro generation data for years not included in EIA dataset through a regression based on annual runoff.
+          type: boolean
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
+  conventional:
+    additionalProperties: true
+    properties:
+
+      unit_commitment:
+        description: Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file „unit_commitment.csv“.
+        type: boolean
+
+      dynamic_fuel_price:
+        description: Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file ""data/validation/monthly_fuel_price.csv"
+        type: boolean
+
+      patternProperties:
+        description: For any carrier/technology overwrite attributes as listed below.
+        "^.*$":
+          type: object
+          additionalProperties: false
+          patternProperties:
+            "^.*$":
+              description: For any attribute, can specify a float or reference to a file path to a CSV file giving floats for each country (2-letter code).
+              type:
+              - string
+              - number
+
+  # ----------------------------------------------------------------------------------
+  # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+  lines:
+    additionalProperties: false
+    properties:
+
+      types:
+        description: Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV. Values should specify a `line type in PyPSA <https://pypsa.readthedocs.io/en/latest/components.html#line-types>`_. Keys should specify the corresponding voltage level (e.g. 220., 300. and 380. kV)
+
+        type: object
+        additionalProperties: false
+        properties:
+          220.:
+            type: string
+          300.:
+            type: string
+          330.:
+            type: string
+          380.:
+            type: string
+          400.:
+            type: string
+          500.:
+            type: string
+          750.:
+            type: string
+
+      s_max_pu:
+        description: Correction factor for line capacities (``s_nom``) to approximate :math:`N-1` security and reserve capacity for reactive power flows"
+        type: number
+
+      s_nom_max:
+        description: Global upper limit for the maximum capacity of each extendable line (in MW).
+        type: number
+
+      max_extension:
+        description: Upper limit for the extended capacity of each extendable line (in MW).
+        type: integer
+
+      length_factor:
+        description: Correction factor to account for the fact that buses are *not* connected by lines through air-line distance.
+        type: number
+
+      reconnect_crimea:
+        description: Whether to reconnect Crimea to the Ukrainian grid.
+        type: boolean
+
+      under_construction:
+        description: >
+          Specifies how to handle lines which are currently under construction.
+          One of {'zero': set capacity to zero, 'remove': remove completely, 'keep':  keep with full capacity}
+        type: string
+        enum: ["keep", "zero", "remove"]
+
+      dynamic_line_rating:
+        type: object
+        additionalProperties: false
+        properties:
+          activate:
+            description: Whether to take dynamic line rating into account.
+            type: boolean
+          cutout:
+            description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
+            type: string
+            examples: europe-2013-sarah3-era5
+          correction_factor:
+            description: Factor to compensate for overestimation of wind speeds in hourly averaged wind data.
+            type: number
+          max_voltage_difference:
+            description: Maximum voltage angle difference in degrees or 'false' to disable.
+            type: boolean
+          max_line_rating:
+            description: Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable.
+            type: boolean
+
+  # ----------------------------------------------------------------------------------
+  links:
+    additionalProperties: false
+    properties:
+      p_max_pu:
+        description: Correction factor for link capacities ``p_nom``.
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+
+      p_nom_max:
+        description: Global upper limit for the maximum capacity of each extendable DC link (in MW).
+        type: number
+
+      max_extension:
+        description: Upper limit for the extended capacity of each extendable DC link (in MW).
+        type: number
+
+      length_factor:
+        description: Correction factor to account for the fact that buses are *not* connected by links through air-line distance.
+        type: number
+
+      under_construction:
+        description: >
+          Specifies how to handle lines which are currently under construction.
+          One of {'zero': set capacity to zero, 'remove': remove completely, 'keep':
+          keep with full capacity}
+        type: string
+        enum: ['zero', 'remove', 'keep']
+
+definitions:
+  offwind-x:
+    additionalProperties: false
+    properties:
+
+      cutout:
+        description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
+        type: string
+        examples: europe-2013-sarah3-era5
+
+      resource:
+        type: object
+        additionalProperties: false
+        properties:
+          method:
+            description: A superordinate technology type.
+            type: string
+            enum: [wind]
+          turbine:
+            description: Specifies the turbine type and its characteristic power curve. Must be one of turbine types included in `atlite <https://github.com/PyPSA/atlite/tree/master/atlite/resources/windturbine>`_. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available.
+            type: string
+          smooth:
+            description: Switch to apply a gaussian kernel density smoothing to the power curve.
+            type: boolean
+          add_cutout_windspeed:
+            type: boolean
+
+      capacity_per_sqkm:
+        description: Allowable density of wind turbine placement (in :math:`MW/km^2`).
+        type: number
+
+      correction_factor:
+        description: Correction factor for the wind speed. A value of 1.0 means no correction.
+        type: number
+
+      corine:
+        description: Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement. Must be any subset of the `CORINE Land Cover code list <http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file>`_.
+        type: array
+        items:
+          type: integer
+        minItems: 2
+        maxItems: 2
+
+      luisa:
+        type: boolean
+
+      natura:
+        description: Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if ``true``."
+        type: boolean
+
+      ship_threshold:
+        description: Ship density threshold from which areas are excluded.
+        type: number
+        minimum: 0
+
+      max_depth:
+        description: Maximum sea water depth at which wind turbines can be build. Maritime areas with deeper waters are excluded in the process of calculating the AC-connected offshore wind potential (in m).
+        type: number
+        minimum: 0
+
+      max_shore_distance:
+        description: Maximum distance to the shore above which wind turbines cannot be build. Such areas close to the shore are excluded in the process of calculating the AC-connected offshore wind potential (in m).
+        type: integer
+        minimum: 0
+
+      excluder_resolution:
+        description: Resolution on which to perform geographical elibility analysis (in m).
+        type: number
+        minimum: 0
+
+      clip_p_max_pu:
+        description: To avoid too small values in the `renewables` per-unit availability time series values below this threshold are set to zero (in p.u.).
+        type: number
+        minimum: 0
+
+      landfall_length:
+        description: Fixed length of the cable connection that is onshorelandfall in km. If 'centroid', the length is calculated as the distance to centroid of the onshore bus (in km).
+        type: integer
+        minimum: 0
+
+  solar-x:
+    additionalProperties: false
+    properties:
+
+      cutout:
+        description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
+        type: string
+        examples: europe-2013-sarah3-era5
+
+      resource:
+        type: object
+        properties:
+          method:
+            description: A superordinate technology type.
+            type: string
+            enum: [pv]
+          panel:
+            description: Specifies the solar panel technology and its characteristic attributes. Choose panels as defined in `atlite <https://github.com/PyPSA/atlite/tree/master/atlite/resources/solarpanel>`_. Can be a string or a dictionary with years as keys which denote the year another turbine model becomes available.
+            type: object
+          orientation:
+            type: object
+            properties:
+              slope:
+                description: Specifies the tilt angle (or slope) of the solar panel. A slope of zero corresponds to the face of the panel aiming directly overhead. A positive tilt angle steers the panel towards the equator. Realistically any angle in [0., 90.].
+                type: number
+              azimuth:
+                description: Specifies the `azimuth <https://en.wikipedia.org/wiki/Azimuth>`_ orientation of the solar panel. South corresponds to 180°. Any angle in [0., 360.]
+                type: number
+
+      capacity_per_sqkm:
+        description: Allowable density of solar panel placement (in :math:`MW/km^2`).\
+        type: number
+
+      corine:
+        description: Specifies areas according to CORINE Land Cover codes which are generally eligible for wind turbine placement. Must be any subset of the `CORINE Land Cover code list <http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file>`_.
+        type: array
+        items:
+          type: integer
+
+      luisa:
+        type: boolean
+
+      natura:
+        description: Switch to exclude `Natura 2000 <https://en.wikipedia.org/wiki/Natura_2000>`_ natural protection areas. Area is excluded if ``true``.
+        type: boolean
+
+      excluder_resolution:
+        description: Resolution on which to perform geographical elibility analysis (in m).
+        type: integer
+
+      clip_p_max_pu:
+        description: To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.
+        type: number
+

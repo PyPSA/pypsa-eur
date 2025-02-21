@@ -9,14 +9,25 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are
+collected in a ``config/config.yaml`` file. This file defines deviations from the
+default configuration (``config/config.default.yaml``); confer installation
+instructions at :ref:`defaultconfig`.
+
+.. Note::
+   Configurations are validated against a JSON schema, located at
+   ``config/config.schema.yaml``. Which means it is also possible to get tooltips and
+   auto completion for all config settings in your editor. For VSCode, 
+   add ``"json.validate.enable": true`` to your settings.
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
-"Private" refers to local, machine-specific settings or data meant for personal use, not to be shared. "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+"Private" refers to local, machine-specific settings or data meant for personal use,
+not to be shared. "Remote" indicates the address of a server used for data exchange,
+often for clusters and data pushing/pulling.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -26,21 +37,21 @@ Top-level configuration
 
 .. dropdown:: Details
 
-   .. jsonschema:: ../config/schemas/general.yaml#/version
+   .. jsonschema:: ../config/config.schema.yaml#/properties/version
       :lift_description:
 
-   .. jsonschema:: ../config/schemas/general.yaml#/tutorial
+   .. jsonschema:: ../config/config.schema.yaml#/properties/tutorial
       :lift_description:
 
-   .. jsonschema:: ../config/schemas/general.yaml#/logging
-      :lift_description:
-      :hide_key: /**/additionalProperties
-
-   .. jsonschema:: ../config/schemas/general.yaml#/private
+   .. jsonschema:: ../config/config.schema.yaml#/properties/logging
       :lift_description:
       :hide_key: /**/additionalProperties
 
-   .. jsonschema:: ../config/schemas/general.yaml#/remote
+   .. jsonschema:: ../config/config.schema.yaml#/properties/private
+      :lift_description:
+      :hide_key: /**/additionalProperties
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/remote
       :lift_description:
       :hide_key: /**/additionalProperties
       
@@ -50,21 +61,28 @@ Top-level configuration
 ``run``
 =============
 
-It is common conduct to analyse energy system optimisation models for **multiple scenarios** for a variety of reasons,
-e.g. assessing their sensitivity towards changing the temporal and/or geographical resolution or investigating how
-investment changes as more ambitious greenhouse-gas emission reduction targets are applied.
+It is common conduct to analyse energy system optimisation models for 
+**multiple scenarios** for a variety of reasons, e.g. assessing their sensitivity
+towards changing the temporal and/or geographical resolution or investigating how
+investment changes as more ambitious greenhouse-gas emission reduction targets are
+applied.
 
-The ``run`` section is used for running and storing scenarios with different configurations which are not covered by :ref:`wildcards`. It determines the path at which resources, networks and results are stored. Therefore the user can run different configurations within the same directory. If a run with a non-empty name should use cutouts shared across runs, set ``shared_cutouts`` to `true`.
+The ``run`` section is used for running and storing scenarios with different
+configurations which are not covered by :ref:`wildcards`. It determines the path at
+which resources, networks and results are stored. Therefore the user can run different
+configurations within the same directory. If a run with a non-empty name should use
+cutouts shared across runs, set ``shared_cutouts`` to `true`.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: run:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/run.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/run
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _foresight_cf:
 
@@ -76,10 +94,11 @@ The ``run`` section is used for running and storing scenarios with different con
    :start-at: foresight:
    :end-at: foresight:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/foresight.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/foresight
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
     If you use myopic or perfect foresight, the planning horizon in
@@ -112,7 +131,8 @@ that snakemake's `expand(...) function
 <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`__
 uses.
 
-An exemplary dependency graph (starting from the simplification rules) then looks like this:
+An exemplary dependency graph (starting from the simplification rules) then looks like 
+this:
 
 .. image:: img/scenarios.png
 
@@ -121,10 +141,11 @@ An exemplary dependency graph (starting from the simplification rules) then look
    :start-at: scenario:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/scenario.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/scenario
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _countries:
 
@@ -136,27 +157,30 @@ An exemplary dependency graph (starting from the simplification rules) then look
    :start-at: countries:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/countries.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/countries
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _snapshots_cf:
 
 ``snapshots``
 =============
 
-Specifies the temporal range to build an energy system model for as arguments to `pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
+Specifies the temporal range to build an energy system model for as arguments to 
+`pandas.date_range <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.date_range.html>`__
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: snapshots:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/snapshots.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/snapshots
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _enable_cf:
 
@@ -170,14 +194,15 @@ Switches for some rules and optional features.
    :start-after: #enable
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/enable.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/enable
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _CO2_budget_cf:
 
-``co2 budget``
+``co2_budget``
 ==============
 
 .. literalinclude:: ../config/config.default.yaml
@@ -185,10 +210,11 @@ Switches for some rules and optional features.
    :start-at: co2_budget:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/co2_budget.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/co2_budget
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
     this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
@@ -204,27 +230,31 @@ Switches for some rules and optional features.
    :start-at: electricity:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/electricity.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/electricity
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _atlite_cf:
 
 ``atlite``
 ==========
 
-Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and time-series. All options except for ``features`` are directly used as `cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
+Define and specify the ``atlite.Cutout`` used for calculating renewable potentials and 
+time-series. All options except for ``features`` are directly used as 
+`cutout parameters <https://atlite.readthedocs.io/en/latest/ref_api.html#cutout>`__.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: atlite:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/atlite.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/atlite
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _renewable_cf:
 
@@ -239,10 +269,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at: renewable:
    :end-before:   offwind-ac:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/onwind.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/renewable/onwind
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 30% fraction of the already restricted
@@ -261,10 +292,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   offwind-ac:
    :end-before:   solar:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/offwind.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/definitions/offwind-x
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 10MW/km^2 and assuming 20% fraction of the already restricted
@@ -276,7 +308,7 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    from 10.1016/j.energy.2018.08.153
    until done more rigorously in #153
 
-``solar``
+``solar-x``
 ---------------
 
 .. literalinclude:: ../config/config.default.yaml
@@ -284,10 +316,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   solar:
    :end-before:   hydro:
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/solar.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/definitions/solar-x
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. note::
    Notes on ``capacity_per_sqkm``. ScholzPhd Tab 4.3.1: 170 MW/km^2 and assuming 1% of the area can be used for solar PV panels.
@@ -306,10 +339,11 @@ Define and specify the ``atlite.Cutout`` used for calculating renewable potentia
    :start-at:   hydro:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/hydro.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/renewable/hydro
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _lines_cf:
 
@@ -328,10 +362,11 @@ overwrite the existing values.
    :start-at:   conventional:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/conventional.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/conventional
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 ``lines``
 =============
@@ -341,10 +376,11 @@ overwrite the existing values.
    :start-at: lines:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/lines.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/lines
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _links_cf:
 
@@ -356,10 +392,11 @@ overwrite the existing values.
    :start-at: links:
    :end-before: # docs
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/links.csv
+.. dropdown:: Details
+
+   .. jsonschema:: ../config/config.schema.yaml#/properties/links
+      :lift_description:
+      :hide_key: /**/additionalProperties
 
 .. _transformers_cf:
 

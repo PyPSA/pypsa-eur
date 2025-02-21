@@ -17,7 +17,6 @@ private:
 remote:
   ssh: ""
   path: ""
-  test_deprecation: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
@@ -172,6 +171,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+
   offwind-ac:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -190,6 +190,7 @@ renewable:
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
     landfall_length: 10
+
   offwind-dc:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -208,6 +209,7 @@ renewable:
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
     landfall_length: 10
+
   offwind-float:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -229,6 +231,7 @@ renewable:
     max_depth: 1000
     clip_p_max_pu: 1.e-2
     landfall_length: 10
+
   solar:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -244,6 +247,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+
   solar-hsat:
     cutout: europe-2013-sarah3-era5
     resource:
@@ -259,6 +263,7 @@ renewable:
     natura: true
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
+
   hydro:
     cutout: europe-2013-sarah3-era5
     carriers: [ror, PHS, hydro]
