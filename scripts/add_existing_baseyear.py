@@ -747,7 +747,7 @@ def add_steel_industry_existing(n):
         carrier="BF-BOF",
         p_nom=p_nom_bof * bof['iron input'],
         p_nom_extendable=False,
-        marginal_cost=0,#opex_bof,
+        marginal_cost=-0.1,#opex_bof,
         efficiency=1 / bof['iron input'],
         efficiency2= -  bof['coal input'] /  bof['iron input'],  # MWhth coal per kt iron
         efficiency3= -  bof['elec input'] /  bof['iron input'],  # MWh electricity per kt iron
@@ -767,7 +767,7 @@ def add_steel_industry_existing(n):
         carrier="DRI-EAF",
         p_nom=p_nom_eaf *  eaf_ng['iron input'],
         p_nom_extendable=False,
-        marginal_cost=0,#opex_eaf,
+        marginal_cost=-0.1,#opex_eaf,
         efficiency=1 / eaf_ng['iron input'],
         efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
         efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
@@ -821,7 +821,7 @@ def add_cement_industry_existing(n):
         p_nom=p_nom,
         p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         p_nom_extendable=False,
-        capital_cost=capex_cement,
+        marginal_cost=-0.1,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.28) / 0.5, # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.28), #tCO2/kt cement
@@ -943,6 +943,7 @@ def add_chemicals_industry_existing(n, options):
             carrier="naphtha steam cracker",
             p_nom_extendable=False,
             capital_cost=725 * 1e3, #€/kt HVC
+            marginal_cost=-0.1,
             efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
             efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
             efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC

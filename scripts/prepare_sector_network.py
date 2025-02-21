@@ -4655,7 +4655,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
-    regional_prod = cap_share * hourly_steel_production
+    p_set = cap_share * hourly_steel_production
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
     max_cap = max(capacities) * 2
 
@@ -4698,11 +4698,11 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
     # Should steel be produced at a constant rate during the year or not? 1 or 0
     ramp_limit = 0
-    regional_prod.index = regional_prod.index + ' steel'
+    p_set.index = p_set.index + ' steel'
 
     if not options["endo_industry"]["regional_steel_demand"]:
 
-        regional_prod = regional_prod.sum()
+        p_set = p_set.sum()
 
     # STEEL
     n.add(
@@ -4710,7 +4710,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         spatial.steel.nodes,
         bus=spatial.steel.nodes,
         carrier="steel",
-        p_set=regional_prod,
+        p_set=p_set,
     )
 
     # add CO2 process from steel industry
@@ -4782,7 +4782,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
     n.add(
         "Link",
         nodes,
-        suffix=" H2 to DRI",
+        suffix=" H2 to syn gas DRI",
         bus0=nodes + " H2",
         bus1=spatial.syngas_dri.nodes,
         carrier="DRI-EAF",
