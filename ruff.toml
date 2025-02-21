@@ -12,7 +12,7 @@ select = [
     'I',   # isort
     'D',   # pydocstyle
     'UP',  # pyupgrade
-    # 'ANN', # flake-8 annotations
+    'ANN', # flake-8 annotations
     'TID', # flake8-tidy-imports
     # 'NPY', # numpy
     # 'RUF', # ruff
@@ -31,7 +31,8 @@ ignore = [
 [lint.per-file-ignores]
 # pydocstyle ignores, which could be enabled in future when existing
 # issues are fixed
-"!**/{xxx.py}" = [
+"!**/lib/**" = [
+    'ANN',  # flake-8 annotations
     'E501', # line too long
     'D100', # Missing docstring in public module
     'D101', # Missing docstring in public class

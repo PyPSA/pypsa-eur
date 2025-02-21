@@ -11,11 +11,19 @@ Release Notes
 Upcoming Release
 ================
 
+**Features**
+
+* Config validation: The input config is now validated against a json schema before the
+  workflow is executed. This helps to catch errors early and provides better error 
+  messages. It will also in future allow for tooltips and autocompletion of config 
+  files in your editor. All changes to the config must now be documented in
+  ``config/config.schema.yaml`` instead of ``doc/configtables/*``.
+
+**Bug fixes**
+
 * Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
-- ...
-
-- Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
+* Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
