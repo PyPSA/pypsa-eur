@@ -178,13 +178,11 @@ properties:
         description: Left bound of date range (YYYY-MM-DD).
         examples: [2025-01-01]
         type: string
-        format: date-time
       end:
         title: End Date
         description: Right bound of date range (YYYY-MM-DD).
         examples: [2025-12-31]
         type: string
-        format: date-time
       inclusive:
         description: >
           Make the time interval closed to the left, right, or both sides both or  neither side.
@@ -721,24 +719,7 @@ properties:
 
       types:
         description: Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV. Values should specify a `line type in PyPSA <https://pypsa.readthedocs.io/en/latest/components.html#line-types>`_. Keys should specify the corresponding voltage level (e.g. 220., 300. and 380. kV)
-
         type: object
-        additionalProperties: false
-        properties:
-          220.:
-            type: string
-          300.:
-            type: string
-          330.:
-            type: string
-          380.:
-            type: string
-          400.:
-            type: string
-          500.:
-            type: string
-          750.:
-            type: string
 
       s_max_pu:
         description: Correction factor for line capacities (``s_nom``) to approximate :math:`N-1` security and reserve capacity for reactive power flows"
