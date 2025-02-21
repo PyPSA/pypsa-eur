@@ -176,13 +176,13 @@ properties:
       start:
         title: Start Date
         description: Left bound of date range (YYYY-MM-DD).
-        examples: 2025-01-01
+        examples: [2025-01-01]
         type: string
         format: date-time
       end:
         title: End Date
         description: Right bound of date range (YYYY-MM-DD).
-        examples: 2025-12-31
+        examples: [2025-12-31]
         type: string
         format: date-time
       inclusive:
@@ -263,7 +263,7 @@ properties:
       osm-prebuilt-version:
         description: "Choose the version of the prebuilt OSM network."
         type: number
-        examples: 0.6
+        examples: [0.6]
 
       gaslimit_enable:
         description: >
@@ -529,13 +529,13 @@ properties:
                   Grid resolution for longitudes. Larger then 0.25.
                 type: number
                 minimum: 0
-                examples: 0.25
+                examples: [0.25]
               dy:
                 description: >
                   Grid resolution for latitudes. Larger then 0.25.
                 type: number
                 minimum: 0
-                examples: 0.25
+                examples: [0.25]
               time:
                 description: >
                   Time span to download weather data for. If not defined, it defaults to  the time interval spanned by the snapshots. Please choose interval  within 1979 and 2018 as valid pandas date time strings.
@@ -557,7 +557,7 @@ properties:
         cutout:
           description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
           type: string
-          examples: europe-2013-sarah3-era5
+          examples: [europe-2013-sarah3-era5]
 
         resource:
           type: object
@@ -641,7 +641,7 @@ properties:
         cutout:
           description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
           type: string
-          examples: europe-2013-sarah3-era5
+          examples: [europe-2013-sarah3-era5]
 
         carriers:
           description: Specifies the types of hydro power plants to build per-unit availability time series for. 'ror' stands for run-of-river plants, 'PHS' represents pumped-hydro storage, and 'hydro' stands for hydroelectric dams.
@@ -777,7 +777,7 @@ properties:
           cutout:
             description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
             type: string
-            examples: europe-2013-sarah3-era5
+            examples: [europe-2013-sarah3-era5]
           correction_factor:
             description: Factor to compensate for overestimation of wind speeds in hourly averaged wind data.
             type: number
@@ -826,7 +826,7 @@ definitions:
       cutout:
         description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
         type: string
-        examples: europe-2013-sarah3-era5
+        examples: [europe-2013-sarah3-era5]
 
       resource:
         type: object
@@ -905,7 +905,7 @@ definitions:
       cutout:
         description: Specifies the directory where the relevant weather data ist stored. Should be listed in the configuration ``atlite.cutouts``. You can also reference an existing folder in the directory ``cutouts``. Source module must be ERA5.
         type: string
-        examples: europe-2013-sarah3-era5
+        examples: [europe-2013-sarah3-era5]
 
       resource:
         type: object
