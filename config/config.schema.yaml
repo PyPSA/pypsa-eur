@@ -98,7 +98,7 @@ properties:
         additionalProperties: false
         properties:
           policy:
-            type: boolean
+            type: [boolean, string]
             description: "Boolean switch to select whether resources should be shared across runs. If a string is passed, this is used as a subdirectory name for shared resources. If set to 'base', only resources before creating the elec.nc file are shared."
           exclude:
             type: array
@@ -501,10 +501,12 @@ properties:
             type: object
             properties:
               module:
-                type: array
-                items:
-                  type: string
-                  enum: ['era5', 'sarah']
+                oneOf:
+                - type: array
+                  items:
+                    type: string
+                    enum: ['era5', 'sarah']
+                - type: string
               x:
                 description: >
                   Range of longitudes to download weather data for. If not defined, it  defaults to the spatial bounds of all bus shapes.  Float interval within [-180, 180].
@@ -764,10 +766,10 @@ properties:
             type: number
           max_voltage_difference:
             description: Maximum voltage angle difference in degrees or 'false' to disable.
-            type: boolean
+            type: [number, boolean]
           max_line_rating:
             description: Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable.
-            type: boolean
+            type: [number, boolean]
 
   # ----------------------------------------------------------------------------------
   links:

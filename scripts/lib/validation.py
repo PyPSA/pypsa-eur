@@ -22,7 +22,7 @@ def _deprecated(
     validator: str, value: bool, instance: Any, schema: dict[str, Any]
 ) -> Iterator[DeprecationError]:
     yield DeprecationError(
-        f"The key for value '{instance}' is deprecated: {schema['description']}",
+        f"Key for value '{instance}' is deprecated: {schema.get('description', '')}",
         validator=validator,
         validator_value=value,
         instance=instance,
