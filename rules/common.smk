@@ -116,10 +116,10 @@ def input_custom_extra_functionality(w):
 def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
-    to a reliable server like Google.
+    to a reliable server like Zenodo.
 
     Parameters:
-    - url (str): The URL to check for internet connection. Default is Google.
+    - url (str): The URL to check for internet connection. Default is Zenodo.
     - timeout (int | float): The maximum time (in seconds) the request should wait.
 
     Returns:
