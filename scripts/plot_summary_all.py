@@ -130,10 +130,11 @@ def get_unchagend_fleet():
         
 def plot_costs(cost_df, drop=None):
 
-
+    wished_scenarios = ["base", "fast", "slow", "high-demand", "low-demand", "mandate"]
     df = cost_df.groupby(cost_df.index.get_level_values(2)).sum()
     
-    
+    selector = df.columns.get_level_values(0).isin(wished_scenarios)
+    df = df.loc[:, selector]
     # plot transport
     df_filtered = df[df.index.str.contains("land transport")].droplevel([1, 2, 3], axis=1)
     
@@ -155,6 +156,7 @@ def plot_costs(cost_df, drop=None):
     
     for ax, year in zip(axes, planning_horizons):
         subset = df_filtered.xs(year, level='planning_horizon', axis=1) 
+        
         # convert to million
         subset /= 1e9
         
@@ -162,7 +164,7 @@ def plot_costs(cost_df, drop=None):
             kind="bar",
             ax=ax,
             stacked=True,
-            legend=False,
+            # legend=False,
             color=[snakemake.config["plotting"]["tech_colors"][i] for i in subset.index]
         )
     
@@ -218,7 +220,7 @@ def plot_costs(cost_df, drop=None):
     
     fig, axes = plt.subplots(
     nrows=1, ncols=len(planning_horizons), 
-    figsize=(12, 8), 
+    figsize=(12, 11), 
     sharey=True  # This ensures that all subplots share the same y-axis
     )
     
@@ -322,11 +324,16 @@ def plot_balances(balances, drop=None):
     balances_df["energy"] = [
         i for i in balances.index.levels[0] if i not in co2_carriers
     ]
+    
+    wished_scenarios = ["base", "fast", "slow", "high-demand", "low-demand"]
 
     for k, v in balances_df.items():
         df = balances.loc[v]
         df = df.groupby(df.index.get_level_values(2)).sum()
-
+        
+        # select only some scenarios
+        selector = df.columns.get_level_values(0).isin(wished_scenarios)
+        df = df.loc[:, selector]
         # convert MWh to TWh
         df = df / 1e6
 
@@ -833,9 +840,227 @@ def plot_shares_area(balances, shares):
     fig.text(0.5, 0.5, "Heavy", ha='center', va='center', fontsize=16, weight='bold')
     fig.savefig(snakemake.output.balances[:-19] + "area-share.pdf",
                 bbox_inches="tight")
+    
+    
+    
+    # new
+    # Update rcParams for global font adjustments
+    plt.rcParams.update({
+        'font.size': 12,
+        'axes.titlesize': 14,
+        'axes.labelsize': 14,
+        'xtick.labelsize': 14,
+        'ytick.labelsize': 14,
+        'legend.fontsize': 14,
+    })
+
+    fig, axes = plt.subplots(
+                nrows=2,
+                ncols=3, 
+                sharex=True,
+                figsize=(10, 5), 
+                sharey=True  # This ensures that all subplots share the same y-axis
+                )
+    carriers = ["land transport demand light"], ["land transport demand heavy"]
+    for row, v in enumerate(carriers):
+        df = balances.loc[v]
+        df = df.groupby(df.index.get_level_values(2)).sum()
+
+        # convert MWh to TWh
+        df = df / 1e6
+
+        # remove trailing link ports
+        df.index = [
+            (
+                i[:-1]
+                if (
+                    (i not in ["co2", "NH3", "H2"])
+                    and (i[-1:] in ["0", "1", "2", "3", "4"])
+                )
+                else i
+            )
+            for i in df.index
+        ]
+        
+        df = df.groupby(df.index.map(rename_techs)).sum()
+
+        to_drop = df.index[
+            df.abs().max(axis=1) < snakemake.config["plotting"]["energy_threshold"] / 10
+        ]
+
+        units ="TWh/a"
+        
+                        
+        logger.debug(
+            f"Dropping technology energy balance smaller than {snakemake.config['plotting']['energy_threshold']/10} {units}"
+        )
+        logger.debug(df.loc[to_drop])
+
+        df = df.drop(to_drop)
+
+        logger.debug(
+            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+        )
+
+        if df.empty:
+            continue
+        
+        
+        df = df.droplevel([1,2,3], axis=1)
+
+        
+        planning_horizons = df.columns.get_level_values('planning_horizon').unique().sort_values()
+        scenarios = df.columns.get_level_values(0).unique()
+        
+        share = abs(df.div(df.loc[v].values, axis=1).drop(v)*100)
+        
+        exogen = shares.droplevel([1,2,3], axis=1)
+        exogen_grouped = exogen[exogen.index.str.contains(v[0].split("demand ")[-1])].sum().unstack()
+        exogen_share = exogen_grouped["existing"].div(exogen_grouped["demand"]).unstack().T
+        
+           
+        wished_scenarios = ["fast", "base", "slow"]
+        color = ['g','b', 'r']
+        line_styles = ["-", "--", ":", "-."]
+        
+
+        for i in range(len(share.index)):
+            title = share.index[i].replace("land transport ", "").replace(" light", "") if row==0 else ""
+            if title!="":
+                title = rename_dict[title]
+            share.iloc[i].reindex(wished_scenarios, level=0).unstack().T.plot(title=title,
+                                                                              ax=axes[row, i],
+                                           legend=False,
+                                           style=line_styles[:len(wished_scenarios)],
+                                           color=color)
+            
+            # Define color for the scenario's contour areas
+            # color = axes[i].get_lines()[-1].get_color()  # Color of the last plotted line for consistency
             
 
+            if share.index[i] == "land transport oil":
+                a=(exogen_share.reindex(columns=wished_scenarios)
+                   .dropna(how="all", axis=1)
+                   .rename(columns = lambda x: x + " exogen"))
+                (a*100).plot(ax=axes[row, i], legend=False, style=line_styles[:len(wished_scenarios)],
+                             color="gray",
+                             linewidth=2, alpha=0.5)
+                
+                axes[row, i].text(
+                        x=a.index[-1],  # Position near the end of the x-axis
+                        y=90, # (a * 100).iloc[-1].values[0],  # Position based on the last data point value
+                        s="exogenous", 
+                        color="gray", 
+                        fontsize=12, 
+                        ha="right",
+                        va="center"
+                    )
+                
+            for j, sc in enumerate(wished_scenarios):
+               
+                # smaller variation
+                # filter_b = (share.columns.get_level_values(0).str.contains(sc) & 
+                # ~share.columns.get_level_values(0).str.contains("2"))
+                # area = share.loc[:,filter_b].iloc[i]
+                # axes[row, i].fill_between(
+                #         area.unstack().columns,
+                #         area.unstack().min(),
+                #         area.unstack().max(),
+                #         color=color[j],
+                #         alpha=0.1,
+                #         # label="+/-10% CAPEX" if (j==0 and row==0) else "",
+                #     )
+                
+                # larger variation
+                area = share.loc[:,share.columns.get_level_values(0).str.contains(sc)].iloc[i]
+                axes[row, i].fill_between(
+                        area.unstack().columns,
+                        area.unstack().min(),
+                        area.unstack().max(),
+                        color=color[j],
+                        alpha=0.05,
+                        # label="+/-20% CAPEX" if (j==0 and row==0) else "",
+                    )
+                
+            axes[row, i].set_xlabel("")
+            axes[row, i].grid(axis="x")
+        axes[row, 0].set_ylabel("share [%]")
+        
+        axes[0, 1].legend(
+            ncol=1,
+            loc="upper left",
+            frameon=False,
+            )
+
+    # Add row titles for "light" and "heavy"
+    fig.text(0.5, 0.99, "Light-duty", ha='center', va='center', fontsize=14, weight='bold')
+    fig.text(0.5, 0.5, "Heavy-duty", ha='center', va='center', fontsize=14, weight='bold')
+    fig.savefig(snakemake.output.balances[:-19] + "area-share-largevariations.pdf",
+                bbox_inches="tight")
+            
+
+def plot_tech_assumptions():
+    fn = "/home/lisa/Documents/own_projects/endogenous_transport/data/total_costs.csv"
+    new_costs = pd.read_csv(fn, index_col=[0,1])
+    
+    car_keys = {'FCEV heavy': ['FCV Bus city',
+      'FCV Coach',
+      'FCV Truck Semi-Trailer max 50 tons',
+      'FCV Truck Solo max 26 tons',
+      'FCV Truck Trailer max 56 tons'],
+     'ICE heavy': ['Diesel Bus city',
+      'Diesel Coach',
+      'Diesel Truck Semi-Trailer max 50 tons',
+      'Diesel Truck Solo max 26 tons',
+      'Diesel Truck Trailer max 56 tons'],
+     'BEV heavy': ['BEV Bus city',
+      'BEV Coach',
+      'BEV Truck Semi-Trailer max 50 tons',
+      'BEV Truck Solo max 26 tons',
+      'BEV Truck Trailer max 56 tons'],
+     'BEV light': ["Battery electric (passenger cars)"],
+     'FCEV light': ["Hydrogen fuel cell (passenger cars)"],
+     'ICE light': ["Liquid fuels ICE (passenger cars)"]
+     }
+    
+    # Reverse the car_keys dictionary
+    reverse_car_keys = {v: k for k, values in car_keys.items() for v in values}
+    
+    a = new_costs.stack().swaplevel(0,1)
+    
+    a = a.rename(index=reverse_car_keys, level=0).groupby(level=[0,1,2]).mean()
+
+    a = a.loc[car_keys.keys()]
+    
+    to_keep = ['FOM', 'investment', 'fixed', 'efficiency', 'lifetime']
+    
+    a = a[a.index.get_level_values(2).isin(to_keep)]
+    
+    units = {"FOM": "% of investment/year",
+             "investment": "EUR/vehicle",
+             "fixed": "EUR/vehicle/a",
+             "efficiency": "kWh/km",
+             "lifetime": "years"}
+    total = pd.DataFrame()
+    total["value"] = a
+    total["unit"] = a.reset_index()["level_2"].map(units).values
+    
+    # efficiencies light duty
+    eff_light = {'BEV light': 0.188,
+                 'FCEV light': 0.33, 
+                 "ICE light": 0.622}
+    # Filter rows where level=2 of the index is "efficiency"
+    efficiency_rows = total.index.get_level_values(2) == "efficiency"
+    
+    # Iterate through eff_light and update matching rows in the DataFrame
+    for tech, new_value in eff_light.items():
+        # Replace value in total['value'] where technology matches and level=2 is "efficiency"
+        mask = efficiency_rows & (total.index.get_level_values(0) == tech)
+        total.loc[mask, 'value'] = new_value
+    
 def plot_prices(prices, drop=True):
+    wished_scenarios = ["base", "fast", "slow", "high-demand", "low-demand", "mandate"]
+    prices = prices[wished_scenarios]
     if drop:
         prices = prices.droplevel([1,2,3], axis=1)
     
@@ -1032,11 +1257,12 @@ def plot_comparison(balances, capacities, drop=True):
         # convert to million tonnes
         produced /= LHV_H2*1e6
         produced = produced.unstack().T
-        bars = produced.loc[year, wished_scenarios].plot(kind="bar", legend=False,
+        diff = produced.subtract(produced.base, axis=0)
+        bars = diff.loc[year, wished_scenarios].plot(kind="bar", legend=False,
                                         ax=axes[2,i],
                                         color=snakemake.config["plotting"]["tech_colors"]["H2"])
         if year == "2030":
-            y_value =  20
+            y_value =  20 - produced.loc["2030", "base"] 
             axes[2,i].axhline(y=y_value, ls="--",
                               color="black")
             # Add the text label near the line
@@ -1065,19 +1291,19 @@ def plot_comparison(balances, capacities, drop=True):
         #             fontsize=10, color='black'
         #         )
                 
-        y_value =  produced.loc[year, "base"]
-        axes[2,i].axhline(y=y_value, 
-                          color="black")
-        # Add the text label near the line
-        axes[2, i].text(
-            x=0.5,  # Position the text at the center of the x-axis (adjust as needed)
-            y=y_value,  # Align the text vertically with the line
-            s=f"Base: {y_value:.0f} Mt H$_2$",  # The text to display
-            color="black",  # Text color
-            ha='center',  # Horizontal alignment
-            va='bottom',  # Vertical alignment, place text above the line
-            fontsize=10  # Adjust the font size as needed
-        )
+        # y_value =  produced.loc[year, "base"]
+        # axes[2,i].axhline(y=y_value, 
+        #                   color="black")
+        # # Add the text label near the line
+        # axes[2, i].text(
+        #     x=0.5,  # Position the text at the center of the x-axis (adjust as needed)
+        #     y=y_value,  # Align the text vertically with the line
+        #     s=f"Base: {y_value:.0f} Mt H$_2$",  # The text to display
+        #     color="black",  # Text color
+        #     ha='center',  # Horizontal alignment
+        #     va='bottom',  # Vertical alignment, place text above the line
+        #     fontsize=10  # Adjust the font size as needed
+        # )
         
        
        
@@ -1106,19 +1332,23 @@ def plot_comparison(balances, capacities, drop=True):
         diff = diff.rename(index=rename_techs).groupby(level=0).sum()/1e9
         diff = diff[(abs(diff)>1).any(axis=1)]
         
+        # Calculate the percentage increase/decrease
+        percent_change = cost_df.sum().div(cost_df["base"].sum()).unstack()[year].loc[wished_scenarios]
+        
         # diff.T.plot(kind="bar", stacked=True, ax=axes[2,i],
         #           color = [snakemake.config["plotting"]["tech_colors"][i] for i in diff.index],
         #           legend=False
         #           )
         # diff.sum().rename("net").plot(ax=axes[2,i], legend=False)
-        bars = diff.sum().plot(kind="bar", legend=False, ax=axes[3,i], color="gray")
+        # bars = diff.sum().plot(kind="bar", legend=False, ax=axes[3,i], color="gray")
+        bars = ((percent_change-1)*100).plot(kind="bar", legend=False, ax=axes[3,i], color="gray")
         
         # Calculate the percentage increase/decrease
-        percent_change = cost_df.sum().div(cost_df["base"].sum()).unstack()[year].loc[wished_scenarios]
         percent_change_labels = [f"{(p-1)*100:.0f}%" for p in percent_change]
+        diff_change_labels = [f"{p:.0f}bn Euro" for p in diff.sum()]
         
         # Add text annotations on each bar
-        for bar, label in zip(bars.patches, percent_change_labels):
+        for bar, label in zip(bars.patches, diff_change_labels):
             height = bar.get_height()
             # Position the text slightly above the top of the bar
             axes[3, i].text(
@@ -1132,9 +1362,9 @@ def plot_comparison(balances, capacities, drop=True):
     
     # Add row subtitles
     row_titles = [
-        "Renewable Capacities Difference",
+        "Total Renewable Capacities Difference",
         "Electrified Individual Heating Difference",
-        "Hydrogen Production from Electrolysis",
+        "Hydrogen Production from Electrolysis Difference",
         "Total System Costs Difference"
     ]
     
@@ -1152,9 +1382,9 @@ def plot_comparison(balances, capacities, drop=True):
     axes[1, 0].set_ylabel("million heat pumps")
     axes[1, ncols-1].legend(ncols=1, bbox_to_anchor=(2.,1), loc="upper right")
     axes[2, 0].set_ylabel("Mt$_{H2}$")
-    axes[3, 0].set_ylabel("billion Euro/a")
+    axes[3, 0].set_ylabel("%")
     
-    fig.savefig(snakemake.output.balances[:-19] + "comparison.pdf",
+    fig.savefig(snakemake.output.balances[:-19] + "comparison-new.pdf",
                 bbox_inches="tight")
 
 
@@ -1224,7 +1454,59 @@ def plot_sensi_dsm():
     fig.savefig(snakemake.output.balances[:-19] + "stores_dsm_v2g.pdf",
                 bbox_inches="tight")
     
+  
+def plot_vehicle_costs():
     
+    fn = "/home/lisa/Documents/own_projects/endogenous_transport/data/total_costs.csv"
+    new_costs = pd.read_csv(fn, index_col=[0,1])
+    
+    rename_engine = {"fuel_cell": "FCEV",
+                     "ice": "ICE",
+                     "electric": "BEV"}
+    to_plot = new_costs["fixed"].unstack()
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(10,3), sharey=True)
+    for i, engine in enumerate(car_keys.keys()):
+        a = to_plot[car_keys[engine]]
+        (a/1e3).plot(kind="bar", ax=ax[i], title=rename_engine[engine], legend=False,
+                     zorder=1)
+        # (a/1e3).mean(axis=1).plot(ax=ax[i], kind="bar")
+        ax[i].grid(axis="y", zorder=0)
+    
+    ax[0].set_ylabel("annualised investment costs \n [tEur/a]")
+    # Customize the legend
+    handles, labels = ax[2].get_legend_handles_labels()
+    # Remove "BEV" from each label
+    labels = [label.replace("BEV", "").strip() for label in labels]
+    ax[2].legend(handles, labels, bbox_to_anchor=(1.05, 0.5))
+    fig.savefig(snakemake.output.balances[:-19] + "heavy-duty-annualised-investmentcosts.pdf",
+                bbox_inches="tight")
+    
+    to_plot = new_costs["investment"].unstack()
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(10,3), sharey="row")
+    for i, engine in enumerate(car_keys.keys()):
+        a = to_plot[car_keys[engine]]
+        (a/1e3).plot(kind="bar", ax=ax[i], title=rename_engine[engine], legend=False,
+                     zorder=1)
+        # (a/1e3).mean(axis=1).plot(ax=ax[i], kind="bar")
+        ax[i].grid(axis="y", zorder=0)
+        # (a.div(a.mean(axis=1), axis=0)-1).plot(kind="bar", ax=ax[1, i], title="deviation mean", legend=False)
+        # Add horizontal lines for each investment period's average
+        # Scatter the average values for each investment period
+        avg_values = (a / 1e3).mean(axis=1)
+        for j, period in enumerate(avg_values.index):
+            ax[i].scatter(j, avg_values[period], color="black", zorder=3,
+                          label="Average" if j == 0 else "")
+
+        
+    ax[0].set_ylabel("investment costs \n [tEur]")
+    # Customize the legend
+    handles, labels = ax[2].get_legend_handles_labels()
+    # Remove "BEV" from each label
+    labels = [label.replace("BEV", "").strip() for label in labels]
+    ax[2].legend(handles, labels, bbox_to_anchor=(1.05, 0.5))
+    fig.savefig(snakemake.output.balances[:-19] + "heavy-duty-investmentcosts.pdf",
+                bbox_inches="tight")
+        
 def plot_scenarios(balances, shares):
     carriers = ["land transport demand light", "land transport demand heavy"]
     wished_scenarios = ["low-demand", "base", "high-demand"]
