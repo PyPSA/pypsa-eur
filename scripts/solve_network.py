@@ -1056,17 +1056,21 @@ def solve_network(n, config, params, solving, **kwargs):
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
+        path = "../submodules/pypsa-eur/scripts"
+        sys.path.insert(0, os.path.abspath(path))
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            simpl="",
+            clusters=1,
             opts="",
-            clusters="5",
-            ll="v1.0",
-            sector_opts="",
-            # planning_horizons="2030",
+            ll="vopt",
+            sector_opts="none",
+            planning_horizons="2020",
+            run="KN2045_Bal_v4",
         )
+        
     configure_logging(snakemake)
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -1110,3 +1114,29 @@ if __name__ == "__main__":
             allow_unicode=True,
             sort_keys=False,
         )
+
+    # solve again with fixed capacities
+    logger.info(f"Solving again with fixed capacities")
+    n.optimize.fix_optimal_capacities()
+    n = prepare_network(
+        n,
+        solve_opts,
+        config=snakemake.config,
+        foresight=snakemake.params.foresight,
+        planning_horizons=snakemake.params.planning_horizons,
+        co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
+    )
+    n = solve_network(
+        n,
+        config=snakemake.config,
+        params=snakemake.params,
+        solving=snakemake.params.solving,
+        log_fn=snakemake.log.solver,
+    )
+
+    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.export_to_netcdf(snakemake.output.network_op)
+
+    if solve_opts["overwrite_with_fixed_capacities"]:
+        n.export_to_netcdf(snakemake.output.network)
+
