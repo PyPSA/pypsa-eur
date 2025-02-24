@@ -51,7 +51,7 @@ enable:
 co2_budget_apply: true
 weather_years:
   enable: true
-  rcp: 4-5
+  rcp: 2-6
 # RCP 2.6 is 2-6, RCP 4.5 is 4-5, RCP 8.5 is 8-5
   global_regional_models: CNRM-CERFACS-CM5--CNRM-ALADIN63
 # Global Climate Models (GCMs): CNRM-CERFACS-CM5, MPI-M-MPI-ESM-LR, MIROC-MIROC5
