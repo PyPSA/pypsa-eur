@@ -841,6 +841,7 @@ def add_chemicals_industry_existing(n, options):
     capacities_nh3 = capacities['Ammonia']
     start_dates_nh3 = start_dates['Ammonia']
     capacities_nh3 = capacities_nh3 * keys["Ammonia"]
+    capacities_nh3 = capacities_nh3 * cf_industry['MWh_NH3_per_tNH3'] * 1e3 # from ktNH3 to MWh NH3
 
     start_dates_nh3 = round(start_dates_nh3)
     start_dates_nh3 = start_dates_nh3.where((start_dates_nh3 >= 1000) & np.isfinite(start_dates_nh3), 2000)
@@ -879,6 +880,7 @@ def add_chemicals_industry_existing(n, options):
     capacities_meth = capacities['Methanol']
     start_dates_meth = start_dates['Methanol']
     capacities_meth = capacities_meth * keys["Chemical industry"] #ADB fix this with real methanol
+    capacities_meth = capacities_meth * cf_industry['MWh_MeOH_per_tMeOH'] * 1e3 # from kt MeOH to MWh MeOH
 
     start_dates_meth = round(start_dates_meth)
     start_dates_meth = start_dates_meth.where((start_dates_meth >= 1000) & np.isfinite(start_dates_meth), 2000)
@@ -925,7 +927,7 @@ def add_chemicals_industry_existing(n, options):
 
         p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
 
-        p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity
+        p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity in ktHVC/h
 
         ########### Add existing HVC production capacities ############
 
@@ -993,6 +995,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
+    cf_industry = snakemake.params.industry
 
     baseyear = snakemake.params.baseyear
 

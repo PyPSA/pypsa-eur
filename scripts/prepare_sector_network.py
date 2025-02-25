@@ -5025,7 +5025,7 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
 
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e3 / nhours) # ktNH3/h
+    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e3 / nhours) # ktNH3/yr to tNH3/h
     #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
 
     # Share of ammonia production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -5867,9 +5867,9 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
     # Get the target year from the Snakemake wildcards
     year = snakemake.wildcards.planning_horizons
 
-    # To be more robust we take the average of 5 years around the planning year 
-    start_year = year - 2
-    end_year = year + 2
+    # To ensure robust profiles, take the average of 5 years centered around the target year 
+    start_year = int(year) - 2
+    end_year = int(year) + 2
 
     # Include additional renewable carriers relevant for hydropower
     renewable_carriers = renewable_carriers + ['ror', 'PHS']
@@ -5926,28 +5926,30 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             # Open the dataset
             ds = xr.open_dataset(os.path.join(dir_path, files[0]))
 
-            # Extract the yearly capacity factor profile
-            #profile = ds[f"{variable_name}"].sel(time=slice(f"{year}-01-01 00:00", f"{year}-12-31 23:00")).to_series()
+            # Create a proper data range, removing February 29th if it is a leap year
+            if pd.to_datetime(f"{year}-01-01").is_leap_year:
+                date_range = pd.date_range(start=f"{year}-01-01 00:00", periods=8784, freq="h")
+                date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
+            else: 
+                date_range = pd.date_range(start=f"{year}-01-01 00:00", periods=8760, freq="h")
+            
+            # Initialize a dataframe with the correct rtime index
+            data_list = pd.DataFrame(index = date_range)
 
-            # Extract the 5-year time series
-            profile_5years = ds[f"{variable_name}"].sel(time=slice(f"{start_year}-01-01 00:00", f"{end_year}-12-31 23:00"))
+            for year_offset in range(start_year, end_year + 1):
+                # Select data for the specific year
+                profile0 = ds[variable_name].sel(time=slice(f"{year_offset}-01-01 00:00", f"{year_offset}-12-31 23:00")).to_series()
+                # Remove February 29th to align with a 365-day year
+                profile0 = profile0.loc[profile0.index.strftime('%m-%d') != '02-29']
+                # Ensure the profile has the correct index
+                profile0.index = date_range
+                # Store the yearly profile in the DataFrame
+                data_list[f"{year_offset}"] = profile0
 
-            # Convert to a pandas DataFrame for easier resampling
-            profile_df = profile_5years.to_dataframe()
+            # Compute the mean profile over the 5-year range
+            profile = data_list.mean(axis=1)
 
-            # Extract the hour-of-year for grouping
-            profile_df["hour_of_year"] = profile_df.index.dayofyear * 24 + profile_df.index.hour
-
-            # Compute the mean for each hour-of-year over the 5 years
-            profile = profile_df.groupby("hour_of_year").mean()
-
-            # Convert back to a pandas Series with a DatetimeIndex (assuming non-leap years)
-            profile.index = pd.date_range(start=f"{year}-01-01", periods=8760, freq="H")
-
-            # Remove February 29th to handle leap years
-            profile = profile.loc[profile.index.strftime('%m-%d') != '02-29']
-
-            # In the case of ror hydropower, normalize the inflow with the maximum value of the timeseries
+            # Normalize run-of-river hydropower inflow to its maximum value
             if carrier == "ror":
                 profile = profile / profile.max()
 
