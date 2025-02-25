@@ -821,7 +821,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
 
     if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
         raise ValueError(
-            "No valid extendable charger or store links found for TES energy to power constraints."
+            "No valid extendable charger links or stores found for TES energy to power constraints."
         )
 
     energy_to_power_ratio_values = n.links.loc[indices_charger_p_nom_extendable, "energy to power ratio"].values
@@ -1088,14 +1088,13 @@ def extra_functionality(
                 r"urban central heat|urban decentral heat|rural heat", case=False, na=False).any():
             add_TES_energy_to_power_ratio_constraints(n)
             add_TES_charger_ratio_constraints(n)
-        elif not (
+        elif (
                 n.links.index.str.lower().str.contains("pits charger|tanks charger", case=False, na=False).any() or
                 n.stores.index.str.lower().str.contains("pits", case=False, na=False).any() or
                 n.stores.index.str.lower().str.contains("tanks", case=False, na=False).any()
         ):
             raise ValueError(
-                "Unsupported network configuration: expected naming convention for pits, tanks, or pits/tanks charger "
-                "not found."
+                "Unsupported network configuration: tes is enabled but no heating bus was found."
             )
 
     add_battery_constraints(n)
