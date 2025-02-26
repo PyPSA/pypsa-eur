@@ -11,7 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
-- Bugfix: Changed setting ``central_heat_vent`` (default: ``true``) because the urban central water tanks charger and discharger were previously used as heat vents with an efficiency of 0.9. Charger sizing is now directly linked to hot water store sizing via the ``TES_energy_to_power_ratio_constraints``, and the efficiency has been updated to 1.0 according to DEA technology catalogues. Consequently, they no longer function as heat vents.
+- Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
 
 * Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
