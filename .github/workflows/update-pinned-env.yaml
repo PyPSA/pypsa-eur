@@ -34,8 +34,9 @@ jobs:
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
       with:
+        miniforge-version: latest
         activate-environment: ${{ github.event.repository.name }}
-        channels: bioconda,conda-forge,defaults
+        channel-priority: strict
         environment-file: ${{ env.BASE_ENV }}
 
     - name: Update pinned environment per OS
