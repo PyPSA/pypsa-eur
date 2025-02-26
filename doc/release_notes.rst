@@ -11,10 +11,11 @@ Release Notes
 Upcoming Release
 ================
 
-* Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
+- Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
 
-- ...
 - Implemented an energy-to-power ratio constraint for TES, linking storage capacity to the corresponding charger capacity. Additionally, chargers and dischargers are now sized identically through a unified constraint.
+
+* Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
 - Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
 
