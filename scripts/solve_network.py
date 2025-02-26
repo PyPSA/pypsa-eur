@@ -244,6 +244,15 @@ def add_co2_sequestration_limit(
 ) -> None:
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    limit_dict : dict[str, float]
+        CO2 sequestration potential limit constraints by year.
+    planning_horizons : str
+        The current planning horizon year
     """
 
     if not n.investment_periods.empty:
@@ -412,7 +421,7 @@ def prepare_network(
     foresight : str
         Planning foresight type ('myopic' or 'perfect')
     planning_horizons : str
-        List of planning horizon years
+        The current planning horizon year
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
 
@@ -513,8 +522,11 @@ def add_CCL_constraints(n: pypsa.Network, config: dict, planning_horizons: str) 
     Parameters
     ----------
     n : pypsa.Network
+        The PyPSA network instance
     config : dict
+        Configuration dictionary
     planning_horizons : str
+        The current planning horizon year
 
     Example
     -------
