@@ -90,7 +90,7 @@ jobs:
     - name: Run pylint check on scripts
       # check for undefined variables to reuse functions across scripts
       run: |
-        pylint --disable=all --enable=E0601 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_* 
+        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_* 
 
     - name: Run snakemake test workflows
       run: |
