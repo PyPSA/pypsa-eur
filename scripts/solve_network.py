@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+from functools import partial
 from typing import Any
 
 import numpy as np
@@ -127,7 +128,7 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
         n.buses.loc[bus, name] = df_carrier.p_nom_max.values
 
 
-def add_land_use_constraint(n: pypsa.Network, planning_horizon: str) -> None:
+def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
     """
     Add land use constraints for renewable energy potential.
 
@@ -135,7 +136,7 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizon: str) -> None:
     ----------
     n : pypsa.Network
         The PyPSA network instance
-    planning_horizon : str
+    planning_horizons : str
         The planning horizon year as string
 
     Returns
@@ -160,7 +161,7 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizon: str) -> None:
             .groupby(n.generators.bus.map(n.buses.location))
             .sum()
         )
-        existing.index += f" {carrier}-{planning_horizon}"
+        existing.index += f" {carrier}-{planning_horizons}"
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
     # check if existing capacities are larger than technical potential
@@ -240,10 +241,19 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
 def add_co2_sequestration_limit(
     n: pypsa.Network,
     limit_dict: dict[str, float],
-    planning_horizons: str,
+    planning_horizons: str | None,
 ) -> None:
     """
     Add a global constraint on the amount of Mt CO2 that can be sequestered.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    limit_dict : dict[str, float]
+        CO2 sequestration potential limit constraints by year.
+    planning_horizons : str, optional
+        The current planning horizon year or None in perfect foresight
     """
 
     if not n.investment_periods.empty:
@@ -396,7 +406,7 @@ def prepare_network(
     n: pypsa.Network,
     solve_opts: dict,
     foresight: str,
-    planning_horizons: str,
+    planning_horizons: str | None,
     co2_sequestration_potential: dict[str, float],
     limit_max_growth: dict[str, Any] | None = None,
 ) -> None:
@@ -411,8 +421,8 @@ def prepare_network(
         Dictionary of solving options containing clip_p_max_pu, load_shedding etc.
     foresight : str
         Planning foresight type ('myopic' or 'perfect')
-    planning_horizons : str
-        List of planning horizon years
+    planning_horizons : str or None
+        The current planning horizon year or None for perfect foresight
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
 
@@ -502,7 +512,9 @@ def prepare_network(
         )
 
 
-def add_CCL_constraints(n: pypsa.Network, config: dict, planning_horizons: str) -> None:
+def add_CCL_constraints(
+    n: pypsa.Network, config: dict, planning_horizons: str | None
+) -> None:
     """
     Add CCL (country & carrier limit) constraint to the network.
 
@@ -513,8 +525,11 @@ def add_CCL_constraints(n: pypsa.Network, config: dict, planning_horizons: str) 
     Parameters
     ----------
     n : pypsa.Network
+        The PyPSA network instance
     config : dict
-    planning_horizons : str
+        Configuration dictionary
+    planning_horizons : str, optional
+        The current planning horizon year or None in perfect foresight
 
     Example
     -------
@@ -523,6 +538,11 @@ def add_CCL_constraints(n: pypsa.Network, config: dict, planning_horizons: str) 
     electricity:
         agg_p_nom_limits: data/agg_p_nom_minmax.csv
     """
+
+    assert planning_horizons is not None, (
+        "add_CCL_constraints are not implemented for perfect foresight, yet"
+    )
+
     agg_p_nom_minmax = pd.read_csv(
         config["solving"]["agg_p_nom_limits"]["file"], index_col=[0, 1], header=[0, 1]
     )[planning_horizons]
@@ -953,8 +973,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network,
-    snapshots: pd.DatetimeIndex,
+    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -965,8 +984,9 @@ def extra_functionality(
         The PyPSA network instance with config and params attributes
     snapshots : pd.DatetimeIndex
         Simulation timesteps
-    """
-    """
+    planning_horizons : str, optional
+        The current planning horizon year or None in perfect foresight
+
     Collects supplementary constraints which will be passed to
     ``pypsa.optimization.optimize``.
 
@@ -981,7 +1001,7 @@ def extra_functionality(
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
     if constraints["CCL"] and n.generators.p_nom_extendable.any():
-        add_CCL_constraints(n, config, n.params.planning_horizons)
+        add_CCL_constraints(n, config, planning_horizons)
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
@@ -1054,6 +1074,7 @@ def solve_network(
     params: dict,
     solving: dict,
     rule_name: str | None = None,
+    planning_horizons: str | None = None,
     **kwargs,
 ) -> None:
     """
@@ -1071,6 +1092,8 @@ def solve_network(
         Dictionary of solving options and configuration
     rule_name : str, optional
         Name of the snakemake rule being executed
+    planning_horizons : str, optional
+            The current planning horizon year or None in perfect foresight
     **kwargs
         Additional keyword arguments passed to the solver
 
@@ -1098,7 +1121,9 @@ def solve_network(
         solving["solver_options"][set_of_options] if set_of_options else {}
     )
     kwargs["solver_name"] = solving["solver"]["name"]
-    kwargs["extra_functionality"] = extra_functionality
+    kwargs["extra_functionality"] = partial(
+        extra_functionality, planning_horizons=planning_horizons
+    )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
@@ -1196,6 +1221,7 @@ if __name__ == "__main__":
             config=snakemake.config,
             params=snakemake.params,
             solving=snakemake.params.solving,
+            planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
         )
 
