@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+from functools import partial
 from typing import Any
 
 import numpy as np
@@ -405,7 +406,7 @@ def prepare_network(
     n: pypsa.Network,
     solve_opts: dict,
     foresight: str,
-    planning_horizons: str,
+    planning_horizons: str | None,
     co2_sequestration_potential: dict[str, float],
     limit_max_growth: dict[str, Any] | None = None,
 ) -> None:
@@ -420,8 +421,8 @@ def prepare_network(
         Dictionary of solving options containing clip_p_max_pu, load_shedding etc.
     foresight : str
         Planning foresight type ('myopic' or 'perfect')
-    planning_horizons : str
-        The current planning horizon year
+    planning_horizons : str or None
+        The current planning horizon year or None for perfect foresight
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
 
@@ -965,8 +966,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network,
-    snapshots: pd.DatetimeIndex,
+    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -977,8 +977,9 @@ def extra_functionality(
         The PyPSA network instance with config and params attributes
     snapshots : pd.DatetimeIndex
         Simulation timesteps
-    """
-    """
+    planning_horizons : str, optional
+        The current planning horizon year
+
     Collects supplementary constraints which will be passed to
     ``pypsa.optimization.optimize``.
 
@@ -993,7 +994,7 @@ def extra_functionality(
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
     if constraints["CCL"] and n.generators.p_nom_extendable.any():
-        add_CCL_constraints(n, config, n.params.planning_horizons)
+        add_CCL_constraints(n, config, n.planning_horizons)
 
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
@@ -1066,6 +1067,7 @@ def solve_network(
     params: dict,
     solving: dict,
     rule_name: str | None = None,
+    planning_horizons: str | None = None,
     **kwargs,
 ) -> None:
     """
@@ -1110,7 +1112,9 @@ def solve_network(
         solving["solver_options"][set_of_options] if set_of_options else {}
     )
     kwargs["solver_name"] = solving["solver"]["name"]
-    kwargs["extra_functionality"] = extra_functionality
+    kwargs["extra_functionality"] = partial(
+        extra_functionality, planning_horizons=planning_horizons
+    )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
@@ -1208,6 +1212,7 @@ if __name__ == "__main__":
             config=snakemake.config,
             params=snakemake.params,
             solving=snakemake.params.solving,
+            planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
         )
 
