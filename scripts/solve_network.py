@@ -34,6 +34,7 @@ import sys
 from functools import partial
 from typing import Any
 
+import linopy
 import numpy as np
 import pandas as pd
 import pypsa
@@ -814,6 +815,104 @@ def add_operational_reserve_margin(n, sns, config):
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
+def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
+    """
+    Add TES constraints to the network.
+
+    For each TES storage unit, enforce:
+        Store-e_nom - etpr * Link-p_nom == 0
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA network with TES and heating sectors enabled.
+
+    Raises
+    ------
+    ValueError
+        If no valid TES storage or charger links are found.
+    """
+    indices_charger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks charger|water pits charger")
+        & n.links.p_nom_extendable
+    ]
+    indices_stores_e_nom_extendable = n.stores.index[
+        n.stores.index.str.contains("water tanks|water pits")
+        & n.stores.e_nom_extendable
+    ]
+
+    if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
+        raise ValueError(
+            "No valid extendable charger links or stores found for TES energy to power constraints."
+        )
+
+    energy_to_power_ratio_values = n.links.loc[
+        indices_charger_p_nom_extendable, "energy to power ratio"
+    ].values
+
+    linear_expr_list = []
+    for charger, tes, energy_to_power_value in zip(
+        indices_charger_p_nom_extendable,
+        indices_stores_e_nom_extendable,
+        energy_to_power_ratio_values,
+    ):
+        charger_var = n.model["Link-p_nom"].loc[charger]
+        store_var = n.model["Store-e_nom"].loc[tes]
+        linear_expr = store_var - energy_to_power_value * charger_var
+        linear_expr_list.append(linear_expr)
+
+    # Merge the individual expressions
+    merged_expr = linopy.expressions.merge(
+        linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
+    )
+
+    n.model.add_constraints(merged_expr == 0, name="TES_energy_to_power_ratio")
+
+
+def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
+    """
+    Add TES charger ratio constraints.
+
+    For each TES unit, enforce:
+        Link-p_nom(charger) - efficiency * Link-p_nom(discharger) == 0
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA network with TES and heating sectors enabled.
+
+    Raises
+    ------
+    ValueError
+        If no valid TES discharger or charger links are found.
+    """
+    indices_charger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks charger|water pits charger")
+        & n.links.p_nom_extendable
+    ]
+    indices_discharger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks discharger|water pits discharger")
+        & n.links.p_nom_extendable
+    ]
+
+    if (
+        indices_charger_p_nom_extendable.empty
+        or indices_discharger_p_nom_extendable.empty
+    ):
+        raise ValueError(
+            "No valid extendable TES discharger or charger links found for TES charger ratio constraints."
+        )
+
+    eff_discharger = n.links.efficiency[indices_discharger_p_nom_extendable].values
+    lhs = (
+        n.model["Link-p_nom"].loc[indices_charger_p_nom_extendable]
+        - n.model["Link-p_nom"].loc[indices_discharger_p_nom_extendable]
+        * eff_discharger
+    )
+
+    n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -1016,6 +1115,33 @@ def extra_functionality(
         config["electricity"]["extendable_carriers"]["Generator"]
     ):
         add_solar_potential_constraints(n, config)
+
+    if n.config.get("sector", {}).get("tes", False):
+        if (
+            n.buses.index.str.lower()
+            .str.contains(
+                r"urban central heat|urban decentral heat|rural heat",
+                case=False,
+                na=False,
+            )
+            .any()
+        ):
+            add_TES_energy_to_power_ratio_constraints(n)
+            add_TES_charger_ratio_constraints(n)
+        elif (
+            n.links.index.str.lower()
+            .str.contains("pits charger|tanks charger", case=False, na=False)
+            .any()
+            or n.stores.index.str.lower()
+            .str.contains("pits", case=False, na=False)
+            .any()
+            or n.stores.index.str.lower()
+            .str.contains("tanks", case=False, na=False)
+            .any()
+        ):
+            raise ValueError(
+                "Unsupported network configuration: tes is enabled but no heating bus was found."
+            )
 
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
