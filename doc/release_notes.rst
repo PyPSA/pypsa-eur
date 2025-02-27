@@ -17,6 +17,11 @@ Upcoming Release
 
 - Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
 
+* Extended pre-built `weather data cutouts
+  <https://zenodo.org/records/14936211>`__. Cutouts are now available for the
+  years 1996, 2010, 2012, 2013, 2019, 2020 and 2023.
+  (https://github.com/PyPSA/pypsa-eur/pull/1559)
+
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
 
