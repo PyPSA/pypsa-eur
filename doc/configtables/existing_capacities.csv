@@ -5,3 +5,4 @@ grouping_years_heat ,--,A list of years below 2020,Intervals to group existing c
 threshold_capacity ,MW,float,Capacities generators and links of below threshold are removed during add_existing_capacities
 default_heating_lifetime ,years,int,Default lifetime for heating technologies
 conventional_carriers ,--,"Any subset of {uranium, coal, lignite, oil} ",List of conventional power plants to include in the sectoral network
+powerplant_fueltype_to_technology_carrier ,--,"str",Map from Fueltype/Technology in powerplant list to technology/carrier

@@ -17,6 +17,7 @@ import pypsa
 import xarray as xr
 from _helpers import (
     configure_logging,
+    expand_hierarchical_map,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
@@ -60,30 +61,25 @@ def add_build_year_to_new_assets(n: pypsa.Network, baseyear: int) -> None:
             c.pnl[attr] = c.pnl[attr].rename(columns=rename)
 
 
-def add_existing_renewables(
-    n: pypsa.Network,
-    costs: pd.DataFrame,
-    df_agg: pd.DataFrame,
-    countries: list[str],
-) -> None:
+def load_existing_renewables(
+    n: pypsa.Network, costs: pd.DataFrame, countries: list[str]
+) -> pd.DataFrame:
     """
     Add existing renewable capacities to conventional power plant data.
 
     Parameters
     ----------
-    df_agg : pd.DataFrame
-        DataFrame containing conventional power plant data
-    costs : pd.DataFrame
-        Technology cost data with 'lifetime' column indexed by technology
     n : pypsa.Network
         Network containing topology and generator data
+    costs : pd.DataFrame
+        Technology cost data with 'lifetime' column indexed by technology
     countries : list
         List of country codes to consider
 
     Returns
     -------
-    None
-        Modifies df_agg in-place
+    powerplants : pd.DataFrame
+        List of powerplants in format of conventional powerplants
     """
     tech_map = {"solar": "PV", "onwind": "Onshore", "offwind-ac": "Offshore"}
 
@@ -93,6 +89,7 @@ def add_existing_renewables(
 
     irena = irena.unstack().reset_index()
 
+    dfs = []
     for carrier, tech in tech_map.items():
         df = (
             irena[irena.Technology.str.contains(tech)]
@@ -127,20 +124,27 @@ def add_existing_renewables(
         nodal_df.index = elec_buses
         nodal_df = nodal_df.multiply(nodal_fraction, axis=0)
 
-        for year in nodal_df.columns:
-            for node in nodal_df.index:
-                name = f"{node}-{carrier}-{year}"
-                capacity = nodal_df.loc[node, year]
-                if capacity > 0.0:
-                    cost_key = carrier.split("-")[0]
-                    df_agg.at[name, "Fueltype"] = carrier
-                    df_agg.at[name, "Capacity"] = capacity
-                    df_agg.at[name, "DateIn"] = year
-                    df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
-                    df_agg.at[name, "DateOut"] = (
-                        year + costs.at[cost_key, "lifetime"] - 1
-                    )
-                    df_agg.at[name, "bus"] = node
+        cost_key = carrier.split("-")[0]
+        df = (
+            nodal_df.rename_axis(index="bus", columns="year")
+            .stack()
+            .rename("capacity")
+            .reset_index()
+        )
+        dfs.append(
+            pd.DataFrame(
+                dict(
+                    Name=df.bus + "-" + carrier + df.year.astype(str),
+                    Capacity=df["capacity"],
+                    DateIn=df["year"],
+                    DateOut=df["year"] + costs.at[cost_key, "lifetime"] - 1,
+                    technology_carrier=carrier,
+                    bus=df.bus,
+                )
+            ).loc[df["capacity"] > 0.0]
+        )
+
+    return pd.concat(dfs, ignore_index=True)
 
 
 def add_power_capacities_installed_before_baseyear(
@@ -151,7 +155,8 @@ def add_power_capacities_installed_before_baseyear(
     powerplants_file: str,
     countries: list[str],
     capacity_threshold: float,
-    lifetime_values: dict[str, float],
+    powerplant_fueltype_to_technology_carrier: dict[str, str],
+    default_values: dict[str, float],
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -172,61 +177,38 @@ def add_power_capacities_installed_before_baseyear(
         List of countries to consider
     capacity_threshold : float
         Minimum capacity threshold
-    lifetime_values : dict
+    powerplant_fueltype_to_technology_carrier : dict
+        Map from powerplant list to technology/carrier combinations
+    default_values : dict
         Default values for missing data
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
     df_agg = pd.read_csv(powerplants_file, index_col=0)
 
-    rename_fuel = {
-        "Hard Coal": "coal",
-        "Lignite": "lignite",
-        "Nuclear": "nuclear",
-        "Oil": "oil",
-        "OCGT": "OCGT",
-        "CCGT": "CCGT",
-        "Bioenergy": "urban central solid biomass CHP",
-    }
-
-    # Replace Fueltype "Natural Gas" with the respective technology (OCGT or CCGT)
-    df_agg.loc[df_agg["Fueltype"] == "Natural Gas", "Fueltype"] = df_agg.loc[
-        df_agg["Fueltype"] == "Natural Gas", "Technology"
-    ]
-
-    fueltype_to_drop = [
-        "Hydro",
-        "Wind",
-        "Solar",
-        "Geothermal",
-        "Waste",
-        "Other",
-        "CCGT, Thermal",
-    ]
-
-    technology_to_drop = ["Pv", "Storage Technologies"]
-
-    # drop unused fueltypes and technologies
-    df_agg.drop(df_agg.index[df_agg.Fueltype.isin(fueltype_to_drop)], inplace=True)
-    df_agg.drop(df_agg.index[df_agg.Technology.isin(technology_to_drop)], inplace=True)
-    df_agg.Fueltype = df_agg.Fueltype.map(rename_fuel)
+    df_agg["technology_carrier"] = expand_hierarchical_map(
+        df_agg[["Fueltype", "Technology", "Set"]],
+        powerplant_fueltype_to_technology_carrier,
+    )
 
     # Intermediate fix for DateIn & DateOut
     # Fill missing DateIn
-    biomass_i = df_agg.loc[df_agg.Fueltype == "urban central solid biomass CHP"].index
-    mean = df_agg.loc[biomass_i, "DateIn"].mean()
-    df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(int(mean))
-    # Fill missing DateOut
-    dateout = df_agg.loc[biomass_i, "DateIn"] + lifetime_values["lifetime"]
-    df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(dateout)
+    biomass_i = df_agg.loc[
+        df_agg.technology_carrier == "urban central solid biomass CHP/biomass"
+    ].index
+    if not biomass_i.empty:
+        df_agg.loc[biomass_i, "DateIn"] = df_agg.loc[biomass_i, "DateIn"].fillna(
+            int(df_agg.loc[biomass_i, "DateIn"].mean())
+        )
+        # Fill missing DateOut
+        df_agg.loc[biomass_i, "DateOut"] = df_agg.loc[biomass_i, "DateOut"].fillna(
+            df_agg.loc[biomass_i, "DateIn"] + default_values["lifetime"]
+        )
 
     # include renewables in df_agg
-    add_existing_renewables(
-        df_agg=df_agg,
-        costs=costs,
-        n=n,
-        countries=countries,
-    )
+    renew = load_existing_renewables(n, costs, countries=countries)
+    df_agg = pd.concat([df_agg, renew])
+
     # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
     df_agg.drop(phased_out, inplace=True)
@@ -251,48 +233,38 @@ def add_power_capacities_installed_before_baseyear(
     df_agg["lifetime"] = df_agg.DateOut - df_agg["grouping_year"] + 1
 
     df = df_agg.pivot_table(
-        index=["grouping_year", "Fueltype"],
+        index=["grouping_year", "technology_carrier"],
         columns="bus",
         values="Capacity",
         aggfunc="sum",
     )
 
     lifetime = df_agg.pivot_table(
-        index=["grouping_year", "Fueltype"],
+        index=["grouping_year", "technology_carrier"],
         columns="bus",
         values="lifetime",
         aggfunc="mean",  # currently taken mean for clustering lifetimes
     )
 
-    carrier = {
-        "OCGT": "gas",
-        "CCGT": "gas",
-        "coal": "coal",
-        "oil": "oil",
-        "lignite": "lignite",
-        "nuclear": "uranium",
-        "urban central solid biomass CHP": "biomass",
-    }
-
-    for grouping_year, generator in df.index:
+    for grouping_year, technology_carrier in df.index:
         # capacity is the capacity in MW at each node for this
-        capacity = df.loc[grouping_year, generator]
+        capacity = df.loc[grouping_year, technology_carrier]
         capacity = capacity[~capacity.isna()]
         capacity = capacity[capacity > capacity_threshold]
-        suffix = "-ac" if generator == "offwind" else ""
-        name_suffix = f" {generator}{suffix}-{grouping_year}"
-        name_suffix_by = f" {generator}{suffix}-{baseyear}"
-        asset_i = capacity.index + name_suffix
-        if generator in ["solar", "onwind", "offwind-ac"]:
+        if technology_carrier in ["solar", "onwind", "offwind-ac"]:
+            generator = technology_carrier
+            name_suffix = f" {generator}-{grouping_year}"
+            name_suffix_by = f" {generator}-{baseyear}"
+            asset_i = capacity.index + name_suffix
             cost_key = generator.split("-")[0]
             # to consider electricity grid connection costs or a split between
             # solar utility and rooftop as well, rather take cost assumptions
             # from existing network than from the cost database
             capital_cost = n.generators.loc[
-                n.generators.carrier == generator + suffix, "capital_cost"
+                n.generators.carrier == generator, "capital_cost"
             ].mean()
             marginal_cost = n.generators.loc[
-                n.generators.carrier == generator + suffix, "marginal_cost"
+                n.generators.carrier == generator, "marginal_cost"
             ].mean()
             # check if assets are already in network (e.g. for 2020)
             already_build = n.generators.index.intersection(asset_i)
@@ -324,9 +296,12 @@ def add_power_capacities_installed_before_baseyear(
                 )
 
         else:
-            bus0 = vars(spatial)[carrier[generator]].nodes
-            if "EU" not in vars(spatial)[carrier[generator]].locations:
-                bus0 = bus0.intersection(capacity.index + " " + carrier[generator])
+            generator, carrier = technology_carrier.split("/")
+            name_suffix = f" {generator}-{grouping_year}"
+            asset_i = capacity.index + name_suffix
+            bus0 = vars(spatial)[carrier].nodes
+            if "EU" not in vars(spatial)[carrier].locations:
+                bus0 = bus0.intersection(capacity.index + " " + carrier)
 
             # check for missing bus
             missing_bus = pd.Index(bus0).difference(n.buses.index)
@@ -336,13 +311,13 @@ def add_power_capacities_installed_before_baseyear(
                     "Bus",
                     bus0,
                     carrier=generator,
-                    location=vars(spatial)[carrier[generator]].locations,
+                    location=vars(spatial)[carrier].locations,
                     unit="MWh_el",
                 )
 
             already_build = n.links.index.intersection(asset_i)
             new_build = asset_i.difference(n.links.index)
-            lifetime_assets = lifetime.loc[grouping_year, generator].dropna()
+            lifetime_assets = lifetime.loc[grouping_year, technology_carrier].dropna()
 
             # this is for the year 2020
             if not already_build.empty:
@@ -368,7 +343,7 @@ def add_power_capacities_installed_before_baseyear(
                         * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
                         p_nom=new_capacity / costs.at[generator, "efficiency"],
                         efficiency=costs.at[generator, "efficiency"],
-                        efficiency2=costs.at[carrier[generator], "CO2 intensity"],
+                        efficiency2=costs.at[carrier, "CO2 intensity"],
                         build_year=grouping_year,
                         lifetime=lifetime_assets.loc[new_capacity.index],
                     )
@@ -740,7 +715,10 @@ if __name__ == "__main__":
         powerplants_file=snakemake.input.powerplants,
         countries=snakemake.config["countries"],
         capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
-        lifetime_values=snakemake.params.costs["fill_values"],
+        powerplant_fueltype_to_technology_carrier=snakemake.params.existing_capacities[
+            "powerplant_fueltype_to_technology_carrier"
+        ],
+        default_values=snakemake.params.costs["fill_values"],
     )
 
     if options["heating"]:
