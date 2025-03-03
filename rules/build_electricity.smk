@@ -660,6 +660,7 @@ rule add_electricity:
         ),
         aggregation_strategies=config_provider("clustering", "aggregation_strategies"),
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
+        update_elec_capacities=config_provider("pypsa_spain", "update_elec_capacities"),   #####        
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -678,6 +679,8 @@ rule add_electricity:
         ),
         load=resources("electricity_demand_base_s.nc"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
+        nuts2_ES='data_ES/nuts/NUTS2_ES.geojson',
+        dic_nuts='data_ES/dics/dic_nuts.yaml',
     output:
         resources("networks/base_s_{clusters}_elec.nc"),
     log:
