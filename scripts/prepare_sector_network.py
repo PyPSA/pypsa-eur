@@ -1440,7 +1440,7 @@ def insert_electricity_distribution_grid(n, costs):
         bus1=nodes + " low voltage",
         carrier="home battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_storage"],
+        marginal_cost=options["marginal_cost_home_battery_storage"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -1524,7 +1524,7 @@ def add_storage_and_grids(
         - coal_cc : bool
         - SMR_cc : bool
         - SMR : bool
-        - marginal_cost_storage : float
+        - marginal_cost_home_battery_storage : float
         - min_part_load_methanation : float
         - cc_fraction : float
     logger : logging.Logger, optional
@@ -1841,7 +1841,7 @@ def add_storage_and_grids(
         bus1=nodes,
         carrier="battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_storage"],
+        marginal_cost=options["marginal_cost_home_battery_storage"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
