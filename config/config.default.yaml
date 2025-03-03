@@ -620,7 +620,6 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
-  central_heat_vent: true
   heat_vent:
     urban central: true
     urban decentral: true
