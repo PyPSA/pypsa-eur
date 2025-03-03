@@ -8,7 +8,7 @@
 pypsa_spain:
   retrieve_Iberian_cutout: false
   q2q_transform:
-    enable: false
+    enable: true
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
@@ -29,7 +29,7 @@ pypsa_spain:
       # onwind: data_ES/esios/esios_onwind_capacity_2022.csv
       # solar: data_ES/esios/esios_solar_capacity_2022.csv
       # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
-      # CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
+      CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
   costs_update:
     enable: false
@@ -56,7 +56,7 @@ run:
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   clusters:
-  - 24
+  - 30
   opts:
   - ''
   sector_opts:

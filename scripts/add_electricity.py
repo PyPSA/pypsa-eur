@@ -1107,7 +1107,7 @@ def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_
 
 
             if (method_increase == 'proportional') and (initial_capacity==0):
-                logger.info(f'########## [PyPSA-Spain] <add_electricity.py> Warning: no initial capacity for carrier {cc} in {rr_name}. Using "additional" method')
+                logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: no initial capacity for carrier {cc} in {rr_name}. Using "additional" method')
                 capacity_added_at_each_bus = (required_capacity-initial_capacity)/df.shape[0]
                 df_updated.loc[:, 'p_nom'] += capacity_added_at_each_bus
 
@@ -1177,7 +1177,7 @@ def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_
                     df_generators_local_cc = df_generators.loc[ (df_generators['bus'].isin(list_buses_local)) & (df_generators['carrier']==cc)]
                 # if still none, there is no bus with this carrier
                 if len(df_generators_local_cc)==0:
-                    logger.info(f'########## [PyPSA-Spain] <add_electricity.py> Warning: No bus with generator {cc} in {rr_name}. Updating capacity was not possible.')
+                    logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: No bus with generator {cc} in {rr_name}. Updating capacity was not possible.')
 
                 else:
                     ########## Get the real capacity reported by ESIOS in that region and carrier for the desired year        
@@ -1230,16 +1230,16 @@ def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_
                     final_capacity = int(df_updated['p_nom'].sum())
     
                     if final_capacity == initial_capacity:
-                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> {cc} capacity matches in {rr_name}.')
+                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity matches in {rr_name}.')
 
                     else:
-                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> {cc} capacity in {rr_name} was updated from {initial_capacity} to {final_capacity}.')
+                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity in {rr_name} was updated from {initial_capacity} to {final_capacity}.')
 
 
                     saturated_nodes = (df_updated['p_nom']==df_updated['p_nom_max']).sum()
                 
                     if saturated_nodes > 0:
-                        logger.info(f'Maximum capacity was reached in {saturated_nodes}!!')
+                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: Maximum capacity was reached in {saturated_nodes}!!')
 
 
 

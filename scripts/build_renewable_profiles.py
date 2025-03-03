@@ -251,6 +251,58 @@ if __name__ == "__main__":
         min_p_max_pu = params["clip_p_max_pu"]
         ds["profile"] = ds["profile"].where(ds["profile"] >= min_p_max_pu, 0)
 
+
+
+
+    ######################################## PyPSA-Spain : q2q transform
+
+    ##### Allocate relevant variables    
+    q2q_transform = snakemake.params.q2q_transform
+    technology = snakemake.wildcards.technology
+
+
+
+
+
+    if q2q_transform['enable']:
+
+        ########## Retrieve the name of the file with the q2q transform
+        q2q_filename = q2q_transform[technology]
+
+
+        ##### If name_of_function is empty, do nothing
+        if not q2q_filename:            
+            logger.info(f'########## [PyPSA-Spain] <build_renewable_profiles.py> WARNING: No q2q transform available for {technology}..')
+
+
+        ##### Aply q2q transform
+        else:
+            logger.info(f'########## [PyPSA-Spain] <build_renewable_profiles.py> INFO: Applying q2q transform "{q2q_filename}" to {technology}..')
+
+            with open(q2q_filename, 'rb') as f:
+                interp_func = pickle.load(f)
+
+                ##### Replace dataset values in [1, 1.001] by 1 ##### (TODO: extend q2q transforms a bit beyond 1.0)
+                # Create a mask to select values between 1 y 1.001
+                variable_data = ds['profile']
+                mask = (variable_data >= 1) & (variable_data <= 1.001)
+                # Replace these values with 1
+                variable_data = variable_data.where(~mask, 1)
+                # Assign the modified DataArray to dataset
+                ds['profile'] = variable_data
+
+
+                ds['profile'][:, :, :] = interp_func(ds.variables['profile'])
+
+    else:
+        print(f'########## [PyPSA-Spain] <build_renewable_profiles.py> INFO: Ommitting q2q transform for {technology}..')
+
+    ########################################
+
+
+
+
+
     ds.to_netcdf(snakemake.output.profile)
 
     if client is not None:
