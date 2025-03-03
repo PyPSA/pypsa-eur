@@ -25,8 +25,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "h2_salt_caverns_GWh_per_sqkm.geojson",
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
-        "GDP_per_capita_PPP_1990_2015_v2.nc",  # TODO: update
-        "ppp_2013_1km_Aggregated.tif",  # TODO: update
+        "GDP_per_capita_PPP_1990_2015_v2.nc",
+        "ppp_2019_1km_Aggregated.tif",
     ]
 
     rule retrieve_databundle:
@@ -34,11 +34,13 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             expand("data/bundle/{file}", file=datafiles),
         log:
             "logs/retrieve_databundle.log",
+        benchmark:
+            "benchmarks/retrieve_databundle"
         resources:
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -49,7 +51,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
 
@@ -69,7 +71,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
 
@@ -133,10 +135,10 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/12791128/files/{cutout}.nc",
+                "https://zenodo.org/records/14936211/files/{cutout}.nc",
             ),
         output:
-            "cutouts/" + CDIR + "{cutout}.nc",
+            CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
@@ -160,7 +162,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_cost_data.py"
 
@@ -181,7 +183,7 @@ if config["enable"]["retrieve"]:
             "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -199,7 +201,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_electricity_demand.py"
 
@@ -537,7 +539,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
@@ -602,7 +604,7 @@ if config["enable"]["retrieve"] and (
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_data.py"
 
@@ -644,27 +646,42 @@ if config["enable"]["retrieve"]:
             "logs/retrieve_osm_boundaries_{country}_adm1.log",
         threads: 1
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_boundaries.py"
 
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_heat_source_utilisation_potentials:
-        params:
-            heat_source="{heat_source}",
-            heat_utilisation_potentials=config_provider(
-                "sector", "district_heating", "heat_utilisation_potentials"
+    rule retrieve_geothermal_heat_utilisation_potentials:
+        input:
+            isi_heat_potentials=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx",
+                keep_local=True,
             ),
-        log:
-            "logs/retrieve_heat_source_potentials_{heat_source}.log",
-        resources:
-            mem_mb=500,
         output:
-            "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
-        script:
-            "../scripts/retrieve_heat_source_utilisation_potentials.py"
+            "data/isi_heat_utilisation_potentials.xlsx",
+        log:
+            "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+    rule retrieve_lau_regions:
+        input:
+            lau_regions=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
+                keep_local=True,
+            ),
+        output:
+            lau_regions="data/lau_regions.geojson",
+        log:
+            "logs/retrieve_lau_regions.log",
+            lau_regions="data/lau_regions.zip",
+        log:
+            "logs/retrieve_lau_regions.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -688,25 +705,3 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
-
-
-# TODO: Remove before merging into master and after updating databundle on Zenodo:
-if config["enable"]["retrieve"]:
-
-    rule retrieve_sandbox_data:
-        input:
-            gdp_non_nuts3=storage(
-                "https://github.com/bobbyxng/sandbox/raw/refs/heads/main/data/GDP_per_capita_PPP_1990_2015_v2.nc",
-                keep_local=True,
-            ),
-            pop_non_nuts_3=storage(
-                "https://github.com/bobbyxng/sandbox/raw/refs/heads/main/data/ppp_2019_1km_Aggregated.tif",
-                keep_local=True,
-            ),
-        output:
-            gdp_non_nuts3="data/sandbox/GDP_per_capita_PPP_1990_2015_v2.nc",
-            pop_non_nuts_3="data/sandbox/ppp_2019_1km_Aggregated.tif",
-        retries: 1
-        run:
-            for key in input.keys():
-                move(input[key], output[key])

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: 0.13.0
+version: v2025.01.0
 tutorial: false
 
 logging:
@@ -30,6 +30,7 @@ run:
     policy: false
     exclude: []
   shared_cutouts: true
+  use_shadow_directory: true # Set to false if problems regarding missing directories occur
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
@@ -37,8 +38,6 @@ foresight: overnight
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
-  ll:
-  - vopt
   clusters:
   - 39
   - 128
@@ -74,13 +73,13 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
+  2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
+  2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
+  2030: 0.450 # 55% reduction by 2030 (Ff55)
+  2035: 0.250
+  2040: 0.100 # 90% by 2040
+  2045: 0.050
+  2050: 0.000 # climate-neutral by 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -109,7 +108,7 @@ electricity:
     Store: [battery, H2]
     Link: [] # H2 pipeline
 
-  powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
+  powerplants_filter: (DateOut >= 2024 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
   everywhere_powerplants: []
 
@@ -130,8 +129,11 @@ electricity:
     enable: false
     by_country: false
 
+  transmission_limit: vopt
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
+  cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
   show_progress: false
@@ -480,16 +482,9 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
-    heat_utilisation_potentials:
+    limited_heat_sources:
       geothermal:
-        # activate for 85C hydrothermal
-        # key: hydrothermal_85
-        # constant_temperature_celsius: 85
-        key: hydrothermal_65
         constant_temperature_celsius: 65
-        column_name: Energy_TWh
-        unit: TWh
-        full_load_hours: 4000
     direct_utilisation_heat_sources:
     - geothermal
   heat_pump_sources:
@@ -623,7 +618,7 @@ sector:
   coal_cc: false
   dac: true
   co2_vent: false
-  central_heat_vent: false
+  central_heat_vent: true
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -839,7 +834,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2030
-  version: v0.10.0
+  version: v0.10.1
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -969,6 +964,12 @@ solving:
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
       random_seed: 123
+    highs-simplex:
+      solver: "simplex"
+      parallel: "on"
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      random_seed: 123
     gurobi-default:
       threads: 8
       method: 2 # barrier
@@ -1025,6 +1026,7 @@ solving:
     rtol: 0.01
 
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  memory_logging_frequency: 30 # in seconds
   runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 
