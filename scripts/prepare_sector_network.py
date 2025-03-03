@@ -2447,6 +2447,7 @@ def add_heat(
                 p_max_pu=0,
                 p_min_pu=-1,
                 unit="MWh_th",
+                marginal_cost=-options["marginal_cost_heat_vent"]
             )
 
         ## Add heat load
