@@ -26,10 +26,10 @@ pypsa_spain:
   update_elec_capacities:
     enable: true
     carriers_to_update:
-      onwind: data_ES/esios/esios_onwind_capacity_2022.csv
-      solar: data_ES/esios/esios_solar_capacity_2022.csv
-      nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
-      CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
+      # onwind: data_ES/esios/esios_onwind_capacity_2022.csv
+      # solar: data_ES/esios/esios_solar_capacity_2022.csv
+      # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
+      # CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
   costs_update:
     enable: false
