@@ -2318,6 +2318,7 @@ def add_heat(
     spatial: object,
     options: dict,
     investment_year: int,
+    marginal_cost_water_tank_charger: float
 ):
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
@@ -2615,6 +2616,7 @@ def add_heat(
                 efficiency=costs.at["water tank charger", "efficiency"],
                 carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
+                marginal_costs=marginal_cost_water_tank_charger,
             )
 
             n.add(
@@ -5219,6 +5221,7 @@ if __name__ == "__main__":
             spatial=spatial,
             options=options,
             investment_year=investment_year,
+            marginal_cost_water_tank_charger=snakemake.params.sector['marginal_cost_water_tank_charger']
         )
 
     if options["biomass"]:
