@@ -614,12 +614,17 @@ sector:
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
   marginal_cost_storage: 0. #1e-4
-  marginal_cost_water_tank_charger: 0.02 #1e-4
+  marginal_cost_water_tank_charger: 0.03
+  marginal_cost_heat_vent: 0.02
   methanation: true
   coal_cc: false
   dac: true
   co2_vent: false
   central_heat_vent: true
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false

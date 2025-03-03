@@ -2435,7 +2435,8 @@ def add_heat(
             unit="MWh_th",
         )
 
-        if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
+        # if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
+        if options["heat_vent"][heat_system.system_type.value]:
             n.add(
                 "Generator",
                 nodes + f" {heat_system} heat vent",
@@ -2616,7 +2617,7 @@ def add_heat(
                 efficiency=costs.at["water tank charger", "efficiency"],
                 carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
-                marginal_costs=marginal_cost_water_tank_charger,
+                marginal_cost=marginal_cost_water_tank_charger,
             )
 
             n.add(
