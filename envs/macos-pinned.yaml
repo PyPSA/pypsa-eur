@@ -91,7 +91,7 @@ dependencies:
   - datrie=0.8.2
   - dav1d=1.2.1
   - debugpy=1.8.12
-  - decorator=5.1.1
+  - decorator=5.2.1
   - defusedxml=0.7.1
   - deprecation=2.1.0
   - descartes=1.1.0
@@ -128,7 +128,7 @@ dependencies:
   - geopandas-base=1.0.1
   - geopy=2.4.1
   - geos=3.13.0
-  - geotiff=1.7.3
+  - geotiff=1.7.4
   - gflags=2.2.2
   - giflib=5.2.2
   - gitdb=4.0.12
@@ -143,7 +143,7 @@ dependencies:
   - gts=0.7.6
   - h11=0.14.0
   - h2=4.2.0
-  - harfbuzz=10.2.0
+  - harfbuzz=10.3.0
   - hdf4=4.2.15
   - hdf5=1.14.3
   - hicolor-icon-theme=0.17
@@ -154,7 +154,7 @@ dependencies:
   - humanfriendly=10.0
   - hyperframe=6.1.0
   - icu=75.1
-  - identify=2.6.7
+  - identify=2.6.8
   - idna=3.10
   - immutables=0.21
   - importlib-metadata=8.6.1
@@ -194,10 +194,10 @@ dependencies:
   - libabseil=20240722.0
   - libaec=1.1.3
   - libarchive=3.7.7
-  - libarrow=19.0.0
-  - libarrow-acero=19.0.0
-  - libarrow-dataset=19.0.0
-  - libarrow-substrait=19.0.0
+  - libarrow=19.0.1
+  - libarrow-acero=19.0.1
+  - libarrow-dataset=19.0.1
+  - libarrow-substrait=19.0.1
   - libasprintf=0.23.1
   - libavif16=1.1.1
   - libblas=3.9.0
@@ -228,7 +228,7 @@ dependencies:
   - libgoogle-cloud-storage=2.35.0
   - libgrpc=1.67.1
   - libheif=1.19.5
-  - libiconv=1.17
+  - libiconv=1.18
   - libintl=0.23.1
   - libjpeg-turbo=3.0.0
   - libkml=1.3.0
@@ -237,25 +237,25 @@ dependencies:
   - liblzma=5.6.4
   - libnetcdf=4.9.2
   - libnghttp2=1.64.0
-  - libopenblas=0.3.28
+  - libopenblas=0.3.29
   - libopentelemetry-cpp=1.18.0
   - libopentelemetry-cpp-headers=1.18.0
-  - libparquet=19.0.0
-  - libpng=1.6.46
+  - libparquet=19.0.1
+  - libpng=1.6.47
   - libprotobuf=5.28.3
   - libre2-11=2024.07.02
   - librsvg=2.58.4
   - librttopo=1.1.0
   - libsodium=1.0.20
   - libspatialite=5.1.0
-  - libsqlite=3.48.0
+  - libsqlite=3.49.1
   - libssh2=1.11.1
   - libthrift=0.21.0
   - libtiff=4.7.0
   - libutf8proc=2.10.0
   - libwebp-base=1.5.0
   - libxcb=1.17.0
-  - libxml2=2.13.5
+  - libxml2=2.13.6
   - libxslt=1.1.39
   - libzip=1.11.2
   - libzlib=1.3.1
@@ -274,7 +274,7 @@ dependencies:
   - mccabe=0.7.0
   - memory_profiler=0.61.0
   - minizip=4.0.7
-  - mistune=3.1.1
+  - mistune=3.1.2
   - msgpack-python=1.1.0
   - multiurl=0.3.3
   - munkres=1.1.4
@@ -328,8 +328,8 @@ dependencies:
   - pulp=2.8.0
   - pure_eval=0.2.3
   - py-cpuinfo=9.0.0
-  - pyarrow=19.0.0
-  - pyarrow-core=19.0.0
+  - pyarrow=19.0.1
+  - pyarrow-core=19.0.1
   - pycountry=24.6.1
   - pycparser=2.22
   - pygments=2.19.1
@@ -366,10 +366,10 @@ dependencies:
   - rfc3339-validator=0.1.4
   - rfc3986-validator=0.1.1
   - rioxarray=0.18.2
-  - rpds-py=0.22.3
-  - ruff=0.9.6
+  - rpds-py=0.23.1
+  - ruff=0.9.7
   - scikit-learn=1.6.1
-  - scipy=1.15.1
+  - scipy=1.15.2
   - seaborn=0.13.2
   - seaborn-base=0.13.2
   - send2trash=1.8.3
@@ -377,7 +377,7 @@ dependencies:
   - shapely=2.0.7
   - six=1.17.0
   - smart_open=7.1.0
-  - smmap=5.0.1
+  - smmap=5.0.2
   - snakemake-interface-common=1.17.4
   - snakemake-interface-executor-plugins=9.3.3
   - snakemake-interface-report-plugins=1.1.0
@@ -388,10 +388,10 @@ dependencies:
   - snuggs=1.4.7
   - sortedcontainers=2.4.0
   - soupsieve=2.5
-  - sqlite=3.48.0
+  - sqlite=3.49.1
   - stack_data=0.6.3
   - statsmodels=0.14.4
-  - svt-av1=2.3.0
+  - svt-av1=3.0.0
   - tabulate=0.9.0
   - tblib=3.0.0
   - terminado=0.18.1
@@ -445,8 +445,8 @@ dependencies:
       - gurobipy==12.0.1
       - oauthlib==3.2.2
       - ply==3.11
-      - pyomo==6.8.2
-      - pyscipopt==5.3.0
+      - pyomo==6.9.0
+      - pyscipopt==5.4.1
       - requests-oauthlib==1.3.1
       - snakemake-executor-plugin-cluster-generic==1.0.9
       - snakemake-executor-plugin-slurm==0.15.1
