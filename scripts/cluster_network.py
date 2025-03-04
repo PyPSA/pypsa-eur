@@ -312,7 +312,7 @@ def busmap_for_admin_regions(
 ):
     """
     Create a busmap based on administrative regions using the NUTS3 shapefile.
-    
+
     Parameters
     ----------
     - n (pypsa.Network): The network to cluster.
@@ -337,18 +337,14 @@ def busmap_for_admin_regions(
     buses = n.buses[["x", "y", "country"]].copy()
 
     # Find the intersection of adm1_countries and n.buses.country
-    adm1_countries = list(
-        set(adm1_countries).intersection(buses["country"].unique())
-    )
+    adm1_countries = list(set(adm1_countries).intersection(buses["country"].unique()))
 
     if adm1_countries:
         logger.info(
             f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
         )
 
-    nuts3_regions = gpd.read_file(nuts3_shapes).set_index(
-        "index"
-    )
+    nuts3_regions = gpd.read_file(nuts3_shapes).set_index("index")
     nuts3_regions["column"] = level_map[admin_level]
 
     country_level = {k: v for k, v in params.administrative.items() if k != "level"}
@@ -393,9 +389,7 @@ def busmap_for_admin_regions(
 
         buses.loc[buses_subset.index, "busmap"] = gpd.sjoin_nearest(
             buses_subset.to_crs(epsg=3857),
-            admin_shapes.loc[admin_shapes["country"] == country].to_crs(
-                epsg=3857
-            ),
+            admin_shapes.loc[admin_shapes["country"] == country].to_crs(epsg=3857),
             how="left",
         )["busmap_right"]
 
@@ -444,7 +438,7 @@ if __name__ == "__main__":
 
         if mode == "administrative":
             busmap = busmap_for_admin_regions(
-                n, 
+                n,
                 snakemake.input.nuts3_shapes,
                 params,
             )
