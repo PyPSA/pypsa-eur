@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
+
 - Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
 
 - Implemented an energy-to-power ratio constraint for TES, linking storage capacity to the corresponding charger capacity. Additionally, chargers and dischargers are now sized identically through a unified constraint.
