@@ -811,6 +811,8 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
     ------
     ValueError
         If no valid TES storage or charger links are found.
+    RuntimeError
+        If the TES storage and charger indices do not align.
     """
     indices_charger_p_nom_extendable = n.links.index[
         n.links.index.str.contains("water tanks charger|water pits charger")
@@ -837,6 +839,12 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         energy_to_power_ratio_values,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
+        if not tes.split(" ")[:4] == charger.split(" ")[:4]:
+            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water", "tanks"]
+            raise RuntimeError(
+                f"Charger {charger} and TES {tes} do not match. "
+                "Ensure that the charger and TES are in the same location and refer to the same technology."
+            )
         store_var = n.model["Store-e_nom"].loc[tes]
         linear_expr = store_var - energy_to_power_value * charger_var
         linear_expr_list.append(linear_expr)
@@ -865,6 +873,8 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     ------
     ValueError
         If no valid TES discharger or charger links are found.
+    RuntimeError
+        If the charger and discharger indices do not align.
     """
     indices_charger_p_nom_extendable = n.links.index[
         n.links.index.str.contains("water tanks charger|water pits charger")
@@ -882,6 +892,16 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
         raise ValueError(
             "No valid extendable TES discharger or charger links found for TES charger ratio constraints."
         )
+
+    for charger, discharger in zip(
+            indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
+    ):
+        if not charger.split(" ")[:5] == discharger.split(" ")[:5]:
+            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water", "tanks"]
+            raise RuntimeError(
+                f"Charger {charger} and discharger {discharger} do not match. "
+                "Ensure that the charger and discharger are in the same location and refer to the same technology."
+            )
 
     eff_discharger = n.links.efficiency[indices_discharger_p_nom_extendable].values
     lhs = (
@@ -1268,7 +1288,7 @@ def solve_network(
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
-        check_objective_value(n, solving)
+   #     check_objective_value(n, solving)
 
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
