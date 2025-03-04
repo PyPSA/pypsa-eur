@@ -291,6 +291,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
+            "prepare_network",
             clusters="37",
             ll="v1.0",
             opts="Co2L-4H",
