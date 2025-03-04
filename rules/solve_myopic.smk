@@ -159,8 +159,10 @@ rule solve_sector_network_myopic:
         + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
         config=RESULTS
         + "configs/config.base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.yaml",
-        network_op=RESULTS
+        network_st=RESULTS
         + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_op.nc",
+        network_lt=RESULTS
+        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}_lt.nc",
     shadow:
         "shallow"
     log:

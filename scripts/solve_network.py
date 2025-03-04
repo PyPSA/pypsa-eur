@@ -1067,7 +1067,7 @@ if __name__ == "__main__":
             opts="",
             ll="vopt",
             sector_opts="none",
-            planning_horizons="2020",
+            planning_horizons="2025",
             run="KN2045_Bal_v4",
         )
         
@@ -1104,7 +1104,10 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output.network)
+    n.export_to_netcdf(snakemake.output.network_lt)
+
+    if not solve_opts["overwrite_with_fixed_capacities"]:
+        n.export_to_netcdf(snakemake.output.network)
 
     with open(snakemake.output.config, "w") as file:
         yaml.dump(
@@ -1117,6 +1120,18 @@ if __name__ == "__main__":
 
     # solve again with fixed capacities
     logger.info(f"Solving again with fixed capacities")
+
+    # delete linopy model from before
+    del n.model
+
+    # # add higher tolerance
+    # solver_used = snakemake.params.solving["solver"]["options"]
+    # snakemake.params.solving["solver_options"][solver_used]['FeasibilityTol'] = 0.01
+
+    # check if co2 constraint is feasible
+    n.global_constraints.loc["CO2Limit" , "constant"] = round(n.global_constraints.loc["CO2Limit" , "constant"])
+
+
     n.optimize.fix_optimal_capacities()
     n = prepare_network(
         n,
@@ -1135,8 +1150,9 @@ if __name__ == "__main__":
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    n.export_to_netcdf(snakemake.output.network_op)
+    n.export_to_netcdf(snakemake.output.network_st)
+
+    # del snakemake.params.solving["solver_options"][solver_used]['FeasibilityTol']
 
     if solve_opts["overwrite_with_fixed_capacities"]:
         n.export_to_netcdf(snakemake.output.network)
-
