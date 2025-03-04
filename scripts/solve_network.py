@@ -920,7 +920,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
         )
 
     for charger, discharger in zip(
-            indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
+        indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
     ):
         if not charger.split(" ")[:5] == discharger.split(" ")[:5]:
             # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
