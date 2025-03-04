@@ -4,5 +4,4 @@ retrieve_databundle,bool,"{true, false}","Switch to retrieve databundle from zen
 retrieve_cost_data,bool,"{true, false}","Switch to retrieve technology cost data from `technology-data repository <https://github.com/PyPSA/technology-data>`_."
 build_cutout,bool,"{true, false}","Switch to enable the building of cutouts via the rule :mod:`build_cutout`."
 retrieve_cutout,bool,"{true, false}","Switch to enable the retrieval of cutouts from zenodo with :mod:`retrieve_cutout`."
-custom_busmap,bool,"{true, false}","Switch to enable the use of custom busmaps in rule :mod:`cluster_network`. If activated the rule looks for provided busmaps at ``data/busmaps/base_s_{clusters}_{base_network}.csv`` which should have the same format as ``resources/busmap_base_s_{clusters}.csv``, i.e. the index should contain the buses of ``networks/base_s.nc``. {base_network} is the name of the selected base_network in electricity, e.g. ``gridkit``, ``osm-prebuilt``, or ``osm-raw``."
 drop_leap_day,bool,"{true, false}","Switch to drop February 29 from all time-dependent data in leap years"

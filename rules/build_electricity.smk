@@ -560,8 +560,8 @@ rule simplify_network:
 
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
-def input_cluster_network(w):
-    if config_provider("enable", "custom_busmap", default=False)(w):
+def input_custom_busmap(w):
+    if config_provider("clustering", "mode", default="busmap")(w) == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
         return {"custom_busmap": custom_busmap}
@@ -571,12 +571,11 @@ def input_cluster_network(w):
 rule cluster_network:
     params:
         mode=config_provider("clustering", "mode"),
-        admin=config_provider("clustering", "admin"),
+        administrative=config_provider("clustering", "administrative"),
         cluster_network=config_provider("clustering", "cluster_network"),
         aggregation_strategies=config_provider(
             "clustering", "aggregation_strategies", default={}
         ),
-        custom_busmap=config_provider("enable", "custom_busmap", default=False),
         focus_weights=config_provider("clustering", "focus_weights", default=None),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
         conventional_carriers=config_provider(
@@ -585,7 +584,7 @@ rule cluster_network:
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
     input:
-        unpack(input_cluster_network),
+        unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),

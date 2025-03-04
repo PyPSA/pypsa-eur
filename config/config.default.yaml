@@ -68,7 +68,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  custom_busmap: false
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -865,12 +864,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
-  mode: admin # buses, admin, custom_admin_map, custom_busmap
-  admin:
-    level: 1 # Set general level of administrative division, e.g. 0 for countries, 1 for regions, specify individual countries if needed
-    DE: 3
-    FR: 2
-    ES: 0
+  mode: busmap # busmap, custom_busmap, administrative
+  administrative:
+    level: 1 # Set general level of administrative division, e.g. 0 for countries, 1 for NUTS1, etc. Optionally specify on a per-country basis using dict.
   focus_weights: false
   simplify_network:
     to_substations: false

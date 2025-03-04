@@ -292,9 +292,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_network",
-            clusters="37",
-            ll="v1.0",
-            opts="Co2L-4H",
+            clusters="adm",
+            opts="",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
