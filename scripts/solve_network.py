@@ -865,8 +865,8 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         energy_to_power_ratio_values,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
-        if not tes.split(" ")[:4] == charger.split(" ")[:4]:
-            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water", "tanks"]
+        if not tes.replace("-", " ").split(" ")[:5] == charger.split(" ")[:5]:
+            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
             raise RuntimeError(
                 f"Charger {charger} and TES {tes} do not match. "
                 "Ensure that the charger and TES are in the same location and refer to the same technology."
@@ -923,7 +923,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
             indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
     ):
         if not charger.split(" ")[:5] == discharger.split(" ")[:5]:
-            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water", "tanks"]
+            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
             raise RuntimeError(
                 f"Charger {charger} and discharger {discharger} do not match. "
                 "Ensure that the charger and discharger are in the same location and refer to the same technology."
@@ -1319,7 +1319,7 @@ def solve_network(
             logger.warning(
                 f"Solving status '{status}' with termination condition '{condition}'"
             )
-   #     check_objective_value(n, solving)
+        check_objective_value(n, solving)
 
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
@@ -1335,7 +1335,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network_perfect",
-            configfiles="../config/test/config.perfect.yaml",
+            configfiles="config/test/config.perfect.yaml",
             opts="",
             clusters="5",
             ll="v1.0",
