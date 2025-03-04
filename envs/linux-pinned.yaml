@@ -507,4 +507,4 @@ dependencies:
       - snakemake-executor-plugin-slurm-jobstep==0.2.1
       - snakemake-storage-plugin-http==0.2.3
       - tsam==2.3.6
-prefix: /usr/share/miniconda/envs/pypsa-eur-adb
+prefix: /usr/share/miniconda/envs/pypsa-eur
