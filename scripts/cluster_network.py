@@ -402,7 +402,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "cluster_network",
-            clusters="adm",
+            clusters=37,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

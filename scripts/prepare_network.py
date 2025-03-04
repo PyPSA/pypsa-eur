@@ -291,9 +291,9 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "prepare_network",
-            clusters="adm",
-            opts="",
+            clusters="37",
+            ll="v1.0",
+            opts="Co2L-4H",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
