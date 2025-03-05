@@ -1205,7 +1205,6 @@ def cycling_shift(df, steps=1):
 
 
 def prepare_costs(cost_file, params, nyears):
-
     for key in ("marginal_cost", "capital_cost"):
         if key in params:
             params["overwrites"][key] = params[key]

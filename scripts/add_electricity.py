@@ -201,7 +201,6 @@ def add_co2_emissions(n, costs, carriers):
 
 
 def load_costs(tech_costs, config, max_hours, Nyears=1.0):
-
     for key in ("marginal_cost", "capital_cost"):
         if key in config:
             config["overwrites"][key] = config[key]
