@@ -845,14 +845,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  overwrites:
-    FOM: {}
-    VOM: {}
-    efficiency: {}
-    fuel: {}
-    investment: {}
-    lifetime: {}
-  capital_cost: {}
+  overwrites: {}
   marginal_cost:
     solar: 0.01
     onwind: 0.015
