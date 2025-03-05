@@ -18,7 +18,7 @@ from make_summary import (
     calculate_nodal_cfs,  # noqa: F401
     calculate_nodal_costs,  # noqa: F401
 )
-from prepare_sector_network import prepare_costs
+from add_electricity import load_costs
 from pypsa.descriptors import get_active_assets
 from six import iteritems
 
@@ -733,10 +733,10 @@ if __name__ == "__main__":
     print(networks_dict)
 
     nyears = 1
-    costs_db = prepare_costs(
+    costs_db = load_costs(
         snakemake.input.costs,
         snakemake.config["costs"],
-        nyears,
+        nyears=nyears,
     )
 
     df = make_summaries(networks_dict)

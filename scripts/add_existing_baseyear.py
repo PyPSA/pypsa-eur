@@ -21,9 +21,9 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
+from add_electricity import sanitize_carriers, load_costs
 from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from prepare_sector_network import cluster_heat_buses, define_spatial
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -726,10 +726,10 @@ if __name__ == "__main__":
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    costs = prepare_costs(
+    costs = load_costs(
         snakemake.input.costs,
         snakemake.params.costs,
-        Nyears,
+        nyears=Nyears,
     )
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
