@@ -1205,6 +1205,12 @@ def cycling_shift(df, steps=1):
 
 
 def prepare_costs(cost_file, params, nyears):
+
+    params["overwrites"].update({
+        "marginal_cost": params["marginal_cost"],
+        "capital_cost": params["capital_cost"],
+    })
+
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
@@ -1219,7 +1225,7 @@ def prepare_costs(cost_file, params, nyears):
     costs = costs.fillna(params["fill_values"])
 
     for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
-        overwrites = params.get(attr)
+        overwrites = params["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
@@ -1233,6 +1239,15 @@ def prepare_costs(cost_file, params, nyears):
     costs["fixed"] = [
         annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
     ]
+
+    for attr, key in dict(marginal_cost="marginal_cost", capital_cost="fixed"):
+        overwrites = params["overwrites"].get(attr)
+        if overwrites is not None:
+            overwrites = pd.Series(overwrites)
+            costs.loc[overwrites.index, key] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     return costs
 

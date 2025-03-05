@@ -201,6 +201,12 @@ def add_co2_emissions(n, costs, carriers):
 
 
 def load_costs(tech_costs, config, max_hours, Nyears=1.0):
+
+    config["overwrites"].update({
+        "marginal_cost": config["marginal_cost"],
+        "capital_cost": config["capital_cost"],
+    })
+
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -216,7 +222,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     costs = costs.value.unstack().fillna(fill_values)
 
     for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
-        overwrites = config.get(attr)
+        overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
@@ -267,7 +273,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     )
 
     for attr in ("marginal_cost", "capital_cost"):
-        overwrites = config.get(attr)
+        overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites

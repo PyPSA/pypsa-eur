@@ -845,9 +845,14 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs, investment, lifetime, FOM, VOM, efficiency and fuel can be overwritten
-  # capital_cost:
-  #   onwind: 500
+  overwrites:
+    FOM: {}
+    VOM: {}
+    efficiency: {}
+    fuel: {}
+    investment: {}
+    lifetime: {}
+  capital_cost: {}
   marginal_cost:
     solar: 0.01
     onwind: 0.015
