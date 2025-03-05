@@ -1238,7 +1238,7 @@ def prepare_costs(cost_file, params, nyears):
         annuity_factor(v) * v["investment"] * nyears for i, v in costs.iterrows()
     ]
 
-    for attr, key in dict(marginal_cost="marginal_cost", capital_cost="fixed"):
+    for attr, key in dict(marginal_cost="marginal_cost", capital_cost="fixed").items():
         overwrites = params["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
