@@ -16,10 +16,13 @@ Creates the network topology from an ENTSO-E map extract, and create Voronoi sha
 """
 
 import logging
+import multiprocessing as mp
 import warnings
+from functools import partial
+from itertools import product
+from typing import Dict, List, Tuple
 
 import geopandas as gpd
-import multiprocessing as mp
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -28,16 +31,12 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-
 from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
-from functools import partial
-from itertools import product
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
 from shapely.geometry import Point
 from tqdm import tqdm
-from typing import Dict, List, Tuple
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -845,10 +844,10 @@ def process_onshore_regions(
     onshore_shape = admin_shapes.loc[adm, "geometry"]
     onshore_locs = (
         buses.loc[c_b & buses.onshore_bus]
-        .sort_values(
-            by="substation_lv", ascending=False
-        )  # preference for substations
-        .drop_duplicates(subset=["x", "y", "country"], keep="first")[["x", "y", "country"]]
+        .sort_values(by="substation_lv", ascending=False)  # preference for substations
+        .drop_duplicates(subset=["x", "y", "country"], keep="first")[
+            ["x", "y", "country"]
+        ]
     )
     onshore_regions_adm = gpd.GeoDataFrame(
         {
@@ -893,16 +892,18 @@ def process_offshore_regions(
         sel = offshore_regions_c.to_crs(3035).area > 10  # m2
         offshore_regions_c = offshore_regions_c.loc[sel]
         offshore_regions.append(offshore_regions_c)
-    
+
     return offshore_regions
 
 
 def build_bus_shapes(
-    n: pypsa.Network, 
+    n: pypsa.Network,
     admin_shapes: gpd.GeoDataFrame,
     offshore_shapes: str,
     countries: List[str],
-) -> Tuple[List[gpd.GeoDataFrame], List[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]:
+) -> Tuple[
+    List[gpd.GeoDataFrame], List[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame
+]:
     """
     Build onshore and offshore regions for buses in the network.
 
@@ -922,13 +923,15 @@ def build_bus_shapes(
             - List of GeoDataFrames for each offshore region
             - Combined GeoDataFrame of all onshore shapes
             - Combined GeoDataFrame of all offshore shapes
-    """ 
+    """
     offshore_shapes = gpd.read_file(offshore_shapes)
     offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
         "geometry"
     ]
 
-    buses = n.buses[["x", "y", "country", "onshore_bus", "substation_lv", "substation_off"]].copy()
+    buses = n.buses[
+        ["x", "y", "country", "onshore_bus", "substation_lv", "substation_off"]
+    ].copy()
 
     buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
@@ -944,9 +947,11 @@ def build_bus_shapes(
             how="left",
         )["admin_right"]
 
-    # Create Voronoi polygons for each administrative region. 
+    # Create Voronoi polygons for each administrative region.
     # If administrative clustering is deactivated, voronoi cells are created on a country level.
-    admin_regions = sorted(set(buses.admin.unique()).intersection(admin_shapes.index.unique()))
+    admin_regions = sorted(
+        set(buses.admin.unique()).intersection(admin_shapes.index.unique())
+    )
 
     # Onshore regions
     nprocesses = snakemake.threads
@@ -970,15 +975,17 @@ def build_bus_shapes(
 
     # Offshore regions
     offshore_regions = process_offshore_regions(
-        buses, 
-        offshore_shapes, 
-        countries, 
+        buses,
+        offshore_shapes,
+        countries,
         n.crs.name,
     )
     if offshore_regions:
         offshore_shapes = pd.concat(offshore_regions, ignore_index=True).set_crs(n.crs)
     else:
-        offshore_shapes = gpd.GeoDataFrame(columns=["name", "geometry"], crs=n.crs).set_index("name")
+        offshore_shapes = gpd.GeoDataFrame(
+            columns=["name", "geometry"], crs=n.crs
+        ).set_index("name")
     logger.info(f"In total {len(offshore_shapes)} offshore regions.")
 
     return onshore_regions, offshore_regions, onshore_shapes, offshore_shapes
@@ -1045,14 +1052,16 @@ def build_admin_shapes(
     nuts3_regions = gpd.read_file(nuts3_shapes)
     nuts3_regions = nuts3_regions.set_index(nuts3_regions.columns[0])
 
-    level =  admin_levels.get("level", 0)
+    level = admin_levels.get("level", 0)
 
-    if clustering == "administrative": 
+    if clustering == "administrative":
         logger.info(f"Building bus regions at administrative level {level}")
         nuts3_regions["column"] = level_map[level]
 
         # Only keep the values whose keys are in countries
-        country_level = {k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)}
+        country_level = {
+            k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+        }
         if country_level:
             country_level_list = "\n".join(
                 [f"- {k}: level {v}" for k, v in country_level.items()]
@@ -1063,12 +1072,12 @@ def build_admin_shapes(
             nuts3_regions.loc[
                 nuts3_regions["country"].isin(country_level.keys()), "column"
             ] = (
-                    nuts3_regions.loc[
-                        nuts3_regions["country"].isin(country_level.keys()), "country"
-                    ]
-                    .map(country_level)
-                    .map(level_map)
-                )
+                nuts3_regions.loc[
+                    nuts3_regions["country"].isin(country_level.keys()), "country"
+                ]
+                .map(country_level)
+                .map(level_map)
+            )
 
         nuts3_regions["admin"] = nuts3_regions.apply(
             lambda row: row[row["column"]], axis=1
@@ -1098,7 +1107,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
     mp.set_start_method("spawn", force=True)
-    
+
     countries = snakemake.params.countries
     nuts3_shapes = snakemake.input.nuts3_shapes
     clustering = snakemake.params.get("clustering", "busmap")
@@ -1146,17 +1155,19 @@ if __name__ == "__main__":
         countries,
     )
 
-    onshore_regions, offshore_regions, onshore_shapes, offshore_shapes = build_bus_shapes(
-        n,
-        admin_shapes,
-        offshore_shapes,
-        countries,
+    onshore_regions, offshore_regions, onshore_shapes, offshore_shapes = (
+        build_bus_shapes(
+            n,
+            admin_shapes,
+            offshore_shapes,
+            countries,
+        )
     )
 
     # Export network
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output.base_network)
-    
+
     # Export shapes
     onshore_shapes.to_file(snakemake.output.regions_onshore)
     # append_bus_shapes(n, shapes, "onshore")

@@ -331,9 +331,9 @@ def busmap_for_admin_regions(
         2: "level2",
         3: "level3",
     }
-    
+
     admin_levels = params.administrative
-    level =  admin_levels.get("level", 0)
+    level = admin_levels.get("level", 0)
     logger.info(f"Clustering at administrative level {level}.")
 
     # check if BA, MD, UA, or XK are in the network
@@ -348,7 +348,9 @@ def busmap_for_admin_regions(
             f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
         )
 
-    country_level = {k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)}
+    country_level = {
+        k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+    }
     if country_level:
         country_level_list = "\n".join(
             [f"- {k}: level {v}" for k, v in country_level.items()]
