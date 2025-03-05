@@ -1205,11 +1205,12 @@ def cycling_shift(df, steps=1):
 
 
 def prepare_costs(cost_file, params, nyears):
-
-    params["overwrites"].update({
-        "marginal_cost": params["marginal_cost"],
-        "capital_cost": params["capital_cost"],
-    })
+    params["overwrites"].update(
+        {
+            "marginal_cost": params["marginal_cost"],
+            "capital_cost": params["capital_cost"],
+        }
+    )
 
     # set all asset costs and other parameters
     costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
