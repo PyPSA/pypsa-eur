@@ -13,6 +13,11 @@ Upcoming Release
 
 * Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
 
+* Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
+
+* Add the options to overwrite investment, lifetime, FOM, VOM, efficiency and fuel attributes from the configuration file under ``costs: overwrites:``. This mimics the existing capital and marginal cost behaviour. (https://github.com/PyPSA/pypsa-eur/pull/1532)
+* Change: Rename "fixed" to "capital_cost" for annualised investment costs in sector-coupled networks.
+
 * Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
 * Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
