@@ -325,12 +325,6 @@ def busmap_for_admin_regions(
     """
     countries = params.countries
     admin_regions = gpd.read_file(admin_shapes)
-    level_map = {
-        0: "country",
-        1: "level1",
-        2: "level2",
-        3: "level3",
-    }
 
     admin_levels = params.administrative
     level = admin_levels.get("level", 0)

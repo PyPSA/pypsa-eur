@@ -20,7 +20,6 @@ import multiprocessing as mp
 import warnings
 from functools import partial
 from itertools import product
-from typing import Dict, List, Tuple
 
 import geopandas as gpd
 import networkx as nx
@@ -866,9 +865,9 @@ def process_onshore_regions(
 def process_offshore_regions(
     buses: pd.DataFrame,
     offshore_shapes: gpd.GeoDataFrame,
-    countries: List[str],
+    countries: list[str],
     crs: str,
-) -> List[gpd.GeoDataFrame]:
+) -> list[gpd.GeoDataFrame]:
     offshore_regions = []
 
     # using tqdm
@@ -900,9 +899,9 @@ def build_bus_shapes(
     n: pypsa.Network,
     admin_shapes: gpd.GeoDataFrame,
     offshore_shapes: str,
-    countries: List[str],
-) -> Tuple[
-    List[gpd.GeoDataFrame], List[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame
+    countries: list[str],
+) -> tuple[
+    list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame
 ]:
     """
     Build onshore and offshore regions for buses in the network.
@@ -912,11 +911,11 @@ def build_bus_shapes(
         n (pypsa.Network) : The network for which the bus shapes will be built.
         admin_shapes (gpd.GeoDataFrame) : GeoDataFrame with administrative region shapes indexed by name.
         offshore_shapes (str) : Path to the file containing offshore shapes.
-        countries (List[str]) : List of country codes to process.
+        countries (list[str]) : List of country codes to process.
 
     Returns
     -------
-        Tuple[List[gpd.GeoDataFrame], List[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]
+        tuple[list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]
 
         A tuple containing:
             - List of GeoDataFrames for each onshore region
@@ -1024,8 +1023,8 @@ def append_bus_shapes(n, shapes, type):
 def build_admin_shapes(
     nuts3_shapes: str,
     clustering: str,
-    admin_levels: Dict[str, int],
-    countries: List[str],
+    admin_levels: dict[str, int],
+    countries: list[str],
 ) -> gpd.GeoDataFrame:
     """
     Builds administrative shapes for bus regions based on NUTS3 regions and custom clustering configuration.
@@ -1034,8 +1033,8 @@ def build_admin_shapes(
     ----------
     nuts3_shapes (str) : Path to the file containing NUTS3 shapes.
     clustering (str) : Clustering method to use ('administrative' or other).
-    admin_levels (Dict[str, int]) : Dictionary mapping country codes to administrative levels.
-    countries (List[str]) : List of country codes to include.
+    admin_levels (dict[str, int]) : Dictionary mapping country codes to administrative levels.
+    countries (list[str]) : List of country codes to include.
 
     Returns
     -------
