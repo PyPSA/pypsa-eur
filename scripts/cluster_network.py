@@ -359,15 +359,6 @@ def busmap_for_admin_regions(
             f"Setting individual administrative levels for:\n{country_level_list}"
         )
 
-    country_level = {k: v for k, v in params.administrative.items() if k != "level"}
-    if country_level:
-        country_level_list = "\n".join(
-            [f"- {k}: level {v}" for k, v in country_level.items()]
-        )
-        logger.info(
-            f"Setting individual administrative levels for:\n{country_level_list}"
-        )
-
     buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
     buses["busmap"] = ""
