@@ -289,13 +289,13 @@ def cluster_regions(
 
     Parameters
     ----------
-    - busmaps (list): A list of busmaps used for clustering.
-    - regions (gpd.GeoDataFrame): The regions to cluster.
-    - with_country (bool): Whether to keep country column.
+        - busmaps (list) : A list of busmaps used for clustering.
+        - regions (gpd.GeoDataFrame) : The regions to cluster.
+        - with_country (bool) : Whether to keep country column.
 
     Returns
     -------
-    None
+        None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     columns = ["name", "country", "geometry"] if with_country else ["name", "geometry"]
@@ -307,7 +307,7 @@ def cluster_regions(
 
 def busmap_for_admin_regions(
     n: pypsa.Network,
-    nuts3_shapes: str,
+    admin_shapes: str,
     params: dict,
 ):
     """
@@ -315,22 +315,26 @@ def busmap_for_admin_regions(
 
     Parameters
     ----------
-    - n (pypsa.Network): The network to cluster.
-    - nuts3_shapes (str): The path to the NUTS3 shapefile.
-    - params (dict): The parameters for clustering.
+        - n (pypsa.Network) : The network to cluster.
+        - admin_shapes (str) : The path to the administrative regions.
+        - params (dict) : The parameters for clustering.
 
     Returns
     -------
-    - busmap (pd.Series): Busmap mapping each bus to an administrative region.
+        busmap (pd.Series): Busmap mapping each bus to an administrative region.
     """
+    countries = params.countries
+    admin_regions = gpd.read_file(admin_shapes)
     level_map = {
         0: "country",
         1: "level1",
         2: "level2",
         3: "level3",
     }
-    admin_level = params.administrative.get("level", 0)
-    logger.info(f"Clustering at administrative level {admin_level}.")
+    
+    admin_levels = params.administrative
+    level =  admin_levels.get("level", 0)
+    logger.info(f"Clustering at administrative level {level}.")
 
     # check if BA, MD, UA, or XK are in the network
     adm1_countries = ["BA", "MD", "UA", "XK"]
@@ -344,8 +348,14 @@ def busmap_for_admin_regions(
             f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
         )
 
-    nuts3_regions = gpd.read_file(nuts3_shapes).set_index("index")
-    nuts3_regions["column"] = level_map[admin_level]
+    country_level = {k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)}
+    if country_level:
+        country_level_list = "\n".join(
+            [f"- {k}: level {v}" for k, v in country_level.items()]
+        )
+        logger.info(
+            f"Setting individual administrative levels for:\n{country_level_list}"
+        )
 
     country_level = {k: v for k, v in params.administrative.items() if k != "level"}
     if country_level:
@@ -355,43 +365,21 @@ def busmap_for_admin_regions(
         logger.info(
             f"Setting individual administrative levels for:\n{country_level_list}"
         )
-        nuts3_regions.loc[
-            nuts3_regions["country"].isin(country_level.keys()), "column"
-        ] = (
-            nuts3_regions.loc[
-                nuts3_regions["country"].isin(country_level.keys()), "country"
-            ]
-            .map(country_level)
-            .map(level_map)
-        )
-
-    nuts3_regions["busmap"] = nuts3_regions.apply(
-        lambda row: row[row["column"]], axis=1
-    )
-
-    # Group by busmap
-    admin_shapes = nuts3_regions[["busmap", "geometry"]]
-    admin_shapes = admin_shapes.groupby("busmap")["geometry"].apply(
-        lambda x: x.union_all()
-    )
-    admin_shapes = gpd.GeoDataFrame(
-        admin_shapes, geometry="geometry", crs=nuts3_regions.crs
-    )
-    admin_shapes["country"] = admin_shapes.index.str[:2]
 
     buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
     buses["busmap"] = ""
 
     # Map based for each country
+    logger.info("Mapping buses to administrative regions.")
     for country in tqdm.tqdm(buses["country"].unique()):
         buses_subset = buses.loc[buses["country"] == country]
 
         buses.loc[buses_subset.index, "busmap"] = gpd.sjoin_nearest(
             buses_subset.to_crs(epsg=3857),
-            admin_shapes.loc[admin_shapes["country"] == country].to_crs(epsg=3857),
+            admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
             how="left",
-        )["busmap_right"]
+        )["admin"]
 
     return buses["busmap"]
 
@@ -423,7 +411,7 @@ if __name__ == "__main__":
 
     if snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
-    elif snakemake.wildcards.clusters == "adm":
+    elif mode == "administrative":
         n_clusters = np.nan
     else:
         n_clusters = int(snakemake.wildcards.clusters)
@@ -439,7 +427,7 @@ if __name__ == "__main__":
         if mode == "administrative":
             busmap = busmap_for_admin_regions(
                 n,
-                snakemake.input.nuts3_shapes,
+                snakemake.input.admin_shapes,
                 params,
             )
         elif mode == "custom_busmap":

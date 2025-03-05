@@ -78,8 +78,11 @@ rule base_network:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
         transformers=config_provider("transformers"),
+        clustering=config_provider("clustering", "mode"),
+        admin_levels=config_provider("clustering", "administrative"),
     input:
         unpack(input_base_network),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
@@ -87,11 +90,12 @@ rule base_network:
         base_network=resources("networks/base.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
+        admin_shapes=resources("admin_shapes.geojson"),
     log:
         logs("base_network.log"),
     benchmark:
         benchmarks("base_network")
-    threads: 1
+    threads: 4
     resources:
         mem_mb=1500,
     conda:
@@ -570,6 +574,7 @@ def input_custom_busmap(w):
 
 rule cluster_network:
     params:
+        countries=config_provider("countries"),
         mode=config_provider("clustering", "mode"),
         administrative=config_provider("clustering", "administrative"),
         cluster_network=config_provider("clustering", "cluster_network"),
@@ -586,7 +591,7 @@ rule cluster_network:
     input:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
-        nuts3_shapes=resources("nuts3_shapes.geojson"),
+        admin_shapes=resources("admin_shapes.geojson"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         hac_features=lambda w: (

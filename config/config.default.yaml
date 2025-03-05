@@ -864,9 +864,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
-  mode: busmap # busmap, custom_busmap, administrative
+  mode: busmap 
   administrative:
-    level: 1 # Set general level of administrative division, e.g. 0 for countries, 1 for NUTS1, etc. Optionally specify on a per-country basis using dict.
+    level: 1 
   focus_weights: false
   simplify_network:
     to_substations: false
