@@ -5135,10 +5135,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="adm",
+            clusters="38",
             ll="vopt",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)
