@@ -1242,7 +1242,8 @@ def prepare_costs(cost_file, params, nyears):
         overwrites = params["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
-            costs.loc[overwrites.index, key] = overwrites
+            idx = overwrites.index.intersection(costs.index)
+            costs.loc[idx, key] = overwrites
             logger.info(
                 f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
             )
