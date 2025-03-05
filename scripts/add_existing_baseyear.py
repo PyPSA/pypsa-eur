@@ -365,7 +365,9 @@ def add_power_capacities_installed_before_baseyear(
                         marginal_cost=costs.at[generator, "efficiency"]
                         * costs.at[generator, "VOM"],  # NB: VOM is per MWel
                         capital_cost=costs.at[generator, "efficiency"]
-                        * costs.at[generator, "capital_cost"],  # NB: fixed cost is per MWel
+                        * costs.at[
+                            generator, "capital_cost"
+                        ],  # NB: fixed cost is per MWel
                         p_nom=new_capacity / costs.at[generator, "efficiency"],
                         efficiency=costs.at[generator, "efficiency"],
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
