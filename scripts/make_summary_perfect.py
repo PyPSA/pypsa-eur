@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import set_scenario_config
+from add_electricity import load_costs
 from make_summary import (
     assign_carriers,
     assign_locations,
@@ -18,7 +19,6 @@ from make_summary import (
     calculate_nodal_cfs,  # noqa: F401
     calculate_nodal_costs,  # noqa: F401
 )
-from add_electricity import load_costs
 from pypsa.descriptors import get_active_assets
 from six import iteritems
 

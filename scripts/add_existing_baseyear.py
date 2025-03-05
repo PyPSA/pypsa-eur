@@ -21,7 +21,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers, load_costs
+from add_electricity import load_costs, sanitize_carriers
 from definitions.heat_system import HeatSystem
 from prepare_sector_network import cluster_heat_buses, define_spatial
 
