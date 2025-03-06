@@ -734,7 +734,7 @@ def attach_hydro(
             capital_cost=costs.at["ror", "capital_cost"],
             weight=ror["p_nom"],
             p_max_pu=(
-                inflow_t[ror.index]
+                inflow_t[ror.index]  # pylint: disable=E0606
                 .divide(ror["p_nom"], axis=1)
                 .where(lambda df: df <= 1.0, other=1.0)
             ),
@@ -787,6 +787,8 @@ def attach_hydro(
             max_hours_country = (
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
             )
+        else:
+            raise ValueError(f"Unknown hydro_max_hours method: {hydro_max_hours}")
 
         max_hours_country.clip(0, inplace=True)
 
@@ -1089,7 +1091,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("add_electricity", clusters=100)
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     params = snakemake.params
