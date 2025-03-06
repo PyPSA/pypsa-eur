@@ -1470,7 +1470,7 @@ def insert_electricity_distribution_grid(n, costs):
         bus1=nodes + " low voltage",
         carrier="home battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_home_battery_storage"],
+        marginal_cost=costs.at["home battery storage", "marginal_cost"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -1554,7 +1554,6 @@ def add_storage_and_grids(
         - coal_cc : bool
         - SMR_cc : bool
         - SMR : bool
-        - marginal_cost_home_battery_storage : float
         - min_part_load_methanation : float
         - cc_fraction : float
     logger : logging.Logger, optional
@@ -1872,7 +1871,6 @@ def add_storage_and_grids(
         bus1=nodes,
         carrier="battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_home_battery_storage"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -2350,7 +2348,6 @@ def add_heat(
     spatial: object,
     options: dict,
     investment_year: int,
-    marginal_cost_water_tank_charger: float,
 ):
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
@@ -2479,7 +2476,7 @@ def add_heat(
                 p_max_pu=0,
                 p_min_pu=-1,
                 unit="MWh_th",
-                marginal_cost=-options["marginal_cost_heat_vent"],
+                marginal_cost=-params["sector"]["marginal_cost_heat_vent"],
             )
 
         ## Add heat load
@@ -2651,7 +2648,7 @@ def add_heat(
                 efficiency=costs.at["water tank charger", "efficiency"],
                 carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
-                marginal_cost=marginal_cost_water_tank_charger,
+                marginal_cost=costs.at["water tank charger", "marginal_cost"],
             )
 
             n.add(
@@ -5261,9 +5258,6 @@ if __name__ == "__main__":
             spatial=spatial,
             options=options,
             investment_year=investment_year,
-            marginal_cost_water_tank_charger=snakemake.params.sector[
-                "marginal_cost_water_tank_charger"
-            ],
         )
 
     if options["biomass"]:

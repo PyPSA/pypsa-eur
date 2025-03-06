@@ -613,9 +613,6 @@ sector:
     micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
-  marginal_cost_home_battery_storage: 0. #1e-4
-  marginal_cost_water_tank_charger: 0.03
-  marginal_cost_heat_vent: 0.02
   methanation: true
   coal_cc: false
   dac: true
@@ -624,6 +621,7 @@ sector:
     urban central: true
     urban decentral: true
     rural: true
+  marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -861,6 +859,8 @@ costs:
     fuel cell: 0.
     battery: 0.
     battery inverter: 0.
+    home battery storage: 0
+    water tank charger: 0.03
   emission_prices:
     enable: false
     co2: 0.
