@@ -1470,7 +1470,7 @@ def insert_electricity_distribution_grid(n, costs):
         bus1=nodes + " low voltage",
         carrier="home battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_storage"],
+        marginal_cost=costs.at["home battery storage", "marginal_cost"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -1554,7 +1554,6 @@ def add_storage_and_grids(
         - coal_cc : bool
         - SMR_cc : bool
         - SMR : bool
-        - marginal_cost_storage : float
         - min_part_load_methanation : float
         - cc_fraction : float
     logger : logging.Logger, optional
@@ -1872,7 +1871,6 @@ def add_storage_and_grids(
         bus1=nodes,
         carrier="battery discharger",
         efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        marginal_cost=options["marginal_cost_storage"],
         p_nom_extendable=True,
         lifetime=costs.at["battery inverter", "lifetime"],
     )
@@ -2466,7 +2464,8 @@ def add_heat(
             unit="MWh_th",
         )
 
-        if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
+        # if heat_system == HeatSystem.URBAN_CENTRAL and options["central_heat_vent"]:
+        if options["heat_vent"][heat_system.system_type.value]:
             n.add(
                 "Generator",
                 nodes + f" {heat_system} heat vent",
@@ -2477,6 +2476,7 @@ def add_heat(
                 p_max_pu=0,
                 p_min_pu=-1,
                 unit="MWh_th",
+                marginal_cost=-params["sector"]["marginal_cost_heat_vent"],
             )
 
         ## Add heat load
@@ -2648,6 +2648,7 @@ def add_heat(
                 efficiency=costs.at["water tank charger", "efficiency"],
                 carrier=f"{heat_system} water tanks charger",
                 p_nom_extendable=True,
+                marginal_cost=costs.at["water tank charger", "marginal_cost"],
             )
 
             n.add(
