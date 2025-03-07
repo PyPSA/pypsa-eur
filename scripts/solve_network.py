@@ -1335,7 +1335,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_sector_network_perfect",
-            configfiles="config/test/config.perfect.yaml",
             opts="",
             clusters="5",
             ll="v1.0",
