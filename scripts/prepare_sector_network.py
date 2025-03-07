@@ -2348,7 +2348,6 @@ def add_heat(
     spatial: object,
     options: dict,
     investment_year: int,
-    marginal_cost_water_tank_charger: float,
 ):
     """
     Add heat sector to the network including heat demand, heat pumps, storage, and conversion technologies.
