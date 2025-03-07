@@ -60,7 +60,7 @@ rule solve_operations_network:
         (RESULTS + "benchmarks/solve_operations_network/base_s_{clusters}_elec_{opts}")
     threads: 4
     resources:
-        mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
+        mem_mb=memory,
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
         shadow_config

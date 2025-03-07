@@ -72,6 +72,7 @@ import linopy
 import numpy as np
 import pandas as pd
 import pypsa
+import tqdm
 import xarray as xr
 from _helpers import configure_logging, set_scenario_config
 from packaging.version import Version, parse
@@ -82,12 +83,18 @@ from pypsa.clustering.spatial import (
     get_clustering_from_busmap,
 )
 from scipy.sparse.csgraph import connected_components
+from shapely.algorithms.polylabel import polylabel
+from shapely.geometry import MultiPolygon, Polygon
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
+
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
+BUS_TOL = 500  # meters
 
 
 def normed(x):
@@ -288,13 +295,13 @@ def cluster_regions(
 
     Parameters
     ----------
-    - busmaps (list): A list of busmaps used for clustering.
-    - regions (gpd.GeoDataFrame): The regions to cluster.
-    - with_country (bool): Whether to keep country column.
+        - busmaps (list) : A list of busmaps used for clustering.
+        - regions (gpd.GeoDataFrame) : The regions to cluster.
+        - with_country (bool) : Whether to keep country column.
 
     Returns
     -------
-    None
+        None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     columns = ["name", "country", "geometry"] if with_country else ["name", "geometry"]
@@ -302,6 +309,150 @@ def cluster_regions(
     regions_c = regions.dissolve(busmap)
     regions_c.index.name = "name"
     return regions_c.reset_index()
+
+
+def busmap_for_admin_regions(
+    n: pypsa.Network,
+    admin_shapes: str,
+    params: dict,
+) -> pd.Series:
+    """
+    Create a busmap based on administrative regions using the NUTS3 shapefile.
+
+    Parameters
+    ----------
+        - n (pypsa.Network) : The network to cluster.
+        - admin_shapes (str) : The path to the administrative regions.
+        - params (dict) : The parameters for clustering.
+
+    Returns
+    -------
+        busmap (pd.Series): Busmap mapping each bus to an administrative region.
+    """
+    countries = params.countries
+    admin_regions = gpd.read_file(admin_shapes)
+
+    admin_levels = params.administrative
+    level = admin_levels.get("level", 0)
+    logger.info(f"Clustering at administrative level {level}.")
+
+    # check if BA, MD, UA, or XK are in the network
+    adm1_countries = ["BA", "MD", "UA", "XK"]
+    buses = n.buses[["x", "y", "country"]].copy()
+
+    # Find the intersection of adm1_countries and n.buses.country
+    adm1_countries = list(set(adm1_countries).intersection(buses["country"].unique()))
+
+    if adm1_countries:
+        logger.info(
+            f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
+        )
+
+    country_level = {
+        k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+    }
+    if country_level:
+        country_level_list = "\n".join(
+            [f"- {k}: level {v}" for k, v in country_level.items()]
+        )
+        logger.info(
+            f"Setting individual administrative levels for:\n{country_level_list}"
+        )
+
+    buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
+    buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
+    buses["busmap"] = ""
+
+    # Map based for each country
+    logger.info("Mapping buses to administrative regions.")
+    for country in tqdm.tqdm(buses["country"].unique()):
+        buses_subset = buses.loc[buses["country"] == country]
+
+        buses.loc[buses_subset.index, "busmap"] = gpd.sjoin_nearest(
+            buses_subset.to_crs(epsg=3857),
+            admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
+            how="left",
+        )["admin"]
+
+    return buses["busmap"]
+
+
+def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
+    """
+    Checks for each MultiPolygon if it contains multiple Polygons and returns the one with the largest area.
+
+    Parameters
+    ----------
+        geometry (MultiPolygon) : The MultiPolygon to check.
+
+    Returns
+    -------
+        geometry (Polygon) : The Polygon with the largest area.
+    """
+    if isinstance(geometry, MultiPolygon):
+        # Find the polygon with the largest area in the MultiPolygon
+        largest_polygon = max(geometry.geoms, key=lambda poly: poly.area)
+
+        return largest_polygon
+    else:
+        # If it's a Polygon, return it as is
+        return geometry
+
+
+def update_bus_coordinates(
+    n: pypsa.Network,
+    busmap: pd.Series,
+    admin_shapes: str,
+    geo_crs: str = GEO_CRS,
+    distance_crs: str = DISTANCE_CRS,
+    tol: float = BUS_TOL,
+) -> None:
+    """
+    Updates the x, y coordinates of the buses in the original network based on the busmap and the administrative regions.
+    Using the Pole of Inaccessibility (PoI) to determine internal points of the administrative regions.
+
+    Parameters
+    ----------
+        - n (pypsa.Network) : The original network.
+        - busmap (pd.Series) : The busmap mapping each bus to an administrative region.
+        - admin_shapes (str) : The path to the administrative regions.
+        - geo_crs (str) : The geographic coordinate reference system.
+        - distance_crs (str) : The distance coordinate reference system.
+        - tol (float) : The tolerance in meters for the PoI calculation.
+
+    Returns
+    -------
+        None
+    """
+    logger.info("Updating x, y coordinates of buses based on administrative regions.")
+    admin_regions = gpd.read_file(admin_shapes).set_index("admin")
+    admin_regions["geometry"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(keep_largest_polygon)
+        .to_crs(geo_crs)
+    )
+    admin_regions["poi"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(lambda polygon: polylabel(polygon, tolerance=tol / 2))
+        .to_crs(geo_crs)
+    )
+    admin_regions["x"] = admin_regions["poi"].x
+    admin_regions["y"] = admin_regions["poi"].y
+
+    busmap_df = pd.DataFrame(busmap)
+    busmap_df = pd.merge(
+        busmap_df,
+        admin_regions[["x", "y"]],
+        left_on="busmap",
+        right_index=True,
+        how="left",
+    )
+
+    # Update x, y coordinates of original network
+    n.buses["x"] = busmap_df["x"]
+    n.buses["y"] = busmap_df["y"]
 
 
 if __name__ == "__main__":
@@ -313,6 +464,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params = snakemake.params
+    mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
     n = pypsa.Network(snakemake.input.network)
@@ -327,6 +479,8 @@ if __name__ == "__main__":
 
     if snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
+    elif mode == "administrative":
+        n_clusters = np.nan
     else:
         n_clusters = int(snakemake.wildcards.clusters)
 
@@ -338,8 +492,20 @@ if __name__ == "__main__":
     else:
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-        custom_busmap = params.custom_busmap
-        if custom_busmap:
+        if mode == "administrative":
+            busmap = busmap_for_admin_regions(
+                n,
+                snakemake.input.admin_shapes,
+                params,
+            )
+            # Update x, y coordinates, ensuring that bus locations are inside the administrative region
+            update_bus_coordinates(
+                n,
+                busmap,
+                snakemake.input.admin_shapes,
+            )
+
+        elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
             ).squeeze()
