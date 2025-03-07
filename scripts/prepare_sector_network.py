@@ -2730,7 +2730,9 @@ def add_heat(
                     carrier=f"{heat_system} water pits charger",
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
-                    marginal_cost=costs.at["central water pit charger", "marginal_cost"],
+                    marginal_cost=costs.at[
+                        "central water pit charger", "marginal_cost"
+                    ],
                 )
 
                 n.add(
