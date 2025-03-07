@@ -83,12 +83,18 @@ from pypsa.clustering.spatial import (
     get_clustering_from_busmap,
 )
 from scipy.sparse.csgraph import connected_components
+from shapely.algorithms.polylabel import polylabel
+from shapely.geometry import MultiPolygon, Polygon
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
 warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
+
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
+BUS_TOL = 500  # meters
 
 
 def normed(x):
@@ -309,7 +315,7 @@ def busmap_for_admin_regions(
     n: pypsa.Network,
     admin_shapes: str,
     params: dict,
-):
+) -> pd.Series:
     """
     Create a busmap based on administrative regions using the NUTS3 shapefile.
 
@@ -371,13 +377,91 @@ def busmap_for_admin_regions(
     return buses["busmap"]
 
 
+def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
+    """
+    Checks for each MultiPolygon if it contains multiple Polygons and returns the one with the largest area.
+
+    Parameters
+    ----------
+        geometry (MultiPolygon) : The MultiPolygon to check.
+
+    Returns
+    -------
+        geometry (Polygon) : The Polygon with the largest area.
+    """
+    if isinstance(geometry, MultiPolygon):
+        # Find the polygon with the largest area in the MultiPolygon
+        largest_polygon = max(geometry.geoms, key=lambda poly: poly.area)
+
+        return largest_polygon
+    else:
+        # If it's a Polygon, return it as is
+        return geometry
+
+
+def update_bus_coordinates(
+    n: pypsa.Network,
+    busmap: pd.Series,
+    admin_shapes: str,
+    geo_crs: str = GEO_CRS,
+    distance_crs: str = DISTANCE_CRS,
+    tol: float = BUS_TOL,
+) -> None:
+    """
+    Updates the x, y coordinates of the buses in the original network based on the busmap and the administrative regions.
+    Using the Pole of Inaccessibility (PoI) to determine internal points of the administrative regions.
+
+    Parameters
+    ----------
+        - n (pypsa.Network) : The original network.
+        - busmap (pd.Series) : The busmap mapping each bus to an administrative region.
+        - admin_shapes (str) : The path to the administrative regions.
+        - geo_crs (str) : The geographic coordinate reference system.
+        - distance_crs (str) : The distance coordinate reference system.
+        - tol (float) : The tolerance in meters for the PoI calculation.
+
+    Returns
+    -------
+        None
+    """
+    logger.info("Updating x, y coordinates of buses based on administrative regions.")
+    admin_regions = gpd.read_file(admin_shapes).set_index("admin")
+    admin_regions["geometry"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(keep_largest_polygon)
+        .to_crs(geo_crs)
+    )
+    admin_regions["poi"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(lambda polygon: polylabel(polygon, tolerance=tol / 2))
+        .to_crs(geo_crs)
+    )
+    admin_regions["x"] = admin_regions["poi"].x
+    admin_regions["y"] = admin_regions["poi"].y
+
+    busmap_df = pd.DataFrame(busmap)
+    busmap_df = pd.merge(
+        busmap_df,
+        admin_regions[["x", "y"]],
+        left_on="busmap",
+        right_index=True,
+        how="left",
+    )
+
+    # Update x, y coordinates of original network
+    n.buses["x"] = busmap_df["x"]
+    n.buses["y"] = busmap_df["y"]
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "cluster_network",
-            clusters=37,
+            clusters="adm",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -417,6 +501,13 @@ if __name__ == "__main__":
                 snakemake.input.admin_shapes,
                 params,
             )
+            # Update x, y coordinates, ensuring that bus locations are inside the administrative region
+            update_bus_coordinates(
+                n,
+                busmap,
+                snakemake.input.admin_shapes,
+            )
+
         elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
