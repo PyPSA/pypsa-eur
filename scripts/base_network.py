@@ -1452,10 +1452,6 @@ def build_admin_shapes(
         logger.info(f"Building bus regions at administrative level {level}")
         nuts3_regions["column"] = level_map[level]
 
-        # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
-        if "GB" in countries:
-            nuts3_regions.loc[nuts3_regions.level1 == "GBI", "column"] = "level1"
-
         # Only keep the values whose keys are in countries
         country_level = {
             k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
@@ -1476,6 +1472,10 @@ def build_admin_shapes(
                 .map(country_level)
                 .map(level_map)
             )
+
+        # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
+        if "GB" in countries:
+            nuts3_regions.loc[nuts3_regions.level1 == "GBI", "column"] = "level1"
 
         nuts3_regions["admin"] = nuts3_regions.apply(
             lambda row: row[row["column"]], axis=1
@@ -1559,10 +1559,6 @@ def build_admin_shapes(
         )
         admin_shapes.set_index("admin", inplace=True)
 
-        # Convert contains columns into strings (pyogrio-friendly)
-        admin_shapes["contains"] = admin_shapes["contains"].apply(lambda x: ",".join(x))
-        admin_shapes["contains"] = admin_shapes["contains"].astype(str)
-
     return admin_shapes[["country", "parent", "contains", "substations", "geometry"]]
 
 
@@ -1643,5 +1639,8 @@ if __name__ == "__main__":
     offshore_shapes.to_file(snakemake.output.regions_offshore)
     # append_bus_shapes(n, offshore_shapes, "offshore")
 
+    # Convert contains columns into strings (pyogrio-friendly)
+    admin_shapes["contains"] = admin_shapes["contains"].apply(lambda x: ",".join(x))
+    admin_shapes["contains"] = admin_shapes["contains"].astype(str)
     admin_shapes.to_file(snakemake.output.admin_shapes)
     # append_bus_shapes(n, admin_shapes, "admin")
