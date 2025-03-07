@@ -360,7 +360,13 @@ def add_retrofit_gas_boiler_constraint(
     n: pypsa.Network, snapshots: pd.DatetimeIndex
 ) -> None:
     """
-    Allow retrofitting of existing gas boilers to H2 boilers.
+    Allow retrofitting of existing gas boilers to H2 boilers and impose load-following must-run condition on existing gas boilers.
+    Modifies the network in place, no return value.
+
+    n : pypsa.Network
+        The PyPSA network to be modified
+    snapshots : pd.DatetimeIndex
+        The snapshots of the network
     """
     c = "Link"
     logger.info("Add constraint for retrofitting gas boilers to H2 boilers.")

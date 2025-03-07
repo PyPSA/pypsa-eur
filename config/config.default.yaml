@@ -613,12 +613,15 @@ sector:
     micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
-  marginal_cost_storage: 0. #1e-4
   methanation: true
   coal_cc: false
   dac: true
   co2_vent: false
-  central_heat_vent: true
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
+  marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -845,9 +848,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
-  # capital_cost:
-  #   onwind: 500
+  overwrites: {}
   marginal_cost:
     solar: 0.01
     onwind: 0.015
@@ -858,6 +859,8 @@ costs:
     fuel cell: 0.
     battery: 0.
     battery inverter: 0.
+    home battery storage: 0
+    water tank charger: 0.03
   emission_prices:
     enable: false
     co2: 0.
