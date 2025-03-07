@@ -1337,6 +1337,7 @@ if __name__ == "__main__":
             "solve_sector_network_perfect",
             opts="",
             clusters="5",
+            configfiles="config/test/config.perfect.yaml",
             ll="v1.0",
             sector_opts="",
             # planning_horizons="2030",
