@@ -5338,7 +5338,6 @@ if __name__ == "__main__":
             options=options,
             investment_year=investment_year,
                 "marginal_cost_water_tank_charger"
-            ],
         )
 
     if options["biomass"]:
