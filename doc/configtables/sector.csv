@@ -97,8 +97,6 @@ chp,--,,
 -- micro_chp,--,"{true, false}",Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
-marginal_cost_home_battery_storage,"currency/MWh ",float,The marginal cost of discharging batteries in distributed grids
-marginal_cost_water_tank_charger,"currency/MWh ",float,The marginal cost of charging water tanks in all heating systems
 marginal_cost_heat_vent,"currency/MWh ",float,The marginal cost of heat-venting in all heating systems
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
