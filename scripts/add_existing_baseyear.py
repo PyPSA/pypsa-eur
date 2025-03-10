@@ -7,6 +7,7 @@ horizon.
 """
 
 import logging
+from collections.abc import Sequence
 from types import SimpleNamespace
 
 import country_converter as coco
@@ -464,6 +465,25 @@ def get_efficiency(
     return efficiency
 
 
+def valid_grouping_years(
+    grouping_years: Sequence[int] | pd.Index,
+    baseyear: int,
+    max_lifetime: float | None = None,
+) -> pd.Index:
+    grouping_years = pd.Index(sorted(grouping_years)).astype(int)
+
+    valid = grouping_years <= baseyear
+    if max_lifetime is not None:
+        valid &= grouping_years + max_lifetime >= baseyear
+    if not valid.all():
+        logger.warning(
+            "Only grouping years between [baseyear - max. lifetime, baseyear] are used."
+            f"Dropping {grouping_years[~valid]}."
+        )
+
+    return grouping_years[valid]
+
+
 def add_heating_capacities_installed_before_baseyear(
     n: pypsa.Network,
     costs: pd.DataFrame,
@@ -490,7 +510,7 @@ def add_heating_capacities_installed_before_baseyear(
         Technology costs
     baseyear : int
         Base year for analysis
-    grouping_years : list
+    grouping_years : pd.Index
         Intervals to group capacities
     heat_pump_cop : xr.DataArray
         Heat pump coefficients of performance
@@ -532,32 +552,14 @@ def add_heating_capacities_installed_before_baseyear(
         else:
             nodes_elec = nodes
 
-            too_large_grouping_years = [
-                gy for gy in grouping_years if gy >= int(baseyear)
-            ]
-            if too_large_grouping_years:
-                logger.warning(
-                    f"Grouping years >= baseyear are ignored. Dropping {too_large_grouping_years}."
-                )
-            valid_grouping_years = pd.Series(
-                [
-                    int(grouping_year)
-                    for grouping_year in grouping_years
-                    if int(grouping_year) + default_lifetime > int(baseyear)
-                    and int(grouping_year) < int(baseyear)
-                ]
-            )
+        # get number of years of each interval
+        _years = pd.Index([grouping_years[0] - baseyear + default_lifetime]).append(
+            grouping_years.diff()
+        )
+        # Installation is assumed to be linear for the past
+        ratios = _years / np.sum(_years)
 
-            assert valid_grouping_years.is_monotonic_increasing
-
-            # get number of years of each interval
-            _years = valid_grouping_years.diff()
-            # Fill NA from .diff() with value for the first interval
-            _years[0] = valid_grouping_years[0] - baseyear + default_lifetime
-            # Installation is assumed to be linear for the past
-            ratios = _years / _years.sum()
-
-        for ratio, grouping_year in zip(ratios, valid_grouping_years):
+        for ratio, grouping_year in zip(ratios, grouping_years):
             # Add heat pumps
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
                 costs_name = heat_system.heat_pump_costs_name(heat_source)
@@ -732,8 +734,10 @@ if __name__ == "__main__":
         Nyears,
     )
 
-    grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
-    grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]
+    grouping_years_power = valid_grouping_years(
+        snakemake.params.existing_capacities["grouping_years_power"],
+        baseyear,
+    )
     add_power_capacities_installed_before_baseyear(
         n=n,
         costs=costs,
@@ -751,6 +755,11 @@ if __name__ == "__main__":
         year = int(snakemake.params["energy_totals_year"])
         heating_efficiencies = pd.read_csv(fn, index_col=[1, 0]).loc[year]
 
+        grouping_years_heat = valid_grouping_years(
+            snakemake.params.existing_capacities["grouping_years_heat"],
+            baseyear,
+            snakemake.params.existing_capacities["default_heating_lifetime"],
+        )
         add_heating_capacities_installed_before_baseyear(
             n=n,
             costs=costs,
