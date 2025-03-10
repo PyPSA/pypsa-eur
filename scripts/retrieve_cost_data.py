@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     if costs_update['enable']:
 
-        print(f'########## PyPSA-ES <retrieve_cost_data.py>: Including cost updates detailed in {costs_update["costs_update_file"]}')
+        logger.info(f'########## [PyPSA-Spain] <retrieve_cost_data.py> INFO: Including cost updates detailed in {costs_update["costs_update_file"]}')
         ########## "to_fn" contains the file, e.g. resources/costs_2030.csv
         df = pd.read_csv(to_fn)
         original_columns = df.columns.tolist()

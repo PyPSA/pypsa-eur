@@ -27,15 +27,15 @@ pypsa_spain:
       # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
       CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
+  costs_update:
+    enable: true
+    costs_update_file: 'data_ES/costs/costs_updates.csv'
 
 pypsa_spain_temporarily_disabled:
   retrieve_Iberian_cutout: false
   interconnections:
     enable: false
     ic_ES_file: data_ES/interconnections/interconnections.yaml
-  costs_update:
-    enable: false
-    costs_update_file: 'data_ES/costs/costs_updates.csv'
 
 
 
