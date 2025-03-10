@@ -89,7 +89,7 @@ class HeatSystem(Enum):
 
         Returns
         -------
-        str
+        HeatSystemType
             The type of the heat system.
 
         Raises
