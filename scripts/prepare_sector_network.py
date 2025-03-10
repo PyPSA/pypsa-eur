@@ -1100,7 +1100,7 @@ def add_methanol_to_power(n, costs, types=None):
         )
 
 
-def add_methanol_to_olefins(n, costs):
+def add_methanol_to_hvc(n, costs):
     nodes = spatial.nodes
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
@@ -1123,7 +1123,7 @@ def add_methanol_to_olefins(n, costs):
         marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         bus0=spatial.methanol.nodes,
-        bus1=spatial.oil.naphtha,
+        bus1=spatial.hvc.nodes,
         bus2=nodes,
         bus3="co2 atmosphere",
         p_min_pu=1,
@@ -4459,6 +4459,7 @@ def add_industry(
             - industrial_demand.loc[loads_i, "current electricity"].sum()
             / n.loads_t.p_set[loads_i].sum().sum()
         )
+
         n.loads_t.p_set[loads_i] *= factor
 
     n.add(
@@ -4693,6 +4694,12 @@ def add_steel_industry(n, investment_year, steel_data, options):
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
     p_set = cap_share * hourly_steel_production
+    p_set.index = p_set.index + ' steel'
+
+    if not options["endo_industry"]["regional_steel_demand"]:
+
+        p_set = p_set.sum()
+
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
     max_cap = max(capacities) * 2
 
@@ -4731,15 +4738,6 @@ def add_steel_industry(n, investment_year, steel_data, options):
         carrier="steel",
         unit=unit,
     )
-
-
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    ramp_limit = 0
-    p_set.index = p_set.index + ' steel'
-
-    if not options["endo_industry"]["regional_steel_demand"]:
-
-        p_set = p_set.sum()
 
     # STEEL
     n.add(
@@ -4794,7 +4792,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus4=spatial.co2.bof,
         carrier="BF-BOF",
         p_nom_extendable=True,
-        p_nom_max=max_cap * bof['iron input'],
+        #p_nom_max=max_cap * bof['iron input'],
         capital_cost=bof['capital cost'],
         efficiency=1 / bof['iron input'],
         efficiency2= - bof['coal input'] / bof['iron input'],  # MWhth coal per kt iron
@@ -4837,7 +4835,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus3=nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
-        p_nom_max = max_cap * eaf_h2['iron input'],
+        #p_nom_max = max_cap * eaf_h2['iron input'],
         capital_cost= eaf_h2['capital cost'],
         efficiency= 1 / eaf_h2['iron input'],
         efficiency2= -1 / eaf_h2['iron input'], # one unit of dri gas per kt iron
@@ -4953,8 +4951,6 @@ def add_cement_industry(n, investment_year, cement_data, options):
         unit="kt/yr",
     )
 
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    ramp_limit = 0
     
     # CEMENT
     n.add(
@@ -5074,23 +5070,7 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
 
         p_set = p_set.sum()
 
-
-    """
-    if not options["endo_industry"]["regional_cement_demand"]:
-
-        regional_prod = regional_prod.sum()
-
-    # Determine the ammonia production load based on the specified option
-    if options["ammonia"] == "regional":
-        # Calculate regional ammonia production load (MWh) and normalize by hours in a year
-        p_set = (industrial_production.loc[spatial.ammonia.locations, "Ammonia"]
-                 .rename(index=lambda x: x + " NH3") * cf_industry['MWh_NH3_per_tNH3'] / nhours)
-    else:
-        # Calculate total ammonia production load (MWh) for all regions and normalize by hours in a year
-        p_set = industrial_production["Ammonia"].sum() * cf_industry["MWh_NH3_per_tNH3"] / nhours
-    """
-
-    # Remove the previous methanol load, which is based on a different quantification of energy demand
+    # Remove the previous ammonia load, which is based on a different quantification of energy demand
     n.loads.drop(n.loads.index[n.loads.carrier == "NH3"], inplace=True)
 
     # Add the new ammonia load to the network
@@ -5119,7 +5099,7 @@ def add_methanol_load(n,investment_year, methanol_data, options):
 
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_methanol_production = (menthanol_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
+    hourly_methanol_production = (methanol_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
     #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Methnol production is in ktMeOH/yr
 
     # Share of methanol production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -5131,22 +5111,6 @@ def add_methanol_load(n,investment_year, methanol_data, options):
     if not options["methanol"]["regional_methanol_demand"]:
 
         p_set = p_set.sum()
-
-
-    """
-    if not options["endo_industry"]["regional_cement_demand"]:
-
-        regional_prod = regional_prod.sum()
-
-    # Determine the ammonia production load based on the specified option
-    if options["ammonia"] == "regional":
-        # Calculate regional ammonia production load (MWh) and normalize by hours in a year
-        p_set = (industrial_production.loc[spatial.ammonia.locations, "Ammonia"]
-                 .rename(index=lambda x: x + " NH3") * cf_industry['MWh_NH3_per_tNH3'] / nhours)
-    else:
-        # Calculate total ammonia production load (MWh) for all regions and normalize by hours in a year
-        p_set = industrial_production["Ammonia"].sum() * cf_industry["MWh_NH3_per_tNH3"] / nhours
-    """
 
     # Remove the previous industry methanol load, which is based on a different quantification of energy demand
     # Methanol load for shipping is added on top of this, and it was 0 in historical years
@@ -6204,19 +6168,21 @@ if __name__ == "__main__":
         cement_data = clean_industry_df(industry_production_scenarios, 'cement')
         chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
 
-        methanol_data = clean_industry_df(industry_production_scenarios, 'methanol')
-        hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
-
         add_steel_industry(n, investment_year, steel_data, options)
         add_cement_industry(n, investment_year, cement_data, options)
 
         if options["endo_industry"]["endo_ammonia"]:
             ammonia_data = clean_industry_df(industry_production_scenarios, 'ammonia')
             add_ammonia_load(n,investment_year, ammonia_data, options)
+        
+        if options["endo_industry"]["endo_methanol"]:
+            methanol_data = clean_industry_df(industry_production_scenarios, 'methanol')
+            add_methanol_load(n,investment_year, methanol_data, options)
 
         if options["endo_industry"]["endo_hvc"]:
+            hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
             add_hvc(n, options)
-            add_methanol_to_olefins(n, costs)
+            add_methanol_to_hvc(n, costs)
 
     if options["heating"]:
         add_waste_heat(n)

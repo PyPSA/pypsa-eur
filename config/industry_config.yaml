@@ -117,13 +117,16 @@ sector:
     enable: true
     regional_steel_demand: false
     regional_cement_demand: false
-    cement_prod_growth: true
+    empirical_demand_growth: false
     endo_chemicals: true
     # Ammonia
     endo_ammonia: true # if true it also skips the ammonia cracker for simplicity
-    endo_hvc: true
+    endo_hvc: true # Adding biomass_to_liquid and biomass_to_liquid_cc
+    endo_methanol: true
     regional_hvc: true
     policy_scenario: maintain
+  biomass_to_liquid: true
+  biomass_to_liquid_cc: false
 
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:

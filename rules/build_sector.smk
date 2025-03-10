@@ -851,7 +851,7 @@ if config["sector"]["endo_industry"].get("enable", False):
             "../scripts/build_industrial_policies_projections.py"
 
 
-if config["sector"]["endo_industry"].get("enable", False):
+if config["sector"]["endo_industry"].get("enable", False)  and config["sector"]["endo_industry"].get("empirical_demand_growth", False):
 
     rule build_industry_steel_production_projections:
         input:
@@ -867,7 +867,7 @@ if config["sector"]["endo_industry"].get("enable", False):
         script:
             "../scripts/build_industry_steel_production_projections.py"
 
-if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["endo_industry"].get("cement_prod_growth", False): 
+if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["endo_industry"].get("empirical_demnad_growth", False): 
 
     rule build_industry_cement_production_projections:
         params:
