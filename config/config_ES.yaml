@@ -6,9 +6,8 @@
 
 # docs in https://pypsa-spain.readthedocs.io/
 pypsa_spain:
-  retrieve_Iberian_cutout: false
   q2q_transform:
-    enable: true
+    enable: false
     onwind: data_ES/q2q/q2q_onwind_v003.pkl
     offwind-ac: ''
     offwind-dc: ''
@@ -20,17 +19,20 @@ pypsa_spain:
     annual_value: 316.5 # TWh   230 # TWh
     profiles: data_ES/electricity_demand/electricity_demand_profiles_NUTS2_by_economicSector_2022.csv
     percentages: data_ES/electricity_demand/electricity_demand_percentages_NUTS2_by_economicSector_2022.csv
-  interconnections:
-    enable: false
-    ic_ES_file: data_ES/interconnections/interconnections.yaml
   update_elec_capacities:
-    enable: true
+    enable: false
     carriers_to_update:
       # onwind: data_ES/esios/esios_onwind_capacity_2022.csv
       # solar: data_ES/esios/esios_solar_capacity_2022.csv
       # nuclear: data_ES/esios/esios_nuclear_capacity_2022.csv
       CCGT: data_ES/esios/esios_CCGT_capacity_2022.csv
     method_increase: proportional # additional / proportional
+
+pypsa_spain_temporarily_disabled:
+  retrieve_Iberian_cutout: false
+  interconnections:
+    enable: false
+    ic_ES_file: data_ES/interconnections/interconnections.yaml
   costs_update:
     enable: false
     costs_update_file: 'data_ES/costs/costs_updates.csv'
