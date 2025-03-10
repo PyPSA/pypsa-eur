@@ -82,22 +82,6 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     df.index = cc.convert(df.index, to="iso2")
     df.index.name = "countries"
 
-
-
-    ########## [PyPSA-Spain] 
-    # missing hydro data for 2022
-    # (note that 2022 is handled as a number, not as a string '2022')
-    if 2022 not in df.columns:
-        df[2022] = float('nan')
-        if not capacities:
-            df.loc['ES', 2022] = 17.86
-            print(f'########## [PyPSA-Spain]: adding hydro GENERATION for 2022: {df.loc["ES", 2022]}')
-        else:
-            df.loc['ES', 2022] = df.loc['ES', 2021]
-            print(f'########## [PyPSA-Spain]: adding hydro CAPACITY for 2022 (copied from 2021): {df.loc["ES", 2022]}')
-
-
-
     # convert to MW of MWh/a
     factor = 1e3 if capacities else 1e6
     df = df.T[countries] * factor
