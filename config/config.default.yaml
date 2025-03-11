@@ -438,6 +438,14 @@ existing_capacities:
   - coal
   - oil
   - uranium
+  powerplant_fueltype_to_technology_carrier:
+    Hard Coal: coal/coal
+    Lignite: lignite/lignite
+    Nuclear: nuclear/uranium
+    "Natural Gas/CCGT": CCGT/gas
+    "Natural Gas/OCGT": OCGT/gas
+    Bioenergy: urban central solid biomass CHP/biomass
+
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
