@@ -541,7 +541,9 @@ def mock_snakemake(
     elif user_in_script_dir:
         os.chdir(root_dir)
     elif Path.cwd().resolve() != root_dir:
-        logger.info("Not in scripts or root directory, will assume this is a separate workdir")
+        logger.info(
+            "Not in scripts or root directory, will assume this is a separate workdir"
+        )
         workdir = Path.cwd()
 
     try:
