@@ -533,6 +533,7 @@ def mock_snakemake(
     else:
         root_dir = Path(root_dir).resolve()
 
+    workdir = None
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
@@ -540,12 +541,14 @@ def mock_snakemake(
     elif user_in_script_dir:
         os.chdir(root_dir)
     elif Path.cwd().resolve() != root_dir:
-        raise RuntimeError(
-            "mock_snakemake has to be run from the repository root"
-            f" {root_dir} or scripts directory {script_dir}"
+        logger.info(
+            "Not in scripts or root directory, will assume this is a separate workdir"
         )
+        workdir = Path.cwd()
+
     try:
         for p in SNAKEFILE_CHOICES:
+            p = root_dir / p
             if os.path.exists(p):
                 snakefile = p
                 break
@@ -566,6 +569,7 @@ def mock_snakemake(
             storage_settings,
             dag_settings,
             storage_provider_settings=dict(),
+            overwrite_workdir=workdir,
         )
         workflow.include(snakefile)
 
