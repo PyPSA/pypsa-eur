@@ -86,8 +86,21 @@ def add_brownfield(
             )
         ]
 
+        industry_processes = c.df.index[
+            c.df[f"{attr}_nom_extendable"]
+            & (
+                c.df.index.str.contains("BOF")
+                | c.df.index.str.contains("DRI")
+                | c.df.index.str.contains("Blast Furnaces")
+                | c.df.index.str.contains("EAF")
+                | c.df.index.str.contains("Cement Plant")
+                | c.df.index.str.contains("Cement TGR")
+                | c.df.index.str.contains("naphtha steam cracker")
+            )
+        ]
+
         threshold = snakemake.params.threshold_capacity
-        threshold_steel = snakemake.params.threshold_capacity_steel
+        threshold_industry = snakemake.params.threshold_capacity_industry
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -117,8 +130,8 @@ def add_brownfield(
             n_p.mremove(
                 c.name,
                 c.df.index[
-                    (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(steel_processes))
-                    & (c.df[f"{attr}_nom_opt"] < threshold_steel)
+                    (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(industry_processes))
+                    & (c.df[f"{attr}_nom_opt"] < threshold_industry)
                 ],
             )
 

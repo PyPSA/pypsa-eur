@@ -1119,7 +1119,7 @@ def add_methanol_to_hvc(n, costs):
         nodes,
         suffix=" methanol-to-olefins",
         carrier=tech,
-        capital_cost=costs.at[tech, "fixed"] / costs.at[tech, "methanol-input"],
+        capital_cost=costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"],
         marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
         p_nom_extendable=True,
         bus0=spatial.methanol.nodes,
@@ -5026,7 +5026,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
     n.add(
         "Link",
         nodes,
-        suffix = " cement CC",
+        suffix = " cement TGR",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
@@ -5916,13 +5916,14 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             if len(files) == 0:
                 # If no file is found, allow skipping for these specific carriers
                 if "offwind" in carrier or "hydro" in carrier or "PHS" in carrier or "ror" in carrier:
-                    logger.warning(f"No climate data timeseries found for {country} with carrier {carrier}. Skipping.")
+                    #logger.warning(f"No climate data timeseries found for {country} with carrier {carrier}. Skipping.")
                     continue
                 else:
                     raise FileNotFoundError(f"No file found matching pattern: {country}_*_{carrier_name}.nc")
 
             elif len(files) > 1:
                 raise ValueError(f"Multiple files found matching pattern: {country}_*_{carrier_name}.nc -> {files}")
+
 
             # Open the dataset
             ds = xr.open_dataset(os.path.join(dir_path, files[0]))

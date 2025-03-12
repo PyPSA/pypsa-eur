@@ -7,6 +7,7 @@
 run:
   prefix: ""
   name: "all"
+  #- base_eu_regain
   scenarios:
     enable: true
     file: config/industry_policy_scenarios.yaml
@@ -68,6 +69,9 @@ electricity:
     Link: [] # H2 pipeline
   renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
 
+existing_capacities:
+  threshold_capacity_industry: 0.001
+
 # docs
 # TODO: PyPSA-Eur merge issue in prepare_sector_network.py
 # regulate what components with which carriers are kept from PyPSA-Eur;
@@ -127,6 +131,8 @@ sector:
     policy_scenario: maintain
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
+  tes: false
+  electricity_distribution_grid: false
 
   # This wildcard is not working if only in config.default.yaml (I have no idea why)
   chp:

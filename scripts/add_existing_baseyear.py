@@ -356,6 +356,7 @@ def add_power_capacities_installed_before_baseyear(
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
                 if generator != "urban central solid biomass CHP":
+                    
                     n.add(
                         "Link",
                         new_capacity.index,
@@ -729,10 +730,6 @@ def add_steel_industry_existing(n):
     p_nom_bof = capacities_bof / nhours  # get the hourly production capacity
     p_nom_eaf = capacities_eaf / nhours  # get the hourly production capacity
 
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 0
-    ramp_limit = 0
-
     # PARAMETERS
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
     bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
@@ -787,7 +784,7 @@ def add_cement_industry_existing(n):
     start_dates = round(start_dates['Cement'])
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
-    capacities = capacities * keys["Cement_SFI"]
+    capacities = capacities * keys["Cement"]
 
     start_dates = start_dates.where(
         (start_dates >= 1000) & np.isfinite(start_dates), 2000
@@ -797,10 +794,6 @@ def add_cement_industry_existing(n):
     p_nom = pd.DataFrame(index=nodes, columns=(["value"]))
 
     p_nom = capacities / nhours  # get the hourly production capacity
-
-    # Should steel be produced at a constant rate during the year or not? 1 or 0
-    prod_constantly = 0
-    ramp_limit = 0
 
     ########### Add existing cement production capacities ############
 
@@ -821,7 +814,6 @@ def add_cement_industry_existing(n):
         bus3=spatial.co2.cement,
         carrier="cement plant",
         p_nom=p_nom,
-        p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         p_nom_extendable=False,
         marginal_cost=-0.1,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
@@ -864,12 +856,11 @@ def add_chemicals_industry_existing(n, options):
         bus2=nodes + " H2",
         p_nom_extendable=False,
         p_nom=p_nom_nh3,
-        #p_min_pu=prod_constantly,  # hot elements cannot be turned off easily
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
         / costs.at["Haber-Bosch", "electricity-input"],
-        capital_cost=costs.at["Haber-Bosch", "fixed"]
+        capital_cost=costs.at["Haber-Bosch", "capital_cost"]
         / costs.at["Haber-Bosch", "electricity-input"],
         marginal_cost=costs.at["Haber-Bosch", "VOM"]
         / costs.at["Haber-Bosch", "electricity-input"],
@@ -906,7 +897,7 @@ def add_chemicals_industry_existing(n, options):
         p_nom_extendable=False,
         p_nom=p_nom_meth,
         p_min_pu=options["min_part_load_methanolisation"],
-        capital_cost=costs.at["methanolisation", "fixed"]
+        capital_cost=costs.at["methanolisation", "capital_cost"]
         * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
         marginal_cost=options["MWh_MeOH_per_MWh_H2"]
         * costs.at["methanolisation", "VOM"],
