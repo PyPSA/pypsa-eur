@@ -60,6 +60,8 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     costs = pd.read_csv(snakemake.input.costs, index_col=[0, 1, 2], header=[0, 1, 2])
+
+    # clean multiindex: handle empty opts/sector_opts & make planning horizons numeric
     costs.columns = pd.MultiIndex.from_tuples(
         [
             (lvl0, "" if lvl1.startswith("Unnamed:") else lvl1, pd.to_numeric(lvl2))
