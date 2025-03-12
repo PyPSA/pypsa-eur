@@ -331,7 +331,7 @@ rule make_cumulative_costs:
         RESULTS + "logs/make_cumulative_costs.log",
     benchmark:
         RESULTS
-        + "benchmarks/make_cumulative_costs"
+        +"benchmarks/make_cumulative_costs"
     conda:
         "../envs/environment.yaml"
     script:

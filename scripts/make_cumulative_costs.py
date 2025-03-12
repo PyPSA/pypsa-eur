@@ -59,13 +59,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    costs = pd.read_csv(
-        snakemake.input.costs, index_col=[0, 1, 2], header=[0, 1, 2]
+    costs = pd.read_csv(snakemake.input.costs, index_col=[0, 1, 2], header=[0, 1, 2])
+    costs.columns = pd.MultiIndex.from_tuples(
+        [
+            (lvl0, "" if lvl1.startswith("Unnamed:") else lvl1, pd.to_numeric(lvl2))
+            for lvl0, lvl1, lvl2 in costs.columns
+        ],
+        names=["cluster", "opt", "planning_horizon"],
     )
-    costs.columns = pd.MultiIndex.from_tuples([
-        (lvl0, "" if lvl1.startswith("Unnamed:") else lvl1, pd.to_numeric(lvl2))
-        for lvl0, lvl1, lvl2 in costs.columns
-    ], names=["cluster", "opt", "planning_horizon"])
 
     planning_horizons = snakemake.params.scenario["planning_horizons"]
 
