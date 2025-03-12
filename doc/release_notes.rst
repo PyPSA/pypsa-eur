@@ -41,6 +41,8 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   biomass-fired CHP). (https://github.com/PyPSA/pypsa-eur/pull/1392,
   https://github.com/PyPSA/pypsa-eur/pull/1414)
 
+* Add an option to create a `filegraph` dag in the `dag` rule. (https://github.com/PyPSA/pypsa-eur/pull/1574)
+
 **Breaking Changes**
 
 * Rearranged workflow to cluster the electricity network before calculating
