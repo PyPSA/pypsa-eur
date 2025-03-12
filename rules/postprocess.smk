@@ -317,6 +317,27 @@ rule make_global_summary:
         "../scripts/make_global_summary.py"
 
 
+rule make_cumulative_costs:
+    params:
+        scenario=config_provider("scenario"),
+    input:
+        costs=RESULTS + "csvs/costs.csv",
+    output:
+        cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    log:
+        RESULTS + "logs/make_cumulative_costs.log",
+    benchmark:
+        RESULTS
+        + "benchmarks/make_cumulative_costs"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/make_cumulative_costs.py"
+
+
 rule plot_summary:
     params:
         countries=config_provider("countries"),

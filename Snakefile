@@ -114,6 +114,11 @@ rule all:
             **config["scenario"],
             allow_missing=True,
         ),
+        cumulative_costs=lambda w: (
+            RESULTS + "csvs/cumulative_costs.csv"
+            if config_provider("foresight")(w) == "myopic"
+            else []
+        ),
     default_target: True
 
 
