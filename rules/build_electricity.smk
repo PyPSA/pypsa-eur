@@ -535,6 +535,9 @@ rule build_hac_features:
 
 rule simplify_network:
     params:
+        countries=config_provider("countries"),
+        mode=config_provider("clustering", "mode"),
+        administrative=config_provider("clustering", "administrative"),
         simplify_network=config_provider("clustering", "simplify_network"),
         cluster_network=config_provider("clustering", "cluster_network"),
         aggregation_strategies=config_provider(
@@ -545,6 +548,7 @@ rule simplify_network:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
+        admin_shapes=resources("admin_shapes.geojson"),
     output:
         network=resources("networks/base_s.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
