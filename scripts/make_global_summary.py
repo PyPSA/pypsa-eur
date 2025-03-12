@@ -42,7 +42,6 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     for kind in snakemake.output.keys():
-
         logger.info(f"Creating global summary for {kind}")
 
         summaries_dict = {

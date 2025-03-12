@@ -134,31 +134,52 @@ if config["foresight"] == "perfect":
 
 rule make_summary:
     input:
-        network=RESULTS + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output:
-        nodal_costs=RESULTS + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_capacities=RESULTS + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_cfs=RESULTS + "csvs/individual/nodal_cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        cfs=RESULTS + "csvs/individual/cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        costs=RESULTS + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        capacities=RESULTS + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        curtailment=RESULTS + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        energy=RESULTS + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        supply=RESULTS + "csvs/individual/supply_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        supply_energy=RESULTS + "csvs/individual/supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_supply_energy=RESULTS + "csvs/individual/nodal_supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        prices=RESULTS + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        weighted_prices=RESULTS + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        market_values=RESULTS + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        price_statistics=RESULTS + "csvs/individual/price_statistics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        metrics=RESULTS + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_costs=RESULTS
+        + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_capacities=RESULTS
+        + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_cfs=RESULTS
+        + "csvs/individual/nodal_cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        cfs=RESULTS
+        + "csvs/individual/cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        costs=RESULTS
+        + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        capacities=RESULTS
+        + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        curtailment=RESULTS
+        + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        energy=RESULTS
+        + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        supply=RESULTS
+        + "csvs/individual/supply_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        supply_energy=RESULTS
+        + "csvs/individual/supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_supply_energy=RESULTS
+        + "csvs/individual/nodal_supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        prices=RESULTS
+        + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        weighted_prices=RESULTS
+        + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        market_values=RESULTS
+        + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        price_statistics=RESULTS
+        + "csvs/individual/price_statistics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        metrics=RESULTS
+        + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
     threads: 1
     resources:
         mem_mb=8000,
     log:
-        RESULTS + "logs/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS
+        + "logs/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
-        RESULTS + "benchmarks/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+        (
+            RESULTS
+            + "benchmarks/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -289,7 +310,7 @@ rule make_global_summary:
     log:
         RESULTS + "logs/make_global_summary.log",
     benchmark:
-        RESULTS + "benchmarks/make_global_summary",
+        RESULTS + "benchmarks/make_global_summary"
     conda:
         "../envs/environment.yaml"
     script:

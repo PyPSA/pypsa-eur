@@ -37,6 +37,7 @@ OUTPUTS = [
     "metrics",
 ]
 
+
 def assign_carriers(n):
     if "carrier" not in n.lines:
         n.lines["carrier"] = "AC"
@@ -51,7 +52,6 @@ def assign_locations(n):
 
 
 def calculate_nodal_cfs(n):
-
     nodal_cfs = []
 
     # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
@@ -87,7 +87,6 @@ def calculate_nodal_cfs(n):
 
 
 def calculate_cfs(n):
-
     cfs = []
 
     for c in n.iterate_components(
@@ -117,7 +116,6 @@ def calculate_cfs(n):
 
 
 def calculate_nodal_costs(n):
-
     nodal_costs = []
 
     # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
@@ -164,7 +162,6 @@ def calculate_nodal_costs(n):
 
 
 def calculate_costs(n):
-
     costs = []
     for c in n.iterate_components(
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
@@ -226,7 +223,6 @@ def calculate_nodal_capacities(n):
 
 
 def calculate_capacities(n):
-
     capacities = []
 
     for c in n.iterate_components(
@@ -466,7 +462,6 @@ def calculate_nodal_supply_energy(n):
 
 
 def calculate_metrics(n):
-
     metrics = {}
 
     metrics["line_volume_DC"] = (n.links.length * n.links.p_nom_opt)[
@@ -477,12 +472,8 @@ def calculate_metrics(n):
     metrics["total costs"] = n.statistics.capex().sum() + n.statistics.opex().sum()
 
     if "lv_limit" in n.global_constraints.index:
-        metrics["line_volume_limit"] = n.global_constraints.at[
-            "lv_limit", "constant"
-        ]
-        metrics["line_volume_shadow"] = n.global_constraints.at[
-            "lv_limit", "mu"
-        ]
+        metrics["line_volume_limit"] = n.global_constraints.at["lv_limit", "constant"]
+        metrics["line_volume_shadow"] = n.global_constraints.at["lv_limit", "mu"]
 
     if "CO2Limit" in n.global_constraints.index:
         metrics["co2_shadow"] = n.global_constraints.at["CO2Limit", "mu"]
@@ -496,7 +487,6 @@ def calculate_metrics(n):
 
 
 def calculate_prices(n):
-
     # WARNING: this is time-averaged, see weighted_prices for load-weighted average
     prices = n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean()
 
@@ -522,9 +512,7 @@ def calculate_weighted_prices(n):
             price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
             price = price.reindex(columns=load.columns, fill_value=1)
 
-            weighted_prices[carrier] = (
-                load * price
-            ).sum().sum() / load.sum().sum()
+            weighted_prices[carrier] = (load * price).sum().sum() / load.sum().sum()
 
     return pd.Series(weighted_prices).sort_index()
 
@@ -588,7 +576,6 @@ def calculate_market_values(n):
 
 
 def calculate_price_statistics(n):
-
     price_statistics = {}
 
     buses = n.buses.index[n.buses.carrier == "AC"]
@@ -599,13 +586,9 @@ def calculate_price_statistics(n):
 
     df[n.buses_t.marginal_price[buses] < threshold] = 1.0
 
-    price_statistics["zero_hours"] = df.sum().sum() / (
-        df.shape[0] * df.shape[1]
-    )
+    price_statistics["zero_hours"] = df.sum().sum() / (df.shape[0] * df.shape[1])
 
-    price_statistics["mean"] = (
-        n.buses_t.marginal_price[buses].unstack().mean()
-    )
+    price_statistics["mean"] = n.buses_t.marginal_price[buses].unstack().mean()
 
     price_statistics["standard_deviation"] = (
         n.buses_t.marginal_price[buses].unstack().std()
