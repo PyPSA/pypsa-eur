@@ -128,6 +128,23 @@ rule dag:
         """
 
 
+rule filegraph:
+    message:
+        "Creating FILEGRAPH of workflow."
+    output:
+        dot=resources("filegraph.dot"),
+        pdf=resources("filegraph.pdf"),
+        png=resources("filegraph.png"),
+    conda:
+        "envs/environment.yaml"
+    shell:
+        r"""
+        snakemake --filegraph all | sed -n "/digraph/,\$p" > {output.dot}
+        dot -Tpdf -o {output.pdf} {output.dot}
+        dot -Tpng -o {output.png} {output.dot}
+        """
+
+
 rule doc:
     message:
         "Build documentation."
