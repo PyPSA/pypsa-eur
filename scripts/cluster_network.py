@@ -106,6 +106,148 @@ def weighting_for_country(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
     return (w * (100 / w.max())).clip(lower=1).astype(int)
 
 
+def busmap_from_shapes(
+    n: pypsa.Network,
+    shapes: gpd.GeoDataFrame,
+    buses=None,
+    cluster_names="name",
+    per_country=False,
+) -> pd.Series:
+    """
+    Create a busmap from target shapes.
+
+    This function takes into account the coordinates of the buses assigns the buses to
+    the closest, preferably covering shape in the set of target shapes.
+
+    For the subset of buses which are not covered by target shapes, the geographically
+    nearest shape is assigned.
+
+    If the shapes have a column "country", the function assigns buses to shapes
+    based on the country of the buses and the shapes.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Non-clustered network.
+    shapes : geopandas.GeoDataFrame
+        Non-overlapping target shapes.
+    buses : pd.DataFrame, optional
+        Buses to be assigned to target shapes. If None, n.buses is used.
+    cluster_names : str, optional
+        Column name of the shapes to be used as cluster names.
+        If None, the cluster names are determined to match the
+        pattern "<country><sub_network> <number>".
+
+    Returns
+    -------
+    pd.Series
+        busmap with index of buses and values of shape names.
+    """
+    if not isinstance(shapes, gpd.GeoDataFrame):
+        raise TypeError("shapes must be a gpd.GeoDataFrame object")
+
+    if buses is None:
+        buses = n.buses
+
+    if per_country:
+        logger.info(
+            "Bus shapes contain `country` column. Assigning buses to target shapes based on country."
+        )
+        if "country" not in shapes.columns:
+            raise ValueError(
+                "shapes must contain a 'country' column for per-country assignment."
+            )
+        if not set(shapes.country).issuperset(buses.country):
+            logger.warning("Not all countries in buses are covered by target shapes.")
+        busmaps = []
+        for country in shapes.country.unique():
+            country_buses = buses[buses.country == country]
+            country_shapes = shapes[shapes.country == country]
+            busmaps.append(
+                busmap_from_shapes(
+                    n,
+                    country_shapes,
+                    country_buses,
+                    cluster_names=cluster_names,
+                    per_country=False,
+                )
+            )
+        busmap = pd.concat(busmaps)
+        return busmap.reindex(n.buses.index)
+
+    shapes.index = shapes.index.astype(str)
+    shapes.index.name = "name"
+    points = gpd.points_from_xy(**buses[["x", "y"]], crs=4326)
+    coords = gpd.GeoDataFrame(geometry=points, index=buses.index)
+    column = cluster_names or "name"
+    busmap = gpd.sjoin(coords, shapes, how="left")[column].rename("busmap")
+
+    if busmap.isnull().any():
+        unassigned = coords[busmap.isnull()]
+        # Take a projection which properly handles distances for European areas.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            unassigned_converted = unassigned.to_crs(3035)
+        shapes_converted = shapes.to_crs(3035).set_index(column)
+        for i, row in unassigned_converted.iterrows():
+            dists = shapes_converted.distance(row.geometry)
+            busmap.at[i] = dists.idxmin()
+
+    # split by sub-network, match target pattern "<country><sub_network> <number>"
+    if cluster_names is None:
+        nth_sub_network = buses.sub_network.loc[busmap.index]
+        split = busmap.str.split()
+        busmap = split.str[0] + nth_sub_network.astype(str) + " " + split.str[1]
+
+    return busmap
+
+
+def copperplate_buses(n: pypsa.Network, ds: pd.Series):
+    """
+    Copperplate buses that belong to the same group.
+
+    Based on the input pandas series, buses are grouped together into market zone by
+    replacing existing connections between the buses with a new connection of infinite capacity.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    ds : pd.Series
+        Series with index of buses and values of market zones.
+    """
+
+    # Remove connections between buses in the same zone
+    for c in n.branch_components:
+        df = n.static(c)
+        bus0_zones = df.bus0.map(ds).values
+        bus1_zones = df.bus1.map(ds).values
+        to_remove = df.index[bus0_zones == bus1_zones]
+        if len(to_remove) > 0:
+            n.remove(c, to_remove)
+
+    # Create reverse mapping from zone to buses
+    zone_to_buses = ds.groupby(ds).apply(lambda x: set(x.index))
+    # Add new lines with infinite capacity within each zone
+    for zone, buses in zone_to_buses.items():
+        if len(buses) > 1:
+            # Create lines between first bus and all others
+            first_bus = list(buses)[0]
+            other_buses = list(buses)[1:]
+
+            for i, bus in enumerate(other_buses):
+                n.add(
+                    "Link",
+                    f"copper_{zone}_{i}",
+                    carrier="copper",
+                    bus0=first_bus,
+                    bus1=bus,
+                    p_nom=float("inf"),
+                    p_min_pu=-1,
+                    underwater_fraction=0.0,
+                    under_construction=0.0,
+                )
+
+
 def get_feature_data_for_hac(fn: str) -> pd.DataFrame:
     ds = xr.open_dataset(fn)
     feature_data = (
@@ -290,8 +432,7 @@ def cluster_regions(
     busmaps: tuple | list, regions: gpd.GeoDataFrame, with_country: bool = False
 ) -> gpd.GeoDataFrame:
     """
-    Cluster regions based on busmaps and save the results to a file and to the
-    network.
+    Cluster regions based on busmaps.
 
     Parameters
     ----------
@@ -301,7 +442,7 @@ def cluster_regions(
 
     Returns
     -------
-        None
+    gpd.GeoDataFrame: The clustered regions.
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
     columns = ["name", "country", "geometry"] if with_country else ["name", "geometry"]
@@ -478,13 +619,6 @@ if __name__ == "__main__":
     )
 
     if snakemake.wildcards.clusters == "all":
-        n_clusters = len(n.buses)
-    elif mode == "administrative":
-        n_clusters = np.nan
-    else:
-        n_clusters = int(snakemake.wildcards.clusters)
-
-    if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
@@ -504,7 +638,25 @@ if __name__ == "__main__":
                 busmap,
                 snakemake.input.admin_shapes,
             )
+        elif mode == "custom_busshapes":
+            n.determine_network_topology()
+            custom_shapes = gpd.read_file(snakemake.input.custom_busshapes)
+            use_shapes_index = True
+            if {"country", "id"} & set(custom_shapes.columns):
+                # keep pypsa-eur naming convention and add an subnetwork id "0" after the country
+                index = custom_shapes.country + "0 " + custom_shapes.id.astype(str)
+                custom_shapes.index = index
+                use_shapes_index = True
+            elif "name" in custom_shapes.columns:
+                custom_shapes = custom_shapes.set_index("name")
+            custom_busmap = busmap_from_shapes(
+                n, custom_shapes, cluster_names=use_shapes_index
+            )
+            logger.info(
+                f"Imported custom shapes from {snakemake.input.custom_busshapes}"
+            )
 
+            busmap = custom_busmap
         elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
@@ -513,6 +665,7 @@ if __name__ == "__main__":
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
             busmap = custom_busmap
         else:
+            n_clusters = int(snakemake.wildcards.clusters)
             algorithm = params.cluster_network["algorithm"]
             features = None
             if algorithm == "hac":
@@ -544,6 +697,13 @@ if __name__ == "__main__":
         )
 
     nc = clustering.n
+
+    if mode == "administrative" and "bz" in params.administrative.values():
+        bidding_zones = gpd.read_file(snakemake.input.bidding_zones)
+        zone_name = bidding_zones.set_index("zone_name").cross_country_zone
+        zone_name = zone_name.where(zone_name.notnull(), zone_name.index)
+        nc.buses["zone"] = zone_name
+        copperplate_buses(nc, zone_name)
 
     for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])
