@@ -23,7 +23,7 @@ pypsa_spain:
       CCGT: 'data_ES/esios/esios_CCGT_capacity_2022.csv'
     method_increase: 'proportional' # 'additional' / 'proportional'
   q2q_transform:
-    enable: false 
+    enable: false
     onwind: 'data_ES/q2q/q2q_onwind_v003.pkl'
     offwind-ac: ''
     offwind-dc: ''

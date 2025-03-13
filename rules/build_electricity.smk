@@ -9,7 +9,7 @@ rule build_electricity_demand:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         countries=config_provider("countries"),
         load=config_provider("load"),
-        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
+        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),  #####
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
         synthetic=lambda w: (
@@ -255,7 +255,7 @@ def input_ua_md_availability_matrix(w):
 rule determine_availability_matrix:
     params:
         renewable=config_provider("renewable"),
-        q2q_transform=config_provider("pypsa_spain","q2q_transform"), #####
+        q2q_transform=config_provider("pypsa_spain", "q2q_transform"),  #####
     input:
         unpack(input_ua_md_availability_matrix),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
@@ -314,7 +314,7 @@ rule build_renewable_profiles:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
-        q2q_transform=config_provider("pypsa_spain","q2q_transform"), #####        
+        q2q_transform=config_provider("pypsa_spain", "q2q_transform"),  #####        
     input:
         availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -494,7 +494,7 @@ def input_profile_tech(w):
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
-        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),   #####
+        electricity_demand=config_provider("pypsa_spain", "electricity_demand"),  #####
     input:
         base_network=resources("networks/base_s.nc"),
         regions=resources("regions_onshore_base_s.geojson"),
@@ -671,7 +671,7 @@ rule add_electricity:
         ),
         aggregation_strategies=config_provider("clustering", "aggregation_strategies"),
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
-        update_elec_capacities=config_provider("pypsa_spain", "update_elec_capacities"),   #####        
+        update_elec_capacities=config_provider("pypsa_spain", "update_elec_capacities"),  #####        
     input:
         unpack(input_profile_tech),
         unpack(input_conventional),
@@ -690,8 +690,8 @@ rule add_electricity:
         ),
         load=resources("electricity_demand_base_s.nc"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
-        nuts2_ES='data_ES/nuts/NUTS2_ES.geojson',
-        dic_nuts='data_ES/dics/dic_nuts.yaml',
+        nuts2_ES="data_ES/nuts/NUTS2_ES.geojson",
+        dic_nuts="data_ES/dics/dic_nuts.yaml",
     output:
         resources("networks/base_s_{clusters}_elec.nc"),
     log:

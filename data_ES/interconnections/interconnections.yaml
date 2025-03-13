@@ -1,4 +1,3 @@
-
 ################################################## ES - FR ##################################################
 
 
@@ -17,7 +16,7 @@ ES FR0:
 
   bus_name: ES FR0
   bus_params:
-    x: 2.877482 
+    x: 2.877482
     y: 42.426598
     carrier: AC
     v_nom: 380
@@ -27,10 +26,10 @@ ES FR0:
     bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
     bus1: ES FR0
     carrier: DC
-    p_nom: 2800 
-    p_nom_extendable: True
+    p_nom: 2800
+    p_nom_extendable: true
     length: 34.25 # ES side
-    efficiency: 1  
+    efficiency: 1
     # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
     lifetime: 50 ### No afecta a cómo se calculan los costes
     ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
@@ -38,15 +37,15 @@ ES FR0:
     ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
 
   generator_name: ES FR0 gen
-  generator_params: 
+  generator_params:
     carrier: biomass
     bus: ES FR0
     p_nom: 66.6
-    efficiency: 1   
+    efficiency: 1
     capital_cost: 0
     p_nom_max: inf
     p_max_pu: 1
-    p_nom_extendable: True
+    p_nom_extendable: true
   generator_prices: data_ES/interconnections/ic_market_prices/mp_FR_2030.csv
 
   load_name: ES FR0
@@ -73,7 +72,7 @@ ES FR1:
 
   bus_name: ES FR1
   bus_params:
-    x: -2.858534 
+    x: -2.858534
     y: 43.364801
     carrier: AC
     v_nom: 380
@@ -83,10 +82,10 @@ ES FR1:
     bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
     bus1: ES FR1
     carrier: DC
-    p_nom: 2000 
-    p_nom_extendable: True
+    p_nom: 2000
+    p_nom_extendable: true
     length: 200 # ES side
-    efficiency: 1  
+    efficiency: 1
     # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
     lifetime: 50 ### No afecta a cómo se calculan los costes
     ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
@@ -94,15 +93,15 @@ ES FR1:
     ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
 
   generator_name: ES FR1 gen
-  generator_params: 
+  generator_params:
     carrier: biomass
     bus: ES FR1
     p_nom: 66.6
-    efficiency: 1   
+    efficiency: 1
     capital_cost: 0
     p_nom_max: inf
     p_max_pu: 1
-    p_nom_extendable: True
+    p_nom_extendable: true
   generator_prices: data_ES/interconnections/ic_market_prices/mp_FR_2030.csv
 
   load_name: ES FR1
@@ -152,10 +151,10 @@ ES PT0:
     bus0:        ### to be determined in <add_extra_components.py> (the closest one from the network)
     bus1: ES PT0
     carrier: DC
-    p_nom: 2000 
-    p_nom_extendable: True
+    p_nom: 2000
+    p_nom_extendable: true
     length: 100 # random
-    efficiency: 1  
+    efficiency: 1
     # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
     lifetime: inf ### No afecta a cómo se calculan los costes
     ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
@@ -163,15 +162,15 @@ ES PT0:
     ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
 
   generator_name: ES PT0 gen
-  generator_params: 
+  generator_params:
     carrier: biomass
     bus: ES PT0
     p_nom: 66.6
-    efficiency: 1   
+    efficiency: 1
     capital_cost: 0
     p_nom_max: inf
     p_max_pu: 1
-    p_nom_extendable: True
+    p_nom_extendable: true
   generator_prices: data_ES/interconnections/ic_market_prices/mp_PT_2030.csv
 
   load_name: ES PT0
@@ -198,9 +197,9 @@ ES PT1:
     bus1: ES PT1
     carrier: DC
     p_nom: 2000
-    p_nom_extendable: True
+    p_nom_extendable: true
     length: 100 # random
-    efficiency: 1  
+    efficiency: 1
     # capital_cost: 50 ### Desaparece durante "prepare_network", es reemplazado por los costes en costes.csv
     lifetime: inf ### No afecta a cómo se calculan los costes
     ### underground: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
@@ -208,15 +207,15 @@ ES PT1:
     ### under_construction: False ### Estos no se pueden añadir con "n.add" porque no son originales del objeto
 
   generator_name: ES PT1 gen
-  generator_params: 
+  generator_params:
     carrier: biomass
     bus: ES PT1
     p_nom: 66.6
-    efficiency: 1   
+    efficiency: 1
     capital_cost: 0
     p_nom_max: inf
     p_max_pu: 1
-    p_nom_extendable: True
+    p_nom_extendable: true
   generator_prices: data_ES/interconnections/ic_market_prices/mp_PT_2030.csv
 
   load_name: ES PT1

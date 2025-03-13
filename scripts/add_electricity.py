@@ -50,13 +50,13 @@ network with **zero** initial capacity:
 
 import logging
 
+import geopandas as gpd  ##### Required in PyPSA-Spain
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
-import yaml   ##### Required in PyPSA-Spain
-import geopandas as gpd   ##### Required in PyPSA-Spain
+import yaml  ##### Required in PyPSA-Spain
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -1086,58 +1086,54 @@ def attach_stores(
         )
 
 
-
-
-
 ######################################## PyPSA-Spain
 #
 # Function to correct initial capacities according to PyPSA-Spain methodology
 #
 # TODO: Needs to be modified: loop over network regions, compute overlap with NUTS 2 regions, and assign target capacity according to the overlap and the provided capacities
-# 
-
-def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_file, dic_nuts_file):
+#
 
 
+def fun_update_elec_capacities(
+    n, carriers_to_update, method_increase, nuts2_ES_file, dic_nuts_file
+):
     def _update_in_network(df, required_capacity, method_increase):
-        '''
+        """
         This function operates on a df = n.generators. It modifies 'p_nom' to match a target installed capacity
-        '''
+        """
 
         ### Compute initial capacity
-        initial_capacity = df['p_nom'].sum()
+        initial_capacity = df["p_nom"].sum()
 
         df_updated = df.copy()
 
         ### Increase capacity according to defined method
         if int(required_capacity) > int(initial_capacity):
+            if method_increase == "additional":
+                capacity_added_at_each_bus = (
+                    required_capacity - initial_capacity
+                ) / df.shape[0]
+                df_updated.loc[:, "p_nom"] += capacity_added_at_each_bus
 
-            if method_increase == 'additional':
-                capacity_added_at_each_bus = (required_capacity-initial_capacity)/df.shape[0]
-                df_updated.loc[:, 'p_nom'] += capacity_added_at_each_bus
-
-                
-            if (method_increase == 'proportional') and (initial_capacity>0):
+            if (method_increase == "proportional") and (initial_capacity > 0):
                 factor = required_capacity / initial_capacity
-                df_updated.loc[:, 'p_nom'] *= factor
+                df_updated.loc[:, "p_nom"] *= factor
 
-
-            if (method_increase == 'proportional') and (initial_capacity==0):
-                logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: no initial capacity for carrier {cc} in {rr_name}. Using "additional" method')
-                capacity_added_at_each_bus = (required_capacity-initial_capacity)/df.shape[0]
-                df_updated.loc[:, 'p_nom'] += capacity_added_at_each_bus
-
+            if (method_increase == "proportional") and (initial_capacity == 0):
+                logger.info(
+                    f'########## [PyPSA-Spain] <add_electricity.py> WARNING: no initial capacity for carrier {cc} in {rr_name}. Using "additional" method'
+                )
+                capacity_added_at_each_bus = (
+                    required_capacity - initial_capacity
+                ) / df.shape[0]
+                df_updated.loc[:, "p_nom"] += capacity_added_at_each_bus
 
         ### Reduce capacity proportionally at each bus
         if int(required_capacity) < int(initial_capacity):
             factor = required_capacity / initial_capacity
-            df_updated.loc[:, 'p_nom'] *= factor
-
-
+            df_updated.loc[:, "p_nom"] *= factor
 
         return df_updated
-
-
 
     ##### Define relevant variables:
     df_buses = n.buses
@@ -1145,119 +1141,123 @@ def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_
 
     nuts2_ES = gpd.read_file(nuts2_ES_file)
 
-    with open(dic_nuts_file, "r") as archivo:
+    with open(dic_nuts_file) as archivo:
         dic_nuts = yaml.safe_load(archivo)
-    dic_nuts2 = dic_nuts['dic_NUTS2']
-
+    dic_nuts2 = dic_nuts["dic_NUTS2"]
 
     # gdf_buses
     geometry_buses = gpd.points_from_xy(df_buses["x"], df_buses["y"])
-    gdf_buses = gpd.GeoDataFrame(df_buses,geometry=geometry_buses, crs=4326)
+    gdf_buses = gpd.GeoDataFrame(df_buses, geometry=geometry_buses, crs=4326)
 
-
-       
     #################### Loop over carriers to update
     for cc, ff in carriers_to_update.items():
-
-
         ##### Load esios file
-        df_installed_capacity = pd.read_csv(ff, index_col='datetime')
-
-
+        df_installed_capacity = pd.read_csv(ff, index_col="datetime")
 
         #################### Loop over NUTS2 regions included in df_installed_capacity columns
         for rr in df_installed_capacity.columns:
-
-
             ##### Enter only if rr is in dic_NUTS2 (which contains regions only included in PyPSA-Spain)
             # This is to avoid columns such as 'total', 'Melilla', 'Canarias'... that are in rr
             if rr in dic_nuts2.values():
-
-
                 # This is just for using the name in the log
-                rr_name = nuts2_ES.loc[ nuts2_ES["NUTS_ID"]==rr , "NUTS_NAME"].values[0]
+                rr_name = nuts2_ES.loc[nuts2_ES["NUTS_ID"] == rr, "NUTS_NAME"].values[0]
 
-                    
                 ########## get a list with local buses located in region rr
-                gdf_region = nuts2_ES[nuts2_ES['NUTS_ID']==rr]
+                gdf_region = nuts2_ES[nuts2_ES["NUTS_ID"] == rr]
 
-                gdf_buses_local = gpd.sjoin(gdf_buses, gdf_region, how="inner", predicate="within")
+                gdf_buses_local = gpd.sjoin(
+                    gdf_buses, gdf_region, how="inner", predicate="within"
+                )
 
                 list_buses_local = gdf_buses_local.index.to_list()
 
-
-                ########## Get the generators in local buses and carrier cc, with capacity>0.01 (to avoid everywhere generators). 
-                df_generators_local_cc = df_generators.loc[ (df_generators['bus'].isin(list_buses_local)) & (df_generators['carrier']==cc) & (df_generators['p_nom']>0.01)]
+                ########## Get the generators in local buses and carrier cc, with capacity>0.01 (to avoid everywhere generators).
+                df_generators_local_cc = df_generators.loc[
+                    (df_generators["bus"].isin(list_buses_local))
+                    & (df_generators["carrier"] == cc)
+                    & (df_generators["p_nom"] > 0.01)
+                ]
                 # but if none, then include everywhere generators
-                if len(df_generators_local_cc)==0:
-                    df_generators_local_cc = df_generators.loc[ (df_generators['bus'].isin(list_buses_local)) & (df_generators['carrier']==cc)]
+                if len(df_generators_local_cc) == 0:
+                    df_generators_local_cc = df_generators.loc[
+                        (df_generators["bus"].isin(list_buses_local))
+                        & (df_generators["carrier"] == cc)
+                    ]
                 # if still none, there is no bus with this carrier
-                if len(df_generators_local_cc)==0:
-                    logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: No bus with generator {cc} in {rr_name}. Updating capacity was not possible.')
+                if len(df_generators_local_cc) == 0:
+                    logger.info(
+                        f"########## [PyPSA-Spain] <add_electricity.py> WARNING: No bus with generator {cc} in {rr_name}. Updating capacity was not possible."
+                    )
 
                 else:
-                    ########## Get the real capacity reported by ESIOS in that region and carrier for the desired year        
+                    ########## Get the real capacity reported by ESIOS in that region and carrier for the desired year
                     required_capacity = df_installed_capacity[rr].mean()
 
-    
                     ############### Update capacities
-                    df_updated = _update_in_network(df_generators_local_cc, required_capacity, method_increase)
-
-
-
+                    df_updated = _update_in_network(
+                        df_generators_local_cc, required_capacity, method_increase
+                    )
 
                     ############### Some buses may have surpassed p_nom_max. Share extra capacity across the other buses
 
                     # Check first that there is space for all the capacity
-                    if df_updated['p_nom'].sum() > df_updated['p_nom_max'].sum():
-                        sys.exit(f'Not enough space to allocate required capacity of carrier {cc} in region {rr_name}')
-
+                    if df_updated["p_nom"].sum() > df_updated["p_nom_max"].sum():
+                        sys.exit(
+                            f"Not enough space to allocate required capacity of carrier {cc} in region {rr_name}"
+                        )
 
                     df_to_sanitise = df_updated.copy()
 
-
-                    while (df_updated['p_nom'] > df_updated['p_nom_max']).any():
-
+                    while (df_updated["p_nom"] > df_updated["p_nom_max"]).any():
                         # Take the first one
-                        index_conflictive = df_updated[df_generators_local_cc['p_nom']>df_updated['p_nom_max']].index[0]
+                        index_conflictive = df_updated[
+                            df_generators_local_cc["p_nom"] > df_updated["p_nom_max"]
+                        ].index[0]
 
                         # Identify overcapacity
-                        overcapacity = df_updated.at[index_conflictive,'p_nom'] - df_updated.at[index_conflictive,'p_nom_max']
+                        overcapacity = (
+                            df_updated.at[index_conflictive, "p_nom"]
+                            - df_updated.at[index_conflictive, "p_nom_max"]
+                        )
 
                         # Remove capacity in conflictive bus at df_updated, so that it is not conflictive anymore
-                        df_updated.at[index_conflictive,'p_nom'] -= overcapacity
+                        df_updated.at[index_conflictive, "p_nom"] -= overcapacity
 
                         # Remove conflictive bus at df_to_sanitise
                         df_to_sanitise.drop(index_conflictive, inplace=True)
 
                         # Share the overcapacity across the other buses
-                        required_capacity = df_to_sanitise['p_nom'].sum() + overcapacity
-                        df_to_sanitise = _update_in_network(df_to_sanitise, required_capacity, method_increase)
-
+                        required_capacity = df_to_sanitise["p_nom"].sum() + overcapacity
+                        df_to_sanitise = _update_in_network(
+                            df_to_sanitise, required_capacity, method_increase
+                        )
 
                         ############### Update df_generators_local_cc with df_to_sanitise
-                        df_updated.update(df_to_sanitise)                   
-                    
+                        df_updated.update(df_to_sanitise)
 
+                    ##### Messages
 
-                    ##### Messages  
+                    initial_capacity = int(df_generators_local_cc["p_nom"].sum())
+                    final_capacity = int(df_updated["p_nom"].sum())
 
-                    initial_capacity = int(df_generators_local_cc['p_nom'].sum())       
-                    final_capacity = int(df_updated['p_nom'].sum())
-    
                     if final_capacity == initial_capacity:
-                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity matches in {rr_name}.')
+                        logger.info(
+                            f"########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity matches in {rr_name}."
+                        )
 
                     else:
-                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity in {rr_name} was updated from {initial_capacity} to {final_capacity}.')
+                        logger.info(
+                            f"########## [PyPSA-Spain] <add_electricity.py> INFO: {cc} capacity in {rr_name} was updated from {initial_capacity} to {final_capacity}."
+                        )
 
+                    saturated_nodes = (
+                        df_updated["p_nom"] == df_updated["p_nom_max"]
+                    ).sum()
 
-                    saturated_nodes = (df_updated['p_nom']==df_updated['p_nom_max']).sum()
-                
                     if saturated_nodes > 0:
-                        logger.info(f'########## [PyPSA-Spain] <add_electricity.py> WARNING: Maximum capacity was reached in {saturated_nodes}!!')
-
-
+                        logger.info(
+                            f"########## [PyPSA-Spain] <add_electricity.py> WARNING: Maximum capacity was reached in {saturated_nodes}!!"
+                        )
 
                     ############### Update n.generators with df_updated
                     n.generators.update(df_updated)
@@ -1267,9 +1267,6 @@ def fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_
 #
 #
 ########################################
-
-
-
 
 
 if __name__ == "__main__":
@@ -1408,35 +1405,31 @@ if __name__ == "__main__":
         sanitize_locations(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
-    
-    
-    
-    
-    
+
     ################################################## PyPSA-Spain
     #
-    # Update elec capacities 
+    # Update elec capacities
     #
 
     ##### parameters
     update_elec_capacities = snakemake.params.update_elec_capacities
 
-    carriers_to_update = update_elec_capacities['carriers_to_update']
-    method_increase = update_elec_capacities['method_increase']
+    carriers_to_update = update_elec_capacities["carriers_to_update"]
+    method_increase = update_elec_capacities["method_increase"]
 
     ##### inputs
     nuts2_ES_file = snakemake.input.nuts2_ES
-    dic_nuts_file = snakemake.input.dic_nuts # is employed to loop over the regions considered in PyPSA-Spain
+    dic_nuts_file = (
+        snakemake.input.dic_nuts
+    )  # is employed to loop over the regions considered in PyPSA-Spain
 
     ##### call function
-    if update_elec_capacities['enable']:
-        fun_update_elec_capacities(n, carriers_to_update, method_increase, nuts2_ES_file, dic_nuts_file)
+    if update_elec_capacities["enable"]:
+        fun_update_elec_capacities(
+            n, carriers_to_update, method_increase, nuts2_ES_file, dic_nuts_file
+        )
     #
     #
     ##########
-    
-    
-    
-    
-    
+
     n.export_to_netcdf(snakemake.output[0])
