@@ -204,7 +204,7 @@ def plot_balances():
     balances["energy"] = balances_df.groupby(["component", "carrier"]).sum()
 
     for bus_carrier, df in balances.items():
-        df = df.groupby('carrier').sum()
+        df = df.groupby("carrier").sum()
 
         # convert MWh to TWh
         df = df / 1e6
@@ -268,7 +268,9 @@ def plot_balances():
             frameon=False,
         )
 
-        fig.savefig(snakemake.output.balances[:-10] + bus_carrier + ".svg", bbox_inches="tight")
+        fig.savefig(
+            snakemake.output.balances[:-10] + bus_carrier + ".svg", bbox_inches="tight"
+        )
         plt.close(fig)
 
 
