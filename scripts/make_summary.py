@@ -55,6 +55,7 @@ def assign_locations(n):
         # regional locations "BE0 0" are longer than "EU" by design
         c.df["location"] = locs.apply(lambda row: max(row.dropna(), key=len), axis=1)
 
+
 def calculate_nodal_cfs(n):
     nodal_cfs = []
 
