@@ -6,8 +6,13 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: "all"
-  #- base_eu_regain
+  name: #"all"
+  - base_eu_regain
+  - base_eu_maintain
+  - base_eu_deindustrial
+  - policy_eu_regain
+  - base_eu_maintain
+  - base_eu_deindustrial
   scenarios:
     enable: true
     file: config/industry_policy_scenarios.yaml
@@ -127,7 +132,7 @@ sector:
     endo_ammonia: true # if true it also skips the ammonia cracker for simplicity
     endo_hvc: true # Adding biomass_to_liquid and biomass_to_liquid_cc
     endo_methanol: true
-    regional_hvc: true
+    regional_hvc: false
     policy_scenario: maintain
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
@@ -141,6 +146,10 @@ sector:
     - solid biomass # For solid biomass, CHP with and without CC are added
     - gas # For all other fuels the same techno economic data from gas CHP is taken
     micro_chp: false # Only gas is used for micro_chp
+  heat_vent:
+    urban central: false
+    urban decentral: false
+    rural: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:

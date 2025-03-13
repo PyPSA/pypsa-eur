@@ -17,10 +17,13 @@ base_eu_maintain:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: maintain
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
+
 
 # Climate policy: YES, Relocation: YES, Industrial policy: MAINTAIN
 policy_eu_maintain:
@@ -28,10 +31,12 @@ policy_eu_maintain:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: maintain
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
 
 # Climate policy: NO, Relocation: YES, Industrial policy: REGAIN
 base_eu_regain:
@@ -39,10 +44,12 @@ base_eu_regain:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: regain
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
 
 # Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
 policy_eu_regain:
@@ -50,10 +57,12 @@ policy_eu_regain:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: regain
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
 
 # Climate policy: NO, Relocation: YES, Industrial policy: DEINDUSTRIAL
 base_eu_deindustrial:
@@ -61,10 +70,12 @@ base_eu_deindustrial:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: deindustrial
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
 
 # Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
 policy_eu_deindustrial:
@@ -72,7 +83,90 @@ policy_eu_deindustrial:
   sector:
     endo_industry:
       regional_steel_demand: false
+      regional_cement_demand: false
       policy_scenario: deindustrial
     methanol:
       regional_methanol_demand: false
     ammonia: true
+    regional_hvc: false
+
+
+# REGIONAL DEMAND
+# Climate policy: NO, Relocation: YES, Industrial policy: MAINTAIN
+base_eu_maintain:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      policy_scenario: maintain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    regional_hvc: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: MAINTAIN
+policy_eu_maintain:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      policy_scenario: maintain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    regional_hvc: true
+
+# Climate policy: NO, Relocation: YES, Industrial policy: REGAIN
+base_eu_regain:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      regional_cement_demand: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: regional
+    regional_hvc: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
+policy_eu_regain:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    regional_hvc: true
+
+# Climate policy: NO, Relocation: YES, Industrial policy: DEINDUSTRIAL
+base_eu_deindustrial:
+  co2_budget_apply: false
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    regional_hvc: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
+policy_eu_deindustrial:
+  co2_budget_apply: true
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    regional_hvc: true
+

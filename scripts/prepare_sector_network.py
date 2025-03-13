@@ -1117,7 +1117,7 @@ def add_methanol_to_hvc(n, costs):
     n.add(
         "Link",
         nodes,
-        suffix=" methanol-to-olefins",
+        suffix=" methanol-to-hvc",
         carrier=tech,
         capital_cost=costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"],
         marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
@@ -4978,11 +4978,11 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Traditional dry process
 
     # Lifetimes
-    lifetime_cement = 100
+    lifetime_cement = 25 # Raillard Cazanove
 
     # Capital costs
     discount_rate = 0.04
-    capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+    capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
 
     n.add(
         "Link",
@@ -5125,7 +5125,7 @@ def add_methanol_load(n,investment_year, methanol_data, options):
         p_set=p_set,
     )
     
-def add_hvc(n, options):
+def add_hvc(n, investment_year, hvc_data, options):
     """
     Adds HVC load to the network based on industrial production data.
     
@@ -5136,17 +5136,21 @@ def add_hvc(n, options):
 
     nodes = pop_layout.index
 
-    # Read industrial production data for HVCs in Europe (in kt/yr)
-    industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # HVC production is in kt/yr
+    # Naphtha production demanded in each country in Europe in kton of HVC products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities['Ethylene']
 
-    # Determine the HVC production load based on the specified option
-    if options["endo_industry"]["regional_hvc"]:
-        # Calculate regional HVC production load (ktHVC/yr) and normalize by hours in a year
-        p_set = (industrial_production.loc[spatial.hvc.locations, "HVC"].rename(index=lambda x: x + " HVC") / nhours)
+    # Read industrial production data for HVC in Europe (in ktHVC/yr)
+    scenario = options["endo_industry"]["policy_scenario"]
+    hourly_hvc_production = (hvc_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
 
-    else:
-        # Calculate total HVC production load (ktHVC/yr) for all regions and normalize by hours in a year
-        p_set = industrial_production["HVC"].sum() / nhours
+    # Share of HVC production capacities -> assumption: keep producing the same share in the country, changing technology
+    cap_share = capacities / capacities.sum()
+    p_set = cap_share * hourly_hvc_production
+
+    if not options["endo_industry"]["regional_hvc"]:
+
+        p_set = p_set.sum()
 
     # Remove the previous HVC load, bus and link, which is based on a different quantification of energy demand
     n.loads.drop(n.loads.index[n.loads.carrier == "naphtha for industry"], inplace=True)
@@ -5172,11 +5176,11 @@ def add_hvc(n, options):
         p_set=p_set,
     )
   
-    naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+    naphtha_to_hvc = (2.31 * 12.47) * 1000 # t oil / t HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
 
     n.add(
         "Link",
-        spatial.hvc.nodes,
+        nodes,
         suffix = " naphtha steam cracker",
         bus0=spatial.oil.nodes,
         bus1=spatial.hvc.nodes,
@@ -5185,16 +5189,15 @@ def add_hvc(n, options):
         bus4=nodes,
         carrier="naphtha steam cracker",
         p_nom_extendable=True,
-        capital_cost=725 * 1e3, #€/kt HVC
+        capital_cost= 2050 * 1e3 * 0.8865, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
+        # Raillard Cazanove says 725 but prices were too low
         efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
-        efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
+        efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
         efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC
         efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
         lifetime=30, 
     )
-
     
-
 
 def add_waste_heat(n):
     # TODO options?
@@ -6167,7 +6170,7 @@ if __name__ == "__main__":
         industry_production_scenarios = pd.read_csv(snakemake.input.industry_production_scenarios, index_col=0)
         steel_data = clean_industry_df(industry_production_scenarios, 'steel')
         cement_data = clean_industry_df(industry_production_scenarios, 'cement')
-        chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
+        #chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
 
         add_steel_industry(n, investment_year, steel_data, options)
         add_cement_industry(n, investment_year, cement_data, options)
@@ -6182,7 +6185,7 @@ if __name__ == "__main__":
 
         if options["endo_industry"]["endo_hvc"]:
             hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
-            add_hvc(n, options)
+            add_hvc(n, investment_year, hvc_data, options)
             add_methanol_to_hvc(n, costs)
 
     if options["heating"]:
