@@ -1232,8 +1232,7 @@ def clean_dict(
 
     # Sub dictionary where values are only of length 1
     single_occurrences = {k: v for k, v in diction.items() if len(v) == 1}
-    
-    
+
     # Enters only if single_occurrences is not empty
     if single_occurrences:
         # Create list of key, value pairs and store in list
@@ -1258,8 +1257,7 @@ def clean_dict(
     else:
         # If there are no unique value occurrences, continue without changing the dictionary
         drop_keys = set()
-        
-        
+
     # Create list of values, that also exist as key
     double_values = list(chain.from_iterable(diction.values()))
     double_values = [x for x in double_values if x in diction.keys()]
