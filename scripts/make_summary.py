@@ -7,34 +7,29 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 """
 
 import logging
-import sys
 
-import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging, set_scenario_config
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
-OPT_NAME = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 OUTPUTS = [
-    "nodal_costs",
-    "nodal_capacities",
-    "nodal_cfs",
-    "cfs",
     "costs",
     "capacities",
-    "curtailment",
     "energy",
-    "supply",
-    "supply_energy",
-    "nodal_supply_energy",
+    "energy_balance",
+    "capacity_factors",
+    "metrics",
+    "curtailment",
     "prices",
     "weighted_prices",
-    "price_statistics",
     "market_values",
-    "metrics",
+    "nodal_costs",
+    "nodal_capacities",
+    "nodal_energy_balance",
+    "nodal_capacity_factors",
 ]
 
 
@@ -55,425 +50,184 @@ def assign_locations(n):
         # regional locations "BE0 0" are longer than "EU" by design
         c.df["location"] = locs.apply(lambda row: max(row.dropna(), key=len), axis=1)
 
-def calculate_nodal_cfs(n):
-    nodal_cfs = []
 
-    # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
-    for c in n.iterate_components(
-        (n.branch_components ^ {"Line", "Transformer"})
-        | n.controllable_one_port_components ^ {"Load", "StorageUnit"}
-    ):
-        capacities_c = c.df.groupby(["location", "carrier"])[
-            OPT_NAME.get(c.name, "p") + "_nom_opt"
-        ].sum()
-
-        if c.name == "Link":
-            p = c.pnl.p0.abs().mean()
-        elif c.name == "Generator":
-            p = c.pnl.p.abs().mean()
-        elif c.name == "Store":
-            p = c.pnl.e.abs().mean()
-        else:
-            sys.exit()
-
-        c.df["p"] = p
-        p_c = c.df.groupby(["location", "carrier"])["p"].sum()
-
-        cf_c = p_c / capacities_c
-
-        index = pd.MultiIndex.from_tuples(
-            [(c.list_name,) + t for t in cf_c.index.to_list()]
-        )
-        cf_c = pd.Series(cf_c.values, index=index)
-        nodal_cfs.append(cf_c)
-
-    return pd.concat(nodal_cfs).sort_index()
+def calculate_nodal_capacity_factors(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the regional dispatched capacity factors / utilisation rates for each technology carrier based on location bus attribute.
+    """
+    comps = n.one_port_components ^ {"Store"} | n.passive_branch_components
+    return n.statistics.capacity_factor(comps=comps, groupby=["location", "carrier"])
 
 
-def calculate_cfs(n):
-    cfs = []
+def calculate_capacity_factors(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the average dispatched capacity factors / utilisation rates for each technology carrier.
 
-    for c in n.iterate_components(
-        n.branch_components
-        | n.controllable_one_port_components ^ {"Load", "StorageUnit"}
-    ):
-        capacities_c = (
-            c.df[OPT_NAME.get(c.name, "p") + "_nom_opt"].groupby(c.df.carrier).sum()
-        )
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "carrier"]
+    """
 
-        if c.name in ["Link", "Line", "Transformer"]:
-            p = c.pnl.p0.abs().mean()
-        elif c.name == "Store":
-            p = c.pnl.e.abs().mean()
-        else:
-            p = c.pnl.p.abs().mean()
-
-        p_c = p.groupby(c.df.carrier).sum()
-
-        cf_c = p_c / capacities_c
-
-        cf_c = pd.concat([cf_c], keys=[c.list_name])
-
-        cfs.append(cf_c)
-
-    return pd.concat(cfs).sort_index()
+    comps = n.one_port_components ^ {"Store"} | n.passive_branch_components
+    return n.statistics.capacity_factor(comps=comps).sort_index()
 
 
-def calculate_nodal_costs(n):
-    nodal_costs = []
+def calculate_nodal_costs(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate optimized regional costs for each technology split by marginal and capital costs and based on location bus attribute.
 
-    # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
-    for c in n.iterate_components(
-        n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        c.df["capital_costs"] = (
-            c.df.capital_cost * c.df[OPT_NAME.get(c.name, "p") + "_nom_opt"]
-        )
-        capital_costs = c.df.groupby(["location", "carrier"])["capital_costs"].sum()
-        index = pd.MultiIndex.from_tuples(
-            [(c.list_name, "capital") + t for t in capital_costs.index.to_list()]
-        )
-        capital_costs = pd.Series(capital_costs.values, index=index)
-        nodal_costs.append(capital_costs)
-
-        if c.name == "Link":
-            p = c.pnl.p0.multiply(n.snapshot_weightings.generators, axis=0).sum()
-        elif c.name == "Line":
-            continue
-        elif c.name == "StorageUnit":
-            p_all = c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
-            p_all[p_all < 0.0] = 0.0
-            p = p_all.sum()
-        else:
-            p = c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0).sum()
-
-        # correct sequestration cost
-        if c.name == "Store":
-            items = c.df.index[
-                (c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.0)
-            ]
-            c.df.loc[items, "marginal_cost"] = -20.0
-
-        c.df["marginal_costs"] = p * c.df.marginal_cost
-        marginal_costs = c.df.groupby(["location", "carrier"])["marginal_costs"].sum()
-        index = pd.MultiIndex.from_tuples(
-            [(c.list_name, "marginal") + t for t in marginal_costs.index.to_list()]
-        )
-        marginal_costs = pd.Series(marginal_costs.values, index=index)
-        nodal_costs.append(marginal_costs)
-
-    return pd.concat(nodal_costs).sort_index()
-
-
-def calculate_costs(n):
-    costs = []
-    for c in n.iterate_components(
-        n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        capital_costs = c.df.capital_cost * c.df[OPT_NAME.get(c.name, "p") + "_nom_opt"]
-        capital_costs_grouped = capital_costs.groupby(c.df.carrier).sum()
-
-        capital_costs_grouped = pd.concat([capital_costs_grouped], keys=["capital"])
-        capital_costs_grouped = pd.concat([capital_costs_grouped], keys=[c.list_name])
-
-        costs.append(capital_costs_grouped)
-
-        if c.name == "Link":
-            p = c.pnl.p0.multiply(n.snapshot_weightings.generators, axis=0).sum()
-        elif c.name == "Line":
-            continue
-        elif c.name == "StorageUnit":
-            p_all = c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
-            p_all[p_all < 0.0] = 0.0
-            p = p_all.sum()
-        else:
-            p = c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0).sum()
-
-        # correct sequestration cost
-        if c.name == "Store":
-            items = c.df.index[
-                (c.df.carrier == "co2 stored") & (c.df.marginal_cost <= -100.0)
-            ]
-            c.df.loc[items, "marginal_cost"] = -20.0
-
-        marginal_costs = p * c.df.marginal_cost
-
-        marginal_costs_grouped = marginal_costs.groupby(c.df.carrier).sum()
-
-        marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=["marginal"])
-        marginal_costs_grouped = pd.concat([marginal_costs_grouped], keys=[c.list_name])
-
-        costs.append(marginal_costs_grouped)
-
-    return pd.concat(costs).sort_index()
-
-
-def calculate_nodal_capacities(n):
-    # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
-    nodal_capacities = []
-    for c in n.iterate_components(
-        n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        nodal_capacities_c = c.df.groupby(["location", "carrier"])[
-            OPT_NAME.get(c.name, "p") + "_nom_opt"
-        ].sum()
-        index = pd.MultiIndex.from_tuples(
-            [(c.list_name,) + t for t in nodal_capacities_c.index.to_list()]
-        )
-        nodal_capacities_c = pd.Series(nodal_capacities_c.values, index=index)
-        nodal_capacities.append(nodal_capacities_c)
-
-    return pd.concat(nodal_capacities).sort_index()
-
-
-def calculate_capacities(n):
-    capacities = []
-
-    for c in n.iterate_components(
-        n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
-        capacities_grouped = (
-            c.df[OPT_NAME.get(c.name, "p") + "_nom_opt"].groupby(c.df.carrier).sum()
-        )
-        capacities_grouped = pd.concat([capacities_grouped], keys=[c.list_name])
-
-        capacities.append(capacities_grouped)
-
-    return pd.concat(capacities).sort_index()
-
-
-def calculate_curtailment(n):
-    avail = (
-        n.generators_t.p_max_pu.multiply(n.generators.p_nom_opt)
-        .sum()
-        .groupby(n.generators.carrier)
-        .sum()
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["cost", "component", "location", "carrier"]
+    """
+    grouper = ["location", "carrier"]
+    costs = pd.concat(
+        {
+            "capital": n.statistics.capex(groupby=grouper),
+            "marginal": n.statistics.opex(groupby=grouper),
+        }
     )
-    used = n.generators_t.p.sum().groupby(n.generators.carrier).sum()
+    costs.index.names = ["cost", "component", "location", "carrier"]
 
-    curtailment = (((avail - used) / avail) * 100).round(3)
-
-    return curtailment.sort_index()
+    return costs
 
 
-def calculate_energy(n):
-    energy = []
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
-        if c.name in n.one_port_components:
-            c_energies = (
-                c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
-                .sum()
-                .multiply(c.df.sign)
-                .groupby(c.df.carrier)
-                .sum()
-            )
-        else:
-            c_energies = pd.Series(0.0, c.df.carrier.unique())
-            for port in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                totals = (
-                    c.pnl["p" + port]
-                    .multiply(n.snapshot_weightings.generators, axis=0)
-                    .sum()
-                )
-                # remove values where bus is missing (bug in nomopyomo)
-                no_bus = c.df.index[c.df["bus" + port] == ""]
-                totals.loc[no_bus] = float(
-                    n.component_attrs[c.name].loc["p" + port, "default"]
-                )
-                c_energies -= totals.groupby(c.df.carrier).sum()
-
-        c_energies = pd.concat([c_energies], keys=[c.list_name])
-
-        energy.append(c_energies)
-
-    return pd.concat(energy)
-
-
-def calculate_supply(n):
+def calculate_costs(n: pypsa.Network) -> pd.Series:
     """
-    Calculate the max dispatch of each component at the buses aggregated by
-    carrier.
+    Calculate optimized total costs for each technology split by marginal and capital costs.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["cost", "component", "carrier"]
     """
-    bus_carriers = n.buses.carrier.unique()
+    costs = pd.concat(
+        {
+            "capital": n.statistics.capex(),
+            "marginal": n.statistics.opex(),
+        }
+    )
+    costs.index.names = ["cost", "component", "carrier"]
 
-    supply = []
-
-    for i in bus_carriers:
-        bus_map = n.buses.carrier == i
-        bus_map.at[""] = False
-
-        for c in n.iterate_components(n.one_port_components):
-            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
-
-            if len(items) == 0:
-                continue
-
-            s = (
-                c.pnl.p[items]
-                .max()
-                .multiply(c.df.loc[items, "sign"])
-                .groupby(c.df.loc[items, "carrier"])
-                .sum()
-            )
-            s = pd.concat([s], keys=[c.list_name])
-            s = pd.concat([s], keys=[i])
-
-            supply.append(s)
-
-        for c in n.iterate_components(n.branch_components):
-            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
-
-                if len(items) == 0 or c.pnl["p" + end].empty:
-                    continue
-
-                # lots of sign compensation for direction and to do maximums
-                s = (-1) ** (1 - int(end)) * (
-                    (-1) ** int(end) * c.pnl["p" + end][items]
-                ).max().groupby(c.df.loc[items, "carrier"]).sum()
-                s.index = s.index + end
-                s = pd.concat([s], keys=[c.list_name])
-                s = pd.concat([s], keys=[i])
-
-                supply.append(s)
-
-    return pd.concat(supply).sort_index()
+    return costs
 
 
-def calculate_supply_energy(n):
+def calculate_nodal_capacities(n: pypsa.Network) -> pd.Series:
     """
-    Calculate the total energy supply/consumption of each component at the buses
-    aggregated by carrier.
+    Calculate optimized regional capacities for each technology relative to bus/bus0 based on location bus attribute.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "location", "carrier"]
     """
-    bus_carriers = n.buses.carrier.unique()
-
-    supply_energy = []
-
-    for i in bus_carriers:
-        bus_map = n.buses.carrier == i
-        bus_map.at[""] = False
-
-        for c in n.iterate_components(n.one_port_components):
-            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
-
-            if len(items) == 0:
-                continue
-
-            s = (
-                c.pnl.p[items]
-                .multiply(n.snapshot_weightings.generators, axis=0)
-                .sum()
-                .multiply(c.df.loc[items, "sign"])
-                .groupby(c.df.loc[items, "carrier"])
-                .sum()
-            )
-            s = pd.concat([s], keys=[c.list_name])
-            s = pd.concat([s], keys=[i])
-
-            supply_energy.append(s)
-
-        for c in n.iterate_components(n.branch_components):
-            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
-
-                if len(items) == 0 or c.pnl["p" + end].empty:
-                    continue
-
-                s = (-1) * c.pnl["p" + end][items].multiply(
-                    n.snapshot_weightings.generators, axis=0
-                ).sum().groupby(c.df.loc[items, "carrier"]).sum()
-                s.index = s.index + end
-                s = pd.concat([s], keys=[c.list_name])
-                s = pd.concat([s], keys=[i])
-
-                supply_energy.append(s)
-
-    return pd.concat(supply_energy)
+    return n.statistics.optimal_capacity(groupby=["location", "carrier"])
 
 
-def calculate_nodal_supply_energy(n):
+def calculate_capacities(n: pypsa.Network) -> pd.Series:
     """
-    Calculate the total energy supply/consumption of each component at the
-    buses aggregated by carrier and node.
+    Calculate optimized total capacities for each technology relative to bus/bus0.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "carrier"]
+    """
+    return n.statistics.optimal_capacity()
+
+
+def calculate_curtailment(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the curtailment of electricity generation technologies in percent.
     """
 
-    bus_carriers = n.buses.carrier.unique()
+    carriers = ["AC", "low voltage"]
 
-    nodal_supply_energy = []
+    duration = n.snapshot_weightings.generators.sum()
 
-    for i in bus_carriers:
-        bus_map = n.buses.carrier == i
-        bus_map.at[""] = False
+    curtailed_abs = n.statistics.curtailment(
+        bus_carrier=carriers, aggregate_across_components=True
+    )
+    available = (
+        n.statistics.optimal_capacity("Generator", bus_carrier=carriers) * duration
+    )
 
-        for c in n.iterate_components(n.one_port_components):
-            items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+    curtailed_rel = curtailed_abs / available * 100
 
-            if len(items) == 0:
-                continue
-
-            s = (
-                pd.concat(
-                    [
-                        (
-                            c.pnl.p[items]
-                            .multiply(n.snapshot_weightings.generators, axis=0)
-                            .sum()
-                            .multiply(c.df.loc[items, "sign"])
-                        ),
-                        c.df.loc[items][["bus", "carrier"]],
-                    ],
-                    axis=1,
-                )
-                .groupby(by=["bus", "carrier"])
-                .sum()[0]
-            )
-            s = pd.concat([s], keys=[c.list_name])
-            s = pd.concat([s], keys=[i])
-
-            nodal_supply_energy.append(s)
-
-        for c in n.iterate_components(n.branch_components):
-            for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map).fillna(False)]
-
-                if (len(items) == 0) or c.pnl["p" + end].empty:
-                    continue
-
-                s = (
-                    pd.concat(
-                        [
-                            (
-                                (-1)
-                                * c.pnl["p" + end][items]
-                                .multiply(n.snapshot_weightings.generators, axis=0)
-                                .sum()
-                            ),
-                            c.df.loc[items][["bus0", "carrier"]],
-                        ],
-                        axis=1,
-                    )
-                    .groupby(by=["bus0", "carrier"])
-                    .sum()[0]
-                )
-
-                s.index = s.index.map(lambda x: (x[0], x[1] + end))
-                s = pd.concat([s], keys=[c.list_name])
-                s = pd.concat([s], keys=[i])
-
-                nodal_supply_energy.append(s)
-
-    return pd.concat(nodal_supply_energy).sort_index()
+    return curtailed_rel.sort_index()
 
 
-def calculate_metrics(n):
+def calculate_energy(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the net energy supply (positive) and consumption (negative) by technology carrier across all ports.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "carrier"]
+    """
+    return n.statistics.energy_balance(groupby="carrier").sort_values(ascending=False)
+
+
+def calculate_energy_balance(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the energy supply (positive) and consumption (negative) by technology carrier for each bus carrier.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "carrier", "bus_carrier"]
+
+    Examples
+    --------
+    >>> eb = calculate_energy_balance(n)
+    >>> eb.xs("methanol", level='bus_carrier')
+    """
+    return n.statistics.energy_balance().sort_values(ascending=False)
+
+
+def calculate_nodal_energy_balance(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate the regional energy balances (positive values for supply, negative values for consumption) for each technology carrier and bus carrier based on the location bus attribute.
+
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with levels ["component", "carrier", "location", "bus_carrier"]
+
+    Examples
+    --------
+    >>> eb = calculate_nodal_energy_balance(n)
+    >>> eb.xs(("AC", "BE0 0"), level=["bus_carrier", "location"])
+    """
+    return n.statistics.energy_balance(groupby=["carrier", "location", "bus_carrier"])
+
+
+def calculate_metrics(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate system-level metrics, e.g. shadow prices, grid expansion, total costs.
+    Also calculate average, standard deviation and share of zero hours for electricity prices.
+    """
+
     metrics = {}
 
-    metrics["line_volume_DC"] = (n.links.length * n.links.p_nom_opt)[
-        n.links.carrier == "DC"
-    ].sum()
-    metrics["line_volume_AC"] = (n.lines.length * n.lines.s_nom_opt).sum()
+    dc_links = n.links.query("carrier == 'DC'")
+    metrics["line_volume_DC"] = dc_links.eval("length * p_nom_opt").sum()
+    metrics["line_volume_AC"] = n.lines.eval("length * s_nom_opt").sum()
     metrics["line_volume"] = metrics["line_volume_AC"] + metrics["line_volume_DC"]
+
     metrics["total costs"] = n.statistics.capex().sum() + n.statistics.opex().sum()
+
+    buses_i = n.buses.query("carrier == 'AC'").index
+    prices = n.buses_t.marginal_price[buses_i]
+
+    # threshold higher than marginal_cost of VRE
+    zero_hours = prices.where(prices < 0.1).count().sum()
+    metrics["electricity_price_zero_hours"] = zero_hours / prices.size
+    metrics["electricity_price_mean"] = prices.unstack().mean()
+    metrics["electricity_price_std"] = prices.unstack().std()
 
     if "lv_limit" in n.global_constraints.index:
         metrics["line_volume_limit"] = n.global_constraints.at["lv_limit", "constant"]
@@ -490,115 +244,50 @@ def calculate_metrics(n):
     return pd.Series(metrics).sort_index()
 
 
-def calculate_prices(n):
-    # WARNING: this is time-averaged, see weighted_prices for load-weighted average
-    prices = n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean()
+def calculate_prices(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate time-averaged prices per carrier.
+    """
+    return n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean().sort_index()
 
-    return prices
 
-
-def calculate_weighted_prices(n):
+def calculate_weighted_prices(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate load-weighted prices per bus carrier.
+    """
     carriers = n.buses.carrier.unique()
 
     weighted_prices = {}
 
     for carrier in carriers:
         load = n.statistics.withdrawal(
-            groupby=pypsa.statistics.groupers["bus", "carrier"],
+            groupby="bus",
             aggregate_time=False,
-            nice_names=False,
             bus_carrier=carrier,
-        )
+            aggregate_across_components=True,
+        ).T
 
         if not load.empty and load.sum().sum() > 0:
-            load = load.groupby(level="bus").sum().T.fillna(0)
-
             price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
             price = price.reindex(columns=load.columns, fill_value=1)
 
-            weighted_prices[carrier] = (load * price).sum().sum() / load.sum().sum()
+            weights = n.snapshot_weightings.generators
+            a = weights @ (load * price).sum(axis=1)
+            b = weights @ load.sum(axis=1)
+            weighted_prices[carrier] = a / b
 
     return pd.Series(weighted_prices).sort_index()
 
 
-def calculate_market_values(n):
-    # Warning: doesn't include storage units
-
-    carrier = "AC"
-
-    market_values = {}
-
-    buses = n.buses.index[n.buses.carrier == carrier]
-
-    ## First do market value of generators ##
-
-    generators = n.generators.index[n.buses.loc[n.generators.bus, "carrier"] == carrier]
-
-    techs = n.generators.loc[generators, "carrier"].value_counts().index
-
-    for tech in techs:
-        gens = generators[n.generators.loc[generators, "carrier"] == tech]
-
-        dispatch = (
-            n.generators_t.p[gens]
-            .T.groupby(n.generators.loc[gens, "bus"])
-            .sum()
-            .T.reindex(columns=buses, fill_value=0.0)
-        )
-        revenue = dispatch * n.buses_t.marginal_price[buses]
-
-        if total_dispatch := dispatch.sum().sum():
-            market_values[tech] = revenue.sum().sum() / total_dispatch
-        else:
-            market_values[tech] = np.nan
-
-    ## Now do market value of links ##
-
-    for i in ["0", "1"]:
-        all_links = n.links.index[n.buses.loc[n.links["bus" + i], "carrier"] == carrier]
-
-        techs = n.links.loc[all_links, "carrier"].value_counts().index
-
-        for tech in techs:
-            links = all_links[n.links.loc[all_links, "carrier"] == tech]
-
-            dispatch = (
-                n.links_t["p" + i][links]
-                .T.groupby(n.links.loc[links, "bus" + i])
-                .sum()
-                .T.reindex(columns=buses, fill_value=0.0)
-            )
-
-            revenue = dispatch * n.buses_t.marginal_price[buses]
-
-            if total_dispatch := dispatch.sum().sum():
-                market_values[tech] = revenue.sum().sum() / total_dispatch
-            else:
-                market_values[tech] = np.nan
-
-    return pd.Series(market_values).sort_index()
-
-
-def calculate_price_statistics(n):
-    price_statistics = {}
-
-    buses = n.buses.index[n.buses.carrier == "AC"]
-
-    threshold = 0.1  # higher than phoney marginal_cost of wind/solar
-
-    df = pd.DataFrame(data=0.0, columns=buses, index=n.snapshots)
-
-    df[n.buses_t.marginal_price[buses] < threshold] = 1.0
-
-    price_statistics["zero_hours"] = df.sum().sum() / (df.shape[0] * df.shape[1])
-
-    price_statistics["mean"] = n.buses_t.marginal_price[buses].unstack().mean()
-
-    price_statistics["standard_deviation"] = (
-        n.buses_t.marginal_price[buses].unstack().std()
+def calculate_market_values(n: pypsa.Network) -> pd.Series:
+    """
+    Calculate market values for electricity.
+    """
+    return (
+        n.statistics.market_value(bus_carrier="AC", aggregate_across_components=True)
+        .sort_values()
+        .dropna()
     )
-
-    return pd.Series(price_statistics).sort_index()
 
 
 if __name__ == "__main__":
@@ -620,6 +309,8 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     assign_carriers(n)
     assign_locations(n)
+
+    n.statistics.set_parameters(nice_names=False, drop_zero=False)
 
     for output in OUTPUTS:
         globals()["calculate_" + output](n).to_csv(snakemake.output[output])
