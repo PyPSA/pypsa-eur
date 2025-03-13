@@ -44,12 +44,16 @@ def assign_carriers(n):
 
 
 def assign_locations(n):
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
-        ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
-        for i in ifind.unique():
-            names = ifind.index[ifind == i]
-            c.df.loc[names, "location"] = "" if i == -1 else names.str[:i]
+    for c in n.iterate_components(n.one_port_components):
+        c.df["location"] = c.df.bus.map(n.buses.location)
 
+    for c in n.iterate_components(n.branch_components):
+        c_bus_cols = c.df.filter(regex="^bus")
+        locs = c_bus_cols.apply(lambda c: c.map(n.buses.location))
+        # take the longest location string for each row;
+        # links and lines inherit location of highest resolved bus;
+        # regional locations "BE0 0" are longer than "EU" by design
+        c.df["location"] = locs.apply(lambda row: max(row.dropna(), key=len), axis=1)
 
 def calculate_nodal_cfs(n):
     nodal_cfs = []
