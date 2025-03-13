@@ -79,8 +79,11 @@ rule base_network:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
         transformers=config_provider("transformers"),
+        clustering=config_provider("clustering", "mode"),
+        admin_levels=config_provider("clustering", "administrative"),
     input:
         unpack(input_base_network),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         europe_shape=resources("europe_shape.geojson"),
@@ -88,11 +91,12 @@ rule base_network:
         base_network=resources("networks/base.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
+        admin_shapes=resources("admin_shapes.geojson"),
     log:
         logs("base_network.log"),
     benchmark:
         benchmarks("base_network")
-    threads: 1
+    threads: 4
     resources:
         mem_mb=1500,
     conda:
@@ -535,6 +539,9 @@ rule build_hac_features:
 
 rule simplify_network:
     params:
+        countries=config_provider("countries"),
+        mode=config_provider("clustering", "mode"),
+        administrative=config_provider("clustering", "administrative"),
         simplify_network=config_provider("clustering", "simplify_network"),
         cluster_network=config_provider("clustering", "cluster_network"),
         aggregation_strategies=config_provider(
@@ -545,6 +552,7 @@ rule simplify_network:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
+        admin_shapes=resources("admin_shapes.geojson"),
     output:
         network=resources("networks/base_s.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
@@ -564,8 +572,8 @@ rule simplify_network:
 
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
-def input_cluster_network(w):
-    if config_provider("enable", "custom_busmap", default=False)(w):
+def input_custom_busmap(w):
+    if config_provider("clustering", "mode", default="busmap")(w) == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
         return {"custom_busmap": custom_busmap}
@@ -574,11 +582,13 @@ def input_cluster_network(w):
 
 rule cluster_network:
     params:
+        countries=config_provider("countries"),
+        mode=config_provider("clustering", "mode"),
+        administrative=config_provider("clustering", "administrative"),
         cluster_network=config_provider("clustering", "cluster_network"),
         aggregation_strategies=config_provider(
             "clustering", "aggregation_strategies", default={}
         ),
-        custom_busmap=config_provider("enable", "custom_busmap", default=False),
         focus_weights=config_provider("clustering", "focus_weights", default=None),
         renewable_carriers=config_provider("electricity", "renewable_carriers"),
         conventional_carriers=config_provider(
@@ -587,11 +597,11 @@ rule cluster_network:
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
     input:
-        unpack(input_cluster_network),
+        unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
+        admin_shapes=resources("admin_shapes.geojson"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
-        busmap=ancient(resources("busmap_base_s.csv")),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)
