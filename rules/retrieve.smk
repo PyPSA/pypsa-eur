@@ -5,6 +5,7 @@
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from shutil import copy as shcopy
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -467,19 +468,15 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            storage(url, keep_local=True),
+            zip = storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
             gpkg="data/WDPA.gpkg",
         run:
-            if os.name == "nt": # Special handling for Windows (PR #1575)
-                shell("powershell -Command \"Copy-Item -Path {input} -Destination {params.zip}\"")
-                shell("powershell -Command \"Expand-Archive -Path {params.zip} -DestinationPath {params.folder} -Force\"")
-            else:
-                shell("cp {input} {params.zip}")
-                shell("unzip -o {params.zip} -d {params.folder}")
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
             
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
@@ -494,7 +491,7 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            storage(
+            zip = storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
@@ -504,13 +501,9 @@ if config["enable"]["retrieve"]:
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
-            if os.name == "nt": # Special handling for Windows (PR #1575)
-                shell("powershell -Command \"Copy-Item -Path {input} -Destination {params.zip}\"")
-                shell("powershell -Command \"Expand-Archive -Path {params.zip} -DestinationPath {params.folder} -Force\"")
-            else:
-                shell("cp {input} {params.zip}")
-                shell("unzip -o {params.zip} -d {params.folder}")
-            
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
