@@ -16,19 +16,17 @@ logger = logging.getLogger(__name__)
 INDEX_COLS = {
     "nodal_costs": 4,
     "nodal_capacities": 3,
-    "nodal_cfs": 3,
-    "cfs": 2,
+    "nodal_capacity_factors": 3,
+    "capacity_factors": 2,
     "costs": 3,
     "capacities": 2,
     "curtailment": 1,
     "energy": 2,
-    "supply": 3,
-    "supply_energy": 3,
-    "nodal_supply_energy": 4,
+    "energy_balance": 3,
+    "nodal_energy_balance": 4,
     "prices": 1,
     "weighted_prices": 1,
     "market_values": 1,
-    "price_statistics": 1,
     "metrics": 1,
 }
 
@@ -62,7 +60,6 @@ if __name__ == "__main__":
         summaries = []
         for _, filename in summaries_dict.items():
             s = pd.read_csv(filename, index_col=list(range(INDEX_COLS[kind])))
-            s.index.names = [None] * s.index.nlevels
             summaries.append(s)
 
         summaries = pd.concat(summaries, axis=1)

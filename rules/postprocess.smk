@@ -141,10 +141,10 @@ rule make_summary:
         + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         nodal_capacities=RESULTS
         + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_cfs=RESULTS
-        + "csvs/individual/nodal_cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        cfs=RESULTS
-        + "csvs/individual/cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_capacity_factors=RESULTS
+        + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        capacity_factors=RESULTS
+        + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         costs=RESULTS
         + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         capacities=RESULTS
@@ -153,20 +153,16 @@ rule make_summary:
         + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         energy=RESULTS
         + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        supply=RESULTS
-        + "csvs/individual/supply_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        supply_energy=RESULTS
-        + "csvs/individual/supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        nodal_supply_energy=RESULTS
-        + "csvs/individual/nodal_supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        energy_balance=RESULTS
+        + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_energy_balance=RESULTS
+        + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         prices=RESULTS
         + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         weighted_prices=RESULTS
         + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         market_values=RESULTS
         + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        price_statistics=RESULTS
-        + "csvs/individual/price_statistics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
         metrics=RESULTS
         + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
     threads: 1
@@ -203,15 +199,15 @@ rule make_global_summary:
             **config["scenario"],
             allow_missing=True,
         ),
-        nodal_cfs=expand(
+        nodal_capacity_factors=expand(
             RESULTS
-            + "csvs/individual/nodal_cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
-        cfs=expand(
+        capacity_factors=expand(
             RESULTS
-            + "csvs/individual/cfs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
@@ -239,21 +235,15 @@ rule make_global_summary:
             **config["scenario"],
             allow_missing=True,
         ),
-        supply=expand(
+        energy_balance=expand(
             RESULTS
-            + "csvs/individual/supply_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
-        supply_energy=expand(
+        nodal_energy_balance=expand(
             RESULTS
-            + "csvs/individual/supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
-        nodal_supply_energy=expand(
-            RESULTS
-            + "csvs/individual/nodal_supply_energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
@@ -275,12 +265,6 @@ rule make_global_summary:
             **config["scenario"],
             allow_missing=True,
         ),
-        price_statistics=expand(
-            RESULTS
-            + "csvs/individual/price_statistics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-            **config["scenario"],
-            allow_missing=True,
-        ),
         metrics=expand(
             RESULTS
             + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
@@ -288,22 +272,20 @@ rule make_global_summary:
             allow_missing=True,
         ),
     output:
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
-        cfs=RESULTS + "csvs/cfs.csv",
         costs=RESULTS + "csvs/costs.csv",
         capacities=RESULTS + "csvs/capacities.csv",
-        curtailment=RESULTS + "csvs/curtailment.csv",
         energy=RESULTS + "csvs/energy.csv",
-        supply=RESULTS + "csvs/supply.csv",
-        supply_energy=RESULTS + "csvs/supply_energy.csv",
-        nodal_supply_energy=RESULTS + "csvs/nodal_supply_energy.csv",
+        energy_balance=RESULTS + "csvs/energy_balance.csv",
+        capacity_factors=RESULTS + "csvs/capacity_factors.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
+        curtailment=RESULTS + "csvs/curtailment.csv",
         prices=RESULTS + "csvs/prices.csv",
         weighted_prices=RESULTS + "csvs/weighted_prices.csv",
         market_values=RESULTS + "csvs/market_values.csv",
-        price_statistics=RESULTS + "csvs/price_statistics.csv",
-        metrics=RESULTS + "csvs/metrics.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
+        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
+        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
     threads: 1
     resources:
         mem_mb=8000,
@@ -351,7 +333,7 @@ rule plot_summary:
     input:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
-        balances=RESULTS + "csvs/supply_energy.csv",
+        balances=RESULTS + "csvs/energy_balance.csv",
         eurostat="data/eurostat/Balances-April2023",
         co2="data/bundle/eea/UNFCCC_v23.csv",
     output:

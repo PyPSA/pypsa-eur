@@ -33,12 +33,12 @@ OUTPUTS = [
 ]
 
 
-def assign_carriers(n):
+def assign_carriers(n: pypsa.Network):
     if "carrier" not in n.lines:
         n.lines["carrier"] = "AC"
 
 
-def assign_locations(n):
+def assign_locations(n: pypsa.Network):
     for c in n.iterate_components(n.one_port_components):
         c.df["location"] = c.df.bus.map(n.buses.location)
 
