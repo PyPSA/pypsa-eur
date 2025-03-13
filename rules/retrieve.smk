@@ -477,7 +477,6 @@ if config["enable"]["retrieve"]:
             if os.name == "nt": # Special handling for Windows (PR #1575)
                 shell("powershell -Command \"Copy-Item -Path {input} -Destination {params.zip}\"")
                 shell("powershell -Command \"Expand-Archive -Path {params.zip} -DestinationPath {params.folder} -Force\"")
-                #shell('xcopy "{input}" "{params.zip}"')
             else:
                 shell("cp {input} {params.zip}")
                 shell("unzip -o {params.zip} -d {params.folder}")
@@ -508,7 +507,6 @@ if config["enable"]["retrieve"]:
             if os.name == "nt": # Special handling for Windows (PR #1575)
                 shell("powershell -Command \"Copy-Item -Path {input} -Destination {params.zip}\"")
                 shell("powershell -Command \"Expand-Archive -Path {params.zip} -DestinationPath {params.folder} -Force\"")
-                #shell('xcopy "{input}" "{params.zip}"')
             else:
                 shell("cp {input} {params.zip}")
                 shell("unzip -o {params.zip} -d {params.folder}")
