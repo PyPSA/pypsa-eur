@@ -121,38 +121,6 @@ rule build_osm_boundaries:
         "../scripts/build_osm_boundaries.py"
 
 
-rule build_shapes:
-    params:
-        countries=config_provider("countries"),
-    input:
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
-        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
-        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
-        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
-        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
-        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
-        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
-        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
-    output:
-        country_shapes=resources("country_shapes.geojson"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
-        europe_shape=resources("europe_shape.geojson"),
-        nuts3_shapes=resources("nuts3_shapes.geojson"),
-    log:
-        logs("build_shapes.log"),
-    benchmark:
-        benchmarks("build_shapes")
-    threads: 1
-    resources:
-        mem_mb=1500,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_shapes.py"
-
-
 rule build_bidding_zones:
     params:
         countries=config_provider("countries"),
@@ -171,6 +139,39 @@ rule build_bidding_zones:
         "../envs/environment.yaml"
     script:
         "../scripts/build_bidding_zones.py"
+
+
+rule build_shapes:
+    params:
+        countries=config_provider("countries"),
+    input:
+        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
+        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
+        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
+        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
+        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        bidding_zones=resources("bidding_zones.geojson"),
+        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
+    output:
+        country_shapes=resources("country_shapes.geojson"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        europe_shape=resources("europe_shape.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    log:
+        logs("build_shapes.log"),
+    benchmark:
+        benchmarks("build_shapes")
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_shapes.py"
 
 
 if config["enable"].get("build_cutout", False):

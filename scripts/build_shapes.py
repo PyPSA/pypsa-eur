@@ -252,6 +252,7 @@ def create_regions(
     offshore_shapes,
     nuts3_gdp,
     nuts3_pop,
+    bidding_zones_path,
     other_gdp,
     other_pop,
 ):
@@ -294,7 +295,6 @@ def create_regions(
     regions = regions.rename(
         columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"}
     )
-
     # Normalise text
     regions["id"] = regions["id"].apply(normalise_text)
 
@@ -340,6 +340,10 @@ def create_regions(
     regions["geometry"] = regions["geometry"].difference(
         offshore_shapes.geometry.union_all()
     )
+
+    # Add bidding zone information
+    bidding_zones = gpd.read_file(bidding_zones_path)
+    regions = map_bidding_zones_to_regions(regions, bidding_zones)
 
     # GDP and POP for NUTS3 regions
     # GDP
@@ -488,6 +492,53 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     return gdp_pop
 
 
+def map_bidding_zones_to_regions(
+    regions: gpd.GeoDataFrame, bidding_zones: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    """
+    Map bidding zones to regions on a country-by-country basis.
+
+    Parameters
+    ----------
+    regions : geopandas.GeoDataFrame
+        The regions GeoDataFrame with a 'country' column
+    bidding_zones : geopandas.GeoDataFrame
+        The bidding zones GeoDataFrame with a 'zone_name' and "country" column.
+
+    Returns
+    -------
+    regions : geopandas.GeoDataFrame
+        The regions GeoDataFrame with an added 'bidding_zone' columnk
+    """
+
+    # Initialize the bidding_zone column with NaN values
+    regions["bidding_zone"] = pd.NA
+
+    # Get unique countries in regions
+    countries = regions["country"].unique()
+
+    # Process each country separately
+    for country in countries:
+        # Get regions for this country
+
+        country_sel = regions["country"] == country
+        country_regions = regions[country_sel].copy()
+        # Get bidding zones that might correspond to this country
+        country_bidding_zones = bidding_zones[bidding_zones.country == country]
+
+        # Perform spatial join for this country
+        if country_regions.empty or country_bidding_zones.empty:
+            continue
+        joined = gpd.sjoin(
+            country_regions, country_bidding_zones, how="left", predicate="within"
+        )
+
+        # Update the bidding_zone column for this country
+        regions.loc[country_sel, "bidding_zone"] = joined["zone_name"]
+
+    return regions
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -511,6 +562,7 @@ if __name__ == "__main__":
         offshore_shapes,
         snakemake.input.nuts3_gdp,
         snakemake.input.nuts3_pop,
+        snakemake.input.bidding_zones,
         snakemake.input.other_gdp,
         snakemake.input.other_pop,
     )
