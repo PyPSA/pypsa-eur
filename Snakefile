@@ -116,11 +116,11 @@ rule all:
         ),
         cumulative_costs=lambda w: expand(
             (
-            RESULTS + "csvs/cumulative_costs.csv"
-            if config_provider("foresight")(w) == "myopic"
-            else []
+                RESULTS + "csvs/cumulative_costs.csv"
+                if config_provider("foresight")(w) == "myopic"
+                else []
             ),
-            run=config["run"]["name"]
+            run=config["run"]["name"],
         ),
     default_target: True
 
