@@ -14,9 +14,6 @@ from _helpers import set_scenario_config
 from make_summary import (
     assign_carriers,
     assign_locations,
-    calculate_cfs,  # noqa: F401
-    calculate_nodal_cfs,  # noqa: F401
-    calculate_nodal_costs,  # noqa: F401
 )
 from prepare_sector_network import prepare_costs
 from pypsa.descriptors import get_active_assets
@@ -656,10 +653,7 @@ def calculate_co2_emissions(n, label, df):
 
 
 outputs = [
-    "nodal_costs",
     "nodal_capacities",
-    "nodal_cfs",
-    "cfs",
     "costs",
     "capacities",
     "curtailment",
