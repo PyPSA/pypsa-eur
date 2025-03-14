@@ -68,7 +68,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  custom_busmap: false
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -869,6 +868,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  mode: busmap
+  administrative:
+    level: 1
   focus_weights: false
   simplify_network:
     to_substations: false
