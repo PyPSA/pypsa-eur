@@ -1538,7 +1538,7 @@ def add_storage_and_grids(
     clustered_gas_network_file : str, optional
         Path to CSV file containing gas network data
     gas_input_nodes : pd.DataFrame
-        DataFrame containing gas input node information (LNG, pipeline, etc.)        
+        DataFrame containing gas input node information (LNG, pipeline, etc.)
     spatial : object, optional
         Object containing spatial information about nodes and their locations
     options : dict, optional
@@ -5183,7 +5183,7 @@ def add_import_options(
         co2_intensity = costs.at["gas", "CO2 intensity"]
 
         p_nom = gas_input_nodes["lng"].dropna()
-        p_nom.rename(lambda x: x + " gas", inplace=True)#
+        p_nom.rename(lambda x: x + " gas", inplace=True)  #
         if len(spatial.gas.nodes) == 1:
             p_nom = p_nom.sum()
             nodes = spatial.gas.nodes
@@ -5220,7 +5220,6 @@ def add_import_options(
             )
 
     if "H2" in import_options:
-
         p_nom = gas_input_nodes["pipeline"].dropna()
         p_nom.rename(lambda x: x + " H2", inplace=True)
 
