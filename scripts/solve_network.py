@@ -1143,23 +1143,19 @@ def extra_functionality(
         add_solar_potential_constraints(n, config)
 
     if n.config.get("sector", {}).get("tes", False):
-        if (
-            n.buses.index.str.contains(
-                r"urban central heat|urban decentral heat|rural heat",
-                case=False,
-                na=False,
-            )
-            .any()
-        ):
+        if n.buses.index.str.contains(
+            r"urban central heat|urban decentral heat|rural heat",
+            case=False,
+            na=False,
+        ).any():
             add_TES_energy_to_power_ratio_constraints(n)
             add_TES_charger_ratio_constraints(n)
         elif (
-            n.links.index.str.contains("pits charger|tanks charger", case=False, na=False)
-            .any()
-            or n.stores.index.str.contains("pits", case=False, na=False)
-            .any()
-            or n.stores.index.str.contains("tanks", case=False, na=False)
-            .any()
+            n.links.index.str.contains(
+                "pits charger|tanks charger", case=False, na=False
+            ).any()
+            or n.stores.index.str.contains("pits", case=False, na=False).any()
+            or n.stores.index.str.contains("tanks", case=False, na=False).any()
         ):
             raise ValueError(
                 "Unsupported network configuration: tes is enabled but no heating bus was found."
