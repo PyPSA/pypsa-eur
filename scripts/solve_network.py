@@ -961,8 +961,8 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     Does not include fossil fuel imports.
     """
 
-    import_links = n.links.loc[n.links.carrier.str.contains('import')].index
-    import_gens = n.generators.loc[n.generators.carrier.str.contains('import')].index
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
 
     limit = n.config["sector"]["imports"]["limit"]
     limit_sense = n.config["sector"]["imports"]["limit_sense"]
