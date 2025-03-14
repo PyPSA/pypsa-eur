@@ -1147,7 +1147,9 @@ def create_merged_admin_region(
     )
 
     merge_regions = sorted([row.name] + first_neighbours)
-    contains_cumulative = sorted(row.contains + first_neighbours + neighbours_contain)
+    contains_cumulative = sorted(
+        set(row.contains + first_neighbours + neighbours_contain)
+    )
     gdf = admin_shapes.loc[merge_regions]
 
     geometry = gdf.union_all()
