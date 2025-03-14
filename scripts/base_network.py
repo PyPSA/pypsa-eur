@@ -1256,9 +1256,6 @@ def clean_dict(
 
         # Drop keys in double_values
         diction = {k: v for k, v in diction.items() if k not in drop_keys}
-    else:
-        # If there are no unique value occurrences, continue without changing the dictionary
-        drop_keys = set()
 
     # Create list of values, that also exist as key
     double_values = list(chain.from_iterable(diction.values()))
