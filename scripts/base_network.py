@@ -1443,6 +1443,7 @@ def build_admin_shapes(
         1: "level1",
         2: "level2",
         3: "level3",
+        "bz": "bidding_zone",
     }
 
     adm1_countries = ["BA", "MD", "UA", "XK"]
@@ -1455,6 +1456,7 @@ def build_admin_shapes(
 
     if clustering == "administrative":
         logger.info(f"Building bus regions at administrative level {level}")
+
         nuts3_regions["column"] = level_map[level]
 
         # Only keep the values whose keys are in countries
@@ -1490,14 +1492,8 @@ def build_admin_shapes(
         nuts3_regions["admin"] = nuts3_regions["country"]
 
     # Group by busmap
-    admin_shapes = nuts3_regions[["admin", "geometry"]]
-    admin_shapes = admin_shapes.groupby("admin")["geometry"].apply(
-        lambda x: x.union_all()
-    )
-    admin_shapes = gpd.GeoDataFrame(
-        admin_shapes, geometry="geometry", crs=nuts3_regions.crs
-    )
-    admin_shapes["country"] = admin_shapes.index.str[:2]
+    admin_shapes = nuts3_regions[["admin", "geometry", "country"]]
+    admin_shapes = admin_shapes.dissolve("admin")
 
     # Identify regions that do not contain buses and merge them with smallest
     # neighbouring area of the same parent region (NUTS3 -> NUTS2 -> NUTS1 -> country)

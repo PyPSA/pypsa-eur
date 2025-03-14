@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+from urllib.error import HTTPError
+
+import entsoe
+import geopandas as gpd
+import pandas as pd
+
+
+def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
+    """
+    Load bidding zone geometries from ENTSO-E GeoJSON files with disk caching.
+
+    Returns:
+        GeoDataFrame: Contains geometries for all available bidding zones
+    """
+    # If not in cache or cache disabled, load from source
+    print("Downloading bidding zones...")
+    gdfs: list[gpd.GeoDataFrame] = []
+    for area in entsoe.Area:
+        name = area.name
+        try:
+            url = f"https://raw.githubusercontent.com/EnergieID/entsoe-py/refs/heads/master/entsoe/geo/geojson/{name}.geojson"
+            gdfs.append(gpd.read_file(url))
+        except HTTPError:
+            continue
+
+    shapes = pd.concat(gdfs, ignore_index=True)  # type: ignore
+
+    return shapes
+
+
+def load_bidding_zones_from_electricitymaps() -> gpd.GeoDataFrame:
+    """
+    Load bidding zone geometries from electricitymaps-contrib repository.
+
+    Returns:
+        GeoDataFrame: Contains geometries for all available bidding zones
+    """
+    url = "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/master/web/geo/world.geojson"
+    return gpd.read_file(url)
+
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake("retrieve_bidding_zones")
+
+    bidding_zones = load_bidding_zones_from_entsoepy()
+    bidding_zones.to_file(snakemake.output.file_entsoepy)
+
+    bidding_zones = load_bidding_zones_from_electricitymaps()
+    bidding_zones.to_file(snakemake.output.file_electricitymaps)

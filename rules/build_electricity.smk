@@ -121,6 +121,26 @@ rule build_osm_boundaries:
         "../scripts/build_osm_boundaries.py"
 
 
+rule build_bidding_zones:
+    params:
+        countries=config_provider("countries"),
+    input:
+        naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
+        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+    output:
+        file=resources("bidding_zones.geojson"),
+    log:
+        logs("build_bidding_zones.log"),
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_bidding_zones.py"
+
+
 rule build_shapes:
     params:
         countries=config_provider("countries"),
@@ -133,6 +153,7 @@ rule build_shapes:
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        bidding_zones=resources("bidding_zones.geojson"),
         other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
         other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
@@ -569,11 +590,25 @@ rule simplify_network:
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
 def input_custom_busmap(w):
-    if config_provider("clustering", "mode", default="busmap")(w) == "custom_busmap":
+
+    custom_busmap = []
+    custom_busshapes = []
+    bidding_zones = []
+
+    mode = config_provider("clustering", "mode", default="busmap")(w)
+
+    if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
-        return {"custom_busmap": custom_busmap}
-    return {"custom_busmap": []}
+
+    if mode == "custom_busshapes":
+        base_network = config_provider("electricity", "base_network")(w)
+        custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
+
+    return {
+        "custom_busmap": custom_busmap,
+        "custom_busshapes": custom_busshapes,
+    }
 
 
 rule cluster_network:
@@ -596,6 +631,7 @@ rule cluster_network:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
+        bidding_zones=resources("bidding_zones.geojson"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         hac_features=lambda w: (
