@@ -82,7 +82,46 @@ if config["foresight"] == "perfect":
 
 rule all:
     input:
-        expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        summary_plot=expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        ac_plot=expand(
+            resources("maps/power-network-s-{clusters}.pdf"),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        costs_plot=expand(
+            RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        h2_plot=lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                if config_provider("sector", "H2_network")(w)
+                else []
+            ),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        ch4_plot=lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                if config_provider("sector", "gas_network")(w)
+                else []
+            ),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        cumulative_costs=lambda w: expand(
+            (
+                RESULTS + "csvs/cumulative_costs.csv"
+                if config_provider("foresight")(w) == "myopic"
+                else []
+            ),
+            run=config["run"]["name"],
+        ),
     default_target: True
 
 
