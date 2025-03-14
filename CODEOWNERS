@@ -41,11 +41,5 @@ scripts/_benchmark.py                                           @lisazeyen
 scripts/prepare_perfect_foresight.py                            @lisazeyen
 scripts/make_summary_perfect.py                                 @lisazeyen
 
-scripts/plot_validation_electricity_production.py               @fabianhofmann
-scripts/build_electricity_prices.py                             @fabianhofmann
-scripts/build_cross_border_flows.py                             @fabianhofmann
 scripts/retrieve_electricity_demand.py                          @fabianhofmann
-scripts/plot_validation_electricity_prices.py                   @fabianhofmann
 scripts/plot_statistics.py                                      @fabianhofmann
-scripts/build_electricity_production.py                         @fabianhofmann
-rules/validate.smk                                              @fabianhofmann

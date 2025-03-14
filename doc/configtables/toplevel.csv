@@ -4,9 +4,6 @@ tutorial,bool,"{true, false}","Switch to retrieve the tutorial data set instead 
 logging,,,
 -- level,--,"Any of {'INFO', 'WARNING', 'ERROR'}","Restrict console outputs to all infos, warning or errors only"
 -- format,--,"","Custom format for log messages. See `LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ attributes."
-private,,,
--- keys,,,
--- -- entsoe_api,--,,Optionally specify the ENTSO-E API key. See the guidelines to get `ENTSO-E API key <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`_
 remote,,,
 -- ssh,--,,Optionally specify the SSH of a remote cluster to be synchronized.
 -- path,--,,Optionally specify the file path within the remote cluster to be synchronized.
