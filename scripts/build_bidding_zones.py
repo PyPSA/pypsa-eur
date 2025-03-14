@@ -1,62 +1,8 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-from functools import reduce
-from itertools import takewhile
-from operator import attrgetter
-
 import geopandas as gpd
-import numpy as np
 import pandas as pd
-from shapely.geometry import MultiPolygon
-
-
-def _simplify_polys(polys, minarea=0.1, tolerance=None, filterremote=True):
-    if isinstance(polys, MultiPolygon):
-        polys = sorted(polys.geoms, key=attrgetter("area"), reverse=True)
-        mainpoly = polys[0]
-        mainlength = np.sqrt(mainpoly.area / (2.0 * np.pi))
-        if mainpoly.area > minarea:
-            polys = MultiPolygon(
-                [
-                    p
-                    for p in takewhile(lambda p: p.area > minarea, polys)
-                    if not filterremote or (mainpoly.distance(p) < mainlength)
-                ]
-            )
-        else:
-            polys = mainpoly
-    if tolerance is not None:
-        polys = polys.simplify(tolerance=tolerance)
-    return polys
-
-
-def get_countries(naturalearth: str, country_list: set[str]) -> gpd.GeoDataFrame:
-    """
-    Load geometries for missing countries from Natural Earth dataset.
-
-    Args:
-        naturalearth: Path to Natural Earth dataset
-        missing_countries: Set of country codes that are missing in the bidding zones
-
-    Returns:
-        GeoDataFrame: Contains geometries for all missing countries
-    """
-    df = gpd.read_file(naturalearth)
-
-    # Names are a hassle in naturalearth, try several fields
-    fieldnames = (
-        df[x].where(lambda s: s != "-99") for x in ("ISO_A2", "WB_A2", "ADM0_A3")
-    )
-    df["name"] = reduce(lambda x, y: x.fillna(y), fieldnames, next(fieldnames)).str[:2]
-    df.replace({"name": {"KV": "XK"}}, inplace=True)
-
-    df = df.loc[
-        df.name.isin(country_list) & ((df["scalerank"] == 0) | (df["scalerank"] == 5))
-    ]
-    return gpd.GeoDataFrame(
-        df.set_index("name")[["geometry"]].geometry.map(_simplify_polys).set_crs(df.crs)
-    )
 
 
 def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
@@ -90,31 +36,6 @@ def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
     covered_countries = primary_countries | set(secondary_countries)
 
     return covered_countries, country_strings
-
-
-def split_combined_zones(gdf, country_shapes):
-    """Split multi-country zones into individual country entries."""
-    crs = gdf.crs
-    new_rows = []
-
-    for _, row in gdf.iterrows():
-        countries = row.country.split(",")
-        if len(countries) == 1:
-            new_rows.append(row)
-            continue
-
-        # Split geometry for combined countries
-        for country in countries:
-            country_geom = country_shapes.loc[country].geometry
-            intersection = row.geometry.intersection(country_geom)
-
-            if not intersection.is_empty:
-                new_row = row.copy()
-                new_row.country = country
-                new_row.geometry = intersection
-                new_rows.append(new_row)
-
-    return gpd.GeoDataFrame(new_rows, crs=crs)
 
 
 def extract_shape_by_bbox(
