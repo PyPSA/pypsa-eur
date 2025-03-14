@@ -1144,8 +1144,7 @@ def extra_functionality(
 
     if n.config.get("sector", {}).get("tes", False):
         if (
-            n.buses.index.str.lower()
-            .str.contains(
+            n.buses.index.str.contains(
                 r"urban central heat|urban decentral heat|rural heat",
                 case=False,
                 na=False,
@@ -1155,14 +1154,11 @@ def extra_functionality(
             add_TES_energy_to_power_ratio_constraints(n)
             add_TES_charger_ratio_constraints(n)
         elif (
-            n.links.index.str.lower()
-            .str.contains("pits charger|tanks charger", case=False, na=False)
+            n.links.index.str.contains("pits charger|tanks charger", case=False, na=False)
             .any()
-            or n.stores.index.str.lower()
-            .str.contains("pits", case=False, na=False)
+            or n.stores.index.str.contains("pits", case=False, na=False)
             .any()
-            or n.stores.index.str.lower()
-            .str.contains("tanks", case=False, na=False)
+            or n.stores.index.str.contains("tanks", case=False, na=False)
             .any()
         ):
             raise ValueError(
