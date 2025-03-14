@@ -17,7 +17,7 @@ Upcoming Release
   - Methane imports use existing LNG terminal entry points, hydrogen imports use existing pipeline entry points. 
   - Import prices are uniform across all regions.
   - Carbon content of imported fuels is handled like biomass.
-  - Total volume of imports can be limited with ``sector: imports: limit:``.
+  - Total volume of imports can be limited with ``sector: imports: limit:``. The limit includes synthetic and biomass imports (``sector: solid_biomass_import:``), but not fossil fuel imports.
 
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 * Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)

@@ -743,6 +743,7 @@ sector:
   imports:
     enable: false
     limit: .inf
+    limit_sense: <=
     price:
       H2: 74
       NH3: 97

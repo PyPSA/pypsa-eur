@@ -193,5 +193,6 @@ solid_biomass_import,,,
 imports,,,
 -- enable,--,"{true, false}",Add option to include renewable energy imports
 -- limit,TWh,float,Maximum allowed renewable energy imports
+-- limit_sense,--,"{==, <=, >=}",Sense of the limit
 -- price,,"{H2, NH3, methanol, gas, oil}",
 -- -- {carrier},currency/MWh,float,Price for importing renewable energy of carrier
