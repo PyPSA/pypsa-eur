@@ -11,6 +11,14 @@ Release Notes
 Upcoming Release
 ================
 
+* Added simplified representation of renewable energy imports:
+  - Activated with ``sector: imports: enable: true``.
+  - Allows hydrogen, ammonia, methanol, gas and oil (Fischer-Tropsch) with configurable prices (``sector: imports: prices:``).
+  - Methane imports use existing LNG terminal entry points, hydrogen imports use existing pipeline entry points. 
+  - Import prices are uniform across all regions.
+  - Carbon content of imported fuels is handled like biomass.
+  - Total volume of imports can be limited with ``sector: imports: limit:``.
+
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 * Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
 

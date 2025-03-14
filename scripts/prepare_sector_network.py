@@ -1516,7 +1516,7 @@ def add_storage_and_grids(
     h2_cavern_file,
     cavern_types,
     clustered_gas_network_file,
-    gas_input_nodes_file,
+    gas_input_nodes,
     spatial,
     options,
 ):
@@ -1537,8 +1537,8 @@ def add_storage_and_grids(
         List of underground storage types to consider
     clustered_gas_network_file : str, optional
         Path to CSV file containing gas network data
-    gas_input_nodes_file : str, optional
-        Path to CSV file containing gas input nodes data
+    gas_input_nodes : pd.DataFrame
+        DataFrame containing gas input node information (LNG, pipeline, etc.)        
     spatial : object, optional
         Object containing spatial information about nodes and their locations
     options : dict, optional
@@ -1722,8 +1722,6 @@ def add_storage_and_grids(
 
         # remove fossil generators where there is neither
         # production, LNG terminal, nor entry-point beyond system scope
-
-        gas_input_nodes = pd.read_csv(gas_input_nodes_file, index_col=0)
 
         unique = gas_input_nodes.index.unique()
         gas_i = n.generators.carrier == "gas"
@@ -5128,6 +5126,115 @@ def add_enhanced_geothermal(
             )
 
 
+def add_import_options(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    options: dict,
+    gas_input_locations: pd.DataFrame,
+):
+    """
+    Add green energy import options.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+    costs : pd.DataFrame
+    options : dict
+        Options from snakemake.params["sector"].
+    gas_input_locations : pd.DataFrame
+        Locations of gas input nodes split by LNG and pipeline.
+    """
+
+    import_config = options["imports"]
+    import_options = import_config["price"]
+    logger.info(f"Adding import options:\n{pd.Series(import_options)}")
+
+    if "methanol" in import_options:
+        co2_intensity = costs.at["methanolisation", "carbondioxide-input"]
+
+        n.add(
+            "Link",
+            spatial.methanol.nodes,
+            suffix=" import",
+            carrier="import methanol",
+            bus0="co2 atmosphere",
+            bus1=spatial.methanol.nodes,
+            efficiency=1 / co2_intensity,
+            marginal_cost=import_options["methanol"] / co2_intensity,
+            p_nom=1e7,
+        )
+
+    if "oil" in import_options:
+        co2_intensity = costs.at["oil", "CO2 intensity"]
+
+        n.add(
+            "Link",
+            spatial.oil.nodes,
+            suffix=" import",
+            carrier="import oil",
+            bus0="co2 atmosphere",
+            bus1=spatial.oil.nodes,
+            efficiency=1 / co2_intensity,
+            marginal_cost=import_options["oil"] / co2_intensity,
+            p_nom=1e7,
+        )
+
+    if "gas" in import_options:
+        co2_intensity = costs.at["gas", "CO2 intensity"]
+
+        p_nom = gas_input_nodes["lng"].dropna()
+        p_nom.rename(lambda x: x + " gas", inplace=True)#
+        if len(spatial.gas.nodes) == 1:
+            p_nom = p_nom.sum()
+            nodes = spatial.gas.nodes
+        else:
+            nodes = p_nom.index
+
+        n.add(
+            "Link",
+            nodes,
+            suffix=" import",
+            carrier="import gas",
+            bus0="co2 atmosphere",
+            bus1=nodes,
+            efficiency=1 / co2_intensity,
+            marginal_cost=import_options["gas"] / co2_intensity,
+            p_nom=p_nom / co2_intensity,
+        )
+
+    if "NH3" in import_options:
+        if options["ammonia"]:
+            n.add(
+                "Generator",
+                spatial.ammonia.nodes,
+                suffix=" import",
+                bus=spatial.ammonia.nodes,
+                carrier="import NH3",
+                p_nom=1e7,
+                marginal_cost=import_options["NH3"],
+            )
+
+        else:
+            logger.warning(
+                "Skipping specified ammonia imports because ammonia carrier is not present."
+            )
+
+    if "H2" in import_options:
+
+        p_nom = gas_input_nodes["pipeline"].dropna()
+        p_nom.rename(lambda x: x + " H2", inplace=True)
+
+        n.add(
+            "Generator",
+            p_nom.index,
+            suffix=" import",
+            bus=p_nom.index,
+            carrier="import H2",
+            p_nom=p_nom,
+            marginal_cost=import_options["H2"],
+        )
+
+
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -5136,10 +5243,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="38",
+            clusters="10",
             ll="vopt",
             sector_opts="",
-            planning_horizons="2030",
+            planning_horizons="2050",
         )
 
     configure_logging(snakemake)
@@ -5170,6 +5277,9 @@ if __name__ == "__main__":
         pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * nyears
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+
+    fn = snakemake.input.gas_input_nodes_simplified
+    gas_input_nodes = pd.read_csv(fn, index_col=0)
 
     carriers_to_keep = snakemake.params.pypsa_eur
     profiles = {
@@ -5215,7 +5325,7 @@ if __name__ == "__main__":
         h2_cavern_file=snakemake.input.h2_cavern,
         cavern_types=snakemake.params.sector["hydrogen_underground_storage_locations"],
         clustered_gas_network_file=snakemake.input.clustered_gas_network,
-        gas_input_nodes_file=snakemake.input.gas_input_nodes_simplified,
+        gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=options,
     )
@@ -5370,6 +5480,9 @@ if __name__ == "__main__":
             egs_config=snakemake.params["sector"]["enhanced_geothermal"],
             egs_capacity_factors="path/to/capacity_factors.csv",
         )
+
+    if options["imports"]["enable"]:
+        add_import_options(n, costs, options, gas_input_nodes)
 
     if options["gas_distribution_grid"]:
         insert_gas_distribution_costs(n, costs)

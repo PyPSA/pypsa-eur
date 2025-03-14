@@ -740,7 +740,15 @@ sector:
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
-
+  imports:
+    enable: false
+    limit: .inf
+    price:
+      H2: 74
+      NH3: 97
+      methanol: 121
+      gas: 122
+      oil: 125
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
