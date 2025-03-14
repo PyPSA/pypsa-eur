@@ -32,6 +32,8 @@ Upcoming Release
 
 * New feature: Allowing network clustering based on administrative boundaries (i.e., NUTS0/country-level to NUTS3).  To make use of this setting, set ``clustering["mode"]: administrative`` and additionally the ``clusters`` wildcard in ``scenario`` to ‘adm’. Optionally include dictionary of individual country codes and their individual NUTS levels (0 to 3, see documentation). Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1. Please be aware that not every region will solve/converge at every NUTS level (especially at high NUTS resolution) due to rigid regional boundaries.
 
+* Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
+
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
 
