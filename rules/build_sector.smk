@@ -1283,21 +1283,9 @@ rule prepare_sector_network:
             if config_provider("weather_years", "enable")(w)
             else []
         ),
-        # Steel
-        steel_production=lambda w: (
-            resources("endo_industry/eu_steel_production.csv")
-            if config_provider("sector", "endo_industry","enable")(w)
-            else []
-        ),
         industry_production_scenarios=lambda w: (
             resources("endo_industry/eu_industry_prod_scenarios.csv")
             if config_provider("sector", "endo_industry","enable")(w)
-            else []
-        ),
-        # Cement
-        cement_production=lambda w: (
-            resources("endo_industry/cement_production_s_{clusters}.csv")
-            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
         endoindustry_capacities=lambda w: (
