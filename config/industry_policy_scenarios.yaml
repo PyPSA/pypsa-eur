@@ -92,8 +92,8 @@ policy_eu_deindustrial:
 
 
 # REGIONAL DEMAND
-# Climate policy: NO, Relocation: YES, Industrial policy: MAINTAIN
-base_eu_maintain:
+# Climate policy: NO, Relocation: NO, Industrial policy: MAINTAIN
+base_reg_maintain:
   co2_budget_apply: false
   sector:
     endo_industry:
@@ -105,8 +105,8 @@ base_eu_maintain:
     ammonia: regional
     regional_hvc: true
 
-# Climate policy: YES, Relocation: YES, Industrial policy: MAINTAIN
-policy_eu_maintain:
+# Climate policy: YES, Relocation: NO, Industrial policy: MAINTAIN
+policy_reg_maintain:
   co2_budget_apply: true
   sector:
     endo_industry:
@@ -118,8 +118,8 @@ policy_eu_maintain:
     ammonia: regional
     regional_hvc: true
 
-# Climate policy: NO, Relocation: YES, Industrial policy: REGAIN
-base_eu_regain:
+# Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
+base_reg_regain:
   co2_budget_apply: false
   sector:
     endo_industry:
@@ -131,8 +131,8 @@ base_eu_regain:
     ammonia: regional
     regional_hvc: true
 
-# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
-policy_eu_regain:
+# Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
+policy_reg_regain:
   co2_budget_apply: true
   sector:
     endo_industry:
@@ -144,8 +144,8 @@ policy_eu_regain:
     ammonia: regional
     regional_hvc: true
 
-# Climate policy: NO, Relocation: YES, Industrial policy: DEINDUSTRIAL
-base_eu_deindustrial:
+# Climate policy: NO, Relocation: NO, Industrial policy: DEINDUSTRIAL
+base_reg_deindustrial:
   co2_budget_apply: false
   sector:
     endo_industry:
@@ -157,8 +157,8 @@ base_eu_deindustrial:
     ammonia: regional
     regional_hvc: true
 
-# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
-policy_eu_deindustrial:
+# Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
+policy_reg_deindustrial:
   co2_budget_apply: true
   sector:
     endo_industry:
