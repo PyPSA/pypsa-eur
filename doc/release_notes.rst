@@ -667,6 +667,9 @@ PyPSA-Eur 0.11.0 (25th May 2024)
 
 **New Features**
 
+* Add plotting routine with statistics where we allow for plotting of individual energy carriers and countries. Besides the plots, we create all necessary csv files for the plotting routine.
+
+
 * Introduced scenario management to support the simultaneous execution of
   multiple scenarios with a single ``snakemake`` call. A ``scenarios.yaml`` file
   allows customizable scenario names with configuration overrides. To enable,
@@ -764,6 +767,16 @@ PyPSA-Eur 0.11.0 (25th May 2024)
   fraction of carbon in plastics that is permanently sequestered in landfills.
   The default assumption is that all carbon in plastics is eventually released
   to the atmosphere. (https://github.com/PyPSA/pypsa-eur/pull/1060)
+* Removed rule ``copy_config``. Instead, a config file is created for each
+  network output of the ``solve_*`` rules, with the same content as ``n.meta``.
+
+* Added new HVDC transmission projects from `TYNDP 2024 draft projects
+  <https://tyndp.entsoe.eu/news/176-pan-european-electricity-transmission-projects-and-33-storage-projects-will-be-assessed-in-tyndp-2024>`__.
+
+* Upgrade to Snakemake v8.5+. This version is the new minimum version required.
+  To upgrade an existing environment, run ``conda install -c bioconda
+  snakemake-minimal">=8.5"`` and ``pip install snakemake-storage-plugin-http``
+  (https://github.com/PyPSA/pypsa-eur/pull/825).
 
 * Added options for building waste-to-energy plants with and without carbon
   capture to consume non-recycled and non-sequestered plastics. Config settings:

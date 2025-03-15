@@ -1052,6 +1052,22 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  statistics:
+    countries:
+    - all
+    carriers:
+    - all
+    - electricity
+    - heat
+    - co2
+    carrier_groups:
+      electricity: [AC, low_voltage]
+    metrics:
+    - energy_balance
+    - total_cost
+    comparison_folder: ""
+    scenario_comparison:
+    - ""
 
   nice_names:
     OCGT: "Open-Cycle Gas"
