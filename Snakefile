@@ -111,13 +111,13 @@ rule purge:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
-rule dag:
+rule rulegraph:
     message:
-        "Creating DAG of workflow."
+        "Creating RULEGRAPH dag of workflow."
     output:
-        dot=resources("dag.dot"),
-        pdf=resources("dag.pdf"),
-        png=resources("dag.png"),
+        dot=resources("dag_rulegraph.dot"),
+        pdf=resources("dag_rulegraph.pdf"),
+        png=resources("dag_rulegraph.png"),
     conda:
         "envs/environment.yaml"
     shell:
@@ -130,11 +130,11 @@ rule dag:
 
 rule filegraph:
     message:
-        "Creating FILEGRAPH of workflow."
+        "Creating FILEGRAPH dag of workflow."
     output:
-        dot=resources("filegraph.dot"),
-        pdf=resources("filegraph.pdf"),
-        png=resources("filegraph.png"),
+        dot=resources("dag_filegraph.dot"),
+        pdf=resources("dag_filegraph.pdf"),
+        png=resources("dag_filegraph.png"),
     conda:
         "envs/environment.yaml"
     shell:
