@@ -123,7 +123,7 @@ rule dag:
         snakemake dag
         
         # Specify dag_type via config
-        snakemake dag --config dag_type=(filegraph|rulegraph)
+        snakemake --config dag_type=(filegraph|rulegraph)
     """
     message:
         f"Creating {dag_type} DAG of workflow."
