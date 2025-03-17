@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,11 +6,15 @@ Build population layouts for all clustered model regions as total as well as
 split by urban and rural population.
 """
 
+import logging
+
 import atlite
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -19,6 +22,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_clustered_population_layouts", clusters=48)
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     cutout = atlite.Cutout(snakemake.input.cutout)

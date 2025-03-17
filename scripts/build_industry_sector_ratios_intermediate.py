@@ -1,32 +1,10 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Build specific energy consumption by carrier and industries and by country,
 that interpolates between the current average energy consumption (from
 2015-2020) and the ideal future best-in-class consumption.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    industry:
-        sector_ratios_fraction_future:
-        ammonia:
-
-Inputs
-------
-
-- ``resources/industry_sector_ratios.csv``
-- ``resources/industrial_energy_demand_per_country_today.csv``
-- ``resources/industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industry_sector_ratios_{planning_horizons}.csv``
 
 Description
 -------
@@ -79,13 +57,17 @@ with the following carriers are considered:
 Unit of the output file is MWh/t.
 """
 
+import logging
+
 import numpy as np
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from prepare_sector_network import get
+
+logger = logging.getLogger(__name__)
 
 
 def build_industry_sector_ratios_intermediate():
-
     # in TWh/a
     demand = pd.read_csv(
         snakemake.input.industrial_energy_demand_per_country_today,
@@ -149,6 +131,8 @@ if __name__ == "__main__":
             "build_industry_sector_ratios_intermediate",
             planning_horizons="2030",
         )
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     year = int(snakemake.wildcards.planning_horizons)
 

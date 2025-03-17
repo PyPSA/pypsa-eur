@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -309,7 +308,7 @@ def add_unsustainable_potentials(df):
     # Phase out unsustainable biomass potentials linearly from 2020 to 2035 while phasing in sustainable potentials
     share_unsus = params.get("share_unsustainable_use_retained").get(investment_year)
 
-    df_wo_ch = df.drop(df.filter(regex=r"CH\d", axis=0).index)
+    df_wo_ch = df.drop(df.filter(regex=r"CH\d*", axis=0).index)
 
     # Calculate unsustainable solid biomass
     df_wo_ch["unsustainable solid biomass"] = _calc_unsustainable_potential(
@@ -339,7 +338,6 @@ def add_unsustainable_potentials(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(

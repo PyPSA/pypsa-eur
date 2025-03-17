@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -15,11 +15,6 @@ Once the API key is set, the validation workflow can be triggered by running the
 
     snakemake validate_elec_networks --configfile config/config.validation.yaml -c8
 
-
-The configuration file `config/config.validation.yaml` contains the following parameters:
-
-.. literalinclude:: ../config/config.validation.yaml
-   :language: yaml
 
 The setup uses monthly varying fuel prices for gas, lignite, coal and oil as well as CO2 prices, which are created by the script ``build_monthly_prices``. Upon completion of the validation process, the resulting network and generated figures will be stored in the ``results/validation`` directory for further analysis.
 

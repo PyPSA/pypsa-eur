@@ -1,72 +1,10 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+
 """
 Adds existing electrical generators, hydro-electric plants as well as
 greenfield and battery and hydrogen storage to the clustered network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    costs:
-        year: version: dicountrate: emission_prices:
-
-    electricity:
-        max_hours: marginal_cost: capital_cost: conventional_carriers: co2limit:
-        extendable_carriers: estimate_renewable_capacities:
-
-
-    load:
-        scaling_factor:
-
-    renewable:
-        hydro:
-            carriers: hydro_max_hours: hydro_capital_cost:
-
-    lines:
-        length_factor:
-
-    links:
-        length_factor:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at :ref:`costs_cf`,
-    :ref:`electricity_cf`, :ref:`load_cf`, :ref:`renewable_cf`, :ref:`lines_cf`
-
-Inputs
-------
-
-- ``resources/costs.csv``: The database of cost assumptions for all included
-  technologies for specific years from various sources; e.g. discount rate,
-  lifetime, investment (CAPEX), fixed operation and maintenance (FOM), variable
-  operation and maintenance (VOM), fuel costs, efficiency, carbon-dioxide
-  intensity.
-- ``data/hydro_capacities.csv``: Hydropower plant store/discharge power
-  capacities, energy storage capacity, and average hourly inflow by country.
-
-    .. image:: img/hydrocapacities.png
-        :scale: 34 %
-
-- ``resources/electricity_demand_base_s.nc`` Hourly nodal electricity demand
-  profiles.
-- ``resources/regions_onshore_base_s_{clusters}.geojson``: confer
-  :ref:`busregions`
-- ``resources/nuts3_shapes.geojson``: confer :ref:`shapes`
-- ``resources/powerplants_s_{clusters}.csv``: confer :ref:`powerplants`
-- ``resources/profile_{clusters}_{}.nc``: all technologies in
-  ``config["renewables"].keys()``, confer :ref:`renewableprofiles`.
-- ``networks/base_s_{clusters}.nc``
-
-Outputs
--------
-
-- ``networks/base_s_{clusters}_elec.nc``:
-
-    .. image:: img/elec.png
-            :scale: 33 %
 
 Description
 -----------
@@ -111,8 +49,6 @@ network with **zero** initial capacity:
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -122,6 +58,7 @@ import xarray as xr
 from _helpers import (
     configure_logging,
     get_snapshots,
+    rename_techs,
     set_scenario_config,
     update_p_nom_max,
 )
@@ -133,15 +70,46 @@ idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
 
-def normed(s):
+def normed(s: pd.Series) -> pd.Series:
+    """
+    Normalize a pandas Series by dividing each element by the sum of all elements.
+
+    Parameters
+    ----------
+    s : pd.Series
+        Input series to normalize
+
+    Returns
+    -------
+    pd.Series
+        Normalized series where all elements sum to 1
+    """
     return s / s.sum()
 
 
-def calculate_annuity(n, r):
+def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
     """
-    Calculate the annuity factor for an asset with lifetime n years and.
+    Calculate the annuity factor for an asset with lifetime n years and discount rate r.
 
-    discount rate of r, e.g. annuity(20, 0.05) * 20 = 1.6
+    The annuity factor is used to calculate the annual payment required to pay off a loan
+    over n years at interest rate r. For example, annuity(20, 0.05) * 20 = 1.6.
+
+    Parameters
+    ----------
+    n : float
+        Lifetime of the asset in years
+    r : float | pd.Series
+        Discount rate (interest rate). Can be a single float or a pandas Series of rates.
+
+    Returns
+    -------
+    float | pd.Series
+        Annuity factor. Returns a float if r is float, or pd.Series if r is pd.Series.
+
+    Examples
+    --------
+    >>> calculate_annuity(20, 0.05)
+    0.08024258718774728
     """
     if isinstance(r, pd.Series):
         return pd.Series(1 / n, index=r.index).where(
@@ -202,7 +170,12 @@ def sanitize_carriers(n, config):
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
-    colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
+
+    tech_colors = config["plotting"]["tech_colors"]
+    colors = pd.Series(tech_colors).reindex(carrier_i)
+    # try to fill missing colors with tech_colors after renaming
+    missing_colors_i = colors[colors.isna()].index
+    colors[missing_colors_i] = missing_colors_i.map(rename_techs).map(tech_colors)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
         logger.warning(f"tech_colors for carriers {missing_i} not defined in config.")
@@ -228,6 +201,10 @@ def add_co2_emissions(n, costs, carriers):
 
 
 def load_costs(tech_costs, config, max_hours, Nyears=1.0):
+    for key in ("marginal_cost", "capital_cost"):
+        if key in config:
+            config["overwrites"][key] = config[key]
+
     # set all asset costs and other parameters
     costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
 
@@ -241,6 +218,15 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
 
     fill_values = config["fill_values"]
     costs = costs.value.unstack().fillna(fill_values)
+
+    for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
+        overwrites = config["overwrites"].get(attr)
+        if overwrites is not None:
+            overwrites = pd.Series(overwrites)
+            costs.loc[overwrites.index, attr] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     costs["capital_cost"] = (
         (
@@ -285,10 +271,13 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     )
 
     for attr in ("marginal_cost", "capital_cost"):
-        overwrites = config.get(attr)
+        overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
+            logger.info(
+                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
+            )
 
     return costs
 
@@ -300,7 +289,6 @@ def load_and_aggregate_powerplants(
     aggregation_strategies: dict = None,
     exclude_carriers: list = None,
 ) -> pd.DataFrame:
-
     if not aggregation_strategies:
         aggregation_strategies = {}
 
@@ -402,7 +390,20 @@ def attach_load(
     busmap_fn: str,
     scaling: float = 1.0,
 ) -> None:
+    """
+    Attach load data to the network.
 
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the load data to.
+    load_fn : str
+        Path to the load data file.
+    busmap_fn : str
+        Path to the busmap file.
+    scaling : float, optional
+        Scaling factor for the load data, by default 1.0.
+    """
     load = (
         xr.open_dataarray(load_fn).to_dataframe().squeeze(axis=1).unstack(level="time")
     )
@@ -423,7 +424,20 @@ def set_transmission_costs(
     line_length_factor: float = 1.0,
     link_length_factor: float = 1.0,
 ) -> None:
+    """
+    Set the transmission costs for lines and links in the network.
 
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to set the transmission costs for.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    line_length_factor : float, optional
+        Factor to scale the line length, by default 1.0.
+    link_length_factor : float, optional
+        Factor to scale the link length, by default 1.0.
+    """
     n.lines["capital_cost"] = (
         n.lines["length"]
         * line_length_factor
@@ -457,12 +471,32 @@ def set_transmission_costs(
 def attach_wind_and_solar(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    input_profiles: str,
+    profile_filenames: dict,
     carriers: list | set,
     extendable_carriers: list | set,
     line_length_factor: float = 1.0,
     landfall_lengths: dict = None,
 ) -> None:
+    """
+    Attach wind and solar generators to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the generators to.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    profile_filenames : dict
+        Dictionary containing the paths to the wind and solar profiles.
+    carriers : list | set
+        List of renewable energy carriers to attach.
+    extendable_carriers : list | set
+        List of extendable renewable energy carriers.
+    line_length_factor : float, optional
+        Factor to scale the line length, by default 1.0.
+    landfall_lengths : dict, optional
+        Dictionary containing the landfall lengths for offshore wind, by default None.
+    """
     add_missing_carriers(n, carriers)
 
     if landfall_lengths is None:
@@ -474,7 +508,7 @@ def attach_wind_and_solar(
 
         landfall_length = landfall_lengths.get(car, 0.0)
 
-        with xr.open_dataset(getattr(input_profiles, "profile_" + car)) as ds:
+        with xr.open_dataset(profile_filenames["profile_" + car]) as ds:
             if ds.indexes["bus"].empty:
                 continue
 
@@ -499,9 +533,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
             else:
                 capital_cost = costs.at[car, "capital_cost"]
@@ -523,16 +555,40 @@ def attach_wind_and_solar(
 
 
 def attach_conventional_generators(
-    n,
-    costs,
-    ppl,
-    conventional_carriers,
-    extendable_carriers,
-    conventional_params,
-    conventional_inputs,
-    unit_commitment=None,
-    fuel_price=None,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    ppl: pd.DataFrame,
+    conventional_carriers: list,
+    extendable_carriers: dict,
+    conventional_params: dict,
+    conventional_inputs: dict,
+    unit_commitment: pd.DataFrame = None,
+    fuel_price: pd.DataFrame = None,
 ):
+    """
+    Attach conventional generators to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the generators to.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    ppl : pd.DataFrame
+        DataFrame containing the power plant data.
+    conventional_carriers : list
+        List of conventional energy carriers.
+    extendable_carriers : dict
+        Dictionary of extendable energy carriers.
+    conventional_params : dict
+        Dictionary of conventional generator parameters.
+    conventional_inputs : dict
+        Dictionary of conventional generator inputs.
+    unit_commitment : pd.DataFrame, optional
+        DataFrame containing unit commitment data, by default None.
+    fuel_price : pd.DataFrame, optional
+        DataFrame containing fuel price data, by default None.
+    """
     carriers = list(set(conventional_carriers) | set(extendable_carriers["Generator"]))
 
     ppl = ppl.query("carrier in @carriers")
@@ -595,7 +651,7 @@ def attach_conventional_generators(
                 # Values affecting generators of technology k country-specific
                 # First map generator buses to countries; then map countries to p_max_pu
                 values = pd.read_csv(
-                    snakemake.input[f"conventional_{carrier}_{attr}"], index_col=0
+                    conventional_inputs[f"conventional_{carrier}_{attr}"], index_col=0
                 ).iloc[:, 0]
                 bus_values = n.buses.country.map(values)
                 n.generators.update(
@@ -606,7 +662,35 @@ def attach_conventional_generators(
                 n.generators.loc[idx, attr] = values
 
 
-def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **params):
+def attach_hydro(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    ppl: pd.DataFrame,
+    profile_hydro: str,
+    hydro_capacities: str,
+    carriers: list,
+    **params,
+):
+    """
+    Attach hydro generators and storage units to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the hydro units to.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    ppl : pd.DataFrame
+        DataFrame containing the power plant data.
+    profile_hydro : str
+        Path to the hydro profile data.
+    hydro_capacities : str
+        Path to the hydro capacities data.
+    carriers : list
+        List of hydro energy carriers.
+    **params :
+        Additional parameters for hydro units.
+    """
     add_missing_carriers(n, carriers)
     add_co2_emissions(n, costs, carriers)
 
@@ -711,7 +795,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
         if not missing_countries.empty:
             logger.warning(
-                f'Assuming max_hours=6 for hydro reservoirs in the countries: {", ".join(missing_countries)}'
+                f"Assuming max_hours=6 for hydro reservoirs in the countries: {', '.join(missing_countries)}"
             )
         hydro_max_hours = hydro.max_hours.where(
             (hydro.max_hours > 0) & ~hydro.index.isin(missing_mh_single_i),
@@ -743,7 +827,7 @@ def attach_hydro(n, costs, ppl, profile_hydro, hydro_capacities, carriers, **par
         )
 
 
-def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> None:
+def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
     """
     Attach renewable capacities from the OPSD dataset to the network.
 
@@ -779,8 +863,12 @@ def attach_OPSD_renewables(n: pypsa.Network, tech_map: Dict[str, List[str]]) -> 
 
 
 def estimate_renewable_capacities(
-    n: pypsa.Network, year: int, tech_map: dict, expansion_limit: bool, countries: list
-) -> None:
+    n: pypsa.Network,
+    year: int,
+    tech_map: dict,
+    expansion_limit: bool,
+    countries: list,
+):
     """
     Estimate a different between renewable capacities in the network and
     reported country totals from IRENASTAT dataset. Distribute the difference
@@ -834,14 +922,33 @@ def estimate_renewable_capacities(
         if expansion_limit:
             assert np.isscalar(expansion_limit)
             logger.info(
-                f"Reducing capacity expansion limit to {expansion_limit*100:.2f}% of installed capacity."
+                f"Reducing capacity expansion limit to {expansion_limit * 100:.2f}% of installed capacity."
             )
             n.generators.loc[tech_i, "p_nom_max"] = (
                 expansion_limit * n.generators.loc[tech_i, "p_nom_min"]
             )
 
 
-def attach_storageunits(n, costs, extendable_carriers, max_hours):
+def attach_storageunits(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    extendable_carriers: dict,
+    max_hours: dict,
+):
+    """
+    Attach storage units to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the storage units to.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    extendable_carriers : dict
+        Dictionary of extendable energy carriers.
+    max_hours : dict
+        Dictionary of maximum hours for storage units.
+    """
     carriers = extendable_carriers["StorageUnit"]
 
     n.add("Carrier", carriers)
@@ -872,7 +979,23 @@ def attach_storageunits(n, costs, extendable_carriers, max_hours):
         )
 
 
-def attach_stores(n, costs, extendable_carriers):
+def attach_stores(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    extendable_carriers: dict,
+):
+    """
+    Attach stores to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network to attach the stores to.
+    costs : pd.DataFrame
+        DataFrame containing the cost data.
+    extendable_carriers : dict
+        Dictionary of extendable energy carriers.
+    """
     carriers = extendable_carriers["Store"]
 
     n.add("Carrier", carriers)

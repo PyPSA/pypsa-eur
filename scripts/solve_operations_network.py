@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Solves linear optimal dispatch in hourly resolution using the capacities of
 previous capacity expansion in rule :mod:`solve_network`.
 """
-
 
 import logging
 
@@ -54,6 +52,7 @@ if __name__ == "__main__":
         params=snakemake.params,
         solving=snakemake.params.solving,
         log_fn=snakemake.log.solver,
+        rule_name=snakemake.rule,
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

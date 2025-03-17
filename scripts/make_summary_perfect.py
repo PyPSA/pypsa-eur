@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,15 +7,17 @@ costs, capacities, capacity factors, curtailment, energy balances, prices and
 other metrics.
 """
 
-
 import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import set_scenario_config
-from make_summary import calculate_cfs  # noqa: F401
-from make_summary import calculate_nodal_cfs  # noqa: F401
-from make_summary import calculate_nodal_costs  # noqa: F401
-from make_summary import assign_carriers, assign_locations
+from make_summary import (
+    assign_carriers,
+    assign_locations,
+    calculate_cfs,  # noqa: F401
+    calculate_nodal_cfs,  # noqa: F401
+    calculate_nodal_costs,  # noqa: F401
+)
 from prepare_sector_network import prepare_costs
 from pypsa.descriptors import get_active_assets
 from six import iteritems
@@ -27,7 +28,7 @@ opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 
 def reindex_columns(df, cols):
-    investments = cols.levels[3]
+    investments = cols.levels[2]
     if len(cols.names) != len(df.columns.levels):
         df = pd.concat([df] * len(investments), axis=1)
         df.columns = cols
@@ -42,7 +43,6 @@ def calculate_costs(n, label, costs):
         [
             costs.columns.unique(0),
             costs.columns.unique(1),
-            costs.columns.unique(2),
             investments,
         ],
         names=costs.columns.names[:3] + ["year"],
@@ -141,18 +141,15 @@ def calculate_cumulative_cost():
     # integrate cost throughout the transition path
     for r in cumulative_cost.columns:
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
-            for lv in cumulative_cost.index.get_level_values(level=1).unique():
-                for sector_opts in cumulative_cost.index.get_level_values(
-                    level=2
-                ).unique():
-                    cumulative_cost.loc[
-                        (cluster, lv, sector_opts, "cumulative cost"), r
-                    ] = np.trapz(
+            for sector_opts in cumulative_cost.index.get_level_values(level=1).unique():
+                cumulative_cost.loc[(cluster, sector_opts, "cumulative cost"), r] = (
+                    np.trapz(
                         cumulative_cost.loc[
-                            idx[cluster, lv, sector_opts, planning_horizons], r
+                            idx[cluster, sector_opts, planning_horizons], r
                         ].values,
                         x=planning_horizons,
                     )
+                )
 
     return cumulative_cost
 
@@ -180,7 +177,6 @@ def calculate_capacities(n, label, capacities):
         [
             capacities.columns.levels[0],
             capacities.columns.levels[1],
-            capacities.columns.levels[2],
             investments,
         ],
         names=capacities.columns.names[:3] + ["year"],
@@ -233,7 +229,6 @@ def calculate_energy(n, label, energy):
         [
             energy.columns.levels[0],
             energy.columns.levels[1],
-            energy.columns.levels[2],
             investments,
         ],
         names=energy.columns.names[:3] + ["year"],
@@ -341,7 +336,6 @@ def calculate_supply_energy(n, label, supply_energy):
         [
             supply_energy.columns.unique(0),
             supply_energy.columns.unique(1),
-            supply_energy.columns.unique(2),
             investments,
         ],
         names=supply_energy.columns.names[:3] + ["year"],
@@ -682,9 +676,7 @@ outputs = [
 
 
 def make_summaries(networks_dict):
-    columns = pd.MultiIndex.from_tuples(
-        networks_dict.keys(), names=["cluster", "lv", "opt"]
-    )
+    columns = pd.MultiIndex.from_tuples(networks_dict.keys(), names=["cluster", "opt"])
     df = {}
 
     for output in outputs:
@@ -730,13 +722,12 @@ if __name__ == "__main__":
         run += "/"
 
     networks_dict = {
-        (clusters, lv, opts + sector_opts): "results/"
+        (clusters, opts + sector_opts): "results/"
         + run
-        + f"postnetworks/base_s_{clusters}_l{lv}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        + f"networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         for clusters in snakemake.config["scenario"]["clusters"]
         for opts in snakemake.config["scenario"]["opts"]
         for sector_opts in snakemake.config["scenario"]["sector_opts"]
-        for lv in snakemake.config["scenario"]["ll"]
     }
 
     print(networks_dict)
@@ -750,6 +741,6 @@ if __name__ == "__main__":
 
     df = make_summaries(networks_dict)
 
-    df["metrics"].loc["total costs"] = df["costs"].sum().groupby(level=[0, 1, 2]).sum()
+    df["metrics"].loc["total costs"] = df["costs"].sum().groupby(level=[0, 1]).sum()
 
     to_csv(df)

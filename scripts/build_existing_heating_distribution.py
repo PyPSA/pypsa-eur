@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,52 +8,52 @@ horizon.
 Existing heat generation capacities are distributed to nodes based on population.
 Within the nodes, the capacities are distributed to sectors (residential and services) based on sectoral consumption and urban/rural based population distribution.
 
-Inputs:
--------
-- Existing heating generators: `data/existing_heating_raw.csv` per country
-- Population layout: `resources/{run_name}/pop_layout_s<simpl>_<clusters>.csv`. Output of `scripts/build_clustered_population_layout.py`
-- Population layout with energy demands: `resources/<run_name>/pop_weighted_energy_totals_s<simpl>_<clusters>.csv`
-- District heating share: `resources/<run_name>/district_heat_share_base_s<simpl>_<clusters>_<planning_horizons>.csv`
-
 Outputs:
 --------
 - Existing heat generation capacities distributed to nodes: `resources/{run_name}/existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv`
 
-Relevant settings:
-------------------
-.. code:: yaml
-    scenario:
-        planning_horizons
-    sector:
-    existing_capacities:
 
-Notes:
-------
+Notes
+-----
 - Data for Albania, Montenegro and Macedonia is not included in input database and assumed 0.
 - Coal and oil boilers are assimilated to oil boilers.
 - All ground-source heat pumps are assumed in rural areas and all air-source heat pumps are assumed to be in urban areas.
 
-References:
------------
+References
+----------
 - "Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)" (https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en)
 """
+
+import logging
+
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
 
 def build_existing_heating():
-    # retrieve existing heating capacities
+    """
+    Retrieve and clean existing heating capacities for the myopic code.
+    Data comes from the study "Mapping and analyses of the current and
+    future (2020 - 2030) heating/cooling fuel deployment (fossil/renewables)".
 
-    # Add existing heating capacities, data comes from the study
-    # "Mapping and analyses of the current and future (2020 - 2030)
-    # heating/cooling fuel deployment (fossil/renewables) "
-    # https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
-    # file: "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
-    # data is for buildings only (i.e. NOT district heating) and represents the year 2012
+    Source
+    ------
+    https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
+
+    File
+    ----
+    "WP2_DataAnnex_1_BuildingTechs_ForPublication_201603.xls" -> "existing_heating_raw.csv".
+
+    Notes
+    -----
+    Data is for buildings only (i.e. NOT district heating) and represents the year 2012.
+    """
     # TODO start from original file
 
     existing_heating = pd.read_csv(
@@ -138,12 +137,17 @@ def build_existing_heating():
         )
         nodal_heat_name_tech[(f"{sector} urban decentral", "ground heat pump")] = 0.0
 
-        nodal_heat_name_tech[
-            (f"{sector} urban decentral", "air heat pump")
-        ] += nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        nodal_heat_name_tech[(f"{sector} urban decentral", "air heat pump")] += (
+            nodal_heat_name_tech[(f"{sector} rural", "air heat pump")]
+        )
         nodal_heat_name_tech[(f"{sector} rural", "air heat pump")] = 0.0
 
-    nodal_heat_name_tech[("urban central", "ground heat pump")] = 0.0
+    # add large-scale heat pump sources as columns for district heating with 0 capacity
+
+    for heat_pump_source in snakemake.params.sector["heat_pump_sources"][
+        "urban central"
+    ]:
+        nodal_heat_name_tech[("urban central", f"{heat_pump_source} heat pump")] = 0.0
 
     nodal_heat_name_tech.to_csv(snakemake.output.existing_heating_distribution)
 
@@ -157,6 +161,7 @@ if __name__ == "__main__":
             clusters=48,
             planning_horizons=2050,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     build_existing_heating()

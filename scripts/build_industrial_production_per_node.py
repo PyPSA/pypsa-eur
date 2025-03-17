@@ -1,20 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Build industrial production per model region.
-
-Inputs
--------
-
-- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
-- ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_node_base_s_{clusters}_{planning_horizons}.csv``
 
 Description
 -------
@@ -25,10 +13,13 @@ The industrial production per country is multiplied by the mapping value to get 
 The unit of the production is kt/a.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
@@ -88,6 +79,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_node", clusters=48)
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     build_nodal_industrial_production()

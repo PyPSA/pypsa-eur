@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -14,16 +13,8 @@ Outputs:
 --------
 - `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
 
-Relevant settings:
-------------------
-.. code:: yaml
-    sector:
-        district_heating:
-    energy:
-        energy_totals_year:
-
-Notes:
-------
+Notes
+-----
 - The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.
 - The `sector.district_heating.potential` setting defines the max. district heating share.
 - The max. share of district heating is increased by a progress factor, depending on the investment year (See `sector.district_heating.progress` setting).

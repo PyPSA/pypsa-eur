@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,36 +11,18 @@ Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute 
     `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
     `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-    atlite:
-        default_cutout:
-
-Inputs
-------
-
-- ``resources/<run_name>/pop_layout_total.nc``:
-- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``:
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/temp_soil_total_base_s<simpl>_<clusters>.nc``:
-- ``resources/temp_air_total_base_s<simpl>_<clusters>.nc`
 """
+
+import logging
 
 import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -51,6 +32,7 @@ if __name__ == "__main__":
             "build_temperature_profiles",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)

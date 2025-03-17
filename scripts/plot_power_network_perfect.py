@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -13,7 +12,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, retry, set_scenario_config
 from plot_power_network import assign_location, load_projection, rename_techs_tyndp
 from plot_summary import preferred_order
 from pypsa.plot import add_legend_circles, add_legend_lines
@@ -21,6 +20,7 @@ from pypsa.plot import add_legend_circles, add_legend_lines
 logger = logging.getLogger(__name__)
 
 
+@retry
 def plot_map_perfect(
     n,
     components=["Link", "Store", "StorageUnit", "Generator"],

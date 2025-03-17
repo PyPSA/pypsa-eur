@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -27,33 +27,23 @@ First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eu
 Install Python Dependencies
 ===============================
 
-PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__
-to install them and manage your environments. For instructions for your operating
-system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
-You can also use ``conda`` equivalently.
+PyPSA-Eur relies on a set of other Python packages to function. We recommend
+using the package manager `conda <https://docs.anaconda.com/miniconda/>` or
+`mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage
+your environments.
 
 The package requirements are curated in the ``envs/environment.yaml`` file.
 There are also regularly updated pinned environment files for each operating system to
 ensure reproducibility (``envs/windows-pinned.yaml``, ``envs/linux-pinned.yaml``, ``envs/macos-pinned.yaml``).
-We recommend to use the pinned files for a stable environment, but you could also use
-the unpinned file.
+We recommend using the pinned files for a stable environment.
 
 .. code:: console
 
-    $ mamba env create -f envs/linux-pinned.yaml # replace for your os
+    $ conda update conda
 
-    $ mamba activate pypsa-eur
+    $ conda env create -f envs/linux-pinned.yaml # replace for your os
 
-.. note::
-    The equivalent commands for ``conda`` would be
-
-    .. code:: console
-
-        $ conda env create -f envs/linux-pinned.yaml # replace for your os
-
-        $ conda activate pypsa-eur
-
+    $ conda activate pypsa-eur
 
 Install a Solver
 ================
@@ -81,15 +71,15 @@ Nevertheless, you can still use open-source solvers for smaller problems.
     `Instructions how to install a solver in the documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`__
 
 .. note::
-    The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
+    The rules :mod:`cluster_network` solves a mixed-integer quadratic optimisation problem for clustering.
     The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
     For an open-source solver setup install for example HiGHS **and** SCIP in your ``conda`` environment on OSX/Linux.
     To install the default solver Gurobi, run
 
     .. code:: console
 
-        $ mamba activate pypsa-eur
-        $ mamba install -c gurobi gurobi
+        $ conda activate pypsa-eur
+        $ conda install -c gurobi gurobi"=12.0.0"
 
     Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
 

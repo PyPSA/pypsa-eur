@@ -1,36 +1,10 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2020 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
 Calculates dynamic line rating time series from base network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    lines:
-        cutout:
-        dynamic_line_rating:
-
-
-.. seealso::
-    Documentation of the configuration file ``config.yaml`
-
-Inputs
-------
-
-- ``data/cutouts``:
-- ``networks/base.nc``: confer :ref:`base`
-
-Outputs
--------
-
-- ``resources/dlr.nc``
-
 
 Description
 -----------

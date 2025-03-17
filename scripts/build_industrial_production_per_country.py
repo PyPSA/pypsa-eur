@@ -1,28 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 This rule builds the historical industrial production per country.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries:
-..
-
-Inputs
--------
-- ``resources/ammonia_production.csv``
-- ``data/bundle-sector/jrc-idees-2021``
-- ``data/eurostat``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_country.csv``
 
 Description
 -------

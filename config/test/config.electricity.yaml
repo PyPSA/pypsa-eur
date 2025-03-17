@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -80,8 +80,11 @@ lines:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
 
+  check_objective:
+    enable: true
+    expected_value: 3.8120188094e+07
 
 plotting:
   map:

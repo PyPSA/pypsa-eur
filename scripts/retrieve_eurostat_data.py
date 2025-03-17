@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2024- The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Retrieve and extract eurostat energy balances data.
 """
-
 
 import logging
 import zipfile

@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -35,7 +35,7 @@ For instance, an invocation to
 
 .. code:: console
 
-    $ snakemake results/networks/base_s_128_elec_lvopt_.nc
+    $ snakemake results/networks/base_s_128_elec_.nc
 
 follows this dependency graph
 
@@ -50,7 +50,7 @@ preceding rules which another rule takes as input data.
 
 .. note::
     The dependency graph was generated using
-    ``snakemake --dag results/networks/base_s_128_elec_lvopt_.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
+    ``snakemake --dag results/networks/base_s_128_elec_.nc -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png``
 
 For the use of ``snakemake``, it makes sense to familiarize yourself quickly
 with the `basic tutorial
@@ -63,7 +63,7 @@ in particular.
 Scenarios, Configuration and Modification
 =========================================
 
-It is easy to run PyPSA-Eur for multiple scenarios using the `wildcards feature
+PyPSA-Eur can be used to run multiple scenarios using the `wildcards feature
 <https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#wildcards>`__
 of ``snakemake``. Wildcards allow to generalise a rule to produce all files that
 follow a `regular expression
@@ -74,8 +74,9 @@ what data to retrieve and what files to produce. Details are explained in
 :ref:`wildcards` and :ref:`scenario`.
 
 The model also has several further configuration options collected in the
-``config/config.default.yaml`` file located in the root directory, which that are not part of
-the scenarios. Options are explained in :ref:`config`.
+``config/config.default.yaml`` file located in the root directory, which can be
+handled with another scenario management. Options are explained in
+:ref:`config`.
 
 Folder Structure
 ================
@@ -90,7 +91,7 @@ Folder Structure
 - ``logs``: Stores log files.
 - ``benchmarks``: Stores ``snakemake`` benchmarks.
 - ``doc``: Includes the documentation of PyPSA-Eur.
-- ``graphics``: Includes some graphics for the documentation of PyPSA-Eur.
+- ``docker``: Includes some optional Docker environments.
 
 System Requirements
 ===================

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,33 +7,21 @@ Build hourly heat demand time series from daily heat demand.
 Water and space heating demand profiles are generated using intraday profiles from BDEW. Different profiles are used for the residential and services sectors as well as weekdays and weekend.
 
 The daily heat demand is multiplied by the intraday profile to obtain the hourly heat demand time series. The rule is executed in ``build_sector.smk``.
-
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-
-Inputs
-------
-
-- ``data/heat_load_profile_BDEW.csv``: Intraday heat profile for water and space heating demand for the residential and services sectors for weekends and weekdays.
-- ``resources/daily_heat_demand_total_base_s<simpl>_<clusters>.nc``: Daily heat demand per cluster.
-
-Outputs
--------
-
-- ``resources/hourly_heat_demand_total_base_s<simpl>_<clusters>.nc``:
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
 import xarray as xr
-from _helpers import generate_periodic_profiles, get_snapshots, set_scenario_config
+from _helpers import (
+    configure_logging,
+    generate_periodic_profiles,
+    get_snapshots,
+    set_scenario_config,
+)
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -45,6 +32,7 @@ if __name__ == "__main__":
             scope="total",
             clusters=5,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     snapshots = get_snapshots(

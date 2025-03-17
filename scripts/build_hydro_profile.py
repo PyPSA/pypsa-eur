@@ -1,38 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Build hydroelectric inflow time-series for each country.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries:
-
-    renewable:
-        hydro:
-            cutout:
-            clip_min_inflow:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`toplevel_cf`, :ref:`renewable_cf`
-
-Inputs
-------
-
-- ``data/bundle/eia_hydro_annual_generation.csv``: Hydroelectricity net generation per country and year (`EIA <https://www.eia.gov/beta/international/data/browser/#/?pa=000000000000000000000000000000g&c=1028i008006gg6168g80a4k000e0ag00gg0004g800ho00g8&ct=0&ug=8&tl_id=2-A&vs=INTL.33-12-ALB-BKWH.A&cy=2014&vo=0&v=H&start=2000&end=2016>`_)
-
-    .. image:: img/hydrogeneration.png
-        :scale: 33 %
-
-- ``resources/country_shapes.geojson``: confer :ref:`shapes`
-- ``"cutouts/" + config["renewable"]['hydro']['cutout']``: confer :ref:`cutout`
 
 Outputs
 -------
@@ -51,12 +21,6 @@ Outputs
 
     .. image:: img/inflow-box.png
         :scale: 33 %
-
-Description
------------
-
-.. seealso::
-    :mod:`build_renewable_profiles`
 """
 
 import logging

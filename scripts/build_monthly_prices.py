@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,19 +7,6 @@
 """
 This script extracts monthly fuel prices of oil, gas, coal and lignite, as well
 as CO2 prices.
-
-Inputs
-------
-- ``data/energy-price-trends-xlsx-5619002.xlsx``: energy price index of fossil fuels
-- ``emission-spot-primary-market-auction-report-2019-data.xls``: CO2 Prices spot primary auction
-
-
-Outputs
--------
-
-- ``data/validation/monthly_fuel_price.csv``
-- ``data/validation/CO2_price_2019.csv``
-
 
 Description
 -----------

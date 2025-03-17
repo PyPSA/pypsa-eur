@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2021 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -6,7 +6,7 @@ cff-version: 1.1.0
 message: "If you use this package, please cite it in the following way."
 title: "PyPSA-Eur: An open sector-coupled optimisation model of the European energy system"
 repository: https://github.com/pypsa/pypsa-eur
-version: 0.13.0
+version: v2025.01.0
 license: MIT
 authors:
   - family-names: Brown

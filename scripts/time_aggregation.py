@@ -1,36 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Defines the time aggregation to be used for sector-coupled network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-        temporal:
-            resolution_sector:
-
-    enable:
-        drop_leap_day:
-
-Inputs
-------
-
-- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: the network whose
-  snapshots are to be aggregated
-- ``resources/hourly_heat_demand_total_base_s_{clusters}.nc``: the total
-  hourly heat demand
-- ``resources/solar_thermal_total_base_s_{clusters}.nc``: the total
-  hourly solar thermal generation
-
-Outputs
--------
-
-- ``snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv``
 
 Description
 -----------
@@ -39,7 +11,6 @@ file with the snapshot weightings, indexed by the new subset of snapshots. This
 rule only computes said aggregation scheme; aggregation of time-varying network
 data is done in ``prepare_sector_network.py``.
 """
-
 
 import logging
 

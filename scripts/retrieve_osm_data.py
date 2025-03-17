@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -31,7 +30,7 @@ def retrieve_osm_data(
     features=[
         "cables_way",
         "lines_way",
-        "links_relation",
+        "routes_relation",
         "substations_way",
         "substations_relation",
     ],
@@ -51,6 +50,7 @@ def retrieve_osm_data(
         A list of OSM features to retrieve. The default is [
             "cables_way",
             "lines_way",
+            "routes_relation",
             "substations_way",
             "substations_relation",
             ].
@@ -61,7 +61,7 @@ def retrieve_osm_data(
     features_dict = {
         "cables_way": 'way["power"="cable"]',
         "lines_way": 'way["power"="line"]',
-        "links_relation": 'relation["route"="power"]["frequency"="0"]',
+        "routes_relation": 'relation["route"="power"]',
         "substations_way": 'way["power"="substation"]',
         "substations_relation": 'relation["power"="substation"]',
     }
@@ -80,7 +80,7 @@ def retrieve_osm_data(
         retries = 3
         for attempt in range(retries):
             logger.info(
-                f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt+1})..."
+                f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt + 1})..."
             )
 
             # Build the overpass query
@@ -97,7 +97,6 @@ def retrieve_osm_data(
                 # Send the request
                 response = requests.post(overpass_url, data=op_query)
                 response.raise_for_status()  # Raise HTTPError for bad responses
-                data = response.json()
 
                 filepath = output[f]
                 parentfolder = os.path.dirname(filepath)

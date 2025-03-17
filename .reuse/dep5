@@ -11,6 +11,10 @@ Files: doc/data.csv
 Copyright: 2019-2024 The PyPSA-Eur Authors
 License: CC-BY-4.0
 
+Files: test/test_data/*
+Copyright: 2019-2024 The PyPSA-Eur Authors
+License: CC-BY-4.0
+
 Files: doc/configtables/*
 Copyright: 2019-2024 The PyPSA-Eur Authors
 License: CC-BY-4.0

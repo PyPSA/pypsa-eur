@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -45,7 +44,6 @@ def upsample_load(
     regions_fn: str,
     load_fn: str,
     nuts3_fn: str,
-    gdp_pop_non_nuts3_fn: str,
     distribution_key: dict[str, float],
 ) -> pd.DataFrame:
     substation_lv_i = n.buses.index[n.buses["substation_lv"]]
@@ -60,22 +58,9 @@ def upsample_load(
     data_arrays = []
 
     for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country):
-
         load_ct = load[cntry]
 
-        if cntry in ["UA", "MD"]:
-            # separate handling because nuts3 provides no data for UA+MD
-            gdp_pop_non_nuts3 = gpd.read_file(gdp_pop_non_nuts3_fn).set_index("Bus")
-            gdp_pop_non_nuts3 = gdp_pop_non_nuts3.loc[
-                (gdp_pop_non_nuts3.country == cntry)
-                & (gdp_pop_non_nuts3.index.isin(substation_lv_i))
-            ]
-            factors = normed(
-                gdp_weight * normed(gdp_pop_non_nuts3["gdp"])
-                + pop_weight * normed(gdp_pop_non_nuts3["pop"])
-            )
-
-        elif len(group) == 1:
+        if len(group) == 1:
             factors = pd.Series(1.0, index=group.index)
 
         else:
@@ -118,7 +103,6 @@ if __name__ == "__main__":
         regions_fn=snakemake.input.regions,
         load_fn=snakemake.input.load,
         nuts3_fn=snakemake.input.nuts3,
-        gdp_pop_non_nuts3_fn=snakemake.input.get("gdp_pop_non_nuts3"),
         distribution_key=params.distribution_key,
     )
 

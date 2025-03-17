@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -209,18 +208,15 @@ def calculate_cumulative_cost():
     # integrate cost throughout the transition path
     for r in cumulative_cost.columns:
         for cluster in cumulative_cost.index.get_level_values(level=0).unique():
-            for ll in cumulative_cost.index.get_level_values(level=1).unique():
-                for sector_opts in cumulative_cost.index.get_level_values(
-                    level=2
-                ).unique():
-                    cumulative_cost.loc[
-                        (cluster, ll, sector_opts, "cumulative cost"), r
-                    ] = np.trapz(
+            for sector_opts in cumulative_cost.index.get_level_values(level=1).unique():
+                cumulative_cost.loc[(cluster, sector_opts, "cumulative cost"), r] = (
+                    np.trapz(
                         cumulative_cost.loc[
-                            idx[cluster, ll, sector_opts, planning_horizons], r
+                            idx[cluster, sector_opts, planning_horizons], r
                         ].values,
                         x=planning_horizons,
                     )
+                )
 
     return cumulative_cost
 
@@ -342,7 +338,7 @@ def calculate_supply(n, label, supply):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p" + end].empty:
                     continue
 
                 # lots of sign compensation for direction and to do maximums
@@ -394,7 +390,7 @@ def calculate_supply_energy(n, label, supply_energy):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p" + end].empty:
                     continue
 
                 s = (-1) * c.pnl["p" + end][items].multiply(
@@ -540,76 +536,25 @@ def calculate_prices(n, label, prices):
 
 
 def calculate_weighted_prices(n, label, weighted_prices):
-    # Warning: doesn't include storage units as loads
+    carriers = n.buses.carrier.unique()
 
-    weighted_prices = weighted_prices.reindex(
-        pd.Index(
-            [
-                "electricity",
-                "heat",
-                "space heat",
-                "urban heat",
-                "space urban heat",
-                "gas",
-                "H2",
-            ]
+    for carrier in carriers:
+        load = n.statistics.withdrawal(
+            groupby=pypsa.statistics.groupers["bus", "carrier"],
+            aggregate_time=False,
+            nice_names=False,
+            bus_carrier=carrier,
         )
-    )
 
-    link_loads = {
-        "electricity": [
-            "heat pump",
-            "resistive heater",
-            "battery charger",
-            "H2 Electrolysis",
-        ],
-        "heat": ["water tanks charger"],
-        "urban heat": ["water tanks charger"],
-        "space heat": [],
-        "space urban heat": [],
-        "gas": ["OCGT", "gas boiler", "CHP electric", "CHP heat"],
-        "H2": ["Sabatier", "H2 Fuel Cell"],
-    }
+        if not load.empty and load.sum().sum() > 0:
+            load = load.groupby(level="bus").sum().T.fillna(0)
 
-    for carrier, value in link_loads.items():
-        if carrier == "electricity":
-            suffix = ""
-        elif carrier[:5] == "space":
-            suffix = carrier[5:]
-        else:
-            suffix = " " + carrier
+            price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
+            price = price.reindex(columns=load.columns, fill_value=1)
 
-        buses = n.buses.index[n.buses.index.str[2:] == suffix]
-
-        if buses.empty:
-            continue
-
-        if carrier in ["H2", "gas"]:
-            load = pd.DataFrame(index=n.snapshots, columns=buses, data=0.0)
-        else:
-            load = n.loads_t.p_set[buses.intersection(n.loads.index)]
-
-        for tech in value:
-            names = n.links.index[n.links.index.to_series().str[-len(tech) :] == tech]
-
-            if not names.empty:
-                load += (
-                    n.links_t.p0[names].T.groupby(n.links.loc[names, "bus0"]).sum().T
-                )
-
-        # Add H2 Store when charging
-        # if carrier == "H2":
-        #    stores = n.stores_t.p[buses+ " Store"].groupby(n.stores.loc[buses+ " Store", "bus"],axis=1).sum(axis=1)
-        #    stores[stores > 0.] = 0.
-        #    load += -stores
-
-        weighted_prices.loc[carrier, label] = (
-            load * n.buses_t.marginal_price[buses]
-        ).sum().sum() / load.sum().sum()
-
-        # still have no idea what this is for, only for debug reasons.
-        if carrier[:5] == "space":
-            logger.debug(load * n.buses_t.marginal_price[buses])
+            weighted_prices.loc[carrier, label] = (
+                load * price
+            ).sum().sum() / load.sum().sum()
 
     return weighted_prices
 
@@ -726,7 +671,7 @@ def make_summaries(networks_dict):
 
     columns = pd.MultiIndex.from_tuples(
         networks_dict.keys(),
-        names=["cluster", "ll", "opt", "planning_horizon"],
+        names=["cluster", "opt", "planning_horizon"],
     )
 
     df = {output: pd.DataFrame(columns=columns, dtype=float) for output in outputs}
@@ -749,6 +694,7 @@ def to_csv(df):
         df[key].to_csv(snakemake.output[key])
 
 
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -759,13 +705,12 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     networks_dict = {
-        (cluster, ll, opt + sector_opt, planning_horizon): "results/"
+        (cluster, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
-        + f"/postnetworks/base_s_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
+        + f"/networks/base_s_{cluster}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for cluster in snakemake.params.scenario["clusters"]
         for opt in snakemake.params.scenario["opts"]
         for sector_opt in snakemake.params.scenario["sector_opts"]
-        for ll in snakemake.params.scenario["ll"]
         for planning_horizon in snakemake.params.scenario["planning_horizons"]
     }
 

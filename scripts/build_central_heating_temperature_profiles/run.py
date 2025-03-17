@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -35,8 +34,6 @@ References
 - AGFW (2022): "Hauptbericht 2022" (https://www.agfw.de/zahlen-und-statistiken/agfw-hauptbericht)
 """
 
-import sys
-
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -53,11 +50,13 @@ def extrapolate_missing_supply_temperatures_by_country(
     """
     Extrapolates missing supply temperatures by country.
 
-    Parameters:
+    Parameters
+    ----------
         extrapolate_from (dict): A dictionary containing supply temperatures to extrapolate from. Should contain all countries.
         extrapolate_to (dict): A dictionary containing supply temperatures to extrapolate to. Where `country` is present, average ratio between `extrapolate_to[country]` and `extrapolate_from[country]` is applied to all countries for which `country` is not present in `extrapolate_from.keys()`  to infer ratio for extrapolation.
 
-    Returns:
+    Returns
+    -------
         xr.DataArray: A DataArray containing the extrapolated supply temperatures.
     """
 
@@ -85,10 +84,12 @@ def get_country_from_node_name(node_name: str) -> str:
     """
     Extracts the country code from a given node name.
 
-    Parameters:
+    Parameters
+    ----------
         node_name (str): The name of the node.
 
-    Returns:
+    Returns
+    -------
         str: The country code extracted from the node name.
     """
     return node_name[:2]
@@ -103,14 +104,14 @@ def map_temperature_dict_to_onshore_regions(
 
     Missing values are replaced by the mean of all values.
 
-    Parameters:
+    Parameters
     ----------
     supply_temperature_by_country : dictionary
         Dictionary with temperatures as values and country keys as keys.
     regions_onshore : pd.Index
         Names of onshore regions
 
-    Returns:
+    Returns
     -------
     xr.DataArray
         The dictionary values mapped to onshore regions with onshore regions as coordinates.

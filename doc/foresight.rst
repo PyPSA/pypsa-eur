@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2021-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -206,21 +206,21 @@ The myopic code solves the network for the time steps included in
    baseyear=2020, capacities installed before 2020 are added. In addition, the
    network comprises additional generator, storage, and link capacities with
    p_nom_extendable=True. The non-solved network is saved in
-   ``results/run_name/networks/prenetworks-brownfield``.
+   ``resources/run_name/networks``.
 
 The base year is the first element in ``planning_horizons``. Step 1 is
 implemented with the rule add_baseyear for the base year and with the rule
 add_brownfield for the remaining planning_horizons.
 
 2. The 2020 network is optimized. The solved network is saved in
-   ``results/run_name/networks/postnetworks``
+   ``results/run_name/networks``
 
 3. For the next planning horizon, e.g. 2030, the capacities from a previous time
    step are added if they are still in operation (i.e., if they fulfil planning
    horizon <= commissioned year + lifetime). In addition, the network comprises
    additional generator, storage, and link capacities with
    p_nom_extendable=True. The non-solved network is saved in
-   ``results/run_name/networks/prenetworks-brownfield``.
+   ``results/run_name/networks``.
 
 Steps 2 and 3 are solved recursively for all the planning_horizons included in
 ``config/config.yaml``.
@@ -231,7 +231,7 @@ Rule overview
 - rule add_existing baseyear
 
   The rule add_existing_baseyear loads the network in
-  ‘results/run_name/networks/prenetworks’ and performs the following operations:
+  ``resources/run_name/networks`` and performs the following operations:
 
   1. Add the conventional, wind and solar power generators that were installed
      before the base year.
@@ -260,17 +260,13 @@ Rule overview
   2045.
 
   Then, the resulting network is saved in
-  ``results/run_name/networks/prenetworks-brownfield``.
+  ``resources/run_name/networks``.
 
 - rule add_brownfield
 
-  The rule add_brownfield loads the network in
-  ``results/run_name/networks/prenetworks`` and performs the following
-  operation:
-
-  1. Read the capacities optimized in the previous time step and add them to the
+  The rule add_brownfield loads the network and reads the capacities optimized
+  in the previous time step and add them to the
      network if they are still in operation (i.e., if they fulfill planning
      horizon < commissioned year + lifetime)
 
-  Then, the resulting network is saved in
-  ``results/run_name/networks/prenetworks_brownfield``.
+

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -7,10 +7,7 @@ rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -34,10 +31,7 @@ rule build_clustered_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
     log:
@@ -58,10 +52,7 @@ rule build_simplified_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("atlite", "default_cutout")(w)
-        + ".nc",
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
     output:
         clustered_pop_layout=resources("pop_layout_base_s.csv"),
     resources:
@@ -85,6 +76,8 @@ rule build_gas_network:
         mem_mb=4000,
     log:
         logs("build_gas_network.log"),
+    benchmark:
+        benchmarks("build_gas_network")
     conda:
         "../envs/environment.yaml"
     script:
@@ -107,6 +100,8 @@ rule build_gas_input_locations:
         mem_mb=2000,
     log:
         logs("build_gas_input_locations_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_gas_input_locations/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -124,6 +119,8 @@ rule cluster_gas_network:
         mem_mb=4000,
     log:
         logs("cluster_gas_network_{clusters}.log"),
+    benchmark:
+        benchmarks("cluster_gas_network/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -133,14 +130,9 @@ rule cluster_gas_network:
 def heat_demand_cutout(wildcards):
     c = config_provider("sector", "heat_demand_cutout")(wildcards)
     if c == "default":
-        return (
-            "cutouts/"
-            + CDIR
-            + config_provider("atlite", "default_cutout")(wildcards)
-            + ".nc"
-        )
+        return CDIR + config_provider("atlite", "default_cutout")(wildcards) + ".nc"
     else:
-        return "cutouts/" + CDIR + c + ".nc"
+        return CDIR + c + ".nc"
 
 
 rule build_daily_heat_demand:
@@ -284,6 +276,37 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
+rule build_geothermal_heat_potential:
+    params:
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        countries=config_provider("countries"),
+        constant_temperature_celsius=config_provider(
+            "sector",
+            "district_heating",
+            "limited_heat_sources",
+            "geothermal",
+            "constant_temperature_celsius",
+        ),
+    input:
+        isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        lau_regions="data/lau_regions.zip",
+    output:
+        heat_source_power=resources(
+            "heat_source_power_geothermal_base_s_{clusters}.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_heat_source_potentials_geothermal_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_heat_source_potentials/geothermal_s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_geothermal_heat_potential.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -296,6 +319,9 @@ rule build_cop_profiles:
             "sector", "district_heating", "heat_pump_cop_approximation"
         ),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -321,17 +347,45 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 
+rule build_direct_heat_source_utilisation_profiles:
+    params:
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=20000,
+    log:
+        logs(
+            "build_direct_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
+        ),
+    benchmark:
+        benchmarks(
+            "build_direct_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
+        )
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_direct_heat_source_utilisation_profiles.py"
+
+
 def solar_thermal_cutout(wildcards):
     c = config_provider("solar_thermal", "cutout")(wildcards)
     if c == "default":
-        return (
-            "cutouts/"
-            + CDIR
-            + config_provider("atlite", "default_cutout")(wildcards)
-            + ".nc"
-        )
+        return CDIR + config_provider("atlite", "default_cutout")(wildcards) + ".nc"
     else:
-        return "cutouts/" + CDIR + c + ".nc"
+        return CDIR + c + ".nc"
 
 
 rule build_solar_thermal_profiles:
@@ -431,7 +485,7 @@ rule build_biomass_potentials:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_biomass_potentials_s_{clusters}_{planning_horizons}.log"),
     benchmark:
@@ -819,6 +873,8 @@ rule build_population_weighted_energy_totals:
         mem_mb=2000,
     log:
         logs("build_population_weighted_{kind}_totals_{clusters}.log"),
+    benchmark:
+        benchmarks("build_population_weighted_{kind}_totals_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -840,6 +896,8 @@ rule build_shipping_demand:
         mem_mb=2000,
     log:
         logs("build_shipping_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_shipping_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -871,6 +929,8 @@ rule build_transport_demand:
         mem_mb=2000,
     log:
         logs("build_transport_demand_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transport_demand/s_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -893,6 +953,8 @@ rule build_district_heat_share:
         mem_mb=1000,
     log:
         logs("build_district_heat_share_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_district_heat_share_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -940,7 +1002,7 @@ rule time_aggregation:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         solver_name=config_provider("solving", "solver", "name"),
     input:
-        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
         hourly_heat_demand_total=lambda w: (
             resources("hourly_heat_demand_total_base_s_{clusters}.nc")
             if config_provider("sector", "heating")(w)
@@ -953,15 +1015,15 @@ rule time_aggregation:
         ),
     output:
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
-        logs("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.log"),
+        logs("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}.log"),
     benchmark:
-        benchmarks("time_aggregation_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}")
+        benchmarks("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -998,10 +1060,28 @@ rule build_egs_potentials:
         mem_mb=2000,
     log:
         logs("build_egs_potentials_{clusters}.log"),
+    benchmark:
+        benchmarks("build_egs_potentials_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/build_egs_potentials.py"
+
+
+def input_heat_source_power(w):
+
+    return {
+        heat_source_name: resources(
+            "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
+        )
+        for heat_source_name in config_provider(
+            "sector", "heat_pump_sources", "urban central"
+        )(w)
+        if heat_source_name
+        in config_provider("sector", "district_heating", "limited_heat_sources")(
+            w
+        ).keys()
+    }
 
 
 rule prepare_sector_network:
@@ -1028,12 +1108,19 @@ rule prepare_sector_network:
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
     input:
         unpack(input_profile_offwind),
+        unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}_{sector_opts}.csv"
+            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
         ),
         retro_cost=lambda w: (
             resources("retro_cost_base_s_{clusters}.csv")
@@ -1058,7 +1145,7 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        network=resources("networks/base_s_{clusters}_elec_l{ll}_{opts}.nc"),
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
         eurostat="data/eurostat/Balances-April2023",
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s_{clusters}.csv"
@@ -1119,19 +1206,23 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     output:
-        RESULTS
-        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
     threads: 1
     resources:
         mem_mb=2000,
     log:
-        RESULTS
-        + "logs/prepare_sector_network_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log",
+        logs(
+            "prepare_sector_network_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/prepare_sector_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+        benchmarks(
+            "prepare_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"

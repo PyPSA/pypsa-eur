@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,7 +10,7 @@ import logging
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, rename_techs, set_scenario_config
 from prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
@@ -19,77 +18,6 @@ plt.style.use("ggplot")
 
 
 # consolidate and rename
-def rename_techs(label):
-    prefix_to_remove = [
-        "residential ",
-        "services ",
-        "urban ",
-        "rural ",
-        "central ",
-        "decentral ",
-    ]
-
-    rename_if_contains = [
-        "CHP",
-        "gas boiler",
-        "biogas",
-        "solar thermal",
-        "air heat pump",
-        "ground heat pump",
-        "resistive heater",
-        "Fischer-Tropsch",
-    ]
-
-    rename_if_contains_dict = {
-        "water tanks": "hot water storage",
-        "retrofitting": "building retrofitting",
-        # "H2 Electrolysis": "hydrogen storage",
-        # "H2 Fuel Cell": "hydrogen storage",
-        # "H2 pipeline": "hydrogen storage",
-        "battery": "battery storage",
-        "H2 for industry": "H2 for industry",
-        "land transport fuel cell": "land transport fuel cell",
-        "land transport oil": "land transport oil",
-        "oil shipping": "shipping oil",
-        # "CC": "CC"
-    }
-
-    rename = {
-        "solar": "solar PV",
-        "Sabatier": "methanation",
-        "offwind": "offshore wind",
-        "offwind-ac": "offshore wind (AC)",
-        "offwind-dc": "offshore wind (DC)",
-        "offwind-float": "offshore wind (Float)",
-        "onwind": "onshore wind",
-        "ror": "hydroelectricity",
-        "hydro": "hydroelectricity",
-        "PHS": "hydroelectricity",
-        "NH3": "ammonia",
-        "co2 Store": "DAC",
-        "co2 stored": "CO2 sequestration",
-        "AC": "transmission lines",
-        "DC": "transmission lines",
-        "B2B": "transmission lines",
-    }
-
-    for ptr in prefix_to_remove:
-        if label[: len(ptr)] == ptr:
-            label = label[len(ptr) :]
-
-    for rif in rename_if_contains:
-        if rif in label:
-            label = rif
-
-    for old, new in rename_if_contains_dict.items():
-        if old in label:
-            label = new
-
-    for old, new in rename.items():
-        if old == label:
-            label = new
-    return label
-
 
 preferred_order = pd.Index(
     [
@@ -305,14 +233,14 @@ def plot_balances():
 
         units = "MtCO2/a" if v[0] in co2_carriers else "TWh/a"
         logger.debug(
-            f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold']/10} {units}"
+            f"Dropping technology energy balance smaller than {snakemake.params['plotting']['energy_threshold'] / 10} {units}"
         )
         logger.debug(df.loc[to_drop])
 
         df = df.drop(to_drop)
 
         logger.debug(
-            f"Total energy balance for {v} of {round(df.sum().iloc[0],2)} {units}"
+            f"Total energy balance for {v} of {round(df.sum().iloc[0], 2)} {units}"
         )
 
         if df.empty:
