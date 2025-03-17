@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
 """
 Create energy balance maps for the defined carriers.
 """
+
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
