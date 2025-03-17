@@ -111,31 +111,35 @@ rule purge:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
-dag_type = config.get("dag_type", "rulegraph")
 rule dag:
-    """
-    Create DAG of workflow. By default, create rulegraph DAG. Optionally, can create filegraph DAG.
-    
-    Usage:
-        # Default usage
-        snakemake dag
-        
-        # Specify dag_type via config
-        snakemake --config dag_type=(filegraph|rulegraph)
-    """
     message:
-        f"Creating {dag_type} DAG of workflow."
+        "Creating DAG of workflow."
     output:
-        dot=resources(f"dag_{dag_type}.dot"),
-        pdf=resources(f"dag_{dag_type}.pdf"),
-        png=resources(f"dag_{dag_type}.png"),
+        dot=resources("dag.dot"),
+        pdf=resources("dag.pdf"),
+        png=resources("dag.png"),
     conda:
         "envs/environment.yaml"
-    params:
-        dag_type=dag_type
     shell:
         r"""
-        snakemake --{params.dag_type} all | sed -n "/digraph/,\$p" > {output.dot}
+        snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
+        dot -Tpdf -o {output.pdf} {output.dot}
+        dot -Tpng -o {output.png} {output.dot}
+        """
+
+
+rule filegraph:
+    message:
+        "Creating FILEGRAPH of workflow."
+    output:
+        dot=resources("filegraph.dot"),
+        pdf=resources("filegraph.pdf"),
+        png=resources("filegraph.png"),
+    conda:
+        "envs/environment.yaml"
+    shell:
+        r"""
+        snakemake --filegraph all | sed -n "/digraph/,\$p" > {output.dot}
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}
         """
