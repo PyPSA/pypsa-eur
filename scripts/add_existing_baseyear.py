@@ -365,7 +365,9 @@ def add_power_capacities_installed_before_baseyear(
                         marginal_cost=costs.at[generator, "efficiency"]
                         * costs.at[generator, "VOM"],  # NB: VOM is per MWel
                         capital_cost=costs.at[generator, "efficiency"]
-                        * costs.at[generator, "fixed"],  # NB: fixed cost is per MWel
+                        * costs.at[
+                            generator, "capital_cost"
+                        ],  # NB: fixed cost is per MWel
                         p_nom=new_capacity / costs.at[generator, "efficiency"],
                         efficiency=costs.at[generator, "efficiency"],
                         efficiency2=costs.at[carrier[generator], "CO2 intensity"],
@@ -390,7 +392,7 @@ def add_power_capacities_installed_before_baseyear(
                         bus2=heat_buses,
                         carrier=generator,
                         p_nom=new_capacity / costs.at[key, "efficiency"],
-                        capital_cost=costs.at[key, "fixed"]
+                        capital_cost=costs.at[key, "capital_cost"]
                         * costs.at[key, "efficiency"],
                         marginal_cost=costs.at[key, "VOM"],
                         efficiency=costs.at[key, "efficiency"],
@@ -581,7 +583,7 @@ def add_heating_capacities_installed_before_baseyear(
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=efficiency,
                     capital_cost=costs.at[costs_name, "efficiency"]
-                    * costs.at[costs_name, "fixed"],
+                    * costs.at[costs_name, "capital_cost"],
                     p_nom=existing_capacities.loc[
                         nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
@@ -604,7 +606,7 @@ def add_heating_capacities_installed_before_baseyear(
                 ],
                 capital_cost=(
                     costs.at[heat_system.resistive_heater_costs_name, "efficiency"]
-                    * costs.at[heat_system.resistive_heater_costs_name, "fixed"]
+                    * costs.at[heat_system.resistive_heater_costs_name, "capital_cost"]
                 ),
                 p_nom=(
                     existing_capacities.loc[
@@ -633,7 +635,7 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency2=costs.at["gas", "CO2 intensity"],
                 capital_cost=(
                     costs.at[heat_system.gas_boiler_costs_name, "efficiency"]
-                    * costs.at[heat_system.gas_boiler_costs_name, "fixed"]
+                    * costs.at[heat_system.gas_boiler_costs_name, "capital_cost"]
                 ),
                 p_nom=(
                     existing_capacities.loc[nodes, (heat_system.value, "gas boiler")]
@@ -659,7 +661,7 @@ def add_heating_capacities_installed_before_baseyear(
                 efficiency=efficiency,
                 efficiency2=costs.at["oil", "CO2 intensity"],
                 capital_cost=costs.at[heat_system.oil_boiler_costs_name, "efficiency"]
-                * costs.at[heat_system.oil_boiler_costs_name, "fixed"],
+                * costs.at[heat_system.oil_boiler_costs_name, "capital_cost"],
                 p_nom=(
                     existing_capacities.loc[nodes, (heat_system.value, "oil boiler")]
                     * ratio

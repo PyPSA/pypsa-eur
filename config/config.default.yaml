@@ -68,7 +68,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  custom_busmap: false
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -482,16 +481,9 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
-    heat_utilisation_potentials:
+    limited_heat_sources:
       geothermal:
-        # activate for 85C hydrothermal
-        # key: hydrothermal_85
-        # constant_temperature_celsius: 85
-        key: hydrothermal_65
         constant_temperature_celsius: 65
-        column_name: Energy_TWh
-        unit: TWh
-        full_load_hours: 4000
     direct_utilisation_heat_sources:
     - geothermal
   heat_pump_sources:
@@ -620,12 +612,15 @@ sector:
     micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
-  marginal_cost_storage: 0. #1e-4
   methanation: true
   coal_cc: false
   dac: true
   co2_vent: false
-  central_heat_vent: false
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
+  marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -852,9 +847,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
-  # capital_cost:
-  #   onwind: 500
+  overwrites: {}
   marginal_cost:
     solar: 0.01
     onwind: 0.015
@@ -865,6 +858,9 @@ costs:
     fuel cell: 0.
     battery: 0.
     battery inverter: 0.
+    home battery storage: 0
+    water tank charger: 0.03
+    central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.
@@ -872,6 +868,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  mode: busmap
+  administrative:
+    level: 1
   focus_weights: false
   simplify_network:
     to_substations: false
@@ -1230,6 +1229,12 @@ plotting:
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: "#cc826a"
+    water pits charger: "#b36a5e"
+    water pits discharger: "#b37468"
+    urban central water pits: "#d96f4c"
+    urban central water pits charger: "#a85d47"
+    urban central water pits discharger: "#b36452"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'

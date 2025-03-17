@@ -23,13 +23,9 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
--- heat_utilisation_potentials,--,Dictionary with names of heat sources for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) should be used,
+-- limited_heat_sources,--,Dictionary with names of limited heat sources (not air) for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) is used,
 -- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
--- -- -- key,-,string used to complete URL for data download - e.g. `geothermal_65` or `geothermal_85`","i.e file names in `Fordatis <https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple>`"
--- -- -- constant_temperature_celsius,C,heat source temperature,
--- -- -- column_name,-,name of the data column in retrieved GeoDataFrame,
--- -- -- unit,-,unit of heat source potential must be in (K/M/G/T)Wh,
--- -- -- full_load_hours,h,assumed full-load hours in Manz et al. (used to scale from utilisation to technical potential),
+-- -- -- constant_temperature_celsius,°C,heat source temperature,
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- heat_pump_sources,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
@@ -101,11 +97,15 @@ chp,--,,
 -- micro_chp,--,"{true, false}",Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
-marginal_cost_storage,"currency/MWh ",float,The marginal cost of discharging batteries in distributed grids
+marginal_cost_heat_vent,"currency/MWh ",float,The marginal cost of heat-venting in all heating systems
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
+heat_vent,--,--,--,--
+-- urban central, --,"{true, false}",Allow heat-venting in central heating.
+-- urban decentral, --,"{true, false}",Allow heat-venting in urban decentral heating.
+-- rural, --,"{true, false}",Allow heat-venting in rural heating.
 allam_cycle_gas,--,"{true, false}",Add option to include `Allam cycle gas power plants <https://en.wikipedia.org/wiki/Allam_power_cycle>`_
 hydrogen_fuel_cell,--,"{true, false}",Add option to include hydrogen fuel cell for re-electrification. Assuming OCGT technology costs
 hydrogen_turbine,--,"{true, false}",Add option to include hydrogen turbine for re-electrification. Assuming OCGT technology costs

@@ -114,9 +114,9 @@ if __name__ == "__main__":
                         f"temp_{heat_source.replace('ground', 'soil')}_total"
                     ]
                 )
-            elif heat_source in snakemake.params.heat_utilisation_potentials.keys():
+            elif heat_source in snakemake.params.limited_heat_sources.keys():
                 source_inlet_temperature_celsius = (
-                    snakemake.params.heat_utilisation_potentials[heat_source][
+                    snakemake.params.limited_heat_sources[heat_source][
                         "constant_temperature_celsius"
                     ]
                 )
