@@ -1056,31 +1056,31 @@ plotting:
     max_threshold: 5 # GW
     mean_threshold: 1 # GW
     monthly: true
-    monthly_resolution: null
+    monthly_resolution:
     annual: true
     annual_resolution: D
     carriers:
-      - H2
-      - NH3
-      - gas
-      - methanol
-      - oil
-      - solid biomass
-      - biogas
-      - co2 stored
-      - co2
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - solid biomass
+    - biogas
+    - co2 stored
+    - co2
     carrier_groups:
       electricity:
-        - AC
-        - low voltage
+      - AC
+      - low voltage
       heat:
-        - urban central heat
-        - urban decentral heat
-        - rural heat
-        - residential urban decentral heat
-        - residential rural heat
-        - services urban decentral heat
-        - services rural heat
+      - urban central heat
+      - urban decentral heat
+      - rural heat
+      - residential urban decentral heat
+      - residential rural heat
+      - services urban decentral heat
+      - services rural heat
 
   nice_names:
     OCGT: "Open-Cycle Gas"

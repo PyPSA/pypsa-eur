@@ -262,7 +262,7 @@ rule plot_balance_timeseries:
         + "logs/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         RESULTS
-        + "benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+        +"benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
     conda:
         "../envs/environment.yaml"
     output:

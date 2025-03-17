@@ -5,18 +5,18 @@
 Plot balance time series.
 """
 
+import logging
+import os
+from functools import partial
+from multiprocessing import Pool
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-import logging
-import os
-
-from multiprocessing import Pool
 from _helpers import configure_logging, set_scenario_config
 from tqdm import tqdm
-from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -168,19 +168,14 @@ def process_carrier(group_item, balance, months, colors, config, output_dir):
     # daily resolution for each carrier
     if config["annual"]:
         plot_energy_balance_timeseries(
-            df,
-            resample=config["annual_resolution"],
-            **kwargs
+            df, resample=config["annual_resolution"], **kwargs
         )
 
     # native resolution for each month and carrier
     if config["monthly"]:
         for month in months:
             plot_energy_balance_timeseries(
-                df,
-                resample=config["monthly_resolution"],
-                time=month,
-                **kwargs
+                df, resample=config["monthly_resolution"], time=month, **kwargs
             )
 
 
