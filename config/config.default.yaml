@@ -68,7 +68,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  custom_busmap: false
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -861,6 +860,7 @@ costs:
     battery inverter: 0.
     home battery storage: 0
     water tank charger: 0.03
+    central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.
@@ -868,6 +868,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  mode: busmap
+  administrative:
+    level: 1
   focus_weights: false
   simplify_network:
     to_substations: false
@@ -1226,6 +1229,12 @@ plotting:
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: "#cc826a"
+    water pits charger: "#b36a5e"
+    water pits discharger: "#b37468"
+    urban central water pits: "#d96f4c"
+    urban central water pits charger: "#a85d47"
+    urban central water pits discharger: "#b36452"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
