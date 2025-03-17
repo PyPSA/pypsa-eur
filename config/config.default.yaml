@@ -325,6 +325,32 @@ transmission_projects:
     #- under_consideration
   new_link_capacity: zero #keep or zero
 
+carrier_networks:
+  CO2:
+    enable: false
+    include:
+      greenfield: true
+      pcipmi: true
+    extendable:
+      greenfield: ['national', 'international']
+      pcipmi: []
+    p_nom_max: .inf
+    options:
+      cost_factor: 1.0
+  H2:
+    enable: false
+    include:
+      greenfield: true
+      pcipmi: true
+    extendable:
+      greenfield: ['national', 'international']
+      pcipmi: []
+    p_nom_max:
+      greenfield: .inf
+      pcipmi: p_nom
+  gas: '...'
+  biomass: '...'
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transformers
 transformers:
   x: 0.1
