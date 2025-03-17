@@ -2336,6 +2336,8 @@ def add_heat(
     cop_profiles_file: str,
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
+    forward_flow_temperature_file: str,
+    return_flow_temperature_file: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -2443,7 +2445,9 @@ def add_heat(
         # 1e3 converts from W/m^2 to MW/(1000m^2) = kW/m^2
         solar_thermal = options["solar_cf_correction"] * solar_thermal / 1e3
 
-    for heat_system in (
+    for (
+        heat_system
+    ) in (
         HeatSystem
     ):  # this loops through all heat systems defined in _entities.HeatSystem
         overdim_factor = options["overdimension_heat_generators"][
@@ -2748,18 +2752,35 @@ def add_heat(
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
-
                 n.links.loc[
                     nodes + f" {heat_system} water pits charger",
                     "energy to power ratio",
                 ] = energy_to_power_ratio_water_pit
 
+                if options["district_heating"]["ptes_dynamic_capacity"]:
+
+                    t_top = xr.open_dataarray(forward_flow_temperature_file)
+                    # Clip forward flow temperature to maximum operational of top layer in PTES
+                    t_top = t_top.where(t_top <= 90, 90)
+                    t_bottom = xr.open_dataarray(return_flow_temperature_file)
+
+                    # Derive e_max_pu as normalized delta T
+                    e_max_pu = t_top - t_bottom
+                    e_max_pu = e_max_pu / (90 - 45)
+                    e_max_pu = (
+                        e_max_pu.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
+                    )
+                else:
+                    e_max_pu = 1
+
                 n.add(
                     "Store",
-                    nodes + f" {heat_system} water pits",
+                    nodes,
+                    suffix=f" {heat_system} water pits",
                     bus=nodes + f" {heat_system} water pits",
                     e_cyclic=True,
                     e_nom_extendable=True,
+                    e_max_pu=e_max_pu,
                     carrier=f"{heat_system} water pits",
                     standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                     capital_cost=costs.at["central water pit storage", "capital_cost"],
@@ -5064,9 +5085,9 @@ def add_enhanced_geothermal(
         * Nyears
     )
 
-    assert (egs_potentials["capital_cost"] > 0).all(), (
-        "Error in EGS cost, negative values found."
-    )
+    assert (
+        egs_potentials["capital_cost"] > 0
+    ).all(), "Error in EGS cost, negative values found."
 
     orc_annuity = calculate_annuity(costs.at["organic rankine cycle", "lifetime"], dr)
     orc_capital_cost = (orc_annuity + FOM / (1 + FOM)) * orc_capex * Nyears
@@ -5219,11 +5240,12 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
+            run="tes_static_capacity",
             opts="",
-            clusters="38",
+            clusters="39",
             ll="vopt",
             sector_opts="",
-            planning_horizons="2030",
+            planning_horizons="2050",
         )
 
     configure_logging(snakemake)
@@ -5326,6 +5348,8 @@ if __name__ == "__main__":
             cop_profiles_file=snakemake.input.cop_profiles,
             direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
+            forward_flow_temperature_file=snakemake.input.central_heating_forward_temperature_profiles,
+            return_flow_temperature_file=snakemake.input.central_heating_return_temperature_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
