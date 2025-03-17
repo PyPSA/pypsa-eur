@@ -220,6 +220,11 @@ if __name__ == "__main__":
     groups = config["carrier_groups"]
     groups.update({c: [c] for c in config["carriers"]})
 
+    missing_bus_carriers = set(config["carriers"]).difference(n.buses.carrier.unique())
+    if missing_bus_carriers:
+        logger.warning(f"Skipping missing bus carriers: {missing_bus_carriers}")
+    groups = {k: v for k, v in groups.items() if k not in missing_bus_carriers}
+
     # Process each carrier group in parallel
     threads = snakemake.threads
     tqdm_kwargs = dict(
