@@ -9,5 +9,14 @@ costs_threshold,bn Euro,float,Threshold below which technologies will not be sho
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.
 energy_min,TWh,float,Lower y-axis limit in energy bar plots.
 energy_threshold,TWh,float,Threshold below which technologies will not be shown in energy bar plots.
+balance_timeseries:
+-- max_threshold,GW or kt/h for CO2,float,Technologies with maximum absolute dispatch below this threshold are grouped to 'other'.
+-- mean_threshold,GW or kt/h for CO2,float,Technologies with mean absolute dispatch below this threshold are grouped to 'other'.
+-- monthly,"{True,False}",bool,Whether to plot monthly balance timeseries.
+-- monthly_resolution,"e.g. 1h",str,Resolution of the monthly balance timeseries. Argument to pandas.DataFrame.resample. Defaults to 'null' which uses the model-native resolution.
+-- annual,"{True,False}",bool,Whether to plot annual balance timeseries.
+-- annual_resolution,"e.g. 1h",str,Resolution of the annual balance timeseries. Argument to pandas.DataFrame.resample. Defaults to 'D' which applies daily resampling.
+-- carriers,--,list,Subset of bus carriers to plot in the balance timeseries.
+-- carrier_groups,--,dict,Mapping from carrier group names to list of bus carriers. E.g. a key 'electricity' to include 'AC' and 'low voltage'.
 tech_colors,--,carrier -> HEX colour code,Mapping from network ``carrier`` to a colour (`HEX colour code <https://en.wikipedia.org/wiki/Web_colors#Hex_triplet>`_).
 nice_names,--,str -> str,Mapping from network ``carrier`` to a more readable name.
