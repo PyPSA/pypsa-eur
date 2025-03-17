@@ -357,6 +357,12 @@ plotting:
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: "#cc826a"
+    water pits charger: "#b36a5e"
+    water pits discharger: "#b37468"
+    urban central water pits: "#d96f4c"
+    urban central water pits charger: "#a85d47"
+    urban central water pits discharger: "#b36452"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
@@ -382,8 +388,11 @@ plotting:
     services urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
+    urban central geothermal heat pump: '#4f2144'
+    geothermal heat pump: '#4f2144'
+    geothermal heat direct utilisation: '#ba91b1'
     ground heat pump: '#2fb537'
-    residential rural ground heat pump: '#48f74f'
+    residential rural ground heat pump: '#4f2144'
     residential rural air heat pump: '#48f74f'
     services rural ground heat pump: '#5af95d'
     Ambient: '#98eb9d'
