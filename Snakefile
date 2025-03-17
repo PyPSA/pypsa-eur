@@ -112,8 +112,6 @@ rule purge:
 
 
 dag_type = config.get("dag_type", "rulegraph")
-
-
 rule dag:
     """
     Create DAG of workflow. By default, create rulegraph DAG. Optionally, can create filegraph DAG.
@@ -134,7 +132,7 @@ rule dag:
     conda:
         "envs/environment.yaml"
     params:
-        dag_type=dag_type,
+        dag_type=dag_type
     shell:
         r"""
         snakemake --{params.dag_type} all | sed -n "/digraph/,\$p" > {output.dot}
