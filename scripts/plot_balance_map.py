@@ -56,7 +56,9 @@ if __name__ == "__main__":
     conversion = config["unit_conversion"]
 
     if carrier not in n.buses.carrier.unique():
-        raise ValueError(f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`.")
+        raise ValueError(
+            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`."
+        )
 
     # for plotting change bus to location
     n.buses["location"] = n.buses["location"].replace("", "EU").fillna("EU")
@@ -76,9 +78,7 @@ if __name__ == "__main__":
     carriers = transmission_carriers.unique("carrier")
     eb.loc[components] = eb.loc[components].drop(index=carriers, level="carrier")
     eb = eb.dropna()
-    bus_sizes = (
-        eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
-    )
+    bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
     bus_sizes = bus_sizes.sort_values(ascending=False)
 
     colors = (
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     prices = weights @ n.buses_t.marginal_price[buses] / weights.sum()
     price = prices.rename(n.buses.location).groupby(level="Bus").mean()
 
-    if carrier == 'co2 stored' and "CO2Limit" in n.global_constraints.index:
+    if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
         co2_price = n.global_constraints.loc["CO2Limit", "mu"]
         price = price - co2_price
 
@@ -184,8 +184,8 @@ if __name__ == "__main__":
     legend_kwargs = {
         "loc": "upper left",
         "frameon": False,
-        "alignment": 'left',
-        "title_fontproperties": {'weight':'bold'}
+        "alignment": "left",
+        "title_fontproperties": {"weight": "bold"},
     }
 
     pad = 0.18

@@ -36,8 +36,8 @@ plotting:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Greens
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.002
       branch_factor: 0.01
@@ -52,8 +52,8 @@ plotting:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Purples
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.002
       branch_factor: 0.05
@@ -68,8 +68,8 @@ plotting:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Blues
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.002
       branch_factor: 0.07
@@ -84,8 +84,8 @@ plotting:
       unit: Mt
       unit_conversion: 1_000_000
       cmap: Purples
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/t_${CO_2}$
       bus_factor: 0.03
       branch_factor: 1
@@ -100,8 +100,8 @@ plotting:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Oranges
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.005
       branch_factor: 0.1
@@ -109,13 +109,13 @@ plotting:
       bus_sizes:
       - 300
       - 100
-      branch_sizes: null
+      branch_sizes:
     methanol:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Greens
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.005
       branch_factor: 0.1
@@ -123,13 +123,13 @@ plotting:
       bus_sizes:
       - 20
       - 10
-      branch_sizes: null
+      branch_sizes:
     biogas:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Greens
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.1
       branch_factor: 0.1
@@ -137,13 +137,13 @@ plotting:
       bus_sizes:
       - 100
       - 50
-      branch_sizes: null
+      branch_sizes:
     solid biomass:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Greens
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.01
       branch_factor: 0.1
@@ -151,13 +151,13 @@ plotting:
       bus_sizes:
       - 100
       - 50
-      branch_sizes: null
+      branch_sizes:
     oil:
       unit: TWh
       unit_conversion: 1_000_000
       cmap: Greys
-      vmin: null
-      vmax: null
+      vmin:
+      vmax:
       region_unit: €/MWh
       bus_factor: 0.002
       branch_factor: 0.01
@@ -165,7 +165,7 @@ plotting:
       bus_sizes:
       - 200
       - 100
-      branch_sizes: null
+      branch_sizes:
 
   nice_names:
     OCGT: "Open-Cycle Gas"
