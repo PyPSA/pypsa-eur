@@ -9,7 +9,9 @@ import logging
 import os
 import re
 import time
-from functools import partial, wraps
+from collections.abc import Mapping, Sequence
+from functools import partial, reduce, wraps
+from operator import and_
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
@@ -307,6 +309,76 @@ def aggregate_p(n):
             -n.loads_t.p.sum().groupby(n.loads.carrier).sum(),
         ]
     )
+
+
+def expand_hierarchical_map(
+    df: pd.DataFrame,
+    mapping: Mapping[str, str],
+    hierarchy: Sequence[str] | None = None,
+    sep: str = "/",
+) -> pd.Series:
+    """
+    Expand a manually specified mapping with patterns to a full map for `df`
+
+    Parameters
+    ----------
+    df : DataFrame
+        Data to be mapped
+    mapping : Mapping
+        Mapping for hierarchy columns, keys are split by `sep`
+    hierarchy : list of str, optional
+        List of columns in df that keys from mapping refer to;
+        if omitted all columns of `df` are used
+    sep : str
+        Separator by which `mapping` keys are split
+
+    Returns
+    -------
+    map : pd.Series
+        full map for df with values from mapping
+
+    Examples
+    --------
+    >>> ppl = pd.DataFrame(
+    ...    [
+    ...        ("Natural Gas", "OCGT", 100),
+    ...        ("Natural Gas", "CCGT", 100),
+    ...        ("Hard Coal", "Steam turbine", 200),
+    ...        ("Nuclear", "...", 200),
+    ...    ],
+    ...    index=["g1", "g2", "c", "n"]
+    ...    columns=["Fueltype", "Technology", "Capacity"],
+    ... )
+    >>> expand_hierarchical_map(
+    ...     ppl,
+    ...     {"*/OCGT": "ocgt", "*/CCGT": "ccgt", "Hard Coal": "coal"},
+    ...     ["Fueltype", "Technology"]
+    ... )
+    pd.Series(["ocgt", "ccgt", "coal", None], index=["g1", "g2", "c", "n"])
+    """
+
+    if hierarchy is None:
+        hierarchy = list(df.columns)
+    elif isinstance(hierarchy, str):
+        hierarchy = hierarchy.split(sep)
+    else:
+        hierarchy = list(hierarchy)
+
+    index = pd.MultiIndex.from_frame(df[hierarchy])
+
+    m = pd.Series(index=index.unique(), dtype="object")
+    for pattern, to in reversed(mapping.items()):
+        matches = reduce(
+            and_,
+            (
+                m.index.isin([pat], level=h)
+                for h, pat in zip(hierarchy, pattern.split(sep))
+                if pat != "*"
+            ),
+        )
+        m.loc[matches] = to
+
+    return m.reindex(index).set_axis(df.index)
 
 
 def get(item, investment_year=None):
