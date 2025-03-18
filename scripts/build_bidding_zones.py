@@ -82,7 +82,7 @@ def format_names(s: str):
         .replace("DK-DK2", "DKE1")
         .replace("FR-C", "FR15")
         .replace("GB", "UK")
-        .replace("UK-N", "UNKI")
+        .replace("UK-N", "UKNI")
         .replace("IT_NORD", "ITN1")
         .replace("IT_SUD", "ITS1")
         .replace("LU", "LUG1")
