@@ -10,7 +10,7 @@ import pandas as pd
 
 def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
     """
-    Load bidding zone geometries from ENTSO-E GeoJSON files with disk caching.
+    Load bidding zone geometries from entsoe-py GeoJSON files with disk caching.
 
     Returns:
         GeoDataFrame: Contains geometries for all available bidding zones

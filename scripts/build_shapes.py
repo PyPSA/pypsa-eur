@@ -295,6 +295,7 @@ def create_regions(
     regions = regions.rename(
         columns={"NUTS_ID": "id", "CNTR_CODE": "country", "NAME_LATN": "name"}
     )
+    
     # Normalise text
     regions["id"] = regions["id"].apply(normalise_text)
 

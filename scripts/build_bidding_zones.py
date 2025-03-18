@@ -17,8 +17,6 @@ def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
             - set of country codes covered by the zones
             - Series of combined country strings (e.g., 'DE,LU')
     """
-    # Extract primary country codes (first two characters)
-    primary_countries = set(zone_names.str[:2])
 
     # Parse combined zones (e.g., 'DE_LU' -> 'LU')
     secondary_countries = (
@@ -32,10 +30,7 @@ def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
         "," + secondary_countries.reindex(zone_names.index)
     ).fillna("")
 
-    # Remove secondary countries from primary set
-    covered_countries = primary_countries | set(secondary_countries)
-
-    return covered_countries, country_strings
+    return country_strings
 
 
 def extract_shape_by_bbox(
@@ -85,7 +80,9 @@ def format_names(s: str):
     s = (
         s.replace("DK-DK1", "DKW1")
         .replace("DK-DK2", "DKE1")
+        .replace("FR-C", "FR15")
         .replace("GB", "UK")
+        .replace("UK-N", "UNKI")
         .replace("IT_NORD", "ITN1")
         .replace("IT_SUD", "ITS1")
         .replace("LU", "LUG1")
@@ -132,7 +129,6 @@ if __name__ == "__main__":
     bidding_zones_entsoe["country"] = country_strings
     italian_zones = bidding_zones_entsoe[bidding_zones_entsoe.country == "IT"]
     bidding_zones = pd.concat([bidding_zones, italian_zones], ignore_index=True)
-    bidding_zones = bidding_zones.sort_values("zone_name").reset_index(drop=True)
 
     # manual corrections: remove islands
     islands = [
@@ -192,4 +188,5 @@ if __name__ == "__main__":
     # rename zones
     bidding_zones["zone_name"] = bidding_zones["zone_name"].apply(format_names)
 
+    bidding_zones = bidding_zones.sort_values("zone_name").reset_index(drop=True)
     bidding_zones.to_file(snakemake.output.file)

@@ -125,7 +125,6 @@ rule build_bidding_zones:
     params:
         countries=config_provider("countries"),
     input:
-        naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
         bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
     output:

@@ -133,8 +133,6 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_bidding_zones:
-        input:
-            naturalearth=ancient("data/naturalearth/ne_10m_admin_0_countries_deu.shp"),
         output:
             file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
             file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
