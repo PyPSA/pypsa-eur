@@ -123,9 +123,7 @@ if __name__ == "__main__":
     bidding_zones_entsoe = bidding_zones_entsoe.rename(
         columns={"zoneName": "zone_name"}
     )
-    core_countries, country_strings = parse_zone_names(
-        bidding_zones_entsoe["zone_name"]
-    )
+    country_strings = parse_zone_names(bidding_zones_entsoe["zone_name"])
     bidding_zones_entsoe["country"] = country_strings
     italian_zones = bidding_zones_entsoe[bidding_zones_entsoe.country == "IT"]
     bidding_zones = pd.concat([bidding_zones, italian_zones], ignore_index=True)

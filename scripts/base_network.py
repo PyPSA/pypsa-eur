@@ -1290,14 +1290,18 @@ def get_nearest_neighbour(
         ["country", "geometry"],
     ]
 
-    nearest_neighbour = (
-        gdf.to_crs(epsg=3035)
-        .sjoin_nearest(
-            nearest_neighbours.to_crs(epsg=3035),
-            how="left",
-        )["index_right"]
-        .values[0]
-    )
+    try:
+        nearest_neighbour = (
+            gdf.to_crs(epsg=3035)
+            .sjoin_nearest(
+                nearest_neighbours.to_crs(epsg=3035),
+                how="left",
+            )["index_right"]
+            .values[0]
+        )
+    except KeyError:
+        logger.warning(f"Skipping for {country}")
+        nearest_neighbour = ""
 
     return nearest_neighbour
 
@@ -1543,7 +1547,8 @@ def build_admin_shapes(
             lambda row: [get_nearest_neighbour(row, admin_shapes)],
             axis=1,
         )
-
+        # remove detached regions that don't contain substations
+        admin_shapes = admin_shapes[~admin_shapes.isempty]
         admin_shapes = merge_regions_recursive(admin_shapes, neighbours_missing=False)
 
         # Update names
