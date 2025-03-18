@@ -147,10 +147,7 @@ rule make_summary_perfect:
         unpack(input_networks_make_summary_perfect),
         costs=resources("costs_2020.csv"),
     output:
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
-        cfs=RESULTS + "csvs/cfs.csv",
         costs=RESULTS + "csvs/costs.csv",
         capacities=RESULTS + "csvs/capacities.csv",
         curtailment=RESULTS + "csvs/curtailment.csv",
