@@ -1147,7 +1147,9 @@ def create_merged_admin_region(
     )
 
     merge_regions = sorted([row.name] + first_neighbours)
-    contains_cumulative = sorted(row.contains + first_neighbours + neighbours_contain)
+    contains_cumulative = sorted(
+        set(row.contains + first_neighbours + neighbours_contain)
+    )
     gdf = admin_shapes.loc[merge_regions]
 
     geometry = gdf.union_all()
@@ -1232,25 +1234,28 @@ def clean_dict(
 
     # Sub dictionary where values are only of length 1
     single_occurrences = {k: v for k, v in diction.items() if len(v) == 1}
-    # Create list of key, value pairs and store in list
-    single_values = list(chain.from_iterable(single_occurrences.values()))
-    single_keys = list(single_occurrences.keys())
 
-    # Create dict with single_keys() as keys and sets of single_keys and single_values as values using
-    single_df = pd.DataFrame(
-        zip(
-            single_keys,
-            [set([key, value]) for key, value in zip(single_keys, single_values)],
+    # Enters only if single_occurrences is not empty
+    if single_occurrences:
+        # Create list of key, value pairs and store in list
+        single_values = list(chain.from_iterable(single_occurrences.values()))
+        single_keys = list(single_occurrences.keys())
+
+        # Create dict with single_keys() as keys and sets of single_keys and single_values as values using
+        single_df = pd.DataFrame(
+            zip(
+                single_keys,
+                [set([key, value]) for key, value in zip(single_keys, single_values)],
+            )
         )
-    )
-    # Only keep first occurrence of duplicates
-    single_df = single_df.drop_duplicates(subset=1, keep="first")
+        # Only keep first occurrence of duplicates
+        single_df = single_df.drop_duplicates(subset=1, keep="first")
 
-    # Difference between single_df[0].values and single_keys
-    drop_keys = set(single_keys) - set(single_df[0].values)
+        # Difference between single_df[0].values and single_keys
+        drop_keys = set(single_keys) - set(single_df[0].values)
 
-    # Drop keys in double_values
-    diction = {k: v for k, v in diction.items() if k not in drop_keys}
+        # Drop keys in double_values
+        diction = {k: v for k, v in diction.items() if k not in drop_keys}
 
     # Create list of values, that also exist as key
     double_values = list(chain.from_iterable(diction.values()))
