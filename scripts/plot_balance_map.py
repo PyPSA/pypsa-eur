@@ -5,7 +5,6 @@
 Create energy balance maps for the defined carriers.
 """
 
-import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -17,6 +16,10 @@ from _helpers import (
 )
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
 from pypsa.statistics import get_transmission_carriers
+from plot_power_network import load_projection
+from packaging.version import Version, parse
+
+SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -28,7 +31,7 @@ if __name__ == "__main__":
             opts="",
             sector_opts="",
             planning_horizons="2050",
-            carrier="co2 stored",
+            carrier="H2",
         )
 
     configure_logging(snakemake)
@@ -132,21 +135,12 @@ if __name__ == "__main__":
     if config["vmax"] is not None:
         vmax = config["vmax"]
 
-    fig, ax = plt.subplots(
-        figsize=(6, 7),
-        subplot_kw={"projection": ccrs.EqualEarth()},
-        layout="constrained",
-    )
+    crs = load_projection(snakemake.params.plotting)
 
-    regions.plot(
-        ax=ax,
-        column="price",
-        cmap=config["cmap"],
-        vmin=vmin,
-        vmax=vmax,
-        edgecolor="None",
-        linewidth=0,
-        transform=ccrs.PlateCarree(),
+    fig, ax = plt.subplots(
+        figsize=(5, 6.5),
+        subplot_kw={"projection": crs},
+        layout="constrained",
     )
 
     n.plot(
@@ -161,6 +155,16 @@ if __name__ == "__main__":
         color_geomap={"border": "darkgrey", "coastline": "darkgrey"},
         geomap="10m",
         boundaries=boundaries,
+    )
+
+    regions.to_crs(crs.proj4_init).plot(
+        ax=ax,
+        column="price",
+        cmap=config["cmap"],
+        vmin=vmin,
+        vmax=vmax,
+        edgecolor="None",
+        linewidth=0,
     )
 
     ax.set_title(carrier)
@@ -230,7 +234,7 @@ if __name__ == "__main__":
     if legend_bus_sizes is not None:
         add_legend_semicircles(
             ax,
-            [s * bus_size_factor * 2 for s in legend_bus_sizes],
+            [s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR for s in legend_bus_sizes],
             [f"{s} {carrier_unit}" for s in legend_bus_sizes],
             patch_kw={"color": "#666"},
             legend_kw={
