@@ -87,14 +87,12 @@ rule validate_elec_networks:
 
 rule plot_balance_maps:
     input:
-        balance_maps=lambda w: expand(
+        lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_l{ll}_{opts}_{sector_opts}-balance_map_{carrier}_{planning_horizons}.{ext}"
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
             ),
             **config["scenario"],
             run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "carriers_to_plot")(w),
-            ext=config_provider("plotting", "balance_map", "ext")(w),
-            allow_missing=True,
+            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),

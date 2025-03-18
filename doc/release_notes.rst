@@ -11,8 +11,9 @@ Release Notes
 Upcoming Release
 ================
 
-* Add modular plotting of energy balance maps. This can be executed by running
-  ``snakemake plot_balance_maps``. The plots are saved in the ``results`` under ``maps`` folder.
+* Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
+
+* Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
 
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 

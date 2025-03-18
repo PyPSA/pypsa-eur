@@ -3,18 +3,6 @@
 # SPDX-License-Identifier: CC0-1.0
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
-  theme:
-    style: white
-    context: paper
-    font: sans-serif
-    rc:
-      patch.linewidth: 0.1
-      savefig.bbox: "tight"
-      savefig.dpi: 350
-      ytick.left: true
-      ytick.major.width: 0.4
-      ytick.major.size: 2.5
-      xtick.major.pad: 0
   map:
     boundaries: [-11, 30, 34, 71]
     color_geomap:
@@ -35,24 +23,25 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
-  # settings for energy balance maps
   balance_map:
-    ext: pdf
-    carriers_to_plot: ["AC", "H2", "gas", "co2_stored", "urban_central_heat"]
-    alpha: 1
-    region_alpha: 0.6
-    figsize: [5, 6.5]
-    boundaries: [-11, 30, 34, 71]
+    bus_carriers:
+    - AC
+    - H2
+    - gas
+    - oil
+    - methanol
+    - co2 stored
+    - urban central heat
     AC:
-      unit: TWh$_{el}$
-      unit_conversion: 1e6
-      region_cmap: Greens
-      vmin:
-      vmax:
-      region_unit: €/MWh$_{el}$
-      bus_factor: 2e-3
-      branch_factor: 1e-2
-      flow_factor: 1e+2
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Greens
+      vmin: null
+      vmax: null
+      region_unit: €/MWh
+      bus_factor: 0.002
+      branch_factor: 0.01
+      flow_factor: 100
       bus_sizes:
       - 200
       - 100
@@ -60,15 +49,15 @@ plotting:
       - 100
       - 20
     gas:
-      unit: TWh$_{th}$
-      unit_conversion: 1e6
-      region_cmap: Purples
-      vmin:
-      vmax:
-      region_unit: €/MWh$_{th}$
-      bus_factor: 2e-3
-      branch_factor: 5e-2
-      flow_factor: 6e+1
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Purples
+      vmin: null
+      vmax: null
+      region_unit: €/MWh
+      bus_factor: 0.002
+      branch_factor: 0.05
+      flow_factor: 60
       bus_sizes:
       - 200
       - 100
@@ -76,110 +65,107 @@ plotting:
       - 100
       - 50
     H2:
-      unit: TWh$_{H_2}$
-      unit_conversion: 1e6
-      region_cmap: Blues
-      vmin:
-      vmax:
-      region_unit: €/MWh$_{H_2}$
-      bus_factor: 2e-3
-      branch_factor: 7e-2
-      flow_factor: 5e+1
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Blues
+      vmin: null
+      vmax: null
+      region_unit: €/MWh
+      bus_factor: 0.002
+      branch_factor: 0.07
+      flow_factor: 50
       bus_sizes:
-      - 200
-      - 100
+      - 50
+      - 25
       branch_sizes:
       - 40
       - 20
-    co2_stored:
-      bus_carrier: co2 stored
+    co2 stored:
       unit: Mt
-      unit_conversion: 1e6
-      region_cmap: Purples
-      vmin:
-      vmax:
+      unit_conversion: 1_000_000
+      cmap: Purples
+      vmin: null
+      vmax: null
       region_unit: €/t_${CO_2}$
-      bus_factor: 3e-2
+      bus_factor: 0.03
       branch_factor: 1
-      flow_factor: 2e+3
+      flow_factor: 2_000
       bus_sizes:
       - 50
       - 10
       branch_sizes:
       - 5
       - 2
-    urban_central_heat:
-      bus_carrier: urban central heat
-      unit: TW$_{th}$
-      unit_conversion: 1e6
-      region_cmap: Oranges
-      vmin:
-      vmax:
-      region_unit: €/MWh_{th}$
-      bus_factor: 5e-3
-      branch_factor: 1e-1
-      flow_factor: 1e+2
+    urban central heat:
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Oranges
+      vmin: null
+      vmax: null
+      region_unit: €/MWh
+      bus_factor: 0.005
+      branch_factor: 0.1
+      flow_factor: 100
       bus_sizes:
       - 300
       - 100
-      branch_sizes:
+      branch_sizes: null
     methanol:
-      unit: TWh$_{MeOH}$
-      unit_conversion: 1e6
-      region_cmap: Greens
-      vmin:
-      vmax:
-      region_unit: €/MWh$_{MeOH}$
-      bus_factor: 5e-3
-      branch_factor: 1e-1
-      flow_factor: 1e+2
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Greens
+      vmin: null
+      vmax: null
+      region_unit: €/MWh
+      bus_factor: 0.005
+      branch_factor: 0.1
+      flow_factor: 100
       bus_sizes:
       - 20
       - 10
-      branch_sizes:
+      branch_sizes: null
     biogas:
-      unit: TWh$_{th}$
-      unit_conversion: 1e6
-      region_cmap: Greens
-      vmin:
-      vmax:
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Greens
+      vmin: null
+      vmax: null
       region_unit: €/MWh
-      bus_factor: 1e-1
-      branch_factor: 1e-1
-      flow_factor: 1e+2
+      bus_factor: 0.1
+      branch_factor: 0.1
+      flow_factor: 100
       bus_sizes:
       - 100
       - 50
-      branch_sizes:
-    solid_biomass:
-      bus_carrier: solid biomass
-      unit: TWh$_{th}$
-      unit_conversion: 1e6
-      region_cmap: Greens
-      vmin:
-      vmax:
+      branch_sizes: null
+    solid biomass:
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Greens
+      vmin: null
+      vmax: null
       region_unit: €/MWh
-      bus_factor: 1e-2
-      branch_factor: 1e-1
-      flow_factor: 1e+2
+      bus_factor: 0.01
+      branch_factor: 0.1
+      flow_factor: 100
       bus_sizes:
       - 100
       - 50
-      branch_sizes:
+      branch_sizes: null
     oil:
-      unit: TWh$_{th}$
-      unit_conversion: 1e6
-      region_cmap: Greys
-      vmin:
-      vmax:
+      unit: TWh
+      unit_conversion: 1_000_000
+      cmap: Greys
+      vmin: null
+      vmax: null
       region_unit: €/MWh
-      bus_factor: 2e-3
-      branch_factor: 1e-1
-      flow_factor: 1e+2
+      bus_factor: 0.002
+      branch_factor: 0.01
+      flow_factor: 100
       bus_sizes:
       - 200
       - 100
-      branch_sizes:
+      branch_sizes: null
 
   nice_names:
     OCGT: "Open-Cycle Gas"

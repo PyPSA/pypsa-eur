@@ -9,7 +9,7 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` and the ``config/plotting.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml`` and ``config/plotting.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml`` and ``config/plotting.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
