@@ -2,9 +2,33 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+run:
+  name: "test-elec-clusters"
+  disable_progressbar: true
+  shared_resources:
+    policy: "test"
+  shared_cutouts: true
+
+scenario:
+  clusters:
+  - "adm"
+  opts:
+  - ''
+  planning_horizons:
+  - 2050
+
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
 
 clustering:
   mode: administrative
   administrative:
     level: bz
+
+  clustering:
+    temporal:
+      resolution_elec: 24h
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex
