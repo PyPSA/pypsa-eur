@@ -70,21 +70,6 @@ rule solve_sector_networks_perfect:
         ),
 
 
-rule validate_elec_networks:
-    input:
-        expand(
-            RESULTS + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        expand(
-            RESULTS + "figures/.validation_{kind}_plots_base_s_{clusters}_elec_{opts}",
-            **config["scenario"],
-            run=config["run"]["name"],
-            kind=["production", "prices", "cross_border"],
-        ),
-
-
 rule plot_balance_maps:
     input:
         lambda w: expand(

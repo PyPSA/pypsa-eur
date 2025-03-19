@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: CC0-1.0
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
   map:
@@ -23,6 +24,79 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  balance_timeseries:
+    max_threshold: 5 # GW
+    mean_threshold: 1 # GW
+    monthly: true
+    monthly_resolution:
+    annual: true
+    annual_resolution: D
+    carriers:
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - solid biomass
+    - biogas
+    - co2 stored
+    - co2
+    carrier_groups:
+      electricity:
+      - AC
+      - low voltage
+      heat:
+      - urban central heat
+      - urban decentral heat
+      - rural heat
+      - residential urban decentral heat
+      - residential rural heat
+      - services urban decentral heat
+      - services rural heat
+  heatmap_timeseries:
+    marginal_price:
+    - AC
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - co2 stored
+    - urban central heat
+    utilisation_rate:
+    - solar
+    - solar rooftop
+    - solar-hsat
+    - onwind
+    - offwind-dc
+    - offwind-ac
+    - offwind-float
+    - ror
+    - hydro
+    - PHS
+    - battery charger
+    - battery discharger
+    - H2 Electrolysis
+    - Fischer-Tropsch
+    - methanolisation
+    - Sabatier
+    - OCGT
+    - H2 Fuel Cell
+    - urban central CHP
+    - urban central CHP CC
+    - urban central solid biomass CHP
+    - urban central solid biomass CHP CC
+    - rural gas boiler
+    - urban central air heat pump
+    - DAC
+    soc:
+    - battery
+    - H2 Store
+    - co2 stored
+    - gas
+    - methanol
+    - oil
+    - urban central water tanks
   balance_map:
     bus_carriers:
     - AC
@@ -492,3 +566,8 @@ plotting:
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     HVC to air: 'k'
+    import H2: '#db8ccd'
+    import gas: '#f7a572'
+    import NH3: '#e2ed74'
+    import oil: '#93eda2'
+    import methanol: '#87d0e6'

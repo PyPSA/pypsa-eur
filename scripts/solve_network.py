@@ -1074,6 +1074,36 @@ def add_flexible_egs_constraint(n):
     )
 
 
+def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
+    """
+    Add constraint for limiting green energy imports (synthetic and biomass).
+    Does not include fossil fuel imports.
+    """
+
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+
+    limit = n.config["sector"]["imports"]["limit"]
+    limit_sense = n.config["sector"]["imports"]["limit_sense"]
+
+    if (import_links.empty and import_gens.empty) or not np.isfinite(limit):
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    # everything needs to be in MWh_fuel
+    eff = n.links.loc[import_links, "efficiency"]
+
+    p_gens = n.model["Generator-p"].loc[sns, import_gens]
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    lhs = (p_gens * weightings).sum() + (p_links * eff * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1174,6 +1204,9 @@ def extra_functionality(
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
 
+    if config["sector"]["imports"]["enable"]:
+        add_import_limit_constraint(n, snapshots)
+
     if n.params.custom_extra_functionality:
         source_path = n.params.custom_extra_functionality
         assert os.path.exists(source_path), f"{source_path} does not exist"
@@ -1253,7 +1286,7 @@ def solve_network(
     Raises
     ------
     RuntimeError
-        If solving status is infeasible
+        If solving status is infeasible or warning
     ObjectiveValueError
         If objective value differs from expected value
     """
@@ -1313,11 +1346,14 @@ def solve_network(
             )
         check_objective_value(n, solving)
 
+    if "warning" in condition:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
-        raise RuntimeError("Solving status 'infeasible'")
+        raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
 
 # %%
