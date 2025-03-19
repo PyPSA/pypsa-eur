@@ -274,7 +274,6 @@ rule plot_balance_timeseries:
         "../scripts/plot_balance_timeseries.py"
 
 
-
 rule plot_heatmap_timeseries:
     params:
         plotting=config_provider("plotting"),
