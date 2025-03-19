@@ -22,7 +22,7 @@ def read_scigrid_gas(fn):
     expanded_param = df.param.apply(json.loads).apply(pd.Series)
     df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
-    df = df.loc[:, ~df.columns.duplicated()]  # duplicated counntry_code column
+    df = df.loc[:, ~df.columns.duplicated()]  # duplicated country_code column
     return df
 
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",
-            clusters="128",
+            clusters="10",
         )
 
     configure_logging(snakemake)
