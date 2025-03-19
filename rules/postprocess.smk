@@ -103,6 +103,32 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_gas_network.py"
 
+    rule plot_balance_map:
+        params:
+            plotting=config_provider("plotting"),
+        input:
+            network=RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        output:
+            RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
+        threads: 1
+        resources:
+            mem_mb=8000,
+        log:
+            RESULTS
+            + "logs/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_balance_map.py"
+
 
 if config["foresight"] == "perfect":
 
@@ -244,6 +270,62 @@ rule plot_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
+
+
+rule plot_balance_timeseries:
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 16
+    resources:
+        mem_mb=10000,
+    log:
+        RESULTS
+        + "logs/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    output:
+        directory(
+            RESULTS
+            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        ),
+    script:
+        "../scripts/plot_balance_timeseries.py"
+
+
+rule plot_heatmap_timeseries:
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 16
+    resources:
+        mem_mb=10000,
+    log:
+        RESULTS
+        + "logs/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    output:
+        directory(
+            RESULTS
+            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        ),
+    script:
+        "../scripts/plot_heatmap_timeseries.py"
 
 
 STATISTICS_BARPLOTS = [

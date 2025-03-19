@@ -16,8 +16,10 @@ Creates the network topology from an ENTSO-E map extract, and create Voronoi sha
 """
 
 import logging
+import multiprocessing as mp
 import warnings
-from itertools import product
+from functools import partial
+from itertools import chain, product
 
 import geopandas as gpd
 import networkx as nx
@@ -33,6 +35,7 @@ from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
 from shapely.geometry import Point
+from tqdm import tqdm
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -184,7 +187,7 @@ def _load_links_from_eg(buses, links):
     links["length"] /= 1e3
 
     # Skagerrak Link is connected to 132kV bus which is removed in _load_buses.
-    # Connect to neighboring 380kV bus
+    # Connect to neighbouring 380kV bus
     links.loc[links.bus1 == "6396", "bus1"] = "6398"
 
     links = _remove_dangling_branches(links, buses)
@@ -828,44 +831,58 @@ def voronoi(points, outline, crs=4326):
     return joined.dissolve(by="Bus").reindex(points.index).squeeze()
 
 
-def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
-    country_shapes = gpd.read_file(country_shapes).set_index("name")["geometry"]
-    offshore_shapes = gpd.read_file(offshore_shapes)
-    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
-        "geometry"
-    ]
+def process_onshore_regions(
+    adm: str,
+    buses: pd.DataFrame,
+    admin_shapes: gpd.GeoDataFrame,
+    crs: str,
+) -> gpd.GeoDataFrame:
+    country = admin_shapes.loc[adm, "country"]
+    c_b = buses.admin == adm
 
-    onshore_regions = []
+    onshore_shape = admin_shapes.loc[adm, "geometry"]
+    onshore_locs = (
+        buses.loc[c_b & buses.onshore_bus]
+        .sort_values(by="substation_lv", ascending=False)  # preference for substations
+        .drop_duplicates(subset=["x", "y", "country"], keep="first")[
+            ["x", "y", "country"]
+        ]
+    )
+    onshore_regions_adm = gpd.GeoDataFrame(
+        {
+            "name": onshore_locs.index,
+            "x": onshore_locs["x"],
+            "y": onshore_locs["y"],
+            "geometry": voronoi(onshore_locs, onshore_shape),
+            "country": country,
+        },
+        crs=crs,
+    )
+
+    return onshore_regions_adm
+
+
+def process_offshore_regions(
+    buses: pd.DataFrame,
+    offshore_shapes: gpd.GeoDataFrame,
+    countries: list[str],
+    crs: str,
+) -> list[gpd.GeoDataFrame]:
     offshore_regions = []
 
-    for country in countries:
-        c_b = n.buses.country == country
-
-        onshore_shape = country_shapes[country]
-        onshore_locs = (
-            n.buses.loc[c_b & n.buses.onshore_bus]
-            .sort_values(
-                by="substation_lv", ascending=False
-            )  # preference for substations
-            .drop_duplicates(subset=["x", "y"], keep="first")[["x", "y"]]
-        )
-        onshore_regions.append(
-            gpd.GeoDataFrame(
-                {
-                    "name": onshore_locs.index,
-                    "x": onshore_locs["x"],
-                    "y": onshore_locs["y"],
-                    "geometry": voronoi(onshore_locs, onshore_shape),
-                    "country": country,
-                },
-                crs=n.crs,
-            )
-        )
-
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" regions",
+        total=len(countries),
+        desc="Building offshore regions",
+    )
+    for country in tqdm(countries, **tqdm_kwargs):
         if country not in offshore_shapes.index:
             continue
+
+        c_b = buses.country == country
         offshore_shape = offshore_shapes[country]
-        offshore_locs = n.buses.loc[c_b & n.buses.substation_off, ["x", "y"]]
+        offshore_locs = buses.loc[c_b & buses.substation_off, ["x", "y"]]
         offshore_regions_c = gpd.GeoDataFrame(
             {
                 "name": offshore_locs.index,
@@ -874,15 +891,108 @@ def build_bus_shapes(n, country_shapes, offshore_shapes, countries):
                 "geometry": voronoi(offshore_locs, offshore_shape),
                 "country": country,
             },
-            crs=n.crs,
+            crs=crs,
         )
         sel = offshore_regions_c.to_crs(3035).area > 10  # m2
         offshore_regions_c = offshore_regions_c.loc[sel]
         offshore_regions.append(offshore_regions_c)
 
-    shapes = pd.concat(onshore_regions, ignore_index=True).set_crs(n.crs)
+    return offshore_regions
 
-    return onshore_regions, offshore_regions, shapes, offshore_shapes
+
+def build_bus_shapes(
+    n: pypsa.Network,
+    admin_shapes: gpd.GeoDataFrame,
+    offshore_shapes: str,
+    countries: list[str],
+) -> tuple[
+    list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame
+]:
+    """
+    Build onshore and offshore regions for buses in the network.
+
+    Parameters
+    ----------
+        n (pypsa.Network) : The network for which the bus shapes will be built.
+        admin_shapes (gpd.GeoDataFrame) : GeoDataFrame with administrative region shapes indexed by name.
+        offshore_shapes (str) : Path to the file containing offshore shapes.
+        countries (list[str]) : List of country codes to process.
+
+    Returns
+    -------
+        tuple[list[gpd.GeoDataFrame], list[gpd.GeoDataFrame], gpd.GeoDataFrame, gpd.GeoDataFrame]
+
+        A tuple containing:
+            - List of GeoDataFrames for each onshore region
+            - List of GeoDataFrames for each offshore region
+            - Combined GeoDataFrame of all onshore shapes
+            - Combined GeoDataFrame of all offshore shapes
+    """
+    offshore_shapes = gpd.read_file(offshore_shapes)
+    offshore_shapes = offshore_shapes.reindex(columns=REGION_COLS).set_index("name")[
+        "geometry"
+    ]
+
+    buses = n.buses[
+        ["x", "y", "country", "onshore_bus", "substation_lv", "substation_off"]
+    ].copy()
+
+    buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
+    buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
+    buses["admin"] = ""
+
+    # Map buses per country
+    for country in countries:
+        buses_subset = buses.loc[buses["country"] == country]
+
+        buses.loc[buses_subset.index, "admin"] = gpd.sjoin_nearest(
+            buses_subset.to_crs(epsg=3857),
+            admin_shapes.loc[admin_shapes["country"] == country].to_crs(epsg=3857),
+            how="left",
+        )["admin_right"]
+
+    # Create Voronoi polygons for each administrative region.
+    # If administrative clustering is deactivated, voronoi cells are created on a country level.
+    admin_regions = sorted(
+        set(buses.admin.unique()).intersection(admin_shapes.index.unique())
+    )
+
+    # Onshore regions
+    nprocesses = snakemake.threads
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" regions",
+        total=len(admin_regions),
+        desc="Building onshore regions",
+    )
+    func = partial(
+        process_onshore_regions,
+        buses=buses,
+        admin_shapes=admin_shapes,
+        crs=n.crs.name,
+    )
+
+    with mp.Pool(processes=nprocesses) as pool:
+        onshore_regions = list(tqdm(pool.imap(func, admin_regions), **tqdm_kwargs))
+    onshore_shapes = pd.concat(onshore_regions, ignore_index=True).set_crs(n.crs)
+    logger.info(f"In total {len(onshore_shapes)} onshore regions.")
+
+    # Offshore regions
+    offshore_regions = process_offshore_regions(
+        buses,
+        offshore_shapes,
+        countries,
+        n.crs.name,
+    )
+    if offshore_regions:
+        offshore_shapes = pd.concat(offshore_regions, ignore_index=True).set_crs(n.crs)
+    else:
+        offshore_shapes = gpd.GeoDataFrame(
+            columns=["name", "geometry"], crs=n.crs
+        ).set_index("name")
+    logger.info(f"In total {len(offshore_shapes)} offshore regions.")
+
+    return onshore_regions, offshore_regions, onshore_shapes, offshore_shapes
 
 
 def append_bus_shapes(n, shapes, type):
@@ -915,6 +1025,548 @@ def append_bus_shapes(n, shapes, type):
     )
 
 
+def find_neighbours(
+    polygon: shapely.geometry.Polygon, index: str, gdf: gpd.GeoDataFrame
+) -> list:
+    """
+    Find neighbouring polygons of a given polygon in a GeoDataFrame using spatial index.
+
+    Parameters
+    ----------
+        polygon (shapely.geometry.Polygon): Polygon for which to find neighbours.
+        index (str): Index of the polygon.
+        gdf (gpd.GeoDataFrame): GeoDataFrame containing all polygons.
+
+    Returns
+    -------
+        list: List of indices of neighbouring polygons.
+    """
+    possible_neighbours = gdf.sindex.intersection(polygon.bounds)
+
+    # Get actual neighbours by filtering those that touch
+    neighbours = gdf.iloc[list(possible_neighbours)]
+    neighbours = neighbours[neighbours.geometry.touches(polygon)]
+
+    # if no neighbours exist, return empty list
+    if len(neighbours) == 0:
+        return None
+
+    # Return the indices of touching neighbours
+    return neighbours.index.tolist()
+
+
+def keep_good_neighbours(
+    adm: str,
+    neighbours: list,
+    parent_dict: dict,
+    country_dict: dict,
+) -> list:
+    """
+    Filtering list of neighbours based on country and parent.
+
+    Parameters
+    ----------
+        adm (str): Index of the administrative region.
+        neighbours (list): List of neighbours.
+        parent_dict (dict): Dictionary with parent of each administrative region.
+        country_dict (dict): Dictionary with country of each administrative region.
+
+    Returns
+    -------
+        list: List of filtered
+    """
+    # Only keep neighbours that are located in the same country
+
+    neighbours = [n for n in neighbours if n[:2] == country_dict[adm]]
+
+    # Filter new neighbours by parent
+    new_neighbours = [n for n in neighbours if parent_dict[n] == parent_dict[adm]]
+
+    # If no neighbours are left, keep all neighbours
+    if not new_neighbours:
+        return neighbours
+
+    return new_neighbours
+
+
+def sort_values_by_dict(
+    neighbours: list,
+    dicts: list,
+    ascending: bool = True,
+) -> list:
+    """
+    Sorts a list of keys by values from multiple dictionaries in order of priority.
+
+    Parameters
+    ----------
+        neighbours (list): List of keys to sort.
+        dicts (list): List of dictionaries containing values to sort by.
+        ascending (bool): Whether to sort in ascending order.
+
+    Returns
+    -------
+        list: Sorted list of keys.
+    """
+    return sorted(
+        neighbours,
+        key=lambda x: tuple(
+            d[x] for d in dicts
+        ),  # Create sorting tuple from multiple dictionaries
+        reverse=not ascending,
+    )
+
+
+def create_merged_admin_region(
+    row: pd.Series,
+    first_neighbours_dict: dict,
+    admin_shapes: gpd.GeoDataFrame,
+) -> pd.Series:
+    """
+    Creates a merged administrative region from a given row and its first neighbours.
+
+    Parameters
+    ----------
+        row (pd.Series): Series containing information about the region to be merged.
+        first_neighbours_dict (dict): Dictionary containing first neighbours for each region.
+        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
+
+    Returns
+    -------
+        pd.Series: Series containing information about the merged region.
+    """
+    first_neighbours = first_neighbours_dict[row.name]
+    neighbours_contain = list(
+        set(
+            chain.from_iterable(
+                [
+                    admin_shapes.loc[neighbour, "contains"]
+                    for neighbour in first_neighbours
+                ]
+            )
+        )
+    )
+
+    merge_regions = sorted([row.name] + first_neighbours)
+    contains_cumulative = sorted(
+        set(row.contains + first_neighbours + neighbours_contain)
+    )
+    gdf = admin_shapes.loc[merge_regions]
+
+    geometry = gdf.union_all()
+    country = gdf.loc[row.name, "country"]
+    parent = gdf.loc[row.name, "parent"]
+    substations = gdf["substations"].sum()
+    isempty = not any(
+        ~gdf["isempty"].values
+    )  # if one of the regions is not empty, the merged region is not empty
+    area = gdf["area"].sum()
+    neighbours = sorted(
+        list(
+            set(
+                chain.from_iterable(
+                    [
+                        neighbour
+                        for neighbour in gdf["neighbours"]
+                        if isinstance(neighbour, list)
+                    ]
+                )
+            )
+        )
+    )
+    neighbours = [
+        n for n in neighbours if n not in merge_regions
+    ]  # Remove contained values from neighbours
+
+    return pd.Series(
+        {
+            "geometry": geometry,
+            "country": country,
+            "parent": parent,
+            "substations": substations,
+            "contains": contains_cumulative,  # List of contains
+            "isempty": isempty,
+            "area": area,
+            "neighbours": neighbours,  # List of neighbours
+        }
+    )
+
+
+def update_names(
+    names: list[str],
+) -> str:
+    """
+    Updating names of merged administrative regions using the alphabetically first name in a list.
+
+    Parameters
+    ----------
+        names (list): List of names to update.
+
+    Returns
+    -------
+        str: Updated name.
+    """
+    if len(names) == 1:
+        return names[0]
+
+    basename = sorted(names)[0]
+    name = basename + "+" + str(len(names) - 1)
+
+    return name
+
+
+def clean_dict(
+    diction: dict,
+) -> dict:
+    """
+    Cleans a dictionary by removing duplicates (keys or values that appear in multiple key-value pairs).
+
+    Parameters
+    ----------
+        diction (dict): Dictionary to clean.
+
+    Returns
+    -------
+        dict: Cleaned dictionary.
+    """
+
+    if not diction:
+        return diction
+
+    # Sub dictionary where values are only of length 1
+    single_occurrences = {k: v for k, v in diction.items() if len(v) == 1}
+
+    # Enters only if single_occurrences is not empty
+    if single_occurrences:
+        # Create list of key, value pairs and store in list
+        single_values = list(chain.from_iterable(single_occurrences.values()))
+        single_keys = list(single_occurrences.keys())
+
+        # Create dict with single_keys() as keys and sets of single_keys and single_values as values using
+        single_df = pd.DataFrame(
+            zip(
+                single_keys,
+                [set([key, value]) for key, value in zip(single_keys, single_values)],
+            )
+        )
+        # Only keep first occurrence of duplicates
+        single_df = single_df.drop_duplicates(subset=1, keep="first")
+
+        # Difference between single_df[0].values and single_keys
+        drop_keys = set(single_keys) - set(single_df[0].values)
+
+        # Drop keys in double_values
+        diction = {k: v for k, v in diction.items() if k not in drop_keys}
+
+    # Create list of values, that also exist as key
+    double_values = list(chain.from_iterable(diction.values()))
+    double_values = [x for x in double_values if x in diction.keys()]
+
+    for key, values in diction.items():
+        diction[key] = [value for value in values if value not in double_values]
+
+    # Remove keys that have no values left
+    diction = {k: v for k, v in diction.items() if v}
+
+    return diction
+
+
+def get_nearest_neighbour(
+    row: pd.Series,
+    admin_shapes: gpd.GeoDataFrame,
+) -> str:
+    """
+    Finds the nearest neighbour containing substations within the same region.
+
+    Parameters
+    ----------
+        row (pd.Series): Series containing information about the region.
+        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
+
+    Returns
+    -------
+        str: Index of the nearest neighbour.
+    """
+    country = row["country"]
+    gdf = gpd.GeoDataFrame([row.loc[["country", "geometry"]]], crs=admin_shapes.crs)
+    nearest_neighbours = admin_shapes.loc[
+        (admin_shapes.index != row.name)
+        & (admin_shapes["country"] == country)
+        & (admin_shapes["isempty"] == False),
+        ["country", "geometry"],
+    ]
+
+    nearest_neighbour = (
+        gdf.to_crs(epsg=3035)
+        .sjoin_nearest(
+            nearest_neighbours.to_crs(epsg=3035),
+            how="left",
+        )["index_right"]
+        .values[0]
+    )
+
+    return nearest_neighbour
+
+
+def merge_regions_recursive(
+    admin_shapes: gpd.GeoDataFrame,
+    neighbours_missing: bool = True,
+) -> gpd.GeoDataFrame:
+    """
+    Recursive function to merge administrative regions that do not contain substations with their neighbours.
+    Prioritises neighbours with the most substations and smallest area.
+    Terminates when all regions without substations have been merged.
+
+    Parameters
+    ----------
+        admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing all administrative regions.
+        neighbours_missing (bool): Whether to find neighbours if they are missing.
+
+    Returns
+    -------
+        gpd.GeoDataFrame: GeoDataFrame containing the merged administrative regions
+    """
+    while True:
+        # Calculate area
+        admin_shapes["area"] = admin_shapes.to_crs(epsg=3035).area
+        area_dict = admin_shapes["area"].to_dict()
+        country_dict = admin_shapes["country"].to_dict()
+        parent_dict = admin_shapes["parent"].to_dict()
+        substations_dict = (
+            admin_shapes["substations"].mul(-1).to_dict()
+        )  # multiply by -1 to sort in ascending order
+
+        if neighbours_missing:
+            # Find all neighbours
+            admin_shapes["neighbours"] = None
+            admin_shapes.loc[admin_shapes.isempty, "neighbours"] = admin_shapes.loc[
+                admin_shapes.isempty
+            ].apply(
+                lambda row: find_neighbours(row.geometry, row.name, admin_shapes),
+                axis=1,
+            )
+
+            # Keep only viable neighbours (preferably same parent)
+            admin_shapes.loc[
+                admin_shapes.isempty & ~admin_shapes.neighbours.isna(), "neighbours"
+            ] = admin_shapes.loc[
+                admin_shapes.isempty & ~admin_shapes.neighbours.isna()
+            ].apply(
+                lambda row: keep_good_neighbours(
+                    row.name, row.neighbours, parent_dict, country_dict
+                ),
+                axis=1,
+            )
+
+        # Filter for regions that have neighbours and are empty
+        b_isempty_hasneighbours = admin_shapes.isempty & admin_shapes.neighbours.apply(
+            lambda x: len(x) > 0 if isinstance(x, list) else False
+        )
+
+        if not b_isempty_hasneighbours.any():
+            logger.info("All administrative regions without buses have been merged.")
+            break
+
+        # Sort neighbours in such a way, that the neighbour with the most substations is first.
+        # If there are multiple neighbours with the same number of substations, the one with the smallest area is first.
+        # ascending = True (default) - For this to work, substations_dict was multiplied by -1
+        # Most negative number of substation (smallest) comes first
+        admin_shapes.loc[b_isempty_hasneighbours, "neighbours"] = admin_shapes.loc[
+            b_isempty_hasneighbours
+        ].apply(
+            lambda row: sort_values_by_dict(
+                row.neighbours, [substations_dict, area_dict]
+            ),
+            axis=1,
+        )
+
+        # Find all first neighbours and
+        # create dict with first neighbours as keys and list of regions of which they are neighbours as values
+        first_neighbours = admin_shapes.loc[
+            b_isempty_hasneighbours, "neighbours"
+        ].apply(lambda x: x[0])
+        first_neighbours = (
+            first_neighbours.groupby(first_neighbours)
+            .apply(lambda x: x.index.tolist())
+            .to_dict()
+        )
+        first_neighbours = clean_dict(first_neighbours)
+
+        # Create merged administrative regions
+        merged_shapes = gpd.GeoDataFrame(
+            columns=admin_shapes.columns,
+            index=sorted(first_neighbours.keys()),
+            crs=admin_shapes.crs,
+        )
+        merged_shapes["contains"] = admin_shapes.loc[merged_shapes.index, "contains"]
+        merged_shapes = merged_shapes.apply(
+            lambda row: create_merged_admin_region(
+                row,
+                first_neighbours,
+                admin_shapes,
+            ),
+            axis=1,
+        )
+        merged_shapes.drop_duplicates(subset="geometry", keep="first", inplace=True)
+
+        # Remove merged regions from admin_shapes and update admin_shapes
+        list_merged_adm = list(set(chain.from_iterable(merged_shapes["contains"])))
+        list_merged_adm = [adm for adm in list_merged_adm if adm in admin_shapes.index]
+        admin_shapes = admin_shapes.drop(list_merged_adm)
+        admin_shapes = pd.concat([admin_shapes, merged_shapes])
+
+    return admin_shapes
+
+
+def build_admin_shapes(
+    n: pypsa.Network,
+    nuts3_shapes: str,
+    clustering: str,
+    admin_levels: dict[str, int],
+    countries: list[str],
+) -> gpd.GeoDataFrame:
+    """
+    Builds administrative shapes for bus regions based on NUTS3 regions and custom clustering configuration.
+
+    Parameters
+    ----------
+    nuts3_shapes (str) : Path to the file containing NUTS3 shapes.
+    clustering (str) : Clustering method to use ('administrative' or other).
+    admin_levels (dict[str, int]) : Dictionary mapping country codes to administrative levels.
+    countries (list[str]) : List of country codes to include.
+
+    Returns
+    -------
+    admin_shapes (gpd.GeoDataFrame): GeoDataFrame containing the administrative regions.
+    """
+    level_map = {
+        0: "country",
+        1: "level1",
+        2: "level2",
+        3: "level3",
+    }
+
+    adm1_countries = ["BA", "MD", "UA", "XK"]
+    adm1_countries = list(set(adm1_countries).intersection(n.buses.country.unique()))
+
+    nuts3_regions = gpd.read_file(nuts3_shapes)
+    nuts3_regions = nuts3_regions.set_index(nuts3_regions.columns[0])
+
+    level = admin_levels.get("level", 0)
+
+    if clustering == "administrative":
+        logger.info(f"Building bus regions at administrative level {level}")
+        nuts3_regions["column"] = level_map[level]
+
+        # Only keep the values whose keys are in countries
+        country_level = {
+            k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+        }
+        if country_level:
+            country_level_list = "\n".join(
+                [f"- {k}: level {v}" for k, v in country_level.items()]
+            )
+            logger.info(
+                f"Setting individual administrative levels for:\n{country_level_list}"
+            )
+            nuts3_regions.loc[
+                nuts3_regions["country"].isin(country_level.keys()), "column"
+            ] = (
+                nuts3_regions.loc[
+                    nuts3_regions["country"].isin(country_level.keys()), "country"
+                ]
+                .map(country_level)
+                .map(level_map)
+            )
+
+        # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
+        if "GB" in countries:
+            nuts3_regions.loc[nuts3_regions.level1 == "GBI", "column"] = "level1"
+
+        nuts3_regions["admin"] = nuts3_regions.apply(
+            lambda row: row[row["column"]], axis=1
+        )
+    else:
+        logger.info("Building bus regions per country level.")
+        nuts3_regions["admin"] = nuts3_regions["country"]
+
+    # Group by busmap
+    admin_shapes = nuts3_regions[["admin", "geometry"]]
+    admin_shapes = admin_shapes.groupby("admin")["geometry"].apply(
+        lambda x: x.union_all()
+    )
+    admin_shapes = gpd.GeoDataFrame(
+        admin_shapes, geometry="geometry", crs=nuts3_regions.crs
+    )
+    admin_shapes["country"] = admin_shapes.index.str[:2]
+
+    # Identify regions that do not contain buses and merge them with smallest
+    # neighbouring area of the same parent region (NUTS3 -> NUTS2 -> NUTS1 -> country)
+    buses = n.buses[["x", "y", "country"]].copy()
+    buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
+    buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=n.crs)
+
+    # Obtain parents
+    admin_shapes["parent"] = admin_shapes.index.str.replace("-", "").map(
+        lambda x: x[:2] if len(x) == 2 else x[:-1]
+    )
+    admin_shapes.loc[admin_shapes.country.isin(adm1_countries), "parent"] = (
+        admin_shapes.loc[admin_shapes.country.isin(adm1_countries), "country"]
+    )
+
+    # Check how many buses are in each region
+    admin_shapes = gpd.sjoin(
+        admin_shapes, buses[["country", "geometry"]], how="left", predicate="contains"
+    )
+    admin_shapes["substations"] = admin_shapes.apply(
+        lambda x: 1 if x["country_left"] == x["country_right"] else 0, axis=1
+    )
+    admin_shapes.rename(columns={"country_left": "country"}, inplace=True)
+    admin_shapes = admin_shapes.groupby(admin_shapes.index).agg(
+        {
+            "geometry": "first",
+            "country": "first",
+            "parent": "first",
+            "substations": "sum",
+        }
+    )
+    admin_shapes = gpd.GeoDataFrame(
+        admin_shapes, geometry="geometry", crs=nuts3_regions.crs
+    )
+    admin_shapes["isempty"] = admin_shapes["substations"] == 0
+
+    # Initiate contains column
+    if "contains" not in admin_shapes.columns:
+        admin_shapes["contains"] = admin_shapes.apply(lambda row: [row.name], axis=1)
+
+    if admin_shapes["isempty"].any():
+        logger.info(
+            "Administrative regions without buses found. Merging with neighbouring regions of the same parent region."
+        )
+
+        admin_shapes = merge_regions_recursive(admin_shapes)
+
+        # Find closest regions for remaining islands
+        logger.info("Finding closest administrative regions for remaining islands.")
+        b_island = admin_shapes["isempty"] == True
+        admin_shapes.loc[b_island, "neighbours"] = admin_shapes.loc[b_island].apply(
+            lambda row: [get_nearest_neighbour(row, admin_shapes)],
+            axis=1,
+        )
+
+        admin_shapes = merge_regions_recursive(admin_shapes, neighbours_missing=False)
+
+        # Update names
+        admin_shapes.index.name = "admin"
+        admin_shapes.reset_index(inplace=True)
+        admin_shapes["admin"] = admin_shapes.apply(
+            lambda row: update_names(row["contains"]),
+            axis=1,
+        )
+        admin_shapes.set_index("admin", inplace=True)
+
+    return admin_shapes[["country", "parent", "contains", "substations", "geometry"]]
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -922,8 +1574,12 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    mp.set_start_method("spawn", force=True)
 
     countries = snakemake.params.countries
+    nuts3_shapes = snakemake.input.nuts3_shapes
+    clustering = snakemake.params.get("clustering", "busmap")
+    admin_levels = snakemake.params.get("admin_levels")
 
     buses = snakemake.input.buses
     converters = snakemake.input.converters
@@ -960,22 +1616,36 @@ if __name__ == "__main__":
         config,
     )
 
-    onshore_regions, offshore_regions, shapes, offshore_shapes = build_bus_shapes(
+    admin_shapes = build_admin_shapes(
         n,
-        country_shapes,
-        offshore_shapes,
+        nuts3_shapes,
+        clustering,
+        admin_levels,
         countries,
     )
 
-    shapes.to_file(snakemake.output.regions_onshore)
-    # append_bus_shapes(n, shapes, "onshore")
+    onshore_regions, offshore_regions, onshore_shapes, offshore_shapes = (
+        build_bus_shapes(
+            n,
+            admin_shapes,
+            offshore_shapes,
+            countries,
+        )
+    )
 
-    if offshore_regions:
-        shapes = pd.concat(offshore_regions, ignore_index=True)
-        shapes.to_file(snakemake.output.regions_offshore)
-        # append_bus_shapes(n, shapes, "offshore")
-    else:
-        offshore_shapes.to_frame().to_file(snakemake.output.regions_offshore)
-
+    # Export network
     n.meta = snakemake.config
     n.export_to_netcdf(snakemake.output.base_network)
+
+    # Export shapes
+    onshore_shapes.to_file(snakemake.output.regions_onshore)
+    # append_bus_shapes(n, shapes, "onshore")
+
+    offshore_shapes.to_file(snakemake.output.regions_offshore)
+    # append_bus_shapes(n, offshore_shapes, "offshore")
+
+    # Convert contains columns into strings (pyogrio-friendly)
+    admin_shapes["contains"] = admin_shapes["contains"].apply(lambda x: ",".join(x))
+    admin_shapes["contains"] = admin_shapes["contains"].astype(str)
+    admin_shapes.to_file(snakemake.output.admin_shapes)
+    # append_bus_shapes(n, admin_shapes, "admin")

@@ -9,14 +9,14 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml`` and ``config/plotting.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
-"Private" refers to local, machine-specific settings or data meant for personal use, not to be shared. "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+"Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -576,7 +576,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -588,10 +587,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 ``plotting``
 =============
 
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
-
-.. literalinclude:: ../config/config.default.yaml
+.. literalinclude:: ../config/plotting.default.yaml
    :language: yaml
    :start-at: plotting:
 
