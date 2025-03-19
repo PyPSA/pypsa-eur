@@ -11,12 +11,19 @@ Release Notes
 Upcoming Release
 ================
 
+* Added simplified representation of renewable energy imports:
+  - Activated with ``sector: imports: enable: true``.
+  - Allows hydrogen, ammonia, methanol, gas and oil (Fischer-Tropsch) with configurable prices (``sector: imports: prices:``).
+  - Methane imports use existing LNG terminal entry points, hydrogen imports use existing pipeline entry points. 
+  - Import prices are uniform across all regions.
+  - Carbon content of imported fuels is handled like biomass.
+  - Total volume of imports can be limited with ``sector: imports: limit:``. The limit includes synthetic and biomass imports (``sector: solid_biomass_import:``), but not fossil fuel imports.
+
 * Added new rule :mod:`plot_balance_timeseries` to plot energy balance time series for the whole year at daily resolution and for each month at model-native resolution.
 
 * Added new rule :mod:`plot_heatmap_timeseries` for plotting configuration of heatmap time series, including options for marginal prices, utilisation rates, and state of charge.
 
 * Fail on solving status 'warning' because results are likely not valid.
-
 
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 

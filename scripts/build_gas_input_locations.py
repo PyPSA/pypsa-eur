@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",
-            clusters="128",
+            clusters="10",
         )
 
     configure_logging(snakemake)

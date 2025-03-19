@@ -189,3 +189,9 @@ solid_biomass_import,,,
 -- price,currency/MWh,float,Price for importing solid biomass
 -- max_amount,Twh,float,Maximum solid biomass import potential
 -- upstream_emissions_factor,p.u.,float,Upstream emissions of solid biomass imports
+imports,,,
+-- enable,--,"{true, false}",Add option to include renewable energy imports
+-- limit,TWh,float,Maximum allowed renewable energy imports
+-- limit_sense,--,"{==, <=, >=}",Sense of the limit
+-- price,,"{H2, NH3, methanol, gas, oil}",
+-- -- {carrier},currency/MWh,float,Price for importing renewable energy of carrier
