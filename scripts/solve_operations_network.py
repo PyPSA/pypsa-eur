@@ -52,6 +52,7 @@ if __name__ == "__main__":
         params=snakemake.params,
         solving=snakemake.params.solving,
         log_fn=snakemake.log.solver,
+        rule_name=snakemake.rule,
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

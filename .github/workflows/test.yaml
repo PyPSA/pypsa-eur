@@ -70,7 +70,9 @@ jobs:
 
     - uses: conda-incubator/setup-miniconda@v3
       with:
+        miniforge-version: latest
         activate-environment: pypsa-eur
+        channel-priority: strict
 
     - name: Cache Conda env
       uses: actions/cache@v4

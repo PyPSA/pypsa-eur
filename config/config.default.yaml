@@ -10,10 +10,6 @@ logging:
   level: INFO
   format: '%(levelname)s:%(name)s:%(message)s'
 
-private:
-  keys:
-    entsoe_api:
-
 remote:
   ssh: ""
   path: ""
@@ -68,7 +64,6 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true
-  custom_busmap: false
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -613,12 +608,15 @@ sector:
     micro_chp: false # Only gas is used for micro_chp
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
-  marginal_cost_storage: 0. #1e-4
   methanation: true
   coal_cc: false
   dac: true
   co2_vent: false
-  central_heat_vent: false
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
+  marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
@@ -738,7 +736,16 @@ sector:
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
-
+  imports:
+    enable: false
+    limit: .inf
+    limit_sense: <=
+    price:
+      H2: 74
+      NH3: 97
+      methanol: 121
+      gas: 122
+      oil: 125
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -845,9 +852,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
-  # Marginal and capital costs can be overwritten
-  # capital_cost:
-  #   onwind: 500
+  overwrites: {}
   marginal_cost:
     solar: 0.01
     onwind: 0.015
@@ -858,6 +863,9 @@ costs:
     fuel cell: 0.
     battery: 0.
     battery inverter: 0.
+    home battery storage: 0
+    water tank charger: 0.03
+    central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.
@@ -865,6 +873,9 @@ costs:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
+  mode: busmap
+  administrative:
+    level: 1
   focus_weights: false
   simplify_network:
     to_substations: false
@@ -1046,6 +1057,79 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  balance_timeseries:
+    max_threshold: 5 # GW
+    mean_threshold: 1 # GW
+    monthly: true
+    monthly_resolution:
+    annual: true
+    annual_resolution: D
+    carriers:
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - solid biomass
+    - biogas
+    - co2 stored
+    - co2
+    carrier_groups:
+      electricity:
+      - AC
+      - low voltage
+      heat:
+      - urban central heat
+      - urban decentral heat
+      - rural heat
+      - residential urban decentral heat
+      - residential rural heat
+      - services urban decentral heat
+      - services rural heat
+  heatmap_timeseries:
+    marginal_price:
+    - AC
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - co2 stored
+    - urban central heat
+    utilisation_rate:
+    - solar
+    - solar rooftop
+    - solar-hsat
+    - onwind
+    - offwind-dc
+    - offwind-ac
+    - offwind-float
+    - ror
+    - hydro
+    - PHS
+    - battery charger
+    - battery discharger
+    - H2 Electrolysis
+    - Fischer-Tropsch
+    - methanolisation
+    - Sabatier
+    - OCGT
+    - H2 Fuel Cell
+    - urban central CHP
+    - urban central CHP CC
+    - urban central solid biomass CHP
+    - urban central solid biomass CHP CC
+    - rural gas boiler
+    - urban central air heat pump
+    - DAC
+    soc:
+    - battery
+    - H2 Store
+    - co2 stored
+    - gas
+    - methanol
+    - oil
+    - urban central water tanks
 
   nice_names:
     OCGT: "Open-Cycle Gas"
@@ -1223,6 +1307,12 @@ plotting:
     residential urban decentral water tanks discharger: '#baac9e'
     services rural water tanks discharger: '#bbc2b8'
     services urban decentral water tanks discharger: '#bdd8d3'
+    water pits: "#cc826a"
+    water pits charger: "#b36a5e"
+    water pits discharger: "#b37468"
+    urban central water pits: "#d96f4c"
+    urban central water pits charger: "#a85d47"
+    urban central water pits discharger: "#b36452"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
@@ -1366,3 +1456,8 @@ plotting:
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     HVC to air: 'k'
+    import H2: '#db8ccd'
+    import gas: '#f7a572'
+    import NH3: '#e2ed74'
+    import oil: '#93eda2'
+    import methanol: '#87d0e6'
