@@ -471,6 +471,7 @@ def set_transmission_costs(
 def attach_wind_and_solar(
     n: pypsa.Network,
     costs: pd.DataFrame,
+    ppl: pd.DataFrame,
     profile_filenames: dict,
     carriers: list | set,
     extendable_carriers: list | set,
@@ -486,6 +487,8 @@ def attach_wind_and_solar(
         The PyPSA network to attach the generators to.
     costs : pd.DataFrame
         DataFrame containing the cost data.
+    ppl : pd.DataFrame
+        DataFrame containing the power plant data.
     profile_filenames : dict
         Dictionary containing the paths to the wind and solar profiles.
     carriers : list | set
@@ -538,12 +541,20 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
+            if not ppl.query("carrier == @car").empty:
+                caps = ppl.query("carrier == @car").groupby("bus").p_nom.sum()
+                caps = pd.Series(data=caps, index=ds.indexes["bus"]).fillna(0)
+            else:
+                caps = pd.Series(index=ds.indexes["bus"]).fillna(0)
+
             n.add(
                 "Generator",
                 ds.indexes["bus"],
                 " " + car,
                 bus=ds.indexes["bus"],
                 carrier=car,
+                p_nom=caps,
+                p_nom_min=caps,
                 p_nom_extendable=car in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),
                 marginal_cost=costs.at[supcar, "marginal_cost"],
@@ -1171,6 +1182,7 @@ if __name__ == "__main__":
     attach_wind_and_solar(
         n,
         costs,
+        ppl,
         snakemake.input,
         renewable_carriers,
         extendable_carriers,

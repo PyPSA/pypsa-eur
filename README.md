@@ -13,6 +13,62 @@ SPDX-License-Identifier: CC-BY-4.0
 [![REUSE status](https://api.reuse.software/badge/github.com/pypsa/pypsa-eur)](https://api.reuse.software/info/github.com/pypsa/pypsa-eur)
 [![Stack Exchange questions](https://img.shields.io/stackexchange/stackoverflow/t/pypsa)](https://stackoverflow.com/questions/tagged/pypsa)
 
+# {{project_name}}
+<img src="https://raw.githubusercontent.com/open-energy-transition/oet-website/main/assets/img/oet-logo-red-n-subtitle.png" alt="Open Energy Transition Logo" width="260" height="100" align="right">
+
+This repository is a soft-fork of [PyPSA-Eur](https://github.com/pypsa/pypsa-eur) and contains the entire project `{{project_name}}` supported by [Open Energy Transition (OET)](https://openenergytransition.org/)<sup>*</sup>, including code and report. The philosophy behind this repository is that no intermediary results are included, but all results are computed from raw data and code. The structure is also inspired by [cookiecutter-project](https://github.com/PyPSA/cookiecutter-project).
+
+This repository is maintained using [OET's soft-fork strategy](https://open-energy-transition.github.io/handbook/docs/Engineering/SoftForkStrategy). OET's primary aim is to contribute as much as possible to the open source (OS) upstream repositories. For long-term changes that cannot be directly merged upstream, the strategy organizes and maintains OET forks, ensuring they remain up-to-date and compatible with upstream, while also supporting future contributions back to the OS repositories.
+
+
+# Repository structure
+
+* `benchmarks`: will store `snakemake` benchmarks (does not exist initially)
+* `config`: configurations used in the study
+* `cutouts`: will store raw weather data cutouts from `atlite` (does not exist initially)
+* `data`: includes input data that is not produced by any `snakemake` rule
+* `doc`: includes all files necessary to build the `readthedocs` documentation of PyPSA-Eur
+* `envs`: includes all the `mamba` environment specifications to run the workflow
+* `logs`: will store log files (does not exist initially)
+* `notebooks`: includes all the `notebooks` used for ad-hoc analysis
+* `report`: contains all files necessary to build the report; plots and result files are generated automatically
+* `rules`: includes all the `snakemake`rules loaded in the `Snakefile`
+* `resources`: will store intermediate results of the workflow which can be picked up again by subsequent rules (does not exist initially)
+* `results`: will store the solved PyPSA network data, summary files and plots (does not exist initially)
+* `scripts`: includes all the Python scripts executed by the `snakemake` rules to build the model
+
+# Installation and Usage
+
+## 1. Installation
+
+Clone the repository:
+
+    git clone https://github.com/open-energy-transition/{{repository}}
+
+You need [mamba](https://mamba.readthedocs.io/en/latest/) to run the analysis. Users may also prefer to use [micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html) or [conda](https://docs.conda.io/projects/conda/en/latest/index.html). Using `mamba`, you can create an environment from within you can run it:
+
+    mamba env create -f environment.yaml
+
+Activate the newly created `{{project_short_name}}` environment:
+
+    mamba activate {{project_short_name}}
+
+## 2. Run the analysis
+
+    snakemake -call
+
+This will run all analysis steps to reproduce results and build the report.
+
+To generate a PDF of the dependency graph of all steps `resources/dag.pdf` run:
+
+    snakemake -c1 dag
+
+<sup>*</sup> Open Energy Transition (g)GmbH, Königsallee 52, 95448 Bayreuth, Germany
+
+----
+
+----
+
 # PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
 
 PyPSA-Eur is an open model dataset of the European energy system at the

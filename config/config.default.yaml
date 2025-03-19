@@ -707,6 +707,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
+  keep_existing_capacities: false
   biomass_to_liquid: false
   biomass_to_liquid_cc: false
   electrobiofuels: false
