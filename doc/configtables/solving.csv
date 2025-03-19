@@ -36,6 +36,9 @@ constraints ,,,
 solver,,,
 -- name,--,"One of {'gurobi', 'cplex', 'highs', 'cbc', 'glpk'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
 -- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
+model_kwargs,,,
+-- solver_dir, --, str, Absolute path to the directory where linopy saves files.
+keep_files, --, bool, Whether to keep LPs and MPS files after solving.
 solver_options,,dict,Dictionaries with solver-specific parameter settings.
 mem,MB,int,Estimated maximum memory requirement for solving networks.
 mem_logging_frequency,s,int,Interval in seconds at which memory usage is logged.
