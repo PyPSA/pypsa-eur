@@ -584,9 +584,6 @@ def add_carrier_buses(
     if options["fossil_fuels"] and carrier in fossils:
         suffix = ""
 
-        if cf_industry is None:
-            raise ValueError("cf_industry must be provided for oil refining emissions")
-
         if carrier == "oil" and cf_industry["oil_refining_emissions"] > 0:
             n.add(
                 "Bus",
@@ -936,7 +933,7 @@ def add_allam_gas(
     carbon capture. It captures approximately 98% of CO2 emissions, with 2%
     going to the atmosphere.
     """
-    print("Adding Allam cycle gas power plants.")
+    logger.info("Adding Allam cycle gas power plants.")
 
     nodes = pop_layout.index
 
@@ -1503,7 +1500,7 @@ def add_ammonia(
 
 
 def insert_electricity_distribution_grid(
-    n: "pypsa.Network",
+    n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
     pop_layout: pd.DataFrame,
