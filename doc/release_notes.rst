@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added new rule :mod:`plot_balance_timeseries` to plot energy balance time series for the whole year at daily resolution and for each month at model-native resolution.
+
 * Added new rule :mod:`plot_heatmap_timeseries` for plotting configuration of heatmap time series, including options for marginal prices, utilisation rates, and state of charge.
 
 * Fail on solving status 'warning' because results are likely not valid.

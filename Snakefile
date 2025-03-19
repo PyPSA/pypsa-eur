@@ -86,6 +86,14 @@ rule all:
         directory(
             expand(
                 RESULTS
+                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
+        directory(
+            expand(
+                RESULTS
                 + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
                 run=config["run"]["name"],
                 **config["scenario"],
