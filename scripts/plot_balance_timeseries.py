@@ -140,7 +140,7 @@ def plot_energy_balance_timeseries(
 
     # Save figures
     if resample is None:
-        resample = f"native-{time}"
+        resample = f"native-{time if time is not None else 'default'}"
     fn = f"ts-balance-{ylabel.replace(' ', '_')}-{resample}.pdf"
     plt.savefig(f"{directory}/{fn}")
     plt.close()
