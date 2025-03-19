@@ -5214,7 +5214,7 @@ def add_import_options(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
-    gas_input_locations: pd.DataFrame,
+    gas_input_nodes: pd.DataFrame,
 ):
     """
     Add green energy import options.
@@ -5225,7 +5225,7 @@ def add_import_options(
     costs : pd.DataFrame
     options : dict
         Options from snakemake.params["sector"].
-    gas_input_locations : pd.DataFrame
+    gas_input_nodes : pd.DataFrame
         Locations of gas input nodes split by LNG and pipeline.
     """
 
