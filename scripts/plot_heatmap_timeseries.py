@@ -76,8 +76,9 @@ def plot_heatmap(
     cb = ax.collections[0].colorbar
     cb.outline.set_linewidth(0)
 
-    plt.savefig(fn)
-    plt.close()
+    if fn is not None:
+        plt.savefig(fn)
+        plt.close()
 
 
 if __name__ == "__main__":
