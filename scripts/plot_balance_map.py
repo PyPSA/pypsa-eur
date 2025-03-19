@@ -14,6 +14,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from add_electricity import sanitize_carriers
 from packaging.version import Version, parse
 from plot_power_network import load_projection
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     n = pypsa.Network(snakemake.input.network)
+    sanitize_carriers(n, snakemake.config)
     n.statistics.set_parameters(round=3, drop_zero=True, nice_names=False)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
