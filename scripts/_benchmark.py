@@ -5,6 +5,7 @@
 
 import logging
 import os
+import signal
 import sys
 import time
 
@@ -42,6 +43,9 @@ class MemTimer(Process):
         super().__init__(*args, **kw)
 
     def run(self):
+        # ignore the interrupt signal in the child process
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
         # get baseline memory usage
         cur_mem = _get_memory(
             self.monitor_pid,

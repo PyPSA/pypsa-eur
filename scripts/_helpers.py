@@ -17,6 +17,7 @@ from typing import Callable
 
 import fiona
 import pandas as pd
+import pypsa
 import pytz
 import requests
 import yaml
@@ -159,6 +160,16 @@ def path_provider(dir, rdir, shared_resources, exclude_from_shared):
         shared_resources=shared_resources,
         exclude_from_shared=exclude_from_shared,
     )
+
+
+def get_shadow(run):
+    """
+    Returns 'shallow' or None depending on the user setting.
+    """
+    shadow_config = run.get("use_shadow_directory", True)
+    if shadow_config:
+        return "shallow"
+    return None
 
 
 def get_opt(opts, expr, flags=None):
@@ -522,6 +533,7 @@ def mock_snakemake(
     else:
         root_dir = Path(root_dir).resolve()
 
+    workdir = None
     user_in_script_dir = Path.cwd().resolve() == script_dir
     if str(submodule_dir) in __file__:
         # the submodule_dir path is only need to locate the project dir
@@ -529,12 +541,14 @@ def mock_snakemake(
     elif user_in_script_dir:
         os.chdir(root_dir)
     elif Path.cwd().resolve() != root_dir:
-        raise RuntimeError(
-            "mock_snakemake has to be run from the repository root"
-            f" {root_dir} or scripts directory {script_dir}"
+        logger.info(
+            "Not in scripts or root directory, will assume this is a separate workdir"
         )
+        workdir = Path.cwd()
+
     try:
         for p in SNAKEFILE_CHOICES:
+            p = root_dir / p
             if os.path.exists(p):
                 snakefile = p
                 break
@@ -555,6 +569,7 @@ def mock_snakemake(
             storage_settings,
             dag_settings,
             storage_provider_settings=dict(),
+            overwrite_workdir=workdir,
         )
         workflow.include(snakefile)
 
@@ -893,6 +908,24 @@ def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
         time = time[~((time.month == 2) & (time.day == 29))]
 
     return time
+
+
+def sanitize_custom_columns(n: pypsa.Network):
+    """
+    Sanitize non-standard columns used throughout the workflow.
+
+    Parameters
+    ----------
+        n (pypsa.Network): The network object.
+
+    Returns
+    -------
+        None
+    """
+    if "reversed" in n.links.columns:
+        # Replace NA values with default value False
+        n.links.loc[n.links.reversed.isna(), "reversed"] = False
+        n.links.reversed = n.links.reversed.astype(bool)
 
 
 def rename_techs(label: str) -> str:

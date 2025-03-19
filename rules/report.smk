@@ -2,14 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 rule report:
-    message: "Compile report."
+    message:
+        "Compile report."
     params:
-        fn="report"
+        fn="report",
     input:
         tex="report/report.tex",
-        bib="report/references.bib"
-    output: "report/report.pdf"
+        bib="report/references.bib",
+    output:
+        "report/report.pdf",
     shell:
         """
         pdflatex -output-directory report {input.tex}

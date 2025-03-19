@@ -7,7 +7,6 @@ rule solve_sector_network:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),
@@ -22,7 +21,7 @@ rule solve_sector_network:
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
-        "shallow"
+        shadow_config
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_solver.log",

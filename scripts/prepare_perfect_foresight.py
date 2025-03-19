@@ -12,9 +12,11 @@ import pandas as pd
 import pypsa
 from _helpers import (
     configure_logging,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
+from add_electricity import sanitize_carriers
 from add_existing_baseyear import add_build_year_to_new_assets
 from pypsa.descriptors import expand_series
 from six import iterkeys
@@ -23,37 +25,63 @@ logger = logging.getLogger(__name__)
 
 
 # helper functions ---------------------------------------------------
-def get_missing(df, n, c):
+def get_missing(df: pd.DataFrame, n: pypsa.Network, c: str) -> pd.DataFrame:
     """
-    Get in network n missing assets of df for component c.
+    Get missing assets in network n compared to df for component c.
 
-    Input:
-        df: pandas DataFrame, static values of pypsa components
-        n : pypsa Network to which new assets should be added
-        c : string, pypsa component.list_name (e.g. "generators")
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Static values of pypsa components
+    n : pypsa.Network
+        Network to which new assets should be added
+    c : str
+        pypsa component.list_name (e.g. "generators")
 
-    Return:
-        pd.DataFrame with static values of missing assets
+    Returns
+    -------
+    pd.DataFrame
+        Static values of missing assets
     """
     df_final = getattr(n, c)
     missing_i = df.index.difference(df_final.index)
     return df.loc[missing_i]
 
 
-def get_social_discount(t, r=0.01):
+def get_social_discount(t: int, r: float = 0.01) -> float:
     """
-    Calculate for a given time t and social discount rate r [per unit] the
-    social discount.
+    Calculate social discount for given time and rate.
+
+    Parameters
+    ----------
+    t : int
+        Time period in years
+    r : float, default 0.01
+        Social discount rate per unit
+
+    Returns
+    -------
+    float
+        Social discount factor
     """
     return 1 / (1 + r) ** t
 
 
-def get_investment_weighting(time_weighting, r=0.01):
+def get_investment_weighting(time_weighting: pd.Series, r: float = 0.01) -> pd.Series:
     """
-    Define cost weighting.
+    Define cost weighting for investment periods.
 
-    Returns cost weightings depending on the the time_weighting
-    (pd.Series) and the social discountrate r
+    Parameters
+    ----------
+    time_weighting : pd.Series
+        Time weightings for each period
+    r : float, default 0.01
+        Social discount rate per unit
+
+    Returns
+    -------
+    pd.Series
+        Cost weightings for each investment period
     """
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
@@ -65,7 +93,7 @@ def get_investment_weighting(time_weighting, r=0.01):
     )
 
 
-def add_year_to_constraints(n, baseyear):
+def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
     """
     Add investment period to global constraints and rename index.
 
@@ -81,7 +109,7 @@ def add_year_to_constraints(n, baseyear):
         c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
 
-def hvdc_transport_model(n):
+def hvdc_transport_model(n: pypsa.Network) -> None:
     """
     Convert AC lines to DC links for multi-decade optimisation with line
     expansion.
@@ -118,18 +146,23 @@ def hvdc_transport_model(n):
     )
 
 
-def adjust_electricity_grid(n, year, years):
+def adjust_electricity_grid(n: pypsa.Network, year: int, years: list[int]) -> None:
     """
-    Add carrier to lines. Replace AC lines with DC links in case of line
-    expansion. Add lifetime to DC links in case of line expansion.
+    Adjust electricity grid for multi-decade optimization.
 
     Parameters
     ----------
-    n    : pypsa.Network
+    n : pypsa.Network
+        Network to adjust
     year : int
-           year in which optimized assets are built
-    years: list
-           investment periods
+        Year in which optimized assets are built
+    years : list[int]
+        List of investment periods
+
+    Returns
+    -------
+    None
+        Modifies network in place
     """
     n.lines["carrier"] = "AC"
     links_i = n.links[n.links.carrier == "DC"].index
@@ -143,22 +176,24 @@ def adjust_electricity_grid(n, year, years):
 
 
 # --------------------------------------------------------------------
-def concat_networks(years):
+def concat_networks(years: list[int], network_paths: list[str]) -> pypsa.Network:
     """
-    Concat given pypsa networks and adds build_year.
+    Concat given pypsa networks and add build years.
 
-    Return:
-        n : pypsa.Network for the whole planning horizon
+    Parameters
+    ----------
+    years : list[int]
+        List of years representing investment periods
+    network_paths : list[str]
+        List of paths to network files for each investment period
+
+    Returns
+    -------
+    pypsa.Network
+        Network for the whole planning horizon
     """
-
-    # input paths of sector coupling networks
-    network_paths = [snakemake.input.brownfield_network] + [
-        snakemake.input[f"network_{year}"] for year in years[1:]
-    ]
-    # final concatenated network
     n = pypsa.Network()
 
-    # iterate over single year networks and concat to perfect foresight network
     for i, network_path in enumerate(network_paths):
         year = years[i]
         network = pypsa.Network(network_path)
@@ -239,10 +274,22 @@ def concat_networks(years):
     return n
 
 
-def adjust_stores(n):
+def adjust_stores(n: pypsa.Network) -> None:
     """
-    Make sure that stores still behave cyclic over one year and not whole
-    modelling horizon.
+    Adjust store behavior for multi-year optimization.
+
+    Ensures stores behave cyclically over one year and not whole modeling horizon.
+    Sets appropriate flags for different types of stores.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to adjust
+
+    Returns
+    -------
+    pypsa.Network
+        Network with adjusted store settings
     """
     # cyclic constraint
     cyclic_i = n.stores[n.stores.e_cyclic].index
@@ -263,13 +310,28 @@ def adjust_stores(n):
     co2_i = n.stores[n.stores.carrier.isin(e_initial_store)].index
     n.stores.loc[co2_i, "e_initial_per_period"] = True
 
-    return n
 
-
-def set_phase_out(n, carrier, ct, phase_out_year):
+def set_phase_out(
+    n: pypsa.Network, carrier: list[str], ct: str, phase_out_year: int
+) -> None:
     """
-    Set planned phase outs for given carrier,country (ct) and planned year of
-    phase out (phase_out_year).
+    Set planned phase outs for given assets.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to adjust
+    carrier : list[str]
+        List of carrier names to phase out
+    ct : str
+        Two-letter country code
+    phase_out_year : int
+        Year when phase out should be complete
+
+    Returns
+    -------
+    None
+        Modifies network in place
     """
     df = n.links[(n.links.carrier.isin(carrier)) & (n.links.bus1.str[:2] == ct)]
     # assets which are going to be phased out before end of their lifetime
@@ -279,7 +341,7 @@ def set_phase_out(n, carrier, ct, phase_out_year):
     n.links.loc[assets_i, "lifetime"] = (phase_out_year - build_year).astype(float)
 
 
-def set_all_phase_outs(n):
+def set_all_phase_outs(n: pypsa.Network) -> None:
     # TODO move this to a csv or to the config
     planned = [
         (["nuclear"], "DE", 2022),
@@ -306,13 +368,28 @@ def set_all_phase_outs(n):
     n.remove("Link", remove_i)
 
 
-def set_carbon_constraints(n):
+def set_carbon_constraints(
+    n: pypsa.Network, co2_budget: float | None, sector_opts: str
+) -> None:
     """
     Add global constraints for carbon emissions.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to add constraints to
+    co2_budget : float or None
+        CO2 budget in Gt CO2; if float, converted to t CO2
+    sector_opts : str
+        String of sector options separated by "-"
+
+    Returns
+    -------
+    pypsa.Network
+        Network with carbon constraints added
     """
-    budget = snakemake.config["co2_budget"]
-    if budget and isinstance(budget, float):
-        budget *= 1e9  # convert to t CO2
+    if co2_budget and isinstance(co2_budget, float):
+        budget = co2_budget * 1e9  # convert to t CO2
 
         logger.info(f"add carbon budget of {budget}")
         n.add(
@@ -340,7 +417,7 @@ def set_carbon_constraints(n):
         )
 
     # set minimum CO2 emission constraint to avoid too fast reduction
-    if "co2min" in snakemake.wildcards.sector_opts.split("-"):
+    if "co2min" in sector_opts.split("-"):
         emissions_1990 = 4.53693
         emissions_2019 = 3.344096
         target_2030 = 0.45 * emissions_1990
@@ -359,10 +436,8 @@ def set_carbon_constraints(n):
             constant=co2min * 1e9 * time_weightings,
         )
 
-    return n
 
-
-def adjust_lvlimit(n):
+def adjust_lvlimit(n: pypsa.Network) -> None:
     """
     Convert global constraints for single investment period to one uniform if
     all attributes stay the same.
@@ -377,20 +452,16 @@ def adjust_lvlimit(n):
         n.remove(c, remove_i)
         n.add(c, glc.index, **glc)
 
-    return n
 
-
-def adjust_CO2_glc(n):
+def adjust_CO2_glc(n: pypsa.Network) -> None:
     c = "GlobalConstraint"
     glc_name = "CO2Limit"
     glc_type = "primary_energy"
     mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type == glc_type)
     n.df(c).loc[mask, "type"] = "co2_limit"
 
-    return n
 
-
-def add_H2_boilers(n):
+def add_H2_boilers(n: pypsa.Network) -> None:
     """
     Gas boilers can be retrofitted to run with H2.
 
@@ -421,18 +492,24 @@ def add_H2_boilers(n):
 
 
 def apply_time_segmentation_perfect(
-    n, segments, solver_name="cbc", overwrite_time_dependent=True
-):
+    n: pypsa.Network, segments: int, solver_name: str = "cbc"
+) -> None:
     """
-    Aggregating time series to segments with different lengths.
+    Aggregate time series to segments with different lengths.
 
-    Input:
-        n: pypsa Network
-        segments: (int) number of segments in which the typical period should be
-                  subdivided
-        solver_name: (str) name of solver
-        overwrite_time_dependent: (bool) overwrite time dependent data of pypsa network
-        with typical time series created by tsam
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to segment
+    segments : int
+        Number of segments for typical period subdivision
+    solver_name : str, default "cbc"
+        Name of solver to use for segmentation
+
+    Returns
+    -------
+    pypsa.Network
+        Network with segmented time series
     """
     try:
         import tsam.timeseriesaggregation as tsam
@@ -483,10 +560,8 @@ def apply_time_segmentation_perfect(
     n.set_snapshots(sn_weightings.index)
     n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
 
-    return n
 
-
-def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]):
+def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
     """
     Update the efficiency of heat pumps from previous years to current year
     (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
@@ -543,20 +618,23 @@ if __name__ == "__main__":
     )
 
     # concat prepared networks of planning horizon to single network ------------
-    n = concat_networks(years)
+    network_paths = [snakemake.input.brownfield_network] + [
+        snakemake.input[f"network_{year}"] for year in years[1:]
+    ]
+    n = concat_networks(years, network_paths)
 
     # temporal aggregate
     solver_name = snakemake.config["solving"]["solver"]["name"]
     segments = snakemake.params.time_resolution
     if isinstance(segments, (int, float)):
-        n = apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
+        apply_time_segmentation_perfect(n, segments, solver_name=solver_name)
 
     # adjust global constraints lv limit if the same for all years
-    n = adjust_lvlimit(n)
+    adjust_lvlimit(n)
     # adjust global constraints CO2 limit
-    n = adjust_CO2_glc(n)
+    adjust_CO2_glc(n)
     # adjust stores to multi period investment
-    n = adjust_stores(n)
+    adjust_stores(n)
 
     # set phase outs
     set_all_phase_outs(n)
@@ -565,7 +643,11 @@ if __name__ == "__main__":
     add_H2_boilers(n)
 
     # set carbon constraints
-    n = set_carbon_constraints(n)
+    set_carbon_constraints(
+        n,
+        co2_budget=snakemake.config["co2_budget"],
+        sector_opts=snakemake.wildcards.sector_opts,
+    )
 
     # update meta
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
@@ -574,4 +656,6 @@ if __name__ == "__main__":
     update_heat_pump_efficiency(n=n, years=years)
 
     # export network
+    sanitize_custom_columns(n)
+    sanitize_carriers(n, snakemake.config)
     n.export_to_netcdf(snakemake.output[0])

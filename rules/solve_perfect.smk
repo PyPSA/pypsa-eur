@@ -113,7 +113,7 @@ rule solve_sector_network_perfect:
     resources:
         mem_mb=config_provider("solving", "mem"),
     shadow:
-        "shallow"
+        shadow_config
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_solver.log",

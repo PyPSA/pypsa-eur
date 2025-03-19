@@ -338,7 +338,7 @@ def calculate_supply(n, label, supply):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p" + end].empty:
                     continue
 
                 # lots of sign compensation for direction and to do maximums
@@ -390,7 +390,7 @@ def calculate_supply_energy(n, label, supply_energy):
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
-                if len(items) == 0:
+                if len(items) == 0 or c.pnl["p" + end].empty:
                     continue
 
                 s = (-1) * c.pnl["p" + end][items].multiply(

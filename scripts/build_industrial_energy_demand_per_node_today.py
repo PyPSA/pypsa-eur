@@ -65,13 +65,13 @@ def build_nodal_industrial_energy_demand():
 
         try:
             key = keys.loc[buses, mapping].fillna(0)
-        except:
+        except KeyError:
             logger.info(
                 f"No industrial demand available for {mapping}. Filling with zeros."
             )
             keys[mapping] = 0
             key = keys.loc[buses, mapping].fillna(0)
-            
+
         demand = industrial_demand[country, sector]
 
         outer = pd.DataFrame(

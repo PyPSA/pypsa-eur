@@ -199,7 +199,9 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
 
     eu27_production = production.loc[countries.intersection(eu27)].sum()
     if eu27_production.sum() == 0:
-        logger.info("EU production is zero. Fallback: Filling non EU28 countries with zeros.")
+        logger.info(
+            "EU production is zero. Fallback: Filling non EU28 countries with zeros."
+        )
     eu27_energy = demand.groupby(level=1).sum()
     eu27_averages = eu27_energy / eu27_production
 

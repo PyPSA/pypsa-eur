@@ -80,10 +80,10 @@ lines:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
 
   check_objective:
-    enable: false
+    enable: true
     expected_value: 3.8120188094e+07
 
 plotting:

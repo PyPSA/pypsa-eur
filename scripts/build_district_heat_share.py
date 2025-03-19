@@ -63,8 +63,9 @@ if __name__ == "__main__":
     pop_layout["urban_ct_fraction"] = pop_layout.urban / pop_layout.ct.map(ct_urban.get)
 
     # fraction of node that is urban
-    urban_fraction = (pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)).fillna(0)
-
+    urban_fraction = (
+        pop_layout.urban / pop_layout[["rural", "urban"]].sum(axis=1)
+    ).fillna(0)
 
     # maximum potential of urban demand covered by district heating
     central_fraction = snakemake.config["sector"]["district_heating"]["potential"]

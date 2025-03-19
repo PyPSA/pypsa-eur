@@ -68,7 +68,7 @@ def build_nodal_industrial_production():
 
         try:
             key = keys.loc[buses, mapping].fillna(0)
-        except:
+        except KeyError:
             logger.info(
                 f"No industrial production available for {mapping}. Filling with zeros."
             )

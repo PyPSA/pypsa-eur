@@ -40,7 +40,7 @@ rule add_existing_baseyear:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
-        mem_mb=2000,
+        mem_mb=3000,
     log:
         logs(
             "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
@@ -112,7 +112,6 @@ rule solve_sector_network_myopic:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),
@@ -128,7 +127,7 @@ rule solve_sector_network_myopic:
         config=RESULTS
         + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.yaml",
     shadow:
-        "shallow"
+        shadow_config
     log:
         solver=RESULTS
         + "logs/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_solver.log",

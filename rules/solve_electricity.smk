@@ -7,7 +7,6 @@ rule solve_network:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),
@@ -30,7 +29,7 @@ rule solve_network:
         mem_mb=memory,
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "shallow"
+        shadow_config
     conda:
         "../envs/environment.yaml"
     script:
@@ -42,7 +41,6 @@ rule solve_operations_network:
         options=config_provider("solving", "options"),
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
         ),
@@ -62,10 +60,10 @@ rule solve_operations_network:
         (RESULTS + "benchmarks/solve_operations_network/base_s_{clusters}_elec_{opts}")
     threads: 4
     resources:
-        mem_mb=(lambda w: 10000 + 372 * int(w.clusters)),
+        mem_mb=memory,
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
-        "shallow"
+        shadow_config
     conda:
         "../envs/environment.yaml"
     script:

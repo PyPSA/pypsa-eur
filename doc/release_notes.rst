@@ -11,8 +11,34 @@ Release Notes
 Upcoming Release
 ================
 
-* Added PTES and transitioned LTES stores to storage units to implement an energy-to-power ratio in ``prepare_sector_network``.
+* Fail on solving status 'warning' because results are likely not valid.
 
+* Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
+
+* Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
+
+* Add the options to overwrite investment, lifetime, FOM, VOM, efficiency and fuel attributes from the configuration file under ``costs: overwrites:``. This mimics the existing capital and marginal cost behaviour. (https://github.com/PyPSA/pypsa-eur/pull/1532)
+
+* Change: Rename "fixed" to "capital_cost" for annualised investment costs in sector-coupled networks.
+
+- Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
+
+- Implemented an energy-to-power ratio constraint for TES, linking storage capacity to the corresponding charger capacity. Additionally, chargers and dischargers are now sized identically through a unified constraint.
+
+* Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
+
+* Bug fix: Added setting ``run: use_shadow_directory:`` (default: ``true``) which sets the ``shadow`` parameter of the snakemake workflow. Configuring to ``true`` sets snakemake ``shadow`` parameter to ``shalloow``, ``false`` to `Ǹone``. Should be set to ``false`` for those cases, where snakemake has an issue with finding missing input/output files in solving rules.
+
+* Extended pre-built `weather data cutouts
+  <https://zenodo.org/records/14936211>`__. Cutouts are now available for the
+  years 1996, 2010, 2012, 2013, 2019, 2020 and 2023.
+  (https://github.com/PyPSA/pypsa-eur/pull/1559)
+
+* Moving ``enable["custom_busmap"]`` setting to ``clustering["mode"]: custom_busmap``.
+
+* New feature: Allowing network clustering based on administrative boundaries (i.e., NUTS0/country-level to NUTS3).  To make use of this setting, set ``clustering["mode"]: administrative`` and additionally the ``clusters`` wildcard in ``scenario`` to ‘adm’. Optionally include dictionary of individual country codes and their individual NUTS levels (0 to 3, see documentation). Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1. Please be aware that not every region will solve/converge at every NUTS level (especially at high NUTS resolution) due to rigid regional boundaries.
+
+* Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
@@ -265,6 +291,8 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
 * Ruff is now used for linting and formatting. It is used within pre-commit, so
   no changes are needed. But we recommend to set it up locally as well.
   (https://github.com/PyPSA/pypsa-eur/pull/1474)
+
+* Updating all base shapes (country_shapes, europe_shape, nuts3_shapes, ...). The workflow has been modified to use higher resolution and more harmonised shapes (NUTS3 2021 01M data and OSM administration level 1 for non-NUTS3 countries, such as BA, MD, UA, and XK). Data sources for population and GDP p.c. have been updated to JRC ARDECO https://urban.jrc.ec.europa.eu/ardeco/ -- 2019 values are used. `build_gdp_pop_non_nuts3` (originally created to build regional GDP p.c. and population data for MD and UA) is now integrated into `build_shapes` and extended to build regional values for all non-NUTS3 countries using cutouts of the updated datasets `GDP_per_capita_PPP_1990_2015_v2.nc` and `ppp_2019_1km_Aggregated.tif`,
 
 
 PyPSA-Eur 0.13.0 (13th September 2024)
@@ -639,7 +667,7 @@ PyPSA-Eur 0.12.0 (30th August 2024)
 * Allow running the sector model for isolated non-EU28 countries, by filling missing sectoral
   data with defaults, average EU values or zeros, if not available.
 
-* Enable retaining exisiting conventional capacities added in the power only model for sector coupeled applications.
+* Enable retaining existing conventional capacities added in the power only model for sector coupeled applications.
 
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================

@@ -5,6 +5,7 @@
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from shutil import copy as shcopy
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -135,10 +136,10 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/12791128/files/{cutout}.nc",
+                "https://zenodo.org/records/14936211/files/{cutout}.nc",
             ),
         output:
-            "cutouts/" + CDIR + "{cutout}.nc",
+            CDIR + "{cutout}.nc",
         log:
             "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
         resources:
@@ -467,15 +468,16 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            storage(url, keep_local=True),
+            zip=storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
             gpkg="data/WDPA.gpkg",
         run:
-            shell("cp {input} {params.zip}")
-            shell("unzip -o {params.zip} -d {params.folder}")
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -489,7 +491,7 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            storage(
+            zip=storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
@@ -499,8 +501,9 @@ if config["enable"]["retrieve"]:
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
-            shell("cp {input} {params.zip}")
-            shell("unzip -o {params.zip} -d {params.folder}")
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
@@ -650,23 +653,38 @@ if config["enable"]["retrieve"]:
         script:
             "../scripts/retrieve_osm_boundaries.py"
 
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_heat_source_utilisation_potentials:
-        params:
-            heat_source="{heat_source}",
-            heat_utilisation_potentials=config_provider(
-                "sector", "district_heating", "heat_utilisation_potentials"
+    rule retrieve_geothermal_heat_utilisation_potentials:
+        input:
+            isi_heat_potentials=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx",
+                keep_local=True,
             ),
-        log:
-            "logs/retrieve_heat_source_potentials_{heat_source}.log",
-        resources:
-            mem_mb=500,
         output:
-            "data/heat_source_utilisation_potentials/{heat_source}.gpkg",
-        script:
-            "../scripts/retrieve_heat_source_utilisation_potentials.py"
+            "data/isi_heat_utilisation_potentials.xlsx",
+        log:
+            "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+    rule retrieve_lau_regions:
+        input:
+            lau_regions=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
+                keep_local=True,
+            ),
+        output:
+            lau_regions="data/lau_regions.geojson",
+        log:
+            "logs/retrieve_lau_regions.log",
+            lau_regions="data/lau_regions.zip",
+        log:
+            "logs/retrieve_lau_regions.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
