@@ -11,6 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
+
+* Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
+
 * Added simplified representation of renewable energy imports:
   - Activated with ``sector: imports: enable: true``.
   - Allows hydrogen, ammonia, methanol, gas and oil (Fischer-Tropsch) with configurable prices (``sector: imports: prices:``).
