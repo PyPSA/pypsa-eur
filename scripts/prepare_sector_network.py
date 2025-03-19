@@ -655,7 +655,7 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
         Configuration options containing at least:
         - regional_co2_sequestration_potential: dict with keys
             - enable: bool
-            - max_size: float (in Mt)
+            - max_size: float (in Mtpa)
             - years_of_storage: float
         - co2_sequestration_cost: float
         - co2_sequestration_lifetime: float
@@ -742,15 +742,15 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
                 "sequestration_potential_file must be provided when "
                 "regional_co2_sequestration_potential is enabled"
             )
-        upper_limit = options["regional_co2_sequestration_potential"]["max_size"]  # Mt
+        upper_limit = options["regional_co2_sequestration_potential"]["max_size"]
         annualiser = options["regional_co2_sequestration_potential"]["years_of_storage"]
         e_nom_max = pd.read_csv(sequestration_potential_file, index_col=0).squeeze()
         e_nom_max = (
             e_nom_max.reindex(spatial.co2.locations)
             .fillna(0.0)
-            .clip(upper=upper_limit)
             .mul(1e6)
-            / annualiser
+            .div(annualiser)
+            .clip(upper=upper_limit * 1e6)
         )  # t
         e_nom_max = e_nom_max.rename(index=lambda x: x + " co2 sequestered")
     else:
