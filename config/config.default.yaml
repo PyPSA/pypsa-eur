@@ -1052,6 +1052,50 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  heatmap_timeseries:
+    marginal_price:
+    - AC
+    - H2
+    - NH3
+    - gas
+    - methanol
+    - oil
+    - co2 stored
+    - urban central heat
+    utilisation_rate:
+    - solar
+    - solar rooftop
+    - solar-hsat
+    - onwind
+    - offwind-dc
+    - offwind-ac
+    - offwind-float
+    - ror
+    - hydro
+    - PHS
+    - battery charger
+    - battery discharger
+    - H2 Electrolysis
+    - Fischer-Tropsch
+    - methanolisation
+    - Sabatier
+    - OCGT
+    - H2 Fuel Cell
+    - urban central CHP
+    - urban central CHP CC
+    - urban central solid biomass CHP
+    - urban central solid biomass CHP CC
+    - rural gas boiler
+    - urban central air heat pump
+    - DAC
+    soc:
+    - battery
+    - H2 Store
+    - co2 stored
+    - gas
+    - methanol
+    - oil
+    - urban central water tanks
 
   nice_names:
     OCGT: "Open-Cycle Gas"

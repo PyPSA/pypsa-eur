@@ -9,5 +9,9 @@ costs_threshold,bn Euro,float,Threshold below which technologies will not be sho
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.
 energy_min,TWh,float,Lower y-axis limit in energy bar plots.
 energy_threshold,TWh,float,Threshold below which technologies will not be shown in energy bar plots.
+heatmap_timeseries,,,Plotting configuration for :mod:`plot_heatmap_timeseries`.
+-- marginal_price,--,list,Subset of bus carriers to plot marginal prices heatmap time series for.
+-- utilisation_rate,--,list,Subset of carriers to plot utilisation rates heatmap time series for.
+-- soc,--,list,Subset of carriers to plot state of charge heatmap time series for.
 tech_colors,--,carrier -> HEX colour code,Mapping from network ``carrier`` to a colour (`HEX colour code <https://en.wikipedia.org/wiki/Web_colors#Hex_triplet>`_).
 nice_names,--,str -> str,Mapping from network ``carrier`` to a more readable name.

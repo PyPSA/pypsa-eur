@@ -11,7 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Added new rule :mod:`plot_heatmap_timeseries` for plotting configuration of heatmap time series, including options for marginal prices, utilisation rates, and state of charge.
+
 * Fail on solving status 'warning' because results are likely not valid.
+
 
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 

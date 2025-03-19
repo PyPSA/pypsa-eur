@@ -83,6 +83,14 @@ if config["foresight"] == "perfect":
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        directory(
+            expand(
+                RESULTS
+                + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
     default_target: True
 
 
