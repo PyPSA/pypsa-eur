@@ -1253,7 +1253,7 @@ def solve_network(
     Raises
     ------
     RuntimeError
-        If solving status is infeasible
+        If solving status is infeasible or warning
     ObjectiveValueError
         If objective value differs from expected value
     """
@@ -1313,11 +1313,14 @@ def solve_network(
             )
         check_objective_value(n, solving)
 
+    if "warning" in condition:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
-        raise RuntimeError("Solving status 'infeasible'")
+        raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
 
 # %%
