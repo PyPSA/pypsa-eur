@@ -98,7 +98,6 @@ chp,--,,
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_heat_vent,"currency/MWh ",float,The marginal cost of heat-venting in all heating systems
-
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)

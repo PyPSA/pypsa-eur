@@ -246,6 +246,62 @@ rule plot_summary:
         "../scripts/plot_summary.py"
 
 
+rule plot_balance_timeseries:
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 16
+    resources:
+        mem_mb=10000,
+    log:
+        RESULTS
+        + "logs/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    output:
+        directory(
+            RESULTS
+            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        ),
+    script:
+        "../scripts/plot_balance_timeseries.py"
+
+
+rule plot_heatmap_timeseries:
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    threads: 16
+    resources:
+        mem_mb=10000,
+    log:
+        RESULTS
+        + "logs/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    conda:
+        "../envs/environment.yaml"
+    output:
+        directory(
+            RESULTS
+            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        ),
+    script:
+        "../scripts/plot_heatmap_timeseries.py"
+
+
 STATISTICS_BARPLOTS = [
     "capacity_factor",
     "installed_capacity",

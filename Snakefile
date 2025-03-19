@@ -61,7 +61,6 @@ include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
-include: "rules/validate.smk"
 include: "rules/development.smk"
 
 
@@ -83,6 +82,22 @@ if config["foresight"] == "perfect":
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        directory(
+            expand(
+                RESULTS
+                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
+        directory(
+            expand(
+                RESULTS
+                + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
     default_target: True
 
 
@@ -111,18 +126,35 @@ rule purge:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 
 
-rule dag:
+rule rulegraph:
     message:
-        "Creating DAG of workflow."
+        "Creating RULEGRAPH dag of workflow."
     output:
-        dot=resources("dag.dot"),
-        pdf=resources("dag.pdf"),
-        png=resources("dag.png"),
+        dot=resources("dag_rulegraph.dot"),
+        pdf=resources("dag_rulegraph.pdf"),
+        png=resources("dag_rulegraph.png"),
     conda:
         "envs/environment.yaml"
     shell:
         r"""
         snakemake --rulegraph all | sed -n "/digraph/,\$p" > {output.dot}
+        dot -Tpdf -o {output.pdf} {output.dot}
+        dot -Tpng -o {output.png} {output.dot}
+        """
+
+
+rule filegraph:
+    message:
+        "Creating FILEGRAPH dag of workflow."
+    output:
+        dot=resources("dag_filegraph.dot"),
+        pdf=resources("dag_filegraph.pdf"),
+        png=resources("dag_filegraph.png"),
+    conda:
+        "envs/environment.yaml"
+    shell:
+        r"""
+        snakemake --filegraph all | sed -n "/digraph/,\$p" > {output.dot}
         dot -Tpdf -o {output.pdf} {output.dot}
         dot -Tpng -o {output.png} {output.dot}
         """
