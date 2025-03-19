@@ -14,10 +14,10 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from packaging.version import Version, parse
+from plot_power_network import load_projection
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
 from pypsa.statistics import get_transmission_carriers
-from plot_power_network import load_projection
-from packaging.version import Version, parse
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
@@ -234,7 +234,10 @@ if __name__ == "__main__":
     if legend_bus_sizes is not None:
         add_legend_semicircles(
             ax,
-            [s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR for s in legend_bus_sizes],
+            [
+                s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR
+                for s in legend_bus_sizes
+            ],
             [f"{s} {carrier_unit}" for s in legend_bus_sizes],
             patch_kw={"color": "#666"},
             legend_kw={
