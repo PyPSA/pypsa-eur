@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Unified the functions ``load_costs`` in :mod:`add_electricity` and ``prepare_costs`` in :mod:`prepare_sector_network` into a single function ``load_costs`` in :mod:`add_electricity`.
+
 * Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
 
 * Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
