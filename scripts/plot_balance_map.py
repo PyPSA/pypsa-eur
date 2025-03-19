@@ -153,7 +153,7 @@ if __name__ == "__main__":
         ax=ax,
         margin=0.2,
         color_geomap={"border": "darkgrey", "coastline": "darkgrey"},
-        geomap="10m",
+        geomap=True,
         boundaries=boundaries,
     )
 
