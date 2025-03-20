@@ -38,7 +38,10 @@ Source
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, configure_logging
+import logging
+
+logger = logging.getLogger(__name__)
 
 ISI_TEMPERATURE_SCENARIOS = {
     65: "low_temperatures",
@@ -139,6 +142,15 @@ def get_heat_source_power(
 
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
+    non_covered_regions = regions_onshore.index.difference(heat_source_power.index)
+    if not non_covered_regions.empty:
+        logger.warning(
+            f"The onshore regions {non_covered_regions.to_list()} have no heat source power. Filling with zeros."
+        )
+        heat_source_power = heat_source_power.reindex(
+            regions_onshore.index, fill_value=0
+        )
+
     return heat_source_power
 
 
@@ -147,10 +159,11 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_source_potentials",
+            "build_geothermal_heat_potential",
             clusters=48,
         )
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # get onshore regions and index them by region name
