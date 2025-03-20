@@ -865,7 +865,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         energy_to_power_ratio_values,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
-        if not tes.replace("-", " ").split(" ")[:5] == charger.split(" ")[:5]:
+        if not tes.replace("-", " ").split(" ")[:-1] == charger.split(" ")[:-1]:
             # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
             raise RuntimeError(
                 f"Charger {charger} and TES {tes} do not match. "
@@ -922,7 +922,7 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     for charger, discharger in zip(
         indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
     ):
-        if not charger.split(" ")[:5] == discharger.split(" ")[:5]:
+        if not charger.split(" ")[:-1] == discharger.split(" ")[:-1]:
             # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
             raise RuntimeError(
                 f"Charger {charger} and discharger {discharger} do not match. "
