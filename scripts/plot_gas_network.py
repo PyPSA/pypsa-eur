@@ -86,6 +86,10 @@ def plot_ch4_map(n):
     biogas.index = pd.MultiIndex.from_product([biogas.index, ["biogas"]])
 
     bus_sizes = pd.concat([fossil_gas, methanation, biogas])
+    non_buses = bus_sizes.index.unique(level=0).difference(n.buses.index)
+    if any(non_buses):
+        logger.info(f"Dropping non-buses {non_buses.tolist()} for CH4 network plot.")
+        bus_sizes = bus_sizes.drop(non_buses)
     bus_sizes.sort_index(inplace=True)
 
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
