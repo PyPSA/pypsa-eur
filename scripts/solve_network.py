@@ -922,7 +922,9 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     for charger, discharger in zip(
         indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
     ):
-        if not charger.replace(" charger", " ") == discharger.replace(" discharger", " "):
+        if not charger.replace(" charger", " ") == discharger.replace(
+            " discharger", " "
+        ):
             # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
             raise RuntimeError(
                 f"Charger {charger} and discharger {discharger} do not match. "
