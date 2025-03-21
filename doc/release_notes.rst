@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed check-up of charger/store string matching in `solve_network`
+
 * Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
 
 * Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
