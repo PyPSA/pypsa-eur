@@ -865,7 +865,7 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         energy_to_power_ratio_values,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
-        if not tes == charger.replace(" charger", " "):
+        if not tes == charger.replace(" charger", ""):
             # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
             raise RuntimeError(
                 f"Charger {charger} and TES {tes} do not match. "
