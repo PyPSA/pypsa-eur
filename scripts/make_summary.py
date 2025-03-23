@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pypsa
 from _helpers import configure_logging, get_snapshots, set_scenario_config
-from prepare_sector_network import prepare_costs
+from add_electricity import load_costs
 
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
@@ -717,10 +717,10 @@ if __name__ == "__main__":
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     Nyears = len(time) / 8760
 
-    costs_db = prepare_costs(
+    costs_db = load_costs(
         snakemake.input.costs,
         snakemake.params.costs,
-        Nyears,
+        nyears=Nyears,
     )
 
     df = make_summaries(networks_dict)
