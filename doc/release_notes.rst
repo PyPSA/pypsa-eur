@@ -11,6 +11,17 @@ Release Notes
 Upcoming Release
 ================
 
+* Refactor of :mod:`make_summary`:
+  - Computes summaries for only a single network at a time.
+  - Concatenation is outsourced to new rule :mod:`make_global_summary`.
+  - Rule no longer depends on network plots; use the ``all`` collection rule to generate summaries and plots.
+  - Calculation of cumulative costs for myopic foresight networks was moved to :mod:`make_cumulative_costs`.
+  - Rewrote functions in :mod:`make_summary` to use PyPSA statistics module more.
+  - Inferral of component locations was made more robust. The revised function uses ``n.buses.location`` rather than the index strings. Components inherit the location of the bus they connect to with the highest spatial resolution. 
+  - The file ``supply.csv`` was **removed**; the file ``price_statistics.csv`` was **removed and integrated** into ``metrics.csv``; the files ``supply_energy.csv``, ``nodal_supply_energy.csv``, ``cfs.csv``, ``nodal_cfs.csv`` were **renamed** to ``energy_balance.csv``, ``nodal_energy_balance.csv``, ``capacity_factors.csv``, ``nodal_capacity_factors.csv``.
+  - The order of the MultiIndex levels changed but are now consistently named and documented; the index level "component" now uses capitalised component names rather than lower case list names (e.g. "Generator" instead of "generators").
+  - The plotting functions in :mod:`plot_summary` have been updated to reflect the changes in the summary files.
+
 * Unified the functions ``load_costs`` in :mod:`add_electricity` and ``prepare_costs`` in :mod:`prepare_sector_network` into a single function ``load_costs`` in :mod:`add_electricity`.
 
 * Fixed check-up of charger/store string matching in `solve_network`

@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging, retry, set_scenario_config
-from plot_power_network import assign_location, load_projection
+from make_summary import assign_locations
+from plot_power_network import load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def plot_ch4_map(n):
     # if "gas pipeline" not in n.links.carrier.unique():
     #     return
 
-    assign_location(n)
+    assign_locations(n)
 
     bus_size_factor = 8e7
     linewidth_factor = 1e4
