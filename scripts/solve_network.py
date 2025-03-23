@@ -34,6 +34,7 @@ import sys
 from functools import partial
 from typing import Any
 
+import linopy
 import numpy as np
 import pandas as pd
 import pypsa
@@ -820,6 +821,126 @@ def add_operational_reserve_margin(n, sns, config):
     n.model.add_constraints(lhs <= rhs, name="Generator-p-reserve-upper")
 
 
+def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
+    """
+    Add TES constraints to the network.
+
+    For each TES storage unit, enforce:
+        Store-e_nom - etpr * Link-p_nom == 0
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA network with TES and heating sectors enabled.
+
+    Raises
+    ------
+    ValueError
+        If no valid TES storage or charger links are found.
+    RuntimeError
+        If the TES storage and charger indices do not align.
+    """
+    indices_charger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks charger|water pits charger")
+        & n.links.p_nom_extendable
+    ]
+    indices_stores_e_nom_extendable = n.stores.index[
+        n.stores.index.str.contains("water tanks|water pits")
+        & n.stores.e_nom_extendable
+    ]
+
+    if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
+        raise ValueError(
+            "No valid extendable charger links or stores found for TES energy to power constraints."
+        )
+
+    energy_to_power_ratio_values = n.links.loc[
+        indices_charger_p_nom_extendable, "energy to power ratio"
+    ].values
+
+    linear_expr_list = []
+    for charger, tes, energy_to_power_value in zip(
+        indices_charger_p_nom_extendable,
+        indices_stores_e_nom_extendable,
+        energy_to_power_ratio_values,
+    ):
+        charger_var = n.model["Link-p_nom"].loc[charger]
+        if not tes == charger.replace(" charger", ""):
+            # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
+            raise RuntimeError(
+                f"Charger {charger} and TES {tes} do not match. "
+                "Ensure that the charger and TES are in the same location and refer to the same technology."
+            )
+        store_var = n.model["Store-e_nom"].loc[tes]
+        linear_expr = store_var - energy_to_power_value * charger_var
+        linear_expr_list.append(linear_expr)
+
+    # Merge the individual expressions
+    merged_expr = linopy.expressions.merge(
+        linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
+    )
+
+    n.model.add_constraints(merged_expr == 0, name="TES_energy_to_power_ratio")
+
+
+def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
+    """
+    Add TES charger ratio constraints.
+
+    For each TES unit, enforce:
+        Link-p_nom(charger) - efficiency * Link-p_nom(discharger) == 0
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        A PyPSA network with TES and heating sectors enabled.
+
+    Raises
+    ------
+    ValueError
+        If no valid TES discharger or charger links are found.
+    RuntimeError
+        If the charger and discharger indices do not align.
+    """
+    indices_charger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks charger|water pits charger")
+        & n.links.p_nom_extendable
+    ]
+    indices_discharger_p_nom_extendable = n.links.index[
+        n.links.index.str.contains("water tanks discharger|water pits discharger")
+        & n.links.p_nom_extendable
+    ]
+
+    if (
+        indices_charger_p_nom_extendable.empty
+        or indices_discharger_p_nom_extendable.empty
+    ):
+        raise ValueError(
+            "No valid extendable TES discharger or charger links found for TES charger ratio constraints."
+        )
+
+    for charger, discharger in zip(
+        indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
+    ):
+        if not charger.replace(" charger", " ") == discharger.replace(
+            " discharger", " "
+        ):
+            # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
+            raise RuntimeError(
+                f"Charger {charger} and discharger {discharger} do not match. "
+                "Ensure that the charger and discharger are in the same location and refer to the same technology."
+            )
+
+    eff_discharger = n.links.efficiency[indices_discharger_p_nom_extendable].values
+    lhs = (
+        n.model["Link-p_nom"].loc[indices_charger_p_nom_extendable]
+        - n.model["Link-p_nom"].loc[indices_discharger_p_nom_extendable]
+        * eff_discharger
+    )
+
+    n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -955,6 +1076,36 @@ def add_flexible_egs_constraint(n):
     )
 
 
+def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
+    """
+    Add constraint for limiting green energy imports (synthetic and biomass).
+    Does not include fossil fuel imports.
+    """
+
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+
+    limit = n.config["sector"]["imports"]["limit"]
+    limit_sense = n.config["sector"]["imports"]["limit_sense"]
+
+    if (import_links.empty and import_gens.empty) or not np.isfinite(limit):
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    # everything needs to be in MWh_fuel
+    eff = n.links.loc[import_links, "efficiency"]
+
+    p_gens = n.model["Generator-p"].loc[sns, import_gens]
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    lhs = (p_gens * weightings).sum() + (p_links * eff * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1023,6 +1174,25 @@ def extra_functionality(
     ):
         add_solar_potential_constraints(n, config)
 
+    if n.config.get("sector", {}).get("tes", False):
+        if n.buses.index.str.contains(
+            r"urban central heat|urban decentral heat|rural heat",
+            case=False,
+            na=False,
+        ).any():
+            add_TES_energy_to_power_ratio_constraints(n)
+            add_TES_charger_ratio_constraints(n)
+        elif (
+            n.links.index.str.contains(
+                "pits charger|tanks charger", case=False, na=False
+            ).any()
+            or n.stores.index.str.contains("pits", case=False, na=False).any()
+            or n.stores.index.str.contains("tanks", case=False, na=False).any()
+        ):
+            raise ValueError(
+                "Unsupported network configuration: tes is enabled but no heating bus was found."
+            )
+
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
@@ -1035,6 +1205,9 @@ def extra_functionality(
 
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
+
+    if config["sector"]["imports"]["enable"]:
+        add_import_limit_constraint(n, snapshots)
 
     if n.params.custom_extra_functionality:
         source_path = n.params.custom_extra_functionality
@@ -1115,7 +1288,7 @@ def solve_network(
     Raises
     ------
     RuntimeError
-        If solving status is infeasible
+        If solving status is infeasible or warning
     ObjectiveValueError
         If objective value differs from expected value
     """
@@ -1175,11 +1348,14 @@ def solve_network(
             )
         check_objective_value(n, solving)
 
+    if "warning" in condition:
+        raise RuntimeError("Solving status 'warning'. Discarding solution.")
+
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
-        raise RuntimeError("Solving status 'infeasible'")
+        raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
 
 # %%
@@ -1188,10 +1364,10 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
-            configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network",
             opts="",
             clusters="5",
+            configfiles="config/test/config.overnight.yaml",
             ll="v1.0",
             sector_opts="",
             # planning_horizons="2030",

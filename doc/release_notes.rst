@@ -22,13 +22,37 @@ Upcoming Release
   - The order of the MultiIndex levels changed but are now consistently named and documented; the index level "component" now uses capitalised component names rather than lower case list names (e.g. "Generator" instead of "generators").
   - The plotting functions in :mod:`plot_summary` have been updated to reflect the changes in the summary files.
 
+* Fixed check-up of charger/store string matching in `solve_network`
+
+* Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
+
+* Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
+
+* Added simplified representation of renewable energy imports:
+  - Activated with ``sector: imports: enable: true``.
+  - Allows hydrogen, ammonia, methanol, gas and oil (Fischer-Tropsch) with configurable prices (``sector: imports: prices:``).
+  - Methane imports use existing LNG terminal entry points, hydrogen imports use existing pipeline entry points. 
+  - Import prices are uniform across all regions.
+  - Carbon content of imported fuels is handled like biomass.
+  - Total volume of imports can be limited with ``sector: imports: limit:``. The limit includes synthetic and biomass imports (``sector: solid_biomass_import:``), but not fossil fuel imports.
+
+* Added new rule :mod:`plot_balance_timeseries` to plot energy balance time series for the whole year at daily resolution and for each month at model-native resolution.
+
+* Added new rule :mod:`plot_heatmap_timeseries` for plotting configuration of heatmap time series, including options for marginal prices, utilisation rates, and state of charge.
+
+* Fail on solving status 'warning' because results are likely not valid.
+
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
+
 * Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
 
 * Add the options to overwrite investment, lifetime, FOM, VOM, efficiency and fuel attributes from the configuration file under ``costs: overwrites:``. This mimics the existing capital and marginal cost behaviour. (https://github.com/PyPSA/pypsa-eur/pull/1532)
+
 * Change: Rename "fixed" to "capital_cost" for annualised investment costs in sector-coupled networks.
 
 - Bugfix: Changed setting ``central_heat_vent`` (default: ``true``), because the  water tanks charger and discharger were used as heat vents with an efficiency of 0.9.
+
+- Implemented an energy-to-power ratio constraint for TES, linking storage capacity to the corresponding charger capacity. Additionally, chargers and dischargers are now sized identically through a unified constraint.
 
 * Bugfix: Geothermal heat potentials are now restricted to those in close proximity to future district heating areas as projected by Manz et al. 2024. Includes a refactoring change: Building of generic technical potentials from heat utilisation potentials was changed to specific computation of geothermal heat potentials.
 
@@ -42,6 +66,11 @@ Upcoming Release
 * Moving ``enable["custom_busmap"]`` setting to ``clustering["mode"]: custom_busmap``.
 
 * New feature: Allowing network clustering based on administrative boundaries (i.e., NUTS0/country-level to NUTS3).  To make use of this setting, set ``clustering["mode"]: administrative`` and additionally the ``clusters`` wildcard in ``scenario`` to ‘adm’. Optionally include dictionary of individual country codes and their individual NUTS levels (0 to 3, see documentation). Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1. Please be aware that not every region will solve/converge at every NUTS level (especially at high NUTS resolution) due to rigid regional boundaries.
+
+* Rules of ``validate.smk`` have been removed to consolidate the volume of code to maintain.
+
+* Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
+
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
@@ -68,6 +97,8 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   Note that the cost assumptions are based on a gas CHP (except for solid
   biomass-fired CHP). (https://github.com/PyPSA/pypsa-eur/pull/1392,
   https://github.com/PyPSA/pypsa-eur/pull/1414)
+
+* Add a rule to create a `filegraph` dag and rename `dag` rule as `rulegraph`. (https://github.com/PyPSA/pypsa-eur/pull/1574)
 
 **Breaking Changes**
 

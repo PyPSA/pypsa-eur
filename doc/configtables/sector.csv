@@ -98,7 +98,6 @@ chp,--,,
 solar_thermal,--,"{true, false}",Add option for using solar thermal to generate heat.
 solar_cf_correction,--,float,The correction factor for the value provided by the solar thermal profile calculations
 marginal_cost_heat_vent,"currency/MWh ",float,The marginal cost of heat-venting in all heating systems
-
 methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into methane using methanation.
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
@@ -139,6 +138,8 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- -- ccgt_cc,--,"{true, false}"," Add combined cycle gas turbine (CCGT) with carbon capture using methanol"
 -- -- ocgt,--,"{true, false}"," Add open cycle gas turbine (OCGT) using methanol"
 -- -- allam,--,"{true, false}"," Add Allam cycle gas power plants using methanol"
+-- -- biomass_to_methanol,--,"{true, false}"," Add biomass to methanol"
+-- -- biomass_to_methanol_cc,--,"{true, false}"," Add biomass to methanol with carbon capture"
 ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
 min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
 min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
@@ -190,3 +191,9 @@ solid_biomass_import,,,
 -- price,currency/MWh,float,Price for importing solid biomass
 -- max_amount,Twh,float,Maximum solid biomass import potential
 -- upstream_emissions_factor,p.u.,float,Upstream emissions of solid biomass imports
+imports,,,
+-- enable,--,"{true, false}",Add option to include renewable energy imports
+-- limit,TWh,float,Maximum allowed renewable energy imports
+-- limit_sense,--,"{==, <=, >=}",Sense of the limit
+-- price,,"{H2, NH3, methanol, gas, oil}",
+-- -- {carrier},currency/MWh,float,Price for importing renewable energy of carrier
