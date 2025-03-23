@@ -33,22 +33,26 @@ OUTPUTS = [
 ]
 
 
-def assign_carriers(n: pypsa.Network):
+def assign_carriers(n: pypsa.Network) -> None:
     if "carrier" not in n.lines:
         n.lines["carrier"] = "AC"
 
 
-def assign_locations(n: pypsa.Network):
+def assign_locations(n: pypsa.Network) -> None:
     for c in n.iterate_components(n.one_port_components):
         c.df["location"] = c.df.bus.map(n.buses.location)
 
     for c in n.iterate_components(n.branch_components):
         c_bus_cols = c.df.filter(regex="^bus")
-        locs = c_bus_cols.apply(lambda c: c.map(n.buses.location))
-        # take the longest location string for each row;
-        # links and lines inherit location of highest resolved bus;
-        # regional locations "BE0 0" are longer than "EU" by design
-        c.df["location"] = locs.apply(lambda row: max(row.dropna(), key=len), axis=1)
+        locs = c_bus_cols.apply(lambda c: c.map(n.buses.location)).sort_index(axis=1)
+        # Use first location that is not "EU"; take "EU" if nothing else available
+        c.df["location"] = locs.apply(
+            lambda row: next(
+                (loc for loc in row.dropna() if loc != "EU"),
+                "EU",
+            ),
+            axis=1,
+        )
 
 
 def calculate_nodal_capacity_factors(n: pypsa.Network) -> pd.Series:
