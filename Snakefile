@@ -121,6 +121,7 @@ rule all:
                 else []
             ),
             run=config["run"]["name"],
+        ),
         lambda w: expand(
             (
                 RESULTS
