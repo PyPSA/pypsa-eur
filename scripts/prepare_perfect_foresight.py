@@ -176,7 +176,9 @@ def adjust_electricity_grid(n: pypsa.Network, year: int, years: list[int]) -> No
 
 
 # --------------------------------------------------------------------
-def concat_networks(years: list[int], network_paths: list[str]) -> pypsa.Network:
+def concat_networks(
+    years: list[int], network_paths: list[str], social_discountrate: float
+) -> pypsa.Network:
     """
     Concat given pypsa networks and add build years.
 
@@ -341,7 +343,7 @@ def set_phase_out(
     n.links.loc[assets_i, "lifetime"] = (phase_out_year - build_year).astype(float)
 
 
-def set_all_phase_outs(n: pypsa.Network) -> None:
+def set_all_phase_outs(n: pypsa.Network, years: list[int]) -> None:
     # TODO move this to a csv or to the config
     planned = [
         (["nuclear"], "DE", 2022),
@@ -605,7 +607,7 @@ if __name__ == "__main__":
             ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -621,7 +623,7 @@ if __name__ == "__main__":
     network_paths = [snakemake.input.brownfield_network] + [
         snakemake.input[f"network_{year}"] for year in years[1:]
     ]
-    n = concat_networks(years, network_paths)
+    n = concat_networks(years, network_paths, social_discountrate)
 
     # temporal aggregate
     solver_name = snakemake.config["solving"]["solver"]["name"]
@@ -637,7 +639,7 @@ if __name__ == "__main__":
     adjust_stores(n)
 
     # set phase outs
-    set_all_phase_outs(n)
+    set_all_phase_outs(n, years)
 
     # add H2 boiler
     add_H2_boilers(n)

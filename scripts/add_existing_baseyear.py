@@ -21,9 +21,9 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
+from add_electricity import load_costs, sanitize_carriers
 from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs
+from prepare_sector_network import cluster_heat_buses, define_spatial
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -459,7 +459,7 @@ def get_efficiency(
         key = f"{carrier} services space efficiency"
         efficiency = nodes.str[:2].map(efficiencies[key])
     else:
-        logger.warning(f"{heat_system} not defined.")
+        raise ValueError(f"Heat system {heat_system} not defined.")
 
     return efficiency
 
@@ -517,6 +517,9 @@ def add_heating_capacities_installed_before_baseyear(
     heating_efficiencies = pd.read_csv(efficiency_file, index_col=[1, 0]).loc[
         energy_totals_year
     ]
+
+    ratios = []
+    valid_grouping_years = []
 
     for heat_system in existing_capacities.columns.get_level_values(0).unique():
         heat_system = HeatSystem(heat_system)
@@ -710,7 +713,7 @@ if __name__ == "__main__":
             planning_horizons=2030,
         )
 
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -726,10 +729,10 @@ if __name__ == "__main__":
     add_build_year_to_new_assets(n, baseyear)
 
     Nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    costs = prepare_costs(
+    costs = load_costs(
         snakemake.input.costs,
         snakemake.params.costs,
-        Nyears,
+        nyears=Nyears,
     )
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]

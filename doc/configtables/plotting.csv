@@ -1,13 +1,46 @@
 ,Unit,Values,Description
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
-projection,,,,
--- name,--,"Valid Cartopy projection name","See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections."
+-- color_geomap,,,
+-- -- ocean,--,str,Color of the ocean in the geomap.
+-- -- land,--,str,Color of the land in the geomap.
+projection,,,
+-- name,--,Valid Cartopy projection name,See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections.
 -- args,--,--,"Other entries under 'projection' are passed as keyword arguments to the projection constructor, e.g. ``central_longitude: 10.``."
+eu_node_location,,,
+-- x,°,float,Longitude of the EU node location.
+-- y,°,float,Latitude of the EU node location.
 costs_max,bn Euro,float,Upper y-axis limit in cost bar plots.
 costs_threshold,bn Euro,float,Threshold below which technologies will not be shown in cost bar plots.
 energy_max,TWh,float,Upper y-axis limit in energy bar plots.
 energy_min,TWh,float,Lower y-axis limit in energy bar plots.
 energy_threshold,TWh,float,Threshold below which technologies will not be shown in energy bar plots.
+balance_timeseries:
+-- max_threshold,GW or kt/h for CO2,float,Technologies with maximum absolute dispatch below this threshold are grouped to 'other'.
+-- mean_threshold,GW or kt/h for CO2,float,Technologies with mean absolute dispatch below this threshold are grouped to 'other'.
+-- monthly,"{True,False}",bool,Whether to plot monthly balance timeseries.
+-- monthly_resolution,"e.g. 1h",str,Resolution of the monthly balance timeseries. Argument to pandas.DataFrame.resample. Defaults to 'null' which uses the model-native resolution.
+-- annual,"{True,False}",bool,Whether to plot annual balance timeseries.
+-- annual_resolution,"e.g. 1h",str,Resolution of the annual balance timeseries. Argument to pandas.DataFrame.resample. Defaults to 'D' which applies daily resampling.
+-- carriers,--,list,Subset of bus carriers to plot in the balance timeseries.
+-- carrier_groups,--,dict,Mapping from carrier group names to list of bus carriers. E.g. a key 'electricity' to include 'AC' and 'low voltage'.
+heatmap_timeseries,,,Plotting configuration for :mod:`plot_heatmap_timeseries`.
+-- marginal_price,--,list,Subset of bus carriers to plot marginal prices heatmap time series for.
+-- utilisation_rate,--,list,Subset of carriers to plot utilisation rates heatmap time series for.
+-- soc,--,list,Subset of carriers to plot state of charge heatmap time series for.
+balance_map,,,
+-- bus_carriers,--,[str],List of carriers to plot.
+-- {bus_carrier},,,
+-- -- unit,--,str,Unit of the energy carrier like TWh for electricity with conversion factor of a million.
+-- -- unit_conversion,--,float,Conversion factor for the energy carrier unit.
+-- -- cmap,--,str,Colormap for the price of the regions.
+-- -- vmin,--,float,Minimum value for the colormap.
+-- -- vmax,--,float,Maximum value for the colormap.
+-- -- region_unit,--,str,Unit for the price like €/MWh for electricity.
+-- -- bus_factor,--,float,Factor for the bus sizes by which they are multiplied.
+-- -- branch_factor,--,float,Factor for the branch sizes by which they are multiplied.
+-- -- flow_factor,--,float,Factor for the flow sizes by which they are multiplied.
+-- -- bus_sizes,--,[float],Sizes for the buses in the legend.
+-- -- branch_sizes,--,[float],Sizes for the branches in the legend.
 tech_colors,--,carrier -> HEX colour code,Mapping from network ``carrier`` to a colour (`HEX colour code <https://en.wikipedia.org/wiki/Web_colors#Hex_triplet>`_).
 nice_names,--,str -> str,Mapping from network ``carrier`` to a more readable name.
