@@ -517,12 +517,12 @@ rule build_biomass_transport_costs:
 
 rule build_co2_sequestration_potentials:
     input:
-        storage_table='data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv',
-        storage_map='data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml',
-        traps_table1='data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv',
-        traps_table2='data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv',
-        traps_table3='data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv',
-        traps_map='data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml',
+        storage_table="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
+        storage_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+        traps_table1="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
+        traps_table2="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
+        traps_table3="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
+        traps_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
     output:
         resources("co2_sequestration_potentials.geojson"),
     threads: 1

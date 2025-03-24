@@ -18,7 +18,9 @@ from shapely.ops import unary_union
 CRS = "EPSG:4326"
 
 
-def convert_to_2d(geom: Union[sg.base.BaseGeometry, Any]) -> Union[sg.base.BaseGeometry, Any]:
+def convert_to_2d(
+    geom: Union[sg.base.BaseGeometry, Any],
+) -> Union[sg.base.BaseGeometry, Any]:
     """
     Remove the third dimension (z-coordinate) from a shapely geometry object.
 
@@ -51,7 +53,10 @@ def convert_to_2d(geom: Union[sg.base.BaseGeometry, Any]) -> Union[sg.base.BaseG
         return sg.Polygon(new_exterior, new_interiors)
 
     # Handle collections of geometries
-    elif isinstance(geom, (sg.MultiPoint, sg.MultiLineString, sg.MultiPolygon, sg.GeometryCollection)):
+    elif isinstance(
+        geom,
+        (sg.MultiPoint, sg.MultiLineString, sg.MultiPolygon, sg.GeometryCollection),
+    ):
         return type(geom)([convert_to_2d(part) for part in geom.geoms])
 
     else:
