@@ -6,8 +6,8 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: "all"
-  #- base_eu_regain
+  name: #"all"
+  - base_eu_regain
   #- base_eu_maintain
   #- base_eu_deindustrial
   #- policy_eu_regain
@@ -156,24 +156,6 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: 2920h
-
-solving:
-  solver:
-    name: gurobi
-    options: gurobi-numeric-focus
-  solver-options:
-      gurobi-numeric-focus:
-      NumericFocus: 3       # Favour numeric stability over speed
-      method: 2             # barrier
-      crossover: 0          # do not use crossover
-      BarHomogeneous: 1     # Use homogeneous barrier if standard does not converge
-      BarConvTol: 1.e-5
-      FeasibilityTol: 1.e-4
-      OptimalityTol: 1.e-4
-      ObjScale: -0.5
-      threads: 8
-      Seed: 123
-      DualReductions: 0
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting

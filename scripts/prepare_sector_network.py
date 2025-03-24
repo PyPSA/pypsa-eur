@@ -5259,6 +5259,7 @@ def add_hvc(n, investment_year, hvc_data, options):
         carrier="HVC",
         p_set=p_set,
     )
+    print(f"LOAD HVC {p_set}")
   
     naphtha_to_hvc = (2.31 * 12.47) * 1000 # t oil / t HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
 
