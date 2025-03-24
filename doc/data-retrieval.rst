@@ -32,7 +32,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains biomass potentials for Europe.
 
-``data/co2jrc_openformats``
+``data/CO2JRC_OpenFormats``
 
 - **Source:** SETIS
 - **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
