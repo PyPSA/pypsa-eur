@@ -25,7 +25,7 @@ country_names = {
     "RS": "Serbia", "SE": "Sweden", "SI": "Slovenia", "SK": "Slovakia", "XK": "Kosovo"
 }
 
-scenarios_steel = ["base_eu_regain", "base_eu_maintain", "base_eu_deindustrial", "policy_eu_regain","policy_eu_maintain", "policy_eu_deindustrial"]
+scenarios = ["base_reg_regain", "base_reg_deindustrial", "policy_reg_regain", "policy_reg_deindustrial"]
 lhv_ammonia = 5.166 # MWh / t
 lhv_methanol = 5.528 # MWh / t
 
@@ -87,7 +87,7 @@ hist_2020_prices = {
 }
 
 # Initialize a dictionary to store DataFrames for each commodity
-price_data = {commodity: pd.DataFrame(index=scenarios_steel, columns=[2020] + years) for commodity in hist_2020_prices.keys()}
+price_data = {commodity: pd.DataFrame(index=scenarios, columns=[2020] + years) for commodity in hist_2020_prices.keys()}
 
 # Fill 2020 values
 for commodity, value in hist_2020_prices.items():
@@ -98,7 +98,7 @@ cwd = os.getcwd()
 parent_dir = os.path.dirname(cwd)
 
 # Iterate through scenarios and years to calculate prices
-for scenario in scenarios_steel:
+for scenario in scenarios:
     for year in years:
         # Load network for the given year
         file_path = os.path.join(parent_dir, "results", scenario, "networks", f"base_s_39___{year}.nc")
@@ -142,7 +142,7 @@ commodities = ["steel", "cement", "ammonia", "methanol", "HVC"]
 colors = ["#4F5050", "#85877C", "#B0B2A1", "#5D8850", "#95BF74", "#C5DEB1"]
 
 for idx, (commodity, ax) in enumerate(zip(commodities, axes)):
-    for i, scenario in enumerate(scenarios_steel):
+    for i, scenario in enumerate(scenarios):
         ax.plot([2020] + years, price_data[commodity].loc[scenario], marker="o", linestyle="-", color=colors[i], label=scenario if idx == 0 else "")
     
     ax.set_title(f"{commodity.capitalize()} Price")
@@ -159,7 +159,7 @@ ax_legend.axis("off")
 # Creating legend
 handles = []
 labels = []
-for scenario in scenarios_steel:
+for scenario in scenarios:
     strategy = next(key for key in base_colors.keys() if key in scenario)
     color = policy_colors[strategy] if "policy" in scenario else base_colors[strategy]
     handles.append(plt.Line2D([0], [0], color=color, marker="o", linestyle="-"))
@@ -169,5 +169,5 @@ ax_legend.legend(handles, labels, loc="center", frameon=False)
 
 
 plt.tight_layout()
-plt.savefig("./graphs/commodity_prices.png")
+plt.savefig("./graphs/commodity_prices_regional.png")
 plt.show()

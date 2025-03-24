@@ -123,11 +123,11 @@ base_reg_regain:
   co2_budget_apply: false
   sector:
     endo_industry:
-      regional_steel_demand: false
+      regional_steel_demand: true
       regional_cement_demand: true
       policy_scenario: regain
     methanol:
-      regional_methanol_demand: false
+      regional_methanol_demand: true
     ammonia: regional
     regional_hvc: true
 

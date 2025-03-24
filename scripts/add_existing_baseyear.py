@@ -798,7 +798,7 @@ def add_cement_industry_existing(n):
     ########### Add existing cement production capacities ############
 
     # Lifetimes
-    lifetime_cement = 100
+    lifetime_cement = 25 #Raillard-Cazanove
 
     # Capital costs
     discount_rate = 0.04
@@ -911,12 +911,13 @@ def add_chemicals_industry_existing(n, options):
 
     if options["endo_industry"]["endo_hvc"]:
         capacities_hvc = capacities['Ethylene']
-        start_dates_hvc = start_dates['Methanol']
+        start_dates_hvc = start_dates['Ethylene']
         capacities_hvc = capacities_hvc * keys["Chemical industry"] #ADB fix this with real hvc
 
         start_dates_hvc = round(start_dates_hvc)
         start_dates_hvc = start_dates_hvc.where((start_dates_hvc >= 1000) & np.isfinite(start_dates_hvc), 2000)
 
+        # I probably do not need this part
         p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
 
         p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity in ktHVC/h
@@ -937,7 +938,7 @@ def add_chemicals_industry_existing(n, options):
             carrier="naphtha steam cracker",
             p_nom_extendable=False,
             p_nom=p_nom_hvc,
-            capital_cost=725 * 1e3, #€/kt HVC
+            capital_cost=2050 * 1e3, #€/kt HVC
             efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
             efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
             efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC

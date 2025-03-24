@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import os
 
-scenarios = ["base_eu_regain", "base_eu_maintain", "base_eu_deindustrial", "policy_eu_regain", "policy_eu_maintain", "policy_eu_deindustrial"]
 # Define colors
 base_colors = {"regain": "#4F5050", "maintain": "#85877C", "deindustrial": "#B0B2A1"}
 policy_colors = {"regain": "#5D8850", "maintain": "#95BF74", "deindustrial": "#C5DEB1"}
@@ -27,8 +26,7 @@ country_names = {
     "RS": "Serbia", "SE": "Sweden", "SI": "Slovenia", "SK": "Slovakia", "XK": "Kosovo"
 }
 
-scenarios = ["base_eu_regain", "policy_eu_regain","base_eu_maintain",  "policy_eu_maintain", "base_eu_deindustrial","policy_eu_deindustrial"]
-scenarios = ["base_eu_regain", "policy_eu_regain", "base_eu_deindustrial","policy_eu_deindustrial"]
+scenarios = ["base_reg_regain", "policy_reg_regain","base_reg_maintain",  "policy_reg_maintain", "base_reg_deindustrial","policy_reg_deindustrial"]
 
 
 # %% FUNCTIONS
@@ -85,17 +83,16 @@ def plot_steel_scenarios(scenarios):
         file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
-        threshold = 1 # Remove values below 1 kt/yr
 
         # Extract EAF production
         p_nom_eaf = -n.links_t.p1.filter(like="EAF", axis=1).sum() * timestep / 1e3 # to Mt
         p_nom_eaf.index = p_nom_eaf.index.str[:2]  # Keep only country code
-        p_nom_eaf = p_nom_eaf[p_nom_eaf >= threshold]  # Remove values below 0
+        p_nom_eaf = p_nom_eaf[p_nom_eaf >= 0]  # Remove values below 0
 
         # Extract BOF production
         p_nom_bof = -n.links_t.p1.filter(like="BF-BOF", axis=1).sum() * timestep / 1e3 # to Mt
         p_nom_bof.index = p_nom_bof.index.str[:2]  # Keep only country code
-        p_nom_bof = p_nom_bof[p_nom_bof >= threshold]  # Remove values below 0
+        p_nom_bof = p_nom_bof[p_nom_bof >= 0]  # Remove values below 0
 
         # Sum per country
         summed_p_nom_eaf = p_nom_eaf.groupby(p_nom_eaf.index).sum()
@@ -111,7 +108,6 @@ def plot_steel_scenarios(scenarios):
 
         # Extract H2 Clean and H2 Dirty production
         share_green = share_green_h2(n)
-        share_green = share_green.reindex(summed_p_nom_eaf.index, fill_value=0)
 
         # Extract CH4 and H2-based DRI data
         dri_ch4 = -n.links_t.p1.filter(like='CH4 to syn gas DRI', axis=1).sum() * timestep
@@ -130,13 +126,12 @@ def plot_steel_scenarios(scenarios):
         if not np.allclose(summed_p_nom_ch4_eaf + summed_p_nom_grey_h2_eaf + summed_p_nom_green_h2_eaf, summed_p_nom_eaf, atol=1e-6):
             print(f"Error in scenario {scenario}: The sum of CH4, Grey H2, and Green H2 EAF does not match the original EAF within the threshold.")
 
-
         # Map country codes to full country names
         summed_p_nom_ch4_eaf.index = [country_names.get(code, code) for code in summed_p_nom_ch4_eaf.index]
         summed_p_nom_grey_h2_eaf.index = [country_names.get(code, code) for code in summed_p_nom_grey_h2_eaf.index]
         summed_p_nom_green_h2_eaf.index = [country_names.get(code, code) for code in summed_p_nom_green_h2_eaf.index]
         summed_p_nom_bof.index = [country_names.get(code, code) for code in summed_p_nom_bof.index]
- 
+        
         # Store data for plotting later
         all_scenario_data[scenario] = {
             "summed_p_nom_ch4_eaf": summed_p_nom_ch4_eaf,
@@ -145,10 +140,13 @@ def plot_steel_scenarios(scenarios):
             "summed_p_nom_bof": summed_p_nom_bof
         }
 
+        # Store total production per country (sum across all scenarios)
+        all_countries = [country_names.get(code, code) for code in all_countries]
+
         for country in all_countries:
             if country not in country_totals:
                 country_totals[country] = 0
-            country_totals[country] += summed_p_nom_ch4_eaf.get(country, 0) + summed_p_nom_grey_h2_eaf.get(country, 0) + summed_p_nom_green_h2_eaf.get(country, 0) + summed_p_nom_bof.get(country, 0)
+            country_totals[country] += summed_p_nom_eaf.get(country, 0) + summed_p_nom_bof.get(country, 0)
 
     # Identify countries to keep (remove those with total production = 0 across all scenarios)
     relevant_countries = [c for c, total in country_totals.items() if total > 1]
@@ -167,14 +165,12 @@ def plot_steel_scenarios(scenarios):
         summed_p_nom_green_h2_eaf = all_scenario_data[scenario]["summed_p_nom_green_h2_eaf"]
         summed_p_nom_bof = all_scenario_data[scenario]["summed_p_nom_bof"]
 
-
         # Reindex using only the relevant countries
         summed_p_nom_ch4_eaf = summed_p_nom_ch4_eaf.reindex(relevant_countries, fill_value=0)
         summed_p_nom_grey_h2_eaf = summed_p_nom_grey_h2_eaf.reindex(relevant_countries, fill_value=0)
         summed_p_nom_green_h2_eaf = summed_p_nom_green_h2_eaf.reindex(relevant_countries, fill_value=0)
         summed_p_nom_bof = summed_p_nom_bof.reindex(relevant_countries, fill_value=0)
 
-        
         # Sort by total production (EAF + BOF)
         total_production = summed_p_nom_ch4_eaf + summed_p_nom_grey_h2_eaf + summed_p_nom_green_h2_eaf + summed_p_nom_bof
         sorted_countries = total_production.sort_values(ascending = 0).index
@@ -195,7 +191,6 @@ def plot_steel_scenarios(scenarios):
         ax = axes[row,col]
 
         # Plot in subplot
-        print(f"LEngth {len(sorted_countries)}")
         ax.bar(sorted_countries, summed_p_nom_bof.values, color="black", label="BF-BOF")
         ax.bar(sorted_countries, summed_p_nom_ch4_eaf.values, color="#552C2D", label="CH4 DRI EAF", bottom=summed_p_nom_bof.values)
         ax.bar(sorted_countries, summed_p_nom_grey_h2_eaf.values, color="gray", label="Grey H2 DRI EAF", bottom=summed_p_nom_bof.values + summed_p_nom_ch4_eaf.values)
@@ -214,7 +209,7 @@ def plot_steel_scenarios(scenarios):
         
         if row == 0:
             scenario_title = scenario.split('_')[-1].capitalize()  # Extract last part of the scenario
-            ax.set_title(f"{scenario_title} production", size=14)
+            ax.set_title(f"{scenario_title} production")
             ax.set_facecolor("#CACACE")
         else:
             ax.set_facecolor("#C1D7AE")
@@ -226,7 +221,7 @@ def plot_steel_scenarios(scenarios):
 
         
         ax.grid(axis="x", linestyle="--", alpha=0.7)
-        if row == 0 and col == 1:
+        if row == 0 and col == 2:
             ax.legend()
             
         row += 1
@@ -235,7 +230,7 @@ def plot_steel_scenarios(scenarios):
     plt.tight_layout()
     # Check if the folder exists, and create it if it doesn't
     os.makedirs("./graphs", exist_ok=True)
-    plt.savefig("./graphs/steel_production.png")
+    plt.savefig("./graphs/steel_production_regional.png")
     plt.show()
 
 
@@ -252,12 +247,11 @@ def plot_cement_scenarios(scenarios):
         file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
-        threshold = 1
 
         # Extract cement production
         prod_cement = -n.links_t.p1.filter(like="Cement Plant", axis=1).sum() * timestep / 1e3
         prod_cement.index = prod_cement.index.str[:2]  # Keep only country code
-        prod_cement = prod_cement[prod_cement > threshold]
+        prod_cement = prod_cement[prod_cement > 1e-8]
         summed_prod_cement = prod_cement.groupby(prod_cement.index).sum()
         
         all_countries = summed_prod_cement.index
@@ -273,8 +267,6 @@ def plot_cement_scenarios(scenarios):
 
         # Calculate CCS share
         share_ccs = round(cement_ccs / (cement_ccs + cement_not_captured), 2)
-        share_ccs = share_ccs.reindex(summed_prod_cement.index, fill_value=0)
-
 
         # Adjusted cement production
         summed_prod_cement_not_captured = summed_prod_cement * (1 - share_ccs)
@@ -349,13 +341,13 @@ def plot_cement_scenarios(scenarios):
         elif col == 0 and row == 1:
             ax.set_ylabel("POLICY\nMt cement/yr")
 
-        if row == 0 and col == 1:
+        if row == 0 and col == 2:
             ax.legend()
         row += 1
 
     plt.tight_layout()
     os.makedirs("./graphs", exist_ok=True)
-    plt.savefig("./graphs/cement_production.png")
+    plt.savefig("./graphs/cement_production_regional.png")
     plt.show()
 
 
@@ -373,20 +365,17 @@ def plot_ammonia_scenarios(scenarios):
         file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
-        threshold = 1
 
         # Extract ammonia production
         prod_nh3 = -n.links_t.p1.filter(like="Haber-Bosch", axis=1).sum() * timestep
         prod_nh3.index = prod_nh3.index.str[:2]  # Keep only country code
-        prod_nh3 = prod_nh3[prod_nh3 > threshold]  # Remove negligible values
+        prod_nh3 = prod_nh3[prod_nh3 > 1e-6]  # Remove negligible values
         summed_prod_nh3 = prod_nh3.groupby(prod_nh3.index).sum()
 
         all_countries = summed_prod_nh3.index
 
         # Extract H2 Clean and H2 Dirty production
         share_green = share_green_h2(n)
-        share_green = share_green.reindex(summed_prod_nh3.index, fill_value=0)
-
 
         # Adjusted ammonia production
         summed_prod_nh3_green = summed_prod_nh3 * share_green
@@ -461,13 +450,13 @@ def plot_ammonia_scenarios(scenarios):
         elif col == 0 and row == 1:
             ax.set_ylabel("POLICY\nMt NH3/yr")
 
-        if row == 0 and col == 1:
+        if row == 0 and col == 2:
             ax.legend()
         row += 1
 
     plt.tight_layout()
     os.makedirs("./graphs", exist_ok=True)
-    plt.savefig("./graphs/ammonia_production.png")
+    plt.savefig("./graphs/ammonia_production_regional.png")
     plt.show()
 
 
@@ -539,7 +528,7 @@ def plot_methanol_scenarios(scenarios):
     
     plt.tight_layout()
     os.makedirs("./graphs",exist_ok=True)
-    plt.savefig("./graphs/methanol_production.png")
+    plt.savefig("./graphs/methanol_production_regional.png")
     plt.show()
 
 def plot_methanol_scenarios(scenarios):
@@ -620,7 +609,7 @@ def plot_methanol_scenarios(scenarios):
 
     plt.tight_layout()
     os.makedirs("./graphs",exist_ok=True)
-    plt.savefig("./graphs/methanol_production.png")
+    plt.savefig("./graphs/methanol_production_regional.png")
     plt.show()
 
 
@@ -799,7 +788,7 @@ def plot_hvc_scenarios(scenarios):
 
     plt.tight_layout()
     os.makedirs("./graphs", exist_ok=True)
-    plt.savefig("./graphs/hvc_production.png")
+    plt.savefig("./graphs/hvc_production_regional.png")
     plt.show()
 
 
@@ -812,5 +801,5 @@ plot_ammonia_scenarios(scenarios)
 
 plot_hvc_scenarios(scenarios)
 plot_methanol_scenarios(scenarios)
-plot_capacities("capacities_s_39.csv")
+
 
