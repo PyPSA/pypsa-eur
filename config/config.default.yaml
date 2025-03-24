@@ -440,6 +440,7 @@ sector:
   heating: true
   biomass: true
   industry: true
+  shipping: true
   agriculture: true
   fossil_fuels: true
   district_heating:

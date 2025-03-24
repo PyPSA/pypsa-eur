@@ -4247,19 +4247,18 @@ def add_biomass(
 
 
 def add_industry(
-    n,
-    costs,
-    industrial_demand_file,
-    shipping_demand_file,
-    pop_layout,
-    pop_weighted_energy_totals,
-    options,
-    spatial,
-    cf_industry,
-    investment_year,
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    industrial_demand_file: str,
+    pop_layout: pd.DataFrame,
+    pop_weighted_energy_totals: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    cf_industry: dict,
+    investment_year: int,
 ):
     """
-    Add industry, shipping, aviation, and their corresponding carrier buses to the network.
+    Add industry, aviation, and their corresponding carrier buses to the network.
 
     Parameters
     ----------
@@ -4269,8 +4268,6 @@ def add_industry(
         Costs data including carbon capture, fuel costs, etc.
     industrial_demand_file : str
         Path to CSV file containing industrial demand data
-    shipping_demand_file : str
-        Path to CSV file containing shipping demand data
     pop_layout : pd.DataFrame
         Population layout data with index of nodes
     pop_weighted_energy_totals : pd.DataFrame
@@ -4515,151 +4512,6 @@ def add_industry(
         efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
         efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
     )
-
-    shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
-    shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
-    shipping_oil_share = get(options["shipping_oil_share"], investment_year)
-
-    total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
-    if total_share != 1:
-        logger.warning(
-            f"Total shipping shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
-        )
-
-    domestic_navigation = pop_weighted_energy_totals.loc[
-        nodes, ["total domestic navigation"]
-    ].squeeze()
-    international_navigation = (
-        pd.read_csv(shipping_demand_file, index_col=0).squeeze(axis=1) * nyears
-    )
-    all_navigation = domestic_navigation + international_navigation
-    p_set = all_navigation * 1e6 / nhours
-
-    if shipping_hydrogen_share:
-        oil_efficiency = options.get(
-            "shipping_oil_efficiency", options.get("shipping_average_efficiency", 0.4)
-        )
-        efficiency = oil_efficiency / costs.at["fuel cell", "efficiency"]
-        shipping_hydrogen_share = get(
-            options["shipping_hydrogen_share"], investment_year
-        )
-
-        if options["shipping_hydrogen_liquefaction"]:
-            n.add(
-                "Bus",
-                nodes,
-                suffix=" H2 liquid",
-                carrier="H2 liquid",
-                location=nodes,
-                unit="MWh_LHV",
-            )
-
-            n.add(
-                "Link",
-                nodes + " H2 liquefaction",
-                bus0=nodes + " H2",
-                bus1=nodes + " H2 liquid",
-                carrier="H2 liquefaction",
-                efficiency=costs.at["H2 liquefaction", "efficiency"],
-                capital_cost=costs.at["H2 liquefaction", "capital_cost"],
-                p_nom_extendable=True,
-                lifetime=costs.at["H2 liquefaction", "lifetime"],
-            )
-
-            shipping_bus = nodes + " H2 liquid"
-        else:
-            shipping_bus = nodes + " H2"
-
-        efficiency = (
-            options["shipping_oil_efficiency"] / costs.at["fuel cell", "efficiency"]
-        )
-        p_set_hydrogen = shipping_hydrogen_share * p_set * efficiency
-
-        n.add(
-            "Load",
-            nodes,
-            suffix=" H2 for shipping",
-            bus=shipping_bus,
-            carrier="H2 for shipping",
-            p_set=p_set_hydrogen,
-        )
-
-    if shipping_methanol_share:
-        efficiency = (
-            options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
-        )
-
-        p_set_methanol_shipping = (
-            shipping_methanol_share
-            * p_set.rename(lambda x: x + " shipping methanol")
-            * efficiency
-        )
-
-        if not options["methanol"]["regional_methanol_demand"]:
-            p_set_methanol_shipping = p_set_methanol_shipping.sum()
-
-        n.add(
-            "Bus",
-            spatial.methanol.shipping,
-            location=spatial.methanol.demand_locations,
-            carrier="shipping methanol",
-            unit="MWh_LHV",
-        )
-
-        n.add(
-            "Load",
-            spatial.methanol.shipping,
-            bus=spatial.methanol.shipping,
-            carrier="shipping methanol",
-            p_set=p_set_methanol_shipping,
-        )
-
-        n.add(
-            "Link",
-            spatial.methanol.shipping,
-            bus0=spatial.methanol.nodes,
-            bus1=spatial.methanol.shipping,
-            bus2="co2 atmosphere",
-            carrier="shipping methanol",
-            p_nom_extendable=True,
-            efficiency2=1
-            / options[
-                "MWh_MeOH_per_tCO2"
-            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
-        )
-
-    if shipping_oil_share:
-        p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
-
-        if not options["regional_oil_demand"]:
-            p_set_oil = p_set_oil.sum()
-
-        n.add(
-            "Bus",
-            spatial.oil.shipping,
-            location=spatial.oil.demand_locations,
-            carrier="shipping oil",
-            unit="MWh_LHV",
-        )
-
-        n.add(
-            "Load",
-            spatial.oil.shipping,
-            bus=spatial.oil.shipping,
-            carrier="shipping oil",
-            p_set=p_set_oil,
-        )
-
-        n.add(
-            "Link",
-            spatial.oil.shipping,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.shipping,
-            bus2="co2 atmosphere",
-            carrier="shipping oil",
-            p_nom_extendable=True,
-            efficiency2=costs.at["oil", "CO2 intensity"],
-        )
 
     if options["oil_boilers"]:
         nodes = pop_layout.index
@@ -5079,6 +4931,168 @@ def add_industry(
             carrier="coal for industry",
             p_nom_extendable=True,
             efficiency2=costs.at["coal", "CO2 intensity"],
+        )
+
+
+def add_shipping(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    shipping_demand_file: str,
+    pop_layout: pd.DataFrame,
+    pop_weighted_energy_totals: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+    investment_year: int,
+) -> None:
+    logger.info("Add shipping")
+
+    nodes = pop_layout.index
+    nhours = n.snapshot_weightings.generators.sum()
+    nyears = nhours / 8760
+
+    shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
+    shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
+    shipping_oil_share = get(options["shipping_oil_share"], investment_year)
+
+    total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
+    if total_share != 1:
+        logger.warning(
+            f"Total shipping shares sum up to {total_share:.2%}, corresponding to increased or decreased demand assumptions."
+        )
+
+    domestic_navigation = pop_weighted_energy_totals.loc[
+        nodes, ["total domestic navigation"]
+    ].squeeze()
+    international_navigation = (
+        pd.read_csv(shipping_demand_file, index_col=0).squeeze(axis=1) * nyears
+    )
+    all_navigation = domestic_navigation + international_navigation
+    p_set = all_navigation * 1e6 / nhours
+
+    if shipping_hydrogen_share:
+        oil_efficiency = options.get(
+            "shipping_oil_efficiency", options.get("shipping_average_efficiency", 0.4)
+        )
+        efficiency = oil_efficiency / costs.at["fuel cell", "efficiency"]
+        shipping_hydrogen_share = get(
+            options["shipping_hydrogen_share"], investment_year
+        )
+
+        if options["shipping_hydrogen_liquefaction"]:
+            n.add(
+                "Bus",
+                nodes,
+                suffix=" H2 liquid",
+                carrier="H2 liquid",
+                location=nodes,
+                unit="MWh_LHV",
+            )
+
+            n.add(
+                "Link",
+                nodes + " H2 liquefaction",
+                bus0=nodes + " H2",
+                bus1=nodes + " H2 liquid",
+                carrier="H2 liquefaction",
+                efficiency=costs.at["H2 liquefaction", "efficiency"],
+                capital_cost=costs.at["H2 liquefaction", "capital_cost"],
+                p_nom_extendable=True,
+                lifetime=costs.at["H2 liquefaction", "lifetime"],
+            )
+
+            shipping_bus = nodes + " H2 liquid"
+        else:
+            shipping_bus = nodes + " H2"
+
+        efficiency = (
+            options["shipping_oil_efficiency"] / costs.at["fuel cell", "efficiency"]
+        )
+        p_set_hydrogen = shipping_hydrogen_share * p_set * efficiency
+
+        n.add(
+            "Load",
+            nodes,
+            suffix=" H2 for shipping",
+            bus=shipping_bus,
+            carrier="H2 for shipping",
+            p_set=p_set_hydrogen,
+        )
+
+    if shipping_methanol_share:
+        efficiency = (
+            options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
+        )
+
+        p_set_methanol_shipping = (
+            shipping_methanol_share
+            * p_set.rename(lambda x: x + " shipping methanol")
+            * efficiency
+        )
+
+        if not options["methanol"]["regional_methanol_demand"]:
+            p_set_methanol_shipping = p_set_methanol_shipping.sum()
+
+        n.add(
+            "Bus",
+            spatial.methanol.shipping,
+            location=spatial.methanol.demand_locations,
+            carrier="shipping methanol",
+            unit="MWh_LHV",
+        )
+
+        n.add(
+            "Load",
+            spatial.methanol.shipping,
+            bus=spatial.methanol.shipping,
+            carrier="shipping methanol",
+            p_set=p_set_methanol_shipping,
+        )
+
+        n.add(
+            "Link",
+            spatial.methanol.shipping,
+            bus0=spatial.methanol.nodes,
+            bus1=spatial.methanol.shipping,
+            bus2="co2 atmosphere",
+            carrier="shipping methanol",
+            p_nom_extendable=True,
+            efficiency2=1
+            / options[
+                "MWh_MeOH_per_tCO2"
+            ],  # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+        )
+
+    if shipping_oil_share:
+        p_set_oil = shipping_oil_share * p_set.rename(lambda x: x + " shipping oil")
+
+        if not options["regional_oil_demand"]:
+            p_set_oil = p_set_oil.sum()
+
+        n.add(
+            "Bus",
+            spatial.oil.shipping,
+            location=spatial.oil.demand_locations,
+            carrier="shipping oil",
+            unit="MWh_LHV",
+        )
+
+        n.add(
+            "Load",
+            spatial.oil.shipping,
+            bus=spatial.oil.shipping,
+            carrier="shipping oil",
+            p_set=p_set_oil,
+        )
+
+        n.add(
+            "Link",
+            spatial.oil.shipping,
+            bus0=spatial.oil.nodes,
+            bus1=spatial.oil.shipping,
+            bus2="co2 atmosphere",
+            carrier="shipping oil",
+            p_nom_extendable=True,
+            efficiency2=costs.at["oil", "CO2 intensity"],
         )
 
 
@@ -6122,6 +6136,18 @@ if __name__ == "__main__":
             options=options,
             spatial=spatial,
             cf_industry=cf_industry,
+            investment_year=investment_year,
+        )
+
+    if options["shipping"]:
+        add_shipping(
+            n=n,
+            costs=costs,
+            shipping_demand_file=snakemake.input.shipping_demand,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
             investment_year=investment_year,
         )
 
