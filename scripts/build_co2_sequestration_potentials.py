@@ -184,7 +184,7 @@ def create_capacity_map_traps(table_fn: list[str], map_fn: str) -> gpd.GeoDataFr
     ]
     df["conservative estimate Mt"] = df[sel].sum(axis=1).fillna(0)
 
-    # neural estimate: use MEAN
+    # neutral estimate: use MEAN
     df["neutral estimate aquifer Mt"] = (
         df["EST_STORECAP_MEAN"].replace(0, np.nan).fillna(df["STORE_CAP_MEAN"])
     )
