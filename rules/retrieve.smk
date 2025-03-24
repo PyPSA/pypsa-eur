@@ -291,21 +291,6 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_geological_co2_storage_potential:
-        input:
-            storage(
-                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-                keep_local=True,
-            ),
-        output:
-            "data/complete_map_2020_unit_Mt.geojson",
-        retries: 1
-        run:
-            move(input[0], output[0])
-
-
-if config["enable"]["retrieve"]:
-
     # Downloading Copernicus Global Land Cover for land cover and land use:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
