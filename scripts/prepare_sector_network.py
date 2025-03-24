@@ -1119,33 +1119,6 @@ def add_methanol_to_power(n, costs, pop_layout, types=None):
         )
 
 
-def add_methanol_to_kerosene(n, costs):
-    tech = "methanol-to-kerosene"
-
-    logger.info(f"Adding {tech}.")
-
-    capital_cost = costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"]
-
-    n.add(
-        "Link",
-        spatial.h2.locations,
-        suffix=f" {tech}",
-        carrier=tech,
-        capital_cost=capital_cost,
-        marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
-        bus0=spatial.methanol.nodes,
-        bus1=spatial.oil.kerosene,
-        bus2=spatial.h2.nodes,
-        bus3="co2 atmosphere",
-        efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=-costs.at[tech, "hydrogen-input"]
-        / costs.at[tech, "methanol-input"],
-        efficiency3=costs.at["oil", "CO2 intensity"] / costs.at[tech, "methanol-input"],
-        p_nom_extendable=True,
-        lifetime=costs.at[tech, "lifetime"],
-    )
-
-
 def add_methanol_reforming(n, costs):
     logger.info("Adding methanol steam reforming.")
 
@@ -4258,7 +4231,7 @@ def add_industry(
     investment_year: int,
 ):
     """
-    Add industry, aviation, and their corresponding carrier buses to the network.
+    Add industry and their corresponding carrier buses to the network.
 
     Parameters
     ----------
@@ -4723,55 +4696,6 @@ def add_industry(
             efficiency3=process_co2_per_naphtha,
         )
 
-    # aviation
-    demand_factor = options["aviation_demand_factor"]
-    if demand_factor != 1:
-        logger.warning(
-            f"Changing aviation demand by {demand_factor * 100 - 100:+.2f}%."
-        )
-
-    all_aviation = ["total international aviation", "total domestic aviation"]
-
-    p_set = (
-        demand_factor
-        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
-        * 1e6
-        / nhours
-    ).rename(lambda x: x + " kerosene for aviation")
-
-    if not options["regional_oil_demand"]:
-        p_set = p_set.sum()
-
-    n.add(
-        "Bus",
-        spatial.oil.kerosene,
-        location=spatial.oil.demand_locations,
-        carrier="kerosene for aviation",
-        unit="MWh_LHV",
-    )
-
-    n.add(
-        "Load",
-        spatial.oil.kerosene,
-        bus=spatial.oil.kerosene,
-        carrier="kerosene for aviation",
-        p_set=p_set,
-    )
-
-    n.add(
-        "Link",
-        spatial.oil.kerosene,
-        bus0=spatial.oil.nodes,
-        bus1=spatial.oil.kerosene,
-        bus2="co2 atmosphere",
-        carrier="kerosene for aviation",
-        p_nom_extendable=True,
-        efficiency2=costs.at["oil", "CO2 intensity"],
-    )
-
-    if options["methanol"]["methanol_to_kerosene"]:
-        add_methanol_to_kerosene(n, costs)
-
     # TODO simplify bus expression
     n.add(
         "Load",
@@ -4931,6 +4855,92 @@ def add_industry(
             carrier="coal for industry",
             p_nom_extendable=True,
             efficiency2=costs.at["coal", "CO2 intensity"],
+        )
+
+
+def add_aviation(
+    n: pypsa.Network,
+    costs: pd.DataFrame,
+    pop_layout: pd.DataFrame,
+    pop_weighted_energy_totals: pd.DataFrame,
+    options: dict,
+    spatial: SimpleNamespace,
+) -> None:
+    logger.info("Add aviation")
+
+    nodes = pop_layout.index
+    nhours = n.snapshot_weightings.generators.sum()
+
+    demand_factor = options["aviation_demand_factor"]
+    if demand_factor != 1:
+        logger.warning(
+            f"Changing aviation demand by {demand_factor * 100 - 100:+.2f}%."
+        )
+
+    all_aviation = ["total international aviation", "total domestic aviation"]
+
+    p_set = (
+        demand_factor
+        * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis=1)
+        * 1e6
+        / nhours
+    ).rename(lambda x: x + " kerosene for aviation")
+
+    if not options["regional_oil_demand"]:
+        p_set = p_set.sum()
+
+    n.add(
+        "Bus",
+        spatial.oil.kerosene,
+        location=spatial.oil.demand_locations,
+        carrier="kerosene for aviation",
+        unit="MWh_LHV",
+    )
+
+    n.add(
+        "Load",
+        spatial.oil.kerosene,
+        bus=spatial.oil.kerosene,
+        carrier="kerosene for aviation",
+        p_set=p_set,
+    )
+
+    n.add(
+        "Link",
+        spatial.oil.kerosene,
+        bus0=spatial.oil.nodes,
+        bus1=spatial.oil.kerosene,
+        bus2="co2 atmosphere",
+        carrier="kerosene for aviation",
+        p_nom_extendable=True,
+        efficiency2=costs.at["oil", "CO2 intensity"],
+    )
+
+    if options["methanol"]["methanol_to_kerosene"]:
+        tech = "methanol-to-kerosene"
+
+        logger.info(f"Adding {tech}.")
+
+        capital_cost = costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"]
+
+        n.add(
+            "Link",
+            spatial.h2.locations,
+            suffix=f" {tech}",
+            carrier=tech,
+            capital_cost=capital_cost,
+            marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
+            bus0=spatial.methanol.nodes,
+            bus1=spatial.oil.kerosene,
+            bus2=spatial.h2.nodes,
+            bus3="co2 atmosphere",
+            efficiency=1 / costs.at[tech, "methanol-input"],
+            efficiency2=-costs.at[tech, "hydrogen-input"]
+            / costs.at[tech, "methanol-input"],
+            efficiency3=costs.at["oil", "CO2 intensity"]
+            / costs.at[tech, "methanol-input"],
+            p_nom_extendable=True,
+            lifetime=costs.at[tech, "lifetime"],
         )
 
 
@@ -6149,6 +6159,16 @@ if __name__ == "__main__":
             options=options,
             spatial=spatial,
             investment_year=investment_year,
+        )
+
+    if options["aviation"]:
+        add_aviation(
+            n=n,
+            costs=costs,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
         )
 
     if options["heating"]:
