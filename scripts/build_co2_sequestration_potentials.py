@@ -289,6 +289,8 @@ def merge_maps(
 
     gdf = gpd.GeoDataFrame(pd.concat([storage_map, traps_map]), crs=CRS)
 
+    gdf.drop_duplicates(inplace=True)
+
     return gdf
 
 
