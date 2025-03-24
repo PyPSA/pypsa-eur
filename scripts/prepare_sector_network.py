@@ -6140,7 +6140,6 @@ if __name__ == "__main__":
             n=n,
             costs=costs,
             industrial_demand_file=snakemake.input.industrial_demand,
-            shipping_demand_file=snakemake.input.shipping_demand,
             pop_layout=pop_layout,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=options,
