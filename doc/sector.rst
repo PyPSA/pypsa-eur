@@ -163,10 +163,15 @@ Rule ``build_salt_cavern_potentials``
 
 .. automodule:: build_salt_cavern_potentials
 
-Rule ``build_sequestration_potentials``
+Rule ``build_co2_sequestration_potentials``
 ==============================================================================
 
-.. automodule:: build_sequestration_potentials
+.. automodule:: build_co2_sequestration_potentials
+
+Rule ``build_clustered_co2_sequestration_potentials``
+==============================================================================
+
+.. automodule:: build_clustered_co2_sequestration_potentials
 
 Rule ``build_shipping_demand``
 ==============================================================================
