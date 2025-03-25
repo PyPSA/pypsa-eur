@@ -1182,16 +1182,6 @@ def extra_functionality(
         ).any():
             add_TES_energy_to_power_ratio_constraints(n)
             add_TES_charger_ratio_constraints(n)
-        elif (
-            n.links.index.str.contains(
-                "pits charger|tanks charger", case=False, na=False
-            ).any()
-            or n.stores.index.str.contains("pits", case=False, na=False).any()
-            or n.stores.index.str.contains("tanks", case=False, na=False).any()
-        ):
-            raise ValueError(
-                "Unsupported network configuration: tes is enabled but no heating bus was found."
-            )
 
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
