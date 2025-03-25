@@ -3187,7 +3187,7 @@ def add_heat(
 
                     # Derive e_max_pu as normalized delta T
                     e_max_pu = t_top - t_bottom
-                    e_max_pu = e_max_pu / (90 - 45)
+                    e_max_pu = e_max_pu / (90 - 35)
                     e_max_pu = (
                         e_max_pu.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
                     )
