@@ -13,13 +13,16 @@ from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
-from typing import Callable
+from tempfile import NamedTemporaryFile
+from typing import Callable, Union
 
+import atlite
 import fiona
 import pandas as pd
 import pypsa
 import pytz
 import requests
+import xarray as xr
 import yaml
 from snakemake.utils import update_config
 from tqdm import tqdm
@@ -1013,3 +1016,35 @@ def rename_techs(label: str) -> str:
         if old == label:
             label = new
     return label
+
+
+def load_cutout(
+    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+) -> atlite.Cutout:
+    """
+    Load and optionally combine multiple cutout files.
+
+    Parameters
+    ----------
+    cutout_files : str or list of str
+        Path to a single cutout file or a list of paths to multiple cutout files.
+        If a list is provided, the cutouts will be concatenated along the time dimension.
+    time : pd.DatetimeIndex, optional
+        If provided, select only the specified times from the cutout.
+
+    Returns
+    -------
+    atlite.Cutout
+        Merged cutout with optional time selection applied.
+    """
+    if isinstance(cutout_files, str):
+        cutout = atlite.Cutout(cutout_files)
+    elif isinstance(cutout_files, list):
+        cutout_da = [atlite.Cutout(c).data for c in cutout_files]
+        combined_data = xr.concat(cutout_da, dim="time", data_vars="minimal")
+        cutout = atlite.Cutout(NamedTemporaryFile().name, data=combined_data)
+
+    if time is not None:
+        cutout.data = cutout.data.sel(time=time)
+
+    return cutout

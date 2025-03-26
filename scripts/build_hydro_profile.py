@@ -25,11 +25,10 @@ Outputs
 
 import logging
 
-import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from numpy.polynomial import Polynomial
 
 cc = coco.CountryConverter()
@@ -144,7 +143,7 @@ if __name__ == "__main__":
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout, time=time)
 
     countries = snakemake.params.countries
     country_shapes = (

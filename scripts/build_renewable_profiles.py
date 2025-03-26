@@ -88,10 +88,9 @@ adding up the installable potentials of the individual grid cells.
 import logging
 import time
 
-import atlite
 import geopandas as gpd
 import xarray as xr
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from build_shapes import _simplify_polys
 from dask.distributed import Client
 
@@ -135,7 +134,7 @@ if __name__ == "__main__":
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
+    cutout = load_cutout(snakemake.input.cutout, time=sns)
 
     availability = xr.open_dataarray(snakemake.input.availability_matrix)
 

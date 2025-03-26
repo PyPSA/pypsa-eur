@@ -11,6 +11,11 @@ Release Notes
 Upcoming Release
 ================
 
+* All cutout references in ``config.default.yaml`` can now be specified by a
+  list of cutouts which will be concatenated along the time dimension.
+  
+* All cutout references in ``config.default.yaml`` now default to ``atlite: default_cutout:``.
+
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 
