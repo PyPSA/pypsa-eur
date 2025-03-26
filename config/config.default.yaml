@@ -860,7 +860,7 @@ costs:
     battery inverter: 0.
     home battery storage: 0
     water tank charger: 0.03
-    central water pit charger: 0.025
+    #central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.

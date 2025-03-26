@@ -10,7 +10,7 @@ run:
   - base_eu_regain
   #- base_eu_maintain
   #- base_eu_deindustrial
-  #- policy_eu_regain
+  - policy_eu_regain
   #- base_eu_maintain
   #- base_eu_deindustrial
   scenarios:

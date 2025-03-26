@@ -256,6 +256,8 @@ def define_spatial(nodes, options):
             spatial.syngas_dri = SimpleNamespace()
             spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
             spatial.syngas_dri.locations = ["EU"]
+        
+        print(f"NODES STEEL {spatial.steel.nodes}")
 
         if options["endo_industry"]["regional_cement_demand"]:
             # Cement
@@ -4783,6 +4785,8 @@ def add_steel_industry(n, investment_year, steel_data, options):
     if not options["endo_industry"]["regional_steel_demand"]:
 
         p_set = p_set.sum()
+    
+    print(f"P SET STEEL {}")
 
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
     max_cap = max(capacities) * 2

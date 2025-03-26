@@ -921,7 +921,6 @@ def add_chemicals_industry_existing(n, options):
         p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
 
         p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity in ktHVC/h
-        print(f"P nom HVC {p_nom_hvc}")
 
         ########### Add existing HVC production capacities ############
 
