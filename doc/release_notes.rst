@@ -16,6 +16,11 @@ Upcoming Release
   
 * All cutout references in ``config.default.yaml`` now default to ``atlite: default_cutout:``.
 
+* Added support to include multiple complete consecutive meteorological years in one optimisation model.
+  The annualised capital costs, energy limits and loads are multiplied by the number of years.
+  To calculate the total annualised system costs, divide the total costs by the number of years.
+  To include multiple years, configure the range in ``snapshots:`` and provide the list of associated cutouts in ``atlite: default_cutouts:``.
+
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 
