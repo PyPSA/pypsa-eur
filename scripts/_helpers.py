@@ -901,11 +901,27 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
     )
 
 
-def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
+def get_snapshots(
+    snapshots: dict, drop_leap_day: bool = False, freq: str = "h", **kwargs
+) -> pd.DatetimeIndex:
     """
-    Returns pandas DateTimeIndex potentially without leap days.
-    """
+    Returns a DateTimeIndex of snapshots.
 
+    Parameters
+    ----------
+    snapshots : dict
+        Dictionary containing time range parameters like 'start', 'end', etc.
+    drop_leap_day : bool, default False
+        If True, removes February 29th from the DateTimeIndex in leap years.
+    freq : str, default "h"
+        Frequency string indicating the time step interval (e.g., "h" for hourly)
+    **kwargs : dict
+        Additional keyword arguments passed to pd.date_range().
+
+    Returns
+    -------
+    pd.DatetimeIndex
+    """
     time = pd.date_range(freq=freq, **snapshots, **kwargs)
     if drop_leap_day and time.is_leap_year.any():
         time = time[~((time.month == 2) & (time.day == 29))]
