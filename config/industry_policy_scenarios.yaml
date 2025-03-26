@@ -11,32 +11,6 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-# Climate policy: NO, Relocation: YES, Industrial policy: MAINTAIN
-base_eu_maintain:
-  co2_budget_apply: false
-  sector:
-    endo_industry:
-      regional_steel_demand: false
-      regional_cement_demand: false
-      policy_scenario: maintain
-    methanol:
-      regional_methanol_demand: false
-    ammonia: true
-    regional_hvc: false
-
-
-# Climate policy: YES, Relocation: YES, Industrial policy: MAINTAIN
-policy_eu_maintain:
-  co2_budget_apply: true
-  sector:
-    endo_industry:
-      regional_steel_demand: false
-      regional_cement_demand: false
-      policy_scenario: maintain
-    methanol:
-      regional_methanol_demand: false
-    ammonia: true
-    regional_hvc: false
 
 # Climate policy: NO, Relocation: YES, Industrial policy: REGAIN
 base_eu_regain:
@@ -90,33 +64,6 @@ policy_eu_deindustrial:
     ammonia: true
     regional_hvc: false
 
-
-# REGIONAL DEMAND
-# Climate policy: NO, Relocation: NO, Industrial policy: MAINTAIN
-base_reg_maintain:
-  co2_budget_apply: false
-  sector:
-    endo_industry:
-      regional_steel_demand: true
-      regional_cement_demand: true
-      policy_scenario: maintain
-    methanol:
-      regional_methanol_demand: true
-    ammonia: regional
-    regional_hvc: true
-
-# Climate policy: YES, Relocation: NO, Industrial policy: MAINTAIN
-policy_reg_maintain:
-  co2_budget_apply: true
-  sector:
-    endo_industry:
-      regional_steel_demand: true
-      regional_cement_demand: true
-      policy_scenario: maintain
-    methanol:
-      regional_methanol_demand: true
-    ammonia: regional
-    regional_hvc: true
 
 # Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
 base_reg_regain:

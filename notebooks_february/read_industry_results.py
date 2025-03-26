@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import os
 
-scenarios = ["base_eu_regain", "base_eu_maintain", "base_eu_deindustrial", "policy_eu_regain", "policy_eu_maintain", "policy_eu_deindustrial"]
 # Define colors
 base_colors = {"regain": "#4F5050", "maintain": "#85877C", "deindustrial": "#B0B2A1"}
 policy_colors = {"regain": "#5D8850", "maintain": "#95BF74", "deindustrial": "#C5DEB1"}
@@ -27,7 +26,6 @@ country_names = {
     "RS": "Serbia", "SE": "Sweden", "SI": "Slovenia", "SK": "Slovakia", "XK": "Kosovo"
 }
 
-scenarios = ["base_eu_regain", "policy_eu_regain","base_eu_maintain",  "policy_eu_maintain", "base_eu_deindustrial","policy_eu_deindustrial"]
 scenarios = ["base_eu_regain", "policy_eu_regain", "base_eu_deindustrial","policy_eu_deindustrial"]
 
 

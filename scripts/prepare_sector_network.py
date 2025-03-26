@@ -5274,7 +5274,7 @@ def add_hvc(n, investment_year, hvc_data, options):
         bus4=nodes,
         carrier="naphtha steam cracker",
         p_nom_extendable=True,
-        capital_cost= 2050 * 1e3 * 0.8865, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
+        capital_cost= 2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
         # Raillard Cazanove says 725 but prices were too low
         efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
         efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
