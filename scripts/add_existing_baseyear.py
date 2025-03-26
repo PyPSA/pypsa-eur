@@ -938,7 +938,7 @@ def add_chemicals_industry_existing(n, options):
             carrier="naphtha steam cracker",
             p_nom_extendable=False,
             p_nom=p_nom_hvc,
-            capital_cost=2050 * 1e3, #€/kt HVC
+            capital_cost=2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC
             efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
             efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
             efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC

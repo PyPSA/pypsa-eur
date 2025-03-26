@@ -4786,7 +4786,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
         p_set = p_set.sum()
     
-    print(f"P SET STEEL {}")
+    print(f"P SET STEEL {p_set}")
 
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
     max_cap = max(capacities) * 2
@@ -4923,12 +4923,11 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus3=nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
-        #p_nom_max = max_cap * eaf_h2['iron input'],
-        capital_cost= eaf_h2['capital cost'],
-        efficiency= 1 / eaf_h2['iron input'],
-        efficiency2= -1 / eaf_h2['iron input'], # one unit of dri gas per kt iron
-        efficiency3= - eaf_h2['elec input'] / eaf_h2['iron input'], #MWh electricity per kt iron
-        lifetime= eaf_h2['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        capital_cost= eaf_ng['capital cost'],
+        efficiency=1 / eaf_ng['iron input'],
+        efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
+        efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
+        lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
 
     n.add(
@@ -6336,15 +6335,16 @@ if __name__ == "__main__":
         limit = co2_cap.loc[investment_year]
     else:
         limit = get(co2_budget, investment_year)
-    if snakemake.params.co2_budget_apply:
-        add_co2limit(
-            n,
-            options,
-            snakemake.input.co2_totals_name,
-            snakemake.params.countries,
-            nyears,
-            limit,
-        )
+
+    print(f"Co2 limit {limit}")
+    add_co2limit(
+        n,
+        options,
+        snakemake.input.co2_totals_name,
+        snakemake.params.countries,
+        nyears,
+        limit,
+    )
 
     maxext = snakemake.params["lines"]["max_extension"]
     if maxext is not None:

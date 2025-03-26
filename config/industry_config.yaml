@@ -6,11 +6,11 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
-  - base_eu_regain
+  name: "all"
+  #- base_eu_regain
   #- base_eu_maintain
   #- base_eu_deindustrial
-  - policy_eu_regain
+  #- policy_eu_regain
   #- base_eu_maintain
   #- base_eu_deindustrial
   scenarios:
@@ -54,7 +54,13 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
-co2_budget_apply: true
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
+co2_budget:
+  2020: 1
+  2030: 0.450 # 55% reduction by 2030 (Ff55)
+  2040: 0.100 # 90% by 2040
+  2050: 0.000 # climate-neutral by 2050
+
 weather_years:
   enable: true
   rcp: 2-6
