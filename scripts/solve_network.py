@@ -46,7 +46,6 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 

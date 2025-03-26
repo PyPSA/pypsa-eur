@@ -134,7 +134,9 @@ rule build_daily_heat_demand:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: input_cutout(w, config_provider("sector", "heat_demand_cutout")(w)),
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", "heat_demand_cutout")(w)
+        ),
     output:
         heat_demand=resources("daily_heat_demand_total_base_s_{clusters}.nc"),
     resources:
@@ -179,7 +181,9 @@ rule build_temperature_profiles:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: input_cutout(w, config_provider("sector", "heat_demand_cutout")(w)),
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", "heat_demand_cutout")(w)
+        ),
     output:
         temp_soil=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air=resources("temp_air_total_base_s_{clusters}.nc"),

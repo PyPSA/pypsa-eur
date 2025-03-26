@@ -3683,7 +3683,9 @@ def add_biomass(
     if options["solid_biomass_import"].get("enable", False):
         biomass_import_price = options["solid_biomass_import"]["price"]
         # convert TWh in MWh
-        biomass_import_max_amount = options["solid_biomass_import"]["max_amount"] * 1e6 * nyears
+        biomass_import_max_amount = (
+            options["solid_biomass_import"]["max_amount"] * 1e6 * nyears
+        )
         biomass_import_upstream_emissions = options["solid_biomass_import"][
             "upstream_emissions_factor"
         ]
