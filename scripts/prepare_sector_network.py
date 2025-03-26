@@ -3509,6 +3509,7 @@ def add_biomass(
     pop_layout,
     biomass_potentials_file,
     biomass_transport_costs_file=None,
+    nyears=1,
 ):
     """
     Add biomass-related components to the PyPSA network.
@@ -3542,6 +3543,8 @@ def add_biomass(
     biomass_transport_costs_file : str, optional
         Path to CSV file containing biomass transport costs data.
         Required if biomass_transport or biomass_spatial options are True.
+    nyears : float
+        Number of years for which to scale the biomass potentials.
 
     Returns
     -------
@@ -3561,7 +3564,7 @@ def add_biomass(
     """
     logger.info("Add biomass")
 
-    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0)
+    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
 
     # need to aggregate potentials if gas not nodally resolved
     if options["gas_network"]:
@@ -3680,7 +3683,7 @@ def add_biomass(
     if options["solid_biomass_import"].get("enable", False):
         biomass_import_price = options["solid_biomass_import"]["price"]
         # convert TWh in MWh
-        biomass_import_max_amount = options["solid_biomass_import"]["max_amount"] * 1e6
+        biomass_import_max_amount = options["solid_biomass_import"]["max_amount"] * 1e6 * nyears
         biomass_import_upstream_emissions = options["solid_biomass_import"][
             "upstream_emissions_factor"
         ]
@@ -6127,6 +6130,7 @@ if __name__ == "__main__":
             pop_layout=pop_layout,
             biomass_potentials_file=snakemake.input.biomass_potentials,
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
+            nyears=nyears,
         )
 
     if options["ammonia"]:
