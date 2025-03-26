@@ -3179,17 +3179,14 @@ def add_heat(
                     "energy to power ratio",
                 ] = energy_to_power_ratio_water_pit
 
-                if options["district_heating"]["ptes_dynamic_capacity"]:
-                    t_top = xr.open_dataarray(forward_flow_temperature_file)
-                    # Clip forward flow temperature to maximum operational of top layer in PTES
-                    t_top = t_top.where(t_top <= 90, 90)
-                    t_bottom = xr.open_dataarray(return_flow_temperature_file)
-
-                    # Derive e_max_pu as normalized delta T
-                    e_max_pu = t_top - t_bottom
-                    e_max_pu = e_max_pu / (90 - 35)
+                if options["district_heating"]["ptes"]["dynamic_capacity"]:
+                    # Load pre-calculated e_max_pu profiles
+                    e_max_pu_file = snakemake.input.ptes_e_max_pu_profiles
+                    e_max_pu_data = xr.open_dataarray(e_max_pu_file)
                     e_max_pu = (
-                        e_max_pu.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
+                        e_max_pu_data.sel(name=nodes)
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
                     )
                 else:
                     e_max_pu = 1
@@ -5968,10 +5965,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            run="tes_static_capacity",
+            run="tes_dynamic_capacity",
             opts="",
-            clusters="10",
-            ll="vopt",
+            clusters="39",
+            ll="",
             sector_opts="",
             planning_horizons="2050",
         )
