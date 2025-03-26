@@ -264,7 +264,7 @@ def add_co2_sequestration_limit(
         limit.index = limit.index.map(lambda s: f"co2_sequestration_limit-{s}")
         names = limit.index
     else:
-        nyears = n.snapshot_weightings.generators / 8760
+        nyears = n.snapshot_weightings.generators.sum() / 8760
         limit = limit_dict[int(planning_horizons)] * nyears
         periods = [np.nan]
         names = pd.Index(["co2_sequestration_limit"])
