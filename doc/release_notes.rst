@@ -21,6 +21,11 @@ Upcoming Release
   To calculate the total annualised system costs, divide the total costs by the number of years.
   To include multiple years, configure the range in ``snapshots:`` and provide the list of associated cutouts in ``atlite: default_cutouts:``.
 
+* In :mod:`build_hydro_profile`, when subannual periods are used but full-year
+  cutouts are available, the hydro profile is now first calculated for the full
+  year(s) and then sliced to the subannual periods. This is to align better with
+  the normalization process that uses annual EIA statistics.
+
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 

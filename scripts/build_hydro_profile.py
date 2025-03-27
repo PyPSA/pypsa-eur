@@ -143,7 +143,22 @@ if __name__ == "__main__":
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = load_cutout(snakemake.input.cutout, time=time)
+    cutout = load_cutout(snakemake.input.cutout)
+
+    years_in_time = pd.DatetimeIndex(time).year.unique()
+    cutout_time = pd.DatetimeIndex(cutout.coords["time"].values)
+
+    full_years_available = all(
+        pd.Timestamp(f"{year}-01-01") in cutout_time and
+        pd.Timestamp(f"{year}-12-31") in cutout_time
+        for year in years_in_time
+    )
+
+    if full_years_available:
+        mask = [pd.Timestamp(t).year in years_in_time for t in cutout_time]
+        cutout = cutout.sel(time=cutout_time[mask])
+    else:
+        cutout = cutout.sel(time=time)
 
     countries = snakemake.params.countries
     country_shapes = (
@@ -166,11 +181,10 @@ if __name__ == "__main__":
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
-    contained_years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
     norm_year = config_hydro.get("eia_norm_year")
-    missing_years = contained_years.difference(eia_stats.index)
+    missing_years = years_in_time.difference(eia_stats.index)
     if norm_year:
-        eia_stats.loc[contained_years] = eia_stats.loc[norm_year]
+        eia_stats.loc[years_in_time] = eia_stats.loc[norm_year]
     elif missing_years.any():
         eia_stats.loc[missing_years] = eia_stats.median()
 
@@ -180,6 +194,9 @@ if __name__ == "__main__":
         lower_threshold_quantile=True,
         normalize_using_yearly=eia_stats,
     )
+
+    if full_years_available:
+        inflow = inflow.sel(time=time)
 
     if "clip_min_inflow" in params_hydro:
         inflow = inflow.where(inflow > params_hydro["clip_min_inflow"], 0)
