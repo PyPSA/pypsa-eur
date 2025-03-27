@@ -331,11 +331,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "add_brownfield",
             clusters="39",
-            run="tes_dynamic_capacity",
             opts="",
             ll="vopt",
             sector_opts="",
-            planning_horizons=2030,
+            planning_horizons=2050,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
