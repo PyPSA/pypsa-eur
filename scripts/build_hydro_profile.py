@@ -149,8 +149,8 @@ if __name__ == "__main__":
     cutout_time = pd.DatetimeIndex(cutout.coords["time"].values)
 
     full_years_available = all(
-        pd.Timestamp(f"{year}-01-01") in cutout_time and
-        pd.Timestamp(f"{year}-12-31") in cutout_time
+        pd.Timestamp(f"{year}-01-01") in cutout_time
+        and pd.Timestamp(f"{year}-12-31") in cutout_time
         for year in years_in_time
     )
 
