@@ -68,6 +68,11 @@ Rule ``build_central_heating_temperature_profiles``
 
 .. automodule:: build_central_heating_temperature_profiles
 
+Rule ``build_tes_capacity_profiles``
+==============================================================================
+
+.. automodule:: build_tes_capacity_profiles
+
 Rule ``build_energy_totals``
 ==============================================================================
 
