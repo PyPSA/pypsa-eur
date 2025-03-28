@@ -131,6 +131,16 @@ if config["enable"]["retrieve"]:
 
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_bidding_zones:
+        output:
+            file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+            file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        script:
+            "../scripts/retrieve_bidding_zones.py"
+
+
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
