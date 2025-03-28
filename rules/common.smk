@@ -146,3 +146,12 @@ def solved_previous_horizon(w):
         + planning_horizon_p
         + ".nc"
     )
+
+
+def input_cutout(wildcards, cutout_names="default"):
+    if cutout_names == "default":
+        cutout_names = config_provider("atlite", "default_cutout")(wildcards)
+    if isinstance(cutout_names, list):
+        return [CDIR + cn + ".nc" for cn in cutout_names]
+    else:
+        return CDIR + cutout_names + ".nc"

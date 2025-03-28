@@ -15,7 +15,7 @@ import atlite
 import fiona
 import geopandas as gpd
 import numpy as np
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
     config = snakemake.params["renewable"][snakemake.wildcards.technology]
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout = load_cutout(snakemake.input.cutout)
     regions = (
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )

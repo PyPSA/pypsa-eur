@@ -7,9 +7,8 @@ Aggregate all rastered cutout data to base regions Voronoi cells.
 
 import logging
 
-import atlite
 import geopandas as gpd
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from atlite.aggregate import aggregate_matrix
 from dask.distributed import Client
 
@@ -33,7 +32,7 @@ if __name__ == "__main__":
 
     time = get_snapshots(params.snapshots, params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout, time=time)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     I = cutout.indicatormatrix(regions)  # noqa: E741
