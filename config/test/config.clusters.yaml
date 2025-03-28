@@ -23,10 +23,11 @@ clustering:
   mode: administrative
   administrative:
     level: bz
-
-  clustering:
-    temporal:
-      resolution_elec: 24h
+  simplify_network:
+    remove_stubs: true
+    remove_stubs_across_borders: true
+  temporal:
+    resolution_elec: 24h
 
 solving:
   solver:
