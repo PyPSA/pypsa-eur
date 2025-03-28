@@ -18,7 +18,7 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
 -- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
 -- ptes,,,
--- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent capacity of pit storage in district heating
+-- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent energy capacity of pit storage in district heating
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps

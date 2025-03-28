@@ -63,8 +63,8 @@ if __name__ == "__main__":
     )
 
     # Define operational limits for PTES
-    max_top_temperature = snakemake.params.get("max_top_temperature", 90)  # °C
-    min_bottom_temperature = snakemake.params.get("min_bottom_temperature", 35)  # °C
+    max_top_temperature = snakemake.params.get("max_top_temperature")
+    min_bottom_temperature = snakemake.params.get("min_bottom_temperature")
 
     logger.info(
         f"Calculating PTES capacity profiles with max temperature {max_top_temperature}°C"

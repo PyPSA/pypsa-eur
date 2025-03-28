@@ -292,7 +292,9 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     )
 
 
-def update_dynamic_ptes_capacity(n, n_p, year):
+def update_dynamic_ptes_capacity(
+    n: pypsa.Network, n_p: pypsa.Network, year: int
+) -> None:
     """
     Updates dynamic pit storage capacity based on district heating temperature changes.
 
