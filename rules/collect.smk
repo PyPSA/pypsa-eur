@@ -68,3 +68,16 @@ rule solve_sector_networks_perfect:
             **config["scenario"],
             run=config["run"]["name"],
         ),
+
+
+rule plot_balance_maps:
+    input:
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+        ),

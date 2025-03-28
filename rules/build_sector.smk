@@ -515,13 +515,36 @@ rule build_biomass_transport_costs:
         "../scripts/build_biomass_transport_costs.py"
 
 
-rule build_sequestration_potentials:
+rule build_co2_sequestration_potentials:
+    input:
+        storage_table="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
+        storage_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+        traps_table1="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
+        traps_table2="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
+        traps_table3="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
+        traps_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+    output:
+        resources("co2_sequestration_potentials.geojson"),
+    threads: 1
+    resources:
+        mem_mb=4000,
+    log:
+        logs("build_co2_sequestration_potentials.log"),
+    benchmark:
+        benchmarks("build_co2_sequestration_potentials")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_co2_sequestration_potentials.py"
+
+
+rule build_clustered_co2_sequestration_potentials:
     params:
         sequestration_potential=config_provider(
             "sector", "regional_co2_sequestration_potential"
         ),
     input:
-        sequestration_potential="data/complete_map_2020_unit_Mt.geojson",
+        sequestration_potential=resources("co2_sequestration_potentials.geojson"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
     output:
@@ -532,13 +555,13 @@ rule build_sequestration_potentials:
     resources:
         mem_mb=4000,
     log:
-        logs("build_sequestration_potentials_{clusters}.log"),
+        logs("build_clustered_co2_sequestration_potentials_{clusters}.log"),
     benchmark:
-        benchmarks("build_sequestration_potentials_{clusters}")
+        benchmarks("build_clustered_co2_sequestration_potentials_{clusters}")
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_sequestration_potentials.py"
+        "../scripts/build_clustered_co2_sequestration_potentials.py"
 
 
 rule build_salt_cavern_potentials:

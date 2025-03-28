@@ -14,7 +14,7 @@ repos:
 # Run ruff to lint and format
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: v0.11.0
+  rev: v0.11.2
   hooks:
     # Run the linter.
   - id: ruff
@@ -49,7 +49,7 @@ repos:
 
   # Format Snakemake rule / workflow files
 - repo: https://github.com/snakemake/snakefmt
-  rev: v0.10.2
+  rev: v0.11.0
   hooks:
   - id: snakefmt
 

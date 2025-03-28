@@ -38,6 +38,12 @@ Rule ``retrieve_eurostat_household_data``
 .. automodule:: retrieve_eurostat_household_data
 
 
+Rule ``retrieve_co2stop``
+===============================
+
+.. automodule:: retrieve_co2stop
+
+
 Rule ``retrieve_gas_infrastructure_data``
 =========================================
 
