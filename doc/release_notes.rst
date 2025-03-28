@@ -16,10 +16,13 @@ Upcoming Release
   
 * All cutout references in ``config.default.yaml`` now default to ``atlite: default_cutout:``.
 
-* Added support to include multiple complete consecutive meteorological years in one optimisation model.
-  The annualised capital costs, energy limits and loads are multiplied by the number of years.
-  To calculate the total annualised system costs, divide the total costs by the number of years.
-  To include multiple years, configure the range in ``snapshots:`` and provide the list of associated cutouts in ``atlite: default_cutouts:``.
+* Added support to include multiple consecutive, non-consecutive or
+  meteorological (July-June) weather years in one optimisation model. The
+  annualised capital costs, energy limits and loads are multiplied by the number
+  of years. To calculate the total annualised system costs, divide the total
+  costs by the number of years. To include multiple years, configure the range
+  in ``snapshots:`` and provide the list of associated cutouts in ``atlite:
+  default_cutouts:``.
 
 * In :mod:`build_hydro_profile`, when subannual periods are used but full-year
   cutouts are available, the hydro profile is now first calculated for the full
@@ -36,6 +39,9 @@ Upcoming Release
 
 * Bugfix in :mod:`time_aggregation`. Avoid that aggregated snapshot indices land
   on February 29th in leap years when ``enable: drop_leap_day: true``.
+
+* In :mod:`time_aggregation`, the resampling will now be applied separately for each year covered in the snapshots.
+  This prevents snapshots that overflow into the next year, which simplifies running non-contiguous periods.
 
 * Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).

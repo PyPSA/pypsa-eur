@@ -58,7 +58,16 @@ if __name__ == "__main__":
     elif isinstance(resolution, str) and "h" in resolution.lower():
         offset = resolution.lower()
         logger.info(f"Averaging every {offset} hours")
-        snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+
+        # Resample years separately to handle non-contiguous years
+        years = pd.DatetimeIndex(n.snapshots).year.unique()
+        snapshot_weightings = []
+        for year in years:
+            sws_year = n.snapshot_weightings[n.snapshots.year == year]
+            sws_year = sws_year.resample(offset).sum()
+            snapshot_weightings.append(sws_year)
+        snapshot_weightings = pd.concat(snapshot_weightings)
+
         # The resampling produces a contiguous date range. In case the original
         # index was not contiguous, all rows with zero weight must be dropped
         # (corresponding to time steps not included in the original snapshots).

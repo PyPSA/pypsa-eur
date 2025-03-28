@@ -8,7 +8,7 @@ Distribute country-level energy demands by population.
 import logging
 
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 
 idx = pd.IndexSlice
 
@@ -29,7 +29,10 @@ if __name__ == "__main__":
     config = snakemake.config["energy"]
 
     if snakemake.wildcards.kind == "heat":
-        data_years = pd.date_range(freq="h", **snakemake.params.snapshots).year.unique()
+        snapshots = get_snapshots(
+            snakemake.params.snapshots, snakemake.params.drop_leap_day
+        )
+        data_years = snapshots.year.unique()
     else:
         data_years = int(config["energy_totals_year"])
 

@@ -221,6 +221,7 @@ rule build_central_heating_temperature_profiles:
             "return_temperature_baseyear",
         ),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         lower_threshold_ambient_temperature=config_provider(
             "sector",
             "district_heating",
@@ -874,6 +875,7 @@ rule build_retro_cost:
 rule build_population_weighted_energy_totals:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         energy_totals=resources("{kind}_totals.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
@@ -1052,6 +1054,7 @@ def input_profile_offwind(w):
 rule build_egs_potentials:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         sector=config_provider("sector"),
         costs=config_provider("costs"),
     input:

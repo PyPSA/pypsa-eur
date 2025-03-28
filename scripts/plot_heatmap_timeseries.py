@@ -12,14 +12,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
 def unstack_day_hour(s: pd.Series, sns: pd.DatetimeIndex) -> pd.DataFrame:
-    if isinstance(sns, dict):
-        sns = pd.date_range(freq="h", **sns)
     s_h = s.reindex(sns).ffill()
     grouped = s_h.groupby(s_h.index.hour).agg(list)
     index = [f"{i:02d}:00" for i in grouped.index]
@@ -107,7 +105,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
 
-    snapshots = snakemake.params["snapshots"]
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
     carriers = n.carriers
 
     # filter for build capacities

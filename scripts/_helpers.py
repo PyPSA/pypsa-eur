@@ -905,12 +905,13 @@ def get_snapshots(
     snapshots: dict, drop_leap_day: bool = False, freq: str = "h", **kwargs
 ) -> pd.DatetimeIndex:
     """
-    Returns a DateTimeIndex of snapshots.
+    Returns a DateTimeIndex of snapshots, supporting multiple time ranges.
 
     Parameters
     ----------
     snapshots : dict
-        Dictionary containing time range parameters like 'start', 'end', etc.
+        Dictionary containing time range parameters. 'start' and 'end' can be
+        strings or lists of strings for multiple date ranges.
     drop_leap_day : bool, default False
         If True, removes February 29th from the DateTimeIndex in leap years.
     freq : str, default "h"
@@ -922,7 +923,28 @@ def get_snapshots(
     -------
     pd.DatetimeIndex
     """
-    time = pd.date_range(freq=freq, **snapshots, **kwargs)
+    start = (
+        snapshots["start"]
+        if isinstance(snapshots["start"], list)
+        else [snapshots["start"]]
+    )
+    end = snapshots["end"] if isinstance(snapshots["end"], list) else [snapshots["end"]]
+
+    assert len(start) == len(end), (
+        "Lists of start and end dates must have the same length"
+    )
+
+    time_periods = []
+    for s, e in zip(start, end):
+        period = pd.date_range(
+            start=s, end=e, freq=freq, inclusive=snapshots["inclusive"], **kwargs
+        )
+        time_periods.append(period)
+
+    time = pd.DatetimeIndex([])
+    for period in time_periods:
+        time = time.append(period)
+
     if drop_leap_day and time.is_leap_year.any():
         time = time[~((time.month == 2) & (time.day == 29))]
 
