@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from enum import Enum
+import warnings
 
 from definitions.heat_sector import HeatSector
 from definitions.heat_system_type import HeatSystemType
@@ -223,7 +224,12 @@ class HeatSystem(Enum):
         str
             The name for the heat pump costs.
         """
-        return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
+        if heat_source in ["sea_water"]:
+            return f"{self.central_or_decentral} air-sourced heat pump"
+        elif heat_source in ["river_water"]:
+            return f"{self.central_or_decentral} excess-heat-sourced heat pump"
+        else:
+            return f"{self.central_or_decentral} {heat_source}-sourced heat pump"
 
     def heat_source_costs_name(self, heat_source: str) -> str:
         """

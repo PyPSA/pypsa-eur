@@ -1,0 +1,92 @@
+import xarray as xr
+import numpy as np
+import shapely
+from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
+    SurfaceWaterHeatApproximator,
+)
+
+
+class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
+
+    LONGITUDE = "lon"
+    LATITUDE = "lat"
+
+    def __init__(
+        self,
+        volume_flow: xr.DataArray,
+        ambient_temperature: xr.DataArray,
+        region_geometry: shapely.geometry.polygon.Polygon,
+        max_relative_volume_flow: float = 0.1,
+        delta_t_max: float = 4,
+        min_outlet_temperature: float = 1,
+        min_distance_meters: int = 2000,
+    ):
+
+        self.region_geometry = region_geometry
+        water_temperature = self._approximate_river_temperature(
+            ambient_temperature=self._get_boxed_data(ambient_temperature)
+        )
+
+        super().__init__(
+            volume_flow=self._round_coordinates(volume_flow),
+            water_temperature=self._round_coordinates(water_temperature),
+            region_geometry=region_geometry,
+            max_relative_volume_flow=max_relative_volume_flow,
+            delta_t_max=delta_t_max,
+            min_outlet_temperature=min_outlet_temperature,
+            min_distance_meters=min_distance_meters,
+        )
+
+    def _round_coordinates(
+        self, hera_data_array: xr.DataArray, decimal_precision: int = 6
+    ) -> xr.DataArray:
+        """
+        Round the coordinates of the HERA dataset to the defined precision.
+
+        Parameters
+        ----------
+        hera_data_array : xr.DataArray
+            HERA dataset.
+
+        Returns
+        -------
+        xr.DataArray
+            HERA dataset with rounded coordinates.
+        """
+        hera_data_array.coords[self.LATITUDE] = hera_data_array.coords[
+            self.LATITUDE
+        ].round(decimal_precision)
+        hera_data_array.coords[self.LONGITUDE] = hera_data_array.coords[
+            self.LONGITUDE
+        ].round(decimal_precision)
+        return hera_data_array
+
+    @staticmethod
+    def _approximate_river_temperature(
+        ambient_temperature: xr.DataArray,
+        moving_average_num_days: int = 13,
+        k1: float = -0.957,
+        k2: float = 28.212,
+        k3: float = 12.434,
+        k4: float = 0.137,
+    ) -> xr.DataArray:
+        """
+        Apply the formula for derivation of the river temperature from the ambient temperature (Triebs & Tsatsaronis 2022: Estimating the local renewable potentials for the transformation of district heating systems, ECOS 2022, pp. 479-490: https://orbit.dtu.dk/en/publications/proceedings-of-ecos-2022-the-35th-international-conference-on-eff)
+
+        Parameters:
+        -----------
+        ambient_temperature_moving_average: xr.DataArray
+            DataArray containing the moving average of the ambient temperature in river areas.
+        k1, k2, k3, k4: float
+            Regression coefficients for the approximation of the river temperature.
+        """
+        # Time steps per day
+        time_steps_per_day = int(24 / float(ambient_temperature.time.dt.hour.frequency))
+        # Window for moving average
+        window = time_steps_per_day * moving_average_num_days
+        # Calculate the mean ambient temperature
+        ambient_temperature_moving_average = ambient_temperature.rolling(
+            time=window, min_periods=1
+        ).mean()
+
+        return k1 + (k2 / (1 + np.exp(k4 * (k3 - ambient_temperature_moving_average))))
