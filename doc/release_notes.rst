@@ -34,6 +34,9 @@ Upcoming Release
   weight must be dropped (corresponding to time steps not included in the
   original snapshots).
 
+* Bugfix in :mod:`time_aggregation`. Avoid that aggregated snapshot indices land
+  on February 29th in leap years when ``enable: drop_leap_day: true``.
+
 * Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).
 

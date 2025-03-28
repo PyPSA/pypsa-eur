@@ -64,6 +64,17 @@ if __name__ == "__main__":
         # (corresponding to time steps not included in the original snapshots).
         zeros_i = snapshot_weightings.query("objective == 0").index
         snapshot_weightings.drop(zeros_i, inplace=True)
+
+        swi = snapshot_weightings.index
+        leap_days = swi[(swi.month == 2) & (swi.day == 29)]
+        if snakemake.params.drop_leap_day and not leap_days.empty:
+            for year in leap_days.year.unique():
+                year_leap_days = leap_days[leap_days.year == year]
+                leap_weights = snapshot_weightings.loc[year_leap_days].sum()
+                march_first = pd.Timestamp(year, 3, 1, 0, 0, 0)
+                snapshot_weightings.loc[march_first] = leap_weights
+            snapshot_weightings = snapshot_weightings.drop(leap_days).sort_index()
+
         sns = snapshot_weightings.index
         snapshot_weightings = snapshot_weightings.loc[sns]
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
