@@ -55,22 +55,13 @@ atlite:
       time: ["2013-03-01", "2013-03-08"]
 
 renewable:
-  onwind:
-    cutout: be-03-2013-era5
   offwind-ac:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-dc:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-float:
-    cutout: be-03-2013-era5
     max_depth: false
     min_depth: false
-  solar:
-    cutout: be-03-2013-era5
-  solar-hsat:
-    cutout: be-03-2013-era5
 
 clustering:
   temporal:
