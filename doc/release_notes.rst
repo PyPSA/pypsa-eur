@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Handled missing geothermal potential data for GB if geothermal is included for direct utilisation or as heat pump source. The config parameter ``sector: district_heating: limited_heat_sources: geothermal: ignore_missing_regions`` can be used to either terminate the workflow throwing an error (default: ``true``) or assign 0 values to missing regions and continue the workflow (``false``).
+
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 
