@@ -79,6 +79,8 @@ database_en>`_. Integrated from separate repository (https://github.com/ericzhou
 
 * Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
 
+* Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`.
+
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================

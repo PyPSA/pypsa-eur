@@ -1,6 +1,16 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Retrieves bidding zone shape files from two sources. `electricitymaps-contrib` provides shape files for all the zones on a global level. `entsoe-py` provides country level shape files which are concatenated into one file. The `electricitymaps-contrib` data is preferred, but the Italian bidding zones from `entsoe-py` are more accurate.
+
+Outputs
+-------
+
+- ``data/busshapes/bidding_zones_electricitymaps.geojson``:
+- ``data/busshapes/bidding_zones_entsoepy.geojson``:
+"""
+
 from urllib.error import HTTPError
 
 import entsoe
