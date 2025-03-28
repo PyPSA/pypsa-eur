@@ -693,8 +693,6 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
-
-                
     rule retrieve_hera_data:
         output:
             river_discharge="data/hera/river_discharge_2013.nc",
@@ -709,6 +707,7 @@ if config["enable"]["retrieve"]:
             wget -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA2013.nc -O {output.river_discharge}
             wget -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_2013.nc -O {output.ambient_temperature}
             """
+
 
 if config["enable"]["retrieve"]:
 
@@ -731,12 +730,13 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
-
     rule retrieve_seawater_data:
         params:
             snapshots=config_provider("snapshots"),
         input:
-            cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+            cutout=lambda w: CDIR
+            + config_provider("atlite", "default_cutout")(w)
+            + ".nc",
         output:
             data="data/seawater_temperature.nc",
         log:
@@ -750,4 +750,3 @@ if config["enable"]["retrieve"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_seawater_data.py"
-

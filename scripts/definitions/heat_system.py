@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 from enum import Enum
-import warnings
 
 from definitions.heat_sector import HeatSector
 from definitions.heat_system_type import HeatSystemType

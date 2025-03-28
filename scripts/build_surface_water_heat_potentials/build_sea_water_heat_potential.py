@@ -1,16 +1,16 @@
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from dask.distributed import Client, LocalCluster
 import shapely
 import xarray as xr
-
-import logging
 from _helpers import (
     configure_logging,
+    get_snapshots,
     set_scenario_config,
     update_config_from_wildcards,
-    get_snapshots,
 )
+from dask.distributed import Client, LocalCluster
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,6 @@ from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 def get_regional_result(
     seawater_temperature_fn: str, geometry: shapely.geometry.polygon.Polygon
 ) -> dict:
-
     ds = xr.open_dataset(
         seawater_temperature_fn,
         chunks={"time": 8760, "latitude": 50, "longitude": 50},
@@ -42,7 +41,6 @@ def get_regional_result(
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
@@ -79,7 +77,8 @@ if __name__ == "__main__":
         geometry = regions_onshore.loc[region_name].geometry
         futures.append(
             get_regional_result(
-                seawater_temperature_fn=snakemake.input["seawater_temperature"], geometry=geometry
+                seawater_temperature_fn=snakemake.input["seawater_temperature"],
+                geometry=geometry,
             )
         )
 

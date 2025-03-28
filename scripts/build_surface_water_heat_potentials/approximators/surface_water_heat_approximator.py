@@ -1,8 +1,9 @@
-import xarray as xr
-import numpy as np
-import shapely.vectorized as sv
-import shapely
 from abc import ABC
+
+import numpy as np
+import shapely
+import shapely.vectorized as sv
+import xarray as xr
 
 
 class SurfaceWaterHeatApproximator(ABC):
@@ -102,7 +103,6 @@ class SurfaceWaterHeatApproximator(ABC):
             )
 
     def _get_data_resolution(self, data: xr.DataArray) -> float:
-
         return (
             data[self.LONGITUDE].diff(self.LONGITUDE).mean().values
             * self.METERS_PER_DEGREE
@@ -111,7 +111,6 @@ class SurfaceWaterHeatApproximator(ABC):
         ) / 2
 
     def _get_scaling_factor(self, data: xr.DataArray) -> float:
-
         return self._get_data_resolution(data) / self.min_distance_meters
 
     def _get_boxed_data(self, data: xr.DataArray) -> xr.Dataset:
@@ -123,7 +122,8 @@ class SurfaceWaterHeatApproximator(ABC):
             geometry (gpd.GeoDataFrame): The geometry.
 
         Returns:
-            xr.Dataset: The boxed dataset."""
+            xr.Dataset: The boxed dataset.
+        """
 
         # bound data to onshore region
         return data.sel(

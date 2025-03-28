@@ -1,13 +1,12 @@
-import xarray as xr
-import numpy as np
 import shapely
+import xarray as xr
+
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
 )
 
 
 class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
-
     def __init__(
         self,
         water_temperature: xr.DataArray,
@@ -17,7 +16,6 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         min_outlet_temperature: float = 1,
         min_distance_meters: int = 2000,
     ):
-
         # buffer the region geometry by half the data resolution
         # This way, offshore data points just outside the region are included
         self.region_geometry = region_geometry.buffer(

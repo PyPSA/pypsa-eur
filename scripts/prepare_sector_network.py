@@ -2917,14 +2917,18 @@ def add_heat(
         for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
             cop_heat_pump = (
-                pd.DataFrame({region: cop.sel(
-                    heat_system=heat_system.system_type.value,
-                    heat_source=heat_source,
-                    name=region,
+                pd.DataFrame(
+                    {
+                        region: cop.sel(
+                            heat_system=heat_system.system_type.value,
+                            heat_source=heat_source,
+                            name=region,
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                        for region in nodes
+                    }
                 )
-                .to_pandas()
-                .reindex(index=n.snapshots)
-                for region in nodes})
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )
@@ -2934,7 +2938,7 @@ def add_heat(
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
                     index_col=0,
-                    parse_dates=True
+                    parse_dates=True,
                 ).squeeze()[nodes]
 
                 # add resource

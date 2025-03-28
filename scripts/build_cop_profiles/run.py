@@ -112,7 +112,8 @@ if __name__ == "__main__":
                 heat_source in snakemake.params.limited_heat_sources
                 and snakemake.params.limited_heat_sources[heat_source][
                     "constant_temperature_celsius"
-                ] is not False
+                ]
+                is not False
             ):
                 source_inlet_temperature_celsius = (
                     snakemake.params.limited_heat_sources[heat_source][

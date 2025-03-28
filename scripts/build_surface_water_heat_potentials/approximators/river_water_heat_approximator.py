@@ -1,13 +1,13 @@
-import xarray as xr
 import numpy as np
 import shapely
+import xarray as xr
+
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
 )
 
 
 class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
-
     LONGITUDE = "lon"
     LATITUDE = "lat"
 
@@ -21,7 +21,6 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         min_outlet_temperature: float = 1,
         min_distance_meters: int = 2000,
     ):
-
         self.region_geometry = region_geometry
         water_temperature = self._approximate_river_temperature(
             ambient_temperature=self._get_boxed_data(ambient_temperature)
@@ -73,8 +72,8 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         """
         Apply the formula for derivation of the river temperature from the ambient temperature (Triebs & Tsatsaronis 2022: Estimating the local renewable potentials for the transformation of district heating systems, ECOS 2022, pp. 479-490: https://orbit.dtu.dk/en/publications/proceedings-of-ecos-2022-the-35th-international-conference-on-eff)
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         ambient_temperature_moving_average: xr.DataArray
             DataArray containing the moving average of the ambient temperature in river areas.
         k1, k2, k3, k4: float

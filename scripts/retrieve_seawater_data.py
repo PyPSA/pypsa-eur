@@ -1,4 +1,3 @@
-
 """
 Retrieve seawater temperature from the Copernicus Marine Service within the cutout bounds and save it to a NetCDF file.
 
@@ -17,9 +16,9 @@ Outputs
 """
 
 import logging
-import copernicusmarine
-import atlite
 
+import atlite
+import copernicusmarine
 from _helpers import (
     configure_logging,
     set_scenario_config,
@@ -30,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
@@ -64,7 +62,6 @@ if __name__ == "__main__":
         or maximum_latitude > 75
     ):
         raise ValueError("Invalid bounds")
-
 
     data = copernicusmarine.subset(
         dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",

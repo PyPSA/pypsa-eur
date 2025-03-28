@@ -306,6 +306,7 @@ rule build_geothermal_heat_potential:
     script:
         "../scripts/build_geothermal_heat_potential.py"
 
+
 rule build_river_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -318,7 +319,7 @@ rule build_river_heat_potential:
         heat_source_power=resources(
             "heat_source_power_river_water_base_s_{clusters}.csv"
         ),
-        heat_source_temperature=resources("temp_river_water_base_s_{clusters}.nc")
+        heat_source_temperature=resources("temp_river_water_base_s_{clusters}.nc"),
     resources:
         mem_mb=10000,
     log:
@@ -332,34 +333,39 @@ rule build_river_heat_potential:
         "../scripts/build_surface_water_heat_potentials/build_river_water_heat_potential.py"
 
 
-
-def input_heat_source_temperature(w, replace_names={
-    "air": "air_total", 
-    "ground": "soil_total"}
-    ):
+def input_heat_source_temperature(
+    w, replace_names={"air": "air_total", "ground": "soil_total"}
+):
 
     heat_pump_sources = set(
-    config_provider(
-        "sector", "heat_pump_sources", "urban central"
-    )(w)).union(
-        config_provider(
-        "sector", "heat_pump_sources", "urban decentral"
-    )(w),
-    config_provider(
-        "sector", "heat_pump_sources", "rural"
-    )(w))
+        config_provider("sector", "heat_pump_sources", "urban central")(w)
+    ).union(
+        config_provider("sector", "heat_pump_sources", "urban decentral")(w),
+        config_provider("sector", "heat_pump_sources", "rural")(w),
+    )
 
     # replace names for soil and air temperature files
-    return {f"temp_{heat_source_name}":
-        resources("temp_" + replace_names.get(heat_source_name, heat_source_name) + "_base_s_{clusters}.nc")
+    return {
+        f"temp_{heat_source_name}": resources(
+            "temp_"
+            + replace_names.get(heat_source_name, heat_source_name)
+            + "_base_s_{clusters}.nc"
+        )
         for heat_source_name in heat_pump_sources
         # remove heat sources with constant temperature - i.e. no temperature profile file (currently only geothermal)
         if not (
-            heat_source_name in config_provider("sector", "district_heating", "limited_heat_sources")(w) and
-            config_provider(
-            "sector", "district_heating", "limited_heat_sources", heat_source_name, "constant_temperature_celsius"
-        )(w))
+            heat_source_name
+            in config_provider("sector", "district_heating", "limited_heat_sources")(w)
+            and config_provider(
+                "sector",
+                "district_heating",
+                "limited_heat_sources",
+                heat_source_name,
+                "constant_temperature_celsius",
+            )(w)
+        )
     }
+
 
 rule build_sea_heat_potential:
     params:
@@ -372,7 +378,7 @@ rule build_sea_heat_potential:
         # heat_source_power=resources(
         #     "heat_source_power_sea_water_base_s_{clusters}.csv"
         # ),
-        heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc")
+        heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
     resources:
         mem_mb=10000,
     log:
@@ -384,6 +390,7 @@ rule build_sea_heat_potential:
         "../envs/environment.yaml"
     script:
         "../scripts/build_surface_water_heat_potentials/build_sea_water_heat_potential.py"
+
 
 rule build_cop_profiles:
     params:

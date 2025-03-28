@@ -1,16 +1,16 @@
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from dask.distributed import Client, LocalCluster
 import shapely
 import xarray as xr
-
-import logging
 from _helpers import (
     configure_logging,
+    get_snapshots,
     set_scenario_config,
     update_config_from_wildcards,
-    get_snapshots,
 )
+from dask.distributed import Client, LocalCluster
 
 logger = logging.getLogger(__name__)
 
@@ -19,33 +19,42 @@ from approximators.river_water_heat_approximator import RiverWaterHeatApproximat
 
 
 def get_regional_result(
-    river_discharge_data_fn: str, ambient_temperature_data_fn: str, geometry: shapely.geometry.polygon.Polygon
+    river_discharge_data_fn: str,
+    ambient_temperature_data_fn: str,
+    geometry: shapely.geometry.polygon.Polygon,
 ) -> dict:
-
-    river_discharge = xr.open_dataset(
-        river_discharge_data_fn,
-        chunks={"time": 8760, "lat": "auto", "lon": "auto"},
-        decode_coords=["time", "lat", "lon"],
-        mode="r",
-    )['dis'].sortby(["time", "lat", "lon"]).sel(
-        lon=slice(geometry.bounds[0], geometry.bounds[2]),
-        lat=slice(
-            geometry.bounds[1],
-            geometry.bounds[3],
-        ),
+    river_discharge = (
+        xr.open_dataset(
+            river_discharge_data_fn,
+            chunks={"time": 8760, "lat": "auto", "lon": "auto"},
+            decode_coords=["time", "lat", "lon"],
+            mode="r",
+        )["dis"]
+        .sortby(["time", "lat", "lon"])
+        .sel(
+            lon=slice(geometry.bounds[0], geometry.bounds[2]),
+            lat=slice(
+                geometry.bounds[1],
+                geometry.bounds[3],
+            ),
+        )
     )
 
-    ambient_temperature = xr.open_dataset(
-        ambient_temperature_data_fn,
-        chunks={"time": 8760, "lat": "auto", "lon": "auto"},
-        decode_coords=["time", "lat", "lon"],
-        mode="r",
-    )["ta6"].sortby(["time", "lat", "lon"]).sel(
-        lon=slice(geometry.bounds[0], geometry.bounds[2]),
-        lat=slice(
-            geometry.bounds[1],
-            geometry.bounds[3],
-        ),
+    ambient_temperature = (
+        xr.open_dataset(
+            ambient_temperature_data_fn,
+            chunks={"time": 8760, "lat": "auto", "lon": "auto"},
+            decode_coords=["time", "lat", "lon"],
+            mode="r",
+        )["ta6"]
+        .sortby(["time", "lat", "lon"])
+        .sel(
+            lon=slice(geometry.bounds[0], geometry.bounds[2]),
+            lat=slice(
+                geometry.bounds[1],
+                geometry.bounds[3],
+            ),
+        )
     )
 
     return RiverWaterHeatApproximator(
@@ -56,7 +65,6 @@ def get_regional_result(
 
 
 if __name__ == "__main__":
-
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
@@ -93,7 +101,9 @@ if __name__ == "__main__":
         geometry = regions_onshore.loc[region_name].geometry
         futures.append(
             get_regional_result(
-                river_discharge_data_fn=snakemake.input.hera_river_discharge, ambient_temperature_data_fn=snakemake.input.hera_ambient_temperature, geometry=geometry
+                river_discharge_data_fn=snakemake.input.hera_river_discharge,
+                ambient_temperature_data_fn=snakemake.input.hera_ambient_temperature,
+                geometry=geometry,
             )
         )
 
