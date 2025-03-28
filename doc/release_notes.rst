@@ -11,9 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Added option to use dynamic capacity for pit storage using the `e_max_pu` attribute of the store component, which is calculated in the new rule `build_tes_capacity_profiles` and added to the network in `prepare_sector_network`.
-  The dynamic capacity linearly depends on the temperature spread within the storage, which is coupled to the forward and return flow temperatures of the district heating network.
-  The feature can be turned off by setting ``sector: district_heating: ptes: dynamic_capacity: false`` in the configuration file.
+* Added option to use dynamic capacity for pit storage using the ``e_max_pu`` attribute of the store component, which is calculated in the new rule :mod:`build_tes_capacity_profiles` and added to the network in :mod:`prepare_sector_network`.
 
 * Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).
