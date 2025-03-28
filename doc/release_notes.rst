@@ -29,6 +29,11 @@ Upcoming Release
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 
+* Bugfix in :mod:`time_aggregation`. The resampling produces a contiguous date
+  range. In case the original index was not contiguous, all rows with zero
+  weight must be dropped (corresponding to time steps not included in the
+  original snapshots).
+
 * Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).
 

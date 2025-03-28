@@ -59,9 +59,12 @@ if __name__ == "__main__":
         offset = resolution.lower()
         logger.info(f"Averaging every {offset} hours")
         snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+        # The resampling produces a contiguous date range. In case the original
+        # index was not contiguous, all rows with zero weight must be dropped
+        # (corresponding to time steps not included in the original snapshots).
+        zeros_i = snapshot_weightings.query("objective == 0").index
+        snapshot_weightings.drop(zeros_i, inplace=True)
         sns = snapshot_weightings.index
-        if snakemake.params.drop_leap_day:
-            sns = sns[~((sns.month == 2) & (sns.day == 29))]
         snapshot_weightings = snapshot_weightings.loc[sns]
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 
