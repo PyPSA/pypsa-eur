@@ -86,15 +86,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     cutout_params = snakemake.params.cutouts[snakemake.wildcards.cutout]
-
-    assert (
-        len(snakemake.params.snapshots["start"]) == 1
-        and len(snakemake.params.snapshots["end"]) == 1
-    ), "The cutout rule currently only supports a single start and end date."
-
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
-    time = [snapshots[0], snapshots[-1]]
-    cutout_params["time"] = slice(*cutout_params.get("time", time))
+    cutout_params["time"] = slice(*cutout_params["time"])
 
     if {"x", "y", "bounds"}.isdisjoint(cutout_params):
         # Determine the bounds from bus regions with a buffer of two grid cells

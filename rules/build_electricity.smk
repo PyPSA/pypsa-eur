@@ -157,7 +157,6 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config_provider("snapshots"),
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
