@@ -90,6 +90,27 @@ def get_unit_conversion_factor(
     return unit_scaling[input_unit] / unit_scaling[output_unit]
 
 
+def identify_non_covered_regions(
+    regions_onshore: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
+) -> pd.Index:
+    """
+    Identify regions without heat source power data.
+
+    Parameters
+    ----------
+    regions_onshore : gpd.GeoDataFrame
+        GeoDataFrame of the onshore regions, indexed by region name.
+    heat_source_power : pd.DataFrame
+        Heat source power data, indexed by region name.
+
+    Returns
+    -------
+    pd.Index
+        Index of regions that have no heat source power data.
+    """
+    return regions_onshore.index.difference(heat_source_power.index)
+
+
 def get_heat_source_power(
     regions_onshore: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
@@ -144,18 +165,38 @@ def get_heat_source_power(
 
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
-    non_covered_regions = regions_onshore.index.difference(heat_source_power.index)
+    non_covered_regions = identify_non_covered_regions(
+        regions_onshore, heat_source_power
+    )
+
+    not_eu_27 = [
+        "GB",
+        "UA",
+        "MD",
+        "AL",
+        "RS",
+        "BA",
+        "ME",
+        "MK",
+        "XK",
+    ]
+
     if not non_covered_regions.empty:
-        if ignore_missing_regions:
-            logger.warning(
-                f"The onshore regions {non_covered_regions.to_list()} have no heat source power. Filling with zeros."
-            )
-            heat_source_power = heat_source_power.reindex(
-                regions_onshore.index, fill_value=0
-            )
+        if all(non_covered_regions.str.contains("|".join(not_eu_27))):
+            if ignore_missing_regions:
+                logger.warning(
+                    f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
+                )
+                heat_source_power = heat_source_power.reindex(
+                    regions_onshore.index, fill_value=0
+                )
+            else:
+                raise ValueError(
+                    f"The onshore regions outside EU 27 {non_covered_regions.to_list()} have no heat source power. Set the ignore_missing_regions parameter in the config to true if you want to include these countries in your analysis despite missing geothermal data."
+                )
         else:
             raise ValueError(
-                f"The onshore regions {non_covered_regions.to_list()} have no heat source power."
+                f"The onshore regions {non_covered_regions.to_list()} have no heat source power. The pre-processing of the potential data might be faulty."
             )
 
     return heat_source_power
