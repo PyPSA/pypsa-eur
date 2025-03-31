@@ -31,7 +31,7 @@ def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
     for area in entsoe.Area:
         name = area.name
         try:
-            url = f"https://raw.githubusercontent.com/EnergieID/entsoe-py/refs/heads/master/entsoe/geo/geojson/{name}.geojson"
+            url = f"https://raw.githubusercontent.com/EnergieID/entsoe-py/c03c604af36ef92e8ef6ee89dc57c56ca5e1dbac/entsoe/geo/geojson/{name}.geojson"
             gdfs.append(gpd.read_file(url))
         except HTTPError:
             continue
@@ -48,7 +48,7 @@ def load_bidding_zones_from_electricitymaps() -> gpd.GeoDataFrame:
     Returns:
         GeoDataFrame: Contains geometries for all available bidding zones
     """
-    url = "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/master/web/geo/world.geojson"
+    url = "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/v1.238.0/web/geo/world.geojson"
     return gpd.read_file(url)
 
 
