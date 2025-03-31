@@ -66,7 +66,7 @@ def extract_shape_by_bbox(
     -------
         - gdf_new: Updated GeoDataFrame with the extracted shape separated.
     """
-    country_gdf = gdf.explode().query(f"country == '{country}'").reset_index(drop=True)
+    country_gdf = gdf.explode().query("country == @country").reset_index(drop=True)
 
     extracted_region = country_gdf.cx[min_lon:max_lon, min_lat:max_lat].assign(
         zone_name=region_id
@@ -78,7 +78,7 @@ def extract_shape_by_bbox(
 
     return pd.concat(
         [
-            gdf.query(f"country != '{country}'"),
+            gdf.query("country != @country"),
             remaining_country,
             extracted_region.dissolve(by="country").reset_index(),
         ]
