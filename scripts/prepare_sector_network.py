@@ -6054,7 +6054,7 @@ if __name__ == "__main__":
 
     fn = snakemake.input.gas_input_nodes_simplified
     gas_input_nodes = pd.read_csv(fn, index_col=0)
-    
+
     if options.get("keep_existing_capacities", False):
         existing_capacities, existing_efficiencies = get_capacities_from_elec(
             n,
@@ -6114,9 +6114,9 @@ if __name__ == "__main__":
         spatial=spatial,
         options=options,
         cf_industry=cf_industry,
-        snakemake.params.electricity.get("extendable_carriers", dict()),
-        existing_capacities,
-        existing_efficiencies,
+        ext_carriers=snakemake.params.electricity.get("extendable_carriers", dict()),
+        existing_capacities=existing_capacities,
+        existing_efficiencies=existing_efficiencies,
     )
 
     add_storage_and_grids(
