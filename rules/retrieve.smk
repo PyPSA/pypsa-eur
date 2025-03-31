@@ -137,6 +137,13 @@ if config["enable"]["retrieve"]:
         output:
             file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
             file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        log:
+            logs("retrieve_bidding_zones.log"),
+        resources:
+            mem_mb=1000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_bidding_zones.py"
 

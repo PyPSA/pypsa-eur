@@ -142,6 +142,7 @@ rule build_bidding_zones:
 
 rule build_shapes:
     params:
+        config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
@@ -152,7 +153,11 @@ rule build_shapes:
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
-        bidding_zones=resources("bidding_zones.geojson"),
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
         other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
@@ -592,7 +597,6 @@ def input_custom_busmap(w):
 
     custom_busmap = []
     custom_busshapes = []
-    bidding_zones = []
 
     mode = config_provider("clustering", "mode", default="busmap")(w)
 
@@ -626,11 +630,16 @@ rule cluster_network:
         ),
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
+        cluster_mode=config_provider("clustering", "mode"),
     input:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
-        bidding_zones=resources("bidding_zones.geojson"),
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         hac_features=lambda w: (
