@@ -7,7 +7,9 @@ rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
-        cutout=lambda w: CDIR.joinpath(config_provider("atlite", "default_cutout")(w) + ".nc").as_posix(),
+        cutout=lambda w: CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(w) + ".nc"
+        ).as_posix(),
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -31,7 +33,9 @@ rule build_clustered_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: CDIR.joinpath(config_provider("atlite", "default_cutout")(w) + ".nc").as_posix(),
+        cutout=lambda w: CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(w) + ".nc"
+        ).as_posix(),
     output:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
     log:
@@ -52,7 +56,9 @@ rule build_simplified_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
-        cutout=lambda w: CDIR.joinpath(config_provider("atlite", "default_cutout")(w) + ".nc").as_posix(),
+        cutout=lambda w: CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(w) + ".nc"
+        ).as_posix(),
     output:
         clustered_pop_layout=resources("pop_layout_base_s.csv"),
     resources:
@@ -130,7 +136,9 @@ rule cluster_gas_network:
 def heat_demand_cutout(wildcards):
     c = config_provider("sector", "heat_demand_cutout")(wildcards)
     if c == "default":
-        return CDIR.joinpath(config_provider("atlite", "default_cutout")(wildcards) + ".nc").as_posix()
+        return CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(wildcards) + ".nc"
+        ).as_posix()
     else:
         return CDIR.joinpath(c + ".nc").as_posix()
 
@@ -383,7 +391,9 @@ rule build_direct_heat_source_utilisation_profiles:
 def solar_thermal_cutout(wildcards):
     c = config_provider("solar_thermal", "cutout")(wildcards)
     if c == "default":
-        return CDIR.joinpath(config_provider("atlite", "default_cutout")(wildcards) + ".nc").as_posix()
+        return CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(wildcards) + ".nc"
+        ).as_posix()
     else:
         return CDIR.joinpath(c + ".nc").as_posix()
 
