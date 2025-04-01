@@ -300,7 +300,6 @@ if __name__ == "__main__":
             "add_brownfield",
             clusters="39",
             opts="",
-            ll="vopt",
             sector_opts="",
             planning_horizons=2050,
         )
