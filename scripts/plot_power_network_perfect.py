@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging, retry, set_scenario_config
-from plot_power_network import assign_location, load_projection, rename_techs_tyndp
+from make_summary import assign_locations
+from plot_power_network import load_projection, rename_techs_tyndp
 from plot_summary import preferred_order
 from pypsa.plot import add_legend_circles, add_legend_lines
 
@@ -26,7 +27,7 @@ def plot_map_perfect(
     components=["Link", "Store", "StorageUnit", "Generator"],
     bus_size_factor=2e10,
 ):
-    assign_location(n)
+    assign_locations(n)
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
     # investment periods

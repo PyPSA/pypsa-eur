@@ -2,7 +2,7 @@
 options,,,
 -- clip_p_max_pu,p.u.,float,To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.
 -- load_shedding,bool/float,"{'true','false', float}","Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
--- curtailment_mode,bool/float,"{'true','false'}","Fixes the dispatch profiles of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu`` and adds an auxiliary curtailment generator (with negative sign to absorb excess power) at every AC bus. This can speed up the solving process as the curtailment decision is aggregated into a single generator per region. Defaults to ``false``."
+-- curtailment_mode,bool/float,"{'true','false'}",Fixes the dispatch profiles of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu`` and adds an auxiliary curtailment generator (with negative sign to absorb excess power) at every AC bus. This can speed up the solving process as the curtailment decision is aggregated into a single generator per region. Defaults to ``false``.
 -- noisy_costs,bool,"{'true','false'}","Add random noise to marginal cost of generators by :math:`\mathcal{U}(0.009,0,011)` and capital cost of lines and links by :math:`\mathcal{U}(0.09,0,11)`."
 -- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."
 -- rolling_horizon,bool,"{'true','false'}","Switch for rule :mod:`solve_operations_network` whether to optimize the network in a rolling horizon manner, where the snapshot range is split into slices of size `horizon` which are solved consecutively. This setting has currently no effect on sector-coupled networks."
@@ -28,7 +28,7 @@ agg_p_nom_limits,,,Configure per carrier generator nominal capacity constraints 
 -- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint. Default is false.
 -- include_existing,bool,"{'true','false'}",Take existing capacities into account when writing the constraint. Default is false.
 -- file,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries and planning horizons. Defaults to ``data/agg_p_nom_minmax.csv``.
-constraints ,,,
+"constraints ",,,
 -- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``.
 -- EQ,bool/string,"{'false',`n(c| )``; i.e. ``0.5``-``0.7c``}",Require each country or node to on average produce a minimal share of its total consumption itself. Example: ``EQ0.5c`` demands each country to produce on average at least 50% of its consumption; ``EQ0.5`` demands each node to produce on average at least 50% of its consumption.
 -- BAU,bool,"{'true','false'}",Add a per-``carrier`` minimal overall capacity; i.e. at least ``40GW`` of ``OCGT`` in Europe; configured in ``electricity: BAU_mincapacities``

@@ -27,13 +27,14 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
     :target: https://snakemake.readthedocs.io
     :alt: Snakemake
 
+.. image:: https://img.shields.io/discord/911692131440148490?logo=discord
+    :target: https://discord.gg/AnuJBk23FU
+    :alt: Discord
+    
 .. image:: https://api.reuse.software/badge/github.com/pypsa/pypsa-eur
     :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
     :alt: REUSE
 
-.. image:: https://img.shields.io/stackexchange/stackoverflow/t/pypsa
-   :target: https://stackoverflow.com/questions/tagged/pypsa
-   :alt: Stackoverflow
 
 |
 
