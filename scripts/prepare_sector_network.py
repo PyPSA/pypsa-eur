@@ -4768,6 +4768,14 @@ def clean_industry_df(df, sector):
 
 def add_steel_industry(n, investment_year, steel_data, options):
 
+    # Remove loads for previous iundustry
+    """
+    n.loads.drop(n.loads.index[n.loads.carrier == "gas for industry"], inplace=True)
+    n.loads.drop(n.loads.index[n.loads.carrier == "H2 for industry"], inplace=True)
+    n.loads.drop(n.loads.index[n.loads.carrier == "industry electricity"], inplace=True)
+    n.loads.drop(n.loads.index[n.loads.carrier == "process emissions"], inplace=True)
+    n.loads.drop(n.loads.index[n.loads.carrier == "coal for industry"], inplace=True)
+    """
     # Steel production demanded in Europe in kton of steel products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
@@ -4900,7 +4908,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         carrier="DRI-EAF",
         p_nom_extendable=True,
         efficiency=1 / eaf_ng['gas input'] , # MWh natural gas per one unit of dri gas
-        efficiency2= eaf_ng['emission factor'] / eaf_ng['iron input'], # t CO2 per kt iron
+        efficiency2= eaf_ng['emission factor'] / eaf_ng['iron input'] / eaf_ng['gas input'], # t CO2 per unit of dri gas
     )
 
     n.add(

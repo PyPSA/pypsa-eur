@@ -6,13 +6,11 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: "all"
-  #- base_eu_regain
-  #- base_eu_maintain
+  name: #"all"
+  - base_eu_regain
   #- base_eu_deindustrial
-  #- policy_eu_regain
-  #- base_eu_maintain
-  #- base_eu_deindustrial
+  - policy_eu_regain
+  #- policy_eu_deindustrial
   scenarios:
     enable: true
     file: config/industry_policy_scenarios.yaml
