@@ -11,6 +11,48 @@ Release Notes
 Upcoming Release
 ================
 
+
+* Added option to use dynamic capacity for pit storage using the ``e_max_pu`` attribute of the store component, which is calculated in the new rule :mod:`build_tes_capacity_profiles` and added to the network in :mod:`prepare_sector_network`.
+
+* In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
+  To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
+
+* Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
+database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).
+
+* Refactor of :mod:`make_summary`:
+  - Computes summaries for only a single network at a time.
+  - Concatenation is outsourced to new rule :mod:`make_global_summary`.
+  - Rule no longer depends on network plots; use the ``all`` collection rule to generate summaries and plots.
+  - Calculation of cumulative costs for myopic foresight networks was moved to :mod:`make_cumulative_costs`.
+  - Rewrote functions in :mod:`make_summary` to use PyPSA statistics module more.
+  - Inferral of component locations was made more robust. The revised function uses ``n.buses.location`` rather than the index strings. Components inherit the location of the bus they connect to with the highest spatial resolution. 
+  - The file ``supply.csv`` was **removed**; the file ``price_statistics.csv`` was **removed and integrated** into ``metrics.csv``; the files ``supply_energy.csv``, ``nodal_supply_energy.csv``, ``cfs.csv``, ``nodal_cfs.csv`` were **renamed** to ``energy_balance.csv``, ``nodal_energy_balance.csv``, ``capacity_factors.csv``, ``nodal_capacity_factors.csv``.
+  - The order of the MultiIndex levels changed but are now consistently named and documented; the index level "component" now uses capitalised component names rather than lower case list names (e.g. "Generator" instead of "generators").
+  - The plotting functions in :mod:`plot_summary` have been updated to reflect the changes in the summary files.
+
+* Unified the functions ``load_costs`` in :mod:`add_electricity` and ``prepare_costs`` in :mod:`prepare_sector_network` into a single function ``load_costs`` in :mod:`add_electricity`.
+
+* Fixed check-up of charger/store string matching in `solve_network`
+
+* Add rule :mod:`plot_balance_maps` for plotting energy balance maps. The plots are saved in ``results/maps/*`` and can be configured in ``plotting.default.yaml`` under ``plotting: balance_maps``.
+
+* Moved plotting configuration from ``config/config.default.yaml`` to ``config/plotting.default.yaml``. The plotting configuration is now separated from the main configuration file.
+
+* Added simplified representation of renewable energy imports:
+  - Activated with ``sector: imports: enable: true``.
+  - Allows hydrogen, ammonia, methanol, gas and oil (Fischer-Tropsch) with configurable prices (``sector: imports: prices:``).
+  - Methane imports use existing LNG terminal entry points, hydrogen imports use existing pipeline entry points. 
+  - Import prices are uniform across all regions.
+  - Carbon content of imported fuels is handled like biomass.
+  - Total volume of imports can be limited with ``sector: imports: limit:``. The limit includes synthetic and biomass imports (``sector: solid_biomass_import:``), but not fossil fuel imports.
+
+* Added new rule :mod:`plot_balance_timeseries` to plot energy balance time series for the whole year at daily resolution and for each month at model-native resolution.
+
+* Added new rule :mod:`plot_heatmap_timeseries` for plotting configuration of heatmap time series, including options for marginal prices, utilisation rates, and state of charge.
+
+* Fail on solving status 'warning' because results are likely not valid.
+
 * Introduced heat-venting in all heating systems at given marginal cost and added marginal cost for water tank charging. Renamed config setting for marginal cost of home-battery charging to ``marginal_cost_home_battery_storage``. (https://github.com/PyPSA/pypsa-eur/pull/1563)
 
 * Added option to specify the cutout directory in the configuration file. This allows to the user to specify the directory where the cutouts are stored. Use it by setting ``atlite: cutout_directory:`` in the configuration file. (https://github.com/PyPSA/pypsa-eur/pull/1515)
@@ -36,7 +78,10 @@ Upcoming Release
 
 * New feature: Allowing network clustering based on administrative boundaries (i.e., NUTS0/country-level to NUTS3).  To make use of this setting, set ``clustering["mode"]: administrative`` and additionally the ``clusters`` wildcard in ``scenario`` to ‘adm’. Optionally include dictionary of individual country codes and their individual NUTS levels (0 to 3, see documentation). Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1. Please be aware that not every region will solve/converge at every NUTS level (especially at high NUTS resolution) due to rigid regional boundaries.
 
+* Rules of ``validate.smk`` have been removed to consolidate the volume of code to maintain.
+
 * Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
+
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
@@ -63,6 +108,8 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   Note that the cost assumptions are based on a gas CHP (except for solid
   biomass-fired CHP). (https://github.com/PyPSA/pypsa-eur/pull/1392,
   https://github.com/PyPSA/pypsa-eur/pull/1414)
+
+* Add a rule to create a `filegraph` dag and rename `dag` rule as `rulegraph`. (https://github.com/PyPSA/pypsa-eur/pull/1574)
 
 **Breaking Changes**
 

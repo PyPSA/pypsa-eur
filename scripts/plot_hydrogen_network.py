@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 from _helpers import configure_logging, retry, set_scenario_config
-from plot_power_network import assign_location, load_projection
+from make_summary import assign_locations
+from plot_power_network import load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ def plot_h2_map(n, regions):
     # if "H2 pipeline" not in n.links.carrier.unique():
     #     return
 
-    assign_location(n)
+    assign_locations(n)
 
     h2_storage = n.stores.query("carrier == 'H2'")
     regions["H2"] = (

@@ -32,10 +32,10 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains biomass potentials for Europe.
 
-``data/complete_map_2020_unit_Mt.geojson``
+``data/CO2JRC_OpenFormats``
 
 - **Source:** SETIS
-- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en, processed with https://github.com/ericzhou571/Co2Storage
+- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
 - **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
 - **Description:** European CO2 storage database CO2StoP.
 
