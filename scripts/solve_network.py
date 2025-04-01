@@ -865,8 +865,8 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         energy_to_power_ratio_values,
     ):
         charger_var = n.model["Link-p_nom"].loc[charger]
-        if not tes.replace("-", " ").split(" ")[:5] == charger.split(" ")[:5]:
-            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
+        if not tes == charger.replace(" charger", ""):
+            # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
             raise RuntimeError(
                 f"Charger {charger} and TES {tes} do not match. "
                 "Ensure that the charger and TES are in the same location and refer to the same technology."
@@ -922,8 +922,10 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     for charger, discharger in zip(
         indices_charger_p_nom_extendable, indices_discharger_p_nom_extendable
     ):
-        if not charger.split(" ")[:5] == discharger.split(" ")[:5]:
-            # e.g. "DE0 0 urban central water tanks charger" -> ["DE0", "0", "urban", "central", "water"]
+        if not charger.replace(" charger", " ") == discharger.replace(
+            " discharger", " "
+        ):
+            # e.g. "DE0 0 urban central water tanks charger-2050" -> "DE0 0 urban central water tanks-2050"
             raise RuntimeError(
                 f"Charger {charger} and discharger {discharger} do not match. "
                 "Ensure that the charger and discharger are in the same location and refer to the same technology."
@@ -1074,6 +1076,36 @@ def add_flexible_egs_constraint(n):
     )
 
 
+def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
+    """
+    Add constraint for limiting green energy imports (synthetic and biomass).
+    Does not include fossil fuel imports.
+    """
+
+    import_links = n.links.loc[n.links.carrier.str.contains("import")].index
+    import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
+
+    limit = n.config["sector"]["imports"]["limit"]
+    limit_sense = n.config["sector"]["imports"]["limit_sense"]
+
+    if (import_links.empty and import_gens.empty) or not np.isfinite(limit):
+        return
+
+    weightings = n.snapshot_weightings.loc[sns, "generators"]
+
+    # everything needs to be in MWh_fuel
+    eff = n.links.loc[import_links, "efficiency"]
+
+    p_gens = n.model["Generator-p"].loc[sns, import_gens]
+    p_links = n.model["Link-p"].loc[sns, import_links]
+
+    lhs = (p_gens * weightings).sum() + (p_links * eff * weightings).sum()
+
+    rhs = limit * 1e6
+
+    n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
+
+
 def add_co2_atmosphere_constraint(n, snapshots):
     glcs = n.global_constraints[n.global_constraints.type == "co2_atmosphere"]
 
@@ -1150,16 +1182,6 @@ def extra_functionality(
         ).any():
             add_TES_energy_to_power_ratio_constraints(n)
             add_TES_charger_ratio_constraints(n)
-        elif (
-            n.links.index.str.contains(
-                "pits charger|tanks charger", case=False, na=False
-            ).any()
-            or n.stores.index.str.contains("pits", case=False, na=False).any()
-            or n.stores.index.str.contains("tanks", case=False, na=False).any()
-        ):
-            raise ValueError(
-                "Unsupported network configuration: tes is enabled but no heating bus was found."
-            )
 
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
@@ -1173,6 +1195,9 @@ def extra_functionality(
 
     if config["sector"]["enhanced_geothermal"]["enable"]:
         add_flexible_egs_constraint(n)
+
+    if config["sector"]["imports"]["enable"]:
+        add_import_limit_constraint(n, snapshots)
 
     if n.params.custom_extra_functionality:
         source_path = n.params.custom_extra_functionality
@@ -1329,10 +1354,10 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
+            "solve_sector_network",
             opts="",
             clusters="5",
-            configfiles="config/test/config.perfect.yaml",
+            configfiles="config/test/config.overnight.yaml",
             ll="v1.0",
             sector_opts="",
             # planning_horizons="2030",

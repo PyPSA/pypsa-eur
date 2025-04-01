@@ -23,6 +23,7 @@ copy_default_files(workflow)
 
 
 configfile: "config/config.default.yaml"
+configfile: "config/plotting.default.yaml"
 configfile: "config/config.yaml"
 
 
@@ -61,7 +62,6 @@ include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
 include: "rules/solve_electricity.smk"
 include: "rules/postprocess.smk"
-include: "rules/validate.smk"
 include: "rules/development.smk"
 include: "rules/report.smk"
 
@@ -84,6 +84,70 @@ if config["foresight"] == "perfect":
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
+        expand(
+            resources("maps/power-network-s-{clusters}.pdf"),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        expand(
+            RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                if config_provider("sector", "H2_network")(w)
+                else []
+            ),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                if config_provider("sector", "gas_network")(w)
+                else []
+            ),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS + "csvs/cumulative_costs.csv"
+                if config_provider("foresight")(w) == "myopic"
+                else []
+            ),
+            run=config["run"]["name"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+        ),
+        directory(
+            expand(
+                RESULTS
+                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
+        directory(
+            expand(
+                RESULTS
+                + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                run=config["run"]["name"],
+                **config["scenario"],
+            ),
+        ),
     default_target: True
 
 

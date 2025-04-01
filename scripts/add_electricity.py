@@ -197,87 +197,109 @@ def add_co2_emissions(n, costs, carriers):
     Add CO2 emissions to the network's carriers attribute.
     """
     suptechs = n.carriers.loc[carriers].index.str.split("-").str[0]
-    n.carriers.loc[carriers, "co2_emissions"] = costs.co2_emissions[suptechs].values
+    n.carriers.loc[carriers, "co2_emissions"] = costs.loc[
+        suptechs, "CO2 intensity"
+    ].values
 
 
-def load_costs(tech_costs, config, max_hours, Nyears=1.0):
+def load_costs(
+    cost_file: str, config: dict, max_hours: dict = None, nyears: float = 1.0
+) -> pd.DataFrame:
+    """
+    Load cost data from CSV and prepare it.
+
+    Parameters
+    ----------
+    cost_file : str
+        Path to the CSV file containing cost data
+    config : dict
+        Dictionary containing cost-related configuration parameters
+    max_hours : dict, optional
+        Dictionary specifying maximum hours for storage technologies
+    nyears : float, optional
+        Number of years for investment, by default 1.0
+
+    Returns
+    -------
+    costs : pd.DataFrame
+        DataFrame containing the processed cost data
+    """
+    # Copy marginal_cost and capital_cost for backward compatibility
     for key in ("marginal_cost", "capital_cost"):
         if key in config:
             config["overwrites"][key] = config[key]
 
     # set all asset costs and other parameters
-    costs = pd.read_csv(tech_costs, index_col=[0, 1]).sort_index()
+    costs = pd.read_csv(cost_file, index_col=[0, 1]).sort_index()
 
-    # correct units from kW to MW
+    # correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
-    costs.unit = costs.unit.str.replace("/kW", "/MW")
-
-    # correct units from GW to MW
     costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
+
+    costs.unit = costs.unit.str.replace("/kW", "/MW")
     costs.unit = costs.unit.str.replace("/GW", "/MW")
 
-    fill_values = config["fill_values"]
-    costs = costs.value.unstack().fillna(fill_values)
+    # min_count=1 is important to generate NaNs which are then filled by fillna
+    costs = costs.value.unstack(level=1).groupby("technology").sum(min_count=1)
+    costs = costs.fillna(config["fill_values"])
 
+    # Process overwrites for various attributes
     for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
-            logger.info(
-                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
-            )
+            logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
-    costs["capital_cost"] = (
-        (
-            calculate_annuity(costs["lifetime"], costs["discount rate"])
-            + costs["FOM"] / 100.0
-        )
-        * costs["investment"]
-        * Nyears
-    )
+    annuity_factor = calculate_annuity(costs["lifetime"], costs["discount rate"])
+    annuity_factor_fom = annuity_factor + costs["FOM"] / 100.0
+    costs["capital_cost"] = annuity_factor_fom * costs["investment"] * nyears
+
     costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
     costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
 
     costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
 
-    costs = costs.rename(columns={"CO2 intensity": "co2_emissions"})
-
-    costs.at["OCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
-    costs.at["CCGT", "co2_emissions"] = costs.at["gas", "co2_emissions"]
+    costs.at["OCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
+    costs.at["CCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
 
     costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
-
     costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
-    def costs_for_storage(store, link1, link2=None, max_hours=1.0):
-        capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
-        if link2 is not None:
-            capital_cost += link2["capital_cost"]
-        return pd.Series(
-            dict(capital_cost=capital_cost, marginal_cost=0.0, co2_emissions=0.0)
-        )
+    # Calculate storage costs if max_hours is provided
+    if max_hours is not None:
 
-    costs.loc["battery"] = costs_for_storage(
-        costs.loc["battery storage"],
-        costs.loc["battery inverter"],
-        max_hours=max_hours["battery"],
-    )
-    costs.loc["H2"] = costs_for_storage(
-        costs.loc["hydrogen storage underground"],
-        costs.loc["fuel cell"],
-        costs.loc["electrolysis"],
-        max_hours=max_hours["H2"],
-    )
+        def costs_for_storage(store, link1, link2=None, max_hours=1.0):
+            capital_cost = link1["capital_cost"] + max_hours * store["capital_cost"]
+            if link2 is not None:
+                capital_cost += link2["capital_cost"]
+            return pd.Series(
+                {
+                    "capital_cost": capital_cost,
+                    "marginal_cost": 0.0,
+                    "CO2 intensity": 0.0,
+                }
+            )
+
+        costs.loc["battery"] = costs_for_storage(
+            costs.loc["battery storage"],
+            costs.loc["battery inverter"],
+            max_hours=max_hours["battery"],
+        )
+        costs.loc["H2"] = costs_for_storage(
+            costs.loc["hydrogen storage underground"],
+            costs.loc["fuel cell"],
+            costs.loc["electrolysis"],
+            max_hours=max_hours["H2"],
+        )
 
     for attr in ("marginal_cost", "capital_cost"):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
-            costs.loc[overwrites.index, attr] = overwrites
-            logger.info(
-                f"Overwriting {attr} of {overwrites.index} to {overwrites.values}"
-            )
+            idx = overwrites.index.intersection(costs.index)
+            costs.loc[idx, attr] = overwrites.loc[idx]
+            logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
     return costs
 
@@ -745,7 +767,7 @@ def attach_hydro(
             capital_cost=costs.at["ror", "capital_cost"],
             weight=ror["p_nom"],
             p_max_pu=(
-                inflow_t[ror.index]
+                inflow_t[ror.index]  # pylint: disable=E0606
                 .divide(ror["p_nom"], axis=1)
                 .where(lambda df: df <= 1.0, other=1.0)
             ),
@@ -798,6 +820,8 @@ def attach_hydro(
             max_hours_country = (
                 hydro_stats["E_store[TWh]"] * 1e3 / hydro_stats["p_nom_discharge[GW]"]
             )
+        else:
+            raise ValueError(f"Unknown hydro_max_hours method: {hydro_max_hours}")
 
         max_hours_country.clip(0, inplace=True)
 
@@ -1100,7 +1124,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("add_electricity", clusters=100)
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     params = snakemake.params
