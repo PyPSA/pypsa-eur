@@ -25,9 +25,10 @@ country_names = {
     "RS": "Serbia", "SE": "Sweden", "SI": "Slovenia", "SK": "Slovakia", "XK": "Kosovo"
 }
 
-scenarios_steel = ["base_eu_regain", "base_eu_maintain", "base_eu_deindustrial", "policy_eu_regain","policy_eu_maintain", "policy_eu_deindustrial"]
+scenarios_steel = ["base_eu_regain", "base_eu_deindustrial", "policy_eu_regain", "policy_eu_deindustrial"]
 lhv_ammonia = 5.166 # MWh / t
 lhv_methanol = 5.528 # MWh / t
+scenarios_steel = ["base_eu_regain", "policy_eu_regain"]
 
 
 # %% FUNCTIONS
@@ -36,7 +37,7 @@ scenario = 'base_eu_regain'
 
 cwd = os.getcwd()
 parent_dir = os.path.dirname(cwd)
-file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2050.nc")
 n = pypsa.Network(file_path)
 
 # Steel marginal price
@@ -101,7 +102,7 @@ parent_dir = os.path.dirname(cwd)
 for scenario in scenarios_steel:
     for year in years:
         # Load network for the given year
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", f"base_s_39___{year}.nc")
+        file_path = os.path.join(parent_dir, "results_march", scenario, "networks", f"base_s_39___{year}.nc")
         n = pypsa.Network(file_path)
 
         # Steel price
@@ -135,39 +136,35 @@ for scenario in scenarios_steel:
         max_value = max(max(df.max().max() for df in price_data.values()), max_value)
         
 
+fig, axes = plt.subplots(1, 4, figsize=(12, 4), sharex=True, sharey=True)
 
-fig, axes = plt.subplots(1, 6, figsize=(15, 5), sharex=True, sharey=True)
-
-commodities = ["steel", "cement", "ammonia", "methanol", "HVC"]
-colors = ["#4F5050", "#85877C", "#B0B2A1", "#5D8850", "#95BF74", "#C5DEB1"]
+commodities = ["steel", "cement", "ammonia", "methanol"]
+# Define color mapping
+scenario_colors = {
+    "base_eu_regain": "grey",
+    "policy_eu_regain": "green"
+}
 
 for idx, (commodity, ax) in enumerate(zip(commodities, axes)):
     for i, scenario in enumerate(scenarios_steel):
-        ax.plot([2020] + years, price_data[commodity].loc[scenario], marker="o", linestyle="-", color=colors[i], label=scenario if idx == 0 else "")
+        # Extract label: first part after splitting by '_', capitalized
+        label = scenario.split('_')[0].capitalize() if idx == 3 else None
+        color = scenario_colors.get(scenario, None)
+        if scenario == 'base_eu_regain':
+            label = 'Baseline'
+        ax.plot([2020] + years, price_data[commodity].loc[scenario], marker="o", linestyle="-", label=label, color=color)
     
     ax.set_title(f"{commodity.capitalize()} Price")
     ax.set_xticks([2020] + years)
     ax.set_ylim(0, max_value)  
     if idx == 0:
         ax.set_ylabel("Price (€/t)")
-    ax.grid(True)
+    ax.grid(True, linestyle = '--')
 
-# Extra invisible subplot for the legend
-ax_legend = axes[-1]
-ax_legend.axis("off")
-
-# Creating legend
-handles = []
-labels = []
-for scenario in scenarios_steel:
-    strategy = next(key for key in base_colors.keys() if key in scenario)
-    color = policy_colors[strategy] if "policy" in scenario else base_colors[strategy]
-    handles.append(plt.Line2D([0], [0], color=color, marker="o", linestyle="-"))
-    labels.append(scenario)
-
-ax_legend.legend(handles, labels, loc="center", frameon=False)
-
+# Show legend only in the last subplot
+axes[-1].legend(loc="upper left", frameon=False)
 
 plt.tight_layout()
 plt.savefig("./graphs/commodity_prices.png")
 plt.show()
+

@@ -76,9 +76,9 @@ def plot_steel_map(n, regions, year, ax=None):
 # %%
 
 
-root_dir = "C:/Users/alice/Desktop/CMCC/pypsa-adb-industry/"
-scenario = "baseline/"
-res_dir = "results/"
+root_dir = "C:/Users/Dibella/Desktop/CMCC/pypsa-adb-industry/"
+scenario = "base_eu_regain/"
+res_dir = "results_march/"
 regions_fn = root_dir + "resources/" + scenario + "regions_onshore_base_s_39.geojson"
 
 import cartopy.crs as ccrs
@@ -89,7 +89,8 @@ import pypsa
 import yaml
 
 with open(
-    root_dir + res_dir + "baseline_eu_dem/configs/config.base_s_39_lvopt___2030.yaml"
+    r"C:\Users\Dibella\Desktop\CMCC\pypsa-adb-industry\results_march\base_eu_regain\configs\config.base_s_39___2030.yaml"
+        #root_dir + res_dir + "base_eu_regain/configs/config.base_s_39_lvopt___2030.yaml"
 ) as config_file:
     config = yaml.safe_load(config_file)
 
@@ -103,7 +104,7 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
-scenarios = ["baseline_eu_dem", "climate_policy_eu_dem"]
+scenarios = ["base_eu_regain", "policy_eu_regain"]
 
 fig, axes = plt.subplots(
     len(scenarios),
@@ -117,9 +118,9 @@ for i, year in enumerate(years):
     for j, scenario in enumerate(scenarios):
         fn = (
             root_dir
-            + "results/"
+            + "results_march/"
             + scenario
-            + f"/postnetworks/base_s_39_lvopt___{year}.nc"
+            + f"/networks/base_s_39___{year}.nc"
         )
         ax = axes[j, i]
         n = pypsa.Network(fn)

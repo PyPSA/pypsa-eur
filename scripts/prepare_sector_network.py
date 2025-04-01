@@ -4788,6 +4788,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
     
     print(f"P SET STEEL {p_set}")
 
+
     # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
     max_cap = max(capacities) * 2
 

@@ -39,7 +39,8 @@ for scenario in scenarios:
     opex = n.statistics.opex()
     threshold = 0.1
     capex = capex[capex>threshold]
+    capex.index = capex.reset_index()
     
     
-    capez = capex[capex.index]
+    capex = capex[~capex.index.str.contains('StorageUnit')]
     opex = opex[opex>threshold]

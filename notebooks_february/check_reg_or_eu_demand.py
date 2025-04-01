@@ -24,6 +24,7 @@ country_names = {
     "MK": "North Macedonia", "NL": "Netherlands", "NO": "Norway", "PL": "Poland", "PT": "Portugal", "RO": "Romania",
     "RS": "Serbia", "SE": "Sweden", "SI": "Slovenia", "SK": "Slovakia", "XK": "Kosovo"
 }
+#scenarios = ["base_eu_regain", "policy_eu_regain"]
 
 commodities = ['steel','cement','NH3','HVC','industry methanol']
 df = pd.DataFrame(index=commodities,columns = scenarios)
@@ -32,7 +33,7 @@ df = pd.DataFrame(index=commodities,columns = scenarios)
 for scenario in scenarios:
     cwd = os.getcwd()
     parent_dir = os.path.dirname(cwd)
-    file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+    file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2050.nc")
     n = pypsa.Network(file_path)
     timestep = n.snapshot_weightings.iloc[0, 0]
     
