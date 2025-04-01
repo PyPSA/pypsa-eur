@@ -112,7 +112,8 @@ These settings work together to organize model runs:
 - Final model outputs are always stored in ``results/[run.name]/...``
 - Intermediate files can be either:
   - Specific to a run: ``resources/[run.shared_resources.policy]/...`` (if policy is a string)
-  - Shared between runs: ``resources/...`` (if policy is ``false``)
+  - Shared between runs: ``resources/...`` (if policy is ``true``)
+  - Not shared between runs: ``resources/[run.name]``(if policy is ``false``)
   - Partially shared: If policy is ``"base"``, some common files are shared while others remain run-specific
 
 For this tutorial, with ``run.name: "test-elec"`` and ``run.shared_resources.policy: "test"``, 
