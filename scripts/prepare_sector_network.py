@@ -4587,14 +4587,26 @@ def add_industry(
     )
 
     # distribute across population
-    if len(spatial.oil.demand_locations) ==1:
+    if len(spatial.oil.demand_locations) == 1:
         non_sequestered_hvc_locations = ["EU non-sequestered HVC"]
-        HVC_potential = p_set_naphtha.sum()*nhours * non_sequestered * emitted_co2_per_naphtha / costs.at["oil", "CO2 intensity"]
+        HVC_potential = (
+            p_set_naphtha.sum()
+            * nhours
+            * non_sequestered
+            * emitted_co2_per_naphtha
+            / costs.at["oil", "CO2 intensity"]
+        )
     else:
         non_sequestered_hvc_locations = (
             pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
         )
-        HVC_potential_sum = p_set_naphtha.sum()*nhours * non_sequestered * emitted_co2_per_naphtha / costs.at["oil", "CO2 intensity"]
+        HVC_potential_sum = (
+            p_set_naphtha.sum()
+            * nhours
+            * non_sequestered
+            * emitted_co2_per_naphtha
+            / costs.at["oil", "CO2 intensity"]
+        )
         shares = pop_layout.total / pop_layout.total.sum()
         HVC_potential = shares.mul(HVC_potential_sum)
         HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
@@ -4610,9 +4622,10 @@ def add_industry(
     )
     # add stores with population distributed potential - must be zero at the last step
     e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=non_sequestered_hvc_locations)
-    e_max_pu.iloc[-1,:] = 0
+    e_max_pu.iloc[-1, :] = 0
 
-    n.add("Store",
+    n.add(
+        "Store",
         non_sequestered_hvc_locations,
         bus=non_sequestered_hvc_locations,
         carrier="non-sequestered HVC",
