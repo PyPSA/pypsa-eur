@@ -934,6 +934,9 @@ solving:
         H2 pipeline: 0.3
         gas pipeline: 0.3
       fractional_last_unit_size: false
+    keep_files: false
+    model_kwargs:
+      solver_dir: "/tmp"
 
   agg_p_nom_limits:
     agg_offwind: false
@@ -1023,10 +1026,6 @@ solving:
     expected_value: None
     atol: 1_000_000
     rtol: 0.01
-
-  model_kwargs:
-    solver_dir: "/tmp"
-  keep_files: false
 
   mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
   memory_logging_frequency: 30 # in seconds
