@@ -83,6 +83,7 @@ database_en>`_. Integrated from separate repository (https://github.com/ericzhou
 
 * Bugfix: Change wdpa download rules in ``retrieve.smk`` to use shutil instead of shell commands to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1575)
 
+* Bugfix: Change CDIR definition in ``Snakefile`` to utilize pathlib to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1602)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================

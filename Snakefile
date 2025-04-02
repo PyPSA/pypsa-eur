@@ -39,7 +39,7 @@ benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_s
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
 cutout_dir = config["atlite"]["cutout_directory"]
-CDIR = join(cutout_dir, ("" if run["shared_cutouts"] else RDIR))
+CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
 RESULTS = "results/" + RDIR
 
 
