@@ -224,7 +224,9 @@ if __name__ == "__main__":
                 .to_pandas()
             )
             grid_cells = grid.loc[bus_bin_mask]
-            geometry = grid_cells.intersection(resource_regions.loc[bus]).union_all()
+            geometry = (
+                grid_cells.intersection(resource_regions.loc[bus]).union_all().buffer(0)
+            )
             class_regions[(bus, bin_id)] = geometry
         class_regions = gpd.GeoSeries(class_regions, crs=4326)
         class_regions.index.names = ["bus", "bin"]
