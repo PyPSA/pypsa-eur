@@ -1227,34 +1227,6 @@ def add_methanol_to_hvc(n, costs):
         efficiency3=co2_release,
     )
 
-    
-
-def add_methanol_to_kerosene(n, costs):
-    tech = "methanol-to-kerosene"
-
-    logger.info(f"Adding {tech}.")
-
-    capital_cost = costs.at[tech, "capital_cost"] / costs.at[tech, "methanol-input"]
-
-    n.add(
-        "Link",
-        spatial.h2.locations,
-        suffix=f" {tech}",
-        carrier=tech,
-        capital_cost=capital_cost,
-        marginal_cost=costs.at[tech, "VOM"] / costs.at[tech, "methanol-input"],
-        bus0=spatial.methanol.nodes,
-        bus1=spatial.oil.kerosene,
-        bus2=spatial.h2.nodes,
-        bus3="co2 atmosphere",
-        efficiency=1 / costs.at[tech, "methanol-input"],
-        efficiency2=-costs.at[tech, "hydrogen-input"]
-        / costs.at[tech, "methanol-input"],
-        efficiency3=costs.at["oil", "CO2 intensity"] / costs.at[tech, "methanol-input"],
-        p_nom_extendable=True,
-        lifetime=costs.at[tech, "lifetime"],
-    )
-
 
 def add_methanol_reforming(n, costs):
     logger.info("Adding methanol steam reforming.")
@@ -1578,7 +1550,7 @@ def add_ammonia(
             p_nom_extendable=True,
             carrier="ammonia cracker",
             efficiency=1 / cf_industry["MWh_NH3_per_MWh_H2_cracker"],
-            capital_cost=costs.at["Ammonia cracker", "fixed"]
+            capital_cost=costs.at["Ammonia cracker", "capital_cost"]
             / cf_industry["MWh_NH3_per_MWh_H2_cracker"],  # given per MW_H2
             lifetime=costs.at["Ammonia cracker", "lifetime"],
         )
@@ -1592,7 +1564,7 @@ def add_ammonia(
             e_nom_extendable=True,
             e_cyclic=True,
             carrier="ammonia store",
-            capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "fixed"],
+            capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "capital_cost"],
             lifetime=costs.at["NH3 (l) storage tank incl. liquefaction", "lifetime"],
         )
 
@@ -7058,6 +7030,7 @@ if __name__ == "__main__":
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
         )
 
+    
     if options["methanol"]:
         add_methanol(n, costs, options=options, spatial=spatial, pop_layout=pop_layout)
 
@@ -7073,6 +7046,29 @@ if __name__ == "__main__":
             cf_industry=cf_industry,
             investment_year=investment_year,
         )
+
+    if options["shipping"]:
+        add_shipping(
+            n=n,
+            costs=costs,
+            shipping_demand_file=snakemake.input.shipping_demand,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+            investment_year=investment_year,
+        )
+
+    if options["aviation"]:
+        add_aviation(
+            n=n,
+            costs=costs,
+            pop_layout=pop_layout,
+            pop_weighted_energy_totals=pop_weighted_energy_totals,
+            options=options,
+            spatial=spatial,
+        )
+
 
     if options["ammonia"]:
         add_ammonia(n, costs, pop_layout, spatial, cf_industry, snakemake.params.endo_ammonia)

@@ -24,7 +24,7 @@ from _helpers import (
 )
 from add_electricity import load_costs, sanitize_carriers, calculate_annuity
 from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial, prepare_costs, calculate_steel_parameters
+from prepare_sector_network import cluster_heat_buses, define_spatial, calculate_steel_parameters
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
