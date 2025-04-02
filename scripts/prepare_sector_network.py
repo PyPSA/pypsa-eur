@@ -1469,6 +1469,7 @@ def insert_electricity_distribution_grid(
     costs: pd.DataFrame,
     options: dict,
     pop_layout: pd.DataFrame,
+    solar_rooftop_potentials_fn: str,
 ) -> None:
     """
     Insert electricity distribution grid components into the network.
@@ -1573,7 +1574,7 @@ def insert_electricity_distribution_grid(
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "capital_cost"]
 
-    fn = snakemake.input.solar_rooftop_potentials
+    fn = solar_rooftop_potentials_fn
     potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
     potential.index = potential.index.map(flatten) + " solar"
 
@@ -6260,7 +6261,9 @@ if __name__ == "__main__":
         limit_individual_line_extension(n, maxext)
 
     if options["electricity_distribution_grid"]:
-        insert_electricity_distribution_grid(n, costs, options, pop_layout)
+        insert_electricity_distribution_grid(
+            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+        )
 
     if options["enhanced_geothermal"].get("enable", False):
         logger.info("Adding Enhanced Geothermal Systems (EGS).")

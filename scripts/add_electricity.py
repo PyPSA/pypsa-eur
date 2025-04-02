@@ -869,7 +869,7 @@ def attach_hydro(
         )
 
 
-def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
+def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]) -> None:
     """
     Attach renewable capacities from the GEM dataset to the network.
 
@@ -890,7 +890,7 @@ def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> N
     )
 
     for fueltype, carrier in tech_map.items():
-        fn = snakemake.input.get(f"class_regions_{carrier}")
+        fn = smk_inputs.get(f"class_regions_{carrier}")
         class_regions = gpd.read_file(fn)
 
         df_fueltype = df.query("Fueltype == @fueltype")
@@ -1246,7 +1246,7 @@ if __name__ == "__main__":
             year = estimate_renewable_caps["year"]
 
             if estimate_renewable_caps["from_gem"]:
-                attach_GEM_renewables(n, tech_map)
+                attach_GEM_renewables(n, tech_map, snakemake.input)
 
             estimate_renewable_capacities(
                 n, year, tech_map, expansion_limit, params.countries
