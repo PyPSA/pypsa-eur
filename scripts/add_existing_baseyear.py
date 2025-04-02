@@ -7,6 +7,7 @@ horizon.
 """
 
 import logging
+import re
 from types import SimpleNamespace
 
 import country_converter as coco
@@ -14,7 +15,6 @@ import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
-import re
 import xarray as xr
 from _helpers import (
     configure_logging,
