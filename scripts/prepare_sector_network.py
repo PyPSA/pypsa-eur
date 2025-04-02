@@ -474,7 +474,9 @@ def update_wind_solar_costs(
             distance = ds["average_distance"].to_pandas()
             distance.index = distance.index.map(flatten)
             submarine_cost = costs.at[tech + "-connection-submarine", "capital_cost"]
-            underground_cost = costs.at[tech + "-connection-underground", "capital_cost"]
+            underground_cost = costs.at[
+                tech + "-connection-underground", "capital_cost"
+            ]
             connection_cost = line_length_factor * (
                 distance * submarine_cost + landfall_length * underground_cost
             )
