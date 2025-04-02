@@ -34,7 +34,7 @@ if __name__ == "__main__":
             planning_horizons="",
         )
 
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
@@ -52,6 +52,7 @@ if __name__ == "__main__":
         params=snakemake.params,
         solving=snakemake.params.solving,
         log_fn=snakemake.log.solver,
+        rule_name=snakemake.rule,
     )
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

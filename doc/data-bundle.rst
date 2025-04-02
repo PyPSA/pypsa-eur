@@ -33,13 +33,6 @@ scope to reduce file size, or are not provided through stable URLs elsewhere.
 - **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
 - **Description:** Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions.
 
-``data/bundle/nama_10r_3gdp.tsv.gz``
-
-- **Source:** Eurostat
-- **Link:** https://ec.europa.eu/eurostat/databrowser/view/nama_10r_3gdp/default/table?lang=en
-- **License:** `custom <https://ec.europa.eu/eurostat/about-us/policies/copyright>`__
-- **Description:** Gross domestic product (GDP) at current market prices by NUTS 3 regions.
-
 ``data/bundle/corine``
 
 - **Source:** European Environment Agency (EEA)
@@ -94,7 +87,7 @@ scope to reduce file size, or are not provided through stable URLs elsewhere.
 - **License:** CC0 (`reference <https://datadryad.org/stash/dataset/doi:10.5061/dryad.dk1j0>`__)
 - **Description:** Gridded GDP data.
 
-``data/bundle/ppp_2013_1km_Aggregated.tif``
+``data/bundle/ppp_2019_1km_Aggregated.tif``
 
 - **Source:** WorldPop (www.worldpop.org - School of Geography and Environmental
   Science, University of Southampton; Department of Geography and Geosciences,
@@ -104,5 +97,5 @@ scope to reduce file size, or are not provided through stable URLs elsewhere.
   Funded by The Bill and Melinda Gates Foundation (OPP1134076).
   https://dx.doi.org/10.5258/SOTON/WP00647
 - **Link:** https://hub.worldpop.org/doi/10.5258/SOTON/WP00647
-- **License:** CC-BY 4.0 (`reference <https://hub.worldpop.org/geodata/summary?id=24770>`__)
+- **License:** CC-BY 4.0 (`reference <https://hub.worldpop.org/geodata/summary?id=24776>`__)
 - **Description:** Gridded population data.

@@ -34,8 +34,9 @@ jobs:
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
       with:
+        miniforge-version: latest
         activate-environment: ${{ github.event.repository.name }}
-        channels: bioconda,conda-forge,defaults
+        channel-priority: strict
         environment-file: ${{ env.BASE_ENV }}
 
     - name: Update pinned environment per OS
@@ -83,5 +84,8 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: update-pinned-environment
         title: "[github-actions.ci] Update pinned envs"
-        body: "Automatically generated PR to update pinned environment files for Windows, macOS, and Linux."
+        body: |
+          Automatically generated PR to update pinned environment files for Windows, macOS, and Linux.
+
+          **Note: Do not merge without manual test execution. Either update the branch to trigger tests, or use `workflow_dispatch` to run tests manually. Unlike standard PRs, tests will not run automatically.**
         commit-message: "Update pinned environment files for all platforms"

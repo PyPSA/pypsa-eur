@@ -5,16 +5,6 @@
 Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
 When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
 
-Relevant Settings
------------------
-
-.. code:: yaml
-    sector:
-        district_heating:
-            heat_utilisation_potentials:
-            direct_utilisation_heat_sources:
-    snapshots:
-
 Inputs
 ------
 - `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles
@@ -24,8 +14,12 @@ Outputs
 - `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
 """
 
+import logging
+
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def get_source_temperature(heat_source_key: str):
@@ -48,8 +42,8 @@ def get_source_temperature(heat_source_key: str):
         If the heat source is unknown (not in `config`).
     """
 
-    if heat_source_key in snakemake.params.heat_utilisation_potentials.keys():
-        return snakemake.params.heat_utilisation_potentials[heat_source_key][
+    if heat_source_key in snakemake.params.limited_heat_sources.keys():
+        return snakemake.params.limited_heat_sources[heat_source_key][
             "constant_temperature_celsius"
         ]
     else:
@@ -89,7 +83,7 @@ if __name__ == "__main__":
             "build_cop_profiles",
             clusters=48,
         )
-
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     direct_utilisation_heat_sources: list[str] = (

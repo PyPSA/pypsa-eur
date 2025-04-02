@@ -65,9 +65,13 @@ The script has the following structure:
         with heated floor area
 """
 
+import logging
+
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 # (i) --- FIXED PARAMETER / STANDARD VALUES -----------------------------------
 
@@ -128,7 +132,7 @@ l_strength = ["0.07", "0.075", "0.08", "0.1", "0.15", "0.22", "0.24", "0.26"]
 
 def get_average_temperature_during_heating_season(temperature, t_threshold=15):
     """
-    returns average temperature during heating season
+    Returns average temperature during heating season
     input:
         temperature : pd.Series(Index=time, values=temperature)
         t_threshold : threshold temperature for heating degree days (HDD)
@@ -142,7 +146,7 @@ def get_average_temperature_during_heating_season(temperature, t_threshold=15):
 
 def prepare_building_stock_data():
     """
-    reads building stock data and cleans up the format, returns
+    Reads building stock data and cleans up the format, returns
     --------
     u_values:          pd.DataFrame current U-values
     area_tot:          heated floor area per country and sector [Mm²]
@@ -1054,6 +1058,7 @@ if __name__ == "__main__":
             ll="v1.0",
             sector_opts="Co2L0-168H-T-H-B-I-solar3-dist1",
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     #  ********  config  *********************************************************

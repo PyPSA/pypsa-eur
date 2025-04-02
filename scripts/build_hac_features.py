@@ -9,7 +9,7 @@ import logging
 
 import atlite
 import geopandas as gpd
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from atlite.aggregate import aggregate_matrix
 from dask.distributed import Client
 
@@ -20,6 +20,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_hac_features")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params

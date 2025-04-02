@@ -4,33 +4,6 @@
 """
 Defines the time aggregation to be used for sector-coupled network.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-        temporal:
-            resolution_sector:
-
-    enable:
-        drop_leap_day:
-
-Inputs
-------
-
-- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: the network whose
-  snapshots are to be aggregated
-- ``resources/hourly_heat_demand_total_base_s_{clusters}.nc``: the total
-  hourly heat demand
-- ``resources/solar_thermal_total_base_s_{clusters}.nc``: the total
-  hourly solar thermal generation
-
-Outputs
--------
-
-- ``snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv``
-
 Description
 -----------
 Computes a time aggregation scheme for the given network, in the form of a CSV

@@ -8,32 +8,6 @@ Lifts electrical transmission network to a single 380 kV voltage layer, removes
 dead-ends of the network, and reduces multi-hop HVDC connections to a single
 link.
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-      simplify_network:
-      cluster_network:
-      aggregation_strategies:
-
-    links:
-        p_max_pu:
-
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`electricity_cf`, :ref:`renewable_cf`,
-    :ref:`lines_cf`, :ref:`links_cf`
-
-Inputs
-------
-
-- ``resources/regions_onshore.geojson``: confer :ref:`busregions`
-- ``resources/regions_offshore.geojson``: confer :ref:`busregions`
-- ``networks/base.nc``
-
 Outputs
 -------
 
@@ -62,7 +36,7 @@ The rule :mod:`simplify_network` does up to three things:
 
 2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``.
 
-3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)``.
+3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)`` and ``remove_stubs_within_admin(...)``.
 """
 
 import logging
@@ -74,7 +48,7 @@ import pandas as pd
 import pypsa
 import scipy as sp
 from _helpers import configure_logging, set_scenario_config
-from cluster_network import cluster_regions
+from cluster_network import busmap_for_admin_regions, cluster_regions
 from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
 
@@ -284,6 +258,28 @@ def remove_stubs(
     return n, busmap
 
 
+def remove_stubs_within_admin(
+    n: pypsa.Network, admin_shapes: str
+) -> tuple[pypsa.Network, pd.Series]:
+    busmap = busmap_for_admin_regions(
+        n,
+        admin_shapes,
+        params,
+    )
+    n.buses["admin"] = n.buses.index.map(busmap)
+
+    logger.info("Removing stubs within administrative regions.")
+    matching_attrs = ["admin"]
+    busmap = busmap_by_stubs(n, matching_attrs)
+
+    _remove_clustered_buses_and_branches(n, busmap)
+
+    # remove admin column again
+    n.buses.drop("admin", axis=1, inplace=True)
+
+    return n, busmap
+
+
 def aggregate_to_substations(
     n: pypsa.Network,
     buses_i: pd.Index | list,
@@ -328,7 +324,6 @@ def aggregate_to_substations(
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        line_length_factor=1.0,
         bus_strategies=bus_strategies,
         line_strategies=line_strategies,
     )
@@ -387,6 +382,9 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     -------
         n (pypsa.Network): The network object with all converters removed.
     """
+    # Initialise converter_map
+    converter_map = n.buses.index.to_series()
+
     # Extract converters
     converters = n.links.query("carrier == ''")[["bus0", "bus1"]]
     converters["bus0_carrier"] = converters["bus0"].map(n.buses.carrier)
@@ -402,6 +400,8 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
     # Dictionary for remapping
     dict_dc_to_ac = dict(zip(converters["dc_bus"], converters["ac_bus"]))
+    # Update converter map
+    converter_map = converter_map.replace(dict_dc_to_ac)
 
     # Remap all buses that were originally connected to the converter to the connected AC bus
     n.links["bus0"] = n.links["bus0"].replace(dict_dc_to_ac)
@@ -411,7 +411,7 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
     n.links = n.links.loc[~n.links.index.isin(converters.index)]
     n.buses = n.buses.loc[~n.buses.index.isin(converters["dc_bus"])]
 
-    return n
+    return n, converter_map
 
 
 if __name__ == "__main__":
@@ -430,16 +430,21 @@ if __name__ == "__main__":
 
     linetype_380 = snakemake.config["lines"]["types"][380]
     n, trafo_map = simplify_network_to_380(n, linetype_380)
+    busmaps = [trafo_map]
 
-    n = remove_converters(n)
+    n, converter_map = remove_converters(n)
+    busmaps.append(converter_map)
 
     n, simplify_links_map = simplify_links(n, params.p_max_pu)
-
-    busmaps = [trafo_map, simplify_links_map]
+    busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
-        n, stub_map = remove_stubs(n, params.simplify_network)
-        busmaps.append(stub_map)
+        if params.mode == "administrative":
+            n, stub_map = remove_stubs_within_admin(n, snakemake.input.admin_shapes)
+            busmaps.append(stub_map)
+        else:
+            n, stub_map = remove_stubs(n, params.simplify_network)
+            busmaps.append(stub_map)
 
     substations_i = n.buses.query("substation_lv or substation_off").index
 

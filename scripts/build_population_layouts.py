@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     for ct in countries:
         logger.debug(
-            f"The urbanization rate for {ct} is {round(urban_fraction[ct]*100)}%"
+            f"The urbanization rate for {ct} is {round(urban_fraction[ct] * 100)}%"
         )
 
         indicator_nuts3_ct = nuts3.country.apply(lambda x: 1.0 if x == ct else 0.0)
