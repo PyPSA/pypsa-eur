@@ -915,7 +915,6 @@ adjustments:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
-  #tmpdir: "path/to/tmp"
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
@@ -946,6 +945,9 @@ solving:
         H2 pipeline: 0.3
         gas pipeline: 0.3
       fractional_last_unit_size: false
+    keep_files: false
+    model_kwargs:
+      solver_dir: "/tmp"
 
   agg_p_nom_limits:
     agg_offwind: false
