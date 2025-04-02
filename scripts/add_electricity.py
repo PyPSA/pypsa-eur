@@ -869,7 +869,9 @@ def attach_hydro(
         )
 
 
-def attach_GEM_renewables(n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]) -> None:
+def attach_GEM_renewables(
+    n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]
+) -> None:
     """
     Attach renewable capacities from the GEM dataset to the network.
 
