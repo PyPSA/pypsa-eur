@@ -4572,41 +4572,40 @@ def add_industry(
         carrier="naphtha for industry",
         p_set=p_set_naphtha,
     )
-
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
         industrial_demand.loc[nodes, "process emission from feedstock"].sum()
         / industrial_demand.loc[nodes, "naphtha"].sum()
     )
-    emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
+    # link to supply the naphtha for industry load
+    n.add(
+        "Link",
+        spatial.oil.naphtha,
+        bus0=spatial.oil.nodes,
+        bus1=spatial.oil.naphtha,
+        bus2=spatial.co2.process_emissions,
+        carrier="naphtha for industry",
+        p_nom_extendable=True,
+        efficiency2=process_co2_per_naphtha,
+    )
 
     non_sequestered = 1 - get(
         cf_industry["HVC_environment_sequestration_fraction"],
         investment_year,
     )
+    # energetic efficiency from naphtha to HVC
+    HVC_per_naphtha = (costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha) / costs.at["oil", "CO2 intensity"]
 
-    # distribute across population
-    if len(spatial.oil.demand_locations) == 1:
+    # distribute HVC waste across population
+    if len(spatial.oil.demand_locations) ==1:
         non_sequestered_hvc_locations = ["EU non-sequestered HVC"]
-        HVC_potential = (
-            p_set_naphtha.sum()
-            * nhours
-            * non_sequestered
-            * emitted_co2_per_naphtha
-            / costs.at["oil", "CO2 intensity"]
-        )
+        HVC_potential = p_set_naphtha.sum()*nhours * non_sequestered * HVC_per_naphtha
     else:
         non_sequestered_hvc_locations = (
             pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
         )
-        HVC_potential_sum = (
-            p_set_naphtha.sum()
-            * nhours
-            * non_sequestered
-            * emitted_co2_per_naphtha
-            / costs.at["oil", "CO2 intensity"]
-        )
+        HVC_potential_sum = p_set_naphtha.sum()*nhours * non_sequestered * HVC_per_naphtha
         shares = pop_layout.total / pop_layout.total.sum()
         HVC_potential = shares.mul(HVC_potential_sum)
         HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
@@ -4643,21 +4642,10 @@ def add_industry(
         bus1="co2 atmosphere",
         carrier="HVC to air",
         p_nom_extendable=True,
-        efficiency=costs.at["oil", "CO2 intensity"],
+        efficiency=costs.at["oil", "CO2 intensity"]
     )
 
     if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=process_co2_per_naphtha,
-        )
-
         if options["biomass"] and options["municipal_solid_waste"]:
             n.add(
                 "Link",
@@ -4727,18 +4715,6 @@ def add_industry(
                 efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
                 lifetime=costs.at["waste CHP CC", "lifetime"],
             )
-
-    else:
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=process_co2_per_naphtha,
-        )
 
     # TODO simplify bus expression
     n.add(
