@@ -1275,7 +1275,8 @@ def solve_network(
     kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
     kwargs["io_api"] = cf_solving.get("io_api", None)
 
-    kwargs["model_kwargs"] = solving.get("model_kwargs", {})
+    kwargs["model_kwargs"] = cf_solving.get("model_kwargs", {})
+    kwargs["keep_files"] = cf_solving.get("keep_files", False)
 
     if kwargs["solver_name"] == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
@@ -1328,11 +1329,11 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_perfect",
+            "solve_network",
             opts="",
-            clusters="5",
-            configfiles="config/test/config.perfect.yaml",
-            ll="v1.0",
+            clusters="6",
+            configfiles="config/test/config.electricity.yaml",
+            # ll="v1.0",
             sector_opts="",
             # planning_horizons="2030",
         )
