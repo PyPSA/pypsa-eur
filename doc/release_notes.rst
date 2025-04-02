@@ -31,10 +31,11 @@ Upcoming Release
     (lowest) to N (highest).
     
   - Additionally, a new ``.geojson`` file of clustered regions split by resource
-    classes is exported, which is is used in :mod:`` and :mod:`` to assign
-    existing wind and solar capacities to the correct combination of bus and
-    resource class. Within a clustered region, the resource classes do not have
-    to be contiguous.
+    classes is exported, which is is used in :mod:`add_electricity` and
+    :mod:`build_clustered_solar_rooftop_potentials` to assign existing wind and
+    solar capacities to the correct combination of bus and resource class.
+    Within a clustered region, the resource classes do not have to be
+    contiguous.
 
 * Replaced renewable capacity estimation from OPSD VRE data with an
   estimation based on Global Energy Monitor (GEM) data.
