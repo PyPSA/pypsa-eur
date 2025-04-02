@@ -4586,32 +4586,63 @@ def add_industry(
         investment_year,
     )
 
-    if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
+    # distribute across population
+    if len(spatial.oil.demand_locations) ==1:
+        non_sequestered_hvc_locations = ["EU non-sequestered HVC"]
+        HVC_potential = p_set_naphtha.sum()*nhours * non_sequestered * emitted_co2_per_naphtha / costs.at["oil", "CO2 intensity"]
+    else:
         non_sequestered_hvc_locations = (
             pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
         )
+        HVC_potential_sum = p_set_naphtha.sum()*nhours * non_sequestered * emitted_co2_per_naphtha / costs.at["oil", "CO2 intensity"]
+        shares = pop_layout.total / pop_layout.total.sum()
+        HVC_potential = shares.mul(HVC_potential_sum)
+        HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
 
-        n.add(
-            "Bus",
-            non_sequestered_hvc_locations,
-            location=spatial.oil.demand_locations,
-            carrier="non-sequestered HVC",
-            unit="MWh_LHV",
-        )
+    n.add("Carrier", "non-sequestered HVC")
 
+    n.add(
+        "Bus",
+        non_sequestered_hvc_locations,
+        location=spatial.oil.demand_locations,
+        carrier="non-sequestered HVC",
+        unit="MWh_LHV",
+    )
+    # add stores with population distributed potential - must be zero at the last step
+    e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=non_sequestered_hvc_locations)
+    e_max_pu.iloc[-1,:] = 0
+
+    n.add("Store",
+        non_sequestered_hvc_locations,
+        bus=non_sequestered_hvc_locations,
+        carrier="non-sequestered HVC",
+        e_nom=HVC_potential,
+        marginal_cost=0,
+        e_initial=HVC_potential,
+        e_max_pu=e_max_pu,
+    )
+
+    n.add(
+        "Link",
+        spatial.oil.demand_locations,
+        suffix=" HVC to air",
+        bus0=non_sequestered_hvc_locations,
+        bus1="co2 atmosphere",
+        carrier="HVC to air",
+        p_nom_extendable=True,
+        efficiency=costs.at["oil", "CO2 intensity"],
+    )
+
+    if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
         n.add(
             "Link",
             spatial.oil.naphtha,
             bus0=spatial.oil.nodes,
             bus1=spatial.oil.naphtha,
-            bus2=non_sequestered_hvc_locations,
-            bus3=spatial.co2.process_emissions,
+            bus2=spatial.co2.process_emissions,
             carrier="naphtha for industry",
             p_nom_extendable=True,
-            efficiency2=non_sequestered
-            * emitted_co2_per_naphtha
-            / costs.at["oil", "CO2 intensity"],
-            efficiency3=process_co2_per_naphtha,
+            efficiency2=process_co2_per_naphtha,
         )
 
         if options["biomass"] and options["municipal_solid_waste"]:
@@ -4628,17 +4659,6 @@ def add_industry(
                     "oil", "CO2 intensity"
                 ],  # because msw is co2 neutral and will be burned in waste CHP or decomposed as oil
             )
-
-        n.add(
-            "Link",
-            spatial.oil.demand_locations,
-            suffix=" HVC to air",
-            bus0=non_sequestered_hvc_locations,
-            bus1="co2 atmosphere",
-            carrier="HVC to air",
-            p_nom_extendable=True,
-            efficiency=costs.at["oil", "CO2 intensity"],
-        )
 
         if len(non_sequestered_hvc_locations) == 1:
             waste_source = non_sequestered_hvc_locations[0]
@@ -4701,12 +4721,10 @@ def add_industry(
             spatial.oil.naphtha,
             bus0=spatial.oil.nodes,
             bus1=spatial.oil.naphtha,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.process_emissions,
+            bus2=spatial.co2.process_emissions,
             carrier="naphtha for industry",
             p_nom_extendable=True,
-            efficiency2=emitted_co2_per_naphtha * non_sequestered,
-            efficiency3=process_co2_per_naphtha,
+            efficiency2=process_co2_per_naphtha,
         )
 
     # TODO simplify bus expression
@@ -5988,8 +6006,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
-            ll="vopt",
+            clusters="39",
+            ll="",
             sector_opts="",
             planning_horizons="2050",
         )
