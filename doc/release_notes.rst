@@ -11,6 +11,7 @@ Release Notes
 Upcoming Release
 ================
 
+* Re-included the fuel name as part of the carrier attribute for CHP plants added in :mod:`prepare_sector_network`
 
 * Added option to use dynamic capacity for pit storage using the ``e_max_pu`` attribute of the store component, which is calculated in the new rule :mod:`build_tes_capacity_profiles` and added to the network in :mod:`prepare_sector_network`.
 
