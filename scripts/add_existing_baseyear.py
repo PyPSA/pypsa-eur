@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
+import re
 import xarray as xr
 from _helpers import (
     configure_logging,
@@ -119,9 +120,8 @@ def add_existing_renewables(
 
         for year in res_capacities.columns:
             for gen in res_capacities.index:
-                bus = " ".join(gen.split(" ")[:2])
-                bus_bin = " ".join(gen.split(" ")[:3])
-                bin_id = gen.split(" ")[2]
+                bus_bin = re.sub(f" {carrier}.*", "", gen)
+                bus, bin_id = bus_bin.rsplit(" ", maxsplit=1)
                 name = f"{bus_bin} {carrier}-{year}"
                 capacity = res_capacities.loc[gen, year]
                 if capacity > 0.0:
