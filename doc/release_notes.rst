@@ -13,6 +13,8 @@ Upcoming Release
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
+* Re-included the fuel name as part of the carrier attribute for CHP plants added in :mod:`prepare_sector_network`
+
 * Added option to use dynamic capacity for pit storage using the ``e_max_pu`` attribute of the store component, which is calculated in the new rule :mod:`build_tes_capacity_profiles` and added to the network in :mod:`prepare_sector_network`.
 
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
