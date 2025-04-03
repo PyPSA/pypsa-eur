@@ -314,12 +314,18 @@ rule build_renewable_profiles:
     input:
         availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        distance_regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        resource_regions=lambda w: (
+            resources("regions_onshore_base_s_{clusters}.geojson")
+            if w.technology in ("onwind", "solar", "solar-hsat")
+            else resources("regions_offshore_base_s_{clusters}.geojson")
+        ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
         profile=resources("profile_{clusters}_{technology}.nc"),
+        class_regions=resources("regions_by_class_{clusters}_{technology}.geojson"),
     log:
         logs("build_renewable_profile_{clusters}_{technology}.log"),
     benchmark:
@@ -484,6 +490,16 @@ def input_profile_tech(w):
     return {
         f"profile_{tech}": resources(f"profile_{tech}.nc")
         for tech in config_provider("electricity", "renewable_carriers")(w)
+    }
+
+
+def input_class_regions(w):
+    return {
+        f"class_regions_{tech}": resources(
+            f"regions_by_class_{{clusters}}_{tech}.geojson"
+        )
+        for tech in set(config_provider("electricity", "renewable_carriers")(w))
+        - {"hydro"}
     }
 
 
@@ -668,6 +684,7 @@ rule add_electricity:
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
     input:
         unpack(input_profile_tech),
+        unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(

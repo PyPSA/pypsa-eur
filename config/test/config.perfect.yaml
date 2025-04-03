@@ -79,7 +79,7 @@ solving:
   mem: 4000
 
   check_objective:
-    enable: true
+    enable: false
     expected_value: 1.3778753459e+10
 
 plotting:

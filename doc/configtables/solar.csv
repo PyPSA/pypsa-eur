@@ -6,6 +6,7 @@ resource,,,
 -- orientation,,,
 -- -- slope,°,"Realistically any angle in [0., 90.]","Specifies the tilt angle (or slope) of the solar panel. A slope of zero corresponds to the face of the panel aiming directly overhead. A positive tilt angle steers the panel towards the equator."
 -- -- azimuth,°,"Any angle in [0., 360.]","Specifies the `azimuth <https://en.wikipedia.org/wiki/Azimuth>`_ orientation of the solar panel. South corresponds to 180.°."
+resource_classes,--,int,"Number of resource classes per clustered region."
 capacity_per_sqkm,:math:`MW/km^2`,float,"Allowable density of solar panel placement."
 correction_factor,--,float,"A correction factor for the capacity factor (availability) time series."
 corine,--,"Any subset of the `CORINE Land Cover code list <http://www.eea.europa.eu/data-and-maps/data/corine-land-cover-2006-raster-1/corine-land-cover-classes-and/clc_legend.csv/at_download/file>`_","Specifies areas according to CORINE Land Cover codes which are generally eligible for solar panel placement."

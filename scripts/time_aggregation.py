@@ -36,7 +36,6 @@ if __name__ == "__main__":
             configfiles="test/config.overnight.yaml",
             opts="",
             clusters="37",
-            ll="v1.0",
             sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )

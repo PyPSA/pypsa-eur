@@ -21,7 +21,7 @@ dependencies:
 - xlrd
 - openpyxl
 - seaborn
-- snakemake-minimal<8.25 # See https://github.com/snakemake/snakemake/issues/3202
+- snakemake-minimal>=9
 - memory_profiler
 - yaml
 - pytables
@@ -67,6 +67,6 @@ dependencies:
   - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
   - entsoe-py
-  - snakemake-storage-plugin-http
+  - snakemake-storage-plugin-http>=0.3
   - snakemake-executor-plugin-slurm
   - snakemake-executor-plugin-cluster-generic

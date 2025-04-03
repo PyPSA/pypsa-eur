@@ -87,7 +87,6 @@ if __name__ == "__main__":
             "plot_heatmap_timeseries",
             simpl="",
             clusters="10",
-            ll="vopt",
             opts="",
             sector_opts="",
             planning_horizons=2050,
