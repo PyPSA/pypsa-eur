@@ -18,7 +18,6 @@ if __name__ == "__main__":
             "plot_elec_statistics",
             opts="Ept-12h",
             clusters="37",
-            ll="v1.0",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

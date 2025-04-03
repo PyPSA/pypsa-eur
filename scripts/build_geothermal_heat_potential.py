@@ -36,9 +36,13 @@ Source
 - Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
 """
 
+import logging
+
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 ISI_TEMPERATURE_SCENARIOS = {
     65: "low_temperatures",
@@ -86,12 +90,34 @@ def get_unit_conversion_factor(
     return unit_scaling[input_unit] / unit_scaling[output_unit]
 
 
+def identify_non_covered_regions(
+    regions_onshore: gpd.GeoDataFrame, heat_source_power: pd.DataFrame
+) -> pd.Index:
+    """
+    Identify regions without heat source power data.
+
+    Parameters
+    ----------
+    regions_onshore : gpd.GeoDataFrame
+        GeoDataFrame of the onshore regions, indexed by region name.
+    heat_source_power : pd.DataFrame
+        Heat source power data, indexed by region name.
+
+    Returns
+    -------
+    pd.Index
+        Index of regions that have no heat source power data.
+    """
+    return regions_onshore.index.difference(heat_source_power.index)
+
+
 def get_heat_source_power(
     regions_onshore: gpd.GeoDataFrame,
     supply_potentials: gpd.GeoDataFrame,
     full_load_hours: float,
     input_unit: str,
     output_unit: str = "MWh",
+    ignore_missing_regions: bool = False,
 ) -> pd.DataFrame:
     """
     Get the heat source power from supply potentials.
@@ -139,6 +165,40 @@ def get_heat_source_power(
 
     heat_source_power = heat_potentials_in_onshore_regions_aggregated * scaling_factor
 
+    non_covered_regions = identify_non_covered_regions(
+        regions_onshore, heat_source_power
+    )
+
+    not_eu_27 = [
+        "GB",
+        "UA",
+        "MD",
+        "AL",
+        "RS",
+        "BA",
+        "ME",
+        "MK",
+        "XK",
+    ]
+
+    if not non_covered_regions.empty:
+        if all(non_covered_regions.str.contains("|".join(not_eu_27))):
+            if ignore_missing_regions:
+                logger.warning(
+                    f"The onshore regions outside EU 27 ({non_covered_regions.to_list()}) have no heat source power. Filling with zeros."
+                )
+                heat_source_power = heat_source_power.reindex(
+                    regions_onshore.index, fill_value=0
+                )
+            else:
+                raise ValueError(
+                    f"The onshore regions outside EU 27 {non_covered_regions.to_list()} have no heat source power. Set the ignore_missing_regions parameter in the config to true if you want to include these countries in your analysis despite missing geothermal data."
+                )
+        else:
+            raise ValueError(
+                f"The onshore regions {non_covered_regions.to_list()} have no heat source power. The pre-processing of the potential data might be faulty."
+            )
+
     return heat_source_power
 
 
@@ -147,10 +207,11 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_heat_source_potentials",
+            "build_geothermal_heat_potential",
             clusters=48,
         )
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     # get onshore regions and index them by region name
@@ -202,6 +263,7 @@ if __name__ == "__main__":
         supply_potentials=geothermal_supply_potentials,
         full_load_hours=FULL_LOAD_HOURS,
         input_unit=input_unit,
+        ignore_missing_regions=snakemake.params.ignore_missing_regions,
     )
 
     heat_source_power.to_csv(snakemake.output[0])
