@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 import logging
-
 import geopandas as gpd
 import pandas as pd
 import shapely
@@ -29,7 +28,7 @@ def get_regional_result(
     river_discharge = (
         xr.open_dataset(
             river_discharge_data_fn,
-            chunks={"time": 8760, "lat": "auto", "lon": "auto"},
+            chunks={"time": -1, "lat": 50, "lon": 50},
             decode_coords=["time", "lat", "lon"],
             mode="r",
         )["dis"]
@@ -46,7 +45,7 @@ def get_regional_result(
     ambient_temperature = (
         xr.open_dataset(
             ambient_temperature_data_fn,
-            chunks={"time": 8760, "lat": "auto", "lon": "auto"},
+            chunks={"time": -1, "lat": 50, "lon": 50},
             decode_coords=["time", "lat", "lon"],
             mode="r",
         )["ta6"]
@@ -144,6 +143,7 @@ if __name__ == "__main__":
     )
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
+    breakpoint()
     # Merge the temporal aggregate results
     energy_temporal_aggregate = xr.merge([
             res["temporal aggregate"]["total_energy"]
