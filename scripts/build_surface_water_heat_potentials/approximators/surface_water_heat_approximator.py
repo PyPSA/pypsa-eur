@@ -162,7 +162,7 @@ class SurfaceWaterHeatApproximator(ABC):
         # Mean Volume flow for the area of interest
         usable_volume_flow = self.max_relative_volume_flow * volume_flow
         # Calculate temperature difference for approximation of the heat flow
-        delta_t = (temperature - self.min_outlet_temperature).clip(max=self.delta_t_max)
+        delta_t = (temperature - self.min_outlet_temperature).clip(max=self.delta_t_max, min=0)
         # Calculate heat flow
         return usable_volume_flow * density_water * heat_capacity_water * delta_t
 
