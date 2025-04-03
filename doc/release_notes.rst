@@ -11,6 +11,42 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Fix the `if` close in `add_methanol` (https://github.com/PyPSA/pypsa-eur/pull/1632).
+
+* Bugfix: Handled missing geothermal potential data for GB if geothermal is included for direct utilisation or as heat pump source. The config parameter ``sector: district_heating: limited_heat_sources: geothermal: ignore_missing_regions`` can be used to either terminate the workflow throwing an error (default: ``true``) or assign 0 values to missing regions and continue the workflow (``false``).
+
+* Support for multiple resource classes for wind and solar to
+  use more accurate renewable potentials and time series even when the
+  spatial resolution is low.:
+
+  - Splits renewable potentials and time series into a configurable number of
+    resource classes per carrier and clustered region. The binning is linear
+    based on the average capacity factors.
+  
+  - With the setting ``renewables: onwind: resource_classes: 4``, 
+    each region would have four onshore wind generators, each with
+    different potential (``p_nom_max``) and capacity factor
+    (``p_max_pu``). The same applies to solar PV and offshore wind.
+
+  - The default number of resource classes is kept at one per cluster.
+
+  - In :mod:`build_renewable_profiles`, a new dimension "bin" is added to the
+    output (``xarray.Dataset``). The resource classes are numbered from 0
+    (lowest) to N (highest).
+    
+  - Additionally, a new ``.geojson`` file of clustered regions split by resource
+    classes is exported, which is is used in :mod:`add_electricity` and
+    :mod:`build_clustered_solar_rooftop_potentials` to assign existing wind and
+    solar capacities to the correct combination of bus and resource class.
+    Within a clustered region, the resource classes do not have to be
+    contiguous.
+
+* Replaced renewable capacity estimation from OPSD VRE data with an
+  estimation based on Global Energy Monitor (GEM) data.
+
+* Functionality reduction: The technology mapping from ``powerplantmatching``
+  now has to be a 1:1 rather than a 1:n mapping.
+
 * Re-included the fuel name as part of the carrier attribute for CHP plants added in :mod:`prepare_sector_network`
 
 * Added option to use dynamic capacity for pit storage using the ``e_max_pu`` attribute of the store component, which is calculated in the new rule :mod:`build_tes_capacity_profiles` and added to the network in :mod:`prepare_sector_network`.

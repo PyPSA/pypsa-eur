@@ -32,13 +32,13 @@ conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,,
 -- enable,,bool,Activate routine to estimate renewable capacities in rule :mod:`add_electricity`. This option should not be used in combination with pathway planning ``foresight: myopic`` or ``foresight: perfect`` as renewable capacities are added differently in :mod:`add_existing_baseyear`.
--- from_opsd,--,bool,Add renewable capacities from `OPSD database <https://data.open-power-system-data.org/renewable_power_plants/2020-08-25>`_. The value is depreciated but still can be used.
+-- from_gem,--,bool,Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."
 -- technology_mapping,,,Mapping between PyPSA-Eur and powerplantmatching technology names
--- -- Offshore,--,"Any subset of {offwind-ac, offwind-dc, offwind-float}","List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) onshore technology."
--- -- Offshore,--,{onwind},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) offshore technology."
--- -- PV,--,{solar},"List of PyPSA-Eur carriers that is considered as (IRENA, OPSD) PV technology."
+-- -- Offshore,--,"{onwind}","PyPSA-Eur carrier that is considered for existing onshore wind capacities (IRENA, GEM)."
+-- -- Offshore,--,"Any of {offwind-ac, offwind-dc, offwind-float}","PyPSA-Eur carrier that is considered for existing offshore wind technology (IRENA, GEM)."
+-- -- PV,--,{solar},"PyPSA-Eur carrier that is considered for existing solar PV capacities (IRENA, GEM)."
 autarky,,,
 -- enable,bool,true or false,Require each node to be autarkic by removing all lines and links.
 -- by_country,bool,true or false,Require each country to be autarkic by removing all cross-border lines and links. ``electricity: autarky`` must be enabled.
