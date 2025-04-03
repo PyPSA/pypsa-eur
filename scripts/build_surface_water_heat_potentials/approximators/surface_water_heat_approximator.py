@@ -87,9 +87,11 @@ class SurfaceWaterHeatApproximator(ABC):
         ) * self._get_scaling_factor(data=self.volume_flow)
 
         # Calculate power-weighted average temperature
-        average_water_temperature = (self.masked_water_temperature * self.masked_power).sum(
-            dim=[self.LATITUDE, self.LONGITUDE]
-        ) / (self.masked_power.sum(dim=[self.LATITUDE, self.LONGITUDE]) + 0.001)
+        average_water_temperature = (
+            self.masked_water_temperature * self.masked_power
+        ).sum(dim=[self.LATITUDE, self.LONGITUDE]) / (
+            self.masked_power.sum(dim=[self.LATITUDE, self.LONGITUDE]) + 0.001
+        )
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -106,9 +108,9 @@ class SurfaceWaterHeatApproximator(ABC):
         ) * self._get_scaling_factor(data=self.volume_flow)
 
         # Calculate power-weighted average temperature
-        average_water_temperature = (self.masked_water_temperature * self.masked_power).sum(
-            dim=[self.TIME]
-        ) / (self.masked_power.sum(dim=[self.TIME]) + 0.001)
+        average_water_temperature = (
+            self.masked_water_temperature * self.masked_power
+        ).sum(dim=[self.TIME]) / (self.masked_power.sum(dim=[self.TIME]) + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -117,8 +119,6 @@ class SurfaceWaterHeatApproximator(ABC):
                 "average_temperature": average_water_temperature,
             }
         )
-
-
 
     def _validate_input(
         self, volume_flow: xr.DataArray, water_temperature: xr.DataArray
@@ -188,7 +188,9 @@ class SurfaceWaterHeatApproximator(ABC):
         # Mean Volume flow for the area of interest
         usable_volume_flow = self.max_relative_volume_flow * volume_flow
         # Calculate temperature difference for approximation of the heat flow
-        delta_t = (temperature - self.min_outlet_temperature).clip(max=self.delta_t_max, min=0)
+        delta_t = (temperature - self.min_outlet_temperature).clip(
+            max=self.delta_t_max, min=0
+        )
         # Calculate heat flow
         return usable_volume_flow * density_water * heat_capacity_water * delta_t
 

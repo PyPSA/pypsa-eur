@@ -47,7 +47,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
                 ),
             }
         )
-    
+
     def get_temporal_aggregate(self):
         """Get the temporal aggregate of water temperature."""
         average_water_temperature = self.masked_water_temperature.mean(
@@ -57,16 +57,14 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         # Combine into a single dataset
         # Don't apply cut-off temperature here because this is only used for plotting
         # and analysis
-        return xr.Dataset(
-            data_vars={
-                "average_temperature": average_water_temperature
-            }
-        )
+        return xr.Dataset(data_vars={"average_temperature": average_water_temperature})
 
-    def _get_usable_water_temperature(self, water_temperature: xr.DataArray) -> xr.DataArray:
+    def _get_usable_water_temperature(
+        self, water_temperature: xr.DataArray
+    ) -> xr.DataArray:
         """Get the usable water temperature."""
         return xr.where(
             water_temperature > self.min_outlet_temperature,
             water_temperature,
-            -273.15, # absolute zero
+            -273.15,  # absolute zero
         )

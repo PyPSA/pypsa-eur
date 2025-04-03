@@ -48,6 +48,7 @@ def get_regional_result(
         "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate().compute(),
     }
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -103,6 +104,6 @@ if __name__ == "__main__":
 
     # Merge the temporal aggregate results
     temperature_temporal_aggregate = xr.merge(
-        [res["temporal aggregate"]["average_temperature"] for res in results])
+        [res["temporal aggregate"]["average_temperature"] for res in results]
+    )
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
-
