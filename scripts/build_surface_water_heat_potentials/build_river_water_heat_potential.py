@@ -1,5 +1,7 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
 import logging
-
 import geopandas as gpd
 import pandas as pd
 import shapely

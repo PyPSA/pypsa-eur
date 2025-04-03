@@ -1,4 +1,6 @@
-import shapely
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MITimport shapely
 import xarray as xr
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
@@ -24,7 +26,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self._mask_to_geometry()
 
     def _mask_to_geometry(self):
-        """Do some computations and return a result."""
+        """Mask water temperature to the geometry."""
 
         boxed_water_temperature = self._get_boxed_data(data=self.water_temperature)
 
