@@ -57,11 +57,23 @@ def get_regional_result(
         )
     )
 
-    return RiverWaterHeatApproximator(
-        volume_flow=river_discharge,
-        ambient_temperature=ambient_temperature,
-        region_geometry=geometry,
-    ).results.compute()
+    return {
+        "spatial aggregate": RiverWaterHeatApproximator(
+            volume_flow=river_discharge,
+            ambient_temperature=ambient_temperature,
+            region_geometry=geometry,
+        )
+        .get_spatial_aggregate()
+        .compute(),
+        # temporal aggregate is only used for plotting/analysis
+        "temporal aggregate": RiverWaterHeatApproximator(
+            volume_flow=river_discharge,
+            ambient_temperature=ambient_temperature,
+            region_geometry=geometry,
+        )
+        .get_temporal_aggregate()
+        .compute(),
+    }
 
 
 if __name__ == "__main__":
@@ -111,7 +123,7 @@ if __name__ == "__main__":
 
     power = pd.DataFrame(
         {
-            region_name: res["total_power"].to_pandas()
+            region_name: res["spatial aggregate"]["total_power"].to_pandas()
             for res in results
             for region_name, res in zip(regions_onshore.index, results)
         }
@@ -121,10 +133,22 @@ if __name__ == "__main__":
     power.to_csv(snakemake.output.heat_source_power)
 
     temperature = xr.concat(
-        [res["average_temperature"] for res in results], dim="name"
+        [res["spatial aggregate"]["average_temperature"] for res in results], dim="name"
     ).assign_coords(name=regions_onshore.index)
 
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
     )
+    temperature.to_netcdf(snakemake.output.heat_source_temperature)
+
+    # Merge the temporal aggregate results
+    power_temporal_aggregate = xr.merge([
+            res["temporal aggregate"]["total_power"]
+            for res in results
+            ]
+    )
+    power_temporal_aggregate.to_netcdf(snakemake.output.heat_source_power_temporal_aggregate)
+
+    temperature_temporal_aggregate = xr.merge(
+        [res["temporal aggregate"]["average_temperature"] for res in results])
     temperature.to_netcdf(snakemake.output.heat_source_temperature)

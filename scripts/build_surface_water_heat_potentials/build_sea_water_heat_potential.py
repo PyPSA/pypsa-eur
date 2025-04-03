@@ -34,11 +34,16 @@ def get_regional_result(
         ),
     )
 
-    return SeaWaterHeatApproximator(
+    seawater_heat_approximator = SeaWaterHeatApproximator(
         water_temperature=ds["thetao"].mean(dim="depth"),
         region_geometry=geometry,
-    ).results.compute()
+    )
 
+    return {
+        "spatial aggregate": seawater_heat_approximator.get_spatial_aggregate().compute(),
+        # temporal aggregate is only used for plotting/analysis
+        "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate().compute(),
+    }
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -85,10 +90,16 @@ if __name__ == "__main__":
     results = client.gather(futures)
 
     temperature = xr.concat(
-        [res["average_temperature"] for res in results], dim="name"
+        [res["spatial aggregate"]["average_temperature"] for res in results], dim="name"
     ).assign_coords(name=regions_onshore.index)
 
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
     )
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
+
+    # Merge the temporal aggregate results
+    temperature_temporal_aggregate = xr.merge(
+        [res["temporal aggregate"]["average_temperature"] for res in results])
+    temperature.to_netcdf(snakemake.output.heat_source_temperature)
+

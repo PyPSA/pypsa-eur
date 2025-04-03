@@ -21,6 +21,7 @@ class SurfaceWaterHeatApproximator(ABC):
     METERS_PER_DEGREE: int = 111111
     LONGITUDE = "longitude"
     LATITUDE = "latitude"
+    TIME = "time"
 
     def __init__(
         self,
@@ -59,10 +60,10 @@ class SurfaceWaterHeatApproximator(ABC):
             volume_flow=volume_flow, water_temperature=water_temperature
         )
 
-        self.results = self.get_results()
+        self._mask_to_geometry()
 
-    def get_results(self):
-        """Do some computations and return a result."""
+    def _mask_to_geometry(self):
+        """Mask water temperature and volume flow to the geometry and compute heat source power."""
 
         boxed_volume_flow = self._get_boxed_data(data=self.volume_flow)
         boxed_water_temperature = self._get_boxed_data(data=self.water_temperature)
@@ -70,21 +71,23 @@ class SurfaceWaterHeatApproximator(ABC):
         mask = self.get_geometry_mask(data=boxed_volume_flow)
 
         masked_volume_flow = boxed_volume_flow.where(mask)
-        masked_water_temperature = boxed_water_temperature.where(mask)
+        self.masked_water_temperature = boxed_water_temperature.where(mask)
 
-        masked_power = self.get_power(
+        self.masked_power = self.get_power(
             volume_flow=masked_volume_flow,
-            temperature=masked_water_temperature,
+            temperature=self.masked_water_temperature,
         )
 
-        total_power = masked_power.sum(
+    def get_spatial_aggregate(self):
+        """Get the spatial aggregate of water temperature and power."""
+        total_power = self.masked_power.sum(
             dim=[self.LATITUDE, self.LONGITUDE]
         ) * self._get_scaling_factor(data=self.volume_flow)
 
         # Calculate power-weighted average temperature
-        average_water_temperature = (masked_water_temperature * masked_power).sum(
+        average_water_temperature = (self.masked_water_temperature * self.masked_power).sum(
             dim=[self.LATITUDE, self.LONGITUDE]
-        ) / (masked_power.sum(dim=[self.LATITUDE, self.LONGITUDE]) + 0.001)
+        ) / (self.masked_power.sum(dim=[self.LATITUDE, self.LONGITUDE]) + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -93,6 +96,27 @@ class SurfaceWaterHeatApproximator(ABC):
                 "average_temperature": average_water_temperature,
             }
         )
+
+    def get_temporal_aggregate(self):
+        """Get the spatial aggregate of water temperature and power."""
+        total_energy = self.masked_power.sum(
+            dim=[self.TIME]
+        ) * self._get_scaling_factor(data=self.volume_flow)
+
+        # Calculate power-weighted average temperature
+        average_water_temperature = (self.masked_water_temperature * self.masked_power).sum(
+            dim=[self.TIME]
+        ) / (self.masked_power.sum(dim=[self.TIME]) + 0.001)
+
+        # Combine into a single dataset
+        return xr.Dataset(
+            data_vars={
+                "total_energy": total_energy,
+                "average_temperature": average_water_temperature,
+            }
+        )
+
+
 
     def _validate_input(
         self, volume_flow: xr.DataArray, water_temperature: xr.DataArray
