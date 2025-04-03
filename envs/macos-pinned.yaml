@@ -89,7 +89,6 @@ dependencies:
   - dask=2025.3.0
   - dask-core=2025.3.0
   - datapi=0.3.1
-  - datrie=0.8.2
   - dav1d=1.2.1
   - debugpy=1.8.13
   - decorator=5.2.1
@@ -140,7 +139,6 @@ dependencies:
   - gmp=6.3.0
   - graphite2=1.3.13
   - graphviz=12.2.1
-  - gtest=1.16.0
   - gtk3=3.24.43
   - gts=0.7.6
   - h11=0.14.0
@@ -261,7 +259,7 @@ dependencies:
   - libzip=1.11.2
   - libzlib=1.3.1
   - linopy=0.5.2
-  - llvm-openmp=20.1.1
+  - llvm-openmp=20.1.2
   - locket=1.0.0
   - lxml=5.3.1
   - lz4=4.3.3
@@ -382,9 +380,10 @@ dependencies:
   - smmap=5.0.2
   - snakemake-interface-common=1.17.4
   - snakemake-interface-executor-plugins=9.3.5
+  - snakemake-interface-logger-plugins=1.2.3
   - snakemake-interface-report-plugins=1.1.0
-  - snakemake-interface-storage-plugins=3.5.0
-  - snakemake-minimal=8.24.1
+  - snakemake-interface-storage-plugins=4.2.1
+  - snakemake-minimal=9.1.4
   - snappy=1.2.1
   - sniffio=1.3.1
   - snuggs=1.4.7
@@ -453,6 +452,6 @@ dependencies:
       - snakemake-executor-plugin-cluster-generic==1.0.9
       - snakemake-executor-plugin-slurm==1.1.0
       - snakemake-executor-plugin-slurm-jobstep==0.3.0
-      - snakemake-storage-plugin-http==0.2.3
+      - snakemake-storage-plugin-http==0.3.0
       - tsam==2.3.6
 prefix: /Users/runner/miniconda3/envs/pypsa-eur
