@@ -697,6 +697,11 @@ sector:
   electricity_distribution_grid: true
   electricity_grid_connection: true
   transmission_efficiency:
+    enable:
+    - DC
+    - H2 pipeline
+    - gas pipeline
+    - electricity distribution grid
     DC:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
