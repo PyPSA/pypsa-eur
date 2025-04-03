@@ -11,9 +11,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self,
         water_temperature: xr.DataArray,
         region_geometry: shapely.geometry.polygon.Polygon,
-        max_relative_volume_flow: float = 1.0,
-        delta_t_max: float = 4,
-        min_outlet_temperature: float = 1,
+        min_inlet_temperature: float = 1,
         min_distance_meters: int = 2000,
     ):
         # buffer the region geometry by half the data resolution
@@ -23,8 +21,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         )
 
         self.water_temperature = water_temperature
-        self.delta_t_max = delta_t_max
-        self.min_outlet_temperature = min_outlet_temperature
+        self.min_outlet_temperature = min_inlet_temperature
         self.min_distance_meters = min_distance_meters
 
         self.results = self.get_results()
@@ -37,11 +34,20 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         mask = self.get_geometry_mask(data=boxed_water_temperature)
         masked_water_temperature = boxed_water_temperature.where(mask)
 
+        average_water_temperature = masked_water_temperature.mean(
+            dim=["latitude", "longitude"], skipna=True
+        )
+
+        # apply cut-off temperature
+        usable_water_temperature = xr.where(
+            average_water_temperature > self.min_outlet_temperature,
+            average_water_temperature,
+            -273.15, # absolute zero
+        ) 
+
         # Combine into a single dataset
         return xr.Dataset(
             data_vars={
-                "average_temperature": masked_water_temperature.mean(
-                    dim=["latitude", "longitude"], skipna=True
-                ),
+                "average_temperature": usable_water_temperature,
             }
         )
