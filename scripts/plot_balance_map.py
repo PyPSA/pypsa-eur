@@ -81,7 +81,7 @@ if __name__ == "__main__":
     )
     components = transmission_carriers.unique("component")
     carriers = transmission_carriers.unique("carrier")
-    
+
     # only carriers that are also in the energy balance
     carriers_in_eb = carriers[carriers.isin(eb.index.get_level_values("carrier"))]
 
