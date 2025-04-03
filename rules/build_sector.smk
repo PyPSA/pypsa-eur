@@ -46,6 +46,25 @@ rule build_clustered_population_layouts:
         "../scripts/build_clustered_population_layouts.py"
 
 
+rule build_clustered_solar_rooftop_potentials:
+    input:
+        pop_layout=resources("pop_layout_total.nc"),
+        class_regions=resources("regions_by_class_{clusters}_solar.geojson"),
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+    output:
+        potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
+    log:
+        logs("build_clustered_solar_rooftop_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb=10000,
+    benchmark:
+        benchmarks("build_clustered_solar_rooftop_potentials/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_clustered_solar_rooftop_potentials.py"
+
+
 rule build_simplified_population_layouts:
     input:
         pop_layout_total=resources("pop_layout_total.nc"),
@@ -1344,6 +1363,11 @@ rule prepare_sector_network:
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
+            else []
+        ),
+        solar_rooftop_potentials=lambda w: (
+            resources("solar_rooftop_potentials_s_{clusters}.csv")
+            if "solar" in config_provider("electricity", "renewable_carriers")(w)
             else []
         ),
         egs_potentials=lambda w: (
