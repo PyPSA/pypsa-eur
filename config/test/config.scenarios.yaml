@@ -12,8 +12,6 @@ run:
     enable: true
     file: "config/test/scenarios.yaml"
   disable_progressbar: true
-  shared_resources:
-    policy: base
   shared_cutouts: true
 
 scenario:

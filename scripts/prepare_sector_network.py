@@ -24,6 +24,7 @@ from _helpers import (
 )
 from add_electricity import (
     calculate_annuity,
+    flatten,
     load_costs,
     sanitize_carriers,
     sanitize_locations,
@@ -468,7 +469,10 @@ def update_wind_solar_costs(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             distance = ds["average_distance"].to_pandas()
+            distance.index = distance.index.map(flatten)
             submarine_cost = costs.at[tech + "-connection-submarine", "capital_cost"]
             underground_cost = costs.at[
                 tech + "-connection-underground", "capital_cost"
@@ -1465,6 +1469,7 @@ def insert_electricity_distribution_grid(
     costs: pd.DataFrame,
     options: dict,
     pop_layout: pd.DataFrame,
+    solar_rooftop_potentials_fn: str,
 ) -> None:
     """
     Insert electricity distribution grid components into the network.
@@ -1568,11 +1573,10 @@ def insert_electricity_distribution_grid(
     # set existing solar to cost of utility cost rather the 50-50 rooftop-utility
     solar = n.generators.index[n.generators.carrier == "solar"]
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "capital_cost"]
-    pop_solar = pop_layout.total.rename(index=lambda x: x + " solar")
 
-    # add max solar rooftop potential assuming 0.1 kW/m2 and 20 m2/person,
-    # i.e. 2 kW/person (population data is in thousands of people) so we get MW
-    potential = 0.1 * 20 * pop_solar
+    fn = solar_rooftop_potentials_fn
+    potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+    potential.index = potential.index.map(flatten) + " solar"
 
     n.add(
         "Generator",
@@ -2733,6 +2737,7 @@ def add_heat(
     cop_profiles_file: str,
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
+    ptes_e_max_pu_file: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -3145,18 +3150,30 @@ def add_heat(
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
-
                 n.links.loc[
                     nodes + f" {heat_system} water pits charger",
                     "energy to power ratio",
                 ] = energy_to_power_ratio_water_pit
 
+                if options["district_heating"]["ptes"]["dynamic_capacity"]:
+                    # Load pre-calculated e_max_pu profiles
+                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
+                    e_max_pu = (
+                        e_max_pu_data.sel(name=nodes)
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                    )
+                else:
+                    e_max_pu = 1
+
                 n.add(
                     "Store",
-                    nodes + f" {heat_system} water pits",
+                    nodes,
+                    suffix=f" {heat_system} water pits",
                     bus=nodes + f" {heat_system} water pits",
                     e_cyclic=True,
                     e_nom_extendable=True,
+                    e_max_pu=e_max_pu,
                     carrier=f"{heat_system} water pits",
                     standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                     capital_cost=costs.at["central water pit storage", "capital_cost"],
@@ -3233,7 +3250,7 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + " urban central heat",
                     bus3="co2 atmosphere",
-                    carrier="urban central CHP",
+                    carrier=f"urban central {fuel} CHP",
                     p_nom_extendable=True,
                     capital_cost=costs.at["central gas CHP", "capital_cost"]
                     * costs.at["central gas CHP", "efficiency"],
@@ -3253,7 +3270,7 @@ def add_heat(
                     bus2=nodes + " urban central heat",
                     bus3="co2 atmosphere",
                     bus4=spatial.co2.df.loc[nodes, "nodes"].values,
-                    carrier="urban central CHP CC",
+                    carrier=f"urban central {fuel} CHP CC",
                     p_nom_extendable=True,
                     capital_cost=costs.at["central gas CHP", "capital_cost"]
                     * costs.at["central gas CHP", "efficiency"]
@@ -6097,6 +6114,7 @@ if __name__ == "__main__":
             cop_profiles_file=snakemake.input.cop_profiles,
             direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
+            ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
@@ -6241,7 +6259,9 @@ if __name__ == "__main__":
         limit_individual_line_extension(n, maxext)
 
     if options["electricity_distribution_grid"]:
-        insert_electricity_distribution_grid(n, costs, options, pop_layout)
+        insert_electricity_distribution_grid(
+            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+        )
 
     if options["enhanced_geothermal"].get("enable", False):
         logger.info("Adding Enhanced Geothermal Systems (EGS).")
