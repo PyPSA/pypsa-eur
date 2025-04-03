@@ -3490,7 +3490,9 @@ def add_methanol(
     - methanol_reforming_cc: Enables methanol reforming with carbon capture
     """
     methanol_options = options["methanol"]
-    if not any(methanol_options.values()):
+    if not any(
+        v if isinstance(v, bool) else any(v.values()) for v in methanol_options.values()
+    ):
         return
 
     logger.info("Add methanol")
