@@ -306,6 +306,13 @@ rule build_geothermal_heat_potential:
             "geothermal",
             "constant_temperature_celsius",
         ),
+        ignore_missing_regions=config_provider(
+            "sector",
+            "district_heating",
+            "limited_heat_sources",
+            "geothermal",
+            "ignore_missing_regions",
+        ),
     input:
         isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
