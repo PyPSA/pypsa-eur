@@ -5,11 +5,10 @@
 Build solar rooftop potentials for all clustered model regions per resource class.
 """
 
-import atlite
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import set_scenario_config, load_cutout
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -23,7 +22,7 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout = load_cutout(snakemake.input.cutout)
 
     class_regions = gpd.read_file(snakemake.input.class_regions).set_index(
         ["bus", "bin"]

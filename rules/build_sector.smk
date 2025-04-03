@@ -50,7 +50,7 @@ rule build_clustered_solar_rooftop_potentials:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         class_regions=resources("regions_by_class_{clusters}_solar.geojson"),
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
     log:
