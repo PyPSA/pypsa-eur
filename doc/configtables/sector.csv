@@ -158,6 +158,7 @@ electricity_distribution _grid,--,"{true, false}",Add a simplified representatio
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
 transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
+-- enable,--,list,Switch to select the carriers for which transmission efficiency is to be added.
 -- {carrier},--,str,The carrier of the link.
 -- -- efficiency_static,p.u.,float,Length-independent transmission efficiency.
 -- -- efficiency_per_1000km,p.u. per 1000 km,float,Length-dependent transmission efficiency ($\eta^{\text{length}}$)
