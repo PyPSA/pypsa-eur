@@ -17,6 +17,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from add_electricity import flatten
 from add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
@@ -223,17 +224,14 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             if ds.indexes["bus"].empty or "year" not in ds.indexes:
                 continue
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             closest_year = max(
                 (y for y in ds.year.values if y <= year), default=min(ds.year.values)
             )
 
-            p_max_pu = (
-                ds["profile"]
-                .sel(year=closest_year)
-                .transpose("time", "bus")
-                .to_pandas()
-            )
-            p_max_pu.columns = p_max_pu.columns + f" {carrier}"
+            p_max_pu = ds["profile"].sel(year=closest_year).to_pandas()
+            p_max_pu.columns = p_max_pu.columns.map(flatten) + f" {carrier}"
 
             # temporal_clustering
             p_max_pu = p_max_pu.groupby(snapshotmaps).mean()
@@ -292,6 +290,40 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     )
 
 
+def update_dynamic_ptes_capacity(
+    n: pypsa.Network, n_p: pypsa.Network, year: int
+) -> None:
+    """
+    Updates dynamic pit storage capacity based on district heating temperature changes.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Original network.
+    n_p : pypsa.Network
+        Network with updated parameters.
+    year : int
+        Target year for capacity update.
+
+    Returns
+    -------
+    None
+        Updates capacity in-place.
+    """
+    # pit storages in previous iteration
+    dynamic_ptes_idx_previous_iteration = n_p.stores.index[
+        n_p.stores.index.str.contains("water pits")
+    ]
+    # construct names of same-technology dynamic pit storage in the current iteration
+    corresponding_idx_this_iteration = dynamic_ptes_idx_previous_iteration.str[
+        :-4
+    ] + str(year)
+    # update pit storage capacity in previous iteration in-place to capacity in this iteration
+    n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = n.stores_t.e_max_pu[
+        corresponding_idx_this_iteration
+    ].values
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -300,7 +332,6 @@ if __name__ == "__main__":
             "add_brownfield",
             clusters="39",
             opts="",
-            ll="vopt",
             sector_opts="",
             planning_horizons=2050,
         )
@@ -323,6 +354,9 @@ if __name__ == "__main__":
     n_p = pypsa.Network(snakemake.input.network_p)
 
     update_heat_pump_efficiency(n, n_p, year)
+
+    if snakemake.params.tes and snakemake.params.dynamic_ptes_capacity:
+        update_dynamic_ptes_capacity(n, n_p, year)
 
     add_brownfield(
         n,

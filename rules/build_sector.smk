@@ -46,6 +46,25 @@ rule build_clustered_population_layouts:
         "../scripts/build_clustered_population_layouts.py"
 
 
+rule build_clustered_solar_rooftop_potentials:
+    input:
+        pop_layout=resources("pop_layout_total.nc"),
+        class_regions=resources("regions_by_class_{clusters}_solar.geojson"),
+        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+    output:
+        potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
+    log:
+        logs("build_clustered_solar_rooftop_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb=10000,
+    benchmark:
+        benchmarks("build_clustered_solar_rooftop_potentials/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_clustered_solar_rooftop_potentials.py"
+
+
 rule build_simplified_population_layouts:
     input:
         pop_layout_total=resources("pop_layout_total.nc"),
@@ -385,6 +404,45 @@ rule build_direct_heat_source_utilisation_profiles:
         "../envs/environment.yaml"
     script:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
+
+
+rule build_tes_capacity_profiles:
+    params:
+        max_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "max_top_temperature",
+        ),
+        min_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "min_bottom_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        ptes_e_max_pu_profiles=resources(
+            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_tes_capacity_profiles_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_tes_capacity_profiles/s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_tes_capacity/run.py"
 
 
 def solar_thermal_cutout(wildcards):
@@ -1216,9 +1274,23 @@ rule prepare_sector_network:
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+        ptes_e_max_pu_profiles=(
+            resources(
+                "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector", "district_heating", "ptes", "dynamic_capacity"
+            )
+            else []
+        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
+            else []
+        ),
+        solar_rooftop_potentials=lambda w: (
+            resources("solar_rooftop_potentials_s_{clusters}.csv")
+            if "solar" in config_provider("electricity", "renewable_carriers")(w)
             else []
         ),
         egs_potentials=lambda w: (
