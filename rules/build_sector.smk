@@ -349,8 +349,8 @@ rule build_river_heat_potential:
         heat_source_temperature_temporal_aggregate=resources(
             "temp_river_water_base_s_{clusters}_temporal_aggregate.nc"
         ),
-        heat_source_power_temporal_aggregate=resources(
-            "heat_source_power_river_water_base_s_{clusters}_temporal_aggregate.nc"
+        heat_source_energy_temporal_aggregate=resources(
+            "heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc"
         ),
     resources:
         mem_mb=10000,
