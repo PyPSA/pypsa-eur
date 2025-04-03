@@ -75,4 +75,5 @@ if __name__ == "__main__":
         maximum_depth=50,
         variables=["thetao"],
         output_filename=snakemake.output[0],
+        disable_progress_bar=True,
     )
