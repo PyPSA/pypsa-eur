@@ -1350,7 +1350,6 @@ def solve_network(
         raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -1360,7 +1359,6 @@ if __name__ == "__main__":
             opts="",
             clusters="5",
             configfiles="config/test/config.overnight.yaml",
-            # ll="v1.0",
             sector_opts="",
             planning_horizons="2030",
         )

@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Bugfix: Handled missing geothermal potential data for GB if geothermal is included for direct utilisation or as heat pump source. The config parameter ``sector: district_heating: limited_heat_sources: geothermal: ignore_missing_regions`` can be used to either terminate the workflow throwing an error (default: ``true``) or assign 0 values to missing regions and continue the workflow (``false``).
+
 * Support for multiple resource classes for wind and solar to
   use more accurate renewable potentials and time series even when the
   spatial resolution is low.:

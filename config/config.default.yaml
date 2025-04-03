@@ -492,6 +492,7 @@ sector:
     limited_heat_sources:
       geothermal:
         constant_temperature_celsius: 65
+        ignore_missing_regions: false
       river_water:
         constant_temperature_celsius: false
     direct_utilisation_heat_sources:

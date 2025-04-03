@@ -5991,7 +5991,6 @@ def add_import_options(
         )
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -6000,7 +5999,6 @@ if __name__ == "__main__":
             "prepare_sector_network",
             opts="",
             clusters="10",
-            ll="vopt",
             sector_opts="",
             planning_horizons="2050",
         )
