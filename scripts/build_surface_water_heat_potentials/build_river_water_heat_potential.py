@@ -145,13 +145,14 @@ if __name__ == "__main__":
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Merge the temporal aggregate results
-    energy_temporal_aggregate = xr.merge([
-            res["temporal aggregate"]["total_energy"]
-            for res in results
-            ]
+    energy_temporal_aggregate = xr.merge(
+        [res["temporal aggregate"]["total_energy"] for res in results]
     )
-    energy_temporal_aggregate.to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
+    energy_temporal_aggregate.to_netcdf(
+        snakemake.output.heat_source_energy_temporal_aggregate
+    )
 
     temperature_temporal_aggregate = xr.merge(
-        [res["temporal aggregate"]["average_temperature"] for res in results])
+        [res["temporal aggregate"]["average_temperature"] for res in results]
+    )
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
