@@ -115,7 +115,9 @@ if __name__ == "__main__":
 
     diffs = snapshots.to_series().diff().dropna()
     if any(diffs > pd.Timedelta("30D")):
-        logger.warning("Snapshots contain a gap longer than 1 month. Skipping heatmaps.")
+        logger.warning(
+            "Snapshots contain a gap longer than 1 month. Skipping heatmaps."
+        )
         sys.exit(0)
 
     # filter for build capacities
