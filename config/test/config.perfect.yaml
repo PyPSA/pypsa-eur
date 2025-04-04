@@ -75,7 +75,7 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-simplex
+    options: highs-default
   mem: 4000
 
   check_objective:
