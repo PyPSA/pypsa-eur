@@ -34,7 +34,9 @@ from numpy.polynomial import Polynomial
 cc = coco.CountryConverter()
 
 
-def get_eia_annual_hydro_generation(fn, countries, capacities=False):
+def get_eia_annual_hydro_generation(
+    fn: str, countries: list[str], capacities: bool = False
+) -> pd.DataFrame:
     # in billion kWh/a = TWh/a
     df = pd.read_csv(fn, skiprows=2, index_col=1, na_values=[" ", "--"]).iloc[1:, 1:]
     df.index = df.index.str.strip()
@@ -90,7 +92,9 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     return df
 
 
-def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
+def correct_eia_stats_by_capacity(
+    eia_stats: pd.DataFrame, fn: str, countries: list[str], baseyear: int = 2019
+) -> None:
     cap = get_eia_annual_hydro_generation(fn, countries, capacities=True)
     ratio = cap / cap.loc[baseyear]
     eia_stats_corrected = eia_stats / ratio
@@ -99,9 +103,11 @@ def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
     eia_stats.loc[:, to_correct] = eia_stats_corrected.loc[:, to_correct]
 
 
-def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
-    runoff = pd.read_csv(runoff_fn, index_col=0).T[countries]
-    runoff.index = runoff.index.astype(int)
+def approximate_missing_eia_stats(
+    eia_stats: pd.DataFrame, runoff_fn: str, countries: list[str]
+) -> pd.DataFrame:
+    runoff = pd.read_csv(runoff_fn, index_col=0, parse_dates=True)[countries]
+    runoff = runoff.groupby(runoff.index.year).sum().index
 
     # fix outliers; exceptional floods in 1977-1979 in ES & PT
     if "ES" in runoff:
