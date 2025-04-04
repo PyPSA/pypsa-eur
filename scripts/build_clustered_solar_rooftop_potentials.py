@@ -8,7 +8,7 @@ Build solar rooftop potentials for all clustered model regions per resource clas
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config, load_cutout
+from _helpers import load_cutout, set_scenario_config
 
 if __name__ == "__main__":
     if "snakemake" not in globals():

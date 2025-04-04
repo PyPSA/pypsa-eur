@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
-def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame) -> pd.DataFrame:
+def approximate_heat_demand(
+    energy_totals: pd.DataFrame, hdd: pd.DataFrame
+) -> pd.DataFrame:
     """
     Approximate heat demand for a set of countries based on energy totals and
     heating degree days (HDD). A polynomial regression of heat demand on HDDs
