@@ -33,6 +33,8 @@ Upcoming Release
   resolved and were moved into the data bundle
   ``data/bundle/era5-{HDD,runoff}-per-country.csv``.
 
+* Add a configuration to disable transmission efficiency for some carriers (https://github.com/PyPSA/pypsa-eur/pull/1631).
+
 * Bugfix: Fix the `if` close in `add_methanol` (https://github.com/PyPSA/pypsa-eur/pull/1632).
 
 * Bugfix: Handled missing geothermal potential data for GB if geothermal is included for direct utilisation or as heat pump source. The config parameter ``sector: district_heating: limited_heat_sources: geothermal: ignore_missing_regions`` can be used to either terminate the workflow throwing an error (default: ``true``) or assign 0 values to missing regions and continue the workflow (``false``).
