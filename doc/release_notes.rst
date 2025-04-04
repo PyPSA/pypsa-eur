@@ -11,6 +11,28 @@ Release Notes
 Upcoming Release
 ================
 
+* All cutout references in ``config.default.yaml`` can now be specified by a
+  list of cutouts which will be concatenated along the time dimension.
+  
+* All cutout references in ``config.default.yaml`` now default to ``atlite: default_cutout:``.
+
+* Added support to include multiple consecutive, non-consecutive or
+  meteorological (July-June) weather years in one optimisation model. The
+  annualised capital costs, energy limits and loads are multiplied by the number
+  of years. To calculate the total annualised system costs, divide the total
+  costs by the number of years. To include multiple years, configure the range
+  in ``snapshots:`` and provide the list of associated cutouts in ``atlite:
+  default_cutouts:``.
+
+* In :mod:`build_hydro_profile`, when subannual periods are used but full-year
+  cutouts are available, the hydro profile is now first calculated for the full
+  year(s) and then sliced to the subannual periods. This is to align better with
+  the normalization process that uses annual EIA statistics.
+
+* The files ``data/era5-annual-{HDD,runoff}-per-country.csv`` are now daily
+  resolved and were moved into the data bundle
+  ``data/bundle/era5-{HDD,runoff}-per-country.csv``.
+
 * Add a configuration to disable transmission efficiency for some carriers (https://github.com/PyPSA/pypsa-eur/pull/1631).
 
 * Bugfix: Fix the `if` close in `add_methanol` (https://github.com/PyPSA/pypsa-eur/pull/1632).
@@ -55,6 +77,17 @@ Upcoming Release
 
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
+
+* Bugfix in :mod:`time_aggregation`. The resampling produces a contiguous date
+  range. In case the original index was not contiguous, all rows with zero
+  weight must be dropped (corresponding to time steps not included in the
+  original snapshots).
+
+* Bugfix in :mod:`time_aggregation`. Avoid that aggregated snapshot indices land
+  on February 29th in leap years when ``enable: drop_leap_day: true``.
+
+* In :mod:`time_aggregation`, the resampling will now be applied separately for each year covered in the snapshots.
+  This prevents snapshots that overflow into the next year, which simplifies running non-contiguous periods.
 
 * Added rule :mod:`build_co2_sequestration_potentials`, which processes the raw data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_. Integrated from separate repository (https://github.com/ericzhou571/Co2Storage).
