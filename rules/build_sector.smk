@@ -405,7 +405,7 @@ rule build_sea_heat_potential:
         snapshots=config_provider("snapshots"),
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        seawater_temperature="data/seawater_temperature.nc",
+        seawater_temperature="data/bundle/seawater_temperature.nc",
     output:
         heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
         heat_source_temperature_temporal_aggregate=resources(

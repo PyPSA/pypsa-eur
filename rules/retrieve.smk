@@ -28,6 +28,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "gebco/GEBCO_2014_2D.nc",
         "GDP_per_capita_PPP_1990_2015_v2.nc",
         "ppp_2019_1km_Aggregated.tif",
+        "seawater_temperature.nc",
     ]
 
     rule retrieve_databundle:
@@ -729,24 +730,3 @@ if config["enable"]["retrieve"]:
                 if output_path:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
-
-    rule retrieve_seawater_data:
-        params:
-            snapshots=config_provider("snapshots"),
-        input:
-            cutout=lambda w: CDIR
-            + config_provider("atlite", "default_cutout")(w)
-            + ".nc",
-        output:
-            data="data/seawater_temperature.nc",
-        log:
-            "logs/retrieve_seawater_data.log",
-        benchmark:
-            "benchmarks/retrieve_seawater_data"
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_seawater_data.py"
