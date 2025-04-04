@@ -7,7 +7,7 @@ rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
@@ -31,7 +31,7 @@ rule build_clustered_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
     log:
@@ -50,7 +50,7 @@ rule build_clustered_solar_rooftop_potentials:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         class_regions=resources("regions_by_class_{clusters}_solar.geojson"),
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         potentials=resources("solar_rooftop_potentials_s_{clusters}.csv"),
     log:
@@ -71,7 +71,7 @@ rule build_simplified_population_layouts:
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         clustered_pop_layout=resources("pop_layout_base_s.csv"),
     resources:
@@ -146,14 +146,6 @@ rule cluster_gas_network:
         "../scripts/cluster_gas_network.py"
 
 
-def heat_demand_cutout(wildcards):
-    c = config_provider("sector", "heat_demand_cutout")(wildcards)
-    if c == "default":
-        return CDIR + config_provider("atlite", "default_cutout")(wildcards) + ".nc"
-    else:
-        return CDIR + c + ".nc"
-
-
 rule build_daily_heat_demand:
     params:
         snapshots=config_provider("snapshots"),
@@ -161,7 +153,9 @@ rule build_daily_heat_demand:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=heat_demand_cutout,
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", "heat_demand_cutout")(w)
+        ),
     output:
         heat_demand=resources("daily_heat_demand_total_base_s_{clusters}.nc"),
     resources:
@@ -206,7 +200,9 @@ rule build_temperature_profiles:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=heat_demand_cutout,
+        cutout=lambda w: input_cutout(
+            w, config_provider("sector", "heat_demand_cutout")(w)
+        ),
     output:
         temp_soil=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air=resources("temp_air_total_base_s_{clusters}.nc"),
@@ -244,6 +240,7 @@ rule build_central_heating_temperature_profiles:
             "return_temperature_baseyear",
         ),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         lower_threshold_ambient_temperature=config_provider(
             "sector",
             "district_heating",
@@ -551,7 +548,7 @@ rule build_solar_thermal_profiles:
     input:
         pop_layout=resources("pop_layout_total.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=solar_thermal_cutout,
+        cutout=lambda w: input_cutout(w, config_provider("solar_thermal", "cutout")(w)),
     output:
         solar_thermal=resources("solar_thermal_total_base_s_{clusters}.nc"),
     resources:
@@ -602,7 +599,7 @@ rule build_energy_totals:
 
 rule build_heat_totals:
     input:
-        hdd="data/era5-annual-HDD-per-country.csv",
+        hdd="data/bundle/era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
@@ -1041,6 +1038,7 @@ rule build_retro_cost:
 rule build_population_weighted_energy_totals:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         energy_totals=resources("{kind}_totals.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
@@ -1219,6 +1217,7 @@ def input_profile_offwind(w):
 rule build_egs_potentials:
     params:
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         sector=config_provider("sector"),
         costs=config_provider("costs"),
     input:
