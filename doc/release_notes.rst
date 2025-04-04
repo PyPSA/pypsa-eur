@@ -23,6 +23,11 @@ Release Notes
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
 
+* Fix: DAG generation (`rulegraph` and `filegraph`) now correctly utilizes all 
+  configuration sources (default, file-based, and command-line overrides), resolving 
+  an issue where visualizations could misrepresent the actual workflow execution plan. 
+  SVG output format has also been added for these graphs, and error handling during 
+  graph generation has been enhanced.
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
