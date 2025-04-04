@@ -5343,9 +5343,6 @@ def add_agriculture(
     )
 
     # machinery
-    def get(parameter, year):
-        """Helper function to get time-dependent parameter values."""
-        return parameter[year] if isinstance(parameter, dict) else parameter
 
     electric_share = get(
         options["agriculture_machinery_electric_share"], investment_year
