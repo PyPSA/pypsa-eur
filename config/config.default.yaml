@@ -147,7 +147,7 @@ atlite:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: Vestas_V112_3MW
@@ -168,7 +168,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -187,7 +187,7 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   offwind-dc:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
@@ -206,7 +206,7 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   offwind-float:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
@@ -228,7 +228,7 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   solar:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: pv
       panel: CSi
@@ -244,7 +244,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   solar-hsat:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: pv
       panel: CSi
@@ -260,7 +260,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
@@ -296,7 +296,7 @@ lines:
   under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false

@@ -43,10 +43,10 @@ import yaml
 from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from prepare_sector_network import get
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -257,18 +257,18 @@ def add_co2_sequestration_limit(
     """
 
     if not n.investment_periods.empty:
+        nyears = n.snapshot_weightings.groupby(level="period").generators.sum() / 8760
         periods = n.investment_periods
         limit = pd.Series(
-            {
-                f"co2_sequestration_limit-{period}": limit_dict.get(period, 200)
-                for period in periods
-            }
+            {period: nyears[period] * get(limit_dict, period) for period in periods}
         )
+        limit.index = limit.index.map(lambda s: f"co2_sequestration_limit-{s}")
         names = limit.index
     else:
-        limit = get(limit_dict, int(planning_horizons))
-        periods = [np.nan]
-        names = pd.Index(["co2_sequestration_limit"])
+        nyears = n.snapshot_weightings.generators.sum() / 8760
+        limit = get(limit_dict, int(planning_horizons)) * nyears
+        periods = np.nan
+        names = "co2_sequestration_limit"
 
     n.add(
         "GlobalConstraint",
@@ -1081,6 +1081,8 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     Does not include fossil fuel imports.
     """
 
+    nyears = n.snapshot_weightings.generators.sum() / 8760
+
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
 
@@ -1100,7 +1102,7 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
 
     lhs = (p_gens * weightings).sum() + (p_links * eff * weightings).sum()
 
-    rhs = limit * 1e6
+    rhs = limit * 1e6 * nyears
 
     n.model.add_constraints(lhs, limit_sense, rhs, name="import_limit")
 
