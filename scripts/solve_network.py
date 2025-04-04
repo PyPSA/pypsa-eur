@@ -43,9 +43,9 @@ import yaml
 from _benchmark import memory_logger
 from _helpers import (
     configure_logging,
+    get,
     set_scenario_config,
     update_config_from_wildcards,
-    get,
 )
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
