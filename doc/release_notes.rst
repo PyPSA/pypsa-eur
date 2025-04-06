@@ -137,7 +137,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   Additionally, chargers and dischargers are now sized proportionally through a
   unified constraint. (https://github.com/PyPSA/pypsa-eur/pull/1546)
 
-* Added option to calcualte dynamic storage capacities for pit thermal energy
+* Added option to calculate dynamic storage capacities for pit thermal energy
   storage using the ``e_max_pu`` attribute. The dynamic capacities are
   calculated in the new rule :mod:`build_tes_capacity_profiles`.
   (https://github.com/PyPSA/pypsa-eur/pull/1612)
