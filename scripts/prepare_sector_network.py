@@ -4993,7 +4993,9 @@ def calculate_steel_parameters(nyears=1):
     lifetime_bof = 25
     discount_rate = 0.04
 
-    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof * nyears)
+    capex_bof_mpp = 871.85 * 1e3
+
+    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof_mpp * nyears)
 
     bof = pd.Series({"iron input": iron_to_steel_bof,
                     "coal input": coal_to_steel_bof,
@@ -5016,7 +5018,9 @@ def calculate_steel_parameters(nyears=1):
     lifetime_eaf_ng = 25
     discount_rate = 0.04
 
-    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_ng * nyears
+    capex_eaf_mpp = 698.34 * 1e3 # €/kt steel
+
+    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
 
 
     eaf_ng = pd.Series({"iron input": iron_to_steel_eaf_ng,
@@ -5102,9 +5106,6 @@ def add_steel_industry(n, investment_year, steel_data, options):
         p_set.index += " steel"
     else:
         p_set = p_set.sum()
-    
-    # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
-    max_cap = max(capacities) * 2
 
     # Adding carriers and components
     nodes = pop_layout.index
@@ -5242,7 +5243,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         p_min_pu=min_part_load_steel,
         capital_cost= eaf_ng['capital cost'],
         efficiency=1 / eaf_ng['iron input'],
-        efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
+        efficiency2= -1, # one unit of dri gas per kt iron
         efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
         lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
