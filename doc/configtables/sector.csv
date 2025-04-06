@@ -109,7 +109,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
-heat_vent,--,--,--,--
+heat_vent,--,--,--
 -- urban central, --,"{true, false}",Allow heat-venting in central heating.
 -- urban decentral, --,"{true, false}",Allow heat-venting in urban decentral heating.
 -- rural, --,"{true, false}",Allow heat-venting in rural heating.
