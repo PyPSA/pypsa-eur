@@ -694,6 +694,20 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
+    rule seawater_temperature:
+        output:
+            seawater_temperature="data/seawater_temperature.nc",
+        log:
+            "logs/retrieve_seawater_data.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        shell:
+            """
+            wget -nv -c https://zenodo.org/records/15152739/files/seawater_temperature.nc -O {output.seawater_temperature}
+            """
+
+
     rule retrieve_hera_data:
         output:
             river_discharge="data/hera/river_discharge_2013.nc",
