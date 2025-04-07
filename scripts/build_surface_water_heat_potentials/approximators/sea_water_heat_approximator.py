@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MITimport shapely
 import xarray as xr
+import shapely
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
