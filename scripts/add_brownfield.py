@@ -17,6 +17,7 @@ from _helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from add_electricity import flatten
 from add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
@@ -223,17 +224,14 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             if ds.indexes["bus"].empty or "year" not in ds.indexes:
                 continue
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             closest_year = max(
                 (y for y in ds.year.values if y <= year), default=min(ds.year.values)
             )
 
-            p_max_pu = (
-                ds["profile"]
-                .sel(year=closest_year)
-                .transpose("time", "bus")
-                .to_pandas()
-            )
-            p_max_pu.columns = p_max_pu.columns + f" {carrier}"
+            p_max_pu = ds["profile"].sel(year=closest_year).to_pandas()
+            p_max_pu.columns = p_max_pu.columns.map(flatten) + f" {carrier}"
 
             # temporal_clustering
             p_max_pu = p_max_pu.groupby(snapshotmaps).mean()
@@ -334,7 +332,6 @@ if __name__ == "__main__":
             "add_brownfield",
             clusters="39",
             opts="",
-            ll="vopt",
             sector_opts="",
             planning_horizons=2050,
         )

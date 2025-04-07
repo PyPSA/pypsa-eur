@@ -99,3 +99,22 @@ scope to reduce file size, or are not provided through stable URLs elsewhere.
 - **Link:** https://hub.worldpop.org/doi/10.5258/SOTON/WP00647
 - **License:** CC-BY 4.0 (`reference <https://hub.worldpop.org/geodata/summary?id=24776>`__)
 - **Description:** Gridded population data.
+
+
+``data/bundle/era5-HDD-per-country.csv``
+
+- **Source:** Neumann, Fabian
+- **Link:** https://gist.github.com/fneum/d99e24e19da423038fd55fe3a4ddf875
+- **License:** CC-BY 4.0
+- **Description:** Contains country-level heating degree days in Europe for
+  1941-2023. Used for rescaling heat demand in weather years not covered by
+  energy balance statistics.
+
+``data/bundle/era5-runoff-per-country.csv``
+
+- **Source:** Neumann, Fabian
+- **Link:** https://gist.github.com/fneum/d99e24e19da423038fd55fe3a4ddf875
+- **License:** CC-BY 4.0
+- **Description:** Contains country-level daily sum of runoff in Europe for
+  1941-2023. Used for rescaling hydro-electricity availability in weather years
+  not covered by EIA hydro-generation statistics.

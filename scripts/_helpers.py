@@ -13,13 +13,16 @@ from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
-from typing import Callable
+from tempfile import NamedTemporaryFile
+from typing import Callable, Union
 
+import atlite
 import fiona
 import pandas as pd
 import pypsa
 import pytz
 import requests
+import xarray as xr
 import yaml
 from snakemake.utils import update_config
 from tqdm import tqdm
@@ -280,7 +283,7 @@ def configure_logging(snakemake, skip_handlers=False):
 
 def update_p_nom_max(n):
     # if extendable carriers (solar/onwind/...) have capacity >= 0,
-    # e.g. existing assets from the OPSD project are included to the network,
+    # e.g. existing assets from GEM are included to the network,
     # the installed capacity might exceed the expansion limit.
     # Hence, we update the assumptions.
 
@@ -898,12 +901,50 @@ def validate_checksum(file_path, zenodo_url=None, checksum=None):
     )
 
 
-def get_snapshots(snapshots, drop_leap_day=False, freq="h", **kwargs):
+def get_snapshots(
+    snapshots: dict, drop_leap_day: bool = False, freq: str = "h", **kwargs
+) -> pd.DatetimeIndex:
     """
-    Returns pandas DateTimeIndex potentially without leap days.
-    """
+    Returns a DateTimeIndex of snapshots, supporting multiple time ranges.
 
-    time = pd.date_range(freq=freq, **snapshots, **kwargs)
+    Parameters
+    ----------
+    snapshots : dict
+        Dictionary containing time range parameters. 'start' and 'end' can be
+        strings or lists of strings for multiple date ranges.
+    drop_leap_day : bool, default False
+        If True, removes February 29th from the DateTimeIndex in leap years.
+    freq : str, default "h"
+        Frequency string indicating the time step interval (e.g., "h" for hourly)
+    **kwargs : dict
+        Additional keyword arguments passed to pd.date_range().
+
+    Returns
+    -------
+    pd.DatetimeIndex
+    """
+    start = (
+        snapshots["start"]
+        if isinstance(snapshots["start"], list)
+        else [snapshots["start"]]
+    )
+    end = snapshots["end"] if isinstance(snapshots["end"], list) else [snapshots["end"]]
+
+    assert len(start) == len(end), (
+        "Lists of start and end dates must have the same length"
+    )
+
+    time_periods = []
+    for s, e in zip(start, end):
+        period = pd.date_range(
+            start=s, end=e, freq=freq, inclusive=snapshots["inclusive"], **kwargs
+        )
+        time_periods.append(period)
+
+    time = pd.DatetimeIndex([])
+    for period in time_periods:
+        time = time.append(period)
+
     if drop_leap_day and time.is_leap_year.any():
         time = time[~((time.month == 2) & (time.day == 29))]
 
@@ -1013,3 +1054,35 @@ def rename_techs(label: str) -> str:
         if old == label:
             label = new
     return label
+
+
+def load_cutout(
+    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+) -> atlite.Cutout:
+    """
+    Load and optionally combine multiple cutout files.
+
+    Parameters
+    ----------
+    cutout_files : str or list of str
+        Path to a single cutout file or a list of paths to multiple cutout files.
+        If a list is provided, the cutouts will be concatenated along the time dimension.
+    time : pd.DatetimeIndex, optional
+        If provided, select only the specified times from the cutout.
+
+    Returns
+    -------
+    atlite.Cutout
+        Merged cutout with optional time selection applied.
+    """
+    if isinstance(cutout_files, str):
+        cutout = atlite.Cutout(cutout_files)
+    elif isinstance(cutout_files, list):
+        cutout_da = [atlite.Cutout(c).data for c in cutout_files]
+        combined_data = xr.concat(cutout_da, dim="time", data_vars="minimal")
+        cutout = atlite.Cutout(NamedTemporaryFile().name, data=combined_data)
+
+    if time is not None:
+        cutout.data = cutout.data.sel(time=time)
+
+    return cutout

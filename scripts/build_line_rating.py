@@ -33,7 +33,7 @@ import geopandas as gpd
 import numpy as np
 import pypsa
 import xarray as xr
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from dask.distributed import Client
 from shapely.geometry import LineString as Line
 from shapely.geometry import Point
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.base_network)
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout, time=time)
 
     da = calculate_line_rating(n, cutout, show_progress, dask_kwargs)
     da.to_netcdf(snakemake.output[0])

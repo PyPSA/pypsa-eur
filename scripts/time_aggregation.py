@@ -36,7 +36,6 @@ if __name__ == "__main__":
             configfiles="test/config.overnight.yaml",
             opts="",
             clusters="37",
-            ll="v1.0",
             sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
@@ -58,10 +57,33 @@ if __name__ == "__main__":
     elif isinstance(resolution, str) and "h" in resolution.lower():
         offset = resolution.lower()
         logger.info(f"Averaging every {offset} hours")
-        snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+
+        # Resample years separately to handle non-contiguous years
+        years = pd.DatetimeIndex(n.snapshots).year.unique()
+        snapshot_weightings = []
+        for year in years:
+            sws_year = n.snapshot_weightings[n.snapshots.year == year]
+            sws_year = sws_year.resample(offset).sum()
+            snapshot_weightings.append(sws_year)
+        snapshot_weightings = pd.concat(snapshot_weightings)
+
+        # The resampling produces a contiguous date range. In case the original
+        # index was not contiguous, all rows with zero weight must be dropped
+        # (corresponding to time steps not included in the original snapshots).
+        zeros_i = snapshot_weightings.query("objective == 0").index
+        snapshot_weightings.drop(zeros_i, inplace=True)
+
+        swi = snapshot_weightings.index
+        leap_days = swi[(swi.month == 2) & (swi.day == 29)]
+        if snakemake.params.drop_leap_day and not leap_days.empty:
+            for year in leap_days.year.unique():
+                year_leap_days = leap_days[leap_days.year == year]
+                leap_weights = snapshot_weightings.loc[year_leap_days].sum()
+                march_first = pd.Timestamp(year, 3, 1, 0, 0, 0)
+                snapshot_weightings.loc[march_first] = leap_weights
+            snapshot_weightings = snapshot_weightings.drop(leap_days).sort_index()
+
         sns = snapshot_weightings.index
-        if snakemake.params.drop_leap_day:
-            sns = sns[~((sns.month == 2) & (sns.day == 29))]
         snapshot_weightings = snapshot_weightings.loc[sns]
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 
