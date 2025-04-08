@@ -586,6 +586,7 @@ def attach_wind_and_solar(
                 caps = pd.Series(data=caps, index=ds.indexes["bus"]).fillna(0)
             else:
                 caps = pd.Series(index=ds.indexes["bus"]).fillna(0)
+            caps.index = caps.index.map(flatten)
 
             n.add(
                 "Generator",
