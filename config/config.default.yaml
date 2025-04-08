@@ -304,6 +304,7 @@ lines:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
   p_max_pu: 1.0
+  p_min_pu: -1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
   length_factor: 1.25

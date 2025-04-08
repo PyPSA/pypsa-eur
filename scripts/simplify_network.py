@@ -107,7 +107,9 @@ def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) ->
 
 
 def simplify_links(
-    n: pypsa.Network, p_max_pu: int | float
+    n: pypsa.Network,
+    p_max_pu: int | float,
+    p_min_pu: int | float,
 ) -> tuple[pypsa.Network, pd.Series]:
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
@@ -214,7 +216,7 @@ def simplify_links(
                     * n.links.loc[all_links, "underwater_fraction"]
                 ),
                 p_max_pu=p_max_pu,
-                p_min_pu=-p_max_pu,
+                p_min_pu=p_min_pu,
                 underground=False,
                 under_construction=False,
             )
@@ -435,7 +437,7 @@ if __name__ == "__main__":
     n, converter_map = remove_converters(n)
     busmaps.append(converter_map)
 
-    n, simplify_links_map = simplify_links(n, params.p_max_pu)
+    n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
