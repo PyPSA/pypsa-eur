@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
