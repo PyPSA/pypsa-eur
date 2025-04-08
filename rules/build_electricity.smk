@@ -77,6 +77,7 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
+        links=config_provider("links"),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -559,6 +560,7 @@ rule simplify_network:
             "clustering", "aggregation_strategies", default={}
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
