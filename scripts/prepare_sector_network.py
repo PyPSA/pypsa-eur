@@ -178,6 +178,7 @@ def define_spatial(nodes, options):
     if options["regional_oil_demand"]:
         spatial.oil.demand_locations = nodes
         spatial.oil.naphtha = nodes + " naphtha for industry"
+        spatial.oil.non_sequestered_hvc = nodes + " non-sequestered HVC"
         spatial.oil.kerosene = nodes + " kerosene for aviation"
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
@@ -185,6 +186,7 @@ def define_spatial(nodes, options):
     else:
         spatial.oil.demand_locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
+        spatial.oil.non_sequestered_hvc = ["EU non-sequestered HVC"]
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
@@ -4604,13 +4606,9 @@ def add_industry(
     ) / costs.at["oil", "CO2 intensity"]
 
     # distribute HVC waste across population
-    if len(spatial.oil.demand_locations) == 1:
-        non_sequestered_hvc_locations = ["EU non-sequestered HVC"]
+    if len(spatial.oil.non_sequestered_hvc) == 1:
         HVC_potential = p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
     else:
-        non_sequestered_hvc_locations = (
-            pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
-        )
         HVC_potential_sum = (
             p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
         )
@@ -4622,19 +4620,19 @@ def add_industry(
 
     n.add(
         "Bus",
-        non_sequestered_hvc_locations,
+        spatial.oil.non_sequestered_hvc,
         location=spatial.oil.demand_locations,
         carrier="non-sequestered HVC",
         unit="MWh_LHV",
     )
     # add stores with population distributed potential - must be zero at the last step
-    e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=non_sequestered_hvc_locations)
+    e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.oil.non_sequestered_hvc)
     e_max_pu.iloc[-1, :] = 0
 
     n.add(
         "Store",
-        non_sequestered_hvc_locations,
-        bus=non_sequestered_hvc_locations,
+        spatial.oil.non_sequestered_hvc,
+        bus=spatial.oil.non_sequestered_hvc,
         carrier="non-sequestered HVC",
         e_nom=HVC_potential,
         marginal_cost=0,
@@ -4646,7 +4644,7 @@ def add_industry(
         "Link",
         spatial.oil.demand_locations,
         suffix=" HVC to air",
-        bus0=non_sequestered_hvc_locations,
+        bus0=spatial.oil.non_sequestered_hvc,
         bus1="co2 atmosphere",
         carrier="HVC to air",
         p_nom_extendable=True,
@@ -4659,7 +4657,7 @@ def add_industry(
                 "Link",
                 spatial.msw.locations,
                 bus0=spatial.msw.nodes,
-                bus1=non_sequestered_hvc_locations,
+                bus1=spatial.oil.non_sequestered_hvc,
                 bus2="co2 atmosphere",
                 carrier="municipal solid waste",
                 p_nom_extendable=True,
@@ -4668,11 +4666,6 @@ def add_industry(
                     "oil", "CO2 intensity"
                 ],  # because msw is co2 neutral and will be burned in waste CHP or decomposed as oil
             )
-
-        if len(non_sequestered_hvc_locations) == 1:
-            waste_source = non_sequestered_hvc_locations[0]
-        else:
-            waste_source = non_sequestered_hvc_locations
 
         if cf_industry["waste_to_energy"]:
             urban_central = spatial.nodes + " urban central heat"
@@ -4685,7 +4678,7 @@ def add_industry(
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP",
-                bus0=waste_source,
+                bus0=spatial.oil.non_sequestered_hvc,
                 bus1=spatial.nodes,
                 bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
@@ -4704,7 +4697,7 @@ def add_industry(
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP CC",
-                bus0=waste_source,
+                bus0=spatial.oil.non_sequestered_hvc,
                 bus1=spatial.nodes,
                 bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
