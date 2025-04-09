@@ -4633,7 +4633,9 @@ def add_industry(
         unit="MWh_LHV",
     )
     # add stores with population distributed potential - must be zero at the last step
-    e_max_pu = pd.DataFrame(1, index=n.snapshots, columns=spatial.oil.non_sequestered_hvc)
+    e_max_pu = pd.DataFrame(
+        1, index=n.snapshots, columns=spatial.oil.non_sequestered_hvc
+    )
     e_max_pu.iloc[-1, :] = 0
 
     n.add(
