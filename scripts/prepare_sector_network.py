@@ -3485,7 +3485,9 @@ def add_methanol(
     - methanol_reforming_cc: Enables methanol reforming with carbon capture
     """
     methanol_options = options["methanol"]
-    if not any(methanol_options.values()):
+    if not any(
+        v if isinstance(v, bool) else any(v.values()) for v in methanol_options.values()
+    ):
         return
 
     logger.info("Add methanol")
@@ -3528,6 +3530,7 @@ def add_biomass(
     pop_layout,
     biomass_potentials_file,
     biomass_transport_costs_file=None,
+    nyears=1,
 ):
     """
     Add biomass-related components to the PyPSA network.
@@ -3561,6 +3564,8 @@ def add_biomass(
     biomass_transport_costs_file : str, optional
         Path to CSV file containing biomass transport costs data.
         Required if biomass_transport or biomass_spatial options are True.
+    nyears : float
+        Number of years for which to scale the biomass potentials.
 
     Returns
     -------
@@ -3580,7 +3585,7 @@ def add_biomass(
     """
     logger.info("Add biomass")
 
-    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0)
+    biomass_potentials = pd.read_csv(biomass_potentials_file, index_col=0) * nyears
 
     # need to aggregate potentials if gas not nodally resolved
     if options["gas_network"]:
@@ -3699,7 +3704,9 @@ def add_biomass(
     if options["solid_biomass_import"].get("enable", False):
         biomass_import_price = options["solid_biomass_import"]["price"]
         # convert TWh in MWh
-        biomass_import_max_amount = options["solid_biomass_import"]["max_amount"] * 1e6
+        biomass_import_max_amount = (
+            options["solid_biomass_import"]["max_amount"] * 1e6 * nyears
+        )
         biomass_import_upstream_emissions = options["solid_biomass_import"][
             "upstream_emissions_factor"
         ]
@@ -5340,9 +5347,6 @@ def add_agriculture(
     )
 
     # machinery
-    def get(parameter, year):
-        """Helper function to get time-dependent parameter values."""
-        return parameter[year] if isinstance(parameter, dict) else parameter
 
     electric_share = get(
         options["agriculture_machinery_electric_share"], investment_year
@@ -6147,6 +6151,7 @@ if __name__ == "__main__":
             pop_layout=pop_layout,
             biomass_potentials_file=snakemake.input.biomass_potentials,
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
+            nyears=nyears,
         )
 
     if options["ammonia"]:
@@ -6289,7 +6294,8 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     for k, v in options["transmission_efficiency"].items():
-        lossy_bidirectional_links(n, k, v)
+        if k in options["transmission_efficiency"]["enable"]:
+            lossy_bidirectional_links(n, k, v)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444

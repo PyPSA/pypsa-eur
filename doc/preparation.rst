@@ -46,6 +46,11 @@ Rule ``build_cutout``
 .. automodule:: build_cutout
 
 
+Rule ``build_osm_boundaries``
+=================================
+
+.. automodule:: build_osm_boundaries
+
 Rule ``clean_osm_data``
 =============================
 
@@ -70,6 +75,16 @@ Rule ``build_transmission_projects``
 
 .. automodule:: build_transmission_projects
 
+Rule ``build_line_rating``
+=================================
+
+.. automodule:: build_line_rating
+
+Rule ``add_transmission_projects_and_dlr``
+===========================================
+
+.. automodule:: add_transmission_projects_and_dlr
+
 .. _shapes:
 
 Rule ``build_shapes``
@@ -78,10 +93,15 @@ Rule ``build_shapes``
 .. automodule:: build_shapes
 
 Rule ``build_gdp_pop_non_nuts3``
-=============================
+================================
 
 .. automodule:: build_gdp_pop_non_nuts3
 
+
+Rule ``build_electricity_demand_base``
+=======================================
+
+.. automodule:: build_electricity_demand_base
 
 .. _electricity_demand:
 
@@ -90,6 +110,11 @@ Rule ``build_electricity_demand``
 
 
 .. automodule:: build_electricity_demand
+
+Rule ``build_hac_features``
+=================================
+
+.. automodule:: build_hac_features
 
 .. _simplify:
 
