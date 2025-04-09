@@ -1081,6 +1081,10 @@ plotting:
   energy_max: 20000
   energy_min: -20000
   energy_threshold: 50.
+  heat_source_map:
+    enable: false
+    temperature_cmap: "Reds"
+    energy_cmap: "Oranges"
 
   nice_names:
     OCGT: "Open-Cycle Gas"

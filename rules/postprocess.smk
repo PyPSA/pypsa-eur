@@ -129,6 +129,44 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_balance_map.py"
 
+    rule plot_heat_source_map:
+        params:
+            plotting=config_provider("plotting"),
+            heat_sources=config_provider("sector", "heat_pump_sources"),
+        input:
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            heat_source_temperature=lambda w: (
+                resources("temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc")
+                if w.carrier in ["river_water", "sea_water", "ambient_air"]
+                else []
+            ),
+            heat_source_energy=lambda w: (
+                resources("heat_source_energy_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc")
+                if w.carrier in ["river_water"]
+                else []
+            ),
+        output:
+            temp_map=RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
+            energy_map=RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+        threads: 1
+        resources:
+            mem_mb=8000,
+        log:
+            RESULTS
+            + "logs/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_heat_source_map.py"
+
+
 
 if config["foresight"] == "perfect":
 
@@ -463,3 +501,22 @@ rule plot_base_statistics:
         + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
     script:
         "../scripts/plot_statistics.py"
+
+
+rule build_ambient_air_temperature_yearly_average:
+    input:
+        cutout=lambda w: input_cutout(w),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        average_ambient_air_temperature=resources("temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"),
+    threads: 1
+    resources:
+        mem_mb=5000,
+    log:
+        logs("build_ambient_air_temperature_yearly_average/base_s_{clusters}"),
+    benchmark:
+        benchmarks("build_ambient_air_temperature_yearly_average/base_s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_ambient_air_temperature_yearly_average.py"

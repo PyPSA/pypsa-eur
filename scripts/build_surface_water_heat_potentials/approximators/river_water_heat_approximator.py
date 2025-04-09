@@ -11,8 +11,6 @@ from scripts.build_surface_water_heat_potentials.approximators.surface_water_hea
 
 
 class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
-    LONGITUDE = "lon"
-    LATITUDE = "lat"
 
     def __init__(
         self,
