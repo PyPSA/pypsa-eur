@@ -47,7 +47,6 @@ class PTESTemperatureApproximator:
         forward_temperature_celsius: Union[xr.DataArray, np.array],
         return_temperature_celsius: Union[xr.DataArray, np.array],
         max_PTES_temperature: float,
-        snapshots: pd.DatetimeIndex,
     ):
         """
         Initialize the PTES Temperature Approximator.
@@ -66,7 +65,6 @@ class PTESTemperatureApproximator:
         self.forward_temperature = forward_temperature_celsius
         self.return_temperature = return_temperature_celsius
         self.max_PTES_temperature = max_PTES_temperature
-        self.snapshots = snapshots  # Use snapshots instead of deriving time
 
     def simplified_top_layer_temperature_model(self) -> xr.DataArray:
         """

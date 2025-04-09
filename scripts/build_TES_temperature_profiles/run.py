@@ -79,3 +79,8 @@ if __name__ == "__main__":
     ltes_bottom_layer_temperature_profiles.to_netcdf(
         snakemake.output.ltes_bottom_layer_temperature_profiles
     )
+
+# was wir als output brauchen ist ein Temperautr profil für PTES welches wir verwenden, welches aber bei der konstaten max temp liegt
+# was wir dann brauchen ist eine Möglichkeit um zu integrieren dass wir mit PTES max Temp arbeiten können
+# temperatur des Speichers ist T_forward und T_return, wobei wenn T_forward > PTES_max dann ist PTES_max die T_top temp und wir brauchen eine Nacherhitzung
+# es brauch eine Funktion für den COP, bzw eine Möglichkeit dass eine Quelle zu gewissen Zeiten nicht für die WP verfügbar sind

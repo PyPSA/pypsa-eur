@@ -47,7 +47,7 @@ from scripts.definitions.heat_system_type import HeatSystemType
 
 def get_cop(
     heat_system_type: str,
-    heat_source: str,
+    heat_source: str, # hier überprüfen, dass PTES als heat_source genutzt wird
     source_inlet_temperature_celsius: xr.DataArray,
     forward_temperature_by_node_and_time: xr.DataArray = None,
     return_temperature_by_node_and_time: xr.DataArray = None,
@@ -112,6 +112,7 @@ if __name__ == "__main__":
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"
+                        # hier müsste die input temperatur von ptes hin
                     ]
                 )
             elif heat_source in snakemake.params.limited_heat_sources.keys():

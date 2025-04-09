@@ -2949,6 +2949,9 @@ def add_heat(
                     suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
                 )
+                # hier gehört das nicht rein, da limited_heat_source anders verarbeitet wird
+                # PTES zählt auch zu einer limited heat source, ist aber keine csv, sondern wird durch die gespeicherte Menge in PTES festgelegt
+                # was wir brazchen ist ein bus der für PTES erstellt wird für die Nacherhitzung und dies
 
                 if heat_source in params.direct_utilisation_heat_sources:
                     capital_cost = (
@@ -3064,16 +3067,20 @@ def add_heat(
                 ],
             )
 
+            # wie wollen wir die nutzung von PTES modellieren? Mit einem link für direct usage und nacherhitzung, um die tracken zu können? oder passt ein bus zu heat und einer zu Nacherhitzung
             n.add(
                 "Link",
                 nodes + f" {heat_system} water tanks discharger",
                 bus0=nodes + f" {heat_system} water tanks",
                 bus1=nodes + f" {heat_system} heat",
+                # hier dann einen zweiten BUS für die Nacherhitzung?
                 carrier=f"{heat_system} water tanks discharger",
                 efficiency=costs.at[
                     heat_system.central_or_decentral + " water tank discharger",
                     "efficiency",
                 ],
+                # dann machen wir dies üer die efficiency, also verfügbar oder nicht verfügbar 0, 1
+                # efficiency2 = bus_nacherhitzung
                 p_nom_extendable=True,
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
