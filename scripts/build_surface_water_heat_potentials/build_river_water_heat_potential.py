@@ -22,60 +22,25 @@ from approximators.river_water_heat_approximator import RiverWaterHeatApproximat
 
 
 def get_regional_result(
-    river_discharge_data_fn: str,
-    ambient_temperature_data_fn: str,
+    river_discharge: xr.DataArray,
+    ambient_temperature: xr.DataArray,
     geometry: shapely.geometry.polygon.Polygon,
 ) -> dict:
-    river_discharge = (
-        xr.open_dataset(
-            river_discharge_data_fn,
-            chunks={"time": -1, "lat": 50, "lon": 50},
-            decode_coords=["time", "lat", "lon"],
-            mode="r",
-        )["dis"]
-        .sortby(["time", "lat", "lon"])
-        .sel(
-            lon=slice(geometry.bounds[0], geometry.bounds[2]),
-            lat=slice(
-                geometry.bounds[1],
-                geometry.bounds[3],
-            ),
-        )
-    )
 
-    ambient_temperature = (
-        xr.open_dataset(
-            ambient_temperature_data_fn,
-            chunks={"time": -1, "lat": 50, "lon": 50},
-            decode_coords=["time", "lat", "lon"],
-            mode="r",
-        )["ta6"]
-        .sortby(["time", "lat", "lon"])
-        .sel(
-            lon=slice(geometry.bounds[0], geometry.bounds[2]),
-            lat=slice(
-                geometry.bounds[1],
-                geometry.bounds[3],
-            ),
-        )
+    river_water_heat_approximator = RiverWaterHeatApproximator(
+        volume_flow=river_discharge,
+        ambient_temperature=ambient_temperature,
+        region_geometry=geometry,
+    )
+    spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate().compute()
+    temporal_aggregate = (
+        river_water_heat_approximator.get_temporal_aggregate().compute()
     )
 
     return {
-        "spatial aggregate": RiverWaterHeatApproximator(
-            volume_flow=river_discharge,
-            ambient_temperature=ambient_temperature,
-            region_geometry=geometry,
-        )
-        .get_spatial_aggregate()
-        .compute(),
+        "spatial aggregate": spatial_aggregate,
         # temporal aggregate is only used for plotting/analysis
-        "temporal aggregate": RiverWaterHeatApproximator(
-            volume_flow=river_discharge,
-            ambient_temperature=ambient_temperature,
-            region_geometry=geometry,
-        )
-        .get_temporal_aggregate()
-        .compute(),
+        "temporal aggregate": temporal_aggregate,
     }
 
 
@@ -111,15 +76,43 @@ if __name__ == "__main__":
     )
     client = Client(cluster)
 
+    river_discharge = xr.open_dataset(
+        snakemake.input.hera_river_discharge,
+        chunks={"time": -1, "lat": 100, "lon": 100},
+        decode_coords=["time", "lat", "lon"],
+        mode="r",
+    )["dis"].sortby(["time", "lat", "lon"]) \
+    .rename({"lon": "longitude", "lat": "latitude"})
+
+    ambient_temperature = xr.open_dataset(
+        snakemake.input.hera_ambient_temperature,
+        chunks={"time": -1, "lat": 100, "lon": 100},
+        decode_coords=["time", "lat", "lon"],
+        mode="r",
+    )["ta6"].sortby(["time", "lat", "lon"]) \
+    .rename({"lon": "longitude", "lat": "latitude"})
+
     futures = []
     for region_name in regions_onshore.index:
         geometry = regions_onshore.loc[region_name].geometry
         futures.append(
             get_regional_result(
-                river_discharge_data_fn=snakemake.input.hera_river_discharge,
-                ambient_temperature_data_fn=snakemake.input.hera_ambient_temperature,
+                river_discharge=river_discharge.sel(
+                    longitude=slice(geometry.bounds[0], geometry.bounds[2]),
+                    latitude=slice(
+                        geometry.bounds[1],
+                        geometry.bounds[3],
+                    ),
+                ),
+                ambient_temperature=ambient_temperature.sel(
+                    longitude=slice(geometry.bounds[0], geometry.bounds[2]),
+                    latitude=slice(
+                        geometry.bounds[1],
+                        geometry.bounds[3],
+                    ),
+                ),
                 geometry=geometry,
-            )
+            ),
         )
 
     results = client.gather(futures)
@@ -144,16 +137,13 @@ if __name__ == "__main__":
     )
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
-    breakpoint()
     # Merge the temporal aggregate results
-    energy_temporal_aggregate = xr.merge(
-        [res["temporal aggregate"]["total_energy"] for res in results]
-    )
-    energy_temporal_aggregate.to_netcdf(
-        snakemake.output.heat_source_energy_temporal_aggregate
-    )
+    xr.concat(
+        [res["temporal aggregate"]["total_energy"] for res in results],
+        dim=regions_onshore.index,
+    ).to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
 
-    temperature_temporal_aggregate = xr.merge(
-        [res["temporal aggregate"]["average_temperature"] for res in results]
-    )
-    temperature.to_netcdf(snakemake.output.heat_source_temperature)
+    xr.concat(
+        [res["temporal aggregate"]["average_temperature"] for res in results],
+        dim=regions_onshore.index,
+    ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)

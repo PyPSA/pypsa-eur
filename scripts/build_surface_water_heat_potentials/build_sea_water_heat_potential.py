@@ -103,7 +103,6 @@ if __name__ == "__main__":
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Merge the temporal aggregate results
-    temperature_temporal_aggregate = xr.merge(
-        [res["temporal aggregate"]["average_temperature"] for res in results]
-    )
-    temperature.to_netcdf(snakemake.output.heat_source_temperature)
+    xr.concat(
+        [res["temporal aggregate"]["average_temperature"] for res in results], dim=regions_onshore.index
+    ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
