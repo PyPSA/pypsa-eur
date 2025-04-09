@@ -80,7 +80,7 @@ def retrieve_osm_data(
         retries = 3
         for attempt in range(retries):
             logger.info(
-                f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt+1})..."
+                f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt + 1})..."
             )
 
             # Build the overpass query

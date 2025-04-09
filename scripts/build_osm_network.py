@@ -1356,7 +1356,7 @@ def _map_links_to_dc_buses(links, dc_buses, distance_crs=DISTANCE_CRS):
     dc_buses_all.reset_index(inplace=True)
 
     logger.info(
-        f"Mapped {len(links_all)} links to {len(dc_buses_all)} DC buses. Dropping {len(dc_buses)-len(dc_buses_all)} DC buses."
+        f"Mapped {len(links_all)} links to {len(dc_buses_all)} DC buses. Dropping {len(dc_buses) - len(dc_buses_all)} DC buses."
     )
 
     return links_all, dc_buses_all

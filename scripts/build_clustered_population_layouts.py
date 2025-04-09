@@ -6,11 +6,14 @@ Build population layouts for all clustered model regions as total as well as
 split by urban and rural population.
 """
 
-import atlite
+import logging
+
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from _helpers import configure_logging, load_cutout, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -18,9 +21,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_clustered_population_layouts", clusters=48)
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout = load_cutout(snakemake.input.cutout)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)

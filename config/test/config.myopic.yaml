@@ -8,14 +8,12 @@ run:
   name: "test-sector-myopic"
   disable_progressbar: true
   shared_resources:
-    policy: "test"
+    policy: false
   shared_cutouts: true
 
 foresight: myopic
 
 scenario:
-  ll:
-  - v1.5
   clusters:
   - 5
   sector_opts:
@@ -33,6 +31,8 @@ snapshots:
 
 sector:
   central_heat_vent: true
+  solid_biomass_import:
+    enable: true
 
 electricity:
 
@@ -57,22 +57,13 @@ atlite:
       time: ["2013-03-01", "2013-03-08"]
 
 renewable:
-  onwind:
-    cutout: be-03-2013-era5
   offwind-ac:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-dc:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-float:
-    cutout: be-03-2013-era5
     max_depth: false
     min_depth: false
-  solar:
-    cutout: be-03-2013-era5
-  solar-hsat:
-    cutout: be-03-2013-era5
 
 clustering:
   temporal:
@@ -87,7 +78,7 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
   mem: 4000
 
 plotting:

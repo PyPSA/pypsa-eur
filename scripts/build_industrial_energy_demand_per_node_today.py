@@ -4,17 +4,6 @@
 """
 Build industrial energy demand per model region.
 
-Inputs
--------
-
-- ``resources/industrial_distribution_key_base_s_{clusters}.csv``
-- ``resources/industrial_energy_demand_per_country_today.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_node_today_base_s_{clusters}.csv``
-
 Description
 -------
 
@@ -24,11 +13,14 @@ The energy demand per country is multiplied by the mapping value from the file `
 The unit of the energy demand is TWh/a.
 """
 
+import logging
 from itertools import product
 
 import numpy as np
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
@@ -93,6 +85,7 @@ if __name__ == "__main__":
             "build_industrial_energy_demand_per_node_today",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     build_nodal_industrial_energy_demand()

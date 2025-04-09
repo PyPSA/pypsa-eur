@@ -22,6 +22,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from shapely.geometry import Polygon
 
 logger = logging.getLogger(__name__)
@@ -143,7 +144,9 @@ def prepare_capex(prepared_data):
     return gpd.GeoDataFrame(data, geometry=data.geometry)
 
 
-def get_capacity_factors(network_regions_file, air_temperatures_file):
+def get_capacity_factors(
+    network_regions_file: str, air_temperatures_file: str, snapshots: pd.DatetimeIndex
+) -> pd.DataFrame:
     """
     Performance of EGS is higher for lower temperatures, due to more efficient
     air cooling Data from Ricks et al.: The Role of Flexible Geothermal Power
@@ -176,7 +179,6 @@ def get_capacity_factors(network_regions_file, air_temperatures_file):
 
     air_temp = xr.open_dataset(air_temperatures_file)
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     capacity_factors = pd.DataFrame(index=snapshots)
 
     # bespoke computation of capacity factors for each bus.
@@ -198,6 +200,9 @@ if __name__ == "__main__":
             "build_egs_potentials",
             clusters=37,
         )
+
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     egs_config = snakemake.params["sector"]["enhanced_geothermal"]
     costs_config = snakemake.params["costs"]
@@ -235,9 +240,14 @@ if __name__ == "__main__":
 
     egs_data[["p_nom_max", "CAPEX"]].to_csv(snakemake.output["egs_potentials"])
 
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
+
     capacity_factors = get_capacity_factors(
         snakemake.input["regions"],
         snakemake.input["air_temperature"],
+        snapshots,
     )
 
     capacity_factors.to_csv(snakemake.output["egs_capacity_factors"])

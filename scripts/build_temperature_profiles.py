@@ -11,36 +11,17 @@ Uses ``atlite.Cutout.temperature`` and ``atlite.Cutout.soil_temperature compute 
     `Atlite.Cutout.temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
     `Atlite.Cutout.soil_temperature <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-    atlite:
-        default_cutout:
-
-Inputs
-------
-
-- ``resources/<run_name>/pop_layout_total.nc``:
-- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``:
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/temp_soil_total_base_s<simpl>_<clusters>.nc``:
-- ``resources/temp_air_total_base_s<simpl>_<clusters>.nc`
 """
 
-import atlite
+import logging
+
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -50,6 +31,7 @@ if __name__ == "__main__":
             "build_temperature_profiles",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
@@ -58,7 +40,7 @@ if __name__ == "__main__":
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)
