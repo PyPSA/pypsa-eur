@@ -2084,9 +2084,7 @@ def add_gas_network(n, gas_pipes, options, costs, gas_input_nodes, logger):
 
     # find all complement edges
     complement_edges = pd.DataFrame(complement(G).edges, columns=["bus0", "bus1"])
-    complement_edges["length"] = complement_edges.apply(
-        haversine, axis=1, args=(n,)
-    )
+    complement_edges["length"] = complement_edges.apply(haversine, axis=1, args=(n,))
 
     # apply k_edge_augmentation weighted by length of complement edges
     k_edge = options["gas_network_connectivity_upgrade"]
