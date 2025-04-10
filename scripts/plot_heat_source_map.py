@@ -12,6 +12,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray as xr
 import folium
 from shapely.geometry import Point
@@ -32,7 +33,8 @@ def plot_heat_source_map(
     latitude_name: str="latitude", 
     onshore_region_name: str="name",
     title: str=None,
-    cmap: str="viridis"
+    cmap: str="viridis",
+    aggregate_type: str="mean"  # 'mean' for temperature, 'sum' for energy
 ):
     """
     Create an interactive folium map from a DataArray with heat source data.
@@ -55,6 +57,8 @@ def plot_heat_source_map(
         Title for the map
     cmap : str, default 'viridis'
         Colormap to use for the plot
+    aggregate_type : str, default 'mean'
+        Type of aggregation to perform for region totals ('mean' for temperature, 'sum' for energy)
         
     Returns
     -------
@@ -89,16 +93,50 @@ def plot_heat_source_map(
         crs="EPSG:4326",
     ).replace(0, np.nan).dropna(subset=[var_name])
     
+    # Calculate aggregations by region
+    if aggregate_type == 'mean':
+        region_totals = gdf.groupby(onshore_region_name)[var_name].mean()
+        agg_title = f"Average {var_name}"
+    else:  # sum for energy
+        region_totals = gdf.groupby(onshore_region_name)[var_name].sum()
+        agg_title = f"Total {var_name}"
+    
+    # Merge region totals back to regions
+    regions_with_totals = regions_onshore.merge(
+        region_totals, on=onshore_region_name, how="left"
+    )
+    
     # Center the map on data
     center = [gdf[latitude_name].mean(), gdf[longitude_name].mean()]
     m = folium.Map(location=center, zoom_start=5)
     
-    # Add region boundaries
+    # Add region boundaries with aggregated values in the tooltip
     folium.GeoJson(
-        regions_onshore,
+        regions_with_totals,
         name="Regions",
-        style_function=lambda x: {"fillColor": "transparent", "color": "black", "weight": 2},
-        tooltip=folium.GeoJsonTooltip(fields=[onshore_region_name]),
+        style_function=lambda x: {
+            "fillColor": "transparent",
+            "color": "black",
+            "weight": 2
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=[onshore_region_name, var_name],
+            aliases=[onshore_region_name, agg_title]
+        ),
+    ).add_to(m)
+    
+    # Add a choropleth layer for region totals
+    folium.Choropleth(
+        geo_data=regions_with_totals,
+        name=f"Region {agg_title}",
+        data=regions_with_totals,
+        columns=[onshore_region_name, var_name],
+        key_on=f"feature.properties.{onshore_region_name}",
+        fill_color=cmap,
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name=agg_title,
+        tooltip=var_name
     ).add_to(m)
     
     # Add data points
@@ -169,7 +207,8 @@ if __name__ == "__main__":
                 regions_onshore,
                 temp_var,
                 title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Temperature (°C)",
-                cmap=temperature_cmap
+                cmap=temperature_cmap,
+                aggregate_type="mean"
             )
             
             temp_map.save(snakemake.output.temp_map)
@@ -202,7 +241,8 @@ if __name__ == "__main__":
                     regions_onshore,
                     energy_var,
                     title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (MWh)",
-                    cmap=energy_cmap
+                    cmap=energy_cmap,
+                    aggregate_type="sum"
                 )
                 
                 energy_map.save(snakemake.output.energy_map)
