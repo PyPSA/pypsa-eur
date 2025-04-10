@@ -107,7 +107,7 @@ author = "Tom Brown (KIT, TUB, FIAS), Jonas Hoersch (KIT, FIAS), Fabian Hofmann 
 # built documents.
 #
 # The short X.Y version.
-version = "v2025.01.0"
+version = "v2025.04.0"
 # The full version, including alpha/beta/rc tags.
 release = version + ""
 
