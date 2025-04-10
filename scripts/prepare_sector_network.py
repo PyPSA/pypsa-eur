@@ -2367,24 +2367,24 @@ def add_gas_and_h2_infrastructure(
     if options["gas_network"] or options["H2_retrofit"]:
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
-    if options["gas_network"]:
-        add_gas_network(
-            n=n,
-            gas_pipes=gas_pipes,
-            options=options,
-            costs=costs,
-            gas_input_nodes=gas_input_nodes,
-            logger=logger,
-        )
+        if options["gas_network"]:
+            add_gas_network(
+                n=n,
+                gas_pipes=gas_pipes,
+                options=options,
+                costs=costs,
+                gas_input_nodes=gas_input_nodes,
+                logger=logger,
+            )
 
-    if options["H2_retrofit"]:
-        add_h2_pipeline_retrofit(
-            n=n,
-            gas_pipes=gas_pipes,
-            options=options,
-            costs=costs,
-            logger=logger,
-        )
+        if options["H2_retrofit"]:
+            add_h2_pipeline_retrofit(
+                n=n,
+                gas_pipes=gas_pipes,
+                options=options,
+                costs=costs,
+                logger=logger,
+            )
 
     if options["H2_network"]:
         add_h2_pipeline_new(n, costs, logger=logger)
