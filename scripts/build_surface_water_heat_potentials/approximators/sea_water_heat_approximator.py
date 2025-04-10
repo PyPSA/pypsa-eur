@@ -18,7 +18,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     ):
         # buffer the region geometry by half the data resolution
         # This way, offshore data points just outside the region are included
-        self.region_geometry = region_geometry.buffer(
+        self.region_geometry = region_geometry.boundary.buffer(
             self._get_data_resolution(data=water_temperature) / 2
         )
 
