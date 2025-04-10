@@ -28,7 +28,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "gebco/GEBCO_2014_2D.nc",
         "GDP_per_capita_PPP_1990_2015_v2.nc",
         "ppp_2019_1km_Aggregated.tif",
-        "seawater_temperature.nc",
     ]
 
     rule retrieve_databundle:
