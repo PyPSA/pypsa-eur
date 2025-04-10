@@ -879,6 +879,9 @@ clustering:
   administrative:
     level: 1
   focus_weights: false
+  build_bidding_zones:
+    remove_islands: false
+    aggregate_to_tyndp: false
   simplify_network:
     to_substations: false
     remove_stubs: true

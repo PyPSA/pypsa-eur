@@ -4,6 +4,9 @@ focus_weights,,,"Optionally specify the focus weights for the clustering of coun
 administrative,,,
 -- level,int,"{0, 1, 2, 3}","Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1."
 -- countries (optional),dict,"Subset of country codes in ‘busmap’`","Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`."
+build_bidding_zones,,,
+-- remove_islands,bool,"{'true','false'}","Exclude from the shape file the Balearic Islands, Bornholm, the Canary Islands, the Orkney Islands, the Shetland Islands, the Azores Islands and Madeira"
+-- aggregate_to_tyndp,bool,"{'true','false'}","Adjust the shape file to the TYNDP topology. Aggregate the Southern Norwegian bidding zones and extract Crete as a separate zone from the Greek shape."
 simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
 -- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."

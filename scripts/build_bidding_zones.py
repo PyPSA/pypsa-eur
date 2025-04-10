@@ -89,16 +89,22 @@ def format_names(s: str):
     s = (
         s.replace("DK-DK1", "DKW1")
         .replace("DK-DK2", "DKE1")
+        .replace("ES-CN", "ES")
+        .replace("ES-IB", "ES")
         .replace("FR-C", "FR15")
         .replace("GB", "UK")
         .replace("UK-N", "UKNI")
         .replace("IT_NORD", "ITN1")
         .replace("IT_SUD", "ITS1")
         .replace("LU", "LUG1")
+        .replace("NO-NO1", "NOS1")
+        .replace("NO-NO2", "NOS2")
         .replace("NO-NO3", "NOM1")
         .replace("NO-NO4", "NON1")
+        .replace("NO-NO5", "NOS5")
         .replace("SE-SE", "SE0")
         .replace("_", "")
+        .replace("-", "")
         .ljust(4, "0")
     )[:4]
     return s
@@ -137,51 +143,62 @@ if __name__ == "__main__":
     italian_zones = bidding_zones_entsoe[bidding_zones_entsoe.country == "IT"]
     bidding_zones = pd.concat([bidding_zones, italian_zones], ignore_index=True)
 
-    # manual corrections: remove islands
-    islands = [
-        "DK-BHM",
-        "ES-CE",
-        "ES-CN-HI",
-        "ES-CN-IG",
-        "ES-CN-LP",
-        "ES-CN-LZ",
-        "ES-IB-FO",
-        "ES-IB-IZ",
-        "ES-IB-ME",
-        "ES-IB-MA",
-        "ES-CN-FV",
-        "ES-CN-GC",
-        "ES-CN-TE",
-        "ES-ML",
-        "GB-ORK",
-        "GB-ZET",
-        "PT-MA",
-        "PT-AC",
-    ]
-    bidding_zones = bidding_zones[~bidding_zones.zone_name.isin(islands)]
-
-    # manually merge southern norwegian zones
-    nos0_idx = bidding_zones.query("zone_name in ['NO-NO1', 'NO-NO2', 'NO-NO5']").index
-    bidding_zones = pd.concat(
-        [
-            bidding_zones.drop(nos0_idx),
-            bidding_zones.loc[nos0_idx]
-            .dissolve(by="country")
-            .reset_index()
-            .assign(zone_name="NOS0"),
+    if snakemake.params.remove_islands:
+        # manual corrections: remove islands
+        islands = [
+            # Bornholm
+            "DK-BHM",
+            # Canary Islands
+            "ES-CN-HI",
+            "ES-CN-IG",
+            "ES-CN-LP",
+            "ES-CN-LZ",
+            "ES-CN-FV",
+            "ES-CN-GC",
+            "ES-CN-TE",
+            # Balearic Islands
+            "ES-IB-FO",
+            "ES-IB-IZ",
+            "ES-IB-ME",
+            "ES-IB-MA",
+            # Melilla & Ceuta
+            "ES-ML",
+            "ES-CE",
+            # Orkney Islands
+            "GB-ORK",
+            # Shetland Islands
+            "GB-ZET",
+            # Madeira & Azores Islands
+            "PT-MA",
+            "PT-AC",
         ]
-    )
+        bidding_zones = bidding_zones[~bidding_zones.zone_name.isin(islands)]
 
-    # Extract Crete
-    bidding_zones = extract_shape_by_bbox(
-        bidding_zones,
-        country="GR",
-        min_lon=24.0,
-        max_lon=26.5,
-        min_lat=35.0,
-        max_lat=35.7,
-        region_id="GR03",
-    )
+    if snakemake.params.aggregate_to_tyndp:
+        # Manually merge southern norwegian zones
+        nos0_idx = bidding_zones.query(
+            "zone_name in ['NO-NO1', 'NO-NO2', 'NO-NO5']"
+        ).index
+        bidding_zones = pd.concat(
+            [
+                bidding_zones.drop(nos0_idx),
+                bidding_zones.loc[nos0_idx]
+                .dissolve(by="country")
+                .reset_index()
+                .assign(zone_name="NOS0"),
+            ]
+        )
+
+        # Extract Crete
+        bidding_zones = extract_shape_by_bbox(
+            bidding_zones,
+            country="GR",
+            min_lon=24.0,
+            max_lon=26.5,
+            min_lat=35.0,
+            max_lat=35.7,
+            region_id="GR03",
+        )
 
     # manually add zone group for DE_LU
     bidding_zones.loc[

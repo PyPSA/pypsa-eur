@@ -700,9 +700,11 @@ if __name__ == "__main__":
 
     if mode == "administrative" and "bz" in params.administrative.values():
         bidding_zones = gpd.read_file(snakemake.input.bidding_zones)
-        zone_name = bidding_zones.set_index("zone_name").cross_country_zone
+        zone_name = bidding_zones.set_index("zone_name").cross_country_zone.rename(
+            {"cross_country_zone": "zone"}
+        )
         zone_name = zone_name.where(zone_name.notnull(), zone_name.index)
-        nc.buses["zone"] = zone_name
+        nc.buses = nc.buses.join(zone_name, how="left")
         copperplate_buses(nc, zone_name)
 
     for attr in ["busmap", "linemap"]:

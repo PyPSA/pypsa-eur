@@ -124,6 +124,12 @@ rule build_osm_boundaries:
 rule build_bidding_zones:
     params:
         countries=config_provider("countries"),
+        remove_islands=config_provider(
+            "clustering", "build_bidding_zones", "remove_islands"
+        ),
+        aggregate_to_tyndp=config_provider(
+            "clustering", "build_bidding_zones", "aggregate_to_tyndp"
+        ),
     input:
         bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
         bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",

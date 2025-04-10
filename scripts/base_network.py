@@ -1485,7 +1485,7 @@ def build_admin_shapes(
             )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
-        if "GB" in countries:
+        if "GB" in countries and level != "bz":
             nuts3_regions.loc[nuts3_regions.level1 == "GBI", "column"] = "level1"
 
         nuts3_regions["admin"] = nuts3_regions.apply(
