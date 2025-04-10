@@ -230,6 +230,10 @@ def copperplate_buses(n: pypsa.Network, ds: pd.Series):
     # Add new lines with infinite capacity within each zone
     for zone, buses in zone_to_buses.items():
         if len(buses) > 1:
+            logging.info(
+                f"Copperplating together the following buses: {', '.join(buses)}"
+            )
+
             # Create lines between first bus and all others
             first_bus = list(buses)[0]
             other_buses = list(buses)[1:]

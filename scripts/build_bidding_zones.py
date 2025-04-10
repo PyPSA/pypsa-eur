@@ -204,6 +204,9 @@ if __name__ == "__main__":
     bidding_zones.loc[
         bidding_zones.zone_name.isin(["DE", "LU"]), "cross_country_zone"
     ] = "DE_LU"
+    bidding_zones.loc[
+        bidding_zones.zone_name.isin(["GB-NIR", "IE"]), "cross_country_zone"
+    ] = "UKNI_IE"
 
     # if turkey is not in the list of countries, drop northern cyprus
     if "TR" not in countries:
