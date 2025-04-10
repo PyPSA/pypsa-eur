@@ -14,21 +14,16 @@ import logging
 
 import geopandas as gpd
 import numpy as np
-import xarray as xr
-from _helpers import (
-    configure_logging,
-    set_scenario_config,
-    get_snapshots,
-    load_cutout
-)
-from shapely.geometry import Point
-import shapely.vectorized as sv
 import shapely
+import shapely.vectorized as sv
+import xarray as xr
+from _helpers import configure_logging, set_scenario_config
 
 LATITUDE = "latitude"
 LONGITUDE = "longitude"
 
 logger = logging.getLogger(__name__)
+
 
 def get_data_in_geometry(
     data: xr.DataArray,
@@ -64,7 +59,6 @@ def get_data_in_geometry(
     return data.where(mask_da)
 
 
-
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -78,18 +72,17 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     ambient_temperature = xr.open_dataset(snakemake.input.cutout).temperature - 273.15
-   
+
     # Load onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
     regions_onshore.set_index("name", inplace=True)
-    
-    
+
     # Calculate yearly average temperature for each grid cell
     # and rename the coordinates to match the expected format
     average_temperature_in_cutout = ambient_temperature.mean(dim="time").rename(
         {"y": LATITUDE, "x": LONGITUDE}
     )
-   
+
     # Get data in unary region
     average_temperature_in_all_onshore_regions = get_data_in_geometry(
         average_temperature_in_cutout,
@@ -97,13 +90,18 @@ if __name__ == "__main__":
     )
 
     # add onshore_region as additional coordinate
-    average_temperature_by_region = xr.concat([
-        get_data_in_geometry(
-            data=average_temperature_in_all_onshore_regions,
-            geometry=regions_onshore.loc[region_name].geometry,
-        )
-        for region_name in regions_onshore.index
-    ], dim=regions_onshore.index)
-    
+    average_temperature_by_region = xr.concat(
+        [
+            get_data_in_geometry(
+                data=average_temperature_in_all_onshore_regions,
+                geometry=regions_onshore.loc[region_name].geometry,
+            )
+            for region_name in regions_onshore.index
+        ],
+        dim=regions_onshore.index,
+    )
+
     # Save the result
-    average_temperature_by_region.to_netcdf(snakemake.output.average_ambient_air_temperature)
+    average_temperature_by_region.to_netcdf(
+        snakemake.output.average_ambient_air_temperature
+    )

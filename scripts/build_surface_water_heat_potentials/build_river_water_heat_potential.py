@@ -26,7 +26,6 @@ def get_regional_result(
     ambient_temperature: xr.DataArray,
     geometry: shapely.geometry.polygon.Polygon,
 ) -> dict:
-
     river_water_heat_approximator = RiverWaterHeatApproximator(
         volume_flow=river_discharge,
         ambient_temperature=ambient_temperature,
@@ -76,21 +75,27 @@ if __name__ == "__main__":
     )
     client = Client(cluster)
 
-    river_discharge = xr.open_dataset(
-        snakemake.input.hera_river_discharge,
-        chunks={"time": -1, "lat": 100, "lon": 100},
-        decode_coords=["time", "lat", "lon"],
-        mode="r",
-    )["dis"].sortby(["time", "lat", "lon"]) \
-    .rename({"lon": "longitude", "lat": "latitude"})
+    river_discharge = (
+        xr.open_dataset(
+            snakemake.input.hera_river_discharge,
+            chunks={"time": -1, "lat": 100, "lon": 100},
+            decode_coords=["time", "lat", "lon"],
+            mode="r",
+        )["dis"]
+        .sortby(["time", "lat", "lon"])
+        .rename({"lon": "longitude", "lat": "latitude"})
+    )
 
-    ambient_temperature = xr.open_dataset(
-        snakemake.input.hera_ambient_temperature,
-        chunks={"time": -1, "lat": 100, "lon": 100},
-        decode_coords=["time", "lat", "lon"],
-        mode="r",
-    )["ta6"].sortby(["time", "lat", "lon"]) \
-    .rename({"lon": "longitude", "lat": "latitude"})
+    ambient_temperature = (
+        xr.open_dataset(
+            snakemake.input.hera_ambient_temperature,
+            chunks={"time": -1, "lat": 100, "lon": 100},
+            decode_coords=["time", "lat", "lon"],
+            mode="r",
+        )["ta6"]
+        .sortby(["time", "lat", "lon"])
+        .rename({"lon": "longitude", "lat": "latitude"})
+    )
 
     futures = []
     for region_name in regions_onshore.index:

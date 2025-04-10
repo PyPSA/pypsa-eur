@@ -136,12 +136,18 @@ if config["foresight"] != "perfect":
         input:
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
             heat_source_temperature=lambda w: (
-                resources("temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc")
+                resources(
+                    "temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc"
+                )
                 if w.carrier in ["river_water", "sea_water", "ambient_air"]
                 else []
             ),
             heat_source_energy=lambda w: (
-                resources("heat_source_energy_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc")
+                resources(
+                    "heat_source_energy_"
+                    + w.carrier
+                    + "_base_s_{clusters}_temporal_aggregate.nc"
+                )
                 if w.carrier in ["river_water"]
                 else []
             ),
@@ -165,7 +171,6 @@ if config["foresight"] != "perfect":
             "../envs/environment.yaml"
         script:
             "../scripts/plot_heat_source_map.py"
-
 
 
 if config["foresight"] == "perfect":
@@ -508,7 +513,9 @@ rule build_ambient_air_temperature_yearly_average:
         cutout=lambda w: input_cutout(w),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        average_ambient_air_temperature=resources("temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"),
+        average_ambient_air_temperature=resources(
+            "temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"
+        ),
     threads: 1
     resources:
         mem_mb=5000,

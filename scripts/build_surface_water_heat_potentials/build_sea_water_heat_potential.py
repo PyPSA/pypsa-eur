@@ -104,5 +104,6 @@ if __name__ == "__main__":
 
     # Merge the temporal aggregate results
     xr.concat(
-        [res["temporal aggregate"]["average_temperature"] for res in results], dim=regions_onshore.index
+        [res["temporal aggregate"]["average_temperature"] for res in results],
+        dim=regions_onshore.index,
     ).to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)

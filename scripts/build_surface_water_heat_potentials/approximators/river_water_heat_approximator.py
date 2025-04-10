@@ -11,7 +11,6 @@ from scripts.build_surface_water_heat_potentials.approximators.surface_water_hea
 
 
 class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
-
     def __init__(
         self,
         volume_flow: xr.DataArray,
