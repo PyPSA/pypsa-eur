@@ -703,7 +703,7 @@ if config["enable"]["retrieve"]:
         retries: 2
         shell:
             """
-            wget -nv -c https://zenodo.org/records/15152739/files/seawater_temperature.nc -O {output.seawater_temperature}
+            wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
             """
 
     rule retrieve_hera_data:

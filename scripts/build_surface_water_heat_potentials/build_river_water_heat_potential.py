@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
     regions_onshore.set_index("name", inplace=True)
-    regions_onshore["name"] = regions_onshore.index
+    regions_onshore.set_crs("EPSG:4326", inplace=True)
 
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),

@@ -29,7 +29,7 @@ def get_regional_result(
         chunks={"time": 8760, "latitude": 50, "longitude": 50},
         decode_coords=["time", "latitude", "longitude"],
         mode="r",
-    ).sel(
+    ).sortby(["time", "latitude", "longitude"]).sel(
         longitude=slice(geometry.bounds[0], geometry.bounds[2]),
         latitude=slice(
             geometry.bounds[1],
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
     regions_onshore.set_index("name", inplace=True)
-    regions_onshore["name"] = regions_onshore.index
+    regions_onshore.set_crs("EPSG:4326", inplace=True)
 
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),
