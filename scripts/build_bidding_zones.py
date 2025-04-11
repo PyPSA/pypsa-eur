@@ -42,6 +42,72 @@ def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
     return country_strings
 
 
+def replace_country(
+    source: gpd.GeoDataFrame,
+    reference: gpd.GeoDataFrame,
+    country: str,
+    default_tolerance: float = 0.05,
+):
+    """
+    Replace a country of the source shapefile with the shape in reference
+    """
+
+    # Remove country from the source
+    bidding_zones = source[source.country != country]
+
+    # Get the data from reference and add to source
+    country_strings = parse_zone_names(reference["zone_name"])
+    reference["country"] = country_strings
+    country_zones = reference[reference.country == country]
+    bidding_zones = pd.concat([bidding_zones, country_zones], ignore_index=True)
+
+    tolerance_dict = {
+        "IT_NORD": {
+            "CH": 0.04,
+            "AT": 0.024,
+            "SI": 0.01,
+        }
+    }
+
+    # Loop on zones in source country
+    for z in bidding_zones.query("country==@country").zone_name:
+        # Find neighbors
+        z_geom = bidding_zones.loc[bidding_zones.zone_name == z].iloc[0].geometry
+        neighbors = bidding_zones[
+            (bidding_zones.intersects(z_geom)) & (bidding_zones.country != country)
+        ]
+
+        if neighbors.empty:
+            continue
+
+        # Snap borders for each neighbor
+        for n in neighbors.zone_name:
+            zi = bidding_zones.query("zone_name == @z")
+            ni = bidding_zones.query("zone_name == @n")
+            tol = tolerance_dict.get(z, default_tolerance).get(n, default_tolerance)
+            ni.loc[:, "geometry"] = (
+                ni.snap(zi, tolerance=tol, align=False)
+                .buffer(0)
+                # the new neighbor border cannot overlap the reference zone
+                .difference(zi, align=False)
+            )
+            bidding_zones = pd.concat(
+                [bidding_zones.query("zone_name != @n"), ni], ignore_index=True
+            )
+
+        # Remove neighbors overlaps
+        for n in neighbors.zone_name:
+            ni = bidding_zones.query("zone_name == @n")
+            ni.loc[:, "geometry"] = ni.difference(
+                neighbors.query("zone_name!=@n").dissolve(), align=False
+            )
+            bidding_zones = pd.concat(
+                [bidding_zones.query("zone_name != @n"), ni], ignore_index=True
+            )
+
+    return bidding_zones
+
+
 def extract_shape_by_bbox(
     gdf: gpd.GeoDataFrame,
     country: str,
@@ -131,17 +197,12 @@ if __name__ == "__main__":
     if not set(countries).issubset(bidding_zones.country):
         raise ValueError("Missing countries in electricitymaps bidding zones")
 
-    # Manual corrections: replace Italy by entsoepy version
-    bidding_zones = bidding_zones[bidding_zones.country != "IT"]
-
     bidding_zones_entsoe = gpd.read_file(snakemake.input.bidding_zones_entsoepy)
     bidding_zones_entsoe = bidding_zones_entsoe.rename(
         columns={"zoneName": "zone_name"}
     )
-    country_strings = parse_zone_names(bidding_zones_entsoe["zone_name"])
-    bidding_zones_entsoe["country"] = country_strings
-    italian_zones = bidding_zones_entsoe[bidding_zones_entsoe.country == "IT"]
-    bidding_zones = pd.concat([bidding_zones, italian_zones], ignore_index=True)
+
+    bidding_zones = replace_country(bidding_zones, bidding_zones_entsoe, "IT")
 
     if snakemake.params.remove_islands:
         # manual corrections: remove islands
