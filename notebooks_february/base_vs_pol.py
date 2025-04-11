@@ -31,7 +31,7 @@ df = pd.DataFrame(columns=scenarios)
 for scenario in scenarios:
     cwd = os.getcwd()
     parent_dir = os.path.dirname(cwd)
-    file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+    file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", "base_s_39___2050.nc")
     n = pypsa.Network(file_path)
     timestep = n.snapshot_weightings.iloc[0, 0]
     df.loc['Annual system cost [b€/yr]',scenario] = n.objective/1e9

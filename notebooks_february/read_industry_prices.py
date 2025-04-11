@@ -37,7 +37,7 @@ scenario = 'base_eu_regain'
 
 cwd = os.getcwd()
 parent_dir = os.path.dirname(cwd)
-file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2050.nc")
+file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", "base_s_39___2050.nc")
 n = pypsa.Network(file_path)
 
 # Steel marginal price
@@ -102,7 +102,7 @@ parent_dir = os.path.dirname(cwd)
 for scenario in scenarios_steel:
     for year in years:
         # Load network for the given year
-        file_path = os.path.join(parent_dir, "results_march", scenario, "networks", f"base_s_39___{year}.nc")
+        file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
         n = pypsa.Network(file_path)
 
         # Steel price

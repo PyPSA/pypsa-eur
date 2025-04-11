@@ -43,7 +43,7 @@ def plot_steel_scenarios(scenarios):
         # Load network once
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2030.nc")
+        file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", "base_s_39___2030.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         threshold = 1 # Remove values below 1 kt/yr
@@ -122,7 +122,6 @@ def plot_steel_scenarios(scenarios):
 
 
     for i, scenario in enumerate(scenarios):
-        print(i)
         # Get the data for this scenario
         summed_p_nom_ch4_eaf = all_scenario_data[scenario]["summed_p_nom_ch4_eaf"]
         summed_p_nom_grey_h2_eaf = all_scenario_data[scenario]["summed_p_nom_grey_h2_eaf"]
@@ -197,12 +196,15 @@ def plot_steel_scenarios(scenarios):
 
 def plot_steel_scenarios_pathways(years, scenarios):
     all_scenario_data = {}  # Store scenario and year data
-    all_countries = set()
     country_totals = {}
     
     for scenario in scenarios:
         for year in years:
-            file_path = os.path.join("..", "results_march", scenario, "networks", f"base_s_39___{year}.nc")
+            if scenario == 'base_eu_regain':
+                file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
+            else:
+                file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
+            #file_path = os.path.join("..", "results_12h", scenario, "networks", f"base_s_39___{year}.nc")
             n = pypsa.Network(file_path)
             timestep = n.snapshot_weightings.iloc[0, 0]
             
@@ -302,7 +304,7 @@ df = pd.DataFrame(index=commodities,columns = scenarios)
 for scenario in scenarios:
     cwd = os.getcwd()
     parent_dir = os.path.dirname(cwd)
-    file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2050.nc")
+    file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", "base_s_39___2050.nc")
     n = pypsa.Network(file_path)
     timestep = n.snapshot_weightings.iloc[0, 0]
     
@@ -335,7 +337,7 @@ for year in years:
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results_march", scenario, "networks", f"base_s_39___{year}.nc")
+        file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         
@@ -396,81 +398,34 @@ plt.savefig("./graphs/costs_emissions.png")
 plt.show()
 
 # %%
-
-
-# Create the figure and the first axis
-fig, ax1 = plt.subplots(figsize=(8, 5))
-
-# Define line styles and colors
-line_styles = {"base_eu_regain": "-", "policy_eu_regain": "--"}  # Solid for baseline, dashed for policy
-colors = ["b", "r"]  # Define colors for different variables
-
-# Plot Annual System Cost on the first y-axis (ax1)
-for (label, values), color in zip(data_dict.items(), colors):
-    if label == "Annual system cost [b€/yr]":
-        for scenario in scenarios:
-            ax1.plot(years, [values[scenario][year] for year in years], 
-                     linestyle=line_styles[scenario], marker='o', label=f"{label} ({scenario})", color=color)
-
-# Set labels and title for the first y-axis
-ax1.set_ylabel("Annual system cost [b€/yr]", color="b")
-ax1.tick_params(axis="y", labelcolor="b")
-
-# Create the second y-axis (for CO2 emissions)
-ax2 = ax1.twinx()
-
-# Plot CO2 emissions on the second y-axis (ax2)
-for (label, values), color in zip(data_dict.items(), colors):
-    if label == "CO2 emissions [MtCO2/yr]":
-        for scenario in scenarios:
-            ax2.plot(years, [values[scenario][year] for year in years], 
-                     linestyle=line_styles[scenario], marker='o', label=f"{label} ({scenario})", color=color)
-
-# Set labels and title for the second y-axis
-ax2.set_ylabel("CO2 emissions [MtCO2/yr]", color="r")
-ax2.tick_params(axis="y", labelcolor="r")
-
-# Set the title of the plot
-#ax1.set_title("Annual System Cost and CO2 Emissions")
-
-# Display the legend
-fig.tight_layout()
-fig.legend(loc="upper right",)# bbox_to_anchor=(1.1, 0.9))
-plt.grid()
-plt.show()
-plt.savefig("./graphs/costs_emissions.png")
-
-# %%
-scenario = 'policy_eu_regain'
+scenario = 'base_eu_regain'
 year = 2030
 cwd = os.getcwd()
 parent_dir = os.path.dirname(cwd)
-file_path = os.path.join(parent_dir, "results_march", scenario, "networks", f"base_s_39___{year}.nc")
+file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
 n = pypsa.Network(file_path)
-const = n.global_constraints
-co2_links = n.links[n.links.bus0 == 'co2 atmosphere']
+timestep = n.snapshot_weightings.iloc[0,0]
 
-co2_links1 = n.links[n.links.bus1 == 'co2 atmosphere']
+aloads_t_2030 = n.loads_t.p.loc[:,n.loads_t.p.columns.str.contains('steel')].sum() * timestep
 
-co2_links2 = n.links[n.links.bus2 == 'co2 atmosphere']
+year = 2040
+cwd = os.getcwd()
+parent_dir = os.path.dirname(cwd)
+file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", f"base_s_39___{year}.nc")
+n = pypsa.Network(file_path)
+timestep = n.snapshot_weightings.iloc[0,0]
 
-co2_links3 = n.links[n.links.bus3 == 'co2 atmosphere']
-
-
-
-alinks1 = -n.links_t.p1[n.links_t.p1.columns.intersection(co2_links1.index)]
-
-alinks2 = -n.links_t.p2[n.links_t.p2.columns.intersection(co2_links2.index)]
-
-alinks3 = -n.links_t.p3[n.links_t.p3.columns.intersection(co2_links3.index)]
-
-alinks1 = alinks1.sum()
-
-alinks2 = alinks2.sum()
-
-alinks3 = alinks3.sum()
-
-tot_co2 = (alinks1.sum() + alinks2.sum() + alinks3.sum())/1e6
-
+aloads_t_2040 = n.loads_t.p.loc[:,n.loads_t.p.columns.str.contains('steel')].sum() * timestep
     
-    
+year = 2050
+cwd = os.getcwd()
+parent_dir = os.path.dirname(cwd)
+file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", f"base_s_39___{year}.nc")
+n = pypsa.Network(file_path)
+timestep = n.snapshot_weightings.iloc[0,0]
+
+steel_load_2050 = n.loads.loc[n.loads.index.str.contains('steel'),"p_set"] * timestep
+
+c = 22.4 * 2920
+
+aloads_t_2050 = n.loads_t.p.loc[:,n.loads_t.p.columns.str.contains('steel')].sum() * timestep

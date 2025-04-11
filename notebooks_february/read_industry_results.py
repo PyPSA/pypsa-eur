@@ -80,7 +80,7 @@ def plot_steel_scenarios(scenarios):
         # Load network once
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         threshold = 1 # Remove values below 1 kt/yr
@@ -247,7 +247,7 @@ def plot_cement_scenarios(scenarios):
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         threshold = 1
@@ -368,7 +368,7 @@ def plot_ammonia_scenarios(scenarios):
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         threshold = 1
@@ -477,7 +477,7 @@ def plot_methanol_scenarios(scenarios):
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         
@@ -547,7 +547,7 @@ def plot_methanol_scenarios(scenarios):
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
         
@@ -693,7 +693,7 @@ def plot_hvc_scenarios(scenarios):
     for scenario in scenarios:
         cwd = os.getcwd()
         parent_dir = os.path.dirname(cwd)
-        file_path = os.path.join(parent_dir, "results", scenario, "networks", "base_s_39___2050.nc")
+        file_path = os.path.join(parent_dir, "results_12h", scenario, "networks", "base_s_39___2050.nc")
         n = pypsa.Network(file_path)
         timestep = n.snapshot_weightings.iloc[0, 0]
 
