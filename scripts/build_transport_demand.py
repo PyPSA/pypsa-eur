@@ -161,7 +161,6 @@ def bev_dsm_profile(snapshots, nodes, options):
     )
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: v2025.01.0
+version: v2025.04.0
 tutorial: false
 
 logging:
@@ -112,13 +112,13 @@ electricity:
 
   estimate_renewable_capacities:
     enable: true
-    from_opsd: true
+    from_gem: true
     year: 2020
     expansion_limit: false
     technology_mapping:
-      Offshore: [offwind-ac, offwind-dc, offwind-float]
-      Onshore: [onwind]
-      PV: [solar]
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
 
   autarky:
     enable: false
@@ -147,12 +147,13 @@ atlite:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
   onwind:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: Vestas_V112_3MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 3
     # correction_factor: 0.93
     corine:
@@ -167,12 +168,13 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   offwind-ac:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -185,12 +187,13 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   offwind-dc:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_2020ATB_5.5MW
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     capacity_per_sqkm: 2
     correction_factor: 0.8855
     corine: [44, 255]
@@ -203,12 +206,13 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   offwind-float:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
       smooth: false
       add_cutout_windspeed: true
+    resource_classes: 1
     # ScholzPhd Tab 4.3.1: 10MW/km^2
     capacity_per_sqkm: 2
     correction_factor: 0.8855
@@ -224,13 +228,14 @@ renewable:
     clip_p_max_pu: 1.e-2
     landfall_length: 10
   solar:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: pv
       panel: CSi
       orientation:
         slope: 35.
         azimuth: 180.
+    resource_classes: 1
     capacity_per_sqkm: 5.1
     # correction_factor: 0.854337
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
@@ -239,7 +244,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   solar-hsat:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     resource:
       method: pv
       panel: CSi
@@ -247,6 +252,7 @@ renewable:
         slope: 35.
         azimuth: 180.
       tracking: horizontal
+    resource_classes: 1
     capacity_per_sqkm: 4.43 # 15% higher land usage acc. to NREL
     corine: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32]
     luisa: false # [1111, 1121, 1122, 1123, 1130, 1210, 1221, 1222, 1230, 1241, 1242, 1310, 1320, 1330, 1410, 1421, 1422, 2110, 2120, 2130, 2210, 2220, 2230, 2310, 2410, 2420, 3210, 3320, 3330]
@@ -254,7 +260,7 @@ renewable:
     excluder_resolution: 100
     clip_p_max_pu: 1.e-2
   hydro:
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
@@ -290,7 +296,7 @@ lines:
   under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
-    cutout: europe-2013-sarah3-era5
+    cutout: default
     correction_factor: 0.95
     max_voltage_difference: false
     max_line_rating: false
@@ -486,6 +492,7 @@ sector:
     limited_heat_sources:
       geothermal:
         constant_temperature_celsius: 65
+        ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
   heat_pump_sources:
@@ -686,6 +693,11 @@ sector:
   electricity_distribution_grid: true
   electricity_grid_connection: true
   transmission_efficiency:
+    enable:
+    - DC
+    - H2 pipeline
+    - gas pipeline
+    - electricity distribution grid
     DC:
       efficiency_static: 0.98
       efficiency_per_1000km: 0.977
@@ -915,7 +927,6 @@ adjustments:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
-  #tmpdir: "path/to/tmp"
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
@@ -946,6 +957,9 @@ solving:
         H2 pipeline: 0.3
         gas pipeline: 0.3
       fractional_last_unit_size: false
+    keep_files: false
+    model_kwargs:
+      solver_dir: "/tmp"
 
   agg_p_nom_limits:
     agg_offwind: false

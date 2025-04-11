@@ -12,7 +12,7 @@ dependencies:
   - affine=2.4.0
   - alsa-lib=1.2.13
   - amply=0.1.6
-  - anyio=4.8.0
+  - anyio=4.9.0
   - aom=3.9.1
   - appdirs=1.4.4
   - argon2-cffi=23.1.0
@@ -21,24 +21,24 @@ dependencies:
   - arrow=1.3.0
   - astroid=3.3.9
   - asttokens=3.0.0
-  - async-lru=2.0.4
+  - async-lru=2.0.5
   - at-spi2-atk=2.38.0
   - at-spi2-core=2.40.3
   - atk-1.0=2.38.0
   - atlite=0.4.0
   - attrs=25.3.0
-  - aws-c-auth=0.8.6
+  - aws-c-auth=0.8.7
   - aws-c-cal=0.8.7
-  - aws-c-common=0.12.0
+  - aws-c-common=0.12.1
   - aws-c-compression=0.3.1
   - aws-c-event-stream=0.5.4
-  - aws-c-http=0.9.4
+  - aws-c-http=0.9.5
   - aws-c-io=0.17.0
   - aws-c-mqtt=0.12.2
   - aws-c-s3=0.7.13
   - aws-c-sdkutils=0.2.3
   - aws-checksums=0.2.3
-  - aws-crt-cpp=0.31.0
+  - aws-crt-cpp=0.31.1
   - aws-sdk-cpp=1.11.510
   - azure-core-cpp=1.14.0
   - azure-identity-cpp=1.10.0
@@ -50,7 +50,7 @@ dependencies:
   - bleach=6.2.0
   - bleach-with-css=6.2.0
   - blosc=1.21.6
-  - bokeh=3.7.0
+  - bokeh=3.7.2
   - bottleneck=1.4.2
   - branca=0.8.1
   - brotli=1.1.0
@@ -58,7 +58,7 @@ dependencies:
   - brotli-python=1.1.0
   - bzip2=1.0.8
   - c-ares=1.34.4
-  - c-blosc2=2.17.0
+  - c-blosc2=2.17.1
   - ca-certificates=2025.1.31
   - cached-property=1.5.2
   - cached_property=1.5.2
@@ -90,10 +90,9 @@ dependencies:
   - cycler=0.12.1
   - cyrus-sasl=2.1.27
   - cytoolz=1.0.1
-  - dask=2025.2.0
-  - dask-core=2025.2.0
-  - datapi=0.3.0
-  - datrie=0.8.2
+  - dask=2025.3.0
+  - dask-core=2025.3.0
+  - datapi=0.3.1
   - dav1d=1.2.1
   - dbus=1.13.6
   - debugpy=1.8.13
@@ -103,7 +102,7 @@ dependencies:
   - descartes=1.1.0
   - dill=0.3.9
   - distlib=0.3.9
-  - distributed=2025.2.0
+  - distributed=2025.3.0
   - docutils=0.21.2
   - double-conversion=3.3.1
   - dpath=2.2.0
@@ -112,7 +111,7 @@ dependencies:
   - et_xmlfile=2.0.0
   - exceptiongroup=1.2.2
   - executing=2.1.0
-  - expat=2.6.4
+  - expat=2.7.0
   - filelock=3.18.0
   - fiona=1.10.1
   - folium=0.19.5
@@ -128,7 +127,7 @@ dependencies:
   - freetype=2.13.3
   - freexl=2.0.0
   - fribidi=1.0.10
-  - fsspec=2025.3.0
+  - fsspec=2025.3.2
   - gdk-pixbuf=2.42.12
   - geographiclib=2.0
   - geojson=3.2.0
@@ -141,7 +140,7 @@ dependencies:
   - giflib=5.2.2
   - gitdb=4.0.12
   - gitpython=3.1.44
-  - glib-tools=2.82.2
+  - glib-tools=2.84.0
   - glog=0.7.1
   - glpk=5.0
   - gmp=6.3.0
@@ -151,11 +150,11 @@ dependencies:
   - gts=0.7.6
   - h11=0.14.0
   - h2=4.2.0
-  - harfbuzz=10.4.0
+  - harfbuzz=11.0.0
   - hdf4=4.2.15
   - hdf5=1.14.3
   - hicolor-icon-theme=0.17
-  - highspy=1.9.0
+  - highspy=1.10.0
   - hpack=4.1.0
   - httpcore=1.0.7
   - httpx=0.28.1
@@ -179,7 +178,7 @@ dependencies:
   - joblib=1.4.2
   - jpype1=1.5.2
   - json-c=0.18
-  - json5=0.10.0
+  - json5=0.11.0
   - jsonpointer=3.0.0
   - jsonschema=4.23.0
   - jsonschema-specifications=2024.10.1
@@ -202,24 +201,24 @@ dependencies:
   - lcms2=2.17
   - ld_impl_linux-64=2.43
   - lerc=4.0.0
-  - libabseil=20250127.0
+  - libabseil=20250127.1
   - libaec=1.1.3
   - libarchive=3.7.7
   - libarrow=19.0.1
   - libarrow-acero=19.0.1
   - libarrow-dataset=19.0.1
   - libarrow-substrait=19.0.1
-  - libavif16=1.2.0
+  - libavif16=1.2.1
   - libblas=3.9.0
   - libbrotlicommon=1.1.0
   - libbrotlidec=1.1.0
   - libbrotlienc=1.1.0
   - libcblas=3.9.0
-  - libclang-cpp19.1=19.1.7
-  - libclang13=19.1.7
+  - libclang-cpp20.1=20.1.2
+  - libclang13=20.1.2
   - libcrc32c=1.1.2
   - libcups=2.3.3
-  - libcurl=8.12.1
+  - libcurl=8.13.0
   - libde265=1.0.15
   - libdeflate=1.23
   - libdrm=2.4.124
@@ -227,7 +226,7 @@ dependencies:
   - libegl=1.7.0
   - libev=4.33
   - libevent=2.1.12
-  - libexpat=2.6.4
+  - libexpat=2.7.0
   - libffi=3.4.6
   - libgcc=14.2.0
   - libgcc-ng=14.2.0
@@ -239,7 +238,7 @@ dependencies:
   - libgfortran=14.2.0
   - libgfortran5=14.2.0
   - libgl=1.7.0
-  - libglib=2.82.2
+  - libglib=2.84.0
   - libglvnd=1.7.0
   - libglx=1.7.0
   - libgomp=14.2.0
@@ -252,7 +251,7 @@ dependencies:
   - libkml=1.3.0
   - liblapack=3.9.0
   - liblapacke=3.9.0
-  - libllvm19=19.1.7
+  - libllvm20=20.1.2
   - liblzma=5.6.4
   - libnetcdf=4.9.2
   - libnghttp2=1.64.0
@@ -260,8 +259,8 @@ dependencies:
   - libntlm=1.8
   - libopenblas=0.3.29
   - libopengl=1.7.0
-  - libopentelemetry-cpp=1.18.0
-  - libopentelemetry-cpp-headers=1.18.0
+  - libopentelemetry-cpp=1.19.0
+  - libopentelemetry-cpp-headers=1.19.0
   - libparquet=19.0.1
   - libpciaccess=0.18
   - libpng=1.6.47
@@ -284,11 +283,11 @@ dependencies:
   - libxcb=1.17.0
   - libxcrypt=4.4.36
   - libxkbcommon=1.8.1
-  - libxml2=2.13.6
+  - libxml2=2.13.7
   - libxslt=1.1.39
   - libzip=1.11.2
   - libzlib=1.3.1
-  - linopy=0.5.0
+  - linopy=0.5.2
   - locket=1.0.0
   - lxml=5.3.1
   - lz4=4.3.3
@@ -302,13 +301,13 @@ dependencies:
   - mccabe=0.7.0
   - memory_profiler=0.61.0
   - minizip=4.0.7
-  - mistune=3.1.2
+  - mistune=3.1.3
   - msgpack-python=1.1.0
-  - multiurl=0.3.3
+  - multiurl=0.3.5
   - munkres=1.1.4
   - mysql-common=9.0.1
   - mysql-libs=9.0.1
-  - narwhals=1.30.0
+  - narwhals=1.33.0
   - nbclient=0.10.2
   - nbconvert-core=7.16.6
   - nbformat=5.10.4
@@ -332,7 +331,7 @@ dependencies:
   - packaging=24.2
   - pandas=2.2.3
   - pandocfilters=1.5.0
-  - pango=1.56.2
+  - pango=1.56.3
   - parso=0.8.4
   - partd=1.4.2
   - patsy=1.0.1
@@ -344,13 +343,13 @@ dependencies:
   - pixman=0.44.2
   - pkgutil-resolve-name=1.3.10
   - plac=1.4.3
-  - platformdirs=4.3.6
+  - platformdirs=4.3.7
   - pluggy=1.5.0
-  - polars=1.24.0
+  - polars=1.26.0
   - powerplantmatching=0.7.1
-  - pre-commit=4.1.0
+  - pre-commit=4.2.0
   - progressbar2=4.5.0
-  - proj=9.5.1
+  - proj=9.6.0
   - prometheus-cpp=1.3.0
   - prometheus_client=0.21.1
   - prompt-toolkit=3.0.50
@@ -368,11 +367,11 @@ dependencies:
   - pygments=2.19.1
   - pylint=3.3.5
   - pyogrio=0.10.0
-  - pyparsing=3.2.1
+  - pyparsing=3.2.3
   - pyproj=3.7.1
   - pypsa=0.33.2
   - pyshp=2.3.1
-  - pyside6=6.8.2
+  - pyside6=6.8.3
   - pysocks=1.7.1
   - pytables=3.10.2
   - pytest=8.3.5
@@ -380,7 +379,7 @@ dependencies:
   - python-dateutil=2.9.0.post0
   - python-fastjsonschema=2.21.1
   - python-json-logger=2.0.7
-  - python-tzdata=2025.1
+  - python-tzdata=2025.2
   - python-utils=3.9.1
   - python_abi=3.12
   - pytz=2024.1
@@ -388,7 +387,7 @@ dependencies:
   - pyyaml=6.0.2
   - pyzmq=26.3.0
   - qhull=2020.2
-  - qt6-main=6.8.2
+  - qt6-main=6.8.3
   - rasterio=1.4.3
   - rav1e=0.6.6
   - re2=2024.07.02
@@ -399,9 +398,9 @@ dependencies:
   - rfc3339-validator=0.1.4
   - rfc3986-validator=0.1.1
   - rioxarray=0.18.2
-  - rpds-py=0.23.1
-  - ruff=0.11.0
-  - s2n=1.5.14
+  - rpds-py=0.24.0
+  - ruff=0.11.2
+  - s2n=1.5.15
   - scikit-learn=1.6.1
   - scipy=1.15.2
   - seaborn=0.13.2
@@ -413,10 +412,11 @@ dependencies:
   - smart_open=7.1.0
   - smmap=5.0.2
   - snakemake-interface-common=1.17.4
-  - snakemake-interface-executor-plugins=9.3.3
+  - snakemake-interface-executor-plugins=9.3.5
+  - snakemake-interface-logger-plugins=1.2.3
   - snakemake-interface-report-plugins=1.1.0
-  - snakemake-interface-storage-plugins=3.4.0
-  - snakemake-minimal=8.24.1
+  - snakemake-interface-storage-plugins=4.2.1
+  - snakemake-minimal=9.1.4
   - snappy=1.2.1
   - sniffio=1.3.1
   - snuggs=1.4.7
@@ -425,9 +425,9 @@ dependencies:
   - sqlite=3.49.1
   - stack_data=0.6.3
   - statsmodels=0.14.4
-  - svt-av1=3.0.1
+  - svt-av1=3.0.2
   - tabulate=0.9.0
-  - tblib=3.0.0
+  - tblib=3.1.0
   - terminado=0.18.1
   - threadpoolctl=3.6.0
   - throttler=1.2.2
@@ -440,10 +440,10 @@ dependencies:
   - tqdm=4.67.1
   - traitlets=5.14.3
   - types-python-dateutil=2.9.0.20241206
-  - typing-extensions=4.12.2
-  - typing_extensions=4.12.2
+  - typing-extensions=4.13.0
+  - typing_extensions=4.13.0
   - typing_utils=0.1.0
-  - tzdata=2025a
+  - tzdata=2025b
   - ukkonen=1.0.1
   - unicodedata2=16.0.0
   - unidecode=1.3.8
@@ -451,7 +451,7 @@ dependencies:
   - uriparser=0.9.8
   - urllib3=2.3.0
   - validators=0.34.0
-  - virtualenv=20.29.3
+  - virtualenv=20.30.0
   - wayland=1.23.1
   - wcwidth=0.2.13
   - webcolors=24.11.1
@@ -461,7 +461,7 @@ dependencies:
   - widgetsnbextension=4.0.13
   - wrapt=1.17.2
   - x265=3.5
-  - xarray=2025.1.2
+  - xarray=2025.3.1
   - xcb-util=0.4.1
   - xcb-util-cursor=0.1.5
   - xcb-util-image=0.4.0
@@ -507,6 +507,6 @@ dependencies:
       - snakemake-executor-plugin-cluster-generic==1.0.9
       - snakemake-executor-plugin-slurm==1.1.0
       - snakemake-executor-plugin-slurm-jobstep==0.3.0
-      - snakemake-storage-plugin-http==0.2.3
+      - snakemake-storage-plugin-http==0.3.0
       - tsam==2.3.6
 prefix: /home/runner/miniconda3/envs/pypsa-eur

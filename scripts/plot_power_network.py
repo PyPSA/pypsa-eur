@@ -242,7 +242,6 @@ if __name__ == "__main__":
             "plot_power_network",
             opts="",
             clusters="37",
-            ll="v1.0",
             sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
