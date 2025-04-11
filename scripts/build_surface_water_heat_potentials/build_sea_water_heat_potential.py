@@ -24,17 +24,21 @@ from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 def get_regional_result(
     seawater_temperature_fn: str, geometry: shapely.geometry.polygon.Polygon
 ) -> dict:
-    ds = xr.open_dataset(
-        seawater_temperature_fn,
-        chunks={"time": 8760, "latitude": 50, "longitude": 50},
-        decode_coords=["time", "latitude", "longitude"],
-        mode="r",
-    ).sortby(["time", "latitude", "longitude"]).sel(
-        longitude=slice(geometry.bounds[0], geometry.bounds[2]),
-        latitude=slice(
-            geometry.bounds[1],
-            geometry.bounds[3],
-        ),
+    ds = (
+        xr.open_dataset(
+            seawater_temperature_fn,
+            chunks={"time": 8760, "latitude": 50, "longitude": 50},
+            decode_coords=["time", "latitude", "longitude"],
+            mode="r",
+        )
+        .sortby(["time", "latitude", "longitude"])
+        .sel(
+            longitude=slice(geometry.bounds[0], geometry.bounds[2]),
+            latitude=slice(
+                geometry.bounds[1],
+                geometry.bounds[3],
+            ),
+        )
     )
 
     seawater_heat_approximator = SeaWaterHeatApproximator(
