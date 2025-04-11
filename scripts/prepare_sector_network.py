@@ -4993,7 +4993,7 @@ def calculate_steel_parameters(nyears=1):
     lifetime_bof = 25
     discount_rate = 0.04
 
-    capex_bof_mpp = 871.85 * 1e3
+    capex_bof_mpp = 871.85 * 1e3 * 8760 # €/kt steel/h
 
     capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof_mpp * nyears)
 
@@ -5018,7 +5018,7 @@ def calculate_steel_parameters(nyears=1):
     lifetime_eaf_ng = 25
     discount_rate = 0.04
 
-    capex_eaf_mpp = 698.34 * 1e3 # €/kt steel
+    capex_eaf_mpp = 698.34 * 1e3 * 8760 # €/kt steel/h
 
     capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
 
