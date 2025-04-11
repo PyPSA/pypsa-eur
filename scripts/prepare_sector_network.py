@@ -260,8 +260,6 @@ def define_spatial(nodes, options):
             spatial.syngas_dri = SimpleNamespace()
             spatial.syngas_dri.nodes = ["EU syn gas for DRI"]
             spatial.syngas_dri.locations = ["EU"]
-        
-        print(f"NODES STEEL {spatial.steel.nodes}")
 
         if options["endo_industry"]["regional_cement_demand"]:
             # Cement
@@ -4995,7 +4993,9 @@ def calculate_steel_parameters(nyears=1):
     lifetime_bof = 25
     discount_rate = 0.04
 
-    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof * nyears)
+    capex_bof_mpp = 871.85 * 1e3 * 8760 # €/kt steel/h
+
+    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof_mpp * nyears)
 
     bof = pd.Series({"iron input": iron_to_steel_bof,
                     "coal input": coal_to_steel_bof,
@@ -5018,7 +5018,9 @@ def calculate_steel_parameters(nyears=1):
     lifetime_eaf_ng = 25
     discount_rate = 0.04
 
-    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_ng * nyears
+    capex_eaf_mpp = 698.34 * 1e3 * 8760 # €/kt steel/h
+
+    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
 
 
     eaf_ng = pd.Series({"iron input": iron_to_steel_eaf_ng,
@@ -5099,17 +5101,11 @@ def add_steel_industry(n, investment_year, steel_data, options):
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
     p_set = cap_share * hourly_steel_production
-    p_set.index = p_set.index + ' steel'
-
-    if not options["endo_industry"]["regional_steel_demand"]:
-
-        p_set = p_set.sum()
     
-    print(f"P SET STEEL {p_set}")
-
-
-    # This should be the minimal steel production capacity in the country, since EAF is the cheapest route and the model would tend to do only that, the p_nom_min constraint will be on this technology
-    max_cap = max(capacities) * 2
+    if options["endo_industry"]["regional_steel_demand"]:
+        p_set.index += " steel"
+    else:
+        p_set = p_set.sum()
 
     # Adding carriers and components
     nodes = pop_layout.index
@@ -5188,6 +5184,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
     # PARAMETERS
     bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
+    min_part_load_steel = 0.5
 
     n.add(
         "Link",
@@ -5200,7 +5197,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus4=spatial.co2.bof,
         carrier="BF-BOF",
         p_nom_extendable=True,
-        #p_nom_max=max_cap * bof['iron input'],
+        p_min_pu=min_part_load_steel,
         capital_cost=bof['capital cost'],
         efficiency=1 / bof['iron input'],
         efficiency2= - bof['coal input'] / bof['iron input'],  # MWhth coal per kt iron
@@ -5243,9 +5240,10 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus3=nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
+        p_min_pu=min_part_load_steel,
         capital_cost= eaf_ng['capital cost'],
         efficiency=1 / eaf_ng['iron input'],
-        efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
+        efficiency2= -1, # one unit of dri gas per kt iron
         efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
         lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
     )
@@ -5318,10 +5316,10 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Share of cement production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
     p_set = cap_share * hourly_cement_production
-    p_set.index = p_set.index + ' cement'
 
-    if not options["endo_industry"]["regional_cement_demand"]:
-
+    if options["endo_industry"]["regional_cement_demand"]:
+        p_set.index += " cement"
+    else:
         p_set = p_set.sum()
 
     # Adding carriers and components
@@ -5390,7 +5388,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-
+    min_part_load_cement = 0.3
     n.add(
         "Link",
         nodes,
@@ -5401,6 +5399,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
         bus3=spatial.co2.cement,
         carrier="cement plant",
         p_nom_extendable=True,
+        p_min_pu=min_part_load_cement,
         capital_cost=capex_cement, 
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.28) /0.5 , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974 divided by 0.5 because I don't have heat
@@ -5555,8 +5554,9 @@ def add_hvc(n, investment_year, hvc_data, options):
     cap_share = capacities / capacities.sum()
     p_set = cap_share * hourly_hvc_production
 
-    if not options["endo_industry"]["regional_hvc"]:
-
+    if options["endo_industry"]["regional_hvc"]:
+        p_set.index += " HVC"
+    else:
         p_set = p_set.sum()
 
     # Remove the previous HVC load, bus and link, which is based on a different quantification of energy demand

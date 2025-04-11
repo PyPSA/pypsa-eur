@@ -717,8 +717,8 @@ def add_steel_industry_existing(n):
     capacities_bof = capacities_bof * keys["Integrated steelworks"]
 
     capacities_eaf = capacities_eaf * keys["EAF"]
-
-    start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"])/ capacities_eaf)
+    start_dates_eaf = max(start_dates["EAF"], start_dates["DRI +EAF"])
+    #start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"])/ capacities_eaf)
     start_dates_bof = round(start_dates["Integrated steelworks"])
 
     # Average age of assets in Iron and steel in Europe: 21-28 years, so I assume they are starting in 2000 in case https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
