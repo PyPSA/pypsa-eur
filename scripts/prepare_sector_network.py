@@ -2738,6 +2738,7 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
+    ltes_additional_heating: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -3068,6 +3069,9 @@ def add_heat(
             )
 
             # wie wollen wir die nutzung von PTES modellieren? Mit einem link für direct usage und nacherhitzung, um die tracken zu können? oder passt ein bus zu heat und einer zu Nacherhitzung
+            # mögliche bedenken, wenn wir über efficiency gehen, dann könnten diese wieder als heat_vents genutzt werden
+            # alternative wären dann zwei links zu bauen, einmal direkt nutzung und nacherhitzung
+            # was ich allgemein brauche ist eine Zeitreihe mit 1 oder null wann ich nacherhitzung benötige und wann nicht
             n.add(
                 "Link",
                 nodes + f" {heat_system} water tanks discharger",
