@@ -527,3 +527,16 @@ rule build_ambient_air_temperature_yearly_average:
         "../envs/environment.yaml"
     script:
         "../scripts/build_ambient_air_temperature_yearly_average.py"
+
+
+rule plot_cop_profiles:
+    input:
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+    output:
+        html=RESULTS + "plots/cop_profiles_s_{clusters}_{planning_horizons}.html",
+    log:
+        logs("plot_cop_profiles_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("plot_cop_profiles/s_{clusters}_{planning_horizons}")
+    script:
+        "../scripts/plot_cop_profiles/plot_cop_profiles.py"

@@ -1,0 +1,460 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
+"""
+Plot coefficient of performance (COP) profiles for heat pumps in different regions.
+Generates interactive HTML plots showing COP profiles for central heating.
+"""
+
+import logging
+import os
+import sys
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import xarray as xr
+from _helpers import configure_logging, set_scenario_config
+from bokeh.io import output_file, save
+from bokeh.layouts import column, row
+from bokeh.models import (
+    CDSView,
+    ColorBar,
+    ColumnDataSource,
+    CustomJS,
+    Div,
+    GeoJSONDataSource,
+    HoverTool,
+    LinearColorMapper,
+    PreText,
+    Select,
+)
+from bokeh.palettes import Category10, Turbo256
+from bokeh.plotting import figure
+from bokeh.transform import dodge
+
+logger = logging.getLogger(__name__)
+
+
+def prepare_cop_data(cop_profiles):
+    """
+    Prepare COP data for plotting.
+    Handles 4-dimensional data (time, name, heat_source, heat_system)
+    and extracts urban central heating system data.
+    
+    Parameters
+    ----------
+    cop_profiles : xarray.Dataset or xarray.DataArray
+        COP profiles dataset or data array
+        
+    Returns
+    -------
+    pandas.DataFrame
+        Prepared COP data for plotting
+    pandas.DataFrame
+        Monthly average COP data for bar chart
+    list
+        List of region names (nodes)
+    list
+        List of heat source names
+    """
+    logger.info(f"COP profiles dimensions: {cop_profiles.dims}")
+    # Datasets don't have shape attribute, so we need to check the type
+    if isinstance(cop_profiles, xr.DataArray):
+        logger.info(f"COP profiles shape: {cop_profiles.shape}")
+    
+    # If we have a Dataset, convert to DataArray
+    if isinstance(cop_profiles, xr.Dataset):
+        # Assuming there's one main variable in the dataset
+        var_name = list(cop_profiles.data_vars)[0]
+        logger.info(f"Converting Dataset to DataArray using variable: {var_name}")
+        cop_profiles = cop_profiles[var_name]
+        logger.info(f"DataArray dimensions: {cop_profiles.dims}")
+        logger.info(f"DataArray shape: {cop_profiles.shape}")
+    
+    # Filter to just "urban central" system type
+    if "heat_system" in cop_profiles.dims:
+        try:
+            system_values = cop_profiles.coords["heat_system"].values
+            logger.info(f"Available heat systems: {system_values}")
+            
+            # Check if "urban central" exists in the heat_system dimension
+            if "urban central" in system_values:
+                cop_data = cop_profiles.sel(heat_system="urban central")
+                logger.info("Selected 'urban central' heat system")
+            else:
+                # If not found, use the first available system
+                first_system = system_values[0]
+                cop_data = cop_profiles.sel(heat_system=first_system)
+                logger.info(f"'urban central' not found, using '{first_system}' instead")
+        except Exception as e:
+            logger.error(f"Error selecting heat system: {e}")
+            cop_data = cop_profiles
+    else:
+        cop_data = cop_profiles
+    
+    # Check dimensions and prepare the dataframe
+    dims = cop_data.dims
+    logger.info(f"Selected COP data dimensions: {dims}")
+    
+    # Get the name of the region dimension
+    region_dim = next((d for d in dims if d in ["name", "node", "region"]), None)
+    if not region_dim:
+        logger.warning("No region dimension found in COP data")
+        # If no region dimension found, add a dummy one
+        cop_data = cop_data.expand_dims({"region": ["All regions"]})
+        region_dim = "region"
+    
+    # Capture heat source names before pivoting
+    if "heat_source" in dims:
+        heat_sources = list(cop_data.coords["heat_source"].values)
+        logger.info(f"Heat sources: {heat_sources}")
+    else:
+        heat_sources = []
+        logger.warning("No heat_source dimension found in COP data")
+    
+    # Convert to pandas for plotting
+    # We need to reshape data to have heat sources as columns
+    if "heat_source" in dims and region_dim in dims and "time" in dims:
+        # Start with a multi-index DataFrame
+        df = cop_data.to_dataframe()
+        
+        if isinstance(df.index, pd.MultiIndex):
+            # Flatten the MultiIndex into columns
+            df = df.reset_index()
+            
+        # Get COP values column name
+        cop_col = None
+        for col in df.columns:
+            if col not in ["time", region_dim, "heat_source", "heat_system"]:
+                cop_col = col
+                break
+        
+        if cop_col is None:
+            logger.error("Could not identify COP values column")
+            return pd.DataFrame(), pd.DataFrame(), [], []
+            
+        # Pivot the table to have heat sources as columns
+        pivot_df = df.pivot_table(
+            index=["time", region_dim], 
+            columns="heat_source", 
+            values=cop_col
+        ).reset_index()
+        
+        # Rename region column to 'node' for consistency
+        if region_dim != "node":
+            pivot_df = pivot_df.rename(columns={region_dim: "node"})
+    else:
+        # Fallback for unexpected structure
+        logger.warning(f"Unexpected data structure. Converting as is.")
+        df = cop_data.to_dataframe().reset_index()
+        if region_dim != "node" and region_dim in df.columns:
+            df = df.rename(columns={region_dim: "node"})
+        pivot_df = df
+    
+    # Calculate monthly averages for bar chart
+    if "time" in pivot_df.columns:
+        # Add month column
+        pivot_df['month'] = pd.to_datetime(pivot_df['time']).dt.month
+        
+        # Group by month and region, calculate mean of each heat source
+        monthly_avg = pivot_df.groupby(['month', 'node']).mean().reset_index()
+        
+        # Add month names for better display
+        month_names = {
+            1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+            7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+        }
+        monthly_avg['month_name'] = monthly_avg['month'].map(month_names)
+        
+        # Sort by month for proper display
+        monthly_avg = monthly_avg.sort_values('month')
+    else:
+        # Create empty DataFrame if time data is not available
+        monthly_avg = pd.DataFrame(columns=['month', 'node', 'month_name'] + heat_sources)
+    
+    # Get unique region names
+    regions = sorted(pivot_df["node"].unique())
+    logger.info(f"Found {len(regions)} regions: {regions[:5]}...")
+    
+    return pivot_df, monthly_avg, regions, heat_sources
+
+
+def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources):
+    """
+    Create an interactive Bokeh plot for COP profiles with a monthly average bar chart.
+    
+    Parameters
+    ----------
+    cop_df : pandas.DataFrame
+        DataFrame with COP data
+    monthly_avg_df : pandas.DataFrame
+        DataFrame with monthly average COP data
+    regions : list
+        List of region names
+    heat_sources : list
+        List of heat source names
+    
+    Returns
+    -------
+    bokeh.layouts.column
+        Bokeh layout with interactive plots
+    """
+    # Use the first region as default
+    default_region = regions[0] if regions else None
+    
+    if default_region is None:
+        logger.error("No regions found in COP data")
+        return None
+    
+    # Filter for the default region
+    region_data = cop_df[cop_df.node == default_region]
+    monthly_region_data = monthly_avg_df[monthly_avg_df.node == default_region]
+    
+    # Create a color palette with enough colors for all heat sources
+    colors = Category10[10] * (len(heat_sources) // 10 + 1)
+    colors = colors[:len(heat_sources)]
+    
+    # Create ColumnDataSources for both plots
+    timeseries_source = ColumnDataSource(region_data)
+    monthly_source = ColumnDataSource(monthly_region_data)
+    
+    # Create tooltip data for time series
+    timeseries_tooltips = [("Date", "@time{%F}")]
+    for heat_source in heat_sources:
+        timeseries_tooltips.append((heat_source, f"@{{{heat_source}}}{{0.00}}"))
+    
+    # Create hover tool for time series
+    timeseries_hover = HoverTool(
+        tooltips=timeseries_tooltips,
+        formatters={"@time": "datetime"},
+        mode="vline",
+        point_policy="follow_mouse"
+    )
+    
+    # Create the time series figure
+    p_timeseries = figure(
+        width=900,
+        height=500,
+        title=f"Heat Pump COP Profiles for {default_region}",
+        x_axis_type="datetime",
+        toolbar_location="above",
+        tools=["pan", "wheel_zoom", "box_zoom", "reset", "save", timeseries_hover]
+    )
+    
+    # Add lines for each heat source to time series plot
+    for i, heat_source in enumerate(heat_sources):
+        p_timeseries.line(
+            x="time", 
+            y=heat_source, 
+            source=timeseries_source,
+            line_width=2,
+            color=colors[i],
+            legend_label=heat_source,
+            name=heat_source,
+        )
+    
+    # Style the time series plot
+    p_timeseries.title.text_font_size = '14pt'
+    p_timeseries.xaxis.axis_label = "Time"
+    p_timeseries.yaxis.axis_label = "Coefficient of Performance (COP)"
+    p_timeseries.legend.location = "top_left"
+    p_timeseries.legend.click_policy = "hide"
+    p_timeseries.grid.grid_line_alpha = 0.3
+    
+    # Create monthly average bar chart
+    p_monthly = figure(
+        width=500,
+        height=500,
+        title=f"Monthly Average COP for {default_region}",
+        x_range=monthly_region_data['month_name'].tolist(),
+        toolbar_location="above",
+        tools=["pan", "wheel_zoom", "box_zoom", "reset", "save"]
+    )
+    
+    # Create tooltip for monthly bar chart
+    monthly_tooltips = [("Month", "@month_name")]
+    for heat_source in heat_sources:
+        monthly_tooltips.append((heat_source, f"@{{{heat_source}}}{{0.00}}"))
+    
+    p_monthly.add_tools(HoverTool(tooltips=monthly_tooltips))
+    
+    # Add grouped bars for each heat source
+    bar_width = 0.8 / len(heat_sources)
+    
+    for i, heat_source in enumerate(heat_sources):
+        # Calculate offset for grouped bars
+        offset = (i - len(heat_sources)/2 + 0.5) * bar_width
+        
+        p_monthly.vbar(
+            x=dodge('month_name', offset, range=p_monthly.x_range),
+            top=heat_source,
+            width=bar_width,
+            source=monthly_source,
+            color=colors[i],
+            legend_label=heat_source,
+            name=heat_source
+        )
+    
+    # Style the monthly bar chart
+    p_monthly.title.text_font_size = '14pt'
+    p_monthly.xaxis.axis_label = "Month"
+    p_monthly.yaxis.axis_label = "Average COP"
+    p_monthly.xgrid.grid_line_color = None
+    p_monthly.legend.location = "top_left"
+    p_monthly.legend.click_policy = "hide"
+    
+    # Rotate x-axis labels for better readability
+    p_monthly.xaxis.major_label_orientation = np.pi/4
+    
+    # Create region selector dropdown
+    region_select = Select(
+        title="Select Region:",
+        value=default_region,
+        options=regions,
+        width=200,
+    )
+    
+    # Create callback to update both plots when region is changed
+    callback = CustomJS(
+        args=dict(
+            timeseries_source=timeseries_source,
+            monthly_source=monthly_source,
+            region_select=region_select,
+            p_timeseries=p_timeseries,
+            p_monthly=p_monthly,
+            all_timeseries_data=ColumnDataSource(cop_df),
+            all_monthly_data=ColumnDataSource(monthly_avg_df),
+        ),
+        code="""
+        const region = region_select.value;
+        
+        // Update timeseries plot
+        const tsData = all_timeseries_data.data;
+        const tsOut = {};
+        
+        // Filter data for selected region
+        const tsIndices = [];
+        for (let i = 0; i < tsData.node.length; i++) {
+            if (tsData.node[i] === region) {
+                tsIndices.push(i);
+            }
+        }
+        
+        // Get all column names
+        const tsColumns = Object.keys(tsData);
+        
+        // For each column, filter the data
+        for (let col of tsColumns) {
+            tsOut[col] = tsIndices.map(i => tsData[col][i]);
+        }
+        
+        // Update the source data
+        timeseries_source.data = tsOut;
+        
+        // Update monthly plot
+        const monthlyData = all_monthly_data.data;
+        const monthlyOut = {};
+        
+        // Filter monthly data for selected region
+        const monthlyIndices = [];
+        for (let i = 0; i < monthlyData.node.length; i++) {
+            if (monthlyData.node[i] === region) {
+                monthlyIndices.push(i);
+            }
+        }
+        
+        // Get all column names
+        const monthlyColumns = Object.keys(monthlyData);
+        
+        // For each column, filter the data
+        for (let col of monthlyColumns) {
+            monthlyOut[col] = monthlyIndices.map(i => monthlyData[col][i]);
+        }
+        
+        // Update the source data
+        monthly_source.data = monthlyOut;
+        
+        // Update the plot titles
+        p_timeseries.title.text = `Heat Pump COP Profiles for ${region}`;
+        p_monthly.title.text = `Monthly Average COP for ${region}`;
+        
+        // Update x-range for bar chart to ensure proper ordering
+        if (monthlyOut.month_name && monthlyOut.month_name.length > 0) {
+            p_monthly.x_range.factors = monthlyOut.month_name;
+        }
+        """,
+    )
+    
+    # Connect callback to dropdown
+    region_select.js_on_change("value", callback)
+    
+    # Create info text
+    info_div = Div(
+        text="""
+        <p>This plot shows Coefficient of Performance (COP) profiles for heat pumps in different regions.</p>
+        <p>COP represents the efficiency of heat pumps - higher values mean better performance.</p>
+        <p>Select a region from the dropdown to see its specific COP profiles for different heat sources.</p>
+        <p>Click on legend items to hide/show specific heat sources.</p>
+        <p>The bar chart shows monthly averages to help identify seasonal patterns.</p>
+        """,
+        width=400,
+        styles={"font-size": "12px"},
+    )
+    
+    # Create layout
+    controls = column(region_select, info_div, width=200)
+    plots = row(p_timeseries, p_monthly)
+    layout = column(row(controls, plots))
+    
+    return layout
+
+
+if __name__ == "__main__":
+    """Generate interactive COP profile plots."""
+    if "snakemake" not in globals():
+        from _helpers import mock_snakemake
+
+        snakemake = mock_snakemake(
+            "plot_cop_profiles", 
+            clusters=48,
+            planning_horizons=2030,
+        )
+
+    configure_logging(snakemake)
+    
+    # Load COP profiles
+    cop_profiles = xr.open_dataset(snakemake.input.cop_profiles)
+    logger.info(f"Loaded COP profiles with dimensions: {cop_profiles.dims}")
+    
+    # Prepare data for plotting
+    cop_df, monthly_avg_df, regions, heat_sources = prepare_cop_data(cop_profiles)
+    
+    if len(regions) == 0:
+        logger.error("No regions found in COP data")
+        sys.exit(1)
+        
+    if len(heat_sources) == 0:
+        logger.error("No heat sources found in COP data")
+        sys.exit(1)
+    
+    # Create output directory if it doesn't exist
+    output_path = Path(snakemake.output.html)
+    os.makedirs(output_path.parent, exist_ok=True)
+    
+    # Configure the output file
+    output_file(snakemake.output.html, title="Heat Pump COP Profiles")
+    
+    # Create plot
+    layout = create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources)
+    
+    # Save the plot
+    save(layout)
+    logger.info(f"Interactive COP profile plot saved to {snakemake.output.html}")
+
+
+
+
+
