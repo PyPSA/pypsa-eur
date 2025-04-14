@@ -91,18 +91,11 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
     logger.info(f"Selected COP data dimensions: {dims}")
     
     # Get the name of the region dimension
-    # region_dim = next((d for d in dims if d in ["name", "node", "region"]), None)
-    # if not region_dim:
-    #     logger.warning("No region dimension found in COP data")
-    #     # If no region dimension found, add a dummy one
-    #     cop_data = cop_data.expand_dims({"region": ["All regions"]})
-    #     region_dim = "region"
     region_dim = "name"
     
     # Capture heat source names before pivoting
-    # if "heat_source" in dims:
     try:
-        heat_sources = list(cop_data.coords["heat_source"].values)
+        heat_sources = [val for val in cop_data.coords["heat_source"].values if cop_data.sel(heat_source=val).notnull().any()]
         logger.info(f"Heat sources: {heat_sources}")
     except Exception as e:
         logger.error(f"Error retrieving heat sources: {e}")
@@ -111,7 +104,6 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
     
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
-    # if "heat_source" in dims and region_dim in dims and "time" in dims:
     try:
         # Start with a multi-index DataFrame
         df = cop_data.to_dataframe()
@@ -135,8 +127,6 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
         nan_count = df[cop_col].isna().sum()
         if nan_count > 0:
             logger.info(f"Found {nan_count} NaN values in COP data (out of {len(df)})")
-            # Optional: fill NaN values or filter them out
-            # df = df.dropna(subset=[cop_col])  # Remove rows with NaN values
         
         # Pivot the table to have heat sources as columns
         pivot_df = df.pivot_table(
@@ -148,19 +138,9 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
             fill_value=None  # Keep NaN values as NaN
         ).reset_index()
         
-        # Rename region column to 'node' for consistency
-        # if region_dim != "node":
-        #     pivot_df = pivot_df.rename(columns={region_dim: "node"})
-    # else:
     except Exception as e:
         logger.error(f"Unexpected data structure. Error processing COP data: {e}")
-        # Fallback for unexpected structure
-        # logger.warning(f"Unexpected data structure. Converting as is.")
-        # df = cop_data.to_dataframe().reset_index()
-        # if region_dim != "node" and region_dim in df.columns:
-        #     df = df.rename(columns={region_dim: "node"})
-        # pivot_df = df
-    
+
     # Calculate monthly averages for bar chart, ignoring NaN values
     if "time" in pivot_df.columns:
         # Add month column
@@ -232,19 +212,6 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
     timeseries_source = ColumnDataSource(region_data)
     monthly_source = ColumnDataSource(monthly_region_data)
     
-    # Create tooltip data for time series
-    timeseries_tooltips = [("Date", "@time{%F}")]
-    for heat_source in heat_sources:
-        timeseries_tooltips.append((heat_source, f"@{{{heat_source}}}{{0.00}}"))
-    
-    # Create hover tool for time series
-    timeseries_hover = HoverTool(
-        tooltips=timeseries_tooltips,
-        formatters={"@time": "datetime"},
-        mode="vline",
-        point_policy="follow_mouse"
-    )
-    
     # Create the time series figure
     p_timeseries = figure(
         width=900,
@@ -252,12 +219,12 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
         title=f"Heat Pump COP Profiles for {default_region}",
         x_axis_type="datetime",
         toolbar_location="above",
-        tools=["pan", "wheel_zoom", "box_zoom", "reset", "save", timeseries_hover]
+        tools=["pan", "wheel_zoom", "box_zoom", "reset", "save"]  # Removed hover tool from here
     )
     
     # Add lines for each heat source to time series plot
     for i, heat_source in enumerate(heat_sources):
-        p_timeseries.line(
+        line = p_timeseries.line(
             x="time", 
             y=heat_source, 
             source=timeseries_source,
@@ -266,6 +233,23 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
             legend_label=heat_source,
             name=heat_source,
         )
+        
+        # Add hover tool only to the first heat source
+        if i == 0:
+            # Create tooltip data for time series
+            timeseries_tooltips = [("Date", "@time{%F}")]
+            for hs in heat_sources:
+                timeseries_tooltips.append((hs, f"@{{{hs}}}{{0.00}}"))
+            
+            # Create hover tool for time series
+            timeseries_hover = HoverTool(
+                renderers=[line],  # Only attach to this line
+                tooltips=timeseries_tooltips,
+                formatters={"@time": "datetime"},
+                mode="vline",  # Still show all values at the hovered time
+                point_policy="follow_mouse"
+            )
+            p_timeseries.add_tools(timeseries_hover)
     
     # Style the time series plot
     p_timeseries.title.text_font_size = '14pt'
