@@ -36,7 +36,7 @@ from scripts.definitions.heat_system import HeatSystemType
 logger = logging.getLogger(__name__)
 
 
-def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
+def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim="name"):
     """
     Prepare COP data for plotting.
     Handles 4-dimensional data (time, name, heat_source, heat_system)
@@ -91,16 +91,12 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
     logger.info(f"Selected COP data dimensions: {dims}")
     
     # Get the name of the region dimension
-    region_dim = "name"
-    
     # Capture heat source names before pivoting
     try:
         heat_sources = [val for val in cop_data.coords["heat_source"].values if cop_data.sel(heat_source=val).notnull().any()]
         logger.info(f"Heat sources: {heat_sources}")
     except Exception as e:
         logger.error(f"Error retrieving heat sources: {e}")
-        # heat_sources = []
-        # logger.warning("No heat_source dimension found in COP data")
     
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
