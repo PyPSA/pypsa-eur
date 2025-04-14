@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+- Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
