@@ -318,9 +318,11 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
             p_monthly=p_monthly,
             all_timeseries_data=ColumnDataSource(cop_df),
             all_monthly_data=ColumnDataSource(monthly_avg_df),
+            region_dim=region_dim,
         ),
         code="""
         const region = region_select.value;
+        const regionColumn = region_dim;  // Use the provided region dimension name
         
         // Update timeseries plot
         const tsData = all_timeseries_data.data;
@@ -328,8 +330,8 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
         
         // Filter data for selected region
         const tsIndices = [];
-        for (let i = 0; i < tsData.node.length; i++) {
-            if (tsData.node[i] === region) {
+        for (let i = 0; i < tsData[regionColumn].length; i++) {
+            if (tsData[regionColumn][i] === region) {
                 tsIndices.push(i);
             }
         }
@@ -351,8 +353,8 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, r
         
         // Filter monthly data for selected region
         const monthlyIndices = [];
-        for (let i = 0; i < monthlyData.node.length; i++) {
-            if (monthlyData.node[i] === region) {
+        for (let i = 0; i < monthlyData[regionColumn].length; i++) {
+            if (monthlyData[regionColumn][i] === region) {
                 monthlyIndices.push(i);
             }
         }
