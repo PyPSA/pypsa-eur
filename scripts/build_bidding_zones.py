@@ -12,6 +12,7 @@ Outputs
 
 import geopandas as gpd
 import pandas as pd
+from shapely.geometry import MultiPolygon, Polygon
 
 
 def parse_zone_names(zone_names: pd.Series) -> tuple[set[str], pd.Series]:
@@ -165,6 +166,15 @@ def extract_shape_by_bbox(
     ).reset_index(drop=True)
 
 
+def remove_holes(geom):
+    if geom.geom_type == "Polygon":
+        return Polygon(geom.exterior)
+    elif geom.geom_type == "MultiPolygon":
+        return MultiPolygon([Polygon(p.exterior) for p in geom.geoms])
+    else:
+        return geom
+
+
 def format_names(s: str):
     s = (
         s.replace("DK-DK1", "DKW1")
@@ -288,13 +298,16 @@ if __name__ == "__main__":
             region_id="GR03",
         )
 
-    # manually add zone group for DE_LU
+    # manually add zone group
     bidding_zones.loc[
         bidding_zones.zone_name.isin(["DE", "LU"]), "cross_country_zone"
     ] = "DE_LU"
     bidding_zones.loc[
         bidding_zones.zone_name.isin(["GB-NIR", "IE"]), "cross_country_zone"
     ] = "UKNI_IE"
+
+    # remove holes from geometries
+    bidding_zones["geometry"] = bidding_zones["geometry"].apply(remove_holes)
 
     # if turkey is not in the list of countries, drop northern cyprus
     if "TR" not in countries:
