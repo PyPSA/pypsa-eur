@@ -99,6 +99,18 @@ rule all:
             run=config["run"]["name"],
             **config["scenario"],
         ),
+        # Bus carrier dispatch plots
+        expand(
+            RESULTS + "plots/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        # Bus annual energy balance plots
+        expand(
+            RESULTS + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
         lambda w: expand(
             (
                 RESULTS
@@ -167,16 +179,6 @@ rule all:
             **config["scenario"],
             run=config["run"]["name"],
         ),
-        # lambda w: expand(
-        #     (
-        #         RESULTS
-        #         + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_air.html"
-        #         if config_provider("plotting", "heat_source_map", "enable")(w)
-        #         else []
-        #     ),
-        #     **config["scenario"],
-        #     run=config["run"]["name"],
-        # ),
         # Only river_water has energy maps
         lambda w: expand(
             (
