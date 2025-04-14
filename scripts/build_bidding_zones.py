@@ -47,9 +47,31 @@ def replace_country(
     reference: gpd.GeoDataFrame,
     country: str,
     default_tolerance: float = 0.05,
+    tolerance_dict: dict[str, dict[str, float]] = None,
 ):
     """
-    Replace a country of the source shapefile with the shape in reference
+    Replace the shape of a specified country in the source shapes file with the corresponding shape from a reference shapes file.
+
+    Parameters
+    ----------
+    source : geopandas.GeoDataFrame
+        Original shapes file, including the country to replace.
+    reference : geopandas.GeoDataFrame
+        Alternative shapes file to use for the replaced the country.
+    country : str
+        The country code to be replaced in the source shapes file.
+    default_tolerance : float, optional
+        Default snapping tolerance (in degrees) used to align neighboring borders.
+    tolerance_dict : dict of dict, optional
+        A nested dictionary specifying custom tolerances (in degrees) for snapping between specific zone pairs.
+        Format: {zone_name: {neighbor_zone_name: tolerance}}.
+        If not provided, the default tolerance value is used.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        A shapes file with the specified country replaced and geometries snapped to
+        neighbors to avoid overlaps.
     """
 
     # Remove country from the source
@@ -60,14 +82,6 @@ def replace_country(
     reference["country"] = country_strings
     country_zones = reference[reference.country == country]
     bidding_zones = pd.concat([bidding_zones, country_zones], ignore_index=True)
-
-    tolerance_dict = {
-        "IT_NORD": {
-            "CH": 0.04,
-            "AT": 0.024,
-            "SI": 0.01,
-        }
-    }
 
     # Loop on zones in source country
     for z in bidding_zones.query("country==@country").zone_name:
@@ -202,7 +216,20 @@ if __name__ == "__main__":
         columns={"zoneName": "zone_name"}
     )
 
-    bidding_zones = replace_country(bidding_zones, bidding_zones_entsoe, "IT")
+    tolerance_dict = {
+        "IT_NORD": {
+            "FR": 0.05,
+            "CH": 0.04,
+            "AT": 0.024,
+            "SI": 0.01,
+        }
+    }
+    bidding_zones = replace_country(
+        source=bidding_zones,
+        reference=bidding_zones_entsoe,
+        country="IT",
+        tolerance_dict=tolerance_dict,
+    )
 
     if snakemake.params.remove_islands:
         # manual corrections: remove islands
