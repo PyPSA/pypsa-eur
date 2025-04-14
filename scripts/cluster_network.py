@@ -109,9 +109,9 @@ def weighting_for_country(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
 def busmap_from_shapes(
     n: pypsa.Network,
     shapes: gpd.GeoDataFrame,
-    buses=None,
-    cluster_names="name",
-    per_country=False,
+    buses: pd.DataFrame = None,
+    cluster_names: str = "name",
+    per_country: bool = False,
 ) -> pd.Series:
     """
     Create a busmap from target shapes.
@@ -122,8 +122,7 @@ def busmap_from_shapes(
     For the subset of buses which are not covered by target shapes, the geographically
     nearest shape is assigned.
 
-    If the shapes have a column "country", the function assigns buses to shapes
-    based on the country of the buses and the shapes.
+    If "per_country" is True, the function assigns buses to shapes based on the country of the buses and the shapes.
 
     Parameters
     ----------
@@ -135,8 +134,8 @@ def busmap_from_shapes(
         Buses to be assigned to target shapes. If None, n.buses is used.
     cluster_names : str, optional
         Column name of the shapes to be used as cluster names.
-        If None, the cluster names are determined to match the
-        pattern "<country><sub_network> <number>".
+    per_country : Bool, optional
+        Apply the function to buses based on country.
 
     Returns
     -------
@@ -144,23 +143,21 @@ def busmap_from_shapes(
         busmap with index of buses and values of shape names.
     """
     if not isinstance(shapes, gpd.GeoDataFrame):
-        raise TypeError("shapes must be a gpd.GeoDataFrame object")
+        raise TypeError("Shapes must be a gpd.GeoDataFrame object")
 
     if buses is None:
         buses = n.buses
 
     if per_country:
-        logger.info(
-            "Bus shapes contain `country` column. Assigning buses to target shapes based on country."
-        )
+        logger.info("Assigning buses to target shapes based on country.")
         if "country" not in shapes.columns:
             raise ValueError(
-                "shapes must contain a 'country' column for per-country assignment."
+                "Shapes must contain a 'country' column for per-country assignment."
             )
         if not set(shapes.country).issuperset(buses.country):
             logger.warning("Not all countries in buses are covered by target shapes.")
         busmaps = []
-        for country in shapes.country.unique():
+        for country in buses.country.unique():
             country_buses = buses[buses.country == country]
             country_shapes = shapes[shapes.country == country]
             busmaps.append(
@@ -172,32 +169,22 @@ def busmap_from_shapes(
                     per_country=False,
                 )
             )
-        busmap = pd.concat(busmaps)
-        return busmap.reindex(n.buses.index)
+        busmap = pd.concat(busmaps).reindex(n.buses.index)
 
-    shapes.index = shapes.index.astype(str)
-    shapes.index.name = "name"
-    points = gpd.points_from_xy(**buses[["x", "y"]], crs=4326)
-    coords = gpd.GeoDataFrame(geometry=points, index=buses.index)
-    column = cluster_names or "name"
-    busmap = gpd.sjoin(coords, shapes, how="left")[column].rename("busmap")
+    else:
+        shapes = shapes.set_index(cluster_names)
+        points = gpd.points_from_xy(**buses[["x", "y"]], crs=GEO_CRS)
+        coords = gpd.GeoDataFrame(geometry=points, index=buses.index)
+        busmap = gpd.sjoin(coords, shapes, how="left")[cluster_names].rename("busmap")
 
-    if busmap.isnull().any():
-        unassigned = coords[busmap.isnull()]
-        # Take a projection which properly handles distances for European areas.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            unassigned_converted = unassigned.to_crs(3035)
-        shapes_converted = shapes.to_crs(3035).set_index(column)
-        for i, row in unassigned_converted.iterrows():
-            dists = shapes_converted.distance(row.geometry)
-            busmap.at[i] = dists.idxmin()
-
-    # split by sub-network, match target pattern "<country><sub_network> <number>"
-    if cluster_names is None:
-        nth_sub_network = buses.sub_network.loc[busmap.index]
-        split = busmap.str.split()
-        busmap = split.str[0] + nth_sub_network.astype(str) + " " + split.str[1]
+        if busmap.isnull().any():
+            unassigned = coords[busmap.isnull()]
+            # Take a projection which properly handles distances for European areas.
+            unassigned_converted = unassigned.to_crs(DISTANCE_CRS)
+            shapes_converted = shapes.to_crs(DISTANCE_CRS)
+            for i, row in unassigned_converted.iterrows():
+                dists = shapes_converted.distance(row.geometry)
+                busmap.at[i] = dists.idxmin()
 
     return busmap
 
@@ -645,16 +632,9 @@ if __name__ == "__main__":
         elif mode == "custom_busshapes":
             n.determine_network_topology()
             custom_shapes = gpd.read_file(snakemake.input.custom_busshapes)
-            use_shapes_index = True
-            if {"country", "id"} & set(custom_shapes.columns):
-                # keep pypsa-eur naming convention and add an subnetwork id "0" after the country
-                index = custom_shapes.country + "0 " + custom_shapes.id.astype(str)
-                custom_shapes.index = index
-                use_shapes_index = True
-            elif "name" in custom_shapes.columns:
-                custom_shapes = custom_shapes.set_index("name")
             custom_busmap = busmap_from_shapes(
-                n, custom_shapes, cluster_names=use_shapes_index
+                n,
+                custom_shapes,
             )
             logger.info(
                 f"Imported custom shapes from {snakemake.input.custom_busshapes}"
