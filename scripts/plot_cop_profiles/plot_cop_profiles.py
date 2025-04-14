@@ -16,38 +16,38 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
-from bokeh.io import output_file, save
 from bokeh.layouts import column, row
 from bokeh.models import (
-    CDSView,
-    ColorBar,
     ColumnDataSource,
     CustomJS,
     Div,
-    GeoJSONDataSource,
     HoverTool,
-    LinearColorMapper,
-    PreText,
     Select,
 )
 from bokeh.palettes import Category10, Turbo256
 from bokeh.plotting import figure
 from bokeh.transform import dodge
+from bokeh.io import output_file, save
+
+from _helpers import configure_logging, set_scenario_config
+from scripts.definitions.heat_system import HeatSystemType 
+
 
 logger = logging.getLogger(__name__)
 
 
-def prepare_cop_data(cop_profiles):
+def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType):
     """
     Prepare COP data for plotting.
     Handles 4-dimensional data (time, name, heat_source, heat_system)
-    and extracts urban central heating system data.
+    and extracts data for the specified heat system type.
     
     Parameters
     ----------
     cop_profiles : xarray.Dataset or xarray.DataArray
         COP profiles dataset or data array
+    heat_system : str
+        Heat system type to filter for (e.g., "urban central")
         
     Returns
     -------
@@ -74,25 +74,16 @@ def prepare_cop_data(cop_profiles):
         logger.info(f"DataArray dimensions: {cop_profiles.dims}")
         logger.info(f"DataArray shape: {cop_profiles.shape}")
     
-    # Filter to just "urban central" system type
-    if "heat_system" in cop_profiles.dims:
-        try:
-            system_values = cop_profiles.coords["heat_system"].values
-            logger.info(f"Available heat systems: {system_values}")
-            
-            # Check if "urban central" exists in the heat_system dimension
-            if "urban central" in system_values:
-                cop_data = cop_profiles.sel(heat_system="urban central")
-                logger.info("Selected 'urban central' heat system")
-            else:
-                # If not found, use the first available system
-                first_system = system_values[0]
-                cop_data = cop_profiles.sel(heat_system=first_system)
-                logger.info(f"'urban central' not found, using '{first_system}' instead")
-        except Exception as e:
-            logger.error(f"Error selecting heat system: {e}")
-            cop_data = cop_profiles
-    else:
+    # Filter to the specified heat system type
+    try:
+        system_values = cop_profiles.coords["heat_system"].values
+        logger.info(f"Available heat systems: {system_values}")
+        
+        # Check if the specified heat system exists in the heat_system dimension
+        cop_data = cop_profiles.sel(heat_system=heat_system_type)
+        logger.info(f"Selected '{heat_system_type}' heat system")
+    except Exception as e:
+        logger.error(f"Error selecting heat system: {e}")
         cop_data = cop_profiles
     
     # Check dimensions and prepare the dataframe
@@ -100,24 +91,28 @@ def prepare_cop_data(cop_profiles):
     logger.info(f"Selected COP data dimensions: {dims}")
     
     # Get the name of the region dimension
-    region_dim = next((d for d in dims if d in ["name", "node", "region"]), None)
-    if not region_dim:
-        logger.warning("No region dimension found in COP data")
-        # If no region dimension found, add a dummy one
-        cop_data = cop_data.expand_dims({"region": ["All regions"]})
-        region_dim = "region"
+    # region_dim = next((d for d in dims if d in ["name", "node", "region"]), None)
+    # if not region_dim:
+    #     logger.warning("No region dimension found in COP data")
+    #     # If no region dimension found, add a dummy one
+    #     cop_data = cop_data.expand_dims({"region": ["All regions"]})
+    #     region_dim = "region"
+    region_dim = "name"
     
     # Capture heat source names before pivoting
-    if "heat_source" in dims:
+    # if "heat_source" in dims:
+    try:
         heat_sources = list(cop_data.coords["heat_source"].values)
         logger.info(f"Heat sources: {heat_sources}")
-    else:
-        heat_sources = []
-        logger.warning("No heat_source dimension found in COP data")
+    except Exception as e:
+        logger.error(f"Error retrieving heat sources: {e}")
+        # heat_sources = []
+        # logger.warning("No heat_source dimension found in COP data")
     
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
-    if "heat_source" in dims and region_dim in dims and "time" in dims:
+    # if "heat_source" in dims and region_dim in dims and "time" in dims:
+    try:
         # Start with a multi-index DataFrame
         df = cop_data.to_dataframe()
         
@@ -136,31 +131,43 @@ def prepare_cop_data(cop_profiles):
             logger.error("Could not identify COP values column")
             return pd.DataFrame(), pd.DataFrame(), [], []
             
+        # Check for NaN values before pivoting
+        nan_count = df[cop_col].isna().sum()
+        if nan_count > 0:
+            logger.info(f"Found {nan_count} NaN values in COP data (out of {len(df)})")
+            # Optional: fill NaN values or filter them out
+            # df = df.dropna(subset=[cop_col])  # Remove rows with NaN values
+        
         # Pivot the table to have heat sources as columns
         pivot_df = df.pivot_table(
             index=["time", region_dim], 
             columns="heat_source", 
-            values=cop_col
+            values=cop_col,
+            # Do not include NaN values in the average
+            aggfunc='mean',  
+            fill_value=None  # Keep NaN values as NaN
         ).reset_index()
         
         # Rename region column to 'node' for consistency
-        if region_dim != "node":
-            pivot_df = pivot_df.rename(columns={region_dim: "node"})
-    else:
+        # if region_dim != "node":
+        #     pivot_df = pivot_df.rename(columns={region_dim: "node"})
+    # else:
+    except Exception as e:
+        logger.error(f"Unexpected data structure. Error processing COP data: {e}")
         # Fallback for unexpected structure
-        logger.warning(f"Unexpected data structure. Converting as is.")
-        df = cop_data.to_dataframe().reset_index()
-        if region_dim != "node" and region_dim in df.columns:
-            df = df.rename(columns={region_dim: "node"})
-        pivot_df = df
+        # logger.warning(f"Unexpected data structure. Converting as is.")
+        # df = cop_data.to_dataframe().reset_index()
+        # if region_dim != "node" and region_dim in df.columns:
+        #     df = df.rename(columns={region_dim: "node"})
+        # pivot_df = df
     
-    # Calculate monthly averages for bar chart
+    # Calculate monthly averages for bar chart, ignoring NaN values
     if "time" in pivot_df.columns:
         # Add month column
         pivot_df['month'] = pd.to_datetime(pivot_df['time']).dt.month
         
         # Group by month and region, calculate mean of each heat source
-        monthly_avg = pivot_df.groupby(['month', 'node']).mean().reset_index()
+        monthly_avg = pivot_df.groupby(['month', region_dim]).mean(numeric_only=True).reset_index()
         
         # Add month names for better display
         month_names = {
@@ -173,16 +180,20 @@ def prepare_cop_data(cop_profiles):
         monthly_avg = monthly_avg.sort_values('month')
     else:
         # Create empty DataFrame if time data is not available
-        monthly_avg = pd.DataFrame(columns=['month', 'node', 'month_name'] + heat_sources)
+        monthly_avg = pd.DataFrame(columns=['month', region_dim, 'month_name'] + heat_sources)
     
     # Get unique region names
-    regions = sorted(pivot_df["node"].unique())
+    regions = sorted(pivot_df[region_dim].unique())
     logger.info(f"Found {len(regions)} regions: {regions[:5]}...")
+    
+    # Add heat system information to the dataframes for reference
+    pivot_df['heat_system'] = heat_system_type
+    monthly_avg['heat_system'] = heat_system_type
     
     return pivot_df, monthly_avg, regions, heat_sources
 
 
-def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources):
+def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources, region_dim: str="name"):
     """
     Create an interactive Bokeh plot for COP profiles with a monthly average bar chart.
     
@@ -210,8 +221,8 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources):
         return None
     
     # Filter for the default region
-    region_data = cop_df[cop_df.node == default_region]
-    monthly_region_data = monthly_avg_df[monthly_avg_df.node == default_region]
+    region_data = cop_df[cop_df[region_dim] == default_region]
+    monthly_region_data = monthly_avg_df[monthly_avg_df[region_dim] == default_region]
     
     # Create a color palette with enough colors for all heat sources
     colors = Category10[10] * (len(heat_sources) // 10 + 1)
@@ -413,7 +424,7 @@ def create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources):
 
 
 if __name__ == "__main__":
-    """Generate interactive COP profile plots."""
+    """Generate interactive COP profile plots for all heat systems in a single file."""
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
@@ -429,32 +440,46 @@ if __name__ == "__main__":
     cop_profiles = xr.open_dataset(snakemake.input.cop_profiles)
     logger.info(f"Loaded COP profiles with dimensions: {cop_profiles.dims}")
     
-    # Prepare data for plotting
-    cop_df, monthly_avg_df, regions, heat_sources = prepare_cop_data(cop_profiles)
+    # Process each heat system and collect layouts
+    all_layouts = []
     
-    if len(regions) == 0:
-        logger.error("No regions found in COP data")
-        sys.exit(1)
+    for heat_system_type in HeatSystemType:
+        logger.info(f"Processing heat system: {heat_system_type.value}")
         
-    if len(heat_sources) == 0:
-        logger.error("No heat sources found in COP data")
-        sys.exit(1)
+        # Prepare data for plotting
+        cop_df, monthly_avg_df, regions, heat_sources = prepare_cop_data(cop_profiles, heat_system_type.value)
+        
+        if len(regions) == 0:
+            logger.error(f"No regions found in COP data for heat system {heat_system_type.value}")
+            continue
+            
+        if len(heat_sources) == 0:
+            logger.error(f"No heat sources found in COP data for heat system {heat_system_type.value}")
+            continue
+        
+        # Create layout
+        layout = create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources)
+        
+        # Create a header for this heat system
+        header = Div(
+            text=f"<h2>Heat Pump COP Profiles - {heat_system_type.value}</h2>",
+            width=800,
+            styles={"font-size": "16px", "font-weight": "bold", "margin-top": "20px"}
+        )
+        
+        # Add header and layout to the collection
+        all_layouts.append(header)
+        all_layouts.append(layout)
     
-    # Create output directory if it doesn't exist
-    output_path = Path(snakemake.output.html)
-    os.makedirs(output_path.parent, exist_ok=True)
-    
-    # Configure the output file
-    output_file(snakemake.output.html, title="Heat Pump COP Profiles")
-    
-    # Create plot
-    layout = create_interactive_cop_plot(cop_df, monthly_avg_df, regions, heat_sources)
-    
-    # Save the plot
-    save(layout)
-    logger.info(f"Interactive COP profile plot saved to {snakemake.output.html}")
-
-
-
+    # Combine all layouts into a single column
+    if all_layouts:
+        combined_layout = column(all_layouts)
+        
+        # Save the combined plot to snakemake.output[0]
+        output_file(snakemake.output[0], title="COP Profiles")
+        save(combined_layout)
+        logger.info(f"Interactive COP profile plots saved to {snakemake.output[0]}")
+    else:
+        logger.error("No heat system data could be processed. No output generated.")
 
 
