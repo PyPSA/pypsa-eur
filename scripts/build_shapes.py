@@ -387,8 +387,9 @@ def create_regions(
     regions = regions.query("country in @country_list")
 
     # Add bidding zone information
-    bidding_zones = gpd.read_file(bidding_zones_path)
-    regions = regions.assign(bidding_zone=bidding_zone_map(regions, bidding_zones))
+    if bidding_zones_path:
+        bidding_zones = gpd.read_file(bidding_zones_path)
+        regions = regions.assign(bidding_zone=bidding_zone_map(regions, bidding_zones))
 
     return regions
 
