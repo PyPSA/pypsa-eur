@@ -95,7 +95,7 @@ rule all:
         ),
         # COP profiles plots
         expand(
-            RESULTS + "plots/cop_profiles_s_{clusters}_{planning_horizons}.html",
+            RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
             run=config["run"]["name"],
             **config["scenario"],
         ),

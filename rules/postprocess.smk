@@ -533,7 +533,7 @@ rule plot_cop_profiles:
     input:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     output:
-        html=RESULTS + "plots/cop_profiles_s_{clusters}_{planning_horizons}.html",
+        html=RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
     log:
         logs("plot_cop_profiles_s_{clusters}_{planning_horizons}.log"),
     benchmark:
