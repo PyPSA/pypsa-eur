@@ -63,7 +63,7 @@ def plot_heat_source_map(
         Interactive map with heat source data
     """
     # Reset index if needed and check for required column
-    if hasattr(regions_onshore, "index") and onshore_region_name == "name":
+    if hasattr(regions_onshore, "index"):
         regions_onshore = regions_onshore.reset_index()
 
     if onshore_region_name not in regions_onshore.columns:
@@ -101,9 +101,13 @@ def plot_heat_source_map(
     if aggregate_type == "mean":
         region_totals = gdf.groupby(onshore_region_name)[var_name].mean()
         agg_title = f"Average {var_name}"
-    else:  # sum for energy
+    elif aggregate_type == "sum":  # sum for energy
         region_totals = gdf.groupby(onshore_region_name)[var_name].sum()
         agg_title = f"Total {var_name}"
+    else:
+        raise ValueError(
+            f"Invalid aggregate_type '{aggregate_type}'. Use 'mean' or 'sum'."
+        )
 
     # Merge region totals back to regions
     regions_with_totals = regions_onshore.merge(
@@ -127,20 +131,6 @@ def plot_heat_source_map(
             fields=[onshore_region_name, var_name],
             aliases=[onshore_region_name, agg_title],
         ),
-    ).add_to(m)
-
-    # Add a choropleth layer for region totals
-    folium.Choropleth(
-        geo_data=regions_with_totals,
-        name=f"Region {agg_title}",
-        data=regions_with_totals,
-        columns=[onshore_region_name, var_name],
-        key_on=f"feature.properties.{onshore_region_name}",
-        fill_color=cmap,
-        fill_opacity=0.7,
-        line_opacity=0.2,
-        legend_name=agg_title,
-        tooltip=var_name,
     ).add_to(m)
 
     # Add data points
