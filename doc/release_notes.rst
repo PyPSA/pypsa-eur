@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
