@@ -189,7 +189,7 @@ def busmap_from_shapes(
     return busmap
 
 
-def copperplate_buses(n: pypsa.Network, ds: pd.Series):
+def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
     """
     Copperplate buses that belong to the same group.
 
@@ -199,23 +199,29 @@ def copperplate_buses(n: pypsa.Network, ds: pd.Series):
     Parameters
     ----------
     n : pypsa.Network
-    ds : pd.Series
-        Series with index of buses and values of market zones.
+    copperplate_regions : list[list[str]]
+        List of groups of regions to copperplate
     """
+    buses_to_regions_raw = {
+        bus: "_".join(region) for region in copperplate_regions for bus in region
+    }
+    n.buses["zone"] = n.buses.index.map(lambda bus: buses_to_regions_raw.get(bus, bus))
+    buses_to_regions = n.buses["zone"]
+    regions_to_buses = buses_to_regions.groupby(buses_to_regions).apply(
+        lambda x: set(x.index)
+    )
 
     # Remove connections between buses in the same zone
     for c in n.branch_components:
         df = n.static(c)
-        bus0_zones = df.bus0.map(ds).values
-        bus1_zones = df.bus1.map(ds).values
+        bus0_zones = df.bus0.map(buses_to_regions).values
+        bus1_zones = df.bus1.map(buses_to_regions).values
         to_remove = df.index[bus0_zones == bus1_zones]
         if len(to_remove) > 0:
             n.remove(c, to_remove)
 
-    # Create reverse mapping from zone to buses
-    zone_to_buses = ds.groupby(ds).apply(lambda x: set(x.index))
     # Add new lines with infinite capacity within each zone
-    for zone, buses in zone_to_buses.items():
+    for zone, buses in regions_to_buses.items():
         if len(buses) > 1:
             logging.info(
                 f"Copperplating together the following buses: {', '.join(buses)}"
@@ -682,14 +688,8 @@ if __name__ == "__main__":
 
     nc = clustering.n
 
-    if mode == "administrative" and "bz" in params.administrative.values():
-        bidding_zones = gpd.read_file(snakemake.input.bidding_zones)
-        zone_name = bidding_zones.set_index("zone_name").cross_country_zone.rename(
-            {"cross_country_zone": "zone"}
-        )
-        zone_name = zone_name.where(zone_name.notnull(), zone_name.index)
-        nc.buses = nc.buses.join(zone_name, how="left")
-        copperplate_buses(nc, zone_name)
+    if snakemake.params.copperplate_regions:
+        copperplate_buses(nc, snakemake.params.copperplate_regions)
 
     for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])

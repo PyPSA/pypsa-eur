@@ -298,14 +298,6 @@ if __name__ == "__main__":
             region_id="GR03",
         )
 
-    # manually add zone group
-    bidding_zones.loc[
-        bidding_zones.zone_name.isin(["DE", "LU"]), "cross_country_zone"
-    ] = "DE_LU"
-    bidding_zones.loc[
-        bidding_zones.zone_name.isin(["GB-NIR", "IE"]), "cross_country_zone"
-    ] = "UKNI_IE"
-
     # remove holes from geometries
     bidding_zones["geometry"] = bidding_zones["geometry"].apply(remove_holes)
 
