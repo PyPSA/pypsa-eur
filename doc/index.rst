@@ -242,7 +242,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
    :hidden:
    :maxdepth: 2
    :caption: Rules Overview
-   
+
    retrieve
    preparation
    sector
