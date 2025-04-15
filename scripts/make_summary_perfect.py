@@ -10,14 +10,15 @@ other metrics.
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import set_scenario_config
-from add_electricity import load_costs
-from make_summary import (
+from pypsa.descriptors import get_active_assets
+from six import iteritems
+
+from scripts._helpers import set_scenario_config
+from scripts.add_electricity import load_costs
+from scripts.make_summary import (
     assign_carriers,
     assign_locations,
 )
-from pypsa.descriptors import get_active_assets
-from six import iteritems
 
 idx = pd.IndexSlice
 
@@ -706,7 +707,7 @@ def to_csv(df):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("make_summary_perfect")
     set_scenario_config(snakemake)

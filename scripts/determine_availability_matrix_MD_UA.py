@@ -15,7 +15,8 @@ import atlite
 import fiona
 import geopandas as gpd
 import numpy as np
-from _helpers import configure_logging, load_cutout, set_scenario_config
+
+from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ def get_wdpa_layer_name(wdpa_fn, layer_substring):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "determine_availability_matrix_MD_UA", clusters=100, technology="solar"

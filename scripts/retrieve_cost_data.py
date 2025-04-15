@@ -8,13 +8,13 @@ Retrieve cost data from ``technology-data``.
 import logging
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve, set_scenario_config
+from scripts._helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("retrieve_cost_data", year=2030)
         rootpath = ".."

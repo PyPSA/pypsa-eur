@@ -15,7 +15,7 @@ import pytest
 
 sys.path.append("./scripts")
 
-from base_network import (
+from scripts.base_network import (
     _get_country,
     _get_linetype_by_voltage,
     _get_linetypes_config,

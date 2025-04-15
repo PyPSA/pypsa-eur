@@ -11,8 +11,9 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from cluster_gas_network import load_bus_regions
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,7 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",

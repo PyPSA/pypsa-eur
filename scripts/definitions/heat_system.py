@@ -4,8 +4,8 @@
 
 from enum import Enum
 
-from definitions.heat_sector import HeatSector
-from definitions.heat_system_type import HeatSystemType
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system_type import HeatSystemType
 
 
 class HeatSystem(Enum):

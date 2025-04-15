@@ -11,13 +11,14 @@ import logging
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, load_cutout, set_scenario_config
+
+from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_clustered_population_layouts", clusters=48)
 

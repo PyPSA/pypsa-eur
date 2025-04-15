@@ -8,7 +8,7 @@ Retrieve and extract JRC IDEES 2021 data.
 import logging
 import zipfile
 
-from _helpers import configure_logging, progress_retrieve, set_scenario_config
+from scripts._helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ url_jrc = "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("retrieve_jrc_idees")
         rootpath = ".."

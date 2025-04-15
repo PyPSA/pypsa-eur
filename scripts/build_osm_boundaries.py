@@ -8,10 +8,11 @@ import logging
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from build_shapes import eez
 from shapely import line_merge
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Polygon
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.build_shapes import eez
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ def build_osm_boundaries(country, adm1_path, offshore_shapes):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_osm_boundaries", country="MD")
 

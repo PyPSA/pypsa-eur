@@ -16,16 +16,17 @@ import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
-from _helpers import (
+
+from scripts._helpers import (
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import load_costs, sanitize_carriers
-from build_energy_totals import cartesian
-from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial
+from scripts.add_electricity import load_costs, sanitize_carriers
+from scripts.build_energy_totals import cartesian
+from scripts.definitions.heat_system import HeatSystem
+from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -700,7 +701,7 @@ def add_heating_capacities_installed_before_baseyear(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",

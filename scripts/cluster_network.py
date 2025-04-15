@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Creates networks clustered to ``{cluster}`` number of zones with aggregated
 buses and transmission corridors.
@@ -74,7 +74,6 @@ import pandas as pd
 import pypsa
 import tqdm
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -85,6 +84,8 @@ from pypsa.clustering.spatial import (
 from scipy.sparse.csgraph import connected_components
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import MultiPolygon, Polygon
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -457,7 +458,7 @@ def update_bus_coordinates(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("cluster_network", clusters=60)
     configure_logging(snakemake)
