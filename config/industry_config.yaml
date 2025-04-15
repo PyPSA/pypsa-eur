@@ -6,10 +6,10 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
-  - base_eu_regain
+  name: "all"
+  #- base_eu_regain
   #- base_eu_deindustrial
-  - policy_eu_regain
+  #- policy_eu_regain
   #- policy_eu_deindustrial
   scenarios:
     enable: true
@@ -61,7 +61,7 @@ co2_budget:
 
 weather_years:
   enable: true
-  rcp: 2-6
+  rcp: 4-5
 # RCP 2.6 is 2-6, RCP 4.5 is 4-5, RCP 8.5 is 8-5
   global_regional_models: CNRM-CERFACS-CM5--CNRM-ALADIN63
 # Global Climate Models (GCMs): CNRM-CERFACS-CM5, MPI-M-MPI-ESM-LR, MIROC-MIROC5

@@ -716,7 +716,7 @@ def add_steel_industry_existing(n):
     capacities_bof = capacities_bof * keys["Integrated steelworks"]
 
     capacities_eaf = capacities_eaf * keys["EAF"]
-    start_dates_eaf = max(start_dates["EAF"], start_dates["DRI +EAF"])
+    start_dates_eaf = pd.Series(np.maximum(start_dates["EAF"], start_dates["DRI + EAF"]))
     #start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"])/ capacities_eaf)
     start_dates_bof = round(start_dates["Integrated steelworks"])
 

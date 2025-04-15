@@ -5475,7 +5475,7 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
 
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e3 / nhours) # ktNH3/yr to tNH3/h
+    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e6 / nhours) # MtNH3/yr to tNH3/h
     #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
 
     # Share of ammonia production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -5516,7 +5516,7 @@ def add_methanol_load(n,investment_year, methanol_data, options):
 
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_methanol_production = (methanol_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
+    hourly_methanol_production = (methanol_data.loc[investment_year, scenario] *1e6 / nhours) # MtMeOH/h to ktMeOH/h
     #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Methnol production is in ktMeOH/yr
 
     # Share of methanol production capacities -> assumption: keep producing the same share in the country, changing technology
@@ -5572,8 +5572,8 @@ def add_hvc(n, investment_year, hvc_data, options):
 
     # Remove the previous HVC load, bus and link, which is based on a different quantification of energy demand
     n.loads.drop(n.loads.index[n.loads.carrier == "naphtha for industry"], inplace=True)
-    n.buses.drop(n.loads.index[n.loads.carrier == "naphtha for industry"], inplace=True)
-    n.links.drop(n.loads.index[n.loads.carrier == "naphtha for industry"], inplace=True)
+    n.buses.drop(n.buses.index[n.buses.carrier == "naphtha for industry"], inplace=True)
+    n.links.drop(n.links.index[n.links.carrier == "naphtha for industry"], inplace=True)
 
     # Add the new HVC load to the network
     n.add("Carrier", "HVC")
@@ -5596,6 +5596,8 @@ def add_hvc(n, investment_year, hvc_data, options):
     print(f"LOAD HVC {p_set}")
   
     naphtha_to_hvc = (2.31 * 12.47) * 1000 # t oil / t HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+    # we need to account for CO2 emissions from HVC decay
+    decay_emis = costs.at["oil", "CO2 intensity"] * naphtha_to_hvc # tCO2/MWh_th * MWh oil / kt HVC = tCO2/kt HVC
 
     n.add(
         "Link",
@@ -5612,7 +5614,7 @@ def add_hvc(n, investment_year, hvc_data, options):
         # Raillard Cazanove says 725 but prices were too low
         efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
         efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
-        efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC
+        efficiency3= (819 / naphtha_to_hvc) + decay_emis, # tCO2 / kt HVC
         efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
         lifetime=30, 
     )

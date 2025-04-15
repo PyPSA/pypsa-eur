@@ -17,7 +17,7 @@ gurobi.log
 /resources
 /resources*
 /results
-/results_*h
+/results_*
 /networks
 /benchmarks
 /logs

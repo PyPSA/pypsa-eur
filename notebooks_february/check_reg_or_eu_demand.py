@@ -33,10 +33,8 @@ df = pd.DataFrame(index=commodities,columns = scenarios)
 for scenario in scenarios:
     cwd = os.getcwd()
     parent_dir = os.path.dirname(cwd)
-    if scenario == 'base_eu_regain':
-        file_path = os.path.join(parent_dir, "results_24h", scenario, "networks", "base_s_39___2050.nc")
-    else:
-        file_path = os.path.join(parent_dir, "results_march", scenario, "networks", "base_s_39___2050.nc")
+    file_path = os.path.join(parent_dir, "results_8h", scenario, "networks", "base_s_39___2050.nc")
+
     n = pypsa.Network(file_path)
     timestep = n.snapshot_weightings.iloc[0, 0]
     
