@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: CC0-1.0
 
 run:
-  prefix: "tyndp"
+  name: "test-elec-tyndp"
+  disable_progressbar: true
+  shared_resources:
+    policy: "test"
+  shared_cutouts: true
 
 scenario:
   clusters:
@@ -25,8 +29,16 @@ transmission_projects:
     manual: false
 
 clustering:
-  mode: administrative  # TODO Switch to Bidding zones to preserve bidding zones shapes
+  mode: administrative
   administrative:
-    level: 3
+    level: bz
+  build_bidding_zones:
+    remove_islands: true
+    aggregate_to_tyndp: true
   temporal:
-    resolution_sector: 50SEG
+    resolution_sector: 24H
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex

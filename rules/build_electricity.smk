@@ -132,6 +132,7 @@ rule build_bidding_zones:
         aggregate_to_tyndp=config_provider(
             "clustering", "build_bidding_zones", "aggregate_to_tyndp"
         ),
+        base=config_provider("electricity", "base_network"),
     input:
         bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
         bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
@@ -881,8 +882,6 @@ if lambda w: config_provider("electricity", "base_network")(w) == "tyndp-raw":
     rule build_tyndp_network:
         params:
             countries=config_provider("countries"),
-            voltages=config_provider("electricity", "voltages"),
-            line_types=config_provider("lines", "types"),
         input:
             reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
             buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
