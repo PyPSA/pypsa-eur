@@ -138,7 +138,7 @@ if config["enable"]["retrieve"]:
             file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
             file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
         log:
-            logs("retrieve_bidding_zones.log"),
+            "logs/retrieve_bidding_zones.log",
         resources:
             mem_mb=1000,
         retries: 2
