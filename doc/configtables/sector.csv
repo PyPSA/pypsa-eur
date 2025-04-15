@@ -7,9 +7,9 @@ shipping,--,"{true, false}",Flag to include shipping sector.
 aviation,--,"{true, false}",Flag to include aviation sector.
 agriculture,--,"{true, false}",Flag to include agriculture sector.
 fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels."
-district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_
+district_heating,--,,
 -- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
--- progress,--,Dictionary with planning horizons as keys., Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
+-- progress,--,Dictionary with planning horizons as keys.,Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 -- supply_temperature_approximation,,,
 -- -- max_forward_temperature_baseyear,C,Dictionary with country codes as keys. One key must be 'default'., Max. forward temperature in district heating in baseyear (if ambient temperature lower-or-equal `lower_threshold_ambient_temperature`)
@@ -19,6 +19,10 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- -- upper_threshold_ambient_temperature,C,float, Assume `min_forward_temperature` if ambient temperature is above this threshold
 -- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
 -- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
+-- ptes,,,
+-- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent energy capacity of pit storage in district heating
+-- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
+-- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
 -- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
@@ -28,6 +32,7 @@ district_heating,--,,`prepare_sector_network.py <https://github.com/PyPSA/pypsa-
 -- limited_heat_sources,--,Dictionary with names of limited heat sources (not air) for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) is used,
 -- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
+-- -- -- ignore_missing_regions,--,Boolean,Ignore missing regions in the data and fill with zeros or raise an error 
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- heat_pump_sources,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
@@ -104,7 +109,7 @@ methanation,--,"{true, false}",Add option for transforming hydrogen and CO2 into
 coal_cc,--,"{true, false}",Add option for coal CHPs with carbon capture
 dac,--,"{true, false}",Add option for Direct Air Capture (DAC)
 co2_vent,--,"{true, false}",Add option for vent out CO2 from storages to the atmosphere.
-heat_vent,--,--,--,--
+heat_vent,--,--,--
 -- urban central, --,"{true, false}",Allow heat-venting in central heating.
 -- urban decentral, --,"{true, false}",Allow heat-venting in urban decentral heating.
 -- rural, --,"{true, false}",Allow heat-venting in rural heating.
@@ -153,6 +158,7 @@ electricity_distribution _grid,--,"{true, false}",Add a simplified representatio
 electricity_distribution _grid_cost_factor,,,Multiplies the investment cost of the electricity distribution grid
 electricity_grid _connection,--,"{true, false}",Add the cost of electricity grid connection for onshore wind and solar
 transmission_efficiency,,,Section to specify transmission losses or compression energy demands of bidirectional links. Splits them into two capacity-linked unidirectional links.
+-- enable,--,list,Switch to select the carriers for which transmission efficiency is to be added. Carriers not listed assume lossless transmission.
 -- {carrier},--,str,The carrier of the link.
 -- -- efficiency_static,p.u.,float,Length-independent transmission efficiency.
 -- -- efficiency_per_1000km,p.u. per 1000 km,float,Length-dependent transmission efficiency ($\eta^{\text{length}}$)

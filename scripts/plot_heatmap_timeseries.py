@@ -7,23 +7,26 @@ Plot heatmap time series of marginal prices, utilisation rates, state of charge 
 
 import logging
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
 import seaborn as sns
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
-def unstack_day_hour(s: pd.Series, sns: pd.DatetimeIndex) -> pd.DataFrame:
-    if isinstance(sns, dict):
-        sns = pd.date_range(freq="h", **sns)
+def unstack_day_hour(
+    s: pd.Series, sns: pd.DatetimeIndex, drop_leap_day: bool = True
+) -> pd.DataFrame:
     s_h = s.reindex(sns).ffill()
     grouped = s_h.groupby(s_h.index.hour).agg(list)
     index = [f"{i:02d}:00" for i in grouped.index]
     columns = pd.date_range(s_h.index[0], s_h.index[-1], freq="D")
+    if drop_leap_day:
+        columns = columns[(columns.month != 2) | (columns.day != 29)]
     return pd.DataFrame(grouped.to_list(), index=index, columns=columns)
 
 
@@ -89,7 +92,6 @@ if __name__ == "__main__":
             "plot_heatmap_timeseries",
             simpl="",
             clusters="10",
-            ll="vopt",
             opts="",
             sector_opts="",
             planning_horizons=2050,
@@ -101,14 +103,22 @@ if __name__ == "__main__":
     plt.style.use(["bmh", snakemake.input.rc])
 
     config = snakemake.params.plotting["heatmap_timeseries"]
+    drop_leap_day = snakemake.params.drop_leap_day
 
     output_dir = snakemake.output[0]
     os.makedirs(output_dir, exist_ok=True)
 
     n = pypsa.Network(snakemake.input.network)
 
-    snapshots = snakemake.params["snapshots"]
+    snapshots = get_snapshots(snakemake.params.snapshots, drop_leap_day)
     carriers = n.carriers
+
+    diffs = snapshots.to_series().diff().dropna()
+    if any(diffs > pd.Timedelta("30D")):
+        logger.warning(
+            "Snapshots contain a gap longer than 1 month. Skipping heatmaps."
+        )
+        sys.exit(0)
 
     # filter for build capacities
     optimal_capacity = (
@@ -129,7 +139,7 @@ if __name__ == "__main__":
 
     for carrier, s in cf.iterrows():
         logger.info(f"Plotting utilisation rate heatmap time series for {carrier}")
-        df = unstack_day_hour(s, snapshots)
+        df = unstack_day_hour(s, snapshots, drop_leap_day)
         label = "utilisation rate [%]"
         fn = (
             output_dir
@@ -153,7 +163,7 @@ if __name__ == "__main__":
 
     for carrier, s in prices.iterrows():
         logger.info(f"Plotting marginal prices heatmap time series for {carrier}")
-        df = unstack_day_hour(s, snapshots)
+        df = unstack_day_hour(s, snapshots, drop_leap_day)
         label = (
             "marginal price [€/t]"
             if "co2" in carrier.lower()
@@ -180,7 +190,7 @@ if __name__ == "__main__":
 
     for carrier, s in socs.iterrows():
         logger.info(f"Plotting SOC heatmap time series for {carrier}")
-        df = unstack_day_hour(s, snapshots)
+        df = unstack_day_hour(s, snapshots, drop_leap_day)
         label = "SOC [%]"
         fn = output_dir + "/ts-heatmap-soc-" + carrier.replace(" ", "_") + ".pdf"
         plot_heatmap(

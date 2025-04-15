@@ -29,7 +29,6 @@ if __name__ == "__main__":
             configfiles="test/config.electricity.yaml",
             opts="",
             clusters="5",
-            ll="v1.5",
             sector_opts="",
             planning_horizons="",
         )
