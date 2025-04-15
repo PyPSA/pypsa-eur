@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  prefix: "tyndp"
+
+scenario:
+  clusters:
+  - all
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+
+enable:
+  retrieve_tyndp_bundle: true
+
+electricity:
+  base_network: tyndp-raw
+
+transmission_projects:
+  enable: true
+  include:
+    tyndp2020: false
+    nep: false
+    manual: false
+
+clustering:
+  mode: administrative  # TODO Switch to Bidding zones to preserve bidding zones shapes
+  administrative:
+    level: 3
+  temporal:
+    resolution_sector: 50SEG

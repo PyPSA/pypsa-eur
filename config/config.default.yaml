@@ -61,6 +61,7 @@ snapshots:
 enable:
   retrieve: auto
   retrieve_databundle: true
+  retrieve_tyndp_bundle: false
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: true

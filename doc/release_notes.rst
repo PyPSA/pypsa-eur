@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Introduce a new base network using TYNDP 2024 data (https://github.com/open-energy-transition/open-tyndp/pull/18/).
+
 * In :mod:`prepare_sector_network`, split shipping and aviation sector from ``add_industry()`` into separate function and configuration setting.
   To mirror previous behaviour of setting ``sector: industry: true``, also set ``sector: shipping: true`` and ``sector: aviation: true``.
 

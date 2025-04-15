@@ -58,6 +58,11 @@ def upsample_load(
     data_arrays = []
 
     for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country):
+        if cntry not in load.columns:
+            # TODO: Implement TYNDP load data integration and remove this
+            logging.warning(f"Cannot upsample load for {cntry}: no load data defined")
+            continue
+
         load_ct = load[cntry]
 
         if len(group) == 1:
