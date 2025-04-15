@@ -126,6 +126,7 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
             "cluster_network_base_s_{clusters}",
             "profile_{clusters}_",
             "build_renewable_profile_{clusters}",
+            "regions_by_class_{clusters}",
             "availability_matrix_",
             "determine_availability_matrix_",
             "solar_thermal",
