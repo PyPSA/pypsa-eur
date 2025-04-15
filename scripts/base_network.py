@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Creates the network topology from a `ENTSO-E map extract.
 <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022)
@@ -30,12 +30,18 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
 from shapely.geometry import Point
 from tqdm import tqdm
+
+from scripts._helpers import (
+    REGION_COLS,
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+)
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -1569,7 +1575,7 @@ def build_admin_shapes(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)

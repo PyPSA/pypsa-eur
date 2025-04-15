@@ -9,9 +9,10 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
 from pypsa.geo import haversine_pts
 from shapely import wkt
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,7 @@ def aggregate_parallel_pipes(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("cluster_gas_network", clusters="37")
     configure_logging(snakemake)
