@@ -54,10 +54,10 @@ install-pinned-macos: _conda_check
 # Run default tests
 test:
 	set -e
-	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml
-	snakemake --configfile config/test/config.overnight.yaml
-	snakemake --configfile config/test/config.myopic.yaml
-	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml
+	snakemake solve_elec_networks --configfile config/test/config.electricity.yaml -c all
+	snakemake --configfile config/test/config.overnight.yaml -c all
+	snakemake --configfile config/test/config.myopic.yaml -c all
+	snakemake make_summary_perfect --configfile config/test/config.perfect.yaml -c all
 	snakemake --configfile config/test/config.scenarios.yaml -n
 	echo "All tests completed successfully."
 
