@@ -11,11 +11,14 @@ Outputs
 - ``data/busshapes/bidding_zones_entsoepy.geojson``:
 """
 
+import logging
 from urllib.error import HTTPError
 
 import entsoe
 import geopandas as gpd
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
@@ -26,7 +29,7 @@ def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
         GeoDataFrame: Contains geometries for all available bidding zones
     """
     # If not in cache or cache disabled, load from source
-    print("Downloading bidding zones...")
+    logging.info("Downloading entsoe-py zones...")
     gdfs: list[gpd.GeoDataFrame] = []
     for area in entsoe.Area:
         name = area.name
@@ -38,6 +41,8 @@ def load_bidding_zones_from_entsoepy() -> gpd.GeoDataFrame:
 
     shapes = pd.concat(gdfs, ignore_index=True)  # type: ignore
 
+    logging.info("Downloading entsoe-py zones... Done")
+
     return shapes
 
 
@@ -48,8 +53,11 @@ def load_bidding_zones_from_electricitymaps() -> gpd.GeoDataFrame:
     Returns:
         GeoDataFrame: Contains geometries for all available bidding zones
     """
+    logging.info("Downloading electricitymaps-contrib zones...")
     url = "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/v1.238.0/web/geo/world.geojson"
-    return gpd.read_file(url)
+    df = gpd.read_file(url)
+    logging.info("Downloading electricitymaps-contrib zones... Done")
+    return df
 
 
 if __name__ == "__main__":

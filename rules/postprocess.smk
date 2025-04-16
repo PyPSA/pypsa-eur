@@ -5,6 +5,24 @@
 
 if config["foresight"] != "perfect":
 
+    rule plot_base_network:
+        params:
+            plotting=config_provider("plotting"),
+        input:
+            network=resources("networks/base.nc"),
+            regions_onshore=resources("regions_onshore.geojson"),
+        output:
+            map=resources("maps/power-network.pdf"),
+        threads: 1
+        resources:
+            mem_mb=4000,
+        benchmark:
+            benchmarks("plot_base_network/base")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_base_network.py"
+
     rule plot_power_network_clustered:
         params:
             plotting=config_provider("plotting"),

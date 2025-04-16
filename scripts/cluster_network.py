@@ -615,7 +615,7 @@ if __name__ == "__main__":
         .reindex(n.buses.index, fill_value=0.0)
     )
 
-    if snakemake.wildcards.clusters == "all":
+    if snakemake.wildcards.clusters == "all" or params.base == "tyndp-raw":
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
