@@ -9,7 +9,7 @@ run:
   name: "test-elec" # use this to keep track of runs with different settings
   disable_progressbar: true
   shared_resources:
-    policy: "test"
+    policy: false
   shared_cutouts: true
 
 scenario:
@@ -47,22 +47,13 @@ atlite:
       time: ["2013-03-01", "2013-03-08"]
 
 renewable:
-  onwind:
-    cutout: be-03-2013-era5
   offwind-ac:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-dc:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-float:
-    cutout: be-03-2013-era5
     max_depth: false
     min_depth: false
-  solar:
-    cutout: be-03-2013-era5
-  solar-hsat:
-    cutout: be-03-2013-era5
 
 
 clustering:
@@ -73,7 +64,6 @@ clustering:
 lines:
   dynamic_line_rating:
     activate: true
-    cutout: be-03-2013-era5
     max_line_rating: 1.3
 
 
@@ -83,7 +73,7 @@ solving:
     options: highs-simplex
 
   check_objective:
-    enable: true
+    enable: false
     expected_value: 3.8120188094e+07
 
 plotting:

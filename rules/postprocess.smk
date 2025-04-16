@@ -398,6 +398,7 @@ rule plot_balance_timeseries:
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -426,6 +427,7 @@ rule plot_heatmap_timeseries:
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",

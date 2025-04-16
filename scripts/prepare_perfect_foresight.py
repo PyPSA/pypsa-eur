@@ -604,7 +604,6 @@ if __name__ == "__main__":
             "prepare_perfect_foresight",
             opts="",
             clusters="37",
-            ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
     configure_logging(snakemake)  # pylint: disable=E0606

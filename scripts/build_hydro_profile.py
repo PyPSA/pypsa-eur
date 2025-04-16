@@ -25,17 +25,18 @@ Outputs
 
 import logging
 
-import atlite
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from numpy.polynomial import Polynomial
 
 cc = coco.CountryConverter()
 
 
-def get_eia_annual_hydro_generation(fn, countries, capacities=False):
+def get_eia_annual_hydro_generation(
+    fn: str, countries: list[str], capacities: bool = False
+) -> pd.DataFrame:
     # in billion kWh/a = TWh/a
     df = pd.read_csv(fn, skiprows=2, index_col=1, na_values=[" ", "--"]).iloc[1:, 1:]
     df.index = df.index.str.strip()
@@ -91,7 +92,9 @@ def get_eia_annual_hydro_generation(fn, countries, capacities=False):
     return df
 
 
-def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
+def correct_eia_stats_by_capacity(
+    eia_stats: pd.DataFrame, fn: str, countries: list[str], baseyear: int = 2019
+) -> None:
     cap = get_eia_annual_hydro_generation(fn, countries, capacities=True)
     ratio = cap / cap.loc[baseyear]
     eia_stats_corrected = eia_stats / ratio
@@ -100,9 +103,11 @@ def correct_eia_stats_by_capacity(eia_stats, fn, countries, baseyear=2019):
     eia_stats.loc[:, to_correct] = eia_stats_corrected.loc[:, to_correct]
 
 
-def approximate_missing_eia_stats(eia_stats, runoff_fn, countries):
-    runoff = pd.read_csv(runoff_fn, index_col=0).T[countries]
-    runoff.index = runoff.index.astype(int)
+def approximate_missing_eia_stats(
+    eia_stats: pd.DataFrame, runoff_fn: str, countries: list[str]
+) -> pd.DataFrame:
+    runoff = pd.read_csv(runoff_fn, index_col=0, parse_dates=True)[countries]
+    runoff = runoff.groupby(runoff.index.year).sum().index
 
     # fix outliers; exceptional floods in 1977-1979 in ES & PT
     if "ES" in runoff:
@@ -144,7 +149,22 @@ if __name__ == "__main__":
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout)
+
+    years_in_time = pd.DatetimeIndex(time).year.unique()
+    cutout_time = pd.DatetimeIndex(cutout.coords["time"].values)
+
+    full_years_available = all(
+        pd.Timestamp(f"{year}-01-01") in cutout_time
+        and pd.Timestamp(f"{year}-12-31") in cutout_time
+        for year in years_in_time
+    )
+
+    if full_years_available:
+        mask = [pd.Timestamp(t).year in years_in_time for t in cutout_time]
+        cutout = cutout.sel(time=cutout_time[mask])
+    else:
+        cutout = cutout.sel(time=time)
 
     countries = snakemake.params.countries
     country_shapes = (
@@ -167,11 +187,10 @@ if __name__ == "__main__":
         fn = snakemake.input.era5_runoff
         eia_stats = approximate_missing_eia_stats(eia_stats, fn, countries)
 
-    contained_years = pd.date_range(freq="YE", **snakemake.params.snapshots).year
     norm_year = config_hydro.get("eia_norm_year")
-    missing_years = contained_years.difference(eia_stats.index)
+    missing_years = years_in_time.difference(eia_stats.index)
     if norm_year:
-        eia_stats.loc[contained_years] = eia_stats.loc[norm_year]
+        eia_stats.loc[years_in_time] = eia_stats.loc[norm_year]
     elif missing_years.any():
         eia_stats.loc[missing_years] = eia_stats.median()
 
@@ -181,6 +200,9 @@ if __name__ == "__main__":
         lower_threshold_quantile=True,
         normalize_using_yearly=eia_stats,
     )
+
+    if full_years_available:
+        inflow = inflow.sel(time=time)
 
     if "clip_min_inflow" in params_hydro:
         inflow = inflow.where(inflow > params_hydro["clip_min_inflow"], 0)
