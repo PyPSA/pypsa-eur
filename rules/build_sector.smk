@@ -1240,6 +1240,9 @@ rule prepare_sector_network:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
+        additional_heating_storage_heat_sources=config_provider(
+            "sector", "district_heating", "additional_heating_storage_heat_sources"
+        ),
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
@@ -1320,6 +1323,9 @@ rule prepare_sector_network:
                 "sector", "district_heating", "ptes", "dynamic_capacity"
             )
             else []
+        ),
+        additional_heating_indicator=resources(
+            "ltes_additional_heating_s_{clusters}_{planning_horizons}.nc"
         ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")

@@ -449,6 +449,7 @@ plotting:
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     urban central geothermal heat pump: '#4f2144'
+    urban central ptes heat pump: '#3498db'
     geothermal heat pump: '#4f2144'
     geothermal heat direct utilisation: '#ba91b1'
     ground heat pump: '#2fb537'

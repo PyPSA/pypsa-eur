@@ -2738,7 +2738,7 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-#    ltes_additional_heating: str,
+    ltes_additional_heating_file: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -2767,6 +2767,8 @@ def add_heat(
         Path to NetCDF file containing direct heat source utilisation profiles
     hourly_heat_demand_total_file : str
         Path to CSV file containing hourly heat demand data
+    ltes_additional_heating_file: str
+        Path to CSV file containing if additional heating is neeed # NOT WELL DESCRIBED
     district_heat_share_file : str
         Path to CSV file containing district heating share information
     solar_thermal_total_file : str
@@ -3027,6 +3029,25 @@ def add_heat(
                         carrier=f"{heat_system} {heat_source} heat direct utilisation",
                         p_nom_extendable=True,
                     )
+
+            if heat_source in params.additional_heating_storage_heat_sources:
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {heat_system} water pits",
+                    bus2=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=-(cop_heat_pump - 1),
+                    efficiency2=cop_heat_pump,
+                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
+                                * costs.at[costs_name_heat_pump, "capital_cost"]
+                                * overdim_factor,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                )
+
             else:
                 n.add(
                     "Link",
@@ -3156,6 +3177,20 @@ def add_heat(
                     ],
                 )
 
+                additional_heating_data_profile = xr.open_dataarray(ltes_additional_heating_file)
+                additional_heating_needed_or_not = (
+                    additional_heating_data_profile.sel(
+#                        heat_source=heat_source,
+                        name=nodes,
+                    )
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
+                )
+
+                additional_heating_needed_or_not = additional_heating_needed_or_not.rename(
+                    columns=lambda x: f"{x} {heat_system} water pits discharger"
+                )
+
                 n.add(
                     "Link",
                     nodes + f" {heat_system} water pits discharger",
@@ -3165,7 +3200,7 @@ def add_heat(
                     efficiency=costs.at[
                         "central water pit discharger",
                         "efficiency",
-                    ],
+                    ] * additional_heating_needed_or_not,
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
@@ -6138,6 +6173,7 @@ if __name__ == "__main__":
             direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
+            ltes_additional_heating_file=snakemake.input.additional_heating_indicator,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
