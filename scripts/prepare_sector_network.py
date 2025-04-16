@@ -2960,9 +2960,6 @@ def add_heat(
                     suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
                 )
-                # hier gehört das nicht rein, da limited_heat_source anders verarbeitet wird
-                # PTES zählt auch zu einer limited heat source, ist aber keine csv, sondern wird durch die gespeicherte Menge in PTES festgelegt
-                # was wir brazchen ist ein bus der für PTES erstellt wird für die Nacherhitzung und dies
 
                 if heat_source in params.direct_utilisation_heat_sources:
                     capital_cost = (
@@ -3097,23 +3094,16 @@ def add_heat(
                 ],
             )
 
-            # wie wollen wir die nutzung von PTES modellieren? Mit einem link für direct usage und nacherhitzung, um die tracken zu können? oder passt ein bus zu heat und einer zu Nacherhitzung
-            # mögliche bedenken, wenn wir über efficiency gehen, dann könnten diese wieder als heat_vents genutzt werden
-            # alternative wären dann zwei links zu bauen, einmal direkt nutzung und nacherhitzung
-            # was ich allgemein brauche ist eine Zeitreihe mit 1 oder null wann ich nacherhitzung benötige und wann nicht
             n.add(
                 "Link",
                 nodes + f" {heat_system} water tanks discharger",
                 bus0=nodes + f" {heat_system} water tanks",
                 bus1=nodes + f" {heat_system} heat",
-                # hier dann einen zweiten BUS für die Nacherhitzung?
                 carrier=f"{heat_system} water tanks discharger",
                 efficiency=costs.at[
                     heat_system.central_or_decentral + " water tank discharger",
                     "efficiency",
-                ], # wäre gut diese zu kombineiren mit der verfügbarkeit zu multiplizeiren, also * nacherhitzung_available
-                # dann machen wir dies üer die efficiency, also verfügbar oder nicht verfügbar 0, 1
-                # efficiency2 = bus_nacherhitzung
+                ],
                 p_nom_extendable=True,
                 lifetime=costs.at[
                     heat_system.central_or_decentral + " water tank storage", "lifetime"
@@ -3178,7 +3168,7 @@ def add_heat(
                 )
 
                 additional_heating_data_profile = xr.open_dataarray(ltes_additional_heating_file)
-                additional_heating_needed_or_not = (
+                additional_heating_needed= (
                     additional_heating_data_profile.sel(
 #                        heat_source=heat_source,
                         name=nodes,
@@ -3187,7 +3177,7 @@ def add_heat(
                     .reindex(index=n.snapshots)
                 )
 
-                additional_heating_needed_or_not = additional_heating_needed_or_not.rename(
+                additional_heating_needed = additional_heating_needed.rename(
                     columns=lambda x: f"{x} {heat_system} water pits discharger"
                 )
 
@@ -3200,7 +3190,7 @@ def add_heat(
                     efficiency=costs.at[
                         "central water pit discharger",
                         "efficiency",
-                    ] * additional_heating_needed_or_not,
+                    ] * additional_heating_needed,
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )

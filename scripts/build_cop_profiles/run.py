@@ -38,12 +38,6 @@ Outputs
 
 import pandas as pd
 import xarray as xr
-
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from _helpers import set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
@@ -53,7 +47,7 @@ from scripts.definitions.heat_system_type import HeatSystemType
 
 def get_cop(
     heat_system_type: str,
-    heat_source: str, # hier überprüfen, dass PTES als heat_source genutzt wird
+    heat_source: str,
     source_inlet_temperature_celsius: xr.DataArray,
     forward_temperature_by_node_and_time: xr.DataArray = None,
     return_temperature_by_node_and_time: xr.DataArray = None,
@@ -98,8 +92,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=6,
-            planning_horizons=2030,
+            clusters=48,
         )
 
     set_scenario_config(snakemake)
@@ -119,7 +112,6 @@ if __name__ == "__main__":
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"
-                        # hier müsste die input temperatur von ptes hin, wobei diese immer 90°C ist, wenn nacherhitzung ermöglicht wird
                     ]
                 )
             elif heat_source in snakemake.params.limited_heat_sources.keys():

@@ -631,7 +631,7 @@ sector:
   heat_vent:
     urban central: true
     urban decentral: true
-    rural: tru
+    rural: true
   marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
