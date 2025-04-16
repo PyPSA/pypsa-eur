@@ -15,11 +15,27 @@ scenario:
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
 enable:
   retrieve_tyndp_bundle: true
 
 electricity:
   base_network: tyndp-raw
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+atlite:
+  europe-2013-sarah3-era5:
+    time: ["2013-03-01", "2013-03-08"]
 
 transmission_projects:
   enable: true
