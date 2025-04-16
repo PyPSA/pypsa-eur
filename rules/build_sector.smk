@@ -346,6 +346,9 @@ rule build_cop_profiles:
             "sector", "district_heating", "limited_heat_sources"
         ),
         snapshots=config_provider("snapshots"),
+        max_PTES_temperature=config_provider(
+            "sector", "district_heating", "ptes", "max_top_temperature",
+        )
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -355,7 +358,9 @@ rule build_cop_profiles:
         ),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        # temp ptes_total
+        temp_ptes_total=resources(
+            "ptes_top_temperature_s_{clusters}_{planning_horizons}.nc"
+        ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
@@ -371,7 +376,7 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 #hier musss ich arbeiten
-rule build_ptes_additional_heating_indicator:
+rule build_ptes_temperature_profiles:
     params:
         max_PTES_temperature=config_provider(
             "sector",
@@ -388,6 +393,9 @@ rule build_ptes_additional_heating_indicator:
     output:
         additional_heating_indicator=resources(
             "ltes_additional_heating_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_top_temperature=resources(
+            "ptes_top_temperature_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=2000,

@@ -498,7 +498,7 @@ sector:
   heat_pump_sources:
     urban central:
     - air
-#    - PTES # vllt lieber noch einen anderen Namen geben
+    - ptes # vllt lieber noch einen anderen Namen geben
     urban decentral:
     - air
     rural:
@@ -629,7 +629,7 @@ sector:
   heat_vent:
     urban central: true
     urban decentral: true
-    rural: true
+    rural: tru
   marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true

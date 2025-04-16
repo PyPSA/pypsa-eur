@@ -1,153 +1,93 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Build TES Temperature Profiles.
 
-import numpy as np
-from typing import Union
+This module provides a class that approximates the top temperature profile for a
+Pit Thermal Energy Storage (PTES) system based on the forward temperature profile
+from the district heating network. The top temperature is defined as the forward
+temperature if it does not exceed the maximum operational PTES temperature. If the
+forward temperature is higher than this threshold, the output is clipped to the
+maximum PTES temperature, reflecting the operational limits and indicating that any
+excess temperature would require additional measures.
+
+Relevant Settings
+-----------------
+.. code:: yaml
+    storage:
+        PTES:
+            max_temperature: 90  # Maximum operational temperature for PTES
+
+Inputs
+------
+- forward_temperature_celsius: xarray.DataArray
+    Forward temperature profile from the district heating network (in Celsius).
+- max_PTES_temperature: float
+    Maximum operational temperature (in Celsius) that PTES can directly supply.
+
+Outputs
+-------
+- clipped_top_temperature: xarray.DataArray
+    The top temperature profile for PTES, clipped at the maximum operational limit.
+"""
+
 import xarray as xr
-import pandas as pd
 
 
-class PTESTemperatureApproximator:
+class BuildTESTemperature:
     """
-    Class to model the temperature dynamics of a Pit Thermal Energy Storage (PTES).
+    Approximates the top temperature profile for Pit Thermal Energy Storage (PTES).
 
-    This class computes the temperature behavior in the top and bottom layers of the PTES,
-    based on the forward and return temperature profiles of the district heating network.
+    This class calculates the PTES top temperature by comparing the district heating
+    forward temperature profile with the maximum operational temperature. When the
+    forward temperature exceeds the set maximum, it is clipped to that limit.
+
+    Parameters
+    ----------
+    forward_temperature_celsius : xr.DataArray
+        The forward temperature profile (in Celsius) of the district heating network.
+    max_PTES_temperature : float
+        The maximum direct usage temperature (in Celsius) that the PTES can deliver.
 
     Attributes
     ----------
-    forward_temperature_celsius : Union[xr.DataArray, np.array]
-        Forward temperature profile in Celsius, representing the supply temperature of the district heating network.
-    return_temperature_celsius : Union[xr.DataArray, np.array]
-        Return temperature profile in Celsius, representing the temperature after heat distribution.
+    forward_temperature : xr.DataArray
+        The input forward temperature profile.
     max_PTES_temperature : float
-        Maximum allowable storage temperature for PTES.
-    snapshots : pd.DatetimeIndex
-        Time snapshots used for temperature calculations.
-
-    Methods
-    -------
-    simplified_top_layer_temperature_model() -> xr.DataArray
-        Computes a sinusoidal temperature profile for the top layer of the PTES
-        based on the maximum top temperature and minimum bottom temperature.
-
-    ptes_top_temperature() -> xr.DataArray
-        Determines the effective maximum temperature for the top layer of the PTES.
-        The top temperature is the smaller value between the maximum PTES storage temperature
-        and the highest forward temperature in the district heating network.
-
-    ptes_bottom_temperature() -> xr.DataArray
-        Retrieves the bottom temperature of the PTES storage, defined as the return
-        temperature of the heating system.
+        The maximum allowable temperature for direct PTES usage.
     """
 
-    def __init__(
-        self,
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
-        return_temperature_celsius: Union[xr.DataArray, np.array],
-        max_PTES_temperature: float,
-    ):
+    def __init__(self, forward_temperature_celsius: xr.DataArray, max_PTES_temperature: float):
         """
-        Initialize the PTES Temperature Approximator.
+        Initialize the TES temperature approximator.
 
         Parameters
         ----------
-        forward_temperature_celsius : Union[xr.DataArray, np.array]
-            Forward temperature profile in Celsius.
-        return_temperature_celsius : Union[xr.DataArray, np.array]
-            Return temperature profile in Celsius.
+        forward_temperature_celsius : xr.DataArray
+            The forward temperature profile (in Celsius) of the district heating network.
         max_PTES_temperature : float
-            Maximum storage temperature for PTES.
-        snapshots : pd.DatetimeIndex
-            Time snapshots used for calculations.
+            The maximum direct usage temperature (in Celsius) that the PTES can deliver.
         """
         self.forward_temperature = forward_temperature_celsius
-        self.return_temperature = return_temperature_celsius
         self.max_PTES_temperature = max_PTES_temperature
 
-    def simplified_top_layer_temperature_model(self) -> xr.DataArray:
+    @property
+    def clipped_top_temperature(self) -> xr.DataArray:
         """
-        Simplified top layer temperature model for PTES.
+        Calculate the PTES top temperature profile.
 
-        Uses the effective maximum PTES top temperature (constant in time) and the
-        minimum PTES bottom temperature to compute a sinusoidal base temperature profile.
+        The top temperature is computed by clipping the forward temperature to the maximum
+        PTES operational temperature. Values above the maximum are replaced by the maximum,
+        ensuring that the output respects the operational limits of the storage.
 
         Returns
         -------
         xr.DataArray
-            Top layer temperature profile for the given timestamps for each PTES,
-            with dimensions ("time", "node") and time coordinates from self.snapshots.
+            Top temperature profile with values exceeding the maximum PTES temperature
+            clipped to that maximum.
         """
-        # ptes_top_temperature now returns a DataArray with shape (time: 1, node: 6)
-        # Remove the singleton "time" dimension to work with a (node: 6) array.
-        max_ptes_top = self.ptes_top_temperature().squeeze("time")
-
-        # Get the bottom temperature (assumed to be a DataArray with dim "node")
-        min_ptes_bottom = self.ptes_bottom_temperature()
-
-        # Compute the mean temperature and amplitude for each node.
-        t_mean = (max_ptes_top + min_ptes_bottom) / 2
-        t_amp = (max_ptes_top - min_ptes_bottom) / 2
-
-        # Create a numeric time array.
-        # Here we assume that self.snapshots (a DatetimeIndex) represents 8760 hourly time steps.
-        t_hours = np.arange(len(self.snapshots))  # shape: (8760,)
-
-        # Create an xarray DataArray for the time axis using self.snapshots as coordinates.
-        time_da = xr.DataArray(t_hours, dims="time", coords={"time": self.snapshots})
-
-        # Compute the sinusoidal term.
-        # The sine function is applied on the time axis and is automatically broadcast
-        # over the "node" dimension when combined with t_mean and t_amp.
-        sin_term = np.sin(2 * np.pi * time_da / 8760 - 2.5)
-
-        # Compute the base temperature by combining the time-constant node values with the time-varying sinusoidal term.
-        base_temp = t_mean + t_amp * sin_term
-
-        return base_temp
-
-    def ptes_top_temperature(self) -> xr.DataArray:
-        """
-        Determines the effective maximum temperature for the top layer of each PTES.
-
-        The maximum top layer temperature is the smaller value between:
-          - `max_PTES_temperature` (global PTES limit)
-          - The maximum forward temperature within the network (computed per PTES).
-
-        Returns
-        -------
-        xr.DataArray
-            Top layer temperature for each PTES with shape (time: 1, name: 6).
-        """
-        # Compute the maximum forward temperature for each PTES (across time).
-        # This yields a DataArray with dims ("name",) and shape (6,).
-        forward_max = self.forward_temperature.max(dim="time")
-
-        # Determine the effective top temperature as the elementwise minimum between:
-        # - the global limit, and
-        # - the maximum forward temperature for each PTES.
-        # Using xr.where preserves the DataArray structure and coordinates.
-        effective_top = xr.where(forward_max < self.max_PTES_temperature,
-                                 forward_max,
-                                 self.max_PTES_temperature)
-
-        # Expand the result to include a "time" dimension of length 1.
-        effective_top = effective_top.expand_dims(dim="time", axis=0)
-
-        # (Optional) If you want to check the dimensions, you can print them:
-
-        return effective_top
-
-    def ptes_bottom_temperature(self) -> xr.DataArray:
-        """
-        Determines the bottom temperature of the PTES storage.
-
-        The bottom temperature is defined as the return temperature of the heating system.
-
-        Returns
-        -------
-        xr.DataArray
-            Bottom layer temperature for each PTES.
-        """
-        return self.return_temperature
+        return self.forward_temperature.where(
+            self.forward_temperature <= self.max_PTES_temperature,
+            self.max_PTES_temperature
+        )

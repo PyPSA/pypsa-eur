@@ -2738,7 +2738,7 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-    ltes_additional_heating: str,
+#    ltes_additional_heating: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -2921,7 +2921,15 @@ def add_heat(
 
         ## Add heat pumps
         for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
+            if heat_source == 'ptes':
+                print('caution')
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
+
+            # Remap name for central PTES-sourced HP, as the HP used is a water-water heat pump
+            if costs_name_heat_pump == "central ptes-sourced heat pump":
+                costs_name_heat_pump = "central water-sourced heat pump"
+                # excess_heat_source_heat_pump
+
             cop_heat_pump = (
                 cop.sel(
                     heat_system=heat_system.system_type.value,
@@ -3082,7 +3090,7 @@ def add_heat(
                 efficiency=costs.at[
                     heat_system.central_or_decentral + " water tank discharger",
                     "efficiency",
-                ],
+                ], # wäre gut diese zu kombineiren mit der verfügbarkeit zu multiplizeiren, also * nacherhitzung_available
                 # dann machen wir dies üer die efficiency, also verfügbar oder nicht verfügbar 0, 1
                 # efficiency2 = bus_nacherhitzung
                 p_nom_extendable=True,
@@ -6006,9 +6014,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
+            clusters="6",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
