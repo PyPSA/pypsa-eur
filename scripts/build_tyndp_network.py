@@ -113,13 +113,19 @@ def extract_shape_by_bbox(
     ).reset_index(drop=True)
 
 
-def build_shapes(bz_fn, geo_crs: str = GEO_CRS, distance_crs: str = DISTANCE_CRS):
+def build_shapes(
+    bz_fn: str,
+    countries: list[str],
+    geo_crs: str = GEO_CRS,
+    distance_crs: str = DISTANCE_CRS,
+):
     """
     Process bidding zones from the shape file and calculate representative point. Deduce the country shapes and their representative point.
 
     Parameters
     ----------
-        - bz_fn (str | Path): Path to bidding zone shape file.
+        - bz_fn (str): Path to bidding zone shape file.
+        - countries (list[str]): List of countries to consider
         - geo_crs (CRS, optional): Coordinate reference system for geographic calculations. Defaults to GEO_CRS.
         - distance_crs (CRS, optional): Coordinate reference system to use for distance calculations. Defaults to DISTANCE_CRS.
 
@@ -150,24 +156,29 @@ def build_shapes(bz_fn, geo_crs: str = GEO_CRS, distance_crs: str = DISTANCE_CRS
     )
 
     # Correct DK, IT, GR and SE coordinates
-    country_shapes.loc["DK", ["node", "x", "y"]] = bidding_shapes.loc[
-        "DKE1", ["node", "x", "y"]
-    ]
-    country_shapes.loc["IT", ["node", "x", "y"]] = bidding_shapes.loc[
-        "ITCA", ["node", "x", "y"]
-    ]
-    country_shapes.loc["GR", ["node", "x", "y"]] = bidding_shapes.loc[
-        "GR00", ["node", "x", "y"]
-    ]
-    country_shapes.loc["SE", ["node", "x", "y"]] = bidding_shapes.loc[
-        "SE01", ["node", "x", "y"]
-    ]
+    if "DK" in countries:
+        country_shapes.loc["DK", ["node", "x", "y"]] = bidding_shapes.loc[
+            "DKE1", ["node", "x", "y"]
+        ]
+    if "IT" in countries:
+        country_shapes.loc["IT", ["node", "x", "y"]] = bidding_shapes.loc[
+            "ITCA", ["node", "x", "y"]
+        ]
+    if "GR" in countries:
+        country_shapes.loc["GR", ["node", "x", "y"]] = bidding_shapes.loc[
+            "GR00", ["node", "x", "y"]
+        ]
+    if "SE" in countries:
+        country_shapes.loc["SE", ["node", "x", "y"]] = bidding_shapes.loc[
+            "SE01", ["node", "x", "y"]
+        ]
 
     return bidding_shapes, country_shapes
 
 
 def build_buses(
-    buses_fn,
+    buses_fn: str,
+    countries: list[str],
     bidding_shapes: gpd.GeoDataFrame,
     country_shapes: gpd.GeoDataFrame,
     geo_crs: str = GEO_CRS,
@@ -177,7 +188,8 @@ def build_buses(
 
     Parameters
     ----------
-        - buses_fn (str | Path): Path to bidding zone shape file.
+        - buses_fn (str): Path to bidding zone shape file.
+        - countries (List[str]): List of countries to consider
         - bidding_shapes (GeoDataFrame): A GeoDataFrame including bidding zone geometry, representative point and id.
         - country_shapes (GeoDataFrame): A GeoDataFrame including country geometry and representative point.
         - geo_crs (CRS, optional): Coordinate reference system for geographic calculations. Defaults to GEO_CRS.
@@ -210,19 +222,21 @@ def build_buses(
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=geo_crs)
 
     # Assume the same coordinates for all LU buses
-    buses.loc["LUB1"] = buses.loc["LUB1"].fillna(buses.loc["LUG1"])
-    buses.loc["LUF1"] = buses.loc["LUF1"].fillna(buses.loc["LUG1"])
-    buses.loc["LUV1"] = buses.loc["LUV1"].fillna(buses.loc["LUG1"])
+    if "LU" in countries:
+        buses.loc["LUB1"] = buses.loc["LUB1"].fillna(buses.loc["LUG1"])
+        buses.loc["LUF1"] = buses.loc["LUF1"].fillna(buses.loc["LUG1"])
+        buses.loc["LUV1"] = buses.loc["LUV1"].fillna(buses.loc["LUG1"])
 
     # Manually add Italian virtual nodes  # TODO Refine assumptions
-    buses.loc["ITCO"] = (
-        buses.loc[["FR15"]]
-        .assign(station_id="ITCO", country="IT", tags="ITCO")
-        .loc["FR15"]
-    )
-    buses.loc["ITVI"] = (
-        buses.loc[["ITSI"]].assign(station_id="ITVI", tags="ITVI").loc["ITSI"]
-    )
+    if "IT" in countries:
+        buses.loc["ITCO"] = (
+            buses.loc[["FR15"]]
+            .assign(station_id="ITCO", country="IT", tags="ITCO")
+            .loc["FR15"]
+        )
+        buses.loc["ITVI"] = (
+            buses.loc[["ITSI"]].assign(station_id="ITVI", tags="ITVI").loc["ITSI"]
+        )
 
     buses_h2 = (
         country_shapes[["node", "x", "y"]]
@@ -242,23 +256,25 @@ def build_buses(
     buses_h2 = gpd.GeoDataFrame(buses_h2, geometry="geometry", crs=geo_crs)
 
     # Manually add IBIT and IBFI nodes  # TODO Refine assumptions
-    buses_h2.loc["IBIT H2"] = (
-        buses.loc[["ITN1"]]
-        .assign(station_id="IBIT H2", voltage=None, dc="f", tags="IBIT H2")
-        .loc["ITN1"]
-    )
-    ibfi_lat, ibfi_long = 63.0, 25.0
-    buses_h2.loc["IBFI H2"] = (
-        buses_h2.loc[["FI H2"]]
-        .assign(
-            station_id="IBFI H2",
-            tags="IBFI H2",
-            x=ibfi_long,
-            y=ibfi_lat,
-            geometry=Point(ibfi_long, ibfi_lat),
+    if "IT" in countries:
+        buses_h2.loc["IBIT H2"] = (
+            buses.loc[["ITN1"]]
+            .assign(station_id="IBIT H2", voltage=None, dc="f", tags="IBIT H2")
+            .loc["ITN1"]
         )
-        .loc["FI H2"]
-    )
+    if "FI" in countries:
+        ibfi_lat, ibfi_long = 63.0, 25.0
+        buses_h2.loc["IBFI H2"] = (
+            buses_h2.loc[["FI H2"]]
+            .assign(
+                station_id="IBFI H2",
+                tags="IBFI H2",
+                x=ibfi_long,
+                y=ibfi_lat,
+                geometry=Point(ibfi_long, ibfi_lat),
+            )
+            .loc["FI H2"]
+        )
 
     return buses, buses_h2
 
@@ -385,9 +401,15 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    countries = snakemake.params.countries
+
     # Build node coordinates
-    bidding_shapes, country_shapes = build_shapes(snakemake.input.bidding_shapes)
-    buses, buses_h2 = build_buses(snakemake.input.buses, bidding_shapes, country_shapes)
+    bidding_shapes, country_shapes = build_shapes(
+        snakemake.input.bidding_shapes, countries
+    )
+    buses, buses_h2 = build_buses(
+        snakemake.input.buses, countries, bidding_shapes, country_shapes
+    )
 
     # Build links
     links = build_links(snakemake.input.reference_grid, buses)
