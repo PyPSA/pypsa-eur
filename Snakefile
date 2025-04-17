@@ -130,6 +130,58 @@ rule all:
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
+        # Explicitly list heat source types for temperature maps
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
+                if config_provider("plotting", "heat_source_map", "enable")(w)
+                else []
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
+                if config_provider("plotting", "heat_source_map", "enable")(w)
+                else []
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
+                if config_provider("plotting", "heat_source_map", "enable")(w)
+                else []
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
+        # lambda w: expand(
+        #     (
+        #         RESULTS
+        #         + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_air.html"
+        #         if config_provider("plotting", "heat_source_map", "enable")(w)
+        #         else []
+        #     ),
+        #     **config["scenario"],
+        #     run=config["run"]["name"],
+        # ),
+        # Only river_water has energy maps
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
+                if config_provider("plotting", "heat_source_map", "enable")(w)
+                else []
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
         directory(
             expand(
                 RESULTS
@@ -146,7 +198,6 @@ rule all:
                 **config["scenario"],
             ),
         ),
-    default_target: True
 
 
 rule create_scenarios:
