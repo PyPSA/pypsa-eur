@@ -12,19 +12,14 @@ min_version("8.11")
 
 from scripts._helpers import (
     path_provider,
-    copy_default_files,
     get_scenarios,
     get_rdir,
     get_shadow,
 )
 
 
-copy_default_files(workflow)
-
-
 configfile: "config/config.default.yaml"
 configfile: "config/plotting.default.yaml"
-configfile: "config/config.yaml"
 
 
 run = config["run"]

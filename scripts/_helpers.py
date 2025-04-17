@@ -10,9 +10,7 @@ import os
 import re
 import time
 from functools import partial, wraps
-from os.path import exists
 from pathlib import Path
-from shutil import copyfile
 from tempfile import NamedTemporaryFile
 from typing import Callable, Union
 
@@ -30,18 +28,6 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
-
-
-def copy_default_files(workflow):
-    default_files = {
-        "config/config.default.yaml": "config/config.yaml",
-        "config/scenarios.template.yaml": "config/scenarios.yaml",
-    }
-    for template, target in default_files.items():
-        target = os.path.join(workflow.current_basedir, target)
-        template = os.path.join(workflow.current_basedir, template)
-        if not exists(target) and exists(template):
-            copyfile(template, target)
 
 
 def get_scenarios(run):
