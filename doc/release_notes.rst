@@ -15,6 +15,8 @@ Release Notes
 
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp-raw` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
+* Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
