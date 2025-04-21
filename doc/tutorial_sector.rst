@@ -59,7 +59,7 @@ To run an overnight / greenfiled scenario with the specifications above, run
 
 .. code:: console
 
-    $ snakemake all --configfile config/test/config.overnight.yaml
+    $ snakemake -call all --configfile config/test/config.overnight.yaml
 
 which will result in the following jobs ``snakemake`` wants to run, some of
 which were already included in the electricity-only tutorial:
@@ -520,7 +520,7 @@ To run a myopic foresight scenario with the specifications above, run
 
 .. code:: console
 
-    $ snakemake all --configfile config/test/config.myopic.yaml
+    $ snakemake -call all --configfile config/test/config.myopic.yaml
 
 which will result in additional jobs ``snakemake`` wants to run, which
 translates to the following workflow diagram which nicely outlines how the
@@ -1059,8 +1059,8 @@ configuration file.
 
 .. code:: console
 
-    $ snakemake purge
-    $ snakemake all
+    $ snakemake -call purge
+    $ snakemake -call all
 
 .. note::
 
@@ -1069,4 +1069,4 @@ configuration file.
 
     .. code:: console
 
-        $ snakemake all -n
+        $ snakemake -call all -n
