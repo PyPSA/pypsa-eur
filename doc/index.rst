@@ -183,9 +183,9 @@ For sector-coupling studies: ::
     @misc{PyPSAEurSec,
         author = "Fabian Neumann and Elisabeth Zeyen and Marta Victoria and Tom Brown",
         title = "The potential role of a hydrogen network in Europe",
-        journal "Joule",
+        journal = "Joule",
         volume = "7",
-        pages = "1--25"
+        pages = "1--25",
         year = "2023",
         eprint = "2207.05816",
         doi = "10.1016/j.joule.2023.06.016",
