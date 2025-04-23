@@ -21,7 +21,7 @@ dependencies:
 - xlrd
 - openpyxl
 - seaborn
-- snakemake-minimal>=9.2
+- snakemake-minimal>=9
 - memory_profiler
 - yaml
 - pytables
