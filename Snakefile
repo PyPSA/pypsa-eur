@@ -101,16 +101,16 @@ rule all:
         ),
         # Bus carrier dispatch plots
         expand(
-            RESULTS + "plots/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+            RESULTS + "graphs/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
             run=config["run"]["name"],
             **config["scenario"],
         ),
         # Bus annual energy balance plots
-        expand(
-            RESULTS + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
+        # expand(
+        #     RESULTS + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+        #     run=config["run"]["name"],
+        #     **config["scenario"],
+        # ),
         lambda w: expand(
             (
                 RESULTS
@@ -190,22 +190,22 @@ rule all:
             **config["scenario"],
             run=config["run"]["name"],
         ),
-        directory(
-            expand(
-                RESULTS
-                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
-        ),
-        directory(
-            expand(
-                RESULTS
-                + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
-        ),
+        # directory(
+        #     expand(
+        #         RESULTS
+        #         + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+        #         run=config["run"]["name"],
+        #         **config["scenario"],
+        #     ),
+        # ),
+        # directory(
+        #     expand(
+        #         RESULTS
+        #         + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+        #         run=config["run"]["name"],
+        #         **config["scenario"],
+        #     ),
+        # ),
 
 
 rule create_scenarios:

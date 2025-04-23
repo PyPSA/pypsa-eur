@@ -424,6 +424,7 @@ if __name__ == "__main__":
     
     # Process each heat system and collect layouts
     all_layouts = []
+
     
     for heat_system_type in HeatSystemType:
         logger.info(f"Processing heat system: {heat_system_type.value}")

@@ -158,7 +158,7 @@ if config["foresight"] != "perfect":
             + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
-            mem_mb=8000,
+            mem_mb=150000,
         log:
             RESULTS
             + "logs/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
@@ -536,6 +536,8 @@ rule plot_cop_profiles:
         RESULTS + "logs/plot_cop_profiles_s_{clusters}_{planning_horizons}.log",
     benchmark:
         RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}",
+    resources:
+        mem_mb=10000,
     script:
         "../scripts/plot_cop_profiles/plot_cop_profiles.py"
 
@@ -550,31 +552,33 @@ rule plot_bus_carrier_dispatch:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
     output:
         html=RESULTS
-        + "plots/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+        + "graphs/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
     log:
         RESULTS
         + "logs/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         RESULTS
         + "benchmarks/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    resources:
+        mem_mb=20000,
     script:
         "../scripts/plot_bus_carrier_dispatch.py"
 
 
-rule plot_bus_annual_balance:
-    params:
-        plotting=config_provider("plotting"),
-    input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-    output:
-        html=RESULTS
-        + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
-    log:
-        RESULTS
-        + "logs/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
-    benchmark:
-        RESULTS
-        + "benchmarks/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-    script:
-        "../scripts/plot_bus_annual_balance.py"
+# rule plot_bus_annual_balance:
+#     params:
+#         plotting=config_provider("plotting"),
+#     input:
+#         network=RESULTS
+#         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+#     output:
+#         html=RESULTS
+#         + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+#     log:
+#         RESULTS
+#         + "logs/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+#     benchmark:
+#         RESULTS
+#         + "benchmarks/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+#     script:
+#         "../scripts/plot_bus_annual_balance.py"
