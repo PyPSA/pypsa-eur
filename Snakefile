@@ -101,7 +101,8 @@ rule all:
         ),
         # Bus carrier dispatch plots
         expand(
-            RESULTS + "graphs/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+            RESULTS
+            + "graphs/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
             run=config["run"]["name"],
             **config["scenario"],
         ),

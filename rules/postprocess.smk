@@ -513,14 +513,19 @@ rule build_ambient_air_temperature_yearly_average:
         cutout=lambda w: input_cutout(w),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        average_ambient_air_temperature=resources("temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"),
+        average_ambient_air_temperature=resources(
+            "temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"
+        ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
         RESULTS + "logs/build_ambient_air_temperature_yearly_average/base_s_{clusters}",
     benchmark:
-        RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
+        (
+            RESULTS
+            + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -535,7 +540,7 @@ rule plot_cop_profiles:
     log:
         RESULTS + "logs/plot_cop_profiles_s_{clusters}_{planning_horizons}.log",
     benchmark:
-        RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}",
+        RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}"
     resources:
         mem_mb=10000,
     script:
@@ -558,7 +563,7 @@ rule plot_bus_carrier_dispatch:
         + "logs/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         RESULTS
-        + "benchmarks/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        +"benchmarks/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
     resources:
         mem_mb=20000,
     script:
