@@ -49,7 +49,10 @@ network with **zero** initial capacity:
 """
 
 import logging
+from collections.abc import Iterable
+from typing import Any
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import powerplantmatching as pm
@@ -62,7 +65,6 @@ from _helpers import (
     set_scenario_config,
     update_p_nom_max,
 )
-from powerplantmatching.export import map_country_bus
 from pypsa.clustering.spatial import DEFAULT_ONE_PORT_STRATEGIES, normed_or_uniform
 
 idx = pd.IndexSlice
@@ -85,6 +87,10 @@ def normed(s: pd.Series) -> pd.Series:
         Normalized series where all elements sum to 1
     """
     return s / s.sum()
+
+
+def flatten(t: Iterable[Any]) -> str:
+    return " ".join(map(str, t))
 
 
 def calculate_annuity(n: float, r: float | pd.Series) -> float | pd.Series:
@@ -541,9 +547,12 @@ def attach_wind_and_solar(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             supcar = car.split("-", 2)[0]
             if supcar == "offwind":
                 distance = ds["average_distance"].to_pandas()
+                distance.index = distance.index.map(flatten)
                 submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
                 underground_cost = costs.at[
                     car + "-connection-underground", "capital_cost"
@@ -563,26 +572,36 @@ def attach_wind_and_solar(
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
+            buses = ds.indexes["bus_bin"].get_level_values("bus")
+            bus_bins = ds.indexes["bus_bin"].map(flatten)
+
+            p_nom_max = ds["p_nom_max"].to_pandas()
+            p_nom_max.index = p_nom_max.index.map(flatten)
+
+            p_max_pu = ds["profile"].to_pandas()
+            p_max_pu.columns = p_max_pu.columns.map(flatten)
+
             if not ppl.query("carrier == @car").empty:
                 caps = ppl.query("carrier == @car").groupby("bus").p_nom.sum()
                 caps = pd.Series(data=caps, index=ds.indexes["bus"]).fillna(0)
             else:
                 caps = pd.Series(index=ds.indexes["bus"]).fillna(0)
+            caps.index = caps.index.map(flatten)
 
             n.add(
                 "Generator",
-                ds.indexes["bus"],
-                " " + car,
-                bus=ds.indexes["bus"],
+                bus_bins,
+                suffix=" " + car,
+                bus=buses,
                 carrier=car,
                 p_nom=caps,
                 p_nom_min=caps,
                 p_nom_extendable=car in extendable_carriers["Generator"],
-                p_nom_max=ds["p_nom_max"].to_pandas(),
+                p_nom_max=p_nom_max,
                 marginal_cost=costs.at[supcar, "marginal_cost"],
                 capital_cost=capital_cost,
                 efficiency=costs.at[supcar, "efficiency"],
-                p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
+                p_max_pu=p_max_pu,
                 lifetime=costs.at[supcar, "lifetime"],
             )
 
@@ -634,7 +653,7 @@ def attach_conventional_generators(
     if unit_commitment is not None:
         committable_attrs = ppl.carrier.isin(unit_commitment).to_frame("committable")
         for attr in unit_commitment.index:
-            default = pypsa.components.component_attrs["Generator"].default[attr]
+            default = n.component_attrs["Generator"].loc[attr, "default"]
             committable_attrs[attr] = ppl.carrier.map(unit_commitment.loc[attr]).fillna(
                 default
             )
@@ -862,9 +881,11 @@ def attach_hydro(
         )
 
 
-def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> None:
+def attach_GEM_renewables(
+    n: pypsa.Network, tech_map: dict[str, list[str]], smk_inputs: list[str]
+) -> None:
     """
-    Attach renewable capacities from the OPSD dataset to the network.
+    Attach renewable capacities from the GEM dataset to the network.
 
     Args:
     - n: The PyPSA network to attach the capacities to.
@@ -873,28 +894,28 @@ def attach_OPSD_renewables(n: pypsa.Network, tech_map: dict[str, list[str]]) -> 
     Returns:
     - None
     """
-    tech_string = ", ".join(sum(tech_map.values(), []))
-    logger.info(f"Using OPSD renewable capacities for carriers {tech_string}.")
+    tech_string = ", ".join(tech_map.values())
+    logger.info(f"Using GEM renewable capacities for carriers {tech_string}.")
 
-    df = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
+    df = pm.data.GEM().powerplant.convert_country_to_alpha2()
     technology_b = ~df.Technology.isin(["Onshore", "Offshore"])
     df["Fueltype"] = df.Fueltype.where(technology_b, df.Technology).replace(
         {"Solar": "PV"}
     )
-    df = df.query("Fueltype in @tech_map").powerplant.convert_country_to_alpha2()
-    df = df.dropna(subset=["lat", "lon"])
 
-    for fueltype, carriers in tech_map.items():
-        gens = n.generators[lambda df: df.carrier.isin(carriers)]
-        buses = n.buses.loc[gens.bus.unique()]
-        gens_per_bus = gens.groupby("bus").p_nom.count()
+    for fueltype, carrier in tech_map.items():
+        fn = smk_inputs.get(f"class_regions_{carrier}")
+        class_regions = gpd.read_file(fn)
 
-        caps = map_country_bus(df.query("Fueltype == @fueltype"), buses)
-        caps = caps.groupby(["bus"]).Capacity.sum()
-        caps = caps / gens_per_bus.reindex(caps.index, fill_value=1)
+        df_fueltype = df.query("Fueltype == @fueltype")
+        geometry = gpd.points_from_xy(df_fueltype.lon, df_fueltype.lat)
+        caps = gpd.GeoDataFrame(df_fueltype, geometry=geometry, crs=4326)
+        caps = caps.sjoin(class_regions)
+        caps = caps.groupby(["bus", "bin"]).Capacity.sum()
+        caps.index = caps.index.map(flatten) + " " + carrier
 
-        n.generators.update({"p_nom": gens.bus.map(caps).dropna()})
-        n.generators.update({"p_nom_min": gens.bus.map(caps).dropna()})
+        n.generators.update({"p_nom": caps.dropna()})
+        n.generators.update({"p_nom_min": caps.dropna()})
 
 
 def estimate_renewable_capacities(
@@ -935,8 +956,8 @@ def estimate_renewable_capacities(
         f"\n{capacities.groupby('Technology').sum().div(1e3).round(2)}"
     )
 
-    for ppm_technology, techs in tech_map.items():
-        tech_i = n.generators.query("carrier in @techs").index
+    for ppm_technology, tech in tech_map.items():
+        tech_i = n.generators.query("carrier == @tech").index
         if ppm_technology in capacities.index.get_level_values("Technology"):
             stats = capacities.loc[ppm_technology].reindex(countries, fill_value=0.0)
         else:
@@ -1239,8 +1260,8 @@ if __name__ == "__main__":
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
-            if estimate_renewable_caps["from_opsd"]:
-                attach_OPSD_renewables(n, tech_map)
+            if estimate_renewable_caps["from_gem"]:
+                attach_GEM_renewables(n, tech_map, snakemake.input)
 
             estimate_renewable_capacities(
                 n, year, tech_map, expansion_limit, params.countries

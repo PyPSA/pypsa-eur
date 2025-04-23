@@ -15,17 +15,17 @@ Outputs
 
 - ``resources/profile_{technology}.nc`` with the following structure
 
-    ===================  ==========  =========================================================
-    Field                Dimensions  Description
-    ===================  ==========  =========================================================
-    profile              bus, time   the per unit hourly availability factors for each bus
-    -------------------  ----------  ---------------------------------------------------------
-    p_nom_max            bus         maximal installable capacity at the bus (in MW)
-    -------------------  ----------  ---------------------------------------------------------
-    average_distance     bus         average distance of units in the region to the
-                                     grid bus for onshore technologies and to the shoreline
-                                     for offshore technologies (in km)
-    ===================  ==========  =========================================================
+    ===================  ====================  =========================================================
+    Field                Dimensions            Description
+    ===================  ====================  =========================================================
+    profile              year, bus, bin, time  the per unit hourly availability factors for each bus
+    -------------------  --------------------  ---------------------------------------------------------
+    p_nom_max            bus, bin              maximal installable capacity at the bus (in MW)
+    -------------------  --------------------  ---------------------------------------------------------
+    average_distance     bus, bin              average distance of units in the region to the
+                                               grid bus for onshore technologies and to the shoreline
+                                               for offshore technologies (in km)
+    ===================  ====================  =========================================================
 
     - **profile**
 
@@ -62,6 +62,9 @@ generators in each clustered region, the installable potential in each grid cell
 is multiplied with the capacity factor at each grid cell. This is done since we
 assume more generators are installed at cells with a higher capacity factor.
 
+Based on the average capacity factor, the potentials are further divided into a
+configurable number of resource classes (bins).
+
 .. image:: img/offwinddc-gridcell.png
     :scale: 50 %
     :align: center
@@ -87,11 +90,14 @@ adding up the installable potentials of the individual grid cells.
 
 import logging
 import time
+from itertools import product
 
-import atlite
 import geopandas as gpd
+import numpy as np
+import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, get_snapshots, set_scenario_config
+from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
+from atlite.gis import ExclusionContainer
 from build_shapes import _simplify_polys
 from dask.distributed import Client
 
@@ -135,15 +141,11 @@ if __name__ == "__main__":
 
     sns = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=sns)
+    cutout = load_cutout(snakemake.input.cutout, time=sns)
 
     availability = xr.open_dataarray(snakemake.input.availability_matrix)
 
-    regions = gpd.read_file(snakemake.input.regions)
-    assert not regions.empty, (
-        f"List of regions in {snakemake.input.regions} is empty, please "
-        "disable the corresponding renewable technology"
-    )
+    regions = gpd.read_file(snakemake.input.distance_regions)
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
     if snakemake.wildcards.technology.startswith("offwind"):
@@ -168,16 +170,73 @@ if __name__ == "__main__":
     if client is not None:
         resource["dask_kwargs"] = {"scheduler": client}
 
-    logger.info(f"Calculate average capacity factor for technology {technology}...")
+    logger.info(
+        f"Calculate average capacity factor per grid cell for technology {technology}..."
+    )
     start = time.time()
 
     capacity_factor = correction_factor * func(capacity_factor=True, **resource)
-    layout = capacity_factor * area * capacity_per_sqkm
 
     duration = time.time() - start
     logger.info(
-        f"Completed average capacity factor calculation for technology {technology} ({duration:2.2f}s)"
+        f"Completed average capacity factor calculation per grid cell for technology {technology} ({duration:2.2f}s)"
     )
+
+    nbins = params.get("resource_classes", 1)
+    logger.info(
+        f"Create masks for {nbins} resource classes for technology {technology}..."
+    )
+    start = time.time()
+
+    fn = snakemake.input.resource_regions
+    resource_regions = gpd.read_file(fn).set_index("name").rename_axis("bus").geometry
+
+    # indicator matrix for which cells touch which regions
+    I = np.ceil(cutout.availabilitymatrix(resource_regions, ExclusionContainer()))
+    cf_by_bus = capacity_factor * I.where(I > 0)
+
+    epsilon = 1e-3
+    cf_min, cf_max = (
+        cf_by_bus.min(dim=["x", "y"]) - epsilon,
+        cf_by_bus.max(dim=["x", "y"]) + epsilon,
+    )
+    normed_bins = xr.DataArray(np.linspace(0, 1, nbins + 1), dims=["bin"])
+    bins = cf_min + (cf_max - cf_min) * normed_bins
+
+    cf_by_bus_bin = cf_by_bus.expand_dims(bin=range(nbins))
+    lower_edges = bins[:, :-1]
+    upper_edges = bins[:, 1:]
+    class_masks = (cf_by_bus_bin >= lower_edges) & (cf_by_bus_bin < upper_edges)
+
+    if nbins == 1:
+        bus_bin_mi = pd.MultiIndex.from_product(
+            [resource_regions.index, [0]], names=["bus", "bin"]
+        )
+        class_regions = resource_regions.set_axis(bus_bin_mi)
+    else:
+        grid = cutout.grid.set_index(["y", "x"])
+        class_regions = {}
+        for bus, bin_id in product(buses, range(nbins)):
+            bus_bin_mask = (
+                class_masks.sel(bus=bus, bin=bin_id)
+                .stack(spatial=["y", "x"])
+                .to_pandas()
+            )
+            grid_cells = grid.loc[bus_bin_mask]
+            geometry = (
+                grid_cells.intersection(resource_regions.loc[bus]).union_all().buffer(0)
+            )
+            class_regions[(bus, bin_id)] = geometry
+        class_regions = gpd.GeoSeries(class_regions, crs=4326)
+        class_regions.index.names = ["bus", "bin"]
+    class_regions.to_file(snakemake.output.class_regions)
+
+    duration = time.time() - start
+    logger.info(
+        f"Completed resource class calculation for technology {technology} ({duration:2.2f}s)"
+    )
+
+    layout = capacity_factor * area * capacity_per_sqkm
 
     profiles = []
     for year, model in models.items():
@@ -188,14 +247,19 @@ if __name__ == "__main__":
 
         resource[tech] = model
 
+        matrix = (availability * class_masks).stack(
+            bus_bin=["bus", "bin"], spatial=["y", "x"]
+        )
+
         profile = func(
-            matrix=availability.stack(spatial=["y", "x"]),
+            matrix=matrix,
             layout=layout,
-            index=buses,
+            index=matrix.indexes["bus_bin"],
             per_unit=True,
             return_capacity=False,
             **resource,
         )
+        profile = profile.unstack("bus_bin")
 
         dim = {"year": [year]}
         profile = profile.expand_dims(dim)
@@ -210,23 +274,26 @@ if __name__ == "__main__":
     profiles = xr.merge(profiles)
 
     logger.info(f"Calculating maximal capacity per bus for technology {technology}")
-    p_nom_max = capacity_per_sqkm * availability @ area
+    p_nom_max = capacity_per_sqkm * availability * class_masks @ area
 
     logger.info(f"Calculate average distances for technology {technology}.")
-    layoutmatrix = (layout * availability).stack(spatial=["y", "x"])
+    layoutmatrix = (layout * availability * class_masks).stack(
+        bus_bin=["bus", "bin"], spatial=["y", "x"]
+    )
 
     coords = cutout.grid.representative_point().to_crs(3035)
 
     average_distance = []
-    for bus in buses:
-        row = layoutmatrix.sel(bus=bus).data
+    bus_bins = layoutmatrix.indexes["bus_bin"]
+    for bus, bin in bus_bins:
+        row = layoutmatrix.sel(bus=bus, bin=bin).data
         nz_b = row != 0
         row = row[nz_b]
         co = coords[nz_b]
         distances = co.distance(regions[bus]).div(1e3)  # km
         average_distance.append((distances * (row / row.sum())).sum())
 
-    average_distance = xr.DataArray(average_distance, [buses])
+    average_distance = xr.DataArray(average_distance, [bus_bins]).unstack("bus_bin")
 
     ds = xr.merge(
         [
@@ -236,14 +303,13 @@ if __name__ == "__main__":
         ]
     )
     # select only buses with some capacity and minimal capacity factor
-    mean_profile = ds["profile"].mean("time")
-    if "year" in ds.indexes:
-        mean_profile = mean_profile.max("year")
+    mean_profile = ds["profile"].mean("time").max(["year", "bin"])
+    sum_potential = ds["p_nom_max"].sum("bin")
 
     ds = ds.sel(
         bus=(
             (mean_profile > params.get("min_p_max_pu", 0.0))
-            & (ds["p_nom_max"] > params.get("min_p_nom_max", 0.0))
+            & (sum_potential > params.get("min_p_nom_max", 0.0))
         )
     )
 

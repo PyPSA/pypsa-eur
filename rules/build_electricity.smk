@@ -157,7 +157,6 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config_provider("snapshots"),
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
@@ -180,7 +179,7 @@ if config["enable"].get("build_cutout", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),
     log:
@@ -219,9 +218,9 @@ rule determine_availability_matrix_MD_UA:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         availability_matrix=resources(
             "availability_matrix_MD-UA_{clusters}_{technology}.nc"
@@ -289,9 +288,9 @@ rule determine_availability_matrix:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         resources("availability_matrix_{clusters}_{technology}.nc"),
     log:
@@ -315,12 +314,18 @@ rule build_renewable_profiles:
     input:
         availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        distance_regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        resource_regions=lambda w: (
+            resources("regions_onshore_base_s_{clusters}.geojson")
+            if w.technology in ("onwind", "solar", "solar-hsat")
+            else resources("regions_offshore_base_s_{clusters}.geojson")
+        ),
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         profile=resources("profile_{clusters}_{technology}.nc"),
+        class_regions=resources("regions_by_class_{clusters}_{technology}.geojson"),
     log:
         logs("build_renewable_profile_{clusters}_{technology}.log"),
     benchmark:
@@ -366,10 +371,10 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff="data/era5-annual-runoff-per-country.csv",
-        cutout=lambda w: CDIR
-        + config_provider("renewable", "hydro", "cutout")(w)
-        + ".nc",
+        era5_runoff="data/bundle/era5-runoff-per-country.csv",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", "hydro", "cutout")(w)
+        ),
     output:
         profile=resources("profile_hydro.nc"),
     log:
@@ -390,9 +395,9 @@ rule build_line_rating:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         base_network=resources("networks/base.nc"),
-        cutout=lambda w: CDIR
-        + config_provider("lines", "dynamic_line_rating", "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("lines", "dynamic_line_rating", "cutout")(w)
+        ),
     output:
         output=resources("dlr.nc"),
     log:
@@ -488,6 +493,16 @@ def input_profile_tech(w):
     }
 
 
+def input_class_regions(w):
+    return {
+        f"class_regions_{tech}": resources(
+            f"regions_by_class_{{clusters}}_{tech}.geojson"
+        )
+        for tech in set(config_provider("electricity", "renewable_carriers")(w))
+        - {"hydro"}
+    }
+
+
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
@@ -516,7 +531,7 @@ rule build_hac_features:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         features=config_provider("clustering", "cluster_network", "hac_features"),
     input:
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
         regions=resources("regions_onshore_base_s.geojson"),
     output:
         resources("hac_features.nc"),
@@ -669,6 +684,7 @@ rule add_electricity:
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
     input:
         unpack(input_profile_tech),
+        unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(

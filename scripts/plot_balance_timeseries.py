@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, get_snapshots, set_scenario_config
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -187,7 +187,6 @@ if __name__ == "__main__":
             "plot_balance_timeseries",
             simpl="",
             clusters="10",
-            ll="vopt",
             opts="",
             sector_opts="",
             planning_horizons=2050,
@@ -205,7 +204,9 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     # Get month ranges for plotting
-    months = pd.date_range(freq="ME", **snakemake.params.snapshots).map(
+    sns = snakemake.params.snapshots
+    drop_leap_day = snakemake.params.drop_leap_day
+    months = get_snapshots(sns, drop_leap_day, freq="ME").map(
         lambda x: x.strftime("%Y-%m")
     )
 
