@@ -11,6 +11,9 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Scripts now use absolute paths. When using `mock_snakemake` this might require you to 
+  add the working directory to the PYTHONPATH or your IDE.
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
