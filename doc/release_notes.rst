@@ -11,8 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-* Developer note: Scripts now use absolute paths. When using `mock_snakemake` this might require you to 
-  add the working directory to the PYTHONPATH or your IDE.
+* Developer note: Scripts now use absolute imporys. When using `mock_snakemake` this 
+  might require you to add the working directory to the PYTHONPATH or in your IDE.
   
 * Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
 
