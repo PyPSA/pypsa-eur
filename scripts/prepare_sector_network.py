@@ -2826,6 +2826,7 @@ def add_heat(
 
     cop = xr.open_dataarray(cop_profiles_file)
     direct_heat_profile = xr.open_dataarray(direct_heat_source_utilisation_profile_file)
+    additional_heating_data_profile = xr.open_dataarray(ltes_additional_heating_file)
     district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -2921,16 +2922,171 @@ def add_heat(
             p_set=heat_load.loc[n.snapshots],
         )
 
+        if options["tes"]:
+            n.add("Carrier", f"{heat_system} water tanks")
+
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} water tanks",
+                location=nodes,
+                carrier=f"{heat_system} water tanks",
+                unit="MWh_th",
+            )
+
+            energy_to_power_ratio_water_tanks = costs.at[
+                heat_system.central_or_decentral + " water tank storage",
+                "energy to power ratio",
+            ]
+
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water tanks charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water tanks",
+                efficiency=costs.at[
+                    heat_system.central_or_decentral + " water tank charger",
+                    "efficiency",
+                ],
+                carrier=f"{heat_system} water tanks charger",
+                p_nom_extendable=True,
+                marginal_cost=costs.at["water tank charger", "marginal_cost"],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+                ],
+            )
+
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water tanks discharger",
+                bus0=nodes + f" {heat_system} water tanks",
+                bus1=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} water tanks discharger",
+                efficiency=costs.at[
+                    heat_system.central_or_decentral + " water tank discharger",
+                    "efficiency",
+                ],
+                p_nom_extendable=True,
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+                ],
+            )
+
+            n.links.loc[
+                nodes + f" {heat_system} water tanks charger", "energy to power ratio"
+            ] = energy_to_power_ratio_water_tanks
+
+            tes_time_constant_days = options["tes_tau"][
+                heat_system.central_or_decentral
+            ]
+
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} water tanks",
+                bus=nodes + f" {heat_system} water tanks",
+                e_cyclic=True,
+                e_nom_extendable=True,
+                carrier=f"{heat_system} water tanks",
+                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                capital_cost=costs.at[
+                    heat_system.central_or_decentral + " water tank storage",
+                    "capital_cost",
+                ],
+                lifetime=costs.at[
+                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+                ],
+            )
+
+            if heat_system == HeatSystem.URBAN_CENTRAL:
+                n.add("Carrier", f"{heat_system} water pits")
+
+                n.add(
+                    "Bus",
+                    nodes + f" {heat_system} water pits",
+                    location=nodes,
+                    carrier=f"{heat_system} water pits",
+                    unit="MWh_th",
+                )
+
+                energy_to_power_ratio_water_pit = costs.at[
+                    "central water pit storage", "energy to power ratio"
+                ]
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} water pits charger",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes + f" {heat_system} water pits",
+                    efficiency=costs.at[
+                        "central water pit charger",
+                        "efficiency",
+                    ],
+                    carrier=f"{heat_system} water pits charger",
+                    p_nom_extendable=True,
+                    lifetime=costs.at["central water pit storage", "lifetime"],
+                    marginal_cost=costs.at[
+                        "central water pit charger", "marginal_cost"
+                    ],
+                )
+
+                additional_heating_needed = (
+                    additional_heating_data_profile.sel(
+                        name=nodes,
+                    )
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
+                )
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} water pits discharger",
+                    bus0=nodes + f" {heat_system} water pits",
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} water pits discharger",
+                    efficiency=costs.at[
+                                   "central water pit discharger",
+                                   "efficiency",
+                               ] * additional_heating_needed,
+                    p_nom_extendable=True,
+                    lifetime=costs.at["central water pit storage", "lifetime"],
+                )
+                n.links.loc[
+                    nodes + f" {heat_system} water pits charger",
+                    "energy to power ratio",
+                ] = energy_to_power_ratio_water_pit
+
+                if options["district_heating"]["ptes"]["dynamic_capacity"]:
+                    # Load pre-calculated e_max_pu profiles
+                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
+                    e_max_pu = (
+                        e_max_pu_data.sel(name=nodes)
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                    )
+                else:
+                    e_max_pu = 1
+
+                n.add(
+                    "Store",
+                    nodes,
+                    suffix=f" {heat_system} water pits",
+                    bus=nodes + f" {heat_system} water pits",
+                    e_cyclic=True,
+                    e_nom_extendable=True,
+                    e_max_pu=e_max_pu,
+                    carrier=f"{heat_system} water pits",
+                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                    capital_cost=costs.at["central water pit storage", "capital_cost"],
+                    lifetime=costs.at["central water pit storage", "lifetime"],
+                )
+
         ## Add heat pumps
         for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
-            if heat_source == 'ptes':
-                print('caution')
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
-
-            # Remap name for central PTES-sourced HP, as the HP used is a water-water heat pump
-            if costs_name_heat_pump == "central ptes-sourced heat pump":
-                costs_name_heat_pump = "central water-sourced heat pump"
-                # excess_heat_source_heat_pump
 
             cop_heat_pump = (
                 cop.sel(
@@ -3027,7 +3183,18 @@ def add_heat(
                         p_nom_extendable=True,
                     )
 
-            if heat_source in params.additional_heating_storage_heat_sources:
+            if heat_source in params.additional_heating_storage_heat_sources: # and booster heat pump true
+
+#                additional_heating_needed = (
+#                    additional_heating_data_profile.sel(
+#                        #                        heat_source=heat_source,
+#                        name=nodes,
+#                    )
+#                    .to_pandas()
+#                    .reindex(index=n.snapshots)
+#                )
+                # bessere bezichnung ist ganz klar temperature boosting
+
                 n.add(
                     "Link",
                     nodes,
@@ -3036,8 +3203,8 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=-(cop_heat_pump - 1),
-                    efficiency2=cop_heat_pump,
+                    efficiency=-(cop_heat_pump - 1) * (1 - additional_heating_needed),
+                    efficiency2=cop_heat_pump * (1 - additional_heating_needed),
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                                 * costs.at[costs_name_heat_pump, "capital_cost"]
                                 * overdim_factor,
@@ -3059,169 +3226,6 @@ def add_heat(
                     * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
-
-        if options["tes"]:
-            n.add("Carrier", f"{heat_system} water tanks")
-
-            n.add(
-                "Bus",
-                nodes + f" {heat_system} water tanks",
-                location=nodes,
-                carrier=f"{heat_system} water tanks",
-                unit="MWh_th",
-            )
-
-            energy_to_power_ratio_water_tanks = costs.at[
-                heat_system.central_or_decentral + " water tank storage",
-                "energy to power ratio",
-            ]
-
-            n.add(
-                "Link",
-                nodes + f" {heat_system} water tanks charger",
-                bus0=nodes + f" {heat_system} heat",
-                bus1=nodes + f" {heat_system} water tanks",
-                efficiency=costs.at[
-                    heat_system.central_or_decentral + " water tank charger",
-                    "efficiency",
-                ],
-                carrier=f"{heat_system} water tanks charger",
-                p_nom_extendable=True,
-                marginal_cost=costs.at["water tank charger", "marginal_cost"],
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
-
-            n.add(
-                "Link",
-                nodes + f" {heat_system} water tanks discharger",
-                bus0=nodes + f" {heat_system} water tanks",
-                bus1=nodes + f" {heat_system} heat",
-                carrier=f"{heat_system} water tanks discharger",
-                efficiency=costs.at[
-                    heat_system.central_or_decentral + " water tank discharger",
-                    "efficiency",
-                ],
-                p_nom_extendable=True,
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
-
-            n.links.loc[
-                nodes + f" {heat_system} water tanks charger", "energy to power ratio"
-            ] = energy_to_power_ratio_water_tanks
-
-            tes_time_constant_days = options["tes_tau"][
-                heat_system.central_or_decentral
-            ]
-
-            n.add(
-                "Store",
-                nodes + f" {heat_system} water tanks",
-                bus=nodes + f" {heat_system} water tanks",
-                e_cyclic=True,
-                e_nom_extendable=True,
-                carrier=f"{heat_system} water tanks",
-                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                capital_cost=costs.at[
-                    heat_system.central_or_decentral + " water tank storage",
-                    "capital_cost",
-                ],
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
-
-            if heat_system == HeatSystem.URBAN_CENTRAL:
-                n.add("Carrier", f"{heat_system} water pits")
-
-                n.add(
-                    "Bus",
-                    nodes + f" {heat_system} water pits",
-                    location=nodes,
-                    carrier=f"{heat_system} water pits",
-                    unit="MWh_th",
-                )
-
-                energy_to_power_ratio_water_pit = costs.at[
-                    "central water pit storage", "energy to power ratio"
-                ]
-
-                n.add(
-                    "Link",
-                    nodes + f" {heat_system} water pits charger",
-                    bus0=nodes + f" {heat_system} heat",
-                    bus1=nodes + f" {heat_system} water pits",
-                    efficiency=costs.at[
-                        "central water pit charger",
-                        "efficiency",
-                    ],
-                    carrier=f"{heat_system} water pits charger",
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                    marginal_cost=costs.at[
-                        "central water pit charger", "marginal_cost"
-                    ],
-                )
-
-                additional_heating_data_profile = xr.open_dataarray(ltes_additional_heating_file)
-                additional_heating_needed= (
-                    additional_heating_data_profile.sel(
-#                        heat_source=heat_source,
-                        name=nodes,
-                    )
-                    .to_pandas()
-                    .reindex(index=n.snapshots)
-                )
-
-                additional_heating_needed = additional_heating_needed.rename(
-                    columns=lambda x: f"{x} {heat_system} water pits discharger"
-                )
-
-                n.add(
-                    "Link",
-                    nodes + f" {heat_system} water pits discharger",
-                    bus0=nodes + f" {heat_system} water pits",
-                    bus1=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} water pits discharger",
-                    efficiency=costs.at[
-                        "central water pit discharger",
-                        "efficiency",
-                    ] * additional_heating_needed,
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                )
-                n.links.loc[
-                    nodes + f" {heat_system} water pits charger",
-                    "energy to power ratio",
-                ] = energy_to_power_ratio_water_pit
-
-                if options["district_heating"]["ptes"]["dynamic_capacity"]:
-                    # Load pre-calculated e_max_pu profiles
-                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
-                    e_max_pu = (
-                        e_max_pu_data.sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    e_max_pu = 1
-
-                n.add(
-                    "Store",
-                    nodes,
-                    suffix=f" {heat_system} water pits",
-                    bus=nodes + f" {heat_system} water pits",
-                    e_cyclic=True,
-                    e_nom_extendable=True,
-                    e_max_pu=e_max_pu,
-                    carrier=f"{heat_system} water pits",
-                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                    capital_cost=costs.at["central water pit storage", "capital_cost"],
-                    lifetime=costs.at["central water pit storage", "lifetime"],
                 )
 
         if options["resistive_heaters"]:

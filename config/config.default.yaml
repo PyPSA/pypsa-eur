@@ -481,6 +481,7 @@ sector:
       relative_annual_temperature_reduction: 0.01
     ptes:
       dynamic_capacity: true
+      # booster heatpump: true
       max_top_temperature: 90
       min_bottom_temperature: 35
     heat_source_cooling: 6 #K

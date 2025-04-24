@@ -59,5 +59,4 @@ class PTESAdditionalHeatingApproximator:
         xr.DataArray
             An array of integer values (0 or 1) representing the need for extra heating.
         """
-        additional_heating_required = (self.forward_temperature < self.max_PTES_temperature).astype(int)
-        return additional_heating_required
+        return (self.forward_temperature < self.max_PTES_temperature).astype(int)

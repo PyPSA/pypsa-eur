@@ -4,6 +4,8 @@
 
 from enum import Enum
 
+### NOTIZEN: Analog hierzu eine definition für heating_components ermöglichen und dabei einbauen, dass if config true nehmen wir für die Komponeten an, dass sie als booster fungieren können
+# dann loopen wir in prepare sector newtork über die komponenten
 
 class HeatSystemType(Enum):
     """
