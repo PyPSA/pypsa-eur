@@ -55,6 +55,11 @@ Rule ``retrieve_osm_data``
 
 .. automodule:: retrieve_osm_data
 
+Rule ``retrieve_bidding_zones``
+=========================================
+
+.. automodule:: retrieve_bidding_zones
+
 Rule ``retrieve_cutout``
 ============================
 
