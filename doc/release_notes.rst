@@ -15,11 +15,17 @@ Release Notes
 
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp-raw` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
+* Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
+
+* Developer note: Scripts now use absolute imporys. When using `mock_snakemake` this 
+  might require you to add the working directory to the PYTHONPATH or in your IDE.
+  
 * Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
 
 * Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
+
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================

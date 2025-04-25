@@ -96,17 +96,23 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import configure_logging, get_snapshots, load_cutout, set_scenario_config
 from atlite.gis import ExclusionContainer
-from build_shapes import _simplify_polys
 from dask.distributed import Client
+
+from scripts._helpers import (
+    configure_logging,
+    get_snapshots,
+    load_cutout,
+    set_scenario_config,
+)
+from scripts.build_shapes import _simplify_polys
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_renewable_profiles", clusters=38, technology="offwind-ac"
