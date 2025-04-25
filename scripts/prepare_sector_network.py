@@ -16,33 +16,34 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
+from networkx.algorithms import complement
+from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
+from pypsa.geo import haversine_pts
+from scipy.stats import beta
+
+from scripts._helpers import (
     configure_logging,
     get,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import (
+from scripts.add_electricity import (
     calculate_annuity,
     flatten,
     load_costs,
     sanitize_carriers,
     sanitize_locations,
 )
-from build_energy_totals import (
+from scripts.build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
     build_eurostat,
     build_eurostat_co2,
 )
-from build_transport_demand import transport_degree_factor
-from definitions.heat_sector import HeatSector
-from definitions.heat_system import HeatSystem
-from networkx.algorithms import complement
-from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
-from prepare_network import maybe_adjust_costs_and_potentials
-from pypsa.geo import haversine_pts
-from scipy.stats import beta
+from scripts.build_transport_demand import transport_degree_factor
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system import HeatSystem
+from scripts.prepare_network import maybe_adjust_costs_and_potentials
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -5997,7 +5998,7 @@ def add_import_options(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",

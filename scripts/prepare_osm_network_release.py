@@ -8,9 +8,10 @@ import folium
 import geopandas as gpd
 import numpy as np
 import pypsa
-from _helpers import configure_logging, set_scenario_config
-from base_network import _get_linetype_by_voltage
 from shapely.wkt import loads
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.base_network import _get_linetype_by_voltage
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +223,7 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("prepare_osm_network_release")
 

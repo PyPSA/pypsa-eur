@@ -15,8 +15,9 @@ import logging
 from itertools import product
 
 import pandas as pd
-from _helpers import configure_logging
 from numpy.polynomial import Polynomial
+
+from scripts._helpers import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ def approximate_heat_demand(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_heat_totals")
 
