@@ -11,11 +11,15 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Developer note: Scripts now use absolute imporys. When using `mock_snakemake` this 
+  might require you to add the working directory to the PYTHONPATH or in your IDE.
+  
 * Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
 
 * Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
+
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
