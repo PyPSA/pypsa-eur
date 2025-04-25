@@ -727,7 +727,6 @@ sector:
   biosng: false
   biosng_cc: false
   bioH2: false
-  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -764,6 +763,10 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+  waste:
+    enable: true
+    waste_to_energy: false
+    waste_to_energy_cc: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -830,8 +833,6 @@ industry:
     2045: 0.16
     2050: 0.20
   HVC_environment_sequestration_fraction: 0.
-  waste_to_energy: false
-  waste_to_energy_cc: false
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.1
