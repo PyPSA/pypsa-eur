@@ -12,6 +12,8 @@ run:
 scenario:
   clusters:
   - all
+  planning_horizons:
+  - 2030
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
@@ -24,6 +26,7 @@ enable:
 
 electricity:
   base_network: tyndp-raw
+  transmission_limit: v1.0
 
   extendable_carriers:
     Generator: [OCGT]
@@ -34,8 +37,32 @@ electricity:
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
 atlite:
-  europe-2013-sarah3-era5:
-    time: ["2013-03-01", "2013-03-08"]
+  default_cutout: europe-2013-03-sarah3-era5
+  cutouts:
+    europe-2013-03-sarah3-era5:
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  onwind:
+    cutout: europe-2013-03-sarah3-era5
+  offwind-ac:
+    cutout: europe-2013-03-sarah3-era5
+    max_depth: false
+  offwind-dc:
+    cutout: europe-2013-03-sarah3-era5
+    max_depth: false
+  offwind-float:
+    cutout: europe-2013-03-sarah3-era5
+    max_depth: false
+    min_depth: false
+  solar:
+    cutout: europe-2013-03-sarah3-era5
+  solar-hsat:
+    cutout: europe-2013-03-sarah3-era5
+
+links:
+  p_max_pu: 1.0
+  p_min_pu: 0
 
 transmission_projects:
   enable: true
