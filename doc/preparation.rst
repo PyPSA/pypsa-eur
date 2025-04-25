@@ -62,6 +62,11 @@ Rule ``build_osm_network``
 
 .. automodule:: build_osm_network
 
+Rule ``build_tyndp_network``
+=============================
+
+.. automodule:: build_tyndp_network
+
 .. _base:
 
 Rule ``base_network``
