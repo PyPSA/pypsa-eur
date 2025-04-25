@@ -86,7 +86,7 @@ def define_spatial(nodes, options):
         spatial.waste.msw = nodes + " municipal solid waste"
         spatial.waste.non_sequestered_hvc = nodes + " non-sequestered HVC"
         spatial.waste.locations = nodes
-    else: 
+    else:
         spatial.waste.msw = ["EU municipal solid waste"]
         spatial.waste.non_sequestered_hvc = ["EU non-sequestered HVC"]
         spatial.waste.locations = ["EU"]
@@ -4168,15 +4168,15 @@ def add_biomass(
 
 
 def add_waste(
-        n,
-        costs,
-        options,
-        spatial,
-        pop_layout,
-        biomass_potential_file,
-        industrial_demand_file,
-        nyears=1,
-        ):
+    n,
+    costs,
+    options,
+    spatial,
+    pop_layout,
+    biomass_potential_file,
+    industrial_demand_file,
+    nyears=1,
+):
     """
     Add waste components to the PyPSA network.
 
@@ -4236,7 +4236,7 @@ def add_waste(
     # collect msw potential from biomass files
     biomass_potential = pd.read_csv(biomass_potential_file, index_col=0) * nyears
     waste_option = options["waste"]
-    # collect hvc potential from production 
+    # collect hvc potential from production
     # 1e6 to convert TWh to MWh
     industrial_demand = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
     process_co2_per_naphtha = (
@@ -4262,12 +4262,12 @@ def add_waste(
         costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
     ) / costs.at["oil", "CO2 intensity"]
 
-    # check if msw potential is per bus region or for Europe 
+    # check if msw potential is per bus region or for Europe
     # distribute hvc across population
     if waste_option["enable"] == "regional":
-        msw_potential = biomass_potential[
-                "municipal solid waste"
-            ].rename(index=lambda x: x + " municipal solid waste")
+        msw_potential = biomass_potential["municipal solid waste"].rename(
+            index=lambda x: x + " municipal solid waste"
+        )
         HVC_potential_sum = (
             p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
         )
@@ -4275,9 +4275,7 @@ def add_waste(
         HVC_potential = shares.mul(HVC_potential_sum)
         HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
     else:
-        msw_potential = biomass_potential[
-                "municipal solid waste"
-            ].sum()
+        msw_potential = biomass_potential["municipal solid waste"].sum()
         HVC_potential = p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
 
     # set up carriers, buses, links and generators
@@ -4347,9 +4345,7 @@ def add_waste(
             carrier="municipal solid waste",
             p_nom_extendable=True,
             efficiency=1.0,
-            efficiency2=-costs.at[
-                "oil", "CO2 intensity"
-            ],
+            efficiency2=-costs.at["oil", "CO2 intensity"],
         )
 
         if waste_option["waste_to_energy"]:
@@ -4402,7 +4398,9 @@ def add_waste(
                 lifetime=costs.at["waste CHP CC", "lifetime"],
             )
     else:
-        logger.warning("Waste streams are taken into account, but no utilization is enabled. Non-sequestered HVC emissions are accounted for.")
+        logger.warning(
+            "Waste streams are taken into account, but no utilization is enabled. Non-sequestered HVC emissions are accounted for."
+        )
 
 
 def add_industry(
@@ -6192,7 +6190,7 @@ if __name__ == "__main__":
             biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
             nyears=nyears,
         )
-    
+
     if options["waste"]["enable"]:
         add_waste(
             n=n,
