@@ -16,33 +16,34 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
+from networkx.algorithms import complement
+from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
+from pypsa.geo import haversine_pts
+from scipy.stats import beta
+
+from scripts._helpers import (
     configure_logging,
     get,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import (
+from scripts.add_electricity import (
     calculate_annuity,
     flatten,
     load_costs,
     sanitize_carriers,
     sanitize_locations,
 )
-from build_energy_totals import (
+from scripts.build_energy_totals import (
     build_co2_totals,
     build_eea_co2,
     build_eurostat,
     build_eurostat_co2,
 )
-from build_transport_demand import transport_degree_factor
-from definitions.heat_sector import HeatSector
-from definitions.heat_system import HeatSystem
-from networkx.algorithms import complement
-from networkx.algorithms.connectivity.edge_augmentation import k_edge_augmentation
-from prepare_network import maybe_adjust_costs_and_potentials
-from pypsa.geo import haversine_pts
-from scipy.stats import beta
+from scripts.build_transport_demand import transport_degree_factor
+from scripts.definitions.heat_sector import HeatSector
+from scripts.definitions.heat_system import HeatSystem
+from scripts.prepare_network import maybe_adjust_costs_and_potentials
 
 spatial = SimpleNamespace()
 logger = logging.getLogger(__name__)
@@ -178,6 +179,7 @@ def define_spatial(nodes, options):
     if options["regional_oil_demand"]:
         spatial.oil.demand_locations = nodes
         spatial.oil.naphtha = nodes + " naphtha for industry"
+        spatial.oil.non_sequestered_hvc = nodes + " non-sequestered HVC"
         spatial.oil.kerosene = nodes + " kerosene for aviation"
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
@@ -185,6 +187,7 @@ def define_spatial(nodes, options):
     else:
         spatial.oil.demand_locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
+        spatial.oil.non_sequestered_hvc = ["EU non-sequestered HVC"]
         spatial.oil.kerosene = ["EU kerosene for aviation"]
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
@@ -4583,54 +4586,88 @@ def add_industry(
         carrier="naphtha for industry",
         p_set=p_set_naphtha,
     )
-
     # some CO2 from naphtha are process emissions from steam cracker
     # rest of CO2 released to atmosphere either in waste-to-energy or decay
     process_co2_per_naphtha = (
         industrial_demand.loc[nodes, "process emission from feedstock"].sum()
         / industrial_demand.loc[nodes, "naphtha"].sum()
     )
-    emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
+    # link to supply the naphtha for industry load
+    n.add(
+        "Link",
+        spatial.oil.naphtha,
+        bus0=spatial.oil.nodes,
+        bus1=spatial.oil.naphtha,
+        bus2=spatial.co2.process_emissions,
+        carrier="naphtha for industry",
+        p_nom_extendable=True,
+        efficiency2=process_co2_per_naphtha,
+    )
 
     non_sequestered = 1 - get(
         cf_industry["HVC_environment_sequestration_fraction"],
         investment_year,
     )
+    # energetic efficiency from naphtha to HVC
+    HVC_per_naphtha = (
+        costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
+    ) / costs.at["oil", "CO2 intensity"]
+
+    # distribute HVC waste across population
+    if len(spatial.oil.non_sequestered_hvc) == 1:
+        HVC_potential = p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
+    else:
+        HVC_potential_sum = (
+            p_set_naphtha.sum() * nhours * non_sequestered * HVC_per_naphtha
+        )
+        shares = pop_layout.total / pop_layout.total.sum()
+        HVC_potential = shares.mul(HVC_potential_sum)
+        HVC_potential.index = HVC_potential.index + " non-sequestered HVC"
+
+    n.add("Carrier", "non-sequestered HVC")
+
+    n.add(
+        "Bus",
+        spatial.oil.non_sequestered_hvc,
+        location=spatial.oil.demand_locations,
+        carrier="non-sequestered HVC",
+        unit="MWh_LHV",
+    )
+    # add stores with population distributed potential - must be zero at the last step
+    e_max_pu = pd.DataFrame(
+        1, index=n.snapshots, columns=spatial.oil.non_sequestered_hvc
+    )
+    e_max_pu.iloc[-1, :] = 0
+
+    n.add(
+        "Store",
+        spatial.oil.non_sequestered_hvc,
+        bus=spatial.oil.non_sequestered_hvc,
+        carrier="non-sequestered HVC",
+        e_nom=HVC_potential,
+        marginal_cost=0,
+        e_initial=HVC_potential,
+        e_max_pu=e_max_pu,
+    )
+
+    n.add(
+        "Link",
+        spatial.oil.demand_locations,
+        suffix=" HVC to air",
+        bus0=spatial.oil.non_sequestered_hvc,
+        bus1="co2 atmosphere",
+        carrier="HVC to air",
+        p_nom_extendable=True,
+        efficiency=costs.at["oil", "CO2 intensity"],
+    )
 
     if cf_industry["waste_to_energy"] or cf_industry["waste_to_energy_cc"]:
-        non_sequestered_hvc_locations = (
-            pd.Index(spatial.oil.demand_locations) + " non-sequestered HVC"
-        )
-
-        n.add(
-            "Bus",
-            non_sequestered_hvc_locations,
-            location=spatial.oil.demand_locations,
-            carrier="non-sequestered HVC",
-            unit="MWh_LHV",
-        )
-
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2=non_sequestered_hvc_locations,
-            bus3=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=non_sequestered
-            * emitted_co2_per_naphtha
-            / costs.at["oil", "CO2 intensity"],
-            efficiency3=process_co2_per_naphtha,
-        )
-
         if options["biomass"] and options["municipal_solid_waste"]:
             n.add(
                 "Link",
                 spatial.msw.locations,
                 bus0=spatial.msw.nodes,
-                bus1=non_sequestered_hvc_locations,
+                bus1=spatial.oil.non_sequestered_hvc,
                 bus2="co2 atmosphere",
                 carrier="municipal solid waste",
                 p_nom_extendable=True,
@@ -4639,22 +4676,6 @@ def add_industry(
                     "oil", "CO2 intensity"
                 ],  # because msw is co2 neutral and will be burned in waste CHP or decomposed as oil
             )
-
-        n.add(
-            "Link",
-            spatial.oil.demand_locations,
-            suffix=" HVC to air",
-            bus0=non_sequestered_hvc_locations,
-            bus1="co2 atmosphere",
-            carrier="HVC to air",
-            p_nom_extendable=True,
-            efficiency=costs.at["oil", "CO2 intensity"],
-        )
-
-        if len(non_sequestered_hvc_locations) == 1:
-            waste_source = non_sequestered_hvc_locations[0]
-        else:
-            waste_source = non_sequestered_hvc_locations
 
         if cf_industry["waste_to_energy"]:
             urban_central = spatial.nodes + " urban central heat"
@@ -4667,7 +4688,7 @@ def add_industry(
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP",
-                bus0=waste_source,
+                bus0=spatial.oil.non_sequestered_hvc,
                 bus1=spatial.nodes,
                 bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
@@ -4686,7 +4707,7 @@ def add_industry(
             n.add(
                 "Link",
                 spatial.nodes + " waste CHP CC",
-                bus0=waste_source,
+                bus0=spatial.oil.non_sequestered_hvc,
                 bus1=spatial.nodes,
                 bus2=urban_central_nodes,
                 bus3="co2 atmosphere",
@@ -4705,20 +4726,6 @@ def add_industry(
                 efficiency4=costs.at["oil", "CO2 intensity"] * options["cc_fraction"],
                 lifetime=costs.at["waste CHP CC", "lifetime"],
             )
-
-    else:
-        n.add(
-            "Link",
-            spatial.oil.naphtha,
-            bus0=spatial.oil.nodes,
-            bus1=spatial.oil.naphtha,
-            bus2="co2 atmosphere",
-            bus3=spatial.co2.process_emissions,
-            carrier="naphtha for industry",
-            p_nom_extendable=True,
-            efficiency2=emitted_co2_per_naphtha * non_sequestered,
-            efficiency3=process_co2_per_naphtha,
-        )
 
     # TODO simplify bus expression
     n.add(
@@ -5990,7 +5997,7 @@ def add_import_options(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
