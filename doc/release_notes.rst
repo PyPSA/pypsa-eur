@@ -957,6 +957,8 @@ PyPSA-Eur 0.12.0 (30th August 2024)
 * Address various deprecations.
 
 
+* Enable EQ-constraint on locations, which allows it to be executed for the sector-coupeled model with a more richer technology-mix than solar rooftop
+
 PyPSA-Eur 0.11.0 (25th May 2024)
 =====================================
 
