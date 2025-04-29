@@ -481,7 +481,7 @@ sector:
       relative_annual_temperature_reduction: 0.01
     ptes:
       dynamic_capacity: true
-      # booster heatpump: true
+      booster_heatpump: false
       max_top_temperature: 90
       min_bottom_temperature: 35
     heat_source_cooling: 6 #K
@@ -888,6 +888,7 @@ costs:
     home battery storage: 0
     water tank charger: 0.03
     central water pit charger: 0.025
+    central excess-heat-sourced heat pump: 0.03
   emission_prices:
     enable: false
     co2: 0.

@@ -2827,6 +2827,7 @@ def add_heat(
     cop = xr.open_dataarray(cop_profiles_file)
     direct_heat_profile = xr.open_dataarray(direct_heat_source_utilisation_profile_file)
     additional_heating_data_profile = xr.open_dataarray(ltes_additional_heating_file)
+    # bessere bezichnung ist ganz klar temperature boosting
     district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -3183,17 +3184,7 @@ def add_heat(
                         p_nom_extendable=True,
                     )
 
-            if heat_source in params.additional_heating_storage_heat_sources: # and booster heat pump true
-
-#                additional_heating_needed = (
-#                    additional_heating_data_profile.sel(
-#                        #                        heat_source=heat_source,
-#                        name=nodes,
-#                    )
-#                    .to_pandas()
-#                    .reindex(index=n.snapshots)
-#                )
-                # bessere bezichnung ist ganz klar temperature boosting
+            if heat_source in params.additional_heating_storage_heat_sources and options["district_heating"]["ptes"]["booster_heatpump"]: # and booster heat pump true
 
                 n.add(
                     "Link",
@@ -3203,13 +3194,14 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=-(cop_heat_pump - 1) * (1 - additional_heating_needed),
-                    efficiency2=cop_heat_pump * (1 - additional_heating_needed),
+                    efficiency=-(cop_heat_pump - 1),
+                    efficiency2=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                                 * costs.at[costs_name_heat_pump, "capital_cost"]
                                 * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                    marginal_cost=costs.at[costs_name_heat_pump, "marginal_cost"],
                 )
 
             else:
@@ -6043,7 +6035,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="6",
+            clusters="8",
             sector_opts="",
             planning_horizons="2030",
         )

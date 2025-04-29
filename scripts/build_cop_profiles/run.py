@@ -42,6 +42,11 @@ from _helpers import set_scenario_config
 from CentralHeatingCopApproximator import CentralHeatingCopApproximator
 from DecentralHeatingCopApproximator import DecentralHeatingCopApproximator
 
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
@@ -92,7 +97,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=48,
+            clusters=8,
+            planning_horizons=2030
         )
 
     set_scenario_config(snakemake)
