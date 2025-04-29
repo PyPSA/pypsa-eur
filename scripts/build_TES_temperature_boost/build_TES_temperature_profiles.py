@@ -5,7 +5,7 @@
 import xarray as xr
 
 
-class BuildTESTemperature:
+class BuildPTETopTemperature:
     """
     Approximates the top temperature profile for Pit Thermal Energy Storage (PTES).
 

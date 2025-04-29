@@ -479,9 +479,11 @@ sector:
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
-    ptes:
+    ptes: # möglichkeit hinzufügen temperatur boosting einzuschließen , wenn nicht dann nicht
       dynamic_capacity: true
-      booster_heatpump: false
+      # temperature_boosting:
+        #booster_heatpump: false
+        #booster_boiler
       max_top_temperature: 90
       min_bottom_temperature: 35
     heat_source_cooling: 6 #K
@@ -888,7 +890,7 @@ costs:
     home battery storage: 0
     water tank charger: 0.03
     central water pit charger: 0.025
-    central excess-heat-sourced heat pump: 0.03
+    central excess-heat-sourced heat pump: 0.03 # vllt nicht nötig
   emission_prices:
     enable: false
     co2: 0.

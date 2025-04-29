@@ -3194,7 +3194,7 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=-(cop_heat_pump - 1),
+                    efficiency=-(cop_heat_pump - 1), #clip auf 0 -> nicht positiv , in Geothermie auch reinschaue ob Änderung
                     efficiency2=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                                 * costs.at[costs_name_heat_pump, "capital_cost"]
