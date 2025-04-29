@@ -406,7 +406,7 @@ rule build_ptes_temperature_profiles:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_TES_temperature_profiles/run.py"
+        "../scripts/build_TES_temperature_boost/run.py"
 
 
 rule build_direct_heat_source_utilisation_profiles:
