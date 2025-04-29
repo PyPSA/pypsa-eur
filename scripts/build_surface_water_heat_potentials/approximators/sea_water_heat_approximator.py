@@ -69,5 +69,5 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         return xr.where(
             water_temperature > self.min_outlet_temperature,
             water_temperature,
-            -273.15,  # absolute zero
+            -1e9,  # absolute zero
         )
