@@ -419,6 +419,10 @@ biomass:
     2045: 1
     2050: 1
 
+waste:
+  transport: false
+  waste_to_energy: true
+  waste_to_energy_cc: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -445,6 +449,7 @@ sector:
   transport: true
   heating: true
   biomass: true
+  waste: false
   industry: true
   shipping: true
   aviation: true
@@ -763,10 +768,7 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
-  waste:
-    enable: true
-    waste_to_energy: false
-    waste_to_energy_cc: false
+  waste_spatial: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:

@@ -2,6 +2,7 @@
 transport,--,"{true, false}",Flag to include transport sector.
 heating,--,"{true, false}",Flag to include heating sector.
 biomass,--,"{true, false}",Flag to include biomass sector.
+waste,--,"{true, false}",Flag to include waste sector.
 industry,--,"{true, false}",Flag to include industry sector.
 shipping,--,"{true, false}",Flag to include shipping sector.
 aviation,--,"{true, false}",Flag to include aviation sector.
@@ -204,7 +205,5 @@ imports,,,
 -- limit_sense,--,"{==, <=, >=}",Sense of the limit
 -- price,,"{H2, NH3, methanol, gas, oil}",
 -- -- {carrier},currency/MWh,float,Price for importing renewable energy of carrier
-waste,,,
--- enable,--,"{true, false, regional}", Option to include municipal solid and non-sequestered hvc waste streams. Default is false.
--- waste_to_energy,--,"{true, false}", Switch to enable expansion of waste to energy CHPs for conversion of plastics. Default is false.
--- waste_to_energy_cc,--,"{true, false}", Switch to enable expansion of waste to energy CHPs for conversion of plastics with carbon capture. Default is false.
+waste_spatial,--,"{true, false}",Flag to model waste potential for each bus region.
+waste,--,"{true, false}",Flag to include waste sector.

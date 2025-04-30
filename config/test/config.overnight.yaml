@@ -61,8 +61,9 @@ clustering:
 sector:
   gas_network: true
   H2_retrofit: true
-  waste:
-    enable: true
+  waste: true
+
+waste:
     waste_to_energy: true
     waste_to_energy_cc: true
 
