@@ -43,12 +43,8 @@ References
 """
 
 import logging
-import sys
-import os
-from pathlib import Path
 
 import geopandas as gpd
-import pandas as pd
 import xarray as xr
 from _helpers import configure_logging, set_scenario_config
 
@@ -68,7 +64,7 @@ def mwh_ates_per_m2(
     Calculate the MWh potential per square meter for ATES systems.
 
     This is based on Jackson, Regnier, Staffell 2024 (https://doi.org/10.1016/j.apenergy.2024.124096).
-    
+
     Parameters
     ----------
     aquifer_volumetric_heat_capacity : float
@@ -85,17 +81,17 @@ def mwh_ates_per_m2(
         Conversion factor from kJ to kWh, by default 1/3600
     mwh_per_kwh : float, optional
         Conversion factor from kWh to MWh, by default 1/1000
-    
+
     Returns
     -------
     float
         The ATES energy storage potential in MWh per square meter
-        
+
     Raises
     ------
     Exception
         If calculation fails
-    
+
     References
     ----------
     - Jackson, Regnier, Staffell 2024 (https://doi.org/10.1016/j.apenergy.2024.124096): Aquifer Thermal Energy Storages for low carbon heating and cooling in the United Kingdom: CUrrent status and future prospects
@@ -120,19 +116,19 @@ def suitable_aquifers(
 ) -> gpd.GeoDataFrame:
     """
     Filter the aquifer shapes by the suitable aquifer types.
-    
+
     Parameters
     ----------
     aquifer_shapes : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of all aquifers
     suitable_aquifer_types : list
         List of aquifer types considered suitable for ATES
-    
+
     Returns
     -------
     geopandas.GeoDataFrame
         Filtered GeoDataFrame containing only suitable aquifers
-        
+
     Raises
     ------
     KeyError
@@ -143,12 +139,14 @@ def suitable_aquifers(
     try:
         if "AQUIF_NAME" not in aquifer_shapes.columns:
             raise KeyError("Column 'AQUIF_NAME' not found in aquifer shapes dataframe")
-        
-        filtered = aquifer_shapes[aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)]
-        
+
+        filtered = aquifer_shapes[
+            aquifer_shapes["AQUIF_NAME"].isin(suitable_aquifer_types)
+        ]
+
         if filtered.empty:
             logger.warning("No suitable aquifers found with the specified types")
-            
+
         return filtered
     except Exception as e:
         logger.error(f"Error filtering suitable aquifers: {e}")
@@ -164,10 +162,10 @@ def ates_potential_per_onshore_region(
 ) -> gpd.GeoDataFrame:
     """
     Calculate the ATES potential for each onshore region.
-    
+
     This function overlays suitable aquifers with onshore regions and district heating areas
     to calculate the potential ATES capacity for each region.
-    
+
     Parameters
     ----------
     suitable_aquifers : geopandas.GeoDataFrame
@@ -180,12 +178,12 @@ def ates_potential_per_onshore_region(
         Buffer distance in meters to apply around district heating areas
     mwh_per_m2 : float
         ATES potential in MWh per square meter
-    
+
     Returns
     -------
     geopandas.GeoDataFrame
         GeoDataFrame with onshore regions and their ATES potential in MWh
-        
+
     Raises
     ------
     KeyError
@@ -196,12 +194,12 @@ def ates_potential_per_onshore_region(
     try:
         if suitable_aquifers.empty or regions_onshore.empty or dh_areas.empty:
             logger.warning("One or more input GeoDataFrames are empty")
-            
+
         ret_val = regions_onshore.copy(deep=True)
-        
+
         if "name" not in ret_val.columns:
             raise KeyError("Column 'name' not found in regions_onshore dataframe")
-            
+
         ret_val.index = ret_val["name"]
         ret_val.drop(columns=["name"], inplace=True)
 
@@ -215,31 +213,37 @@ def ates_potential_per_onshore_region(
             return ret_val
 
         dh_areas_buffered = dh_areas.copy(deep=True)
-        dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(dh_area_buffer)
+        dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(
+            dh_area_buffer
+        )
 
         try:
             aquifers_in_dh_areas = (
                 gpd.overlay(
-                    dh_areas_buffered, suitable_aquifers_in_onshore_regions, how="intersection"
+                    dh_areas_buffered,
+                    suitable_aquifers_in_onshore_regions,
+                    how="intersection",
                 )
                 .groupby("name")["geometry"]
                 .apply(lambda x: x.area.sum())
             )
-            
+
             # Handle regions without any ATES potential
             missing_regions = set(ret_val.index) - set(aquifers_in_dh_areas.index)
             if missing_regions:
                 logger.info(f"{len(missing_regions)} regions have no ATES potential")
-                
+
             ret_val["ates_potential"] = 0  # Default value
-            ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = aquifers_in_dh_areas * mwh_per_m2
-            
+            ret_val.loc[aquifers_in_dh_areas.index, "ates_potential"] = (
+                aquifers_in_dh_areas * mwh_per_m2
+            )
+
         except Exception as e:
             logger.error(f"Error in overlay calculation: {e}")
             ret_val["ates_potential"] = 0
-            
+
         return ret_val
-        
+
     except Exception as e:
         logger.error(f"Error calculating ATES potential per onshore region: {e}")
         raise
@@ -248,8 +252,9 @@ def ates_potential_per_onshore_region(
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
+
         snakemake = mock_snakemake("build_ates_potential", clusters="48")
-        
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -257,12 +262,15 @@ if __name__ == "__main__":
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
     regions_onshore = regions_onshore.to_crs(epsg=3035)
 
-    aquifer_shapes = gpd.read_file(snakemake.input.aquifer_shapes_shp).to_crs(regions_onshore.crs)
+    aquifer_shapes = gpd.read_file(snakemake.input.aquifer_shapes_shp).to_crs(
+        regions_onshore.crs
+    )
 
     dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(regions_onshore.crs)
 
     forward_temperature_profiles = xr.open_dataarray(
-        snakemake.input.central_heating_forward_temperature_profiles)
+        snakemake.input.central_heating_forward_temperature_profiles
+    )
     return_temperature_profiles = xr.open_dataarray(
         snakemake.input.central_heating_return_temperature_profiles
     )
@@ -293,4 +301,3 @@ if __name__ == "__main__":
 
     logger.info(f"Writing results to {snakemake.output.ates_potentials}")
     ates_potentials.to_csv(snakemake.output.ates_potentials, index_label="name")
-

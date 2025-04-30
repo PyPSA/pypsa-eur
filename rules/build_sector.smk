@@ -329,6 +329,7 @@ rule build_geothermal_heat_potential:
     script:
         "../scripts/build_geothermal_heat_potential.py"
 
+
 rule build_ates_potentials:
     params:
         max_top_temperature=config_provider(

@@ -720,11 +720,15 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
+
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_aquifer_data_bgr:
         input:
-            zip=storage("https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"),
+            zip=storage(
+                "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
+            ),
         output:
             aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
             aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
@@ -765,5 +769,3 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
-
- 

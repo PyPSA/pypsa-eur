@@ -6189,9 +6189,15 @@ if __name__ == "__main__":
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
             ates_e_nom_max=snakemake.input.ates_potentials,
-            ates_capex_as_fraction_of_geothermal_heat_source=snakemake.params.sector["district_heating"]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
-            ates_marginal_cost_charger=snakemake.params.sector["district_heating"]["ates"]["marginal_cost_charger"],
-            ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"]["recovery_factor"],
+            ates_capex_as_fraction_of_geothermal_heat_source=snakemake.params.sector[
+                "district_heating"
+            ]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
+            ates_marginal_cost_charger=snakemake.params.sector["district_heating"][
+                "ates"
+            ]["marginal_cost_charger"],
+            ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"][
+                "recovery_factor"
+            ],
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
