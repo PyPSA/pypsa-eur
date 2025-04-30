@@ -2738,6 +2738,9 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
+    ates_e_nom_max: str,
+    ates_capex_as_fraction_of_geothermal_heat_source: float,
+    ates_recovery_factor: float,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -3178,6 +3181,61 @@ def add_heat(
                     standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
                     capital_cost=costs.at["central water pit storage", "capital_cost"],
                     lifetime=costs.at["central water pit storage", "lifetime"],
+                )
+
+                n.add("Carrier", f"{heat_system} aquifer storage")
+
+                n.add(
+                    "Bus",
+                    nodes + f" {heat_system} aquifer storage",
+                    location=nodes,
+                    carrier=f"{heat_system} aquifer storage",
+                    unit="MWh_th",
+                )
+
+                n.add(
+                    "Link",
+                    nodes + f" {heat_system} aquifer storage charger",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes + f" {heat_system} aquifer storage",
+                    efficiency=1.0,
+                    carrier=f"{heat_system} aquifer storage charger",
+                    p_nom_extendable=True,
+                    lifetime=costs.at["central geothermal heat source", "lifetime"],
+                    marginal_cost=costs.at[
+                        "central water pit charger", "marginal_cost"
+                    ] * 1.1,
+                    capital_cost=costs.at["central geothermal heat source", "capital_cost"] / 2
+                )
+
+                n.add(
+                    "Link",
+                    nodes + f" {heat_system} aquifer storage discharger",
+                    bus1=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} aquifer storage",
+                    efficiency=1.0,
+                    carrier=f"{heat_system} aquifer storage discharger",
+                    p_nom_extendable=True,
+                    lifetime=costs.at["central geothermal heat source", "lifetime"],
+                    marginal_cost=costs.at[
+                        "central water pit charger", "marginal_cost"
+                    ] * 1.1,
+                    capital_cost=costs.at["central geothermal heat source", "capital_cost"] / 2
+                )
+
+                n.add(
+                    "Store",
+                    nodes,
+                    suffix=f" {heat_system} aquifer storage",
+                    bus=nodes + f" {heat_system} aquifer storage",
+                    e_cyclic=True,
+                    e_nom_extendable=True,
+                    e_nom_max=pd.read_csv(ates_e_nom_max, index_col=0)[
+                        "ates_potential"
+                    ][nodes],
+                    carrier=f"{heat_system} aquifer storage",
+                    standing_loss=1 - ates_recovery_factor ** (1 / 8760),
+                    lifetime=costs.at["central geothermal heat source", "lifetime"],
                 )
 
         if options["resistive_heaters"]:
@@ -6119,6 +6177,9 @@ if __name__ == "__main__":
             direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
+            ates_e_nom_max=snakemake.input.ates_potentials,
+            ates_capex_as_fraction_of_geothermal_heat_source=snakemake.params.sector["district_heating"]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
+            ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"]["recovery_factor"],
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
