@@ -566,6 +566,7 @@ plotting:
     load: "#dd2e23"
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
+    non-sequestered HVC: '#8f79b5'
     HVC to air: 'k'
     import H2: '#db8ccd'
     import gas: '#f7a572'

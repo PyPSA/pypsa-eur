@@ -10,16 +10,17 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import (
+from pypsa.descriptors import expand_series
+from six import iterkeys
+
+from scripts._helpers import (
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
-from add_existing_baseyear import add_build_year_to_new_assets
-from pypsa.descriptors import expand_series
-from six import iterkeys
+from scripts.add_electricity import sanitize_carriers
+from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 
@@ -598,7 +599,7 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_perfect_foresight",
