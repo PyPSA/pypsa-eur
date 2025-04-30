@@ -35,7 +35,6 @@ class TESSupplementalHeatingApproximator:
         """
         Identify timesteps requiring supplemental heating.
 
-
         Returns
         -------
         xr.DataArray

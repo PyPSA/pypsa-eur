@@ -5,18 +5,21 @@
 Approximate thermal energy storage (TES) top temperature and identify need for supplemental heating.
 
 This script evaluates the district heating forward temperature profile to:
-  - Approximate the top temperature of the Pit Thermal Energy Storage (PTES) system,
+  - Approximate the top temperature of the TES system,
      ensuring that the temperature does not exceed the operational limit.
-  - Determine whether additional (after) heating is needed. A binary indicator is generated:
-       - 1: The forward temperature is less than or equal to the PTES maximum; direct usage is possible.
-       - 0: The forward temperature exceeds the PTES maximum; additional heating (e.g., via a heat pump) is required.
+  - Determine whether supplemental heating is needed. A binary indicator is generated:
+       - 1: The forward temperature is less than or equal to the TES maximum; direct usage is possible.
+       - 0: The forward temperature exceeds the TES maximum; supplemental heating (e.g., via a heat pump) is required.
 
 Relevant Settings
 -----------------
 .. code:: yaml
-    storage:
-        PTES:
-            max_temperature: 90  # Maximum PTES temperature (°C) usable without supplemental heating
+    sector
+        district_heating:
+            ptes:
+                supplemental_heating:
+                    enable: true
+                max_top_temperature: 90  # Maximum PTES temperature (°C) usable without supplemental heating
 
 Inputs
 ------

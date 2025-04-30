@@ -346,9 +346,6 @@ rule build_cop_profiles:
             "sector", "district_heating", "limited_heat_sources"
         ),
         snapshots=config_provider("snapshots"),
-        max_PTES_temperature=config_provider(
-            "sector", "district_heating", "ptes", "max_top_temperature",
-        )
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
