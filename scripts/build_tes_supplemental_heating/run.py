@@ -35,17 +35,19 @@ Outputs
 """
 
 import logging
+
 import xarray as xr
 
 logger = logging.getLogger(__name__)
 
 from _helpers import set_scenario_config
-from tes_supplemental_heating_approximator import TESSupplementalHeatingApproximator
 from build_tes_top_temperature_profile import BuildTesTopTemperature
+from tes_supplemental_heating_approximator import TESSupplementalHeatingApproximator
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
+
         snakemake = mock_snakemake(
             "build_ptes_temperature_profiles",
             clusters=6,
@@ -56,11 +58,15 @@ if __name__ == "__main__":
 
     # Load forward temperature profile
     logger.info("Loading forward temperature profile")
-    forward_temp = xr.open_dataarray(snakemake.input.central_heating_forward_temperature_profiles)
+    forward_temp = xr.open_dataarray(
+        snakemake.input.central_heating_forward_temperature_profiles
+    )
 
     # Load parameter for max. PTES temperature.
     max_PTES_temperature = snakemake.params.max_PTES_temperature
-    logger.info(f"Using maximum PTES direct usage temperature: {max_PTES_temperature}°C")
+    logger.info(
+        f"Using maximum PTES direct usage temperature: {max_PTES_temperature}°C"
+    )
 
     # Initialize TES top temperature approximator.
     tes_temp_builder = BuildTesTopTemperature(
@@ -77,12 +83,20 @@ if __name__ == "__main__":
         max_PTES_temperature=max_PTES_temperature,
     )
 
-    supplemental_heating_profile = supplemental_heating_approximator.determine_ptes_usage()
+    supplemental_heating_profile = (
+        supplemental_heating_approximator.determine_ptes_usage()
+    )
 
     # Save output
-    logger.info(f"Saving TES top temperature profile to {snakemake.output.tes_top_temperature_profile}")
+    logger.info(
+        f"Saving TES top temperature profile to {snakemake.output.tes_top_temperature_profile}"
+    )
     ptes_top_temperature.to_netcdf(snakemake.output.tes_top_temperature_profile)
 
     # Save output
-    logger.info(f"Saving supplemental heating profile to {snakemake.output.tes_supplemental_heating_profile}")
-    supplemental_heating_profile.to_netcdf(snakemake.output.tes_supplemental_heating_profile)
+    logger.info(
+        f"Saving supplemental heating profile to {snakemake.output.tes_supplemental_heating_profile}"
+    )
+    supplemental_heating_profile.to_netcdf(
+        snakemake.output.tes_supplemental_heating_profile
+    )

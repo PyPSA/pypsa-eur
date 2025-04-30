@@ -499,7 +499,7 @@ sector:
     direct_utilisation_heat_sources:
     - geothermal
     temperature_limited_stores:
-      - ptes
+    - ptes
   heat_pump_sources:
     urban central:
     - air

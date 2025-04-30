@@ -17,7 +17,9 @@ class TESSupplementalHeatingApproximator:
         The maximum operational PTES temperature.
     """
 
-    def __init__(self, forward_temperature_celsius: xr.DataArray, max_PTES_temperature: float):
+    def __init__(
+        self, forward_temperature_celsius: xr.DataArray, max_PTES_temperature: float
+    ):
         """
         Initialize the TESSupplementalHeatingApproximator.
 

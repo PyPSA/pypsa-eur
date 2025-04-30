@@ -372,6 +372,7 @@ rule build_cop_profiles:
     script:
         "../scripts/build_cop_profiles/run.py"
 
+
 rule build_tes_supplemental_heating_profile:
     params:
         max_PTES_temperature=config_provider(
@@ -396,9 +397,13 @@ rule build_tes_supplemental_heating_profile:
     resources:
         mem_mb=2000,
     log:
-        logs("build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.log"),
+        logs(
+            "build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}")
+        benchmarks(
+            "build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}"
+        )
     conda:
         "../envs/environment.yaml"
     script:
@@ -1322,10 +1327,11 @@ rule prepare_sector_network:
         ),
         tes_supplemental_heating_profile=lambda w: (
             resources(
-            "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc")
+                "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc"
+            )
             if config_provider(
-                "sector", "district_heating", "ptes", "supplemental_heating", "enable")
-            (w)
+                "sector", "district_heating", "ptes", "supplemental_heating", "enable"
+            )(w)
             else []
         ),
         solar_thermal_total=lambda w: (

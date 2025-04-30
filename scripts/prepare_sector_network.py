@@ -3034,16 +3034,19 @@ def add_heat(
                     ],
                 )
 
-                if options["district_heating"]["ptes"]["supplemental_heating"]["enable"]:
-                    tes_supplemental_heating_profile = xr.open_dataarray(tes_supplemental_heating_profile_file)
+                if options["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
+                ]:
+                    tes_supplemental_heating_profile = xr.open_dataarray(
+                        tes_supplemental_heating_profile_file
+                    )
                     tes_supplemental_heating = (
-                        tes_supplemental_heating_profile
-                        .sel(name=nodes)
+                        tes_supplemental_heating_profile.sel(name=nodes)
                         .to_pandas()
                         .reindex(index=n.snapshots)
                     )
                 else:
-                    tes_supplemental_heating = 1 #pd.Series(1.0, index=n.snapshots)
+                    tes_supplemental_heating = 1  # pd.Series(1.0, index=n.snapshots)
 
                 n.add(
                     "Link",
@@ -3053,9 +3056,10 @@ def add_heat(
                     bus1=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} water pits discharger",
                     efficiency=costs.at[
-                                   "central water pit discharger",
-                                   "efficiency",
-                               ] * tes_supplemental_heating,
+                        "central water pit discharger",
+                        "efficiency",
+                    ]
+                    * tes_supplemental_heating,
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
@@ -3188,18 +3192,27 @@ def add_heat(
                         p_nom_extendable=True,
                     )
 
-            if (not options["district_heating"]["ptes"]["supplemental_heating"]["enable"] and
-                    options["district_heating"]["ptes"]["supplemental_heating"]["booster_heat_pump"]):
+            if (
+                not options["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
+                ]
+                and options["district_heating"]["ptes"]["supplemental_heating"][
+                    "booster_heat_pump"
+                ]
+            ):
                 raise ValueError(
                     "'booster_heat_pump' is true, but 'enable' is false in 'supplemental_heating'."
                 )
 
             if (
-                    heat_source in params.temperature_limited_stores and
-                    options["district_heating"]["ptes"]["supplemental_heating"]["enable"] and
-                    options["district_heating"]["ptes"]["supplemental_heating"]["booster_heat_pump"]
+                heat_source in params.temperature_limited_stores
+                and options["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
+                ]
+                and options["district_heating"]["ptes"]["supplemental_heating"][
+                    "booster_heat_pump"
+                ]
             ):
-
                 n.add(
                     "Link",
                     nodes,
@@ -3211,11 +3224,11 @@ def add_heat(
                     efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
                     efficiency2=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                                * costs.at[costs_name_heat_pump, "capital_cost"]
-                                * overdim_factor,
+                    * costs.at[costs_name_heat_pump, "capital_cost"]
+                    * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                #    marginal_cost=costs.at[costs_name_heat_pump, "marginal_cost"],
+                    #    marginal_cost=costs.at[costs_name_heat_pump, "marginal_cost"],
                 )
 
             else:

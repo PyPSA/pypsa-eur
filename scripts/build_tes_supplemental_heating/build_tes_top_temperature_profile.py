@@ -22,7 +22,9 @@ class BuildTesTopTemperature:
         Forward temperature clipped at the maximum PTES temperature.
     """
 
-    def __init__(self, forward_temperature_celsius: xr.DataArray, max_PTES_temperature: float):
+    def __init__(
+        self, forward_temperature_celsius: xr.DataArray, max_PTES_temperature: float
+    ):
         """
         Initialize BuildTESTemperature.
 
@@ -48,5 +50,5 @@ class BuildTesTopTemperature:
         """
         return self.forward_temperature.where(
             self.forward_temperature <= self.max_PTES_temperature,
-            self.max_PTES_temperature
+            self.max_PTES_temperature,
         )
