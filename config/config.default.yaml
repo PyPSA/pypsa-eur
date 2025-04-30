@@ -890,7 +890,6 @@ costs:
     home battery storage: 0
     water tank charger: 0.03
     central water pit charger: 0.025
-    #central excess-heat-sourced heat pump: 0.03 # vllt nicht nötig
   emission_prices:
     enable: false
     co2: 0.
