@@ -2741,6 +2741,7 @@ def add_heat(
     ates_e_nom_max: str,
     ates_capex_as_fraction_of_geothermal_heat_source: float,
     ates_recovery_factor: float,
+    ates_marginal_cost_charger: float,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -3202,10 +3203,12 @@ def add_heat(
                     carrier=f"{heat_system} aquifer storage charger",
                     p_nom_extendable=True,
                     lifetime=costs.at["central geothermal heat source", "lifetime"],
-                    marginal_cost=costs.at[
-                        "central water pit charger", "marginal_cost"
-                    ] * 1.1,
-                    capital_cost=costs.at["central geothermal heat source", "capital_cost"] / 2
+                    marginal_cost=ates_marginal_cost_charger,
+                    capital_cost=costs.at[
+                        "central geothermal heat source", "capital_cost"
+                    ]
+                    * ates_capex_as_fraction_of_geothermal_heat_source
+                    / 2,
                 )
 
                 n.add(
@@ -3217,10 +3220,11 @@ def add_heat(
                     carrier=f"{heat_system} aquifer storage discharger",
                     p_nom_extendable=True,
                     lifetime=costs.at["central geothermal heat source", "lifetime"],
-                    marginal_cost=costs.at[
-                        "central water pit charger", "marginal_cost"
-                    ] * 1.1,
-                    capital_cost=costs.at["central geothermal heat source", "capital_cost"] / 2
+                    capital_cost=costs.at[
+                        "central geothermal heat source", "capital_cost"
+                    ]
+                    * ates_capex_as_fraction_of_geothermal_heat_source
+                    / 2,
                 )
 
                 n.add(
@@ -6179,6 +6183,7 @@ if __name__ == "__main__":
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
             ates_e_nom_max=snakemake.input.ates_potentials,
             ates_capex_as_fraction_of_geothermal_heat_source=snakemake.params.sector["district_heating"]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
+            ates_marginal_cost_charger=snakemake.params.sector["district_heating"]["ates"]["marginal_cost_charger"],
             ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"]["recovery_factor"],
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,

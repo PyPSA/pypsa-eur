@@ -261,8 +261,8 @@ if __name__ == "__main__":
 
     dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(regions_onshore.crs)
 
-    forward_temperature_profiles = xr.opens_dataarray(
-        snakemake.input.forward_temperature_profiles)
+    forward_temperature_profiles = xr.open_dataarray(
+        snakemake.input.central_heating_forward_temperature_profiles)
     return_temperature_profiles = xr.open_dataarray(
         snakemake.input.central_heating_return_temperature_profiles
     )
