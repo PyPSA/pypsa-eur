@@ -4404,7 +4404,8 @@ def add_waste(
                 efficiency2=costs.at["waste CHP CC", "efficiency-heat"],
                 efficiency3=costs.at["oil", "CO2 intensity"]
                 * (1 - sector_options["cc_fraction"]),
-                efficiency4=costs.at["oil", "CO2 intensity"] * sector_options["cc_fraction"],
+                efficiency4=costs.at["oil", "CO2 intensity"]
+                * sector_options["cc_fraction"],
                 lifetime=costs.at["waste CHP CC", "lifetime"],
             )
     if options["transport"] and not sector_options["waste_spatial"]:
@@ -4801,8 +4802,12 @@ def add_industry(
             efficiency2=process_co2_per_naphtha,
         )
     else:
-        emitted_co2_per_naphtha = costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
-        non_sequestered = 1 - get(cf_industry["HVC_environment_sequestration_fraction"],investment_year)
+        emitted_co2_per_naphtha = (
+            costs.at["oil", "CO2 intensity"] - process_co2_per_naphtha
+        )
+        non_sequestered = 1 - get(
+            cf_industry["HVC_environment_sequestration_fraction"], investment_year
+        )
         n.add(
             "Link",
             spatial.oil.naphtha,
@@ -6094,7 +6099,7 @@ if __name__ == "__main__":
             clusters="39",
             sector_opts="",
             planning_horizons="2050",
-            configfiles="config/config.default.yaml"
+            configfiles="config/config.default.yaml",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
