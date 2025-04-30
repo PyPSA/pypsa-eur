@@ -61,8 +61,9 @@ import logging
 
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from prepare_sector_network import get
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.prepare_sector_network import get
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ def build_industry_sector_ratios_intermediate():
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_industry_sector_ratios_intermediate",
