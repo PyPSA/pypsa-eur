@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Determine PTES top temperature and additional heating requirements for integration.
+Approximate thermal energy storage (TES) top temperature and identify need for supplemental heating.
 
 This script evaluates the district heating forward temperature profile to:
-  1. Approximate the top temperature of the Pit Thermal Energy Storage (PTES) system,
+  - Approximate the top temperature of the Pit Thermal Energy Storage (PTES) system,
      ensuring that the temperature does not exceed the operational limit.
-  2. Determine whether additional (after) heating is needed. A binary indicator is generated:
+  - Determine whether additional (after) heating is needed. A binary indicator is generated:
        - 1: The forward temperature is less than or equal to the PTES maximum; direct usage is possible.
        - 0: The forward temperature exceeds the PTES maximum; additional heating (e.g., via a heat pump) is required.
 
@@ -16,19 +16,19 @@ Relevant Settings
 .. code:: yaml
     storage:
         PTES:
-            max_temperature: 90  # Maximum temperature (°C) the PTES can deliver directly
+            max_temperature: 90  # Maximum PTES temperature (°C) usable without supplemental heating
 
 Inputs
 ------
 - `resources/<run_name>/forward_temperature.nc`
-    Forward temperature profile (in Celsius) for the district heating network.
+    Forward temperature profile for the district heating network.
 
 Outputs
 -------
-- `resources/<run_name>/ptes_top_temperature.nc`
-    NetCDF file containing the PTES top temperature profile (clipped at the maximum operational limit).
+- `resources/<run_name>/tes_top_temperature_profile.nc`
+    Clipped TES top temperature profile (in °C).
 - `resources/<run_name>/additional_heating_indicator.nc`
-    NetCDF file containing a binary indicator for additional after heating requirements.
+    Binary indicator for additional heating (1 = direct TES use, 0 = supplemental heating required).
 """
 
 import logging
@@ -36,14 +36,9 @@ import xarray as xr
 
 logger = logging.getLogger(__name__)
 
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from _helpers import set_scenario_config
-from tes_additional_heating_approximator import PTESAdditionalHeatingApproximator
-from build_TES_temperature_profiles import BuildTESTemperature
+from tes_supplemental_heating_approximator import TESSupplementalHeatingApproximator
+from build_tes_top_temperature_profile import BuildTesTopTemperature
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -65,7 +60,7 @@ if __name__ == "__main__":
     logger.info(f"Using maximum PTES direct usage temperature: {max_PTES_temperature}°C")
 
     # Initialize TES top temperature approximator.
-    tes_temp_builder = BuildTESTemperature(
+    tes_temp_builder = BuildTesTopTemperature(
         forward_temperature_celsius=forward_temp,
         max_PTES_temperature=max_PTES_temperature,
     )
@@ -73,18 +68,18 @@ if __name__ == "__main__":
     # Approximate PTES top temperature profile
     ptes_top_temperature = tes_temp_builder.clipped_top_temperature
 
-    # Initialize additional heating approximator.
-    heating_approximator = PTESAdditionalHeatingApproximator(
+    # Initialize supplemental heating approximator.
+    supplemental_heating_approximator = TESSupplementalHeatingApproximator(
         forward_temperature_celsius=forward_temp,
         max_PTES_temperature=max_PTES_temperature,
     )
 
-    additional_heating = heating_approximator.determine_ptes_usage()
+    supplemental_heating_profile = supplemental_heating_approximator.determine_ptes_usage()
 
     # Save output
-    logger.info(f"Saving PTES top temperature profile to {snakemake.output.ptes_top_temperature}")
-    ptes_top_temperature.to_netcdf(snakemake.output.ptes_top_temperature)
+    logger.info(f"Saving TES top temperature profile to {snakemake.output.tes_top_temperature_profile}")
+    ptes_top_temperature.to_netcdf(snakemake.output.tes_top_temperature_profile)
 
     # Save output
-    logger.info(f"Saving additional heating indicator to {snakemake.output.additional_heating_indicator}")
-    additional_heating.to_netcdf(snakemake.output.additional_heating_indicator)
+    logger.info(f"Saving supplemental heating profile to {snakemake.output.tes_supplemental_heating_profile}")
+    supplemental_heating_profile.to_netcdf(snakemake.output.tes_supplemental_heating_profile)

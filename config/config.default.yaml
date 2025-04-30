@@ -479,11 +479,11 @@ sector:
       upper_threshold_ambient_temperature: 10
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
-    ptes: # möglichkeit hinzufügen temperatur boosting einzuschließen , wenn nicht dann nicht
+    ptes:
       dynamic_capacity: true
-      # temperature_boosting:
-        #booster_heatpump: false
-        #booster_boiler
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
       max_top_temperature: 90
       min_bottom_temperature: 35
     heat_source_cooling: 6 #K
@@ -498,12 +498,12 @@ sector:
         ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
-    additional_heating_storage_heat_sources:
+    temperature_limited_stores:
       - ptes
   heat_pump_sources:
     urban central:
     - air
-    - ptes # vllt lieber noch einen anderen Namen geben
+    - ptes
     urban decentral:
     - air
     rural:
@@ -890,7 +890,7 @@ costs:
     home battery storage: 0
     water tank charger: 0.03
     central water pit charger: 0.025
-    central excess-heat-sourced heat pump: 0.03 # vllt nicht nötig
+    #central excess-heat-sourced heat pump: 0.03 # vllt nicht nötig
   emission_prices:
     enable: false
     co2: 0.

@@ -359,7 +359,7 @@ rule build_cop_profiles:
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         temp_ptes_total=resources(
-            "ptes_top_temperature_s_{clusters}_{planning_horizons}.nc"
+            "tes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
@@ -375,8 +375,7 @@ rule build_cop_profiles:
     script:
         "../scripts/build_cop_profiles/run.py"
 
-#hier musss ich arbeiten
-rule build_ptes_temperature_profiles:
+rule build_tes_supplemental_heating_profile:
     params:
         max_PTES_temperature=config_provider(
             "sector",
@@ -391,22 +390,22 @@ rule build_ptes_temperature_profiles:
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        additional_heating_indicator=resources(
-            "ltes_additional_heating_s_{clusters}_{planning_horizons}.nc"
+        tes_supplemental_heating_profile=resources(
+            "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_top_temperature=resources(
-            "ptes_top_temperature_s_{clusters}_{planning_horizons}.nc"
+        tes_top_temperature_profile=resources(
+            "tes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=2000,
     log:
-        logs("build_tes_storage_temperature_profile_s_{clusters}_{planning_horizons}.log"),
+        logs("build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("build_tes_storage_temperature_profile_s_{clusters}_{planning_horizons}")
+        benchmarks("build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_TES_temperature_boost/run.py"
+        "../scripts/build_tes_supplemental_heating/run.py"
 
 
 rule build_direct_heat_source_utilisation_profiles:
@@ -1240,8 +1239,8 @@ rule prepare_sector_network:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
-        additional_heating_storage_heat_sources=config_provider(
-            "sector", "district_heating", "additional_heating_storage_heat_sources"
+        temperature_limited_stores=config_provider(
+            "sector", "district_heating", "temperature_limited_stores"
         ),
     input:
         unpack(input_profile_offwind),
@@ -1324,8 +1323,13 @@ rule prepare_sector_network:
             )
             else []
         ),
-        additional_heating_indicator=resources(
-            "ltes_additional_heating_s_{clusters}_{planning_horizons}.nc"
+        tes_supplemental_heating_profile=lambda w: (
+            resources(
+            "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc")
+            if config_provider(
+                "sector", "district_heating", "ptes", "supplemental_heating", "enable")
+            (w)
+            else []
         ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
