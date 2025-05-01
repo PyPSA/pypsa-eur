@@ -1547,7 +1547,9 @@ def insert_electricity_distribution_grid(
         efficiency := options["transmission_efficiency"]
         .get("electricity distribution grid", {})
         .get("efficiency_static")
-    ):
+    ) and "electricity distribution grid" in options["transmission_efficiency"][
+        "enable"
+    ]:
         logger.info(
             f"Deducting distribution losses from electricity demand: {np.around(100 * (1 - efficiency), decimals=2)}%"
         )
