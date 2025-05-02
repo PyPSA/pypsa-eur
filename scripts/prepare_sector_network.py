@@ -3188,64 +3188,60 @@ def add_heat(
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
 
-        if allow_ates: 
-                n.add("Carrier", f"{heat_system} aquifer storage")
+        if allow_ates:
+            n.add("Carrier", f"{heat_system} aquifer storage")
 
-                n.add(
-                    "Bus",
-                    nodes + f" {heat_system} aquifer storage",
-                    location=nodes,
-                    carrier=f"{heat_system} aquifer storage",
-                    unit="MWh_th",
-                )
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} aquifer storage",
+                location=nodes,
+                carrier=f"{heat_system} aquifer storage",
+                unit="MWh_th",
+            )
 
-                n.add(
-                    "Link",
-                    nodes + f" {heat_system} aquifer storage charger",
-                    bus0=nodes + f" {heat_system} heat",
-                    bus1=nodes + f" {heat_system} aquifer storage",
-                    efficiency=1.0,
-                    carrier=f"{heat_system} aquifer storage charger",
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central geothermal heat source", "lifetime"],
-                    marginal_cost=ates_marginal_cost_charger,
-                    capital_cost=costs.at[
-                        "central geothermal heat source", "capital_cost"
-                    ]
-                    * ates_capex_as_fraction_of_geothermal_heat_source
-                    / 2,
-                )
+            n.add(
+                "Link",
+                nodes + f" {heat_system} aquifer storage charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} aquifer storage",
+                efficiency=1.0,
+                carrier=f"{heat_system} aquifer storage charger",
+                p_nom_extendable=True,
+                lifetime=costs.at["central geothermal heat source", "lifetime"],
+                marginal_cost=ates_marginal_cost_charger,
+                capital_cost=costs.at["central geothermal heat source", "capital_cost"]
+                * ates_capex_as_fraction_of_geothermal_heat_source
+                / 2,
+            )
 
-                n.add(
-                    "Link",
-                    nodes + f" {heat_system} aquifer storage discharger",
-                    bus1=nodes + f" {heat_system} heat",
-                    bus0=nodes + f" {heat_system} aquifer storage",
-                    efficiency=1.0,
-                    carrier=f"{heat_system} aquifer storage discharger",
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central geothermal heat source", "lifetime"],
-                    capital_cost=costs.at[
-                        "central geothermal heat source", "capital_cost"
-                    ]
-                    * ates_capex_as_fraction_of_geothermal_heat_source
-                    / 2,
-                )
+            n.add(
+                "Link",
+                nodes + f" {heat_system} aquifer storage discharger",
+                bus1=nodes + f" {heat_system} heat",
+                bus0=nodes + f" {heat_system} aquifer storage",
+                efficiency=1.0,
+                carrier=f"{heat_system} aquifer storage discharger",
+                p_nom_extendable=True,
+                lifetime=costs.at["central geothermal heat source", "lifetime"],
+                capital_cost=costs.at["central geothermal heat source", "capital_cost"]
+                * ates_capex_as_fraction_of_geothermal_heat_source
+                / 2,
+            )
 
-                n.add(
-                    "Store",
-                    nodes,
-                    suffix=f" {heat_system} aquifer storage",
-                    bus=nodes + f" {heat_system} aquifer storage",
-                    e_cyclic=True,
-                    e_nom_extendable=True,
-                    e_nom_max=pd.read_csv(ates_e_nom_max, index_col=0)[
-                        "ates_potential"
-                    ][nodes],
-                    carrier=f"{heat_system} aquifer storage",
-                    standing_loss=1 - ates_recovery_factor ** (1 / 8760),
-                    lifetime=costs.at["central geothermal heat source", "lifetime"],
-                )
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} aquifer storage",
+                bus=nodes + f" {heat_system} aquifer storage",
+                e_cyclic=True,
+                e_nom_extendable=True,
+                e_nom_max=pd.read_csv(ates_e_nom_max, index_col=0)["ates_potential"][
+                    nodes
+                ],
+                carrier=f"{heat_system} aquifer storage",
+                standing_loss=1 - ates_recovery_factor ** (1 / 8760),
+                lifetime=costs.at["central geothermal heat source", "lifetime"],
+            )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
