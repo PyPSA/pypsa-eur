@@ -249,28 +249,25 @@ def ates_potential_per_onshore_region(
         raise
 
 
-def check_dh_areas_coverage(
-    dh_areas: gpd.GeoDataFrame, 
-    countries: list
-) -> None:
+def check_dh_areas_coverage(dh_areas: gpd.GeoDataFrame, countries: list) -> None:
     """
     Check if district heating areas exist for all specified countries.
-    
-    Issues a warning if any country in the countries list doesn't have 
+
+    Issues a warning if any country in the countries list doesn't have
     corresponding district heating areas in the provided GeoDataFrame.
-    
+
     Parameters
     ----------
     dh_areas : geopandas.GeoDataFrame
         GeoDataFrame containing district heating areas
     countries : list
         List of country codes to check for coverage
-        
+
     Returns
     -------
     None
         Function only logs warnings for missing countries
-        
+
     Raises
     ------
     ValueError
@@ -280,77 +277,90 @@ def check_dh_areas_coverage(
     """
     if countries is None or len(countries) == 0:
         raise ValueError("Countries list is empty or None.")
-        
+
     if dh_areas.empty:
-        raise ValueError("District heating areas dataframe is empty. Cannot proceed with ATES calculation.")
-    
+        raise ValueError(
+            "District heating areas dataframe is empty. Cannot proceed with ATES calculation."
+        )
+
     # Extract countries from DH areas - first try direct column
     if "country" in dh_areas.columns:
         dh_countries = set(dh_areas["country"].unique())
     else:
-        raise KeyError("Cannot find 'country' column in district heating areas dataframe. This column is required.")
-    
+        raise KeyError(
+            "Cannot find 'country' column in district heating areas dataframe. This column is required."
+        )
+
     # Check for missing countries
     missing_countries = set(countries) - dh_countries
-    
+
     if missing_countries:
-        logger.info(f"No district heating areas found for the following countries: {', '.join(missing_countries)}")
+        logger.info(
+            f"No district heating areas found for the following countries: {', '.join(missing_countries)}"
+        )
     else:
         logger.info("District heating areas available for all requested countries")
 
 
 def check_aquifer_coverage(
-    aquifer_shapes: gpd.GeoDataFrame,
-    regions_onshore: gpd.GeoDataFrame
+    aquifer_shapes: gpd.GeoDataFrame, regions_onshore: gpd.GeoDataFrame
 ) -> None:
     """
     Check if aquifer shapes cover all onshore regions.
-    
+
     Issues a warning if there are onshore regions without any aquifer coverage,
     which would result in zero ATES potential for those regions.
-    
+
     Parameters
     ----------
     aquifer_shapes : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of all aquifers
     regions_onshore : geopandas.GeoDataFrame
         GeoDataFrame containing the shapes of onshore regions
-        
+
     Returns
     -------
     None
         Function only logs warnings for uncovered regions
-        
+
     Raises
     ------
     ValueError
         If input GeoDataFrames are empty
     """
     if aquifer_shapes.empty:
-        raise ValueError("Aquifer shapes dataframe is empty. Cannot proceed with ATES calculation.")
-        
+        raise ValueError(
+            "Aquifer shapes dataframe is empty. Cannot proceed with ATES calculation."
+        )
+
     if regions_onshore.empty:
-        raise ValueError("Onshore regions dataframe is empty. Cannot proceed with ATES calculation.")
-    
+        raise ValueError(
+            "Onshore regions dataframe is empty. Cannot proceed with ATES calculation."
+        )
+
     # Perform spatial overlay to check which regions have aquifer coverage
-    aquifers_by_region = gpd.overlay(
-        aquifer_shapes, regions_onshore, how="intersection"
-    ).groupby("name")["geometry"].count()
-    
+    aquifers_by_region = (
+        gpd.overlay(aquifer_shapes, regions_onshore, how="intersection")
+        .groupby("name")["geometry"]
+        .count()
+    )
+
     # Get regions without any aquifer coverage
     if "name" in regions_onshore.columns:
         all_region_names = set(regions_onshore["name"])
         covered_region_names = set(aquifers_by_region.index)
         uncovered_regions = all_region_names - covered_region_names
-        
+
         if uncovered_regions:
             raise ValueError(
-                f"Regions without aquifer data coverage: {', '.join(uncovered_regions)}. ")
+                f"Regions without aquifer data coverage: {', '.join(uncovered_regions)}. "
+            )
         else:
             logger.info("All regions have aquifer coverage")
     else:
-        raise KeyError("Cannot find 'name' column in onshore regions dataframe. This column is required.")
-
+        raise KeyError(
+            "Cannot find 'name' column in onshore regions dataframe. This column is required."
+        )
 
 
 if __name__ == "__main__":
@@ -373,11 +383,11 @@ if __name__ == "__main__":
     )
 
     dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(regions_onshore.crs)
-    
+
     # Check district heating areas coverage
     logger.info("Checking district heating areas coverage")
     check_dh_areas_coverage(dh_areas, countries)
-    
+
     # Check aquifer coverage for onshore regions
     logger.info("Checking aquifer coverage for onshore regions")
     check_aquifer_coverage(aquifer_shapes, regions_onshore)
