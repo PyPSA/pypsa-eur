@@ -374,6 +374,7 @@ rule build_ates_potentials:
             "ates",
             "dh_area_buffer",
         ),
+        countries=config_provider("countries"),
     input:
         aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
         aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
