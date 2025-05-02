@@ -484,7 +484,7 @@ sector:
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
-      allow: false
+      allow: true
       suitable_aquifer_types: ['Highly productive porous aquifers']
       aquifer_volumetric_heat_capacity: 2600
       fraction_of_aquifer_area_available: 0.2
