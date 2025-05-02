@@ -2744,6 +2744,7 @@ def add_heat(
     ates_e_nom_max: str,
     ates_capex_as_fraction_of_geothermal_heat_source: float,
     ates_recovery_factor: float,
+    allow_ates: bool,
     ates_marginal_cost_charger: float,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
@@ -3187,6 +3188,7 @@ def add_heat(
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
 
+        if allow_ates: 
                 n.add("Carrier", f"{heat_system} aquifer storage")
 
                 n.add(
@@ -6198,6 +6200,7 @@ if __name__ == "__main__":
             ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"][
                 "recovery_factor"
             ],
+            allow_ates=snakemake.params.sector["district_heating"]["ates"]["allow"],
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
