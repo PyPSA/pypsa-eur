@@ -12,10 +12,11 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, retry, set_scenario_config
-from make_summary import assign_locations
-from plot_power_network import load_projection
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+
+from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts.make_summary import assign_locations
+from scripts.plot_power_network import load_projection
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +232,7 @@ def plot_ch4_map(n):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "plot_gas_network",

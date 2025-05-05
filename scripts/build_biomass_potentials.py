@@ -11,8 +11,9 @@ import logging
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from build_energy_totals import build_eurostat
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.build_energy_totals import build_eurostat
 
 logger = logging.getLogger(__name__)
 AVAILABLE_BIOMASS_YEARS = [2010, 2020, 2030, 2040, 2050]
@@ -338,7 +339,7 @@ def add_unsustainable_potentials(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",

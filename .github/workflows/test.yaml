@@ -186,6 +186,7 @@ jobs:
     - name: Install inhouse packages from master
       if: env.pinned == 'false'
       run: |
+        conda uninstall -y ${{ matrix.inhouse }} || true
         python -m pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master
 
     - name: Run snakemake test workflows
