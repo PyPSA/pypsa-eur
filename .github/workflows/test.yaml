@@ -194,6 +194,9 @@ jobs:
     - name: Run snakemake test workflows
       if: env.pinned == 'false'
       run: |
+        conda env list
+        conda info
+        conda list
         make test
 
     - name: Upload artifacts
