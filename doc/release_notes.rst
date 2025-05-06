@@ -11,6 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Refactoring of ``add_storage_and_grids`` in ``prepare_sector_network`` into multiple distinct functions for easier readability and adjustability.
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
@@ -50,7 +51,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   default_cutouts:``. (https://github.com/PyPSA/pypsa-eur/pull/1613)
 
   - All cutout references in ``config.default.yaml`` can now be specified by a
-    list of cutouts which will be concatenated along the time dimension.    
+    list of cutouts which will be concatenated along the time dimension.
 
   - All cutout references in ``config.default.yaml`` now default to ``atlite:
     default_cutout:``.
@@ -76,7 +77,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   - Splits renewable potentials and time series into a configurable number of
     resource classes per carrier and clustered region. The binning is linear
     based on the average capacity factors.
-  
+
   - With the setting ``renewables: onwind: resource_classes: 4``, each region
     would have four onshore wind generators, each with different potential
     (``p_nom_max``) and capacity factor (``p_max_pu``). The same applies to
@@ -87,7 +88,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   - In :mod:`build_renewable_profiles`, a new dimension "bin" is added to the
     output (``xarray.Dataset``). The resource classes are numbered from 0
     (lowest) to N (highest).
-    
+
   - Additionally, a new ``.geojson`` file of clustered regions split by resource
     classes is exported, which is is used in :mod:`add_electricity` and
     :mod:`build_clustered_solar_rooftop_potentials` to assign existing wind and
@@ -104,7 +105,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
     configurable prices (``sector: imports: prices:``).
 
   - Methane imports use existing LNG terminal entry points, hydrogen imports use
-    existing pipeline entry points. 
+    existing pipeline entry points.
 
   - Simplification: Import prices are uniform across all regions.
 
@@ -196,7 +197,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
 
   - Inferral of component locations was made more robust. The revised function
     uses ``n.buses.location`` rather than the index strings. Components inherit
-    the location of the bus they connect to with the highest spatial resolution. 
+    the location of the bus they connect to with the highest spatial resolution.
 
   - The file ``supply.csv`` was **removed**; the file ``price_statistics.csv``
     was **removed and integrated** into ``metrics.csv``; the files
