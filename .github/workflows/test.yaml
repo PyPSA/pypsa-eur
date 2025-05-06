@@ -187,6 +187,7 @@ jobs:
       if: env.pinned == 'false'
       run: |
         conda uninstall -y --force ${{ matrix.inhouse }} || true
+        conda list
         python -m pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master
 
     - name: Run snakemake test workflows
