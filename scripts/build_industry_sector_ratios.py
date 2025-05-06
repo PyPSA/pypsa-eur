@@ -32,7 +32,8 @@ import logging
 
 import country_converter as coco
 import pandas as pd
-from _helpers import configure_logging, mute_print, set_scenario_config
+
+from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -1620,7 +1621,7 @@ def steel_capacities():
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industry_sector_ratios")
     configure_logging(snakemake)
