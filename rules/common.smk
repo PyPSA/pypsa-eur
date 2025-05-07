@@ -7,6 +7,8 @@ from functools import partial, lru_cache
 
 import os, sys, glob
 
+import pandas as pd
+
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
@@ -76,6 +78,33 @@ def config_provider(*keys, default=None):
         return partial(dynamic_getter, keys=keys, default=default)
     else:
         return partial(static_getter, keys=keys, default=default)
+
+
+DATA_VERSIONS = pd.read_csv(
+    "data/versions.csv", dtype=str, na_filter=False, delimiter=","
+)
+
+
+def get_versioned_data_url(source_name: str, version: str | None = None):
+    """
+    Provide the URL for a specific data source and version.
+
+    Instead of a specific version, it can also be 'latest' to get the most recent version.
+    """
+
+    if version == "latest":
+        version = DATA_VERSIONS.query(
+            f"`source_name` == '{source_name}' and `recency` == 'latest'"
+        )
+    else:
+        version = DATA_VERSIONS.query(
+            f"`source_name` == '{source_name}' and `version` == '{version}'"
+        )
+
+    if version.empty:
+        raise ValueError(f"Version '{version}' not found for source '{source_name}'.")
+
+    return version["url"].item()
 
 
 def solver_threads(w):
