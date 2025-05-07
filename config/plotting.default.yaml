@@ -423,6 +423,9 @@ plotting:
     urban central water pits: "#d96f4c"
     urban central water pits charger: "#a85d47"
     urban central water pits discharger: "#b36452"
+    aquifer storage: "#6d00fc"
+    aquifer storage charger: "#6d00fc"
+    aquifer storage discharger: "#6d00fc"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
