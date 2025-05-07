@@ -51,17 +51,18 @@ Approximate thermal energy storage (TES) top temperature and identify need for s
 """
 
 import logging
-import xarray as xr
 
+import xarray as xr
 from _helpers import set_scenario_config
+
 from scripts.build_tes_operation.build_tes_top_temperature_profile import (
-    BuildTesTopTemperature
-)
-from scripts.build_tes_operation.tes_supplemental_heating_approximator import (
-    TESSupplementalHeatingApproximator
+    BuildTesTopTemperature,
 )
 from scripts.build_tes_operation.tes_capacity_approximator import (
-    TesCapacityApproximator
+    TesCapacityApproximator,
+)
+from scripts.build_tes_operation.tes_supplemental_heating_approximator import (
+    TESSupplementalHeatingApproximator,
 )
 
 logger = logging.getLogger(__name__)
