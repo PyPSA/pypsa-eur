@@ -169,16 +169,8 @@ jobs:
       with:
         activate-environment: pypsa-eur
 
-    - name: Cache Conda env
-      if: env.pinned == 'false'
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{  matrix.inhouse  }}-${{ hashFiles(format('{0}', env.env_file)) }}
-      id: cache-env
-
     - name: Update environment
-      if: env.pinned == 'false' && steps.cache-env.outputs.cache-hit != 'true'
+      if: env.pinned == 'false'
       run: |
         conda env update -n pypsa-eur -f ${{ env.env_file }}
         echo "Run conda list" && conda list
@@ -186,8 +178,8 @@ jobs:
     - name: Install inhouse packages from master
       if: env.pinned == 'false'
       run: |
-        conda uninstall -y ${{ matrix.inhouse }} || true
         python -m pip install git+https://github.com/PyPSA/${{ matrix.inhouse }}.git@master
+        conda list
 
     - name: Run snakemake test workflows
       if: env.pinned == 'false'
