@@ -548,7 +548,7 @@ if config["enable"]["retrieve"]:
 
 
 if config["data"]["osm"]["source"] == "archive":
-    OSM_VERSION = config["data"]["osm"]["version"]
+    OSM_VERSION = get_data_version("osm")
     OSM_FILES = [
         "buses.csv",
         "converters.csv",
@@ -583,14 +583,15 @@ if config["data"]["osm"]["source"] == "archive":
 
 
 if config["data"]["osm"]["source"] == "build":
+    OSM_VERSION = get_data_version("osm")
 
     rule retrieve_osm_raw:
         output:
-            cables_way="data/osm/upstream/raw/{country}/cables_way.json",
-            lines_way="data/osm/upstream/raw/{country}/lines_way.json",
-            routes_relation="data/osm/upstream/raw/{country}/routes_relation.json",
-            substations_way="data/osm/upstream/raw/{country}/substations_way.json",
-            substations_relation="data/osm/upstream/raw/{country}/substations_relation.json",
+            cables_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/cables_way.json",
+            lines_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/lines_way.json",
+            routes_relation=f"data/osm/{OSM_VERSION}/raw/{{country}}/routes_relation.json",
+            substations_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_way.json",
+            substations_relation=f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_relation.json",
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
@@ -602,23 +603,23 @@ if config["data"]["osm"]["source"] == "build":
     rule retrieve_osm_raw_all:
         input:
             expand(
-                "data/osm/upstream/raw/{country}/cables_way.json",
+                f"data/osm/{OSM_VERSION}/raw/{{country}}/cables_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm/upstream/raw/{country}/lines_way.json",
+                f"data/osm/{OSM_VERSION}/raw/{{country}}/lines_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm/upstream/raw/{country}/routes_relation.json",
+                f"data/osm/{OSM_VERSION}/raw/{{country}}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm/upstream/raw/{country}/substations_way.json",
+                f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm/upstream/raw/{country}/substations_relation.json",
+                f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_relation.json",
                 country=config_provider("countries"),
             ),
 

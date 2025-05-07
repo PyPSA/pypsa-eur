@@ -107,6 +107,34 @@ def get_versioned_data_url(source_name: str, version: str | None = None):
     return version["url"].item()
 
 
+def get_data_version(source_name: str) -> str:
+    """
+    Provide the version of a requested data source based on the config.
+
+    This maps special cases to specific versions, i.e.
+    * a lookup to the latest version if 'latest' is specified
+    * 'upstream' if the data source is set to 'build' from upstream
+    """
+    version = config["data"][source_name]["version"]
+    source = config["data"][source_name]["source"]
+
+    if version == "latest":
+        version = DATA_VERSIONS.query(
+            f"`source_name` == '{source_name}' and `recency` == 'latest'"
+        )["version"].item()
+
+    if source == "build":
+        version = "upstream"
+    elif source == "archive":
+        pass
+    else:
+        raise ValueError(
+            f"Source '{source}' not recognized for data source '{source_name}'."
+        )
+
+    return version
+
+
 def solver_threads(w):
     solver_options = config_provider("solving", "solver_options")(w)
     option_set = config_provider("solving", "solver", "options")(w)
