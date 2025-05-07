@@ -3205,10 +3205,12 @@ def add_heat(
                 )
 
             if (
-                options["district_heating"]["ptes"]["supplemental_heating"]["enable"]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
+                 options["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
+                 ]
+                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_heat_pump"
-                ]
+                 ]
             ):
                 n.add(
                     "Link",
