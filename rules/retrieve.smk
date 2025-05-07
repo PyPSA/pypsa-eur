@@ -372,31 +372,36 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if config["data"]["worldbank_urban_population"]["source"] in ["build", "archive"]:
+    WB_URB_POP_VERSION = get_data_version(source_name="worldbank_urban_population")
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            url=get_versioned_data_url(
+                source_name="worldbank_urban_population",
+                version=WB_URB_POP_VERSION,
+            ),
         output:
-            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+            zip=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            csv=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
             import os
             import requests
 
             response = requests.get(
-                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params["url"],
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(output["zip"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output["zip"], output_folder)
 
             for f in os.listdir(output_folder):
                 if f.startswith(
                     "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
                 ) and f.endswith(".csv"):
-                    os.rename(os.path.join(output_folder, f), output.gpkg)
+                    os.rename(os.path.join(output_folder, f), output.csv)
                     break
 
 
