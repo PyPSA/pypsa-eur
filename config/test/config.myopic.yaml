@@ -33,6 +33,11 @@ sector:
   central_heat_vent: true
   solid_biomass_import:
     enable: true
+  district_heating:
+    ates:
+      allow: true
+
+
 
 electricity:
 

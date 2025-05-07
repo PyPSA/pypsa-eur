@@ -61,6 +61,10 @@ clustering:
 sector:
   gas_network: true
   H2_retrofit: true
+  district_heating:
+    ates:
+      allow: true
+
 
 industry:
   HVC_environment_sequestration_fraction: 0.5
