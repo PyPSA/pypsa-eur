@@ -1,0 +1,8 @@
+attribute,OCGT,CCGT,coal,lignite,nuclear
+ramp_limit_up,1,1,1,1,0.3
+ramp_limit_start_up,0.2,0.45,0.38,0.4,0.5
+ramp_limit_shut_down,0.2,0.45,0.38,0.4,0.5
+p_min_pu,0.2,0.45,0.325,0.4,0.5
+min_up_time,,3,5,7,6
+min_down_time,,2,6,6,10
+start_up_cost,9.6,34.2,35.64,19.14,16.5

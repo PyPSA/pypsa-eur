@@ -3046,7 +3046,7 @@ def add_heat(
                         .reindex(index=n.snapshots)
                     )
                 else:
-                    tes_supplemental_heating = 1
+                    tes_supplemental_heating = 1  # pd.Series(1.0, index=n.snapshots)
 
                 n.add(
                     "Link",
@@ -3205,12 +3205,13 @@ def add_heat(
                 )
 
             if (
-                 options["district_heating"]["ptes"]["supplemental_heating"][
+                heat_source in params.temperature_limited_stores
+                and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
-                 ]
-                 and options["district_heating"]["ptes"]["supplemental_heating"][
+                ]
+                and options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_heat_pump"
-                 ]
+                ]
             ):
                 n.add(
                     "Link",
@@ -3227,6 +3228,7 @@ def add_heat(
                     * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                    #    marginal_cost=costs.at[costs_name_heat_pump, "marginal_cost"],
                 )
 
             else:
@@ -6064,7 +6066,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="5",
+            clusters="10",
             sector_opts="",
             planning_horizons="2050",
         )

@@ -11,7 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
+* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: enable: true``
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 

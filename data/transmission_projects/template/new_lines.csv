@@ -1,0 +1,5 @@
+,project_status,length,build_year,underground,v_nom,tags,x0,y0,x1,y1,num_parallel
+New_line_1,in_permitting,100,2025,False,380,"{link to source, name of project, further custom information}",-7.793621146853301,41.52102394053344,-8.38943499999999,40.95916,2
+New_line_2,under_construction,100,2023,False,380,"{link to source, name of project, further custom information}",,,,,
+New_line_3,in_planning,100,2040,False,380,"{link to source, name of project, further custom information}",,,,,
+New_line_4,under_consideration,100,2050,true,380,"{link to source, name of project, further custom information}",,,,,

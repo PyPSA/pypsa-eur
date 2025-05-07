@@ -1,0 +1,7 @@
+component,cost_fix,cost_var,life_time,comment,additional source
+wall,70.34,2.36,40,Agora Energiewende p.110,
+floor,39.39,1.3,40,Agora Energiewende p.110,
+roof,75.61,1.3,40,Agora Energiewende p.110,https://www.baulinks.de/webplugin/2018/1524.php4
+window,nan,nan,35,,
+source: p.37 https://www.umweltbundesamt.de/sites/default/files/medien/1410/publikationen/2019-10-29_texte_132-2019_energieaufwand-gebaeudekonzepte.pdf,,,https://www.agora-energiewende.de/en/publications/building-sector-efficiency-a-crucial-component-of-the-energy-transition/,,
+,,,p.115,,

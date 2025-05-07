@@ -373,27 +373,18 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 
-rule build_tes_operation:
+rule build_tes_supplemental_heating_profile:
     params:
-        max_ptes_temperature=config_provider(
+        max_PTES_temperature=config_provider(
             "sector",
             "district_heating",
             "ptes",
             "max_top_temperature",
         ),
-        min_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "min_bottom_temperature",
-        ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
@@ -403,23 +394,20 @@ rule build_tes_operation:
         tes_top_temperature_profile=resources(
             "tes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_e_max_pu_profiles=resources(
-            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
     resources:
         mem_mb=2000,
     log:
         logs(
-            "build_tes_operation_s_{clusters}_{planning_horizons}.log"
+            "build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.log"
         ),
     benchmark:
         benchmarks(
-            "build_tes_operation_s_{clusters}_{planning_horizons}"
+            "build_tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_tes_operation/run.py"
+        "../scripts/build_tes_supplemental_heating/run.py"
 
 
 rule build_direct_heat_source_utilisation_profiles:
@@ -453,6 +441,45 @@ rule build_direct_heat_source_utilisation_profiles:
         "../envs/environment.yaml"
     script:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
+
+
+rule build_tes_capacity_profiles:
+    params:
+        max_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "max_top_temperature",
+        ),
+        min_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "min_bottom_temperature",
+        ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        ptes_e_max_pu_profiles=resources(
+            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_tes_capacity_profiles_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_tes_capacity_profiles/s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_tes_capacity/run.py"
 
 
 def solar_thermal_cutout(wildcards):

@@ -1,0 +1,164 @@
+Electricity prices for household consumers - bi-annual data (from 2007 onwards) [nrg_pc_204],,,,
+,,,,
+Last update,30.10.19,,,
+Extracted on,14.11.19,,,
+Source of data,Eurostat,,,
+,,,,
+PRODUCT,Electrical energy,,,
+CONSOM,Band DC : 2 500 kWh < Consumption < 5 000 kWh,,,
+UNIT,Kilowatt-hour,,,
+TIME,2018S1,,,
+,,,,
+CURRENCY,Euro,Euro,Euro,
+GEO/TAX,Excluding taxes and levies,Excluding VAT and other recoverable taxes and levies,All taxes and levies included,% cost without taxes
+European Union - 28 countries,0.1285,0.1756,0.2052,0.626218323586745
+"Euro area (EA11-2000, EA12-2006, EA13-2007, EA15-2008, EA16-2010, EA17-2013, EA18-2014, EA19)",0.1331,0.1855,0.2188,0.608318098720293
+Belgium,0.1903,0.2279,0.2733,0.696304427369191
+Bulgaria,0.0816,0.0816,0.0979,0.833503575076609
+Czech Republic,0.1286,0.1298,0.1573,0.817546090273363
+Denmark,0.1011,0.2501,0.3126,0.32341650671785
+Germany,0.1379,0.2510,0.2987,0.461667224640107
+Estonia,0.0989,0.1123,0.1348,0.733679525222552
+Ireland,0.1846,0.2087,0.2369,0.779231743351625
+Greece,0.1132,0.1482,0.1672,0.677033492822967
+Spain,0.1873,0.1969,0.2383,0.785984053713806
+France,0.1134,0.1492,0.1748,0.648741418764302
+Croatia,0.1020,0.1160,0.1311,0.778032036613272
+Italy,0.1285,0.1873,0.2067,0.621673923560716
+Cyprus,0.1445,0.1606,0.1893,0.763338615953513
+Latvia,0.1035,0.1266,0.1531,0.676028739386022
+Lithuania,0.0771,0.0906,0.1097,0.702825888787603
+Luxembourg,0.1283,0.1547,0.1671,0.767803710353082
+Hungary,0.0885,0.0885,0.1123,0.78806767586821
+Malta,0.1209,0.1224,0.1285,0.940856031128405
+Netherlands,0.1187,0.1410,0.1706,0.6957796014068
+Austria,0.1232,0.1638,0.1966,0.626653102746694
+Poland,0.0906,0.1146,0.1410,0.642553191489362
+Portugal,0.1007,0.1826,0.2246,0.448352626892253
+Romania,0.0990,0.1120,0.1333,0.742685671417854
+Slovenia,0.1108,0.1322,0.1613,0.686918784872908
+Slovakia,0.0942,0.1305,0.1566,0.601532567049808
+Finland,0.1074,0.1300,0.1612,0.666253101736973
+Sweden,0.1202,0.1513,0.1891,0.635642517186674
+United Kingdom,0.1347,0.1797,0.1887,0.713831478537361
+Iceland,0.1222,0.1246,0.1545,0.790938511326861
+Liechtenstein,:,:,:,#VALUE!
+Norway,0.1254,0.1434,0.1751,0.716162193032553
+Montenegro,0.0828,0.0844,0.1024,0.80859375
+North Macedonia,0.0662,0.0662,0.0781,0.847631241997439
+Albania,:,:,:,#VALUE!
+Serbia,0.0539,0.0587,0.0705,0.764539007092199
+Turkey,0.0727,0.0766,0.0904,0.804203539823009
+Bosnia and Herzegovina,0.0722,0.0738,0.0864,0.835648148148148
+Kosovo (under United Nations Security Council Resolution 1244/99),0.0569,0.0586,0.0633,0.898894154818325
+Moldova,0.1020,0.1020,0.1020,1
+Ukraine,0.0342,0.0342,0.0410,0.834146341463415
+,,,0.157271052631579,
+Special value:,,,,
+:,not available,,,
+,,,,
+PRODUCT,Electrical energy,,,
+CONSOM,Band DC : 2 500 kWh < Consumption < 5 000 kWh,,,
+UNIT,Kilowatt-hour,,,
+TIME,2018S2,,,
+,,,,
+CURRENCY,Euro,Euro,Euro,
+GEO/TAX,Excluding taxes and levies,Excluding VAT and other recoverable taxes and levies,All taxes and levies included,
+European Union - 28 countries,0.1329,0.1810,0.2113,
+"Euro area (EA11-2000, EA12-2006, EA13-2007, EA15-2008, EA16-2010, EA17-2013, EA18-2014, EA19)",0.1376,0.1902,0.2242,
+Belgium,0.1998,0.2429,0.2937,
+Bulgaria,0.0838,0.0838,0.1005,
+Czechia,0.1299,0.1311,0.1586,
+Denmark,0.1116,0.2499,0.3123,
+Germany (until 1990 former territory of the FRG),0.1378,0.2521,0.3000,
+Estonia,0.1048,0.1182,0.1418,
+Ireland,0.2006,0.2237,0.2539,
+Greece,0.1125,0.1458,0.1646,
+Spain,0.1947,0.2047,0.2477,
+France,0.1168,0.1537,0.1799,
+Croatia,0.1028,0.1169,0.1321,
+Italy,0.1416,0.1964,0.2161,
+Cyprus,0.1745,0.1850,0.2183,
+Latvia,0.1041,0.1249,0.1511,
+Lithuania,0.0771,0.0906,0.1097,
+Luxembourg,0.1302,0.1566,0.1691,
+Hungary,0.0880,0.0880,0.1118,
+Malta,0.1229,0.1244,0.1306,
+Netherlands,0.1212,0.1420,0.1707,
+Austria,0.1265,0.1676,0.2012,
+Poland,0.0889,0.1135,0.1396,
+Portugal,0.1028,0.1864,0.2293,
+Romania,0.0964,0.1107,0.1317,
+Slovenia,0.1125,0.1342,0.1638,
+Slovakia,0.0849,0.1218,0.1462,
+Finland,0.1144,0.1369,0.1698,
+Sweden,0.1287,0.1592,0.1990,
+United Kingdom,0.1401,0.1927,0.2024,
+Iceland,0.1152,0.1175,0.1457,
+Liechtenstein,:,:,:,
+Norway,0.1382,0.1562,0.1907,
+Montenegro,0.0829,0.0848,0.1030,
+North Macedonia,0.0667,0.0667,0.0787,
+Albania,0.0759,0.0759,0.0910,
+Serbia,0.0542,0.0591,0.0709,
+Turkey,0.0688,0.0726,0.0857,
+Bosnia and Herzegovina,0.0729,0.0744,0.0871,
+Kosovo (under United Nations Security Council Resolution 1244/99),0.0579,0.0591,0.0638,
+Moldova,0.0960,0.0960,0.1029,
+Ukraine,0.0342,0.0342,0.0410,
+,,,,
+Special value:,,,,
+:,not available,,,
+,,,,
+PRODUCT,Electrical energy,,,
+CONSOM,Band DC : 2 500 kWh < Consumption < 5 000 kWh,,,
+UNIT,Kilowatt-hour,,,
+TIME,2019S1,,,
+,,,,
+CURRENCY,Euro,Euro,Euro,
+GEO/TAX,Excluding taxes and levies,Excluding VAT and other recoverable taxes and levies,All taxes and levies included,
+European Union - 28 countries,0.1351,0.1841,0.2147,
+"Euro area (EA11-2000, EA12-2006, EA13-2007, EA15-2008, EA16-2010, EA17-2013, EA18-2014, EA19)",0.1396,0.1928,0.2270,
+Belgium,0.1965,0.2355,0.2839,
+Bulgaria,0.0831,0.0831,0.0997,
+Czechia,0.1433,0.1444,0.1748,
+Denmark,0.1084,0.2387,0.2984,
+Germany (until 1990 former territory of the FRG),0.1473,0.2595,0.3088,
+Estonia,0.0982,0.1131,0.1357,
+Ireland,0.2027,0.2134,0.2423,
+Greece,0.1139,0.1482,0.1650,
+Spain,0.1889,0.1986,0.2403,
+France,0.1138,0.1508,0.1765,
+Croatia,0.1028,0.1169,0.1321,
+Italy,0.1432,0.2090,0.2301,
+Cyprus,0.1762,0.1867,0.2203,
+Latvia,0.1136,0.1347,0.1629,
+Lithuania,0.0947,0.1037,0.1255,
+Luxembourg,0.1326,0.1666,0.1798,
+Hungary,0.0882,0.0882,0.1120,
+Malta,0.1228,0.1243,0.1305,
+Netherlands,0.1357,0.1708,0.2052,
+Austria,0.1316,0.1695,0.2034,
+Poland,0.0884,0.1092,0.1343,
+Portugal,0.1103,0.1751,0.2154,
+Romania,0.0983,0.1141,0.1358,
+Slovenia,0.1125,0.1339,0.1634,
+Slovakia,0.0962,0.1314,0.1577,
+Finland,0.1173,0.1398,0.1734,
+Sweden,0.1297,0.1612,0.2015,
+United Kingdom,0.1450,0.2021,0.2122,
+Iceland,0.1112,0.1134,0.1406,
+Liechtenstein,:,:,:,
+Norway,0.1360,0.1529,0.1867,
+Montenegro,0.0834,0.0850,0.1032,
+North Macedonia,:,:,:,
+Albania,:,:,:,
+Serbia,0.0541,0.0589,0.0706,
+Turkey,0.0684,0.0718,0.0847,
+Bosnia and Herzegovina,0.0729,0.0746,0.0873,
+Kosovo (under United Nations Security Council Resolution 1244/99),0.0537,0.0556,0.0600,
+Moldova,0.0936,0.0936,0.0936,
+Ukraine,0.0369,0.0369,0.0442,
+,,,,
+Special value:,,,,
+:,not available,,,
