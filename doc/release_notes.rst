@@ -11,6 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Waste streams are decoupled from industry and biomass and can be set in the config ``sector: waste``
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 

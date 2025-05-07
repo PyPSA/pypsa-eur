@@ -419,6 +419,10 @@ biomass:
     2045: 1
     2050: 1
 
+waste:
+  transport: false
+  waste_to_energy: true
+  waste_to_energy_cc: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
@@ -445,6 +449,7 @@ sector:
   transport: true
   heating: true
   biomass: true
+  waste: false
   industry: true
   shipping: true
   aviation: true
@@ -727,7 +732,6 @@ sector:
   biosng: false
   biosng_cc: false
   bioH2: false
-  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -764,6 +768,7 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+  waste_spatial: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -830,8 +835,6 @@ industry:
     2045: 0.16
     2050: 0.20
   HVC_environment_sequestration_fraction: 0.
-  waste_to_energy: false
-  waste_to_energy_cc: false
   sector_ratios_fraction_future:
     2020: 0.0
     2025: 0.1

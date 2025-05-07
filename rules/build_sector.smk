@@ -1191,6 +1191,7 @@ rule prepare_sector_network:
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
         biomass=config_provider("biomass"),
+        waste=config_provider("waste"),
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
@@ -1223,6 +1224,7 @@ rule prepare_sector_network:
             resources("biomass_transport_costs.csv")
             if config_provider("sector", "biomass_transport")(w)
             or config_provider("sector", "biomass_spatial")(w)
+            or config_provider("waste", "transport")(w)
             else []
         ),
         sequestration_potential=lambda w: (
