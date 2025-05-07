@@ -1,0 +1,5 @@
+,Unit,Values,Description
+unit_commitment ,bool,"{true, false}","Allow the overwrite of ramp_limit_up, ramp_limit_start_up, ramp_limit_shut_down, p_min_pu, min_up_time, min_down_time, and start_up_cost of conventional generators. Refer to the CSV file „unit_commitment.csv“."
+dynamic_fuel_price ,bool,"{true, false}","Consider the monthly fluctuating fuel prices for each conventional generator. Refer to the CSV file ""data/validation/monthly_fuel_price.csv""."
+{name},--,string,For any carrier/technology overwrite attributes as listed below.
+-- {attribute},--,string or float,"For any attribute, can specify a float or reference to a file path to a CSV file giving floats for each country (2-letter code)."

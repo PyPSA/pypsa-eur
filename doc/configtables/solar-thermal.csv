@@ -1,0 +1,6 @@
+,Unit,Values,Description
+clearsky_model ,--,"{‘simple’, ‘enhanced’}",Type of clearsky model for diffuse irradiation
+orientation ,--,"{units of degrees, ‘latitude_optimal’}",Panel orientation with slope and azimuth
+-- azimuth,float,units of degrees,The angle between the North and the sun with panels on the local horizon
+
+-- slope,float,units of degrees,The angle between the ground and the panels
