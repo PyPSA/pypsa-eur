@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+font.family: sans-serif
+image.cmap: viridis
+figure.autolayout : True
+figure.dpi : 400
+legend.frameon : False

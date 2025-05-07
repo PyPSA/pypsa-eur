@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+version: 2
+
+sphinx:
+  configuration: doc/conf.py
+
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.11"
+  apt_packages:
+  - graphviz
+
+python:
+  install:
+  - requirements: doc/requirements.txt

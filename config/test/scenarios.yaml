@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+test-elec-no-offshore-wind:
+  electricity:
+    renewable_carriers: [solar, onwind]
+
+test-elec-no-onshore-wind:
+  electricity:
+    renewable_carriers: [solar, offwind-ac, offwind-dc]

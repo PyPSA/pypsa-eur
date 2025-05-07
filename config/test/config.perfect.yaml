@@ -1,0 +1,97 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+run:
+  name: "test-sector-perfect"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+foresight: perfect
+
+scenario:
+  clusters:
+  - 5
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2030
+  - 2040
+  - 2050
+
+countries: ['BE']
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+electricity:
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+sector:
+  min_part_load_fischer_tropsch: 0
+  min_part_load_methanolisation: 0
+  solid_biomass_import:
+    enable: true
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x: [4., 15.]
+      y: [46., 56.]
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+clustering:
+  temporal:
+    resolution_sector: 8760h
+
+industry:
+  St_primary_fraction:
+    2020: 0.8
+    2030: 0.6
+    2040: 0.5
+    2050: 0.4
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex
+  mem: 4000
+
+  check_objective:
+    enable: false
+    expected_value: 1.3778753459e+10
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
