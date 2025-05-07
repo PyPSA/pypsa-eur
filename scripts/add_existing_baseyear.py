@@ -465,12 +465,12 @@ def get_efficiency(
     return efficiency
 
 
-def add_heating_capacities_installed_before_baseyear(
+def add_heating_capacities_installed_before_baseyear(  # if heat source not in existing heating hinzufügen
     n: pypsa.Network,
     costs: pd.DataFrame,
     baseyear: int,
     grouping_years: list[int],
-    existing_capacities: pd.DataFrame,
+    existing_capacities: pd.DataFrame,  # schauen was hier passiert, warum kein Fehler geworfen wird
     heat_pump_cop: xr.DataArray,
     heat_pump_source_types: dict[str, list[str]],
     efficiency_file: str,
@@ -522,7 +522,9 @@ def add_heating_capacities_installed_before_baseyear(
     ratios = []
     valid_grouping_years = []
 
-    for heat_system in existing_capacities.columns.get_level_values(0).unique():
+    for heat_system in existing_capacities.columns.get_level_values(
+        0
+    ).unique():  # ist der heat pump typ vorhanden überprüfen
         heat_system = HeatSystem(heat_system)
 
         nodes = pd.Index(
@@ -562,8 +564,10 @@ def add_heating_capacities_installed_before_baseyear(
             ratios = _years / _years.sum()
 
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
-            # Add heat pumps
+            # Add heat pumps, but skip 'geothermal' and 'ptes'
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
+                if heat_source in ("geothermal", "ptes"):
+                    continue
                 costs_name = heat_system.heat_pump_costs_name(heat_source)
 
                 efficiency = (
@@ -705,7 +709,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_existing_baseyear",
-            configfiles="config/test/config.myopic.yaml",
+            configfiles="config/test/config.perfect.yaml",
             clusters="5",
             opts="",
             sector_opts="",
