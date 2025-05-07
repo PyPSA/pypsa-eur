@@ -665,23 +665,20 @@ def base_network(
     config,
 ):
     base_network = config["electricity"].get("base_network")
-    osm_prebuilt_version = config["electricity"].get("osm-prebuilt-version")
+    osm_version = config["data"]["osm"]["version"]
     assert base_network in {
         "entsoegridkit",
-        "osm-raw",
-        "osm-prebuilt",
-    }, (
-        f"base_network must be either 'entsoegridkit', 'osm-raw' or 'osm-prebuilt', but got '{base_network}'"
-    )
+        "osm",
+    }, f"base_network must be either 'entsoegridkit' or 'osm', but got '{base_network}'"
     if base_network == "entsoegridkit":
         warnings.warn(
-            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm-raw' or 'osm-prebuilt' instead.",
+            "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead.",
             DeprecationWarning,
         )
 
     logger_str = (
         f"Creating base network using {base_network}"
-        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + (f" v{osm_version}" if base_network == "osm" else "")
         + "."
     )
     logger.info(logger_str)
@@ -703,7 +700,7 @@ def base_network(
         # Set electrical parameters of lines and links
         lines = _set_electrical_parameters_lines_eg(lines, config)
         links = _set_electrical_parameters_links_eg(links, config, links_p_nom)
-    elif base_network in {"osm-prebuilt", "osm-raw"}:
+    elif base_network in {"osm"}:
         links = _load_links_from_osm(buses, links)
         converters = _load_converters_from_osm(buses, converters)
 
@@ -711,9 +708,7 @@ def base_network(
         lines = _set_electrical_parameters_lines_osm(lines, config)
         links = _set_electrical_parameters_links_osm(links, config)
     else:
-        raise ValueError(
-            "base_network must be either 'entsoegridkit', 'osm-raw', or 'osm-prebuilt'"
-        )
+        raise ValueError("base_network must be either 'entsoegridkit' or 'osm'")
 
     # Set electrical parameters of transformers and converters
     transformers = _set_electrical_parameters_transformers(transformers, config)
@@ -722,7 +717,7 @@ def base_network(
     n = pypsa.Network()
     n.name = (
         f"PyPSA-Eur ({base_network}"
-        + (f" v{osm_prebuilt_version}" if base_network == "osm-prebuilt" else "")
+        + (f" v{osm_version}" if base_network == "osm" else "")
         + ")"
     )
 

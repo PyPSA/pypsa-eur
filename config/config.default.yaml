@@ -70,6 +70,14 @@ enable:
   retrieve_cutout: true
   drop_leap_day: true
 
+# Specify fixed versions of external data sources to use
+data:
+  # TODO implement
+  # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
+  osm:
+    source: "archive" # "archive" or "build"
+    version: "upstream" # specific version from 'data/versions.csv', 'latest' or if 'source: "build"' is used, then use "upstream" here
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
@@ -83,8 +91,7 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 330., 380., 400., 500., 750.]
-  base_network: osm-prebuilt
-  osm-prebuilt-version: 0.6
+  base_network: osm
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false

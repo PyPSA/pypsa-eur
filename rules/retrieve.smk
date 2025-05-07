@@ -547,10 +547,8 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-prebuilt"
-):
-    OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
+if config["data"]["osm"]["source"] == "archive":
+    OSM_VERSION = config["data"]["osm"]["version"]
     OSM_FILES = [
         "buses.csv",
         "converters.csv",
@@ -558,30 +556,22 @@ if config["enable"]["retrieve"] and (
         "links.csv",
         "transformers.csv",
     ]
-    if OSM_VERSION >= 0.6:
+    if float(OSM_VERSION) >= 0.6:
+        # Newer versions include the additional map.html file for visualisation
         OSM_FILES.append("map.html")
-    OSM_ZENODO_IDS = {
-        0.1: "12799202",
-        0.2: "13342577",
-        0.3: "13358976",
-        0.4: "13759222",
-        0.5: "13981528",
-        0.6: "14144752",
-    }
 
-    # update rule to use the correct version
-    rule retrieve_osm_prebuilt:
+    OSM_URL = get_versioned_data_url(
+        source_name="osm",
+        version=OSM_VERSION,
+    )
+
+    rule retrieve_osm_archive:
         input:
-            **{
-                file: storage(
-                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
-                )
-                for file in OSM_FILES
-            },
+            **{file: storage(f"{OSM_URL}/files/{file}") for file in OSM_FILES},
         output:
-            **{file: f"data/osm-prebuilt/{OSM_VERSION}/{file}" for file in OSM_FILES},
+            **{file: f"data/osm/{OSM_VERSION}/{file}" for file in OSM_FILES},
         log:
-            "logs/retrieve_osm_prebuilt.log",
+            "logs/retrieve_osm_archive.log",
         threads: 1
         resources:
             mem_mb=500,
@@ -592,50 +582,43 @@ if config["enable"]["retrieve"] and (
 
 
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
+if config["data"]["osm"]["source"] == "build":
 
-    rule retrieve_osm_data:
+    rule retrieve_osm_raw:
         output:
-            cables_way="data/osm-raw/{country}/cables_way.json",
-            lines_way="data/osm-raw/{country}/lines_way.json",
-            routes_relation="data/osm-raw/{country}/routes_relation.json",
-            substations_way="data/osm-raw/{country}/substations_way.json",
-            substations_relation="data/osm-raw/{country}/substations_relation.json",
+            cables_way="data/osm/upstream/raw/{country}/cables_way.json",
+            lines_way="data/osm/upstream/raw/{country}/lines_way.json",
+            routes_relation="data/osm/upstream/raw/{country}/routes_relation.json",
+            substations_way="data/osm/upstream/raw/{country}/substations_way.json",
+            substations_relation="data/osm/upstream/raw/{country}/substations_relation.json",
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/retrieve_osm_data.py"
+            "../scripts/retrieve_osm_raw.py"
 
-
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
-
-    rule retrieve_osm_data_all:
+    rule retrieve_osm_raw_all:
         input:
             expand(
-                "data/osm-raw/{country}/cables_way.json",
+                "data/osm/upstream/raw/{country}/cables_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/lines_way.json",
+                "data/osm/upstream/raw/{country}/lines_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/routes_relation.json",
+                "data/osm/upstream/raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/substations_way.json",
+                "data/osm/upstream/raw/{country}/substations_way.json",
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/substations_relation.json",
+                "data/osm/upstream/raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
 

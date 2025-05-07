@@ -194,7 +194,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://www.protectedplanet.net/en/legal>`__
 - **Description:** Contains global protected marine areas.
 
-``data/osm-raw``
+``data/osm/build/raw``
 
 - **Source:** OpenStreetMap via Overpass API
 - **Link:** https://overpass-api.de/api/interpreter

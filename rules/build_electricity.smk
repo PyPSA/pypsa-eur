@@ -55,17 +55,17 @@ rule build_powerplants:
 
 
 def input_base_network(w):
-    base_network = config_provider("electricity", "base_network")(w)
-    osm_prebuilt_version = config_provider("electricity", "osm-prebuilt-version")(w)
+    network_source = config_provider("electricity", "base_network")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
-    if base_network == "osm-raw":
-        inputs = {c: resources(f"osm-raw/build/{c}.csv") for c in components}
-    elif base_network == "osm-prebuilt":
-        inputs = {
-            c: f"data/{base_network}/{osm_prebuilt_version}/{c}.csv" for c in components
-        }
+    if base_network == "osm":
+        osm_source = config_provider("data", "osm", "source")(w)
+        osm_version = config_provider("data", "osm", "version")(w)
+        if osm_source == "build":
+            inputs = {c: resources(f"osm/upstream/build/{c}.csv") for c in components}
+        elif osm_source == "archive":
+            inputs = {c: f"data/osm/{osm_version}/{c}.csv" for c in components}
     elif base_network == "entsoegridkit":
-        inputs = {c: f"data/{base_network}/{c}.csv" for c in components}
+        inputs = {c: f"data/ensoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
         inputs["links_p_nom"] = "data/links_p_nom.csv"
     return inputs
@@ -737,38 +737,45 @@ rule prepare_network:
         "../scripts/prepare_network.py"
 
 
-if config["electricity"]["base_network"] == "osm-raw":
+if (
+    config["electricity"]["base_network"] == "osm"
+    and config["data"]["osm"]["source"] == "build"
+):
 
     rule clean_osm_data:
         input:
             cables_way=expand(
-                "data/osm-raw/{country}/cables_way.json",
+                f"data/osm/upstream/raw/{country}/cables_way.json",
                 country=config_provider("countries"),
             ),
             lines_way=expand(
-                "data/osm-raw/{country}/lines_way.json",
+                "data/osm/upstream/raw/{country}/lines_way.json",
                 country=config_provider("countries"),
             ),
             routes_relation=expand(
-                "data/osm-raw/{country}/routes_relation.json",
+                "data/osm/upstream/raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             substations_way=expand(
-                "data/osm-raw/{country}/substations_way.json",
+                "data/osm/upstream/raw/{country}/substations_way.json",
                 country=config_provider("countries"),
             ),
             substations_relation=expand(
-                "data/osm-raw/{country}/substations_relation.json",
+                "data/osm/upstream/raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
             offshore_shapes=resources("offshore_shapes.geojson"),
             country_shapes=resources("country_shapes.geojson"),
         output:
-            substations=resources("osm-raw/clean/substations.geojson"),
-            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
-            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
-            lines=resources("osm-raw/clean/lines.geojson"),
-            links=resources("osm-raw/clean/links.geojson"),
+            substations=resources("osm/upstream/clean/substations.geojson"),
+            substations_polygon=resources(
+                "osm/upstream/clean/substations_polygon.geojson"
+            ),
+            converters_polygon=resources(
+                "osm/upstream/clean/converters_polygon.geojson"
+            ),
+            lines=resources("osm/upstream/clean/lines.geojson"),
+            links=resources("osm/upstream/clean/links.geojson"),
         log:
             logs("clean_osm_data.log"),
         benchmark:
@@ -781,34 +788,41 @@ if config["electricity"]["base_network"] == "osm-raw":
         script:
             "../scripts/clean_osm_data.py"
 
-
-if config["electricity"]["base_network"] == "osm-raw":
-
     rule build_osm_network:
         params:
             countries=config_provider("countries"),
             voltages=config_provider("electricity", "voltages"),
             line_types=config_provider("lines", "types"),
         input:
-            substations=resources("osm-raw/clean/substations.geojson"),
-            substations_polygon=resources("osm-raw/clean/substations_polygon.geojson"),
-            converters_polygon=resources("osm-raw/clean/converters_polygon.geojson"),
-            lines=resources("osm-raw/clean/lines.geojson"),
-            links=resources("osm-raw/clean/links.geojson"),
+            substations=resources("osm/upstream/clean/substations.geojson"),
+            substations_polygon=resources(
+                "osm/upstream/clean/substations_polygon.geojson"
+            ),
+            converters_polygon=resources(
+                "osm/upstream/clean/converters_polygon.geojson"
+            ),
+            lines=resources("osm/upstream/clean/lines.geojson"),
+            links=resources("osm/upstream/clean/links.geojson"),
             country_shapes=resources("country_shapes.geojson"),
         output:
-            lines=resources("osm-raw/build/lines.csv"),
-            links=resources("osm-raw/build/links.csv"),
-            converters=resources("osm-raw/build/converters.csv"),
-            transformers=resources("osm-raw/build/transformers.csv"),
-            substations=resources("osm-raw/build/buses.csv"),
-            lines_geojson=resources("osm-raw/build/geojson/lines.geojson"),
-            links_geojson=resources("osm-raw/build/geojson/links.geojson"),
-            converters_geojson=resources("osm-raw/build/geojson/converters.geojson"),
-            transformers_geojson=resources("osm-raw/build/geojson/transformers.geojson"),
-            substations_geojson=resources("osm-raw/build/geojson/buses.geojson"),
-            stations_polygon=resources("osm-raw/build/geojson/stations_polygon.geojson"),
-            buses_polygon=resources("osm-raw/build/geojson/buses_polygon.geojson"),
+            lines=resources("osm/upstream/build/lines.csv"),
+            links=resources("osm/upstream/build/links.csv"),
+            converters=resources("osm/upstream/build/converters.csv"),
+            transformers=resources("osm/upstream/build/transformers.csv"),
+            substations=resources("osm/upstream/build/buses.csv"),
+            lines_geojson=resources("osm/upstream/build/geojson/lines.geojson"),
+            links_geojson=resources("osm/upstream/build/geojson/links.geojson"),
+            converters_geojson=resources(
+                "osm/upstream/build/geojson/converters.geojson"
+            ),
+            transformers_geojson=resources(
+                "osm/upstream/build/geojson/transformers.geojson"
+            ),
+            substations_geojson=resources("osm/upstream/build/geojson/buses.geojson"),
+            stations_polygon=resources(
+                "osm/upstream/build/geojson/stations_polygon.geojson"
+            ),
+            buses_polygon=resources("osm/upstream/build/geojson/buses_polygon.geojson"),
         log:
             logs("build_osm_network.log"),
         benchmark:
