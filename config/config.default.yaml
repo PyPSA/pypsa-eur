@@ -76,7 +76,13 @@ data:
   # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
   osm:
     source: "archive" # "archive" or "build"
-    version: "upstream" # specific version from 'data/versions.csv', 'latest' or if 'source: "build"' is used, then use "upstream" here
+    version: "latest" # specific version from 'data/versions.csv', 'latest' or if 'source: "build"' is used, then use "upstream" here
+  worldbank_urban_population:
+    source: "archive"
+    version: "latest"
+  gem_gspt: # 
+    source: "archive"
+    version: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
