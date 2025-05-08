@@ -377,10 +377,7 @@ if config["data"]["worldbank_urban_population"]["source"] in ["build", "archive"
 
     rule retrieve_worldbank_urban_population:
         params:
-            url=get_versioned_data_url(
-                source_name="worldbank_urban_population",
-                version=WB_URB_POP_VERSION,
-            ),
+            url=get_data_url(source_name="worldbank_urban_population"),
         output:
             zip=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
             csv=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
@@ -565,10 +562,7 @@ if config["data"]["osm"]["source"] == "archive":
         # Newer versions include the additional map.html file for visualisation
         OSM_FILES.append("map.html")
 
-    OSM_URL = get_versioned_data_url(
-        source_name="osm",
-        version=OSM_VERSION,
-    )
+    OSM_URL = get_data_url(source_name="osm")
 
     rule retrieve_osm_archive:
         input:

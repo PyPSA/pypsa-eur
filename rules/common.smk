@@ -81,47 +81,40 @@ def config_provider(*keys, default=None):
 
 
 DATA_VERSIONS = pd.read_csv(
-    "data/versions.csv", dtype=str, na_filter=False, delimiter=","
+    "data/versions.csv", dtype=str, na_filter=False, delimiter=",", comment="#"
 )
-
-
-def get_versioned_data_url(source_name: str, version: str | None = None):
-    """
-    Provide the URL for a specific data source and version.
-
-    Instead of a specific version, it can also be 'latest' to get the most recent version.
-    """
-
-    if version == "latest":
-        version = DATA_VERSIONS.query(
-            f"`source_name` == '{source_name}' and `recency` == 'latest'"
-        )
-    else:
-        version = DATA_VERSIONS.query(
-            f"`source_name` == '{source_name}' and `version` == '{version}'"
-        )
-
-    if version.empty:
-        raise ValueError(f"Version '{version}' not found for source '{source_name}'.")
-
-    return version["url"].item()
 
 
 def get_data_version(source_name: str) -> str:
     """
-    Provide the version of a requested data source based on the config.
+    Provide the version of a data source based on the config and the data/versions.csv file.
 
-    This maps special cases to specific versions, i.e.
-    * a lookup to the latest version if 'latest' is specified
-    * 'upstream' if the data source is set to 'build' from upstream
+    This translates special cases to specific versions, i.e.
+    * a lookup to the latest version if 'latest' is specified based on data/versions.csv
+    * returning 'upstream' if the data source in the config is set to 'build' from upstream
     """
-    version = config["data"][source_name]["version"]
-    source = config["data"][source_name]["source"]
+    version = config["data"][source_name][
+        "version"
+    ]  # TODO as is right now, it is not compatible with config_provider
+    source = config["data"][source_name][
+        "source"
+    ]  # TODO as is right now, it is not compatible with config_provider
 
     if version == "latest":
+        # Get version from csv dataframe
         version = DATA_VERSIONS.query(
             f"`source_name` == '{source_name}' and `recency` == 'latest'"
-        )["version"].item()
+        )["version"]
+
+        # .item() will raise an error, if there isn't exactly one entry
+        # use this for checking that entries in the csv are consistent
+        try:
+            version = version.item()
+        except ValueError as e:
+            raise ValueError(
+                f"No or more than one versions tagged as 'latest' found for source '{source_name}' in `data/versions.csv`. "
+                f"Check the file for correct entries."
+            ) from e
 
     if source == "build":
         version = "upstream"
@@ -133,6 +126,26 @@ def get_data_version(source_name: str) -> str:
         )
 
     return version
+
+
+def get_data_url(source_name: str):
+    """
+    Return the URL for a specific data source by taking into account the version set in the config.
+    """
+
+    # Get and resolve the version
+    version = get_data_version(source_name)
+
+    # Extract the URL
+    version = DATA_VERSIONS.query(
+        f"`source_name` == '{source_name}' and `version` == '{version}'"
+    )
+
+    # Consistency check
+    if version.empty:
+        raise ValueError(f"Version '{version}' not found for source '{source_name}'.")
+
+    return version["url"].item()
 
 
 def solver_threads(w):
