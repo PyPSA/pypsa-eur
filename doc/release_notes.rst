@@ -11,6 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* (Breaking) Group gaps filling strategies options and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677)
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
