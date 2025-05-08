@@ -1,0 +1,17 @@
+country,sector,estimated,value,source,,comments,population [in Million],
+AL,residential,0,64,p.13 1.6 million m² = 2.5% of total floor area,https://www.buildup.eu/sites/default/files/content/sled_albania_residential_building_eng.pdf,,,
+AL,services,0,,,,,,
+BA,residential,0,125.89,Tabula,https://episcope.eu/building-typology/country/ba/,strong differences ? other source claims more than 300 Million m²,,https://www.buildup.eu/sites/default/files/content/sled_serbia_building_eng.pdf
+BA,services,0,,,,,,
+RS,residential,0,72.3,Odyssee(2011),https://odyssee.enerdata.net/database/,,,
+RS,services,0,,,,,,
+MK,residential,0,,"Worldbank p.7 Skopje 75% residential, 25% commercial",http://documents.albankaldawli.org/curated/ar/838951574180734318/pdf/Project-Information-Document-North-Macedonia-Public-Sector-Energy-Efficiency-Project-P149990.pdf,15 % live in illegal constructed buildings ? not part of the statistics,2.1,
+MK,services,0,,,,,,
+ME,residential,0,19.625,p.13 0.314 million m² = 1.6% of total floor area,buildup.eu/sites/default/files/content/sled_montenegro_building_eng.pdf,Only 50 % of the floor area is heated p.12,,buildup.eu/sites/default/files/content/sled_montenegro_building_eng.pdf
+ME,services,0,,,,,,
+CH,residential,0,99.45,Odyssee(2015),,,,
+CH,services,1,78.1392857142857,p.8 44%floor area is services,https://bta.climate-kic.org/wp-content/uploads/2018/04/171123-CK-BTA-DEF-BMB_SWITZERLAND_.pdf,,,
+NO,residential,0,121.55,Odyssee(2015),,,,
+NO,services,0,115.21,Odyssee(2015),,,,
+PL,residential,0,1028.41,EU Building Database,,,,
+PL,services,0,498.84,EU Building Database,,,,
