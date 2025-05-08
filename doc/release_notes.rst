@@ -11,6 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
