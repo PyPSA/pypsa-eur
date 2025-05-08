@@ -55,17 +55,11 @@ rule build_powerplants:
 
 
 def input_base_network(w):
-    network_source = config_provider("electricity", "base_network")(w)
+    base_network = config_provider("electricity", "base_network")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if base_network == "osm":
-        osm_source = config_provider("data", "osm", "source")(w)
-        osm_version = config_provider("data", "osm", "version")(w)
-        if osm_source == "build":
-            inputs = {
-                c: resources(f"osm/{osm_version}/build/{c}.csv") for c in components
-            }
-        elif osm_source == "archive":
-            inputs = {c: f"data/osm/{osm_version}/{c}.csv" for c in components}
+        osm_version = get_data_version("osm")
+        inputs = {c: f"data/osm/{osm_version}/{c}.csv" for c in components}
     elif base_network == "entsoegridkit":
         inputs = {c: f"data/ensoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
@@ -812,28 +806,24 @@ if (
             links=resources(f"osm/{OSM_VERSION}/clean/links.geojson"),
             country_shapes=resources("country_shapes.geojson"),
         output:
-            lines=resources(f"osm/{OSM_VERSION}/build/lines.csv"),
-            links=resources(f"osm/{OSM_VERSION}/build/links.csv"),
-            converters=resources(f"osm/{OSM_VERSION}/build/converters.csv"),
-            transformers=resources(f"osm/{OSM_VERSION}/build/transformers.csv"),
-            substations=resources(f"osm/{OSM_VERSION}/build/buses.csv"),
-            lines_geojson=resources(f"osm/{OSM_VERSION}/build/geojson/lines.geojson"),
-            links_geojson=resources(f"osm/{OSM_VERSION}/build/geojson/links.geojson"),
+            lines=resources(f"osm/{OSM_VERSION}/lines.csv"),
+            links=resources(f"osm/{OSM_VERSION}/links.csv"),
+            converters=resources(f"osm/{OSM_VERSION}/converters.csv"),
+            transformers=resources(f"osm/{OSM_VERSION}/transformers.csv"),
+            substations=resources(f"osm/{OSM_VERSION}/buses.csv"),
+            lines_geojson=resources(f"osm/{OSM_VERSION}/geojson/lines.geojson"),
+            links_geojson=resources(f"osm/{OSM_VERSION}/geojson/links.geojson"),
             converters_geojson=resources(
-                f"osm/{OSM_VERSION}/build/geojson/converters.geojson"
+                f"osm/{OSM_VERSION}/geojson/converters.geojson"
             ),
             transformers_geojson=resources(
-                f"osm/{OSM_VERSION}/build/geojson/transformers.geojson"
+                f"osm/{OSM_VERSION}/geojson/transformers.geojson"
             ),
-            substations_geojson=resources(
-                f"osm/{OSM_VERSION}/build/geojson/buses.geojson"
-            ),
+            substations_geojson=resources(f"osm/{OSM_VERSION}/geojson/buses.geojson"),
             stations_polygon=resources(
-                f"osm/{OSM_VERSION}/build/geojson/stations_polygon.geojson"
+                f"osm/{OSM_VERSION}/geojson/stations_polygon.geojson"
             ),
-            buses_polygon=resources(
-                f"osm/{OSM_VERSION}/build/geojson/buses_polygon.geojson"
-            ),
+            buses_polygon=resources(f"osm/{OSM_VERSION}/geojson/buses_polygon.geojson"),
         log:
             logs("build_osm_network.log"),
         benchmark:
