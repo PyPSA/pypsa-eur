@@ -173,21 +173,24 @@ rule purge:
         else:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 
+
 rule dump_graph_config:
     """Dump the current Snakemake configuration to a YAML file for graph generation."""
     output:
-        config_file=temp(resources("dag_final_config.yaml"))
+        config_file=temp(resources("dag_final_config.yaml")),
     run:
         import yaml
+
         with open(output.config_file, "w") as f:
             yaml.dump(config, f)
+
 
 rule rulegraph:
     """Generates Rule DAG in DOT, PDF, PNG, and SVG formats using the final configuration."""
     message:
         "Creating RULEGRAPH dag in multiple formats using the final configuration."
     input:
-        config_file=rules.dump_graph_config.output.config_file
+        config_file=rules.dump_graph_config.output.config_file,
     output:
         dot=resources("dag_rulegraph.dot"),
         pdf=resources("dag_rulegraph.pdf"),
@@ -219,12 +222,13 @@ rule rulegraph:
         fi
         """
 
+
 rule filegraph:
     """Generates File DAG in DOT, PDF, PNG, and SVG formats using the final configuration."""
     message:
         "Creating FILEGRAPH dag in multiple formats using the final configuration."
     input:
-        config_file=rules.dump_graph_config.output.config_file
+        config_file=rules.dump_graph_config.output.config_file,
     output:
         dot=resources("dag_filegraph.dot"),
         pdf=resources("dag_filegraph.pdf"),
@@ -256,6 +260,7 @@ rule filegraph:
         fi
         """
 
+
 rule doc:
     message:
         "Build documentation."
@@ -263,6 +268,7 @@ rule doc:
         directory("doc/_build"),
     shell:
         "make -C doc html"
+
 
 rule sync:
     params:
