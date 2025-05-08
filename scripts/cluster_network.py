@@ -1,61 +1,30 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
 # coding: utf-8
 """
 Creates networks clustered to ``{cluster}`` number of zones with aggregated
-buses, generators and transmission corridors.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-      cluster_network:
-      aggregation_strategies:
-      focus_weights:
-
-    solving:
-        solver:
-            name:
-
-    lines:
-        length_factor:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`toplevel_cf`, :ref:`renewable_cf`, :ref:`solving_cf`, :ref:`lines_cf`
-
-Inputs
-------
-
-- ``resources/regions_onshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/regions_offshore_elec_s{simpl}.geojson``: confer :ref:`simplify`
-- ``resources/busmap_elec_s{simpl}.csv``: confer :ref:`simplify`
-- ``networks/elec_s{simpl}.nc``: confer :ref:`simplify`
-- ``data/custom_busmap_elec_s{simpl}_{clusters}.csv``: optional input
+buses and transmission corridors.
 
 Outputs
 -------
 
-- ``resources/regions_onshore_elec_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_onshore_base_s_{clusters}.geojson``:
 
-    .. image:: img/regions_onshore_elec_s_X.png
+    .. image:: img/regions_onshore_base_s_X.png
         :scale: 33 %
 
-- ``resources/regions_offshore_elec_s{simpl}_{clusters}.geojson``:
+- ``resources/regions_offshore_base_s_{clusters}.geojson``:
 
-    .. image:: img/regions_offshore_elec_s_X.png
+    .. image:: img/regions_offshore_base_s_X.png
         :scale: 33 %
 
-- ``resources/busmap_elec_s{simpl}_{clusters}.csv``: Mapping of buses from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
-- ``resources/linemap_elec_s{simpl}_{clusters}.csv``: Mapping of lines from ``networks/elec_s{simpl}.nc`` to ``networks/elec_s{simpl}_{clusters}.nc``;
-- ``networks/elec_s{simpl}_{clusters}.nc``:
+- ``resources/busmap_base_s_{clusters}.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
+- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
+- ``networks/base_s_{clusters}.nc``:
 
-    .. image:: img/elec_s_X.png
+    .. image:: img/base_s_X.png
         :scale: 40  %
 
 Description
@@ -63,60 +32,33 @@ Description
 
 .. note::
 
-    **Why is clustering used both in** ``simplify_network`` **and** ``cluster_network`` **?**
-
-        Consider for example a network ``networks/elec_s100_50.nc`` in which
-        ``simplify_network`` clusters the network to 100 buses and in a second
-        step ``cluster_network``` reduces it down to 50 buses.
-
-        In preliminary tests, it turns out, that the principal effect of
-        changing spatial resolution is actually only partially due to the
-        transmission network. It is more important to differentiate between
-        wind generators with higher capacity factors from those with lower
-        capacity factors, i.e. to have a higher spatial resolution in the
-        renewable generation than in the number of buses.
-
-        The two-step clustering allows to study this effect by looking at
-        networks like ``networks/elec_s100_50m.nc``. Note the additional
-        ``m`` in the ``{cluster}`` wildcard. So in the example network
-        there are still up to 100 different wind generators.
-
-        In combination these two features allow you to study the spatial
-        resolution of the transmission network separately from the
-        spatial resolution of renewable generators.
-
     **Is it possible to run the model without the** ``simplify_network`` **rule?**
 
         No, the network clustering methods in the PyPSA module
         `pypsa.clustering.spatial <https://github.com/PyPSA/PyPSA/blob/master/pypsa/clustering/spatial.py>`_
         do not work reliably with multiple voltage levels and transformers.
 
-.. tip::
-    The rule :mod:`cluster_networks` runs
-    for all ``scenario`` s in the configuration file
-    the rule :mod:`cluster_network`.
-
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: img/elec_s_512.png
+.. image:: img/base_s_512.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: img/elec_s_256.png
+.. image:: img/base_s_256.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: img/elec_s_128.png
+.. image:: img/base_s_128.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: img/elec_s_37.png
+.. image:: img/base_s_37.png
     :scale: 40  %
     :align: center
 """
@@ -127,14 +69,12 @@ from functools import reduce
 
 import geopandas as gpd
 import linopy
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-import seaborn as sns
-from _helpers import configure_logging, set_scenario_config, update_p_nom_max
-from add_electricity import load_costs
-from base_network import append_bus_shapes
+import tqdm
+import xarray as xr
+from _helpers import configure_logging, set_scenario_config
 from packaging.version import Version, parse
 from pypsa.clustering.spatial import (
     busmap_by_greedy_modularity,
@@ -142,6 +82,9 @@ from pypsa.clustering.spatial import (
     busmap_by_kmeans,
     get_clustering_from_busmap,
 )
+from scipy.sparse.csgraph import connected_components
+from shapely.algorithms.polylabel import polylabel
+from shapely.geometry import MultiPolygon, Polygon
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -149,100 +92,85 @@ warnings.filterwarnings(action="ignore", category=UserWarning)
 idx = pd.IndexSlice
 logger = logging.getLogger(__name__)
 
+GEO_CRS = "EPSG:4326"
+DISTANCE_CRS = "EPSG:3035"
+BUS_TOL = 500  # meters
+
 
 def normed(x):
     return (x / x.sum()).fillna(0.0)
 
 
-def weighting_for_country(n, x):
-    conv_carriers = {"OCGT", "CCGT", "PHS", "hydro"}
-    gen = n.generators.loc[n.generators.carrier.isin(conv_carriers)].groupby(
-        "bus"
-    ).p_nom.sum().reindex(n.buses.index, fill_value=0.0) + n.storage_units.loc[
-        n.storage_units.carrier.isin(conv_carriers)
-    ].groupby(
-        "bus"
-    ).p_nom.sum().reindex(
-        n.buses.index, fill_value=0.0
+def weighting_for_country(df: pd.DataFrame, weights: pd.Series) -> pd.Series:
+    w = normed(weights.reindex(df.index, fill_value=0))
+    return (w * (100 / w.max())).clip(lower=1).astype(int)
+
+
+def get_feature_data_for_hac(fn: str) -> pd.DataFrame:
+    ds = xr.open_dataset(fn)
+    feature_data = (
+        pd.concat([ds[var].to_pandas() for var in ds.data_vars], axis=0).fillna(0.0).T
     )
-    load = n.loads_t.p_set.mean().groupby(n.loads.bus).sum()
-
-    b_i = x.index
-    g = normed(gen.reindex(b_i, fill_value=0))
-    l = normed(load.reindex(b_i, fill_value=0))
-
-    w = g + l
-    return (w * (100.0 / w.max())).clip(lower=1.0).astype(int)
-
-
-def get_feature_for_hac(n, buses_i=None, feature=None):
-    if buses_i is None:
-        buses_i = n.buses.index
-
-    if feature is None:
-        feature = "solar+onwind-time"
-
-    carriers = feature.split("-")[0].split("+")
-    if "offwind" in carriers:
-        carriers.remove("offwind")
-        carriers = np.append(
-            carriers, n.generators.carrier.filter(like="offwind").unique()
-        )
-
-    if feature.split("-")[1] == "cap":
-        feature_data = pd.DataFrame(index=buses_i, columns=carriers)
-        for carrier in carriers:
-            gen_i = n.generators.query("carrier == @carrier").index
-            attach = (
-                n.generators_t.p_max_pu[gen_i]
-                .mean()
-                .rename(index=n.generators.loc[gen_i].bus)
-            )
-            feature_data[carrier] = attach
-
-    if feature.split("-")[1] == "time":
-        feature_data = pd.DataFrame(columns=buses_i)
-        for carrier in carriers:
-            gen_i = n.generators.query("carrier == @carrier").index
-            attach = n.generators_t.p_max_pu[gen_i].rename(
-                columns=n.generators.loc[gen_i].bus
-            )
-            feature_data = pd.concat([feature_data, attach], axis=0)[buses_i]
-
-        feature_data = feature_data.T
-        # timestamp raises error in sklearn >= v1.2:
-        feature_data.columns = feature_data.columns.astype(str)
-
-    feature_data = feature_data.fillna(0)
-
+    feature_data.columns = feature_data.columns.astype(str)
     return feature_data
 
 
-def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
+def fix_country_assignment_for_hac(n: pypsa.Network) -> None:
+    # overwrite country of nodes that are disconnected from their country-topology
+    for country in n.buses.country.unique():
+        m = n[n.buses.country == country].copy()
+
+        _, labels = connected_components(m.adjacency_matrix(), directed=False)
+
+        component = pd.Series(labels, index=m.buses.index)
+        component_sizes = component.value_counts()
+
+        if len(component_sizes) > 1:
+            disconnected_bus = component[component == component_sizes.index[-1]].index[
+                0
+            ]
+
+            neighbor_bus = n.lines.query(
+                "bus0 == @disconnected_bus or bus1 == @disconnected_bus"
+            ).iloc[0][["bus0", "bus1"]]
+            new_country = list(set(n.buses.loc[neighbor_bus].country) - {country})[0]
+
+            logger.info(
+                f"overwriting country `{country}` of bus `{disconnected_bus}` "
+                f"to new country `{new_country}`, because it is disconnected "
+                "from its initial inter-country transmission grid."
+            )
+            n.buses.at[disconnected_bus, "country"] = new_country
+
+
+def distribute_n_clusters_to_countries(
+    n: pypsa.Network,
+    n_clusters: int,
+    cluster_weights: pd.Series,
+    focus_weights: dict | None = None,
+    solver_name: str = "scip",
+) -> pd.Series:
     """
     Determine the number of clusters per country.
     """
     L = (
-        n.loads_t.p_set.mean()
-        .groupby(n.loads.bus)
-        .sum()
-        .groupby([n.buses.country, n.buses.sub_network])
+        cluster_weights.groupby([n.buses.country, n.buses.sub_network])
         .sum()
         .pipe(normed)
     )
 
     N = n.buses.groupby(["country", "sub_network"]).size()[L.index]
 
-    assert (
-        n_clusters >= len(N) and n_clusters <= N.sum()
-    ), f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
+    assert n_clusters >= len(N) and n_clusters <= N.sum(), (
+        f"Number of clusters must be {len(N)} <= n_clusters <= {N.sum()} for this selection of countries."
+    )
 
     if isinstance(focus_weights, dict):
         total_focus = sum(list(focus_weights.values()))
 
-        assert (
-            total_focus <= 1.0
-        ), "The sum of focus weights must be less than or equal to 1."
+        assert total_focus <= 1.0, (
+            "The sum of focus weights must be less than or equal to 1."
+        )
 
         for country, weight in focus_weights.items():
             L[country] = weight / len(L[country])
@@ -254,9 +182,9 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
 
         logger.warning("Using custom focus weights for determining number of clusters.")
 
-    assert np.isclose(
-        L.sum(), 1.0, rtol=1e-3
-    ), f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
+    assert np.isclose(L.sum(), 1.0, rtol=1e-3), (
+        f"Country weights L must sum up to 1.0 when distributing clusters. Is {L.sum()}."
+    )
 
     m = linopy.Model()
     clusters = m.add_variables(
@@ -277,92 +205,50 @@ def distribute_clusters(n, n_clusters, focus_weights=None, solver_name="scip"):
 
 
 def busmap_for_n_clusters(
-    n,
-    n_clusters,
-    solver_name,
-    focus_weights=None,
-    algorithm="kmeans",
-    feature=None,
+    n: pypsa.Network,
+    n_clusters_c: pd.Series,
+    cluster_weights: pd.Series,
+    algorithm: str = "kmeans",
+    features: pd.DataFrame | None = None,
     **algorithm_kwds,
-):
+) -> pd.Series:
+    if algorithm == "hac" and features is None:
+        raise ValueError("For HAC clustering, features must be provided.")
+
     if algorithm == "kmeans":
         algorithm_kwds.setdefault("n_init", 1000)
         algorithm_kwds.setdefault("max_iter", 30000)
         algorithm_kwds.setdefault("tol", 1e-6)
         algorithm_kwds.setdefault("random_state", 0)
 
-    def fix_country_assignment_for_hac(n):
-        from scipy.sparse import csgraph
-
-        # overwrite country of nodes that are disconnected from their country-topology
-        for country in n.buses.country.unique():
-            m = n[n.buses.country == country].copy()
-
-            _, labels = csgraph.connected_components(
-                m.adjacency_matrix(), directed=False
-            )
-
-            component = pd.Series(labels, index=m.buses.index)
-            component_sizes = component.value_counts()
-
-            if len(component_sizes) > 1:
-                disconnected_bus = component[
-                    component == component_sizes.index[-1]
-                ].index[0]
-
-                neighbor_bus = n.lines.query(
-                    "bus0 == @disconnected_bus or bus1 == @disconnected_bus"
-                ).iloc[0][["bus0", "bus1"]]
-                new_country = list(set(n.buses.loc[neighbor_bus].country) - {country})[
-                    0
-                ]
-
-                logger.info(
-                    f"overwriting country `{country}` of bus `{disconnected_bus}` "
-                    f"to new country `{new_country}`, because it is disconnected "
-                    "from its initial inter-country transmission grid."
-                )
-                n.buses.at[disconnected_bus, "country"] = new_country
-        return n
-
-    if algorithm == "hac":
-        feature = get_feature_for_hac(n, buses_i=n.buses.index, feature=feature)
-        n = fix_country_assignment_for_hac(n)
-
-    if (algorithm != "hac") and (feature is not None):
-        logger.warning(
-            f"Keyword argument feature is only valid for algorithm `hac`. "
-            f"Given feature `{feature}` will be ignored."
-        )
-
-    n.determine_network_topology()
-
-    n_clusters = distribute_clusters(
-        n, n_clusters, focus_weights=focus_weights, solver_name=solver_name
-    )
-
     def busmap_for_country(x):
         prefix = x.name[0] + x.name[1] + " "
-        logger.debug(f"Determining busmap for country {prefix[:-1]}")
+        logger.debug(
+            f"Determining busmap for country {prefix[:-1]} "
+            f"from {len(x)} buses to {n_clusters_c[x.name]}."
+        )
         if len(x) == 1:
             return pd.Series(prefix + "0", index=x.index)
-        weight = weighting_for_country(n, x)
+        weight = weighting_for_country(x, cluster_weights)
 
         if algorithm == "kmeans":
             return prefix + busmap_by_kmeans(
-                n, weight, n_clusters[x.name], buses_i=x.index, **algorithm_kwds
+                n, weight, n_clusters_c[x.name], buses_i=x.index, **algorithm_kwds
             )
         elif algorithm == "hac":
             return prefix + busmap_by_hac(
-                n, n_clusters[x.name], buses_i=x.index, feature=feature.loc[x.index]
+                n,
+                n_clusters_c[x.name],
+                buses_i=x.index,
+                feature=features.reindex(x.index, fill_value=0.0),
             )
         elif algorithm == "modularity":
             return prefix + busmap_by_greedy_modularity(
-                n, n_clusters[x.name], buses_i=x.index
+                n, n_clusters_c[x.name], buses_i=x.index
             )
         else:
             raise ValueError(
-                f"`algorithm` must be one of 'kmeans' or 'hac'. Is {algorithm}."
+                f"`algorithm` must be one of 'kmeans' or 'hac' or 'modularity'. Is {algorithm}."
             )
 
     compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
@@ -376,194 +262,305 @@ def busmap_for_n_clusters(
 
 
 def clustering_for_n_clusters(
-    n,
-    n_clusters,
-    custom_busmap=False,
-    aggregate_carriers=None,
-    line_length_factor=1.25,
-    aggregation_strategies=dict(),
-    solver_name="scip",
-    algorithm="hac",
-    feature=None,
-    extended_link_costs=0,
-    focus_weights=None,
-):
-    if not isinstance(custom_busmap, pd.Series):
-        busmap = busmap_for_n_clusters(
-            n, n_clusters, solver_name, focus_weights, algorithm, feature
-        )
-    else:
-        busmap = custom_busmap
+    n: pypsa.Network,
+    busmap: pd.Series,
+    aggregation_strategies: dict | None = None,
+) -> pypsa.clustering.spatial.Clustering:
+    if aggregation_strategies is None:
+        aggregation_strategies = dict()
 
     line_strategies = aggregation_strategies.get("lines", dict())
-    generator_strategies = aggregation_strategies.get("generators", dict())
-    one_port_strategies = aggregation_strategies.get("one_ports", dict())
+
+    bus_strategies = aggregation_strategies.get("buses", dict())
+    bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
+    bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
 
     clustering = get_clustering_from_busmap(
         n,
         busmap,
-        aggregate_generators_weighted=True,
-        aggregate_generators_carriers=aggregate_carriers,
-        aggregate_one_ports=["Load", "StorageUnit"],
-        line_length_factor=line_length_factor,
+        bus_strategies=bus_strategies,
         line_strategies=line_strategies,
-        generator_strategies=generator_strategies,
-        one_port_strategies=one_port_strategies,
-        scale_link_capital_costs=False,
+        custom_line_groupers=["build_year"],
     )
-
-    if not n.links.empty:
-        nc = clustering.network
-        nc.links["underwater_fraction"] = (
-            n.links.eval("underwater_fraction * length").div(nc.links.length).dropna()
-        )
-        nc.links["capital_cost"] = nc.links["capital_cost"].add(
-            (nc.links.length - n.links.length)
-            .clip(lower=0)
-            .mul(extended_link_costs)
-            .dropna(),
-            fill_value=0,
-        )
 
     return clustering
 
 
-def cluster_regions(busmaps, regions):
+def cluster_regions(
+    busmaps: tuple | list, regions: gpd.GeoDataFrame, with_country: bool = False
+) -> gpd.GeoDataFrame:
     """
     Cluster regions based on busmaps and save the results to a file and to the
     network.
 
-    Parameters:
-    - busmaps (list): A list of busmaps used for clustering.
-    - which (str): The type of regions to cluster.
+    Parameters
+    ----------
+        - busmaps (list) : A list of busmaps used for clustering.
+        - regions (gpd.GeoDataFrame) : The regions to cluster.
+        - with_country (bool) : Whether to keep country column.
 
-    Returns:
-    None
+    Returns
+    -------
+        None
     """
     busmap = reduce(lambda x, y: x.map(y), busmaps[1:], busmaps[0])
-    regions = regions.reindex(columns=["name", "geometry"]).set_index("name")
+    columns = ["name", "country", "geometry"] if with_country else ["name", "geometry"]
+    regions = regions.reindex(columns=columns).set_index("name")
     regions_c = regions.dissolve(busmap)
     regions_c.index.name = "name"
     return regions_c.reset_index()
 
 
-def plot_busmap_for_n_clusters(n, n_clusters, solver_name="scip", fn=None):
-    busmap = busmap_for_n_clusters(n, n_clusters, solver_name)
-    cs = busmap.unique()
-    cr = sns.color_palette("hls", len(cs))
-    n.plot(bus_colors=busmap.map(dict(zip(cs, cr))))
-    if fn is not None:
-        plt.savefig(fn, bbox_inches="tight")
-    del cs, cr
+def busmap_for_admin_regions(
+    n: pypsa.Network,
+    admin_shapes: str,
+    params: dict,
+) -> pd.Series:
+    """
+    Create a busmap based on administrative regions using the NUTS3 shapefile.
+
+    Parameters
+    ----------
+        - n (pypsa.Network) : The network to cluster.
+        - admin_shapes (str) : The path to the administrative regions.
+        - params (dict) : The parameters for clustering.
+
+    Returns
+    -------
+        busmap (pd.Series): Busmap mapping each bus to an administrative region.
+    """
+    countries = params.countries
+    admin_regions = gpd.read_file(admin_shapes)
+
+    admin_levels = params.administrative
+    level = admin_levels.get("level", 0)
+    logger.info(f"Clustering at administrative level {level}.")
+
+    # check if BA, MD, UA, or XK are in the network
+    adm1_countries = ["BA", "MD", "UA", "XK"]
+    buses = n.buses[["x", "y", "country"]].copy()
+
+    # Find the intersection of adm1_countries and n.buses.country
+    adm1_countries = list(set(adm1_countries).intersection(buses["country"].unique()))
+
+    if adm1_countries:
+        logger.info(
+            f"Note that the following countries can only be clustered at a maximum administration level of 1: {adm1_countries}."
+        )
+
+    country_level = {
+        k: v for k, v in admin_levels.items() if (k != "level") and (k in countries)
+    }
+    if country_level:
+        country_level_list = "\n".join(
+            [f"- {k}: level {v}" for k, v in country_level.items()]
+        )
+        logger.info(
+            f"Setting individual administrative levels for:\n{country_level_list}"
+        )
+
+    buses["geometry"] = gpd.points_from_xy(buses["x"], buses["y"])
+    buses = gpd.GeoDataFrame(buses, geometry="geometry", crs="EPSG:4326")
+    buses["busmap"] = ""
+
+    # Map based for each country
+    logger.info("Mapping buses to administrative regions.")
+    for country in tqdm.tqdm(buses["country"].unique()):
+        buses_subset = buses.loc[buses["country"] == country]
+
+        buses.loc[buses_subset.index, "busmap"] = gpd.sjoin_nearest(
+            buses_subset.to_crs(epsg=3857),
+            admin_regions.loc[admin_regions["country"] == country].to_crs(epsg=3857),
+            how="left",
+        )["admin"]
+
+    return buses["busmap"]
+
+
+def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
+    """
+    Checks for each MultiPolygon if it contains multiple Polygons and returns the one with the largest area.
+
+    Parameters
+    ----------
+        geometry (MultiPolygon) : The MultiPolygon to check.
+
+    Returns
+    -------
+        geometry (Polygon) : The Polygon with the largest area.
+    """
+    if isinstance(geometry, MultiPolygon):
+        # Find the polygon with the largest area in the MultiPolygon
+        largest_polygon = max(geometry.geoms, key=lambda poly: poly.area)
+
+        return largest_polygon
+    else:
+        # If it's a Polygon, return it as is
+        return geometry
+
+
+def update_bus_coordinates(
+    n: pypsa.Network,
+    busmap: pd.Series,
+    admin_shapes: str,
+    geo_crs: str = GEO_CRS,
+    distance_crs: str = DISTANCE_CRS,
+    tol: float = BUS_TOL,
+) -> None:
+    """
+    Updates the x, y coordinates of the buses in the original network based on the busmap and the administrative regions.
+    Using the Pole of Inaccessibility (PoI) to determine internal points of the administrative regions.
+
+    Parameters
+    ----------
+        - n (pypsa.Network) : The original network.
+        - busmap (pd.Series) : The busmap mapping each bus to an administrative region.
+        - admin_shapes (str) : The path to the administrative regions.
+        - geo_crs (str) : The geographic coordinate reference system.
+        - distance_crs (str) : The distance coordinate reference system.
+        - tol (float) : The tolerance in meters for the PoI calculation.
+
+    Returns
+    -------
+        None
+    """
+    logger.info("Updating x, y coordinates of buses based on administrative regions.")
+    admin_regions = gpd.read_file(admin_shapes).set_index("admin")
+    admin_regions["geometry"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(keep_largest_polygon)
+        .to_crs(geo_crs)
+    )
+    admin_regions["poi"] = (
+        admin_regions["geometry"]
+        .to_crs(distance_crs)
+        .apply(lambda polygon: polylabel(polygon, tolerance=tol / 2))
+        .to_crs(geo_crs)
+    )
+    admin_regions["x"] = admin_regions["poi"].x
+    admin_regions["y"] = admin_regions["poi"].y
+
+    busmap_df = pd.DataFrame(busmap)
+    busmap_df = pd.merge(
+        busmap_df,
+        admin_regions[["x", "y"]],
+        left_on="busmap",
+        right_index=True,
+        how="left",
+    )
+
+    # Update x, y coordinates of original network
+    n.buses["x"] = busmap_df["x"]
+    n.buses["y"] = busmap_df["y"]
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", simpl="", clusters="40")
+        snakemake = mock_snakemake("cluster_network", clusters=60)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params
+    mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
     n = pypsa.Network(snakemake.input.network)
+    buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
-    # remove integer outputs for compatibility with PyPSA v0.26.0
-    n.generators.drop("n_mod", axis=1, inplace=True, errors="ignore")
+    load = (
+        xr.open_dataarray(snakemake.input.load)
+        .mean(dim="time")
+        .to_pandas()
+        .reindex(n.buses.index, fill_value=0.0)
+    )
 
-    exclude_carriers = params.cluster_network["exclude_carriers"]
-    aggregate_carriers = set(n.generators.carrier) - set(exclude_carriers)
-    conventional_carriers = set(params.conventional_carriers)
-    if snakemake.wildcards.clusters.endswith("m"):
-        n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = conventional_carriers & aggregate_carriers
-    elif snakemake.wildcards.clusters.endswith("c"):
-        n_clusters = int(snakemake.wildcards.clusters[:-1])
-        aggregate_carriers = aggregate_carriers - conventional_carriers
-    elif snakemake.wildcards.clusters == "all":
+    if snakemake.wildcards.clusters == "all":
         n_clusters = len(n.buses)
+    elif mode == "administrative":
+        n_clusters = np.nan
     else:
         n_clusters = int(snakemake.wildcards.clusters)
-
-    if params.cluster_network.get("consider_efficiency_classes", False):
-        carriers = []
-        for c in aggregate_carriers:
-            gens = n.generators.query("carrier == @c")
-            low = gens.efficiency.quantile(0.10)
-            high = gens.efficiency.quantile(0.90)
-            if low >= high:
-                carriers += [c]
-            else:
-                labels = ["low", "medium", "high"]
-                suffix = pd.cut(
-                    gens.efficiency, bins=[0, low, high, 1], labels=labels
-                ).astype(str)
-                carriers += [f"{c} {label} efficiency" for label in labels]
-                n.generators.update(
-                    {"carrier": gens.carrier + " " + suffix + " efficiency"}
-                )
-        aggregate_carriers = carriers
 
     if n_clusters == len(n.buses):
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
-        clustering = pypsa.clustering.spatial.Clustering(
-            n, busmap, linemap, linemap, pd.Series(dtype="O")
-        )
+        clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
-        hvac_overhead_cost = load_costs(
-            snakemake.input.tech_costs,
-            params.costs,
-            params.max_hours,
-            Nyears,
-        ).at["HVAC overhead", "capital_cost"]
+        if mode == "administrative":
+            busmap = busmap_for_admin_regions(
+                n,
+                snakemake.input.admin_shapes,
+                params,
+            )
+            # Update x, y coordinates, ensuring that bus locations are inside the administrative region
+            update_bus_coordinates(
+                n,
+                busmap,
+                snakemake.input.admin_shapes,
+            )
 
-        custom_busmap = params.custom_busmap
-        if custom_busmap:
+        elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
             ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
+            busmap = custom_busmap
+        else:
+            algorithm = params.cluster_network["algorithm"]
+            features = None
+            if algorithm == "hac":
+                features = get_feature_data_for_hac(snakemake.input.hac_features)
+                fix_country_assignment_for_hac(n)
+
+            n.determine_network_topology()
+
+            n_clusters_c = distribute_n_clusters_to_countries(
+                n,
+                n_clusters,
+                load,
+                focus_weights=params.focus_weights,
+                solver_name=solver_name,
+            )
+
+            busmap = busmap_for_n_clusters(
+                n,
+                n_clusters_c,
+                cluster_weights=load,
+                algorithm=algorithm,
+                features=features,
+            )
 
         clustering = clustering_for_n_clusters(
             n,
-            n_clusters,
-            custom_busmap,
-            aggregate_carriers,
-            params.length_factor,
-            params.aggregation_strategies,
-            solver_name,
-            params.cluster_network["algorithm"],
-            params.cluster_network["feature"],
-            hvac_overhead_cost,
-            params.focus_weights,
+            busmap,
+            aggregation_strategies=params.aggregation_strategies,
         )
 
-    nc = clustering.network
-    update_p_nom_max(nc)
+    nc = clustering.n
 
-    if params.cluster_network.get("consider_efficiency_classes"):
-        labels = [f" {label} efficiency" for label in ["low", "medium", "high"]]
-        nc.generators["carrier"] = nc.generators.carrier.replace(labels, "", regex=True)
-
-    for attr in (
-        "busmap",
-        "linemap",
-    ):  # also available: linemap_positive, linemap_negative
+    for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])
 
-    nc.shapes = n.shapes.copy()
+    # nc.shapes = n.shapes.copy()
     for which in ["regions_onshore", "regions_offshore"]:
         regions = gpd.read_file(snakemake.input[which])
         clustered_regions = cluster_regions((clustering.busmap,), regions)
         clustered_regions.to_file(snakemake.output[which])
-        append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
+        # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
     nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     nc.export_to_netcdf(snakemake.output.network)
+
+    logger.info(
+        f"Clustered network:\n"
+        f"Buses: {buses_prev} to {len(nc.buses)}\n"
+        f"Lines: {lines_prev} to {len(nc.lines)}\n"
+        f"Links: {links_prev} to {len(nc.links)}"
+    )

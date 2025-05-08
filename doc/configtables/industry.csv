@@ -35,3 +35,4 @@ MWh_CH4_per_tMeOH,MWhCH4/tMeOH,float,"The energy amount of methane needed to pro
 MWh_MeOH_per_tMeOH,LHV,float,"The energy amount per ton of methanol. From `DECHEMA (2017) <https://dechema.de/dechema_media/Downloads/Positionspapiere/Technology_study_Low_carbon_energy_and_feedstock_for_the_European_chemical_industry-p-20002750.pdf>`_, page 74."
 hotmaps_locate_missing,--,"{true,false}",Locate industrial sites without valid locations based on city and countries.
 reference_year,year,YYYY,The year used as the baseline for industrial energy demand and production. Data extracted from `JRC-IDEES 2015 <https://data.jrc.ec.europa.eu/dataset/jrc-10110-10001>`_
+oil_refining_emissions,tCO2/MWh,float,"The emissions from oil fuel processing (e.g. oil in petrochemical refinieries). The default value of 0.013 tCO2/MWh is based on DE statistics for 2019; the EU value is very similar."

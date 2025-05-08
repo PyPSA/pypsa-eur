@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,20 +6,19 @@ Approximate heat demand for all weather years.
 
 :func:`approximate_heat_demand` approximates annual heat demand based on energy totals and heating degree days (HDD) using a regression of heat demand on HDDs.
 
-Inputs
-------
-- `resources/<run_name>/energy_totals.csv`: Energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
-- `data/era5-annual-HDD-per-country.csv`: Number of heating degree days by year (columns) and country (index).
-
 Outputs
 -------
 - `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
+from _helpers import configure_logging
 from numpy.polynomial import Polynomial
+
+logger = logging.getLogger(__name__)
 
 idx = pd.IndexSlice
 
@@ -104,6 +102,8 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_heat_totals")
+
+    configure_logging(snakemake)
 
     hdd = pd.read_csv(snakemake.input.hdd, index_col=0).T
     hdd.index = hdd.index.astype(int)

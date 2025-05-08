@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2023-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -43,6 +43,11 @@ Rule ``build_biomass_potentials``
 
 .. automodule:: build_biomass_potentials
 
+Rule ``build_egs_potentials``
+==============================================================================
+
+.. automodule:: build_egs_potentials
+
 Rule ``build_biomass_transport_costs``
 ==============================================================================
 
@@ -57,6 +62,16 @@ Rule ``build_cop_profiles``
 ==============================================================================
 
 .. automodule:: build_cop_profiles
+
+Rule ``build_central_heating_temperature_profiles``
+==============================================================================
+
+.. automodule:: build_central_heating_temperature_profiles
+
+Rule ``build_tes_capacity_profiles``
+==============================================================================
+
+.. automodule:: build_tes_capacity_profiles
 
 Rule ``build_energy_totals``
 ==============================================================================
@@ -153,10 +168,15 @@ Rule ``build_salt_cavern_potentials``
 
 .. automodule:: build_salt_cavern_potentials
 
-Rule ``build_sequestration_potentials``
+Rule ``build_co2_sequestration_potentials``
 ==============================================================================
 
-.. automodule:: build_sequestration_potentials
+.. automodule:: build_co2_sequestration_potentials
+
+Rule ``build_clustered_co2_sequestration_potentials``
+==============================================================================
+
+.. automodule:: build_clustered_co2_sequestration_potentials
 
 Rule ``build_shipping_demand``
 ==============================================================================

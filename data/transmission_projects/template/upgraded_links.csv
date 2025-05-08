@@ -1,0 +1,5 @@
+,project_status,length,build_year,underground,p_nom,tags,x0,y0,x1,y1
+Upgraded_link_1,in_permitting,100,2025,False,1000,"{link to source, name of project, further custom information}",-7.793621,41.52145,-8.38944,40.95915
+Upgraded_link_2,under_construction,100,2023,False,600,"{link to source, name of project, further custom information}",-7.793621,41.52145,-8.38944,40.95915
+Upgraded_link_3,in_planning,100,2040,False,2000,"{link to source, name of project, further custom information}",-7.793621,41.52145,-8.38944,40.95915
+Upgraded_link_4,under_consideration,100,2050,true,600,"{link to source, name of project, further custom information}",-7.793621,41.52145,-8.38944,40.95915

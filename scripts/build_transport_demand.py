@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 def build_nodal_transport_data(fn, pop_layout, year):
     # get numbers of car and fuel efficiency per country
     transport_data = pd.read_csv(fn, index_col=[0, 1])
-    transport_data = transport_data.xs(min(2015, year), level="year")
+    transport_data = transport_data.xs(year, level="year")
 
     # break number of cars down to nodal level based on population density
     nodal_transport_data = transport_data.loc[pop_layout.ct].fillna(0.0)
@@ -167,11 +166,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_transport_demand",
-            simpl="",
-            clusters=128,
-        )
+        snakemake = mock_snakemake("build_transport_demand", clusters=128)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

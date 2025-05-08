@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -9,6 +8,7 @@ Build mapping between cutout grid cells and population (total, urban, rural).
 import logging
 
 import atlite
+import country_converter as coco
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -16,6 +16,8 @@ import xarray as xr
 from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
+
+cc = coco.CountryConverter()
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -27,6 +29,7 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+    coco.logging.getLogger().setLevel(coco.logging.CRITICAL)
 
     cutout = atlite.Cutout(snakemake.input.cutout)
 
@@ -45,19 +48,14 @@ if __name__ == "__main__":
 
     countries = np.sort(nuts3.country.unique())
 
+    urban_fraction = pd.read_csv(snakemake.input.urban_percent, skiprows=4)
+    iso3 = urban_fraction["Country Code"]
+    urban_fraction["iso2"] = cc.convert(names=iso3, src="ISO3", to="ISO2")
     urban_fraction = (
-        pd.read_csv(
-            snakemake.input.urban_percent, header=None, index_col=0, names=["fraction"]
-        ).squeeze()
-        / 100.0
+        urban_fraction.query("iso2 in @countries").set_index("iso2")["2019"].div(100)
     )
-
-    # fill missing Balkans values
-    missing = ["AL", "ME", "MK"]
-    reference = ["RS", "BA"]
-    average = urban_fraction[reference].mean()
-    fill_values = pd.Series({ct: average for ct in missing})
-    urban_fraction = pd.concat([urban_fraction, fill_values])
+    if "XK" in countries:
+        urban_fraction["XK"] = urban_fraction["RS"]
 
     # population in each grid cell
     pop_cells = pd.Series(I.dot(nuts3["pop"]))
@@ -74,7 +72,7 @@ if __name__ == "__main__":
 
     for ct in countries:
         logger.debug(
-            f"The urbanization rate for {ct} is {round(urban_fraction[ct]*100)}%"
+            f"The urbanization rate for {ct} is {round(urban_fraction[ct] * 100)}%"
         )
 
         indicator_nuts3_ct = nuts3.country.apply(lambda x: 1.0 if x == ct else 0.0)

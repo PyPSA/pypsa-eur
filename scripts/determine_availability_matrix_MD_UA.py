@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -34,21 +33,21 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "determine_availability_matrix_MD_UA", technology="solar"
+            "determine_availability_matrix_MD_UA", clusters=100, technology="solar"
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
     noprogress = not snakemake.config["atlite"].get("show_progress", True)
-    config = snakemake.config["renewable"][snakemake.wildcards.technology]
+    config = snakemake.params["renewable"][snakemake.wildcards.technology]
 
     cutout = atlite.Cutout(snakemake.input.cutout)
     regions = (
         gpd.read_file(snakemake.input.regions).set_index("name").rename_axis("bus")
     )
     # Limit to "UA" and "MD" regions
-    buses = regions.loc[regions["country"].isin(["UA", "MD"])].index.values
+    buses = regions.filter(regex="(UA|MD)", axis=0).index.values
     regions = regions.loc[buses]
 
     excluder = atlite.ExclusionContainer(crs=3035, res=100)
@@ -125,24 +124,24 @@ if __name__ == "__main__":
                 time.sleep(1)
             excluder.add_geometry(pts_tmp_fn)
 
-    if "max_depth" in config:
+    if config.get("max_depth"):
         # lambda not supported for atlite + multiprocessing
         # use named function np.greater with partially frozen argument instead
         # and exclude areas where: -max_depth > grid cell depth
         func = functools.partial(np.greater, -config["max_depth"])
         excluder.add_raster(snakemake.input.gebco, codes=func, crs=4236, nodata=-1000)
 
-    if "min_shore_distance" in config:
+    if config.get("min_shore_distance"):
         buffer = config["min_shore_distance"]
         excluder.add_geometry(snakemake.input.country_shapes, buffer=buffer)
 
-    if "max_shore_distance" in config:
+    if config.get("max_shore_distance"):
         buffer = config["max_shore_distance"]
         excluder.add_geometry(
             snakemake.input.country_shapes, buffer=buffer, invert=True
         )
 
-    if "ship_threshold" in config:
+    if config.get("ship_threshold"):
         shipping_threshold = config["ship_threshold"] * 8760 * 6
         func = functools.partial(np.less, shipping_threshold)
         excluder.add_raster(

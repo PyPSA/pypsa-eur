@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -18,7 +16,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_elec_statistics",
-            simpl="",
             opts="Ept-12h",
             clusters="37",
             ll="v1.0",
@@ -55,6 +52,7 @@ if __name__ == "__main__":
     ds = n.statistics.capacity_factor().dropna()
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.capacity_factor_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.installed_capacity().dropna()
@@ -64,6 +62,7 @@ if __name__ == "__main__":
     ds.attrs["unit"] = "GW"
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.installed_capacity_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.optimal_capacity()
@@ -73,21 +72,25 @@ if __name__ == "__main__":
     ds.attrs["unit"] = "GW"
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.optimal_capacity_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.capex()
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.capital_expenditure_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.opex()
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.operational_expenditure_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.curtailment()
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.curtailment_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.supply()
@@ -96,6 +99,7 @@ if __name__ == "__main__":
     ds.attrs["unit"] = "TWh"
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.supply_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.withdrawal()
@@ -104,11 +108,13 @@ if __name__ == "__main__":
     ds.attrs["unit"] = "TWh"
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.withdrawal_bar)
+    plt.close(fig)
 
     fig, ax = plt.subplots()
     ds = n.statistics.market_value()
     plot_static_per_carrier(ds, ax)
     fig.savefig(snakemake.output.market_value_bar)
+    plt.close(fig)
 
     # touch file
     with open(snakemake.output.barplots_touch, "a"):

@@ -5,3 +5,6 @@ manual_adjustments,bool,"{true, false}","Whether to adjust the load data manuall
 scaling_factor,--,float,"Global correction factor for the load time series."
 fixed_year,--,Year or False,"To specify a fixed year for the load time series that deviates from the snapshots' year"
 supplement_synthetic,bool,"{true, false}","Whether to supplement missing data for selected time period should be supplemented by synthetic data from https://zenodo.org/records/10820928."
+distribution_key,--,--,"Distribution key for spatially disaggregating the per-country electricity demand data."
+-- gdp,float,"[0, 1]","Weighting factor for the GDP data in the distribution key."
+-- population,float,"[0, 1]","Weighting factor for the population data in the distribution key."

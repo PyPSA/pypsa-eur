@@ -1,42 +1,33 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>>
 #
 # SPDX-License-Identifier: MIT
 """
 Build industrial energy demand per model region.
 
-Inputs
--------
-
-- ``resources/industrial_distribution_key_elec_s{simpl}_{clusters}.csv``
-- ``resources/industrial_energy_demand_per_country_today.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_node_today_elec_s{simpl}_{clusters}.csv``
-
 Description
 -------
 
 This rule maps the industrial energy demand per country `industrial_energy_demand_per_country_today.csv` to each bus region.
-The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_elec_s{simpl}_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
+The energy demand per country is multiplied by the mapping value from the file ``industrial_distribution_key_base_s_{clusters}.csv`` between 0 and 1 to get the industrial energy demand per bus.
 
 The unit of the energy demand is TWh/a.
 """
 
+import logging
 from itertools import product
 
 import numpy as np
 import pandas as pd
-from _helpers import set_scenario_config
+from _helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
 sector_mapping = {
-    "Electric arc": "Iron and steel",
-    "Integrated steelworks": "Iron and steel",
-    "DRI + Electric arc": "Iron and steel",
-    "Ammonia": "Chemical industry",
+    "Electric arc": "EAF",
+    "Integrated steelworks": "Integrated steelworks",
+    "DRI + Electric arc": "DRI + EAF",
+    "Ammonia": "Ammonia",
     "Basic chemicals (without ammonia)": "Chemical industry",
     "Other chemicals": "Chemical industry",
     "Pharmaceutical products etc.": "Chemical industry",
@@ -66,7 +57,7 @@ def build_nodal_industrial_energy_demand():
     )
 
     countries = keys.country.unique()
-    sectors = industrial_demand.columns.levels[1]
+    sectors = industrial_demand.columns.unique(1)
 
     for country, sector in product(countries, sectors):
         buses = keys.index[keys.country == country]
@@ -92,9 +83,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_energy_demand_per_node_today",
-            simpl="",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     build_nodal_industrial_energy_demand()
