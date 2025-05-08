@@ -734,7 +734,7 @@ def add_steel_industry_existing(n):
 
     # PARAMETERS
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
+    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
     n.add(
         "Link",
@@ -748,6 +748,7 @@ def add_steel_industry_existing(n):
         carrier="BF-BOF",
         p_nom=p_nom_bof * bof['iron input'],
         p_nom_extendable=False,
+        p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_bof,
         efficiency=1 / bof['iron input'],
         efficiency2= -  bof['coal input'] /  bof['iron input'],  # MWhth coal per kt iron
@@ -768,6 +769,7 @@ def add_steel_industry_existing(n):
         carrier="DRI-EAF",
         p_nom=p_nom_eaf *  eaf_ng['iron input'],
         p_nom_extendable=False,
+        p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_eaf,
         efficiency=1 / eaf_ng['iron input'],
         efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
@@ -805,6 +807,7 @@ def add_cement_industry_existing(n):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+    min_part_load_cement = 0.3
 
     n.add(
         "Link",
@@ -817,6 +820,7 @@ def add_cement_industry_existing(n):
         carrier="cement plant",
         p_nom=p_nom,
         p_nom_extendable=False,
+        p_min_pu=min_part_load_cement,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency2= - 3420.1 / 3.6 * (1/1.28) / 0.5, # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
         efficiency3=500 * (1/1.28), #tCO2/kt cement
@@ -847,7 +851,7 @@ def add_chemicals_industry_existing(n, options):
     p_nom_nh3 = capacities_nh3 / nhours  # get the hourly production capacity
 
     ########### Add existing ammonia production capacities ############
-
+    min_part_load_hb=0.3
     n.add(
         "Link",
         nodes,
@@ -857,6 +861,7 @@ def add_chemicals_industry_existing(n, options):
         bus2=nodes + " H2",
         p_nom_extendable=False,
         p_nom=p_nom_nh3,
+        p_min_pu=min_part_load_hb,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -927,7 +932,10 @@ def add_chemicals_industry_existing(n, options):
         ########### Add existing HVC production capacities ############
 
         naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
-
+        # we need to account for CO2 emissions from HVC decay
+        decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
+        min_part_load_hvc = 0.3
+        
         n.add(
             "Link",
             nodes,
@@ -939,11 +947,12 @@ def add_chemicals_industry_existing(n, options):
             bus4=nodes,
             carrier="naphtha steam cracker",
             p_nom_extendable=False,
+            p_min_pu=min_part_load_hvc,
             p_nom=p_nom_hvc,
             capital_cost=2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC
             efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
             efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
-            efficiency3= 819 / naphtha_to_hvc, # tCO2 / kt HVC
+            efficiency3= 819 / naphtha_to_hvc + decay_emis, # tCO2 / kt HVC
             efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
             lifetime=30, 
             build_year=start_dates_hvc,

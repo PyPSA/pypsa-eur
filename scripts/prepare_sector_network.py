@@ -1525,6 +1525,7 @@ def add_ammonia(
     n.add(
         "Bus", spatial.ammonia.nodes, location=spatial.ammonia.locations, carrier="NH3"
     )
+    min_part_load_hb=0.3
 
     n.add(
         "Link",
@@ -1534,6 +1535,7 @@ def add_ammonia(
         bus1=spatial.ammonia.nodes,
         bus2=nodes + " H2",
         p_nom_extendable=True,
+        p_min_pu=min_part_load_hb,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -5084,8 +5086,9 @@ def calculate_steel_parameters(nyears=1):
                     "capital cost 2050": capital_cost_tgr_2050,
                     "lifetime": lifetime_tgr})
 
+    min_part_load_steel = 0.3
 
-    return bof, eaf_ng, eaf_h2, tgr
+    return bof, eaf_ng, eaf_h2, tgr, min_part_load_steel
 
 def clean_industry_df(df, sector):
     df = (
@@ -5201,8 +5204,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
     
 
     # PARAMETERS
-    bof, eaf_ng, eaf_h2, tgr = calculate_steel_parameters(nyears)
-    min_part_load_steel = 0.5
+    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
     n.add(
         "Link",
@@ -5604,7 +5606,8 @@ def add_hvc(n, investment_year, hvc_data, options):
   
     naphtha_to_hvc = (2.31 * 12.47) * 1000 # t oil / t HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
     # we need to account for CO2 emissions from HVC decay
-    decay_emis = costs.at["oil", "CO2 intensity"] * naphtha_to_hvc # tCO2/MWh_th * MWh oil / kt HVC = tCO2/kt HVC
+    decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
+    min_part_load_hvc = 0.3
 
     n.add(
         "Link",
@@ -5617,6 +5620,7 @@ def add_hvc(n, investment_year, hvc_data, options):
         bus4=nodes,
         carrier="naphtha steam cracker",
         p_nom_extendable=True,
+        p_min_pu=min_part_load_hvc,
         capital_cost= 2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
         # Raillard Cazanove says 725 but prices were too low
         efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC

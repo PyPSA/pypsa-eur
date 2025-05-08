@@ -159,7 +159,7 @@ sector:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 8h
+    resolution_sector: false
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
@@ -183,3 +183,19 @@ plotting:
     syn gas for DRI: 'grey'
     HVC: 'yellow'
     naphtha steam cracker: 'grey'
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-crossover
+
+  solver_options:
+    gurobi-crossover:
+      threads: 8
+      method: 2 # barrier
+      crossover: 1
+      BarConvTol: 1.e-6
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
