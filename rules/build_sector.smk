@@ -409,13 +409,9 @@ rule build_tes_operation:
     resources:
         mem_mb=2000,
     log:
-        logs(
-            "build_tes_operation_s_{clusters}_{planning_horizons}.log"
-        ),
+        logs("build_tes_operation_s_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks(
-            "build_tes_operation_s_{clusters}_{planning_horizons}"
-        )
+        benchmarks("build_tes_operation_s_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
