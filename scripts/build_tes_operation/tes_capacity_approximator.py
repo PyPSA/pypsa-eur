@@ -53,20 +53,6 @@ class TesCapacityApproximator:
         self.min_bottom_temperature = min_bottom_temperature
 
     @property
-    def clipped_top_temperature(self) -> xr.DataArray:
-        """
-        Clip top temperature to maximum operational limit.
-
-        Returns
-        -------
-        xr.DataArray
-            Top temperature clipped to maximum operational limit.
-        """
-        return self.top_temperature.where(
-            self.top_temperature <= self.max_top_temperature, self.max_top_temperature
-        )
-
-    @property
     def e_max_pu(self) -> xr.DataArray:
         """
         Calculate the normalized delta T for TES capacity in relation to
@@ -78,7 +64,7 @@ class TesCapacityApproximator:
             Normalized delta T values between 0 and 1, representing the
             available storage capacity as a percentage of maximum capacity.
         """
-        delta_t = self.clipped_top_temperature - self.bottom_temperature
+        delta_t = self.top_temperature - self.bottom_temperature
         normalized_delta_t = delta_t / (
             self.max_top_temperature - self.min_bottom_temperature
         )

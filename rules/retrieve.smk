@@ -687,10 +687,9 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            lau_regions="data/lau_regions.geojson",
+            lau_regions="data/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
-            lau_regions="data/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
         threads: 1

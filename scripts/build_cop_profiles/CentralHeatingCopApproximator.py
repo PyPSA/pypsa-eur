@@ -153,7 +153,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
         return xr.where(
-            self.t_source_in_kelvin > self.t_sink_out_kelvin,
+            self.t_source_in_kelvin >= self.t_sink_out_kelvin,
             0,
             self.ideal_lorenz_cop
             * (
