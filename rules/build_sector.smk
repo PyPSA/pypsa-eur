@@ -693,7 +693,7 @@ rule build_industrial_distribution_key:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
-        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",

@@ -419,20 +419,16 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if config["data"]["gem_gspt"]["source"] in ["build", "archive"]:
+    GEM_GSPT_VERSION = get_data_version("gem_gspt")
 
     rule retrieve_gem_steel_plant_tracker:
+        input:
+            xlsx=storage(get_data_url("gem_gspt")),
         output:
-            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+            xlsx=f"data/gem_gspt/{GEM_GSPT_VERSION}/Global-Steel-Plant-Tracker.xlsx",
         run:
-            import requests
-
-            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
-            response = requests.get(url)
-            with open(output[0], "wb") as f:
-                f.write(response.content)
-
+            os.rename(input.xlsx, output.xlsx)
 
 
 if config["enable"]["retrieve"]:
