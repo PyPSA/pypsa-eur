@@ -744,3 +744,18 @@ if config["enable"]["retrieve"]:
                 if output_path:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
+
+    rule retrieve_dh_areas:
+        input:
+            dh_areas=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
+                keep_local=True,
+            ),
+        output:
+            dh_areas="data/dh_areas.gpkg",
+        log:
+            "logs/retrieve_dh_areas.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])

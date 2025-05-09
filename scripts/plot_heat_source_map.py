@@ -83,18 +83,14 @@ def plot_heat_source_map(
     if var_name not in df.columns:
         raise ValueError(f"Variable '{var_name}' not found in DataArray")
 
-    # Create a GeoDataFrame by constructing a Point for each (longitude, latitude) pair
-    gdf = (
-        gpd.GeoDataFrame(
-            df,
-            geometry=[
-                Point(lon, lat)
-                for lon, lat in zip(df[longitude_name], df[latitude_name])
-            ],
-            crs="EPSG:4326",
-        )
-        .replace(0, np.nan)
-        .dropna(subset=[var_name])
+
+    # Filter out zero values and NaNs
+    df = df[df[var_name] != 0].dropna(subset=[var_name])
+    # Convert to GeoDataFrame
+    gdf = gpd.GeoDataFrame(
+        df,
+        geometry=gpd.points_from_xy(df[longitude_name], df[latitude_name]),
+        crs="EPSG:4326",
     )
 
     # Calculate aggregations by region
@@ -170,6 +166,7 @@ if __name__ == "__main__":
 
     # Load onshore regions shapefile
     regions_onshore = gpd.read_file(snakemake.input.regions)
+    region_onshore = regions_onshore.to_crs("EPSG:4326")
 
     # Get colormaps from config
     temperature_cmap = snakemake.params.plotting.get("heat_source_map", {}).get(
@@ -179,43 +176,40 @@ if __name__ == "__main__":
         "energy_cmap", "Oranges"
     )
 
-    # Plot temperature map
     logger.info(
         f"Creating temperature map for {snakemake.wildcards.carrier} heat source"
     )
+    # Load temperature data
     temperature_data = xr.open_dataset(snakemake.input.heat_source_temperature)
 
-    # Find the first data variable in the dataset
-    temp_vars = list(temperature_data.data_vars)
-    if not temp_vars:
-        logger.error("No temperature variables found in the dataset")
+    if snakemake.wildcards.carrier == "ambient_air":
+        temp_var = "temperature"
     else:
-        temp_var = temp_vars[0]
-        logger.info(f"Found temperature variable: {temp_var}")
+        temp_var = 'average_temperature'
 
-        try:
-            # If time dimension exists, use the mean across time
-            if "time" in temperature_data[temp_var].dims:
-                plot_data = temperature_data[temp_var].mean("time")
-                logger.info("Taking mean across time dimension")
-            else:
-                plot_data = temperature_data[temp_var]
+    try:
+        # If time dimension exists, use the mean across time
+        if "time" in temperature_data[temp_var].dims:
+            plot_data = temperature_data[temp_var].mean("time")
+            logger.info("Taking mean across time dimension")
+        else:
+            plot_data = temperature_data[temp_var]
 
-            # Create and save the temperature map
-            temp_map = plot_heat_source_map(
-                plot_data,
-                regions_onshore,
-                temp_var,
-                title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Temperature (°C)",
-                cmap=temperature_cmap,
-                aggregate_type="mean",
-            )
+        # Create and save the temperature map
+        temp_map = plot_heat_source_map(
+            da=plot_data,
+            regions_onshore=regions_onshore,
+            var_name=temp_var,
+            title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Temperature (°C)",
+            cmap=temperature_cmap,
+            aggregate_type="mean",
+        )
 
-            temp_map.save(snakemake.output.temp_map)
-            logger.info(f"Temperature map saved to {snakemake.output.temp_map}")
+        temp_map.save(snakemake.output.temp_map)
+        logger.info(f"Temperature map saved to {snakemake.output.temp_map}")
 
-        except ValueError as e:
-            logger.error(f"Error creating temperature map: {e}")
+    except ValueError as e:
+        logger.error(f"Error creating temperature map: {e}")
 
     # Plot energy map if input is available
     if (
@@ -228,32 +222,18 @@ if __name__ == "__main__":
         try:
             energy_data = xr.open_dataset(snakemake.input.heat_source_energy)
 
-            # Find the first data variable in the dataset
-            energy_vars = list(energy_data.data_vars)
-            if not energy_vars:
-                logger.error("No energy variables found in the dataset")
-                # Create an empty map to satisfy output requirements
-                empty_map = folium.Map(location=[50, 10], zoom_start=4)
-                empty_map.save(snakemake.output.energy_map)
-                logger.warning(
-                    f"Created empty energy map at {snakemake.output.energy_map}"
-                )
-            else:
-                energy_var = energy_vars[0]
-                logger.info(f"Found energy variable: {energy_var}")
+            # Create and save the energy map
+            energy_map = plot_heat_source_map(
+                da=energy_data["total_energy"] / 1e6, # Convert to TWh
+                regions_onshore=regions_onshore,
+                energy_var="total_energy",
+                title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (TWh)",
+                cmap=energy_cmap,
+                aggregate_type="sum",
+            )
 
-                # Create and save the energy map
-                energy_map = plot_heat_source_map(
-                    energy_data[energy_var],
-                    regions_onshore,
-                    energy_var,
-                    title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (MWh)",
-                    cmap=energy_cmap,
-                    aggregate_type="sum",
-                )
-
-                energy_map.save(snakemake.output.energy_map)
-                logger.info(f"Energy map saved to {snakemake.output.energy_map}")
+            energy_map.save(snakemake.output.energy_map)
+            logger.info(f"Energy map saved to {snakemake.output.energy_map}")
         except Exception as e:
             logger.error(f"Error creating energy map: {e}")
             # Create an empty map to satisfy output requirements

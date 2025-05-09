@@ -4,6 +4,7 @@
 import numpy as np
 import shapely
 import xarray as xr
+import rasterio.features
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
@@ -15,36 +16,38 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self,
         volume_flow: xr.DataArray,
         ambient_temperature: xr.DataArray,
-        region_geometry: shapely.geometry.polygon.Polygon,
+        region: shapely.geometry.polygon.Polygon,
         max_relative_volume_flow: float = 0.1,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
         min_distance_meters: int = 2000,
     ):
-        self.region_geometry = region_geometry
         water_temperature = self._approximate_river_temperature(
-            ambient_temperature=self._get_boxed_data(ambient_temperature)
+            ambient_temperature=ambient_temperature
+        )
+        water_temperature = water_temperature.rio.write_crs(
+            f"EPSG:{ambient_temperature.rio.crs.to_epsg()}"
         )
 
         super().__init__(
             volume_flow=self._round_coordinates(volume_flow),
             water_temperature=self._round_coordinates(water_temperature),
-            region_geometry=region_geometry,
+            region=region,
             max_relative_volume_flow=max_relative_volume_flow,
             delta_t_max=delta_t_max,
             min_outlet_temperature=min_outlet_temperature,
             min_distance_meters=min_distance_meters,
         )
-
+    
     def _round_coordinates(
-        self, hera_data_array: xr.DataArray, decimal_precision: int = 6
+        self, da: xr.DataArray, decimal_precision: int = 4
     ) -> xr.DataArray:
         """
         Round the coordinates of the HERA dataset to the defined precision.
 
         Parameters
         ----------
-        hera_data_array : xr.DataArray
+        da : xr.DataArray
             HERA dataset.
 
         Returns
@@ -52,13 +55,14 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         xr.DataArray
             HERA dataset with rounded coordinates.
         """
-        hera_data_array.coords[self.LATITUDE] = hera_data_array.coords[
-            self.LATITUDE
-        ].round(decimal_precision)
-        hera_data_array.coords[self.LONGITUDE] = hera_data_array.coords[
-            self.LONGITUDE
-        ].round(decimal_precision)
-        return hera_data_array
+        if "x" in da.coords and "y" in da.coords:
+            return da.assign_coords(
+                x=da.x.round(decimal_precision), y=da.y.round(decimal_precision)
+            )
+        else:
+            raise ValueError(
+                "The DataArray does not contain the expected coordinates 'x' and 'y'."
+            )
 
     @staticmethod
     def _approximate_river_temperature(

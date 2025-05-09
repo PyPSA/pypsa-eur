@@ -3,6 +3,12 @@
 # SPDX-License-Identifier: MITimport shapely
 import shapely
 import xarray as xr
+import rioxarray
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
@@ -13,33 +19,62 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def __init__(
         self,
         water_temperature: xr.DataArray,
-        region_geometry: shapely.geometry.polygon.Polygon,
+        region: shapely.geometry.polygon.Polygon,
         min_inlet_temperature: float = 1,
     ):
+
         # buffer the region geometry by half the data resolution
         # This way, offshore data points just outside the region are included
-        self.region_geometry = region_geometry.boundary.buffer(
-            self._get_data_resolution(data=water_temperature)
-            / self.METERS_PER_DEGREE
-            / 1.5
-        )
-
         self.water_temperature = water_temperature
+        self.region_geometry = region.geometry.boundary.buffer(
+            self._data_resolution / 1.5
+        )
         self.min_outlet_temperature = min_inlet_temperature
-        self._mask_to_geometry()
 
-    def _mask_to_geometry(self):
+        # Validate inputs and potentially reproject data
+        self._validate_and_reproject_input()
+
+        # Create masked data for processing
+        self._clip_data_to_region()
+
+    def _validate_and_reproject_input(self):
+        """
+        Validate input data and ensure proper CRS alignment.
+        
+        Updates self.volume_flow and self.water_temperature with properly
+        projected data if needed.
+        
+        Raises:
+            ValueError: If inputs are invalid or incompatible
+        """
+        # Check if data has rio attribute and CRS information
+        # Ensure data has rioxarray capabilities
+        if not hasattr(self.water_temperature, "rio"):
+            raise ValueError(f"water temperature must have rioxarray capabilities")
+            
+        # Ensure data has CRS information
+        if not self.water_temperature.rio.crs:
+            raise ValueError(f"water temperature must have CRS information (use rio.write_crs)")
+        
+        # Project data to target CRS if needed
+        if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
+            try:
+                self.water_temperature = self.water_temperature.rio.reproject(f"EPSG:{self.EPSG}")
+                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
+            except Exception as e:
+                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+                
+    def _clip_data_to_region(self):
         """Mask water temperature to the geometry."""
 
-        boxed_water_temperature = self._get_boxed_data(data=self.water_temperature)
-
-        mask = self.get_geometry_mask(data=boxed_water_temperature)
-        self.masked_water_temperature = boxed_water_temperature.where(mask)
+        self._water_temperature_in_region =self.water_temperature.rio.clip(
+            self.region_geometry, drop=False
+        )
 
     def get_spatial_aggregate(self):
         """Get the spatial aggregate of water temperature."""
-        average_water_temperature = self.masked_water_temperature.mean(
-            dim=[self.LATITUDE, self.LONGITUDE], skipna=True
+        average_water_temperature = self._water_temperature_in_region.mean(
+            dim=["x", "y"], skipna=True
         )
 
         # Combine into a single dataset and apply cut-off temperature
@@ -53,7 +88,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
 
     def get_temporal_aggregate(self):
         """Get the temporal aggregate of water temperature."""
-        average_water_temperature = self.masked_water_temperature.mean(
+        average_water_temperature = self._water_temperature_in_region.mean(
             dim=[self.TIME], skipna=True
         )
 

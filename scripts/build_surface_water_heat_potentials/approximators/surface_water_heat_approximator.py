@@ -7,6 +7,10 @@ import numpy as np
 import shapely
 import shapely.vectorized as sv
 import xarray as xr
+import rioxarray
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SurfaceWaterHeatApproximator(ABC):
@@ -21,16 +25,14 @@ class SurfaceWaterHeatApproximator(ABC):
         results (xr.Dataset): The results of the calculation. Contains `total_power` and `average_temperature`. Coordinates are `time`.
     """
 
-    METERS_PER_DEGREE: int = 111111
-    LONGITUDE = "longitude"
-    LATITUDE = "latitude"
     TIME = "time"
+    EPSG = 3035
 
     def __init__(
         self,
         volume_flow: xr.DataArray,
         water_temperature: xr.DataArray,
-        region_geometry: shapely.geometry.polygon.Polygon,
+        region: shapely.geometry.polygon.Polygon,
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
@@ -38,60 +40,45 @@ class SurfaceWaterHeatApproximator(ABC):
     ):
         """
         Initialize the SeawaterThermalApproximator. This is an abstract class and should not be instantiated directly.
-
+        
         Args:
-            volume_flow (xr.DataArray): The volume flow of the water.
-            water_temperature (xr.DataArray): The water temperature data.
-            region_geometry (shapely.geometry.polygon.Polygon): The geometry of the region of interest.
-            max_relative_volume_flow (float): The maximum relative volume flow.
-            density_water (float): The density of water.
-            heat_capacity_water (float): The heat capacity of water.
-            delta_t_max (float): The maximum temperature difference.
-            min_outlet_temperature (float): The minimum outlet temperature.
-            min_distance_meters (int): The minimum distance in meters between two projects.
+            volume_flow: Volume flow data
+            water_temperature: Water temperature data
+            region_geometry: Region of interest geometry
+            max_relative_volume_flow: Maximum relative volume flow
+            delta_t_max: Maximum temperature difference
+            min_outlet_temperature: Minimum outlet temperature
+            min_distance_meters: Minimum distance between projects in meters
         """
-
+        # Set instance variables
         self.volume_flow = volume_flow
         self.water_temperature = water_temperature
-        self.region_geometry = region_geometry
+        self.region = region
         self.max_relative_volume_flow = max_relative_volume_flow
         self.delta_t_max = delta_t_max
         self.min_outlet_temperature = min_outlet_temperature
         self.min_distance_meters = min_distance_meters
 
-        self._validate_input(
-            volume_flow=volume_flow, water_temperature=water_temperature
-        )
-
-        self._mask_to_geometry()
-
-    def _mask_to_geometry(self):
-        """Mask water temperature and volume flow to the geometry and compute heat source power."""
-
-        boxed_volume_flow = self._get_boxed_data(data=self.volume_flow)
-        boxed_water_temperature = self._get_boxed_data(data=self.water_temperature)
-
-        mask = self.get_geometry_mask(data=boxed_volume_flow)
-
-        masked_volume_flow = boxed_volume_flow.where(mask)
-        self.masked_water_temperature = boxed_water_temperature.where(mask)
-
-        self.masked_power = self.get_power(
-            volume_flow=masked_volume_flow,
-            temperature=self.masked_water_temperature,
-        )
+        # Validate inputs and potentially reproject data
+        # self._validate_and_reproject_input()
+        
+        # Create masked data for processing
+        self._clip_data_to_region()
+        
+        # Calculate power based on masked data
+        self._calculate_power_in_region(temperature=self._water_temperature_in_region, volume_flow=self._volume_flow_in_region)
 
     def get_spatial_aggregate(self):
         """Get the spatial aggregate of water temperature and power."""
-        total_power = self.masked_power.sum(
-            dim=[self.LATITUDE, self.LONGITUDE]
-        ) * self._get_scaling_factor(data=self.volume_flow)
+        total_power = self._power_in_region.sum(
+            dim=["x", "y"]
+        ) * self._scaling_factor
 
         # Calculate power-weighted average temperature
         average_water_temperature = (
-            self.masked_water_temperature * self.masked_power
-        ).sum(dim=[self.LATITUDE, self.LONGITUDE]) / (
-            self.masked_power.sum(dim=[self.LATITUDE, self.LONGITUDE]) + 0.001
+            self._water_temperature_in_region * self._power_in_region
+        ).sum(dim=["x", "y"]) / (
+            self._power_in_region.sum(dim=["x", "y"]) + 0.001
         )
 
         # Combine into a single dataset
@@ -104,14 +91,14 @@ class SurfaceWaterHeatApproximator(ABC):
 
     def get_temporal_aggregate(self):
         """Get the spatial aggregate of water temperature and power."""
-        total_energy = self.masked_power.sum(
+        total_energy = self._power_in_region.sum(
             dim=[self.TIME]
-        ) * self._get_scaling_factor(data=self.volume_flow)
+        ) * self._scaling_factor
 
         # Calculate power-weighted average temperature
         average_water_temperature = (
-            self.masked_water_temperature * self.masked_power
-        ).sum(dim=[self.TIME]) / (self.masked_power.sum(dim=[self.TIME]) + 0.001)
+            self._water_temperature_in_region * self._power_in_region
+        ).sum(dim=[self.TIME]) / (self._power_in_region.sum(dim=[self.TIME]) + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -121,50 +108,87 @@ class SurfaceWaterHeatApproximator(ABC):
             }
         )
 
-    def _validate_input(
-        self, volume_flow: xr.DataArray, water_temperature: xr.DataArray
-    ):
-        if not volume_flow.coords.equals(water_temperature.coords):
-            raise ValueError(
-                "Coordinates of `volume_flow` and `temperature` do not match."
-            )
-
-    def _get_data_resolution(self, data: xr.DataArray) -> float:
-        return (
-            data[self.LONGITUDE].diff(self.LONGITUDE).mean().values
-            * self.METERS_PER_DEGREE
-            + data[self.LATITUDE].diff(self.LATITUDE).mean().values
-            * self.METERS_PER_DEGREE
-        ) / 2
-
-    def _get_scaling_factor(self, data: xr.DataArray) -> float:
-        return self._get_data_resolution(data) / self.min_distance_meters
-
-    def _get_boxed_data(self, data: xr.DataArray) -> xr.Dataset:
+    def _validate_and_reproject_input(self):
         """
-        Get the dataset boxed to the geometry.
-
-        Args:
-            data (xr.DataArray): Data to box.
-            geometry (gpd.GeoDataFrame): The geometry.
-
-        Returns:
-            xr.Dataset: The boxed dataset.
+        Validate input data and ensure proper CRS alignment.
+        
+        Updates self.volume_flow and self.water_temperature with properly
+        projected data if needed.
+        
+        Raises:
+            ValueError: If inputs are invalid or incompatible
         """
+        # Check if data has rio attribute and CRS information
+        for name, data in [("water_temperature", self.water_temperature), 
+                           ("volume_flow", self.volume_flow)]:
+            # Ensure data has rioxarray capabilities
+            if not hasattr(data, "rio"):
+                raise ValueError(f"{name} must have rioxarray capabilities")
+                
+            # Ensure data has CRS information
+            if not data.rio.crs:
+                raise ValueError(f"{name} must have CRS information (use rio.write_crs)")
+        
+        # Project data to target CRS if needed
+        if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
+            try:
+                self.water_temperature = self.water_temperature.rio.reproject(f"EPSG:{self.EPSG}")
+                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
+            except Exception as e:
+                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+                
+        if self.volume_flow.rio.crs.to_epsg() != self.EPSG:
+            try:
+                self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
+                logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
+            except Exception as e:
+                raise ValueError(f"Failed to reproject volume_flow: {str(e)}")
+        
+        # Check that datasets have the same dimensions
+        if not set(self.water_temperature.dims) == set(self.volume_flow.dims):
+            raise ValueError(f"Dimensions mismatch: water_temperature has {self.water_temperature.dims}, "
+                            f"volume_flow has {self.volume_flow.dims}")
+        
+        # Check that x and y coordinates match
+        for coord in ['x', 'y', self.TIME]:
+            if coord in self.water_temperature.coords and coord in self.volume_flow.coords:
+                if not np.array_equal(self.water_temperature[coord].values, self.volume_flow[coord].values):
+                    raise ValueError(f"{coord} coordinates don't match between datasets")
+            else:
+                raise ValueError(f"{coord} coordinate '{coord}' not found in both datasets")
+       
+        # For region geometry, we just check the type
+        # if not isinstance(self.region, shapely.geometry.multipolygon.MultiPolygon):
+        #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
 
-        # bound data to onshore region
-        return data.sel(
-            **{
-                self.LONGITUDE: slice(
-                    self.region_geometry.bounds[0], self.region_geometry.bounds[2]
-                ),
-                self.LATITUDE: slice(
-                    self.region_geometry.bounds[1], self.region_geometry.bounds[3]
-                ),
-            }
+    def _clip_data_to_region(self) -> None:
+        """Create masked data by clipping to the region geometry."""
+        self._volume_flow_in_region = self.volume_flow.rio.clip(
+            self.region.geometry, drop=False
+        )
+        
+        self._water_temperature_in_region = self.water_temperature.rio.clip(
+            self.region.geometry, drop=False
         )
 
-    def get_power(
+    @property
+    def _data_resolution(self) -> float:
+        """
+        Calculate scaling factor based on dataset resolution and minimum distance.
+        Assumes data is in EPSG:3035 (meters).
+        """
+        # Get resolution directly from rio
+        x_res, y_res = self.water_temperature.rio.resolution()
+        
+        # Average resolution in meters (EPSG:3035 uses meters)
+        return (abs(x_res) + abs(y_res)) / 2
+        
+    @property
+    def _scaling_factor(self) -> float:
+        # Return the ratio of resolution to minimum distance
+        return self._data_resolution / self.min_distance_meters
+
+    def _calculate_power_in_region(
         self,
         volume_flow: xr.DataArray,
         temperature: xr.DataArray,
@@ -187,41 +211,10 @@ class SurfaceWaterHeatApproximator(ABC):
             xr.DataArray: Power.
         """
         # Mean Volume flow for the area of interest
-        usable_volume_flow = self.max_relative_volume_flow * volume_flow
+        usable_volume_flow = self.max_relative_volume_flow * self.volume_flow
         # Calculate temperature difference for approximation of the heat flow
         delta_t = (temperature - self.min_outlet_temperature).clip(
             max=self.delta_t_max, min=0
         )
         # Calculate heat flow
-        return usable_volume_flow * density_water * heat_capacity_water * delta_t
-
-    def get_geometry_mask(
-        self,
-        data: xr.DataArray,
-    ) -> xr.DataArray:
-        """
-        Get the mask for the geometry border.
-
-        Args:
-            ds (xr.Dataset): The dataset.
-            geometry: The geometry.
-            scale_buffer (float): The scale buffer.
-
-        Returns:
-            xr.DataArray: The mask.
-        """
-
-        # Extract coordinate values from ds (note: coordinate names match those in ds)
-        lon2d, lat2d = np.meshgrid(data[self.LONGITUDE], data[self.LATITUDE])
-        # Create a boolean mask for grid points within the border buffer.
-        mask = sv.contains(self.region_geometry, lon2d, lat2d)
-
-        # Convert to an xarray DataArray with matching dims and coords.
-        return xr.DataArray(
-            mask,
-            dims=[self.LATITUDE, self.LONGITUDE],
-            coords={
-                self.LATITUDE: data[self.LATITUDE],
-                self.LONGITUDE: data[self.LONGITUDE],
-            },
-        )
+        self._power_in_region = usable_volume_flow * density_water * heat_capacity_water * delta_t

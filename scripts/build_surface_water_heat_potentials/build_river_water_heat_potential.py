@@ -7,6 +7,7 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 import xarray as xr
+import rioxarray
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -22,18 +23,65 @@ from approximators.river_water_heat_approximator import RiverWaterHeatApproximat
 
 
 def get_regional_result(
-    river_discharge: xr.DataArray,
-    ambient_temperature: xr.DataArray,
-    geometry: shapely.geometry.polygon.Polygon,
+    river_discharge_fn: xr.DataArray,
+    ambient_temperature_fn: xr.DataArray,
+    region: gpd.GeoSeries,
+    dh_areas: gpd.GeoDataFrame,
 ) -> dict:
+
+    # Clip the region to the district heating areas
+    region.geometry = gpd.overlay(
+        region.to_frame(),
+        dh_areas,
+        how="intersection",
+    ).union_all()
+    # Get bounds for initial clip_box
+    minx, miny, maxx, maxy = region.total_bounds
+
+    logging.info(f"Loading river-water data and boxing to region bounds...")
+
+    river_discharge = (
+        xr.open_dataset(
+            river_discharge_fn,
+            chunks={"time": "auto", "lat": "auto", "lon": "auto"},
+            # engine="rasterio",
+        )["dis"]
+        .rename({"lat": "latitude", "lon": "longitude"})
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
+    )
+
+    ambient_temperature = (
+        xr.open_dataset(
+            ambient_temperature_fn,
+            chunks={"time": "auto", "lat": "auto", "lon": "auto"},
+            # engine="rasterio",
+        )["ta6"]
+        .rename({"lat": "latitude", "lon": "longitude"})
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
+    )
+
+    # Use EPSG:3035 for all calculations to use buffers/distances etc. in meters
+    region = region.to_crs("EPSG:3035")
+
+    logging.info(f"Approximating river-heat potential...")
     river_water_heat_approximator = RiverWaterHeatApproximator(
         volume_flow=river_discharge,
         ambient_temperature=ambient_temperature,
-        region_geometry=geometry,
+        region=region,
     )
-    spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate().compute()
+    spatial_aggregate = (
+        river_water_heat_approximator.get_spatial_aggregate()
+        .compute()
+    )
     temporal_aggregate = (
-        river_water_heat_approximator.get_temporal_aggregate().compute()
+        river_water_heat_approximator.get_temporal_aggregate()
+        .rio.reproject("EPSG:4326")
+        .rename({"x": "longitude", "y": "latitude"})
+        .compute()
     )
 
     return {
@@ -66,7 +114,11 @@ if __name__ == "__main__":
 
     regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
     regions_onshore.set_index("name", inplace=True)
-    regions_onshore.set_crs("EPSG:4326", inplace=True)
+    regions_onshore = regions_onshore.to_crs("EPSG:4326")
+
+    dh_areas = gpd.read_file(snakemake.input["dh_areas"]).to_crs("EPSG:3035")
+    dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
+    dh_areas = dh_areas.to_crs("EPSG:4326")
 
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),
@@ -75,48 +127,17 @@ if __name__ == "__main__":
     )
     client = Client(cluster)
 
-    river_discharge = (
-        xr.open_dataset(
-            snakemake.input.hera_river_discharge,
-            chunks={"time": -1, "lat": 100, "lon": 100},
-            decode_coords=["time", "lat", "lon"],
-            mode="r",
-        )["dis"]
-        .sortby(["time", "lat", "lon"])
-        .rename({"lon": "longitude", "lat": "latitude"})
-    )
-
-    ambient_temperature = (
-        xr.open_dataset(
-            snakemake.input.hera_ambient_temperature,
-            chunks={"time": -1, "lat": 100, "lon": 100},
-            decode_coords=["time", "lat", "lon"],
-            mode="r",
-        )["ta6"]
-        .sortby(["time", "lat", "lon"])
-        .rename({"lon": "longitude", "lat": "latitude"})
-    )
-
     futures = []
     for region_name in regions_onshore.index:
-        geometry = regions_onshore.loc[region_name].geometry
+        logging.info(f"Processing region {region_name}")
+        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
         futures.append(
+        # results.append(
             get_regional_result(
-                river_discharge=river_discharge.sel(
-                    longitude=slice(geometry.bounds[0], geometry.bounds[2]),
-                    latitude=slice(
-                        geometry.bounds[1],
-                        geometry.bounds[3],
-                    ),
-                ),
-                ambient_temperature=ambient_temperature.sel(
-                    longitude=slice(geometry.bounds[0], geometry.bounds[2]),
-                    latitude=slice(
-                        geometry.bounds[1],
-                        geometry.bounds[3],
-                    ),
-                ),
-                geometry=geometry,
+                river_discharge_fn=snakemake.input.hera_river_discharge,
+                ambient_temperature_fn=snakemake.input.hera_ambient_temperature,
+                region=region,
+                dh_areas=dh_areas,
             ),
         )
 

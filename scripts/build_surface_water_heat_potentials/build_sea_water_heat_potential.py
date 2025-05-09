@@ -22,34 +22,49 @@ from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 
 
 def get_regional_result(
-    seawater_temperature_fn: str, geometry: shapely.geometry.polygon.Polygon
+    seawater_temperature_fn: str, region: gpd.GeoSeries, dh_areas: gpd.GeoDataFrame
 ) -> dict:
-    ds = (
+
+    # Clip the region to the district heating areas
+    region.geometry = gpd.overlay(
+        region.to_frame(),
+        dh_areas,
+        how="intersection",
+    ).union_all()
+    # Get bounds for initial clip_box (more efficient)
+    minx, miny, maxx, maxy = region.total_bounds
+
+    water_temperature = (
         xr.open_dataset(
             seawater_temperature_fn,
-            chunks={"time": 8760, "latitude": 50, "longitude": 50},
-            decode_coords=["time", "latitude", "longitude"],
-            mode="r",
-        )
-        .sortby(["time", "latitude", "longitude"])
-        .sel(
-            longitude=slice(geometry.bounds[0], geometry.bounds[2]),
-            latitude=slice(
-                geometry.bounds[1],
-                geometry.bounds[3],
-            ),
-        )
+            chunks={
+                "time": "auto",
+                "latitude": "auto",
+                "longitude": "auto",
+                "depth": 1,
+            },
+            # engine="rasterio",
+        )["thetao"]
+        .mean(dim="depth")
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
     )
 
+    region = region.to_crs("EPSG:3035")
+
     seawater_heat_approximator = SeaWaterHeatApproximator(
-        water_temperature=ds["thetao"].mean(dim="depth"),
-        region_geometry=geometry,
+        water_temperature=water_temperature,
+        region=region,
     )
 
     return {
         "spatial aggregate": seawater_heat_approximator.get_spatial_aggregate().compute(),
         # temporal aggregate is only used for plotting/analysis
-        "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate().compute(),
+        "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate()
+        .rio.reproject("EPSG:4326")
+        .rename({"x": "longitude", "y": "latitude"})
+        .compute(),
     }
 
 
@@ -78,6 +93,11 @@ if __name__ == "__main__":
     regions_onshore.set_index("name", inplace=True)
     regions_onshore.set_crs("EPSG:4326", inplace=True)
 
+    dh_areas = gpd.read_file(snakemake.input["dh_areas"]).to_crs("EPSG:3035")
+    dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
+    dh_areas = dh_areas.to_crs("EPSG:4326")
+
+
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),
         threads_per_worker=1,
@@ -87,11 +107,13 @@ if __name__ == "__main__":
 
     futures = []
     for region_name in regions_onshore.index:
-        geometry = regions_onshore.loc[region_name].geometry
+        logging.info(f"Processing region {region_name}")
+        region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
         futures.append(
             get_regional_result(
                 seawater_temperature_fn=snakemake.input["seawater_temperature"],
-                geometry=geometry,
+                region=region,
+                dh_areas=dh_areas,
             )
         )
 
