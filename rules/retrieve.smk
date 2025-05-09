@@ -687,16 +687,41 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            lau_regions="data/lau_regions.geojson",
-        log:
-            "logs/retrieve_lau_regions.log",
-            lau_regions="data/lau_regions.zip",
+            "data/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
         threads: 1
         retries: 2
         run:
             move(input[0], output[0])
+
+    rule seawater_temperature:
+        output:
+            seawater_temperature="data/seawater_temperature.nc",
+        log:
+            "logs/retrieve_seawater_data.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        shell:
+            """
+            wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
+            """
+
+    rule retrieve_hera_data:
+        output:
+            river_discharge="data/hera/river_discharge_2013.nc",
+            ambient_temperature="data/hera/ambient_temperature_2013.nc",
+        log:
+            "logs/retrieve_hera_data.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        shell:
+            """
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA2013.nc -O {output.river_discharge}
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_2013.nc -O {output.ambient_temperature}
+            """
 
 
 if config["enable"]["retrieve"]:
@@ -720,3 +745,17 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
+    rule retrieve_dh_areas:
+        input:
+            dh_areas=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
+                keep_local=True,
+            ),
+        output:
+            dh_areas="data/dh_areas.gpkg",
+        log:
+            "logs/retrieve_dh_areas.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
