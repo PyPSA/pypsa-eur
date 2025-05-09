@@ -204,10 +204,10 @@ class SurfaceWaterHeatApproximator(ABC):
         self,
         volume_flow: xr.DataArray,
         temperature: xr.DataArray,
-        density_water: float = 1000, # kg/m^3
-        heat_capacity_water: float = 4.18, # kJ/kg/K
-        kJ_per_mwh: float = 3.6e6, # kJ/MWh
-        seconds_per_hour: float = 3600, # seconds/hour
+        density_water: float = 1000,  # kg/m^3
+        heat_capacity_water: float = 4.18,  # kJ/kg/K
+        kJ_per_mwh: float = 3.6e6,  # kJ/MWh
+        seconds_per_hour: float = 3600,  # seconds/hour
     ) -> xr.DataArray:
         """
         Get the power from flow and temperature.
@@ -231,4 +231,11 @@ class SurfaceWaterHeatApproximator(ABC):
             max=self.delta_t_max, min=0
         )
         # Calculate heat flow
-        self._power_in_region = usable_volume_flow * density_water * heat_capacity_water * delta_t / kJ_per_mwh * seconds_per_hour
+        self._power_in_region = (
+            usable_volume_flow
+            * density_water
+            * heat_capacity_water
+            * delta_t
+            / kJ_per_mwh
+            * seconds_per_hour
+        )
