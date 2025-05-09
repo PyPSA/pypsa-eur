@@ -126,7 +126,6 @@ if __name__ == "__main__":
         logging.info(f"Processing region {region_name}")
         region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
         futures.append(
-            # results.append(
             get_regional_result(
                 river_discharge_fn=snakemake.input.hera_river_discharge,
                 ambient_temperature_fn=snakemake.input.hera_ambient_temperature,

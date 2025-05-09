@@ -223,7 +223,7 @@ if __name__ == "__main__":
             energy_map = plot_heat_source_map(
                 da=energy_data["total_energy"] / 1e6,  # Convert to TWh
                 regions_onshore=regions_onshore,
-                energy_var="total_energy",
+                var_name="total_energy",
                 title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (TWh)",
                 cmap=energy_cmap,
                 aggregate_type="sum",
