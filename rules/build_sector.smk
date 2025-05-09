@@ -334,14 +334,12 @@ rule build_river_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
-        dh_area_buffer=config_provider(
-            "sector", "district_heating", "dh_area_buffer"
-        ),
+        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         hera_river_discharge="data/hera/river_discharge_2013.nc",
         hera_ambient_temperature="data/hera/ambient_temperature_2013.nc",
-        dh_areas="data/dh_areas.gpkg"
+        dh_areas="data/dh_areas.gpkg",
     output:
         heat_source_power=resources(
             "heat_source_power_river_water_base_s_{clusters}.csv"
@@ -404,13 +402,11 @@ rule build_sea_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
-        dh_area_buffer=config_provider(
-            "sector", "district_heating", "dh_area_buffer"
-        ),
+        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         seawater_temperature="data/seawater_temperature.nc",
-        dh_areas="data/dh_areas.gpkg"
+        dh_areas="data/dh_areas.gpkg",
     output:
         heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
         heat_source_temperature_temporal_aggregate=resources(

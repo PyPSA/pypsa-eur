@@ -5,7 +5,6 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-import shapely
 import xarray as xr
 from _helpers import (
     configure_logging,
@@ -24,7 +23,6 @@ from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 def get_regional_result(
     seawater_temperature_fn: str, region: gpd.GeoSeries, dh_areas: gpd.GeoDataFrame
 ) -> dict:
-
     # Clip the region to the district heating areas
     region.geometry = gpd.overlay(
         region.to_frame(),
@@ -96,7 +94,6 @@ if __name__ == "__main__":
     dh_areas = gpd.read_file(snakemake.input["dh_areas"]).to_crs("EPSG:3035")
     dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
     dh_areas = dh_areas.to_crs("EPSG:4326")
-
 
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),

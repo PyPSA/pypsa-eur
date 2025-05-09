@@ -5,9 +5,7 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-import shapely
 import xarray as xr
-import rioxarray
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -28,7 +26,6 @@ def get_regional_result(
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
 ) -> dict:
-
     # Clip the region to the district heating areas
     region.geometry = gpd.overlay(
         region.to_frame(),
@@ -38,7 +35,7 @@ def get_regional_result(
     # Get bounds for initial clip_box
     minx, miny, maxx, maxy = region.total_bounds
 
-    logging.info(f"Loading river-water data and boxing to region bounds...")
+    logging.info("Loading river-water data and boxing to region bounds...")
 
     river_discharge = (
         xr.open_dataset(
@@ -67,16 +64,13 @@ def get_regional_result(
     # Use EPSG:3035 for all calculations to use buffers/distances etc. in meters
     region = region.to_crs("EPSG:3035")
 
-    logging.info(f"Approximating river-heat potential...")
+    logging.info("Approximating river-heat potential...")
     river_water_heat_approximator = RiverWaterHeatApproximator(
         volume_flow=river_discharge,
         ambient_temperature=ambient_temperature,
         region=region,
     )
-    spatial_aggregate = (
-        river_water_heat_approximator.get_spatial_aggregate()
-        .compute()
-    )
+    spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate().compute()
     temporal_aggregate = (
         river_water_heat_approximator.get_temporal_aggregate()
         .rio.reproject("EPSG:4326")
@@ -132,7 +126,7 @@ if __name__ == "__main__":
         logging.info(f"Processing region {region_name}")
         region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
         futures.append(
-        # results.append(
+            # results.append(
             get_regional_result(
                 river_discharge_fn=snakemake.input.hera_river_discharge,
                 ambient_temperature_fn=snakemake.input.hera_ambient_temperature,

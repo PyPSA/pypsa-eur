@@ -10,14 +10,12 @@ import logging
 
 import folium
 import geopandas as gpd
-import numpy as np
 import xarray as xr
 from _helpers import (
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from shapely.geometry import Point
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +80,6 @@ def plot_heat_source_map(
     # Check that variable name exists
     if var_name not in df.columns:
         raise ValueError(f"Variable '{var_name}' not found in DataArray")
-
 
     # Filter out zero values and NaNs
     df = df[df[var_name] != 0].dropna(subset=[var_name])
@@ -185,7 +182,7 @@ if __name__ == "__main__":
     if snakemake.wildcards.carrier == "ambient_air":
         temp_var = "temperature"
     else:
-        temp_var = 'average_temperature'
+        temp_var = "average_temperature"
 
     try:
         # If time dimension exists, use the mean across time
@@ -224,7 +221,7 @@ if __name__ == "__main__":
 
             # Create and save the energy map
             energy_map = plot_heat_source_map(
-                da=energy_data["total_energy"] / 1e6, # Convert to TWh
+                da=energy_data["total_energy"] / 1e6,  # Convert to TWh
                 regions_onshore=regions_onshore,
                 energy_var="total_energy",
                 title=f"{snakemake.wildcards.carrier.replace('_', ' ').title()} Energy Potential (TWh)",

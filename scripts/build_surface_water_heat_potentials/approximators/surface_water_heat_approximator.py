@@ -1,14 +1,12 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+import logging
 from abc import ABC
 
 import numpy as np
 import shapely
-import shapely.vectorized as sv
 import xarray as xr
-import rioxarray
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ class SurfaceWaterHeatApproximator(ABC):
     ):
         """
         Initialize the SeawaterThermalApproximator. This is an abstract class and should not be instantiated directly.
-        
+
         Args:
             volume_flow: Volume flow data
             water_temperature: Water temperature data
@@ -61,25 +59,24 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # Validate inputs and potentially reproject data
         # self._validate_and_reproject_input()
-        
+
         # Create masked data for processing
         self._clip_data_to_region()
-        
+
         # Calculate power based on masked data
-        self._calculate_power_in_region(temperature=self._water_temperature_in_region, volume_flow=self._volume_flow_in_region)
+        self._calculate_power_in_region(
+            temperature=self._water_temperature_in_region,
+            volume_flow=self._volume_flow_in_region,
+        )
 
     def get_spatial_aggregate(self):
         """Get the spatial aggregate of water temperature and power."""
-        total_power = self._power_in_region.sum(
-            dim=["x", "y"]
-        ) * self._scaling_factor
+        total_power = self._power_in_region.sum(dim=["x", "y"]) * self._scaling_factor
 
         # Calculate power-weighted average temperature
         average_water_temperature = (
             self._water_temperature_in_region * self._power_in_region
-        ).sum(dim=["x", "y"]) / (
-            self._power_in_region.sum(dim=["x", "y"]) + 0.001
-        )
+        ).sum(dim=["x", "y"]) / (self._power_in_region.sum(dim=["x", "y"]) + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -91,9 +88,7 @@ class SurfaceWaterHeatApproximator(ABC):
 
     def get_temporal_aggregate(self):
         """Get the spatial aggregate of water temperature and power."""
-        total_energy = self._power_in_region.sum(
-            dim=[self.TIME]
-        ) * self._scaling_factor
+        total_energy = self._power_in_region.sum(dim=[self.TIME]) * self._scaling_factor
 
         # Calculate power-weighted average temperature
         average_water_temperature = (
@@ -111,52 +106,69 @@ class SurfaceWaterHeatApproximator(ABC):
     def _validate_and_reproject_input(self):
         """
         Validate input data and ensure proper CRS alignment.
-        
+
         Updates self.volume_flow and self.water_temperature with properly
         projected data if needed.
-        
+
         Raises:
             ValueError: If inputs are invalid or incompatible
         """
         # Check if data has rio attribute and CRS information
-        for name, data in [("water_temperature", self.water_temperature), 
-                           ("volume_flow", self.volume_flow)]:
+        for name, data in [
+            ("water_temperature", self.water_temperature),
+            ("volume_flow", self.volume_flow),
+        ]:
             # Ensure data has rioxarray capabilities
             if not hasattr(data, "rio"):
                 raise ValueError(f"{name} must have rioxarray capabilities")
-                
+
             # Ensure data has CRS information
             if not data.rio.crs:
-                raise ValueError(f"{name} must have CRS information (use rio.write_crs)")
-        
+                raise ValueError(
+                    f"{name} must have CRS information (use rio.write_crs)"
+                )
+
         # Project data to target CRS if needed
         if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
             try:
-                self.water_temperature = self.water_temperature.rio.reproject(f"EPSG:{self.EPSG}")
+                self.water_temperature = self.water_temperature.rio.reproject(
+                    f"EPSG:{self.EPSG}"
+                )
                 logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
             except Exception as e:
                 raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
-                
+
         if self.volume_flow.rio.crs.to_epsg() != self.EPSG:
             try:
                 self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
                 logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
             except Exception as e:
                 raise ValueError(f"Failed to reproject volume_flow: {str(e)}")
-        
+
         # Check that datasets have the same dimensions
         if not set(self.water_temperature.dims) == set(self.volume_flow.dims):
-            raise ValueError(f"Dimensions mismatch: water_temperature has {self.water_temperature.dims}, "
-                            f"volume_flow has {self.volume_flow.dims}")
-        
+            raise ValueError(
+                f"Dimensions mismatch: water_temperature has {self.water_temperature.dims}, "
+                f"volume_flow has {self.volume_flow.dims}"
+            )
+
         # Check that x and y coordinates match
-        for coord in ['x', 'y', self.TIME]:
-            if coord in self.water_temperature.coords and coord in self.volume_flow.coords:
-                if not np.array_equal(self.water_temperature[coord].values, self.volume_flow[coord].values):
-                    raise ValueError(f"{coord} coordinates don't match between datasets")
+        for coord in ["x", "y", self.TIME]:
+            if (
+                coord in self.water_temperature.coords
+                and coord in self.volume_flow.coords
+            ):
+                if not np.array_equal(
+                    self.water_temperature[coord].values, self.volume_flow[coord].values
+                ):
+                    raise ValueError(
+                        f"{coord} coordinates don't match between datasets"
+                    )
             else:
-                raise ValueError(f"{coord} coordinate '{coord}' not found in both datasets")
-       
+                raise ValueError(
+                    f"{coord} coordinate '{coord}' not found in both datasets"
+                )
+
         # For region geometry, we just check the type
         # if not isinstance(self.region, shapely.geometry.multipolygon.MultiPolygon):
         #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
@@ -166,7 +178,7 @@ class SurfaceWaterHeatApproximator(ABC):
         self._volume_flow_in_region = self.volume_flow.rio.clip(
             self.region.geometry, drop=False
         )
-        
+
         self._water_temperature_in_region = self.water_temperature.rio.clip(
             self.region.geometry, drop=False
         )
@@ -179,10 +191,10 @@ class SurfaceWaterHeatApproximator(ABC):
         """
         # Get resolution directly from rio
         x_res, y_res = self.water_temperature.rio.resolution()
-        
+
         # Average resolution in meters (EPSG:3035 uses meters)
         return (abs(x_res) + abs(y_res)) / 2
-        
+
     @property
     def _scaling_factor(self) -> float:
         # Return the ratio of resolution to minimum distance
@@ -217,4 +229,6 @@ class SurfaceWaterHeatApproximator(ABC):
             max=self.delta_t_max, min=0
         )
         # Calculate heat flow
-        self._power_in_region = usable_volume_flow * density_water * heat_capacity_water * delta_t
+        self._power_in_region = (
+            usable_volume_flow * density_water * heat_capacity_water * delta_t
+        )

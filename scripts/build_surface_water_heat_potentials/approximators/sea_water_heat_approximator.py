@@ -1,13 +1,12 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MITimport shapely
-import shapely
-import xarray as xr
-import rioxarray
 import logging
 
-logger = logging.getLogger(__name__)
+import shapely
+import xarray as xr
 
+logger = logging.getLogger(__name__)
 
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
@@ -22,7 +21,6 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         region: shapely.geometry.polygon.Polygon,
         min_inlet_temperature: float = 1,
     ):
-
         # buffer the region geometry by half the data resolution
         # This way, offshore data points just outside the region are included
         self.water_temperature = water_temperature
@@ -40,34 +38,38 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def _validate_and_reproject_input(self):
         """
         Validate input data and ensure proper CRS alignment.
-        
+
         Updates self.volume_flow and self.water_temperature with properly
         projected data if needed.
-        
+
         Raises:
             ValueError: If inputs are invalid or incompatible
         """
         # Check if data has rio attribute and CRS information
         # Ensure data has rioxarray capabilities
         if not hasattr(self.water_temperature, "rio"):
-            raise ValueError(f"water temperature must have rioxarray capabilities")
-            
+            raise ValueError("water temperature must have rioxarray capabilities")
+
         # Ensure data has CRS information
         if not self.water_temperature.rio.crs:
-            raise ValueError(f"water temperature must have CRS information (use rio.write_crs)")
-        
+            raise ValueError(
+                "water temperature must have CRS information (use rio.write_crs)"
+            )
+
         # Project data to target CRS if needed
         if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
             try:
-                self.water_temperature = self.water_temperature.rio.reproject(f"EPSG:{self.EPSG}")
+                self.water_temperature = self.water_temperature.rio.reproject(
+                    f"EPSG:{self.EPSG}"
+                )
                 logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
             except Exception as e:
                 raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
-                
+
     def _clip_data_to_region(self):
         """Mask water temperature to the geometry."""
 
-        self._water_temperature_in_region =self.water_temperature.rio.clip(
+        self._water_temperature_in_region = self.water_temperature.rio.clip(
             self.region_geometry, drop=False
         )
 

@@ -4,7 +4,6 @@
 import numpy as np
 import shapely
 import xarray as xr
-import rasterio.features
 
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
@@ -38,7 +37,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
             min_outlet_temperature=min_outlet_temperature,
             min_distance_meters=min_distance_meters,
         )
-    
+
     def _round_coordinates(
         self, da: xr.DataArray, decimal_precision: int = 4
     ) -> xr.DataArray:
