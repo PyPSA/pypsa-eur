@@ -85,6 +85,11 @@ Rule ``add_transmission_projects_and_dlr``
 
 .. automodule:: add_transmission_projects_and_dlr
 
+Rule ``build_bidding_zones``
+=============================
+
+.. automodule:: build_bidding_zones
+
 .. _shapes:
 
 Rule ``build_shapes``
