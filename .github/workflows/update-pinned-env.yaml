@@ -1,5 +1,4 @@
-name: Update pinned envs
-
+name: Update pinned envs with conda-lock
 on:
   push:
     paths:
@@ -15,19 +14,10 @@ jobs:
   update-pinned-environment:
     if: ${{ github.ref == 'refs/heads/master' }}
     name: Update pinned envs
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu, macos, windows]
-        include:
-        - os: ubuntu
-          suffix: "linux"
-        - os: macos
-          suffix: "macos"
-        - os: windows
-          suffix: "windows"
-
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v4
 
@@ -39,29 +29,47 @@ jobs:
         channel-priority: strict
         environment-file: ${{ env.BASE_ENV }}
 
-    - name: Update pinned environment per OS
+    - name: Install conda-lock
       run: |
-        conda env export --name ${{ github.event.repository.name }} --no-builds -c conda-forge -c bioconda --override-channels > envs/${{ matrix.suffix }}-pinned.yaml
+        conda install -c conda-forge conda-lock
 
-    - name: Add SPDX header
-      if: ${{ matrix.suffix != 'windows' }}
+    - name: Generate lockfiles for all platforms
+      run: |
+        conda-lock -f ${{ env.BASE_ENV }} -p linux-64 -p osx-64 -p win-64 -k env --filename-template "envs/{platform}.lock"
+
+    - name: Add SPDX headers to lock files
       run: |
         SPDX_HEADER="# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n# SPDX-License-Identifier: CC0-1.0\n"
-        echo -e "$SPDX_HEADER" | cat - envs/${{ matrix.suffix }}-pinned.yaml > temp && mv temp envs/${{ matrix.suffix }}-pinned.yaml
 
-    - name: Add SPDX header (windows)
-      if: ${{ matrix.suffix == 'windows' }}
+        # Add header to all generated lock files
+        for file in envs/*.lock.yml; do
+          echo "Adding header to $file"
+          echo -e "$SPDX_HEADER" | cat - "$file" > temp && mv temp "$file"
+        done
+
+    - name: Rename files to match existing conventions
       run: |
-        $SPDX_HEADER = "# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
-        $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml" -Raw
-        $NewContent = $SPDX_HEADER + $CurrentContent
-        $NewContent | Set-Content "envs/${{ matrix.suffix }}-pinned.yaml"
+        # Rename files to the conventional names, overwriting if needed
+        if [ -f "envs/linux-64.lock.yml" ]; then
+          mv envs/linux-64.lock.yml envs/linux-pinned.yaml
+          echo "Renamed linux-64.lock.yml to linux-pinned.yaml"
+        fi
 
-    - name: Cache environment files
+        if [ -f "envs/osx-64.lock.yml" ]; then
+          mv envs/osx-64.lock.yml envs/macos-pinned.yaml
+          echo "Renamed osx-64.lock.yml to macos-pinned.yaml"
+        fi
+
+        if [ -f "envs/win-64.lock.yml" ]; then
+          mv envs/win-64.lock.yml envs/windows-pinned.yaml
+          echo "Renamed win-64.lock.yml to windows-pinned.yaml"
+        fi
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.suffix }}-pinned
-        path: envs/${{ matrix.suffix }}-pinned.yaml
+        name: lockfiles
+        path: envs/*-pinned.yaml
 
   create-pull-request:
     needs: update-pinned-environment
@@ -70,13 +78,9 @@ jobs:
     - uses: actions/checkout@v4
     - name: Download all artifacts
       uses: actions/download-artifact@v4
-
-    - name: Prepare files for commit
-      run: |
-        mkdir -p envs
-        mv linux-pinned/* envs/linux-pinned.yaml
-        mv macos-pinned/* envs/macos-pinned.yaml
-        mv windows-pinned/* envs/windows-pinned.yaml
+      with:
+        name: lockfiles
+        path: envs/
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v7
@@ -86,6 +90,8 @@ jobs:
         title: "[github-actions.ci] Update pinned envs"
         body: |
           Automatically generated PR to update pinned environment files for Windows, macOS, and Linux.
+
+          These files were generated using conda-lock for improved dependency resolution and reproducibility.
 
           **Note: Do not merge without manual test execution. Either update the branch to trigger tests, or use `workflow_dispatch` to run tests manually. Unlike standard PRs, tests will not run automatically.**
         commit-message: "Update pinned environment files for all platforms"
