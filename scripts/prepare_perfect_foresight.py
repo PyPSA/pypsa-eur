@@ -229,11 +229,12 @@ def concat_networks(
         for component in network.iterate_components():
             pnl = getattr(n, component.list_name + "_t")
             for k in iterkeys(component.pnl):
-                if "chp" in k:
-                    print("stop")
                 pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
                 if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
+                if k not in pnl:  # prüft auf vorhandene Keys
+                    # lege ein leeres DataFrame für diesen Key an
+                    pnl[k] = pd.DataFrame(index=snapshots)
                 if component.name == "Load":
                     static_load = network.loads.loc[network.loads.p_set != 0]
                     static_load_t = expand_series(static_load.p_set, network_sns).T

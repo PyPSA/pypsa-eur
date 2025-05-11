@@ -566,8 +566,6 @@ def add_heating_capacities_installed_before_baseyear(  # if heat source not in e
         for ratio, grouping_year in zip(ratios, valid_grouping_years):
             # Add heat pumps, but skip 'geothermal' and 'ptes'
             for heat_source in heat_pump_source_types[heat_system.system_type.value]:
-                if heat_source in ("geothermal", "ptes"):
-                    continue
                 costs_name = heat_system.heat_pump_costs_name(heat_source)
 
                 efficiency = (
