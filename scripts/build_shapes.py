@@ -253,6 +253,7 @@ def create_regions(
     offshore_shapes,
     nuts3_gdp,
     nuts3_pop,
+    bidding_zones_path,
     other_gdp,
     other_pop,
 ):
@@ -386,6 +387,11 @@ def create_regions(
     # Only include countries in the config
     regions = regions.query("country in @country_list")
 
+    # Add bidding zone information
+    if bidding_zones_path:
+        bidding_zones = gpd.read_file(bidding_zones_path)
+        regions = regions.assign(bidding_zone=bidding_zone_map(regions, bidding_zones))
+
     return regions
 
 
@@ -489,6 +495,120 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
     return gdp_pop
 
 
+def bidding_zone_map(
+    regions: gpd.GeoDataFrame, bidding_zones: gpd.GeoDataFrame
+) -> pd.Series:
+    """
+    Map bidding zones to regions on a country-by-country basis, assigning each region
+    to the bidding zone with which it has the largest overlap. If a region doesn't
+    overlap with any bidding zone, it's assigned to the nearest one as a fallback.
+
+    Parameters
+    ----------
+    regions : geopandas.GeoDataFrame
+        The regions GeoDataFrame with a 'country' column
+    bidding_zones : geopandas.GeoDataFrame
+        The bidding zones GeoDataFrame with a 'zone_name' and "country" column.
+
+    Returns
+    -------
+    bidding_zone_map : pandas.Series
+        A Series with the same index as regions, containing the assigned bidding zone names.
+    """
+    # Initialize the bidding_zone column with NaN values
+    bidding_zone_map = pd.Series(pd.NA, regions.index, dtype="object")
+
+    logger.info("Mapping bidding zones to regions based on maximum overlap area")
+
+    # Get unique countries in regions
+    countries = regions["country"].unique()
+
+    # Process each country separately
+    for country in countries:
+        # Get regions for this country
+        country_sel = regions["country"] == country
+        country_regions = regions.loc[country_sel].copy()
+
+        # Get bidding zones for this country
+        country_bidding_zones = bidding_zones[bidding_zones.country == country]
+
+        if country_regions.empty or country_bidding_zones.empty:
+            logger.debug(
+                f"Skipping country {country}: no regions or bidding zones found"
+            )
+            continue
+
+        logger.debug(f"Processing {len(country_regions)} regions in country: {country}")
+
+        # Calculate overlap for each region with each bidding zone
+        assignments = []
+        no_overlap_regions = []
+
+        # Ensure same CRS for accurate area calculations
+        if country_regions.crs != country_bidding_zones.crs:
+            country_bidding_zones = country_bidding_zones.to_crs(country_regions.crs)
+
+        for idx, region in country_regions.iterrows():
+            region_geom = region.geometry
+            max_overlap = 0
+            best_zone = None
+
+            for _, zone in country_bidding_zones.iterrows():
+                intersection = region_geom.intersection(zone.geometry)
+                if not intersection.is_empty:
+                    overlap_area = intersection.area
+                    if overlap_area > max_overlap:
+                        max_overlap = overlap_area
+                        best_zone = zone.zone_name
+
+            if best_zone is not None:
+                assignments.append((idx, best_zone))
+            else:
+                # Keep track of regions with no overlap for nearest assignment
+                no_overlap_regions.append(idx)
+                logger.debug(
+                    f"Region {idx} in {country} has no overlap with any bidding zone, will use nearest"
+                )
+
+        # Update the bidding_zone column for regions with overlap
+        for idx, zone in assignments:
+            bidding_zone_map[idx] = zone
+
+        # Handle regions with no overlap by finding nearest bidding zone
+        if no_overlap_regions:
+            logger.info(
+                f"Assigning {len(no_overlap_regions)} regions in {country} to nearest bidding zone"
+            )
+
+            for idx in no_overlap_regions:
+                region_geom = regions.loc[idx, "geometry"]
+                min_distance = float("inf")
+                nearest_zone = None
+
+                for _, zone in country_bidding_zones.iterrows():
+                    distance = region_geom.distance(zone.geometry)
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_zone = zone.zone_name
+
+                if nearest_zone is not None:
+                    bidding_zone_map[idx] = nearest_zone
+                    logger.debug(
+                        f"Region {idx} assigned to nearest zone {nearest_zone}"
+                    )
+                else:
+                    logger.warning(
+                        f"Could not find any bidding zone for region {idx} in {country}"
+                    )
+
+    # Check if any regions couldn't be assigned
+    unassigned = bidding_zone_map.isnull().sum()
+    if unassigned > 0:
+        logger.warning(f"{unassigned} regions couldn't be assigned to any bidding zone")
+
+    return bidding_zone_map
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -512,6 +632,7 @@ if __name__ == "__main__":
         offshore_shapes,
         snakemake.input.nuts3_gdp,
         snakemake.input.nuts3_pop,
+        snakemake.input.bidding_zones,
         snakemake.input.other_gdp,
         snakemake.input.other_pop,
     )
