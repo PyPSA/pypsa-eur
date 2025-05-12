@@ -206,8 +206,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_bidding_zones")
 
+    params = snakemake.params
+
     # Load core bidding zones and country shapes
-    countries = snakemake.params.countries
+    countries = params.countries
 
     rename_columns = {"zoneName": "zone_name", "countryKey": "country"}
     bidding_zones_elecmaps = gpd.read_file(
@@ -226,22 +228,23 @@ if __name__ == "__main__":
         columns={"zoneName": "zone_name"}
     )
 
-    tolerance_dict = {
-        "IT_NORD": {
-            "FR": 0.05,
-            "CH": 0.04,
-            "AT": 0.024,
-            "SI": 0.01,
+    if "IT" in countries:
+        tolerance_dict = {
+            "IT_NORD": {
+                "FR": 0.05,
+                "CH": 0.04,
+                "AT": 0.024,
+                "SI": 0.01,
+            }
         }
-    }
-    bidding_zones = replace_country(
-        source=bidding_zones,
-        reference=bidding_zones_entsoe,
-        country="IT",
-        tolerance_dict=tolerance_dict,
-    )
+        bidding_zones = replace_country(
+            source=bidding_zones,
+            reference=bidding_zones_entsoe,
+            country="IT",
+            tolerance_dict=tolerance_dict,
+        )
 
-    if snakemake.params.remove_islands:
+    if params.remove_islands or params.base == "tyndp-raw":
         # manual corrections: remove islands
         islands = [
             # Bornholm
@@ -272,7 +275,7 @@ if __name__ == "__main__":
         ]
         bidding_zones = bidding_zones[~bidding_zones.zone_name.isin(islands)]
 
-    if snakemake.params.aggregate_to_tyndp:
+    if params.aggregate_to_tyndp or params.base == "tyndp-raw":
         # Manually merge southern norwegian zones
         nos0_idx = bidding_zones.query(
             "zone_name in ['NO-NO1', 'NO-NO2', 'NO-NO5']"
