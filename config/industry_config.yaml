@@ -6,8 +6,8 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: "all"
-  #- base_eu_regain
+  name: #"all"
+  - base_eu_regain
   #- base_eu_deindustrial
   #- policy_eu_regain
   #- policy_eu_deindustrial
@@ -159,7 +159,7 @@ sector:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 8h
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
