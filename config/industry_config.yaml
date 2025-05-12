@@ -6,8 +6,8 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
-  - base_eu_regain
+  name: "all"
+  #- base_eu_regain
   #- base_eu_deindustrial
   #- policy_eu_regain
   #- policy_eu_deindustrial
@@ -154,6 +154,13 @@ sector:
     urban central: false
     urban decentral: false
     rural: false
+  # No heat integration to not mess up with the rest of the optimization
+  use_fischer_tropsch_waste_heat: false
+  use_haber_bosch_waste_heat: false
+  use_methanolisation_waste_heat: false
+  use_methanation_waste_heat: false
+  use_fuel_cell_waste_heat: false
+  use_electrolysis_waste_heat: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
@@ -187,7 +194,7 @@ plotting:
 solving:
   solver:
     name: gurobi
-    options: gurobi-crossover
+    options: gurobi-default
 
   solver_options:
     gurobi-crossover:

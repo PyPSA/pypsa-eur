@@ -5456,14 +5456,14 @@ def add_cement_industry(n, investment_year, cement_data, options):
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
-        bus3=spatial.gas.nodes,
+        #bus3=spatial.gas.nodes,
         bus4=nodes,
         carrier="cement process emissions CC",
         p_nom_extendable=True,
         capital_cost=costs.at["cement capture", "investment"], #80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
-        efficiency=1- costs.at["cement capture", "capture_rate"],
+        efficiency=1- costs.at["cement capture", "capture_rate"], # Natural gas emissions are not included yet
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3= -heat_input * costs.at["cement capture", "capture_rate"] / 0.5,
+        #efficiency3= -heat_input * costs.at["cement capture", "capture_rate"] / 0.5,
         efficiency4= -electricity_input * costs.at["cement capture", "capture_rate"],
         lifetime=costs.at["cement capture", "lifetime"], 
     )
@@ -5625,7 +5625,9 @@ def add_hvc(n, investment_year, hvc_data, options):
         # Raillard Cazanove says 725 but prices were too low
         efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
         efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
-        efficiency3= (819 / naphtha_to_hvc) + decay_emis, # tCO2 / kt HVC
+        efficiency3= decay_emis, # tCO2 / MWh oil # should remove the first process emissions term
+        # To be sure I include all C embedded in the plastics it's better to directly put the emission factor of oil
+        #efficiency3= (819 / naphtha_to_hvc) + decay_emis, # tCO2 / kt HVC # should remove the first process emissions term
         efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
         lifetime=30, 
     )
