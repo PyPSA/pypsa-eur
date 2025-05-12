@@ -123,7 +123,7 @@ def connect_new_lines(
                 new_buses_df = pd.concat([new_buses_df, new_buses])
 
         if not lines_port.match_distance.all():
-            logging.warning(
+            logger.warning(
                 "Could not find bus close enough to connect the the following lines:\n"
                 + str(lines_port[~lines_port.match_distance].index.to_list())
                 + "\n Lines will be ignored."
@@ -389,7 +389,7 @@ def add_projects(
 ):
     lines_dict = get_project_files(path, skip=skip)
     for key, lines in lines_dict.items():
-        logging.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
+        logger.info(f"Processing {key.replace('_', ' ')} projects from {plan}.")
         lines = remove_projects_outside_countries(lines, europe_shape)
         if isinstance(status, dict):
             status = status[plan]
