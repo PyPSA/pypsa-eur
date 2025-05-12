@@ -45,11 +45,11 @@ jobs:
     - name: Setup env file path (macos and windows)
       if: matrix.os != 'ubuntu'
       run: |
-       if [[ "${{ matrix.os }}" == "macos" ]]; then
-         echo "env_file=envs/osx-64.lock.yaml" >> $GITHUB_ENV
-       else
-         echo "env_file=envs/win-64.lock.yaml" >> $GITHUB_ENV
-       fi
+        if [[ "${{ matrix.os }}" == "macos" ]]; then
+          echo "env_file=envs/osx-64.lock.yaml" >> $GITHUB_ENV
+        else
+          echo "env_file=envs/win-64.lock.yaml" >> $GITHUB_ENV
+        fi
 
     - name: Use base env file if it was changed
       run: |
