@@ -224,7 +224,7 @@ def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
     # Add new lines with infinite capacity within each zone
     for zone, buses in regions_to_buses.items():
         if len(buses) > 1:
-            logging.info(
+            logger.info(
                 f"Copperplating together the following buses: {', '.join(buses)}"
             )
 
@@ -334,7 +334,7 @@ def distribute_n_clusters_to_countries(
     # leave out constant in objective (L * n_clusters) ** 2
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
-        logging.getLogger("gurobipy").propagate = False
+        logger.getLogger("gurobipy").propagate = False
     elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
