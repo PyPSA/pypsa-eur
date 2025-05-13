@@ -55,14 +55,14 @@ import logging
 import xarray as xr
 from _helpers import set_scenario_config
 
-from scripts.build_ptes_operations.PTESTopTemperatureProfileApproximator import (
-    PTESTopTemperatureProfileApproximator,
-)
 from scripts.build_ptes_operations.PTESCapacityApproximator import (
     PTESCapacityApproximator,
 )
 from scripts.build_ptes_operations.PTESSupplementalHeatingApproximator import (
     PTESSupplementalHeatingApproximator,
+)
+from scripts.build_ptes_operations.PTESTopTemperatureProfileApproximator import (
+    PTESTopTemperatureProfileApproximator,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,10 +105,11 @@ if __name__ == "__main__":
     logger.info(
         f"Saving TES top temperature profile to {snakemake.output.ptes_top_temperature_profiles}"
     )
-    ptes_top_temperature_profile.to_netcdf(snakemake.output.ptes_top_temperature_profiles)
+    ptes_top_temperature_profile.to_netcdf(
+        snakemake.output.ptes_top_temperature_profiles
+    )
 
     if snakemake.params.enable_ptes_supplemental_heating_approximatior:
-
         # Initialize supplemental heating approximator.
         ptes_supplemental_heating_profiles = PTESSupplementalHeatingApproximator(
             forward_temperature=forward_temp,
@@ -123,7 +124,6 @@ if __name__ == "__main__":
         )
 
     if snakemake.params.enable_ptes_capacity_approximatior:
-
         logger.info(
             f"Calculating PTES capacity profiles with max temperature {max_ptes_top_temperature}°C"
         )
@@ -140,5 +140,3 @@ if __name__ == "__main__":
             f"Saving PTES capacity profiles to {snakemake.output.ptes_e_max_pu_profiles}"
         )
         ptes_e_max_pu.to_netcdf(snakemake.output.ptes_e_max_pu_profiles)
-
-
