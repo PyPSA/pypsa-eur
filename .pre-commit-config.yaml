@@ -47,7 +47,7 @@ repos:
   rev: v2.14.0
   hooks:
   - id: pretty-format-yaml
-    exclude: pinned\.yaml$
+    exclude: (pinned\.yaml|\.lock\.yaml)$
     args: [--autofix, --indent, "2", --preserve-quotes]
 
   # Format Snakemake rule / workflow files
