@@ -373,19 +373,32 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 
-rule build_ptes_operation:
+rule build_ptes_operations:
     params:
-        max_ptes_temperature=config_provider(
+        max_ptes_top_temperature=config_provider(
             "sector",
             "district_heating",
             "ptes",
             "max_top_temperature",
         ),
-        min_bottom_temperature=config_provider(
+        min_ptes_bottom_temperature=config_provider(
             "sector",
             "district_heating",
             "ptes",
             "min_bottom_temperature",
+        ),
+        enable_ptes_supplemental_heating_approximatior=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "supplemental_heating",
+            "enable",
+        ),
+        enable_ptes_capacity_approximatior=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "dynamic_capacity",
         ),
         snapshots=config_provider("snapshots"),
     input:
@@ -397,11 +410,11 @@ rule build_ptes_operation:
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        tes_supplemental_heating_profile=resources(
-            "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc"
+        ptes_supplemental_heating_profiles=resources(
+            "ptes_supplemental_heating_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
-        tes_top_temperature_profile=resources(
-            "tes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
+        ptes_top_temperature_profiles=resources(
+            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -409,13 +422,13 @@ rule build_ptes_operation:
     resources:
         mem_mb=2000,
     log:
-        logs("build_tes_operation_s_{clusters}_{planning_horizons}.log"),
+        logs("build_ptes_operations_s_{clusters}_{planning_horizons}.log"),
     benchmark:
-        benchmarks("build_tes_operation_s_{clusters}_{planning_horizons}")
+        benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_tes_operation/run.py"
+        "../scripts/build_ptes_operations/run.py"
 
 
 rule build_direct_heat_source_utilisation_profiles:
@@ -1285,18 +1298,18 @@ rule prepare_sector_network:
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
-        ptes_e_max_pu_profiles=(
+        ptes_e_max_pu_profiles=lambda w: (
             resources(
                 "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "dynamic_capacity"
-            )
+            )(w)
             else []
         ),
-        tes_supplemental_heating_profile=lambda w: (
+        ptes_supplemental_heating_profiles=lambda w: (
             resources(
-                "tes_supplemental_heating_profile_s_{clusters}_{planning_horizons}.nc"
+                "tes_supplemental_heating_profiles_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"
