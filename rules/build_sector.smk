@@ -373,7 +373,7 @@ rule build_cop_profiles:
         "../scripts/build_cop_profiles/run.py"
 
 
-rule build_tes_operation:
+rule build_ptes_operation:
     params:
         max_ptes_temperature=config_provider(
             "sector",
