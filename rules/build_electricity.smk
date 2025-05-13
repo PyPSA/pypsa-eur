@@ -486,13 +486,6 @@ rule add_transmission_projects_and_dlr:
         "../scripts/add_transmission_projects_and_dlr.py"
 
 
-def input_profile_tech(w):
-    return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
-        for tech in config_provider("electricity", "renewable_carriers")(w)
-    }
-
-
 def input_class_regions(w):
     return {
         f"class_regions_{tech}": resources(
