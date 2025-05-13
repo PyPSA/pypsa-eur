@@ -387,7 +387,7 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        enable_ptes_supplemental_heating_approximatior=config_provider(
+        enable_ptes_supplemental_heating_required_approximatior=config_provider(
             "sector",
             "district_heating",
             "ptes",
@@ -410,8 +410,8 @@ rule build_ptes_operations:
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        ptes_supplemental_heating_profiles=resources(
-            "ptes_supplemental_heating_profiles_s_{clusters}_{planning_horizons}.nc"
+        ptes_supplemental_heating_required=resources(
+            "ptes_supplemental_heating_required_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
             "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
@@ -1307,9 +1307,9 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        ptes_supplemental_heating_profiles=lambda w: (
+        ptes_supplemental_heating_required=lambda w: (
             resources(
-                "tes_supplemental_heating_profiles_s_{clusters}_{planning_horizons}.nc"
+                "ptes_supplemental_heating_required_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"

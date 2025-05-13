@@ -5,7 +5,7 @@
 import xarray as xr
 
 
-class PTESSupplementalHeatingApproximator:
+class PTESSupplementalHeatingRequiredApproximator:
     """
     Approximates the need for supplemental heating in PTES integration.
 

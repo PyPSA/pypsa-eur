@@ -39,7 +39,7 @@ Outputs
 -------
 - `resources/<run_name>/ptes_top_temperature_profiles.nc`
     Clipped PTES top temperature profile (in °C).
-- `resources/<run_name>/ptes_supplemental_heating_profiles.nc`
+- `resources/<run_name>/ptes_supplemental_heating_required.nc`
     Binary indicator for additional heating (1 = direct PTES use, 0 = supplemental heating required).
 - `resources/<run_name>/ptes_e_max_pu_profiles.nc`
     Normalized PTES capacity profiles.
@@ -58,8 +58,8 @@ from _helpers import set_scenario_config
 from scripts.build_ptes_operations.PTESCapacityApproximator import (
     PTESCapacityApproximator,
 )
-from scripts.build_ptes_operations.PTESSupplementalHeatingApproximator import (
-    PTESSupplementalHeatingApproximator,
+from scripts.build_ptes_operations.PTESSupplementalHeatingRequiredApproximator.py import (
+    PTESSupplementalHeatingRequiredApproximator,
 )
 from scripts.build_ptes_operations.PTESTopTemperatureProfileApproximator import (
     PTESTopTemperatureProfileApproximator,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     if snakemake.params.enable_ptes_supplemental_heating_approximatior:
         # Initialize PTES supplemental heating profiles
-        ptes_supplemental_heating_profiles = PTESSupplementalHeatingApproximator(
+        ptes_supplemental_heating_profiles = PTESSupplementalHeatingRequiredApproximator(
             forward_temperature=forward_temp,
             max_ptes_top_temperature=max_ptes_top_temperature,
         ).determine_ptes_usage()
