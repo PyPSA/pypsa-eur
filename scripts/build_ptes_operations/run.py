@@ -96,7 +96,7 @@ if __name__ == "__main__":
         f"Using maximum PTES direct usage temperature: {max_ptes_top_temperature}°C"
     )
 
-    # Initialize TES top temperature approximator.
+    # Initialize PTES clipped top temperature profiles
     ptes_top_temperature_profile = PTESTopTemperatureProfileApproximator(
         forward_temperature=forward_temp,
         max_ptes_top_temperature=max_ptes_top_temperature,
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     )
 
     if snakemake.params.enable_ptes_supplemental_heating_approximatior:
-        # Initialize supplemental heating approximator.
+        # Initialize PTES supplemental heating profiles
         ptes_supplemental_heating_profiles = PTESSupplementalHeatingApproximator(
             forward_temperature=forward_temp,
             max_ptes_top_temperature=max_ptes_top_temperature,
@@ -128,7 +128,7 @@ if __name__ == "__main__":
             f"Calculating PTES capacity profiles with max temperature {max_ptes_top_temperature}°C"
         )
 
-        # Create TES capacity approximator
+        # Initialize PTES capacity profiles
         ptes_e_max_pu = PTESCapacityApproximator(
             top_temperature=ptes_top_temperature_profile,
             bottom_temperature=return_temp,

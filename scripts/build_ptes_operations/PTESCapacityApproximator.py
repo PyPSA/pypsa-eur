@@ -33,7 +33,7 @@ class PTESCapacityApproximator:
         min_ptes_bottom_temperature: float = 35,
     ):
         """
-        Initialize PTesCapacityApproximator.
+        Initialize PTESCapacityApproximator.
 
         Parameters
         ----------
