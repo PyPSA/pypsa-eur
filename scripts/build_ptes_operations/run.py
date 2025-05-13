@@ -58,7 +58,7 @@ from _helpers import set_scenario_config
 from scripts.build_ptes_operations.PTESCapacityApproximator import (
     PTESCapacityApproximator,
 )
-from scripts.build_ptes_operations.PTESSupplementalHeatingRequiredApproximator.py import (
+from scripts.build_ptes_operations.PTESSupplementalHeatingRequiredApproximator import (
     PTESSupplementalHeatingRequiredApproximator,
 )
 from scripts.build_ptes_operations.PTESTopTemperatureProfileApproximator import (
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         snakemake.output.ptes_top_temperature_profiles
     )
 
-    if snakemake.params.enable_ptes_supplemental_heating_approximatior:
+    if snakemake.params.enable_ptes_supplemental_heating_required_approximatior:
         # Initialize PTES supplemental heating profiles
         ptes_supplemental_heating_profiles = PTESSupplementalHeatingRequiredApproximator(
             forward_temperature=forward_temp,
@@ -117,10 +117,10 @@ if __name__ == "__main__":
         ).determine_ptes_usage()
 
         logger.info(
-            f"Saving supplemental heating profile to {snakemake.output.ptes_supplemental_heating_profiles}"
+            f"Saving supplemental heating profile to {snakemake.output.ptes_supplemental_heating_required}"
         )
         ptes_supplemental_heating_profiles.to_netcdf(
-            snakemake.output.ptes_supplemental_heating_profiles
+            snakemake.output.ptes_supplemental_heating_required
         )
 
     if snakemake.params.enable_ptes_capacity_approximatior:
