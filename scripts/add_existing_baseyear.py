@@ -522,9 +522,7 @@ def add_heating_capacities_installed_before_baseyear(
     ratios = []
     valid_grouping_years = []
 
-    for heat_system in existing_capacities.columns.get_level_values(
-        0
-    ).unique():
+    for heat_system in existing_capacities.columns.get_level_values(0).unique():
         heat_system = HeatSystem(heat_system)
 
         nodes = pd.Index(
