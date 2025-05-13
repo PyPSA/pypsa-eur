@@ -111,10 +111,12 @@ if __name__ == "__main__":
 
     if snakemake.params.enable_ptes_supplemental_heating_approximatior:
         # Initialize PTES supplemental heating profiles
-        ptes_supplemental_heating_profiles = PTESSupplementalHeatingRequiredApproximator(
-            forward_temperature=forward_temp,
-            max_ptes_top_temperature=max_ptes_top_temperature,
-        ).determine_ptes_usage()
+        ptes_supplemental_heating_profiles = (
+            PTESSupplementalHeatingRequiredApproximator(
+                forward_temperature=forward_temp,
+                max_ptes_top_temperature=max_ptes_top_temperature,
+            ).determine_ptes_usage()
+        )
 
         logger.info(
             f"Saving supplemental heating profile to {snakemake.output.ptes_supplemental_heating_profiles}"
