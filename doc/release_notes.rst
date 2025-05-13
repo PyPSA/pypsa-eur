@@ -11,7 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-* (Breaking) Group gaps filling strategies options and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677)
+* (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
