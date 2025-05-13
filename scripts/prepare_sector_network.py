@@ -3205,8 +3205,10 @@ def add_heat(
                 )
 
             if (
-                heat_source in params.temperature_limited_stores and
-                options["district_heating"]["ptes"]["supplemental_heating"]["enable"]
+                heat_source in params.temperature_limited_stores
+                and options["district_heating"]["ptes"]["supplemental_heating"][
+                    "enable"
+                ]
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_heat_pump"
                 ]
