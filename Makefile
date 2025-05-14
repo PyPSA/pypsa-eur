@@ -40,10 +40,6 @@ install-lock-linux64: _conda_check
 	$(CONDA_OR_MAMBA) env create -f envs/linux-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 
-install-lock-linux-arm: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/linux-aarch64.lock.yaml -n $(or $(name), pypsa-eur)
-	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
-
 install-lock-windows: _conda_check
 	$(CONDA_OR_MAMBA) env create -f envs/win-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install

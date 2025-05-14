@@ -41,8 +41,8 @@ ensure reproducibility. Choose the correct file for your platform:
   - macOS: ``envs/osx-64.lock.yaml``
   - Windows: ``envs/win-64.lock.yaml``
 - For ARM processors:
-  - Linux (ARM): ``envs/linux-aarch64.lock.yaml``
   - macOS (Apple Silicon): ``envs/osx-arm64.lock.yaml``
+  - Linux (ARM): Currently not supported via lock files; requires building certain packages, such as ``PySCIPOpt``, from source
 
 We recommend using these locked files for a stable environment.
 
