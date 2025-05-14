@@ -9,7 +9,7 @@ on:
 
 env:
   IMAGE_NAME: pypsa/eur-dev-env
-  BASE_ENV: envs/linux-pinned.yaml
+  BASE_ENV: envs/linux-64.lock.yaml
 
 jobs:
   push-image:
@@ -32,7 +32,7 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.REGISTRY_TOKEN }}
 
-    - name: 'Build new image' # only build if the pinned envs file was modified
+    - name: 'Build new image' # only build if the locked envs file was modified
       if: env.hash_last_changed == github.sha || github.event_name == 'workflow_dispatch'
       run: |
         docker build . --file docker/dev-env/Dockerfile --tag ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}

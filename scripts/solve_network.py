@@ -1398,6 +1398,7 @@ if __name__ == "__main__":
             solving=snakemake.params.solving,
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
+            log_fn=snakemake.log.solver,
         )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
