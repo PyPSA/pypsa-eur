@@ -687,7 +687,9 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            "data/lau_regions.zip",
+            lau_regions="data/lau_regions.zip",
+        log:
+            "logs/retrieve_lau_regions.log",
         log:
             "logs/retrieve_lau_regions.log",
         threads: 1

@@ -52,6 +52,7 @@ dependencies:
 - graphviz
 - geojson
 - copernicusmarine
+- pyscipopt
 
 # GIS dependencies:
 - cartopy
@@ -68,6 +69,5 @@ dependencies:
 - pip:
   - gurobipy
   - highspy
-  - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
   - entsoe-py
