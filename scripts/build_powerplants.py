@@ -185,7 +185,7 @@ if __name__ == "__main__":
     )
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
-        logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
+        logger.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     # Add "everywhere powerplants" to all bus locations
     ppl = add_everywhere_powerplants(
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
-        logging.warning(
+        logger.warning(
             f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
             "Removing them from the powerplants list."
         )
