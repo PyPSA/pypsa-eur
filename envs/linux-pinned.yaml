@@ -5,11 +5,7 @@
 #
 # Please use the new conda-lock file instead:
 #
-# For x86-64 architecture
 # conda env create -f envs/linux-64.lock.yaml
-#
-# For ARM architecture
-# conda env create -f envs/linux-aarch64.lock.yaml
 #
 # This file will be removed in a future release.
 
