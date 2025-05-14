@@ -36,7 +36,7 @@ jobs:
     - name: Generate lockfiles for all platforms
       run: |
         conda-lock -f ${{ env.BASE_ENV }} \
-        -p linux-64 -p osx-64 -p win-64 -p osx-arm64 -p linux-aarch64 \
+        -p linux-64 -p osx-64 -p win-64 -p osx-arm64 \
         -k env --filename-template "envs/{platform}.lock"
 
         # Rename to .yaml extension

@@ -113,7 +113,7 @@ def input_custom_extra_functionality(w):
     return []
 
 
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
     to a reliable server like Zenodo.
