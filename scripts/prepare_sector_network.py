@@ -5110,7 +5110,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
     n.loads.drop(n.loads.index[n.loads.carrier == "process emissions"], inplace=True)
     n.loads.drop(n.loads.index[n.loads.carrier == "coal for industry"], inplace=True)
     """
-    # Steel production demanded in Europe in kton of steel products per year
+    # Steel production demanded in Europe in Mton of steel products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
@@ -5482,7 +5482,7 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities['Ammonia']
 
-    # Read industrial production data for ammonia in Europe (in ktNH3/yr)
+    # Read industrial production data for ammonia in Europe (in MtNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
     hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e6 / nhours) # MtNH3/yr to tNH3/h
     #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
@@ -5507,6 +5507,8 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
         carrier="NH3",
         p_set=p_set,
     )
+
+    print(f"LOAD NH3 {p_set}")
 
 
 

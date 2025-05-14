@@ -9,6 +9,7 @@ run:
   name: "all"
   #- base_eu_regain
   #- base_eu_deindustrial
+  #- policy_reg_regain
   #- policy_eu_regain
   #- policy_eu_deindustrial
   scenarios:

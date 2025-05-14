@@ -748,7 +748,7 @@ def add_steel_industry_existing(n):
         carrier="BF-BOF",
         p_nom=p_nom_bof * bof['iron input'],
         p_nom_extendable=False,
-        p_min_pu=min_part_load_steel,
+        p_min_pu=min_part_load_steel/2,
         #marginal_cost=-0.1,#opex_bof,
         efficiency=1 / bof['iron input'],
         efficiency2= -  bof['coal input'] /  bof['iron input'],  # MWhth coal per kt iron
@@ -769,7 +769,7 @@ def add_steel_industry_existing(n):
         carrier="DRI-EAF",
         p_nom=p_nom_eaf *  eaf_ng['iron input'],
         p_nom_extendable=False,
-        p_min_pu=min_part_load_steel,
+        p_min_pu=min_part_load_steel/2,
         #marginal_cost=-0.1,#opex_eaf,
         efficiency=1 / eaf_ng['iron input'],
         efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
@@ -851,7 +851,7 @@ def add_chemicals_industry_existing(n, options):
     p_nom_nh3 = capacities_nh3 / nhours  # get the hourly production capacity
 
     ########### Add existing ammonia production capacities ############
-    min_part_load_hb=0.3
+    min_part_load_hb=0.25
     n.add(
         "Link",
         nodes,
@@ -861,7 +861,7 @@ def add_chemicals_industry_existing(n, options):
         bus2=nodes + " H2",
         p_nom_extendable=False,
         p_nom=p_nom_nh3,
-        p_min_pu=min_part_load_hb,
+        p_min_pu=min_part_load_hb/2,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
