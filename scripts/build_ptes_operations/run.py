@@ -55,13 +55,13 @@ import logging
 import xarray as xr
 from _helpers import set_scenario_config
 
-from scripts.build_ptes_operations.PTESCapacityApproximator import (
+from scripts.build_ptes_operations.ptes_capacity_approximator import (
     PTESCapacityApproximator,
 )
-from scripts.build_ptes_operations.PTESSupplementalHeatingRequiredApproximator import (
+from scripts.build_ptes_operations.ptes_supplemental_heating_required_approximator import (
     PTESSupplementalHeatingRequiredApproximator,
 )
-from scripts.build_ptes_operations.PTESTopTemperatureProfileApproximator import (
+from scripts.build_ptes_operations.ptes_top_temperature_profile_approximator import (
     PTESTopTemperatureProfileApproximator,
 )
 
