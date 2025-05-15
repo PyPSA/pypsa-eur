@@ -387,19 +387,19 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        enable_ptes_supplemental_heating_required_approximatior=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "supplemental_heating",
-            "enable",
-        ),
-        enable_ptes_capacity_approximatior=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "dynamic_capacity",
-        ),
+        # enable_supplemental_heating=config_provider(
+        #     "sector",
+        #     "district_heating",
+        #     "ptes",
+        #     "supplemental_heating",
+        #     "enable",
+        # ),
+        # enable_dynamic_capacity=config_provider(
+        #     "sector",
+        #     "district_heating",
+        #     "ptes",
+        #     "dynamic_capacity",
+        # ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -410,8 +410,8 @@ rule build_ptes_operations:
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        ptes_supplemental_heating_required=resources(
-            "ptes_supplemental_heating_required_s_{clusters}_{planning_horizons}.nc"
+        ptes_direct_utilisation_profiles=resources(
+            "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
             "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
@@ -1307,9 +1307,9 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
-        ptes_supplemental_heating_required=lambda w: (
+        ptes_direct_utilisation_profiles=lambda w: (
             resources(
-                "ptes_supplemental_heating_required_s_{clusters}_{planning_horizons}.nc"
+                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"
