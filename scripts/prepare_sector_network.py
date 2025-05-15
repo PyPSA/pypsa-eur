@@ -2741,7 +2741,7 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-    ptes_supplemental_heating_required_file: str,
+    ptes_direct_utilisation_profile: str,
     district_heat_share_file: str,
     solar_thermal_total_file: str,
     retro_cost_file: str,
@@ -3038,7 +3038,7 @@ def add_heat(
                     "enable"
                 ]:
                     ptes_supplemental_heating_required = (
-                        xr.open_dataarray(ptes_supplemental_heating_required_file)
+                        xr.open_dataarray(ptes_direct_utilisation_profile)
                         .sel(name=nodes)
                         .to_pandas()
                         .reindex(index=n.snapshots)
@@ -6187,7 +6187,7 @@ if __name__ == "__main__":
             direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
-            ptes_supplemental_heating_required_file=snakemake.input.ptes_supplemental_heating_required,
+            ptes_direct_utilisation_profile=snakemake.input.ptes_direct_utilisation_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,

@@ -23,10 +23,10 @@ Relevant Settings
     sector
         district_heating:
             ptes:
-                dynamic_ptes_capacity: true
+                dynamic_ptes_capacity:
                 supplemental_heating:
-                    enable: true
-                max_top_temperature: 90  # Maximum PTES temperature (°C) usable without supplemental heating
+                    enable:
+                max_top_temperature:
 
 Inputs
 ------
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     logger.info(
         f"Saving TES top temperature profile to {snakemake.output.ptes_top_temperature_profiles}"
     )
-    ptes_temperature_approximator.top_temperature_profile.to_netcdf(
+    ptes_temperature_approximator.top_temperature.to_netcdf(
         snakemake.output.ptes_top_temperature_profiles
     )
 
@@ -110,8 +110,6 @@ if __name__ == "__main__":
     logger.info("Calculating dynamic PTES capacity profiles")
 
     # Get PTES capacity profiles
-    ptes_e_max_pu = ptes_temperature_approximator.calculate_e_max_pu()
-
     logger.info(
         f"Saving PTES capacity profiles to {snakemake.output.ptes_e_max_pu_profiles}"
     )
