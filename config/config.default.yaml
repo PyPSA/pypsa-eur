@@ -482,7 +482,7 @@ sector:
     ptes:
       dynamic_capacity: true
       supplemental_heating:
-        enable: true
+        enable: false
         booster_heat_pump: true
       max_top_temperature: 90
       min_bottom_temperature: 35

@@ -44,6 +44,11 @@ sector:
   min_part_load_methanolisation: 0
   solid_biomass_import:
     enable: true
+  district_heating:
+    ptes:
+      supplemental_heating:
+        enable: true
+
 
 atlite:
   default_cutout: be-03-2013-era5
