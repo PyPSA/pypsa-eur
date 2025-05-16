@@ -3136,6 +3136,7 @@ def add_heat(
                 / 2,
             )
 
+            ates_e_nom_max = pd.read_csv(ates_e_nom_max, index_col=0)["ates_potential"]
             n.add(
                 "Store",
                 nodes,
@@ -3143,9 +3144,7 @@ def add_heat(
                 bus=nodes + f" {heat_system} aquifer thermal energy storage",
                 e_cyclic=True,
                 e_nom_extendable=True,
-                e_nom_max=pd.read_csv(ates_e_nom_max, index_col=0)["ates_potential"][
-                    nodes
-                ],
+                e_nom_max=ates_e_nom_max[nodes],
                 carrier=f"{heat_system} aquifer thermal energy storage",
                 standing_loss=1 - ates_recovery_factor ** (1 / 8760),
                 lifetime=costs.at["central geothermal heat source", "lifetime"],
