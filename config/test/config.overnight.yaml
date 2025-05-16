@@ -65,6 +65,8 @@ sector:
     ptes:
       supplemental_heating:
         enable: true
+    ates:
+      enable: true
 
 
 industry:

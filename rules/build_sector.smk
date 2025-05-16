@@ -330,6 +330,89 @@ rule build_geothermal_heat_potential:
         "../scripts/build_geothermal_heat_potential.py"
 
 
+rule build_ates_potentials:
+    params:
+        max_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "max_top_temperature",
+        ),
+        min_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "min_bottom_temperature",
+        ),
+        suitable_aquifer_types=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "suitable_aquifer_types",
+        ),
+        aquifer_volumetric_heat_capacity=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "aquifer_volumetric_heat_capacity",
+        ),
+        fraction_of_aquifer_area_available=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "fraction_of_aquifer_area_available",
+        ),
+        effective_screen_length=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "effective_screen_length",
+        ),
+        dh_area_buffer=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "dh_area_buffer",
+        ),
+        ignore_missing_regions=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "ignore_missing_regions",
+        ),
+        countries=config_provider("countries"),
+    input:
+        aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
+        aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
+        aquifer_shapes_dbf="data/bgr/ihme1500_aquif_ec4060_v12_poly.dbf",
+        aquifer_shapes_cpg="data/bgr/ihme1500_aquif_ec4060_v12_poly.cpg",
+        aquifer_shapes_prj="data/bgr/ihme1500_aquif_ec4060_v12_poly.prj",
+        aquifer_shapes_sbn="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbn",
+        aquifer_shapes_sbx="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbx",
+        dh_areas="data/dh_areas.gpkg",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        ates_potentials=resources(
+            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_ates_potentials_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_ates_potentials_geothermal_s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_ates_potentials.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -1343,6 +1426,9 @@ rule prepare_sector_network:
         ),
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ates_potentials=resources(
+            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
         ),
     output:
         resources(

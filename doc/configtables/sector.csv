@@ -26,6 +26,21 @@ district_heating,--,,
 -- -- -- booster_heat_pump: true,--,"{true, false}",Add option to enable a booster heat pump for supplemental heating of pit storage in district heating
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
+-- ates,,,
+-- -- enable,--,"{true, false}",Enable investments in aquifer thermal energy pit storage in district heating
+-- -- suitable_aquifer_types,--,List of aquifer types assumed suitable for ATES. Must be subset of [Highly productive porous aquifers';
+       'Low and moderately productive porous aquifers';
+       'Highly productive fissured aquifers (including karstified rocks)';
+       'Low and moderately productive fissured aquifers (including karstified rocks)';
+       'Locally aquiferous rocks, porous or fissured';
+       'Practically non-aquiferous rocks, porous or fissured';
+       'Inland water'; 'Snow field / ice field'],
+-- -- aquifer_volumetric_heat_capacity, kJ/m³/K,float,The volumetric heat capacity of the aquifer water
+-- -- fraction_of_aquifer_area_available,,float,The fraction of the aquifer area available for ATES
+-- -- effective_screen_length,m,float,The effective screen length of the aquifer well. Used to estimate its thermal radius.
+-- -- dh_area_buffer,m,float,Suitable aquifers must be within this distance to district heating areas. 
+-- -- capex_as_fraction_of_geothermal_heat_source,,float,The capital expenditure of ATES chargers/dischargers as a fraction of the geothermal heat source per-MWh CAPEX.
+-- -- recovery_factor,,float,The recovery factor of the aquifer (1- yearly_losses).
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
 -- heat_pump_cop_approximation,,,
 -- -- refrigerant,--,"{ammonia, isobutane}",Heat pump refrigerant assumed for COP approximation
