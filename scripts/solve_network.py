@@ -904,13 +904,13 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     """
     indices_charger_p_nom_extendable = n.links.index[
         n.links.index.str.contains(
-            "water tanks charger|water pits charger|aquifer storage charger"
+            "water tanks charger|water pits charger|aquifer thermal energy storage charger"
         )
         & n.links.p_nom_extendable
     ]
     indices_discharger_p_nom_extendable = n.links.index[
         n.links.index.str.contains(
-            "water tanks discharger|water pits discharger|aquifer storage discharger"
+            "water tanks discharger|water pits discharger|aquifer thermal energy storage discharger"
         )
         & n.links.p_nom_extendable
     ]

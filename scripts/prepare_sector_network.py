@@ -3189,23 +3189,23 @@ def add_heat(
                 )
 
         if allow_ates:
-            n.add("Carrier", f"{heat_system} aquifer storage")
+            n.add("Carrier", f"{heat_system} aquifer thermal energy storage")
 
             n.add(
                 "Bus",
-                nodes + f" {heat_system} aquifer storage",
+                nodes + f" {heat_system} aquifer thermal energy storage",
                 location=nodes,
-                carrier=f"{heat_system} aquifer storage",
+                carrier=f"{heat_system} aquifer thermal energy storage",
                 unit="MWh_th",
             )
 
             n.add(
                 "Link",
-                nodes + f" {heat_system} aquifer storage charger",
+                nodes + f" {heat_system} aquifer thermal energy storage charger",
                 bus0=nodes + f" {heat_system} heat",
-                bus1=nodes + f" {heat_system} aquifer storage",
+                bus1=nodes + f" {heat_system} aquifer thermal energy storage",
                 efficiency=1.0,
-                carrier=f"{heat_system} aquifer storage charger",
+                carrier=f"{heat_system} aquifer thermal energy storage charger",
                 p_nom_extendable=True,
                 lifetime=costs.at["central geothermal heat source", "lifetime"],
                 marginal_cost=ates_marginal_cost_charger,
@@ -3216,11 +3216,11 @@ def add_heat(
 
             n.add(
                 "Link",
-                nodes + f" {heat_system} aquifer storage discharger",
+                nodes + f" {heat_system} aquifer thermal energy storage discharger",
                 bus1=nodes + f" {heat_system} heat",
-                bus0=nodes + f" {heat_system} aquifer storage",
+                bus0=nodes + f" {heat_system} aquifer thermal energy storage",
                 efficiency=1.0,
-                carrier=f"{heat_system} aquifer storage discharger",
+                carrier=f"{heat_system} aquifer thermal energy storage discharger",
                 p_nom_extendable=True,
                 lifetime=costs.at["central geothermal heat source", "lifetime"],
                 capital_cost=costs.at["central geothermal heat source", "capital_cost"]
@@ -3231,14 +3231,14 @@ def add_heat(
             n.add(
                 "Store",
                 nodes,
-                suffix=f" {heat_system} aquifer storage",
-                bus=nodes + f" {heat_system} aquifer storage",
+                suffix=f" {heat_system} aquifer thermal energy storage",
+                bus=nodes + f" {heat_system} aquifer thermal energy storage",
                 e_cyclic=True,
                 e_nom_extendable=True,
                 e_nom_max=pd.read_csv(ates_e_nom_max, index_col=0)["ates_potential"][
                     nodes
                 ],
-                carrier=f"{heat_system} aquifer storage",
+                carrier=f"{heat_system} aquifer thermal energy storage",
                 standing_loss=1 - ates_recovery_factor ** (1 / 8760),
                 lifetime=costs.at["central geothermal heat source", "lifetime"],
             )
