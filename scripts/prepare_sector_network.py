@@ -6256,7 +6256,7 @@ if __name__ == "__main__":
             ates_recovery_factor=snakemake.params.sector["district_heating"]["ates"][
                 "recovery_factor"
             ],
-            enable_ates=snakemake.params.sector["district_heating"]["ates"]["allow"],
+            enable_ates=snakemake.params.sector["district_heating"]["ates"]["enable"],
             ptes_direct_utilisation_profile=snakemake.input.ptes_direct_utilisation_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
