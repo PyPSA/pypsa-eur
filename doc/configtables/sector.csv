@@ -21,6 +21,9 @@ district_heating,--,,
 -- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
 -- ptes,,,
 -- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent energy capacity of pit storage in district heating
+-- -- supplemental_heating,,,
+-- -- -- enable,--,"{true, false}",Add option to enable supplemental heating of pit storage in district heating
+-- -- -- booster_heat_pump: true,--,"{true, false}",Add option to enable a booster heat pump for supplemental heating of pit storage in district heating
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- heat_source_cooling,K,float,Cooling of heat source for heat pumps
@@ -34,6 +37,8 @@ district_heating,--,,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
 -- -- -- ignore_missing_regions,--,Boolean,Ignore missing regions in the data and fill with zeros or raise an error 
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
+-- temperature_limited_stores,,Dictionary with names for stores used as limited heat sources
+-- -- ptes,-,Name of the heat source. Must be the same as in ``heat_pump_sources``
 -- heat_pump_sources,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,

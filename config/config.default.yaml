@@ -481,6 +481,9 @@ sector:
       relative_annual_temperature_reduction: 0.01
     ptes:
       dynamic_capacity: true
+      supplemental_heating:
+        enable: false
+        booster_heat_pump: true
       max_top_temperature: 90
       min_bottom_temperature: 35
     heat_source_cooling: 6 #K
@@ -495,9 +498,12 @@ sector:
         ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
+    temperature_limited_stores:
+    - ptes
   heat_pump_sources:
     urban central:
     - air
+    - ptes
     urban decentral:
     - air
     rural:
