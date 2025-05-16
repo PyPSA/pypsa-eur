@@ -80,14 +80,14 @@ def get_cop(
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
-        ).approximate_cop()
+        ).cop
 
     else:
         return DecentralHeatingCopApproximator(
             forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=heat_source,
-        ).approximate_cop()
+        ).cop
 
 
 if __name__ == "__main__":

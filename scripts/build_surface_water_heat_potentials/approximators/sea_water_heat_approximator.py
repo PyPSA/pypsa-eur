@@ -1,17 +1,16 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
-# SPDX-License-Identifier: MITimport shapely
+# SPDX-License-Identifier: MIT
 import logging
 
 import shapely
 import xarray as xr
 
-logger = logging.getLogger(__name__)
-
-
 from scripts.build_surface_water_heat_potentials.approximators.surface_water_heat_approximator import (
     SurfaceWaterHeatApproximator,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
