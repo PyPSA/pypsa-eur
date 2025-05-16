@@ -25,6 +25,7 @@ from bokeh.models import (
 from bokeh.palettes import Category10
 from bokeh.plotting import figure
 from bokeh.transform import dodge
+
 from scripts.definitions.heat_system_type import HeatSystemType
 
 logger = logging.getLogger(__name__)
@@ -73,10 +74,7 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
     # Get the name of the region dimension
     # Capture heat source names before pivoting
     try:
-        heat_sources = [
-            val
-            for val in cop_data.coords["heat_source"].values
-        ]
+        heat_sources = [val for val in cop_data.coords["heat_source"].values]
         # logger.info(f"Heat sources: {heat_sources}")
     except Exception as e:
         raise RuntimeError(f"Error retrieving heat sources: {e}")
@@ -88,7 +86,7 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         df = cop_data.to_dataframe().reset_index()
         # Check for NaN values before pivoting
         cop_col = var_name
-        
+
         # Pivot the table to have heat sources as columns
         pivot_df = df.pivot_table(
             index=["time", region_dim],
@@ -115,14 +113,14 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         )
         # Add month column and month names in one go
         pivot_df["month"] = pd.to_datetime(pivot_df["time"]).dt.month
-        pivot_df["month_name"] = pd.to_datetime(pivot_df["time"]).dt.strftime('%b')
+        pivot_df["month_name"] = pd.to_datetime(pivot_df["time"]).dt.strftime("%b")
 
         # Group by month and region, calculate mean of each heat source
         monthly_avg = (
             pivot_df.groupby(["month", region_dim, "month_name"])
             .mean(numeric_only=True)
             .reset_index()
-        # Sort by month
+            # Sort by month
             .sort_values("month")
         )
 
@@ -379,6 +377,7 @@ def create_interactive_cop_plot(
     # Create info text
     info_div = Div(
         text="""
+        <p> Warning: Experimental - check values!</p>
         <p>This plot shows Coefficient of Performance (COP) profiles for heat pumps in different regions.</p>
         <p>COP represents the efficiency of heat pumps - higher values mean better performance.</p>
         <p>Select a region from the dropdown to see its specific COP profiles for different heat sources.</p>
