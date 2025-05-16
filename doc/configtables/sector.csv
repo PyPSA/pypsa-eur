@@ -24,7 +24,7 @@ district_heating,--,,
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- ates,,,
--- -- allow,--,"{true, false}",Allow investments in aquifer thermal energy pit storage in district heating
+-- -- enable,--,"{true, false}",Enable investments in aquifer thermal energy pit storage in district heating
 -- -- suitable_aquifer_types,--,List of aquifer types assumed suitable for ATES. Must be subset of [Highly productive porous aquifers';
        'Low and moderately productive porous aquifers';
        'Highly productive fissured aquifers (including karstified rocks)';

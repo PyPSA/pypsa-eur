@@ -46,7 +46,7 @@ sector:
     enable: true
   district_heating:
     ates:
-      allow: true
+      enable: true
 
 
 atlite:

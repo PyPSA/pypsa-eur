@@ -63,7 +63,7 @@ sector:
   H2_retrofit: true
   district_heating:
     ates:
-      allow: true
+      enable: true
 
 
 industry:
