@@ -736,6 +736,9 @@ def add_steel_industry_existing(n):
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
     bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
+    if options['endo_industry']['regional_steel_demand']:
+        min_part_load_steel = 0
+
     n.add(
         "Link",
         nodes,
@@ -748,7 +751,7 @@ def add_steel_industry_existing(n):
         carrier="BF-BOF",
         p_nom=p_nom_bof * bof['iron input'],
         p_nom_extendable=False,
-        p_min_pu=min_part_load_steel/2,
+        p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_bof,
         efficiency=1 / bof['iron input'],
         efficiency2= -  bof['coal input'] /  bof['iron input'],  # MWhth coal per kt iron
@@ -769,7 +772,7 @@ def add_steel_industry_existing(n):
         carrier="DRI-EAF",
         p_nom=p_nom_eaf *  eaf_ng['iron input'],
         p_nom_extendable=False,
-        p_min_pu=min_part_load_steel/2,
+        p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_eaf,
         efficiency=1 / eaf_ng['iron input'],
         efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
@@ -808,6 +811,8 @@ def add_cement_industry_existing(n):
     discount_rate = 0.04
     capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
     min_part_load_cement = 0.3
+    if options['endo_industry']['regional_cement_demand']:
+        min_part_load_cement = 0
 
     n.add(
         "Link",
@@ -852,6 +857,9 @@ def add_chemicals_industry_existing(n, options):
 
     ########### Add existing ammonia production capacities ############
     min_part_load_hb=0.25
+    if options['ammonia'] == 'regional':
+        min_part_load_hb = 0
+
     n.add(
         "Link",
         nodes,
@@ -861,7 +869,7 @@ def add_chemicals_industry_existing(n, options):
         bus2=nodes + " H2",
         p_nom_extendable=False,
         p_nom=p_nom_nh3,
-        p_min_pu=min_part_load_hb/2,
+        p_min_pu=min_part_load_hb,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
         efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
@@ -935,6 +943,9 @@ def add_chemicals_industry_existing(n, options):
         # we need to account for CO2 emissions from HVC decay
         decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
         min_part_load_hvc = 0.3
+
+        if options['endo_industry']['regional_hvc']:
+            min_part_load_hvc = 0
         
         n.add(
             "Link",

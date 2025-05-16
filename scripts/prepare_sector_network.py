@@ -1527,6 +1527,9 @@ def add_ammonia(
     )
     min_part_load_hb=0.3
 
+    if options['ammonia'] == 'regional':
+        min_part_load_hb = 0
+
     n.add(
         "Link",
         nodes,
@@ -5206,6 +5209,9 @@ def add_steel_industry(n, investment_year, steel_data, options):
     # PARAMETERS
     bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
+    if options['endo_industry']['regional_steel_demand']:
+        min_part_load_steel = 0
+
     n.add(
         "Link",
         nodes,
@@ -5409,6 +5415,10 @@ def add_cement_industry(n, investment_year, cement_data, options):
     discount_rate = 0.04
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
     min_part_load_cement = 0.3
+
+    if options['endo_industry']['regional_cement_demand']:
+        min_part_load_cement = 0
+    
     n.add(
         "Link",
         nodes,
@@ -5610,6 +5620,9 @@ def add_hvc(n, investment_year, hvc_data, options):
     # we need to account for CO2 emissions from HVC decay
     decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
     min_part_load_hvc = 0.3
+
+    if options['endo_industry']['regional_hvc']:
+        min_part_load_hvc = 0
 
     n.add(
         "Link",
