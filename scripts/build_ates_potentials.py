@@ -395,14 +395,17 @@ if __name__ == "__main__":
     # Check district heating areas coverage
     logger.info("Checking district heating areas coverage")
     check_dh_areas_coverage(
-        dh_areas,
-        countries,
-        ignore_missing_regions=snakemake.params.ignore_missing_regions,
+        dh_areas=dh_areas,
+        countries=countries,
     )
 
     # Check aquifer coverage for onshore regions
     logger.info("Checking aquifer coverage for onshore regions")
-    check_aquifer_coverage(aquifer_shapes, regions_onshore)
+    check_aquifer_coverage(
+        aquifer_shapes=aquifer_shapes,
+        regions_onshore=regions_onshore,
+        ignore_missing_regions=snakemake.params.ignore_missing_regions,
+    )
 
     forward_temperature_profiles = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
