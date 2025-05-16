@@ -303,7 +303,9 @@ def check_dh_areas_coverage(dh_areas: gpd.GeoDataFrame, countries: list) -> None
 
 
 def check_aquifer_coverage(
-    aquifer_shapes: gpd.GeoDataFrame, regions_onshore: gpd.GeoDataFrame
+    aquifer_shapes: gpd.GeoDataFrame,
+    regions_onshore: gpd.GeoDataFrame,
+    ignore_missing_regions: bool,
 ) -> None:
     """
     Check if aquifer shapes cover all onshore regions.
@@ -352,9 +354,15 @@ def check_aquifer_coverage(
         uncovered_regions = all_region_names - covered_region_names
 
         if uncovered_regions:
-            raise ValueError(
-                f"Regions without aquifer data coverage: {', '.join(uncovered_regions)}. "
-            )
+            if ignore_missing_regions:
+                logger.warning(
+                    f"Regions without aquifer data coverage: {', '.join(uncovered_regions)}. "
+                    "Ignoring these regions."
+                )
+            else:
+                raise ValueError(
+                    f"Regions without aquifer data coverage: {', '.join(uncovered_regions)}. Set `sector:district_heating:ates:ignore_missing_regions: true` to ignore these regions."
+                )
         else:
             logger.info("All regions have aquifer coverage")
     else:

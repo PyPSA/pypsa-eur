@@ -374,6 +374,12 @@ rule build_ates_potentials:
             "ates",
             "dh_area_buffer",
         ),
+        ignore_missing_regions=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "ignore_missing_regions",
+        ),
         countries=config_provider("countries"),
     input:
         aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
