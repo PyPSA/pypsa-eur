@@ -45,6 +45,9 @@ sector:
   solid_biomass_import:
     enable: true
   district_heating:
+    ptes:
+      supplemental_heating:
+        enable: true
     ates:
       enable: true
 

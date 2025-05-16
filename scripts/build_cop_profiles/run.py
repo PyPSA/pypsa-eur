@@ -112,7 +112,7 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            if heat_source in ["ground", "air"]:
+            if heat_source in ["ground", "air", "ptes"]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"

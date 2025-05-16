@@ -36,11 +36,11 @@ sector:
   district_heating:
     ates:
       enable: true
-
-
+    ptes:
+      supplemental_heating:
+        enable: true
 
 electricity:
-
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]
