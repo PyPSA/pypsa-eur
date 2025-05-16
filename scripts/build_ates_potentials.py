@@ -195,7 +195,7 @@ def ates_potential_per_onshore_region(
         if suitable_aquifers.empty or regions_onshore.empty or dh_areas.empty:
             logger.warning("One or more input GeoDataFrames are empty")
 
-        ret_val = regions_onshore.copy(deep=True)
+        ret_val = regions_onshore.copy()
 
         if "name" not in ret_val.columns:
             raise KeyError("Column 'name' not found in regions_onshore dataframe")
@@ -212,7 +212,7 @@ def ates_potential_per_onshore_region(
             ret_val["ates_potential"] = 0
             return ret_val
 
-        dh_areas_buffered = dh_areas.copy(deep=True)
+        dh_areas_buffered = dh_areas.copy()
         dh_areas_buffered["geometry"] = dh_areas_buffered.geometry.buffer(
             dh_area_buffer
         )
