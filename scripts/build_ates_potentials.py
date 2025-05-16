@@ -394,7 +394,11 @@ if __name__ == "__main__":
 
     # Check district heating areas coverage
     logger.info("Checking district heating areas coverage")
-    check_dh_areas_coverage(dh_areas, countries)
+    check_dh_areas_coverage(
+        dh_areas,
+        countries,
+        ignore_missing_regions=snakemake.params.ignore_missing_regions,
+    )
 
     # Check aquifer coverage for onshore regions
     logger.info("Checking aquifer coverage for onshore regions")
