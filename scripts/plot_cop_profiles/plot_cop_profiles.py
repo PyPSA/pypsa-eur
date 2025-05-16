@@ -25,8 +25,7 @@ from bokeh.models import (
 from bokeh.palettes import Category10
 from bokeh.plotting import figure
 from bokeh.transform import dodge
-
-from scripts.definitions.heat_system import HeatSystemType
+from scripts.definitions.heat_system_type import HeatSystemType
 
 logger = logging.getLogger(__name__)
 
@@ -55,35 +54,21 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
     list
         List of heat source names
     """
-    logger.info(f"COP profiles dimensions: {cop_profiles.dims}")
-    # Datasets don't have shape attribute, so we need to check the type
-    if isinstance(cop_profiles, xr.DataArray):
-        logger.info(f"COP profiles shape: {cop_profiles.shape}")
-
     # If we have a Dataset, convert to DataArray
     if isinstance(cop_profiles, xr.Dataset):
         # Assuming there's one main variable in the dataset
         var_name = list(cop_profiles.data_vars)[0]
         logger.info(f"Converting Dataset to DataArray using variable: {var_name}")
         cop_profiles = cop_profiles[var_name]
-        logger.info(f"DataArray dimensions: {cop_profiles.dims}")
-        logger.info(f"DataArray shape: {cop_profiles.shape}")
 
     # Filter to the specified heat system type
     try:
-        system_values = cop_profiles.coords["heat_system"].values
-        logger.info(f"Available heat systems: {system_values}")
-
         # Check if the specified heat system exists in the heat_system dimension
         cop_data = cop_profiles.sel(heat_system=heat_system_type)
         logger.info(f"Selected '{heat_system_type}' heat system")
     except Exception as e:
-        logger.error(f"Error selecting heat system: {e}")
+        raise RuntimeError(f"Error selecting heat system: {e}")
         cop_data = cop_profiles
-
-    # Check dimensions and prepare the dataframe
-    dims = cop_data.dims
-    logger.info(f"Selected COP data dimensions: {dims}")
 
     # Get the name of the region dimension
     # Capture heat source names before pivoting
@@ -91,38 +76,19 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         heat_sources = [
             val
             for val in cop_data.coords["heat_source"].values
-            if cop_data.sel(heat_source=val).notnull().any()
         ]
-        logger.info(f"Heat sources: {heat_sources}")
+        # logger.info(f"Heat sources: {heat_sources}")
     except Exception as e:
-        logger.error(f"Error retrieving heat sources: {e}")
+        raise RuntimeError(f"Error retrieving heat sources: {e}")
 
     # Convert to pandas for plotting
     # We need to reshape data to have heat sources as columns
     try:
         # Start with a multi-index DataFrame
-        df = cop_data.to_dataframe()
-
-        if isinstance(df.index, pd.MultiIndex):
-            # Flatten the MultiIndex into columns
-            df = df.reset_index()
-
-        # Get COP values column name
-        cop_col = None
-        for col in df.columns:
-            if col not in ["time", region_dim, "heat_source", "heat_system"]:
-                cop_col = col
-                break
-
-        if cop_col is None:
-            logger.error("Could not identify COP values column")
-            return pd.DataFrame(), pd.DataFrame(), [], []
-
+        df = cop_data.to_dataframe().reset_index()
         # Check for NaN values before pivoting
-        nan_count = df[cop_col].isna().sum()
-        if nan_count > 0:
-            logger.info(f"Found {nan_count} NaN values in COP data (out of {len(df)})")
-
+        cop_col = var_name
+        
         # Pivot the table to have heat sources as columns
         pivot_df = df.pivot_table(
             index=["time", region_dim],
@@ -147,26 +113,19 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
             .mean(numeric_only=True)
             .reset_index()
         )
+        # Add month column and month names in one go
+        pivot_df["month"] = pd.to_datetime(pivot_df["time"]).dt.month
+        pivot_df["month_name"] = pd.to_datetime(pivot_df["time"]).dt.strftime('%b')
 
-        # Add month names for better display
-        month_names = {
-            1: "Jan",
-            2: "Feb",
-            3: "Mar",
-            4: "Apr",
-            5: "May",
-            6: "Jun",
-            7: "Jul",
-            8: "Aug",
-            9: "Sep",
-            10: "Oct",
-            11: "Nov",
-            12: "Dec",
-        }
-        monthly_avg["month_name"] = monthly_avg["month"].map(month_names)
+        # Group by month and region, calculate mean of each heat source
+        monthly_avg = (
+            pivot_df.groupby(["month", region_dim, "month_name"])
+            .mean(numeric_only=True)
+            .reset_index()
+        # Sort by month
+            .sort_values("month")
+        )
 
-        # Sort by month for proper display
-        monthly_avg = monthly_avg.sort_values("month")
     else:
         # Create empty DataFrame if time data is not available
         monthly_avg = pd.DataFrame(
@@ -243,32 +202,37 @@ def create_interactive_cop_plot(
 
     # Add lines for each heat source to time series plot
     for i, heat_source in enumerate(heat_sources):
-        line = p_timeseries.line(
-            x="time",
-            y=heat_source,
-            source=timeseries_source,
-            line_width=2,
-            color=colors[i],
-            legend_label=heat_source,
-            name=heat_source,
-        )
-
-        # Add hover tool only to the first heat source
-        if i == 0:
-            # Create tooltip data for time series
-            timeseries_tooltips = [("Date", "@time{%F}")]
-            for hs in heat_sources:
-                timeseries_tooltips.append((hs, f"@{{{hs}}}{{0.00}}"))
-
-            # Create hover tool for time series
-            timeseries_hover = HoverTool(
-                renderers=[line],  # Only attach to this line
-                tooltips=timeseries_tooltips,
-                formatters={"@time": "datetime"},
-                mode="vline",  # Still show all values at the hovered time
-                point_policy="follow_mouse",
+        if heat_source in region_data.columns:
+            line = p_timeseries.line(
+                x="time",
+                y=heat_source,
+                source=timeseries_source,
+                line_width=2,
+                color=colors[i],
+                legend_label=heat_source,
+                name=heat_source,
             )
-            p_timeseries.add_tools(timeseries_hover)
+
+            # Add hover tool only to the first heat source
+            if i == 0:
+                # Create tooltip data for time series
+                timeseries_tooltips = [("Date", "@time{%F}")]
+                for hs in heat_sources:
+                    timeseries_tooltips.append((hs, f"@{{{hs}}}{{0.00}}"))
+
+                # Create hover tool for time series
+                timeseries_hover = HoverTool(
+                    renderers=[line],  # Only attach to this line
+                    tooltips=timeseries_tooltips,
+                    formatters={"@time": "datetime"},
+                    mode="vline",  # Still show all values at the hovered time
+                    point_policy="follow_mouse",
+                )
+                p_timeseries.add_tools(timeseries_hover)
+        else:
+            logger.warning(
+                f"Heat source '{heat_source}' not found in timeseries data for {default_region}"
+            )
 
     # Style the time series plot
     p_timeseries.title.text_font_size = "14pt"
@@ -299,18 +263,23 @@ def create_interactive_cop_plot(
     bar_width = 0.8 / len(heat_sources)
 
     for i, heat_source in enumerate(heat_sources):
-        # Calculate offset for grouped bars
-        offset = (i - len(heat_sources) / 2 + 0.5) * bar_width
+        if heat_source in monthly_source.data:
+            # Calculate offset for grouped bars
+            offset = (i - len(heat_sources) / 2 + 0.5) * bar_width
 
-        p_monthly.vbar(
-            x=dodge("month_name", offset, range=p_monthly.x_range),
-            top=heat_source,
-            width=bar_width,
-            source=monthly_source,
-            color=colors[i],
-            legend_label=heat_source,
-            name=heat_source,
-        )
+            p_monthly.vbar(
+                x=dodge("month_name", offset, range=p_monthly.x_range),
+                top=heat_source,
+                width=bar_width,
+                source=monthly_source,
+                color=colors[i],
+                legend_label=heat_source,
+                name=heat_source,
+            )
+        else:
+            logger.warning(
+                f"Heat source '{heat_source}' not found in monthly data for {default_region}"
+            )
 
     # Style the monthly bar chart
     p_monthly.title.text_font_size = "14pt"
