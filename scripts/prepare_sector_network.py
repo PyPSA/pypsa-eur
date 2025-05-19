@@ -4323,7 +4323,7 @@ def add_waste(
         p_nom_extendable=True,
         efficiency=costs.at["oil", "CO2 intensity"],
     )
-    if options["waste_to_energy"] or options["waste_to_energy"]:
+    if options["waste_to_energy"] or options["waste_to_energy_cc"]:
         # add municipal solid waste once it can be utilized
         n.add("Carrier", "municipal solid waste")
         n.add(
