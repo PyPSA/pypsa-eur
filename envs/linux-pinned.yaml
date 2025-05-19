@@ -1,5 +1,13 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 # SPDX-License-Identifier: CC0-1.0
+#
+# ‼️ DEPRECATED ‼️ This file will be removed in a future release.
+#
+# Please use the new conda-lock file instead:
+#
+# conda env create -f envs/linux-64.lock.yaml
+#
+# This file will be removed in a future release.
 
 name: pypsa-eur
 channels:
