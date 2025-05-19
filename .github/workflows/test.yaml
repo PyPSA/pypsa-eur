@@ -40,21 +40,25 @@ jobs:
     - name: Setup env file path (ubuntu)
       if: matrix.os == 'ubuntu'
       run: |
-        echo "env_file=envs/linux-pinned.yaml" >> $GITHUB_ENV
+        echo "env_file=envs/linux-64.lock.yaml" >> $GITHUB_ENV
 
     - name: Setup env file path (macos and windows)
       if: matrix.os != 'ubuntu'
       run: |
-        echo "env_file=envs/${{ matrix.os }}-pinned.yaml" >> $GITHUB_ENV
+        if [[ "${{ matrix.os }}" == "macos" ]]; then
+          echo "env_file=envs/osx-arm64.lock.yaml" >> $GITHUB_ENV
+        else
+          echo "env_file=envs/win-64.lock.yaml" >> $GITHUB_ENV
+        fi
 
     - name: Use base env file if it was changed
       run: |
         git fetch origin master
         if git diff --name-only origin/master | grep '${{ env.BASE_ENV }}'; then
-          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of pinned envs."
+          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of locked envs."
           echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
         else
-          echo "Base env ${{ env.BASE_ENV }} not changed. Using pinned envs."
+          echo "Base env ${{ env.BASE_ENV }} not changed. Using locked envs."
         fi
 
     - name: Setup cache keys
@@ -90,7 +94,7 @@ jobs:
     - name: Run pylint check on scripts
       # check for undefined variables to reuse functions across scripts
       run: |
-        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_* 
+        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
       run: |
@@ -134,11 +138,11 @@ jobs:
       run: |
         git fetch origin master
         if git diff --name-only origin/master | grep '${{ env.BASE_ENV }}'; then
-          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of pinned envs."
+          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of locked envs."
           echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
         else
-          echo "Base env ${{ env.BASE_ENV }} not changed. Using pinned envs."
-          echo "env_file=envs/linux-pinned.yaml" >> $GITHUB_ENV
+          echo "Base env ${{ env.BASE_ENV }} not changed. Using locked envs."
+          echo "env_file=envs/linux-64.lock.yaml" >> $GITHUB_ENV
         fi
 
     # Only run checks if package is not pinned

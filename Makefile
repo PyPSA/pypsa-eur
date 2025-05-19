@@ -4,7 +4,7 @@
 
 .ONESHELL:
 
-.PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos test checks clean-tests reset
+.PHONY: _conda_check install install-pinned-linux install-pinned-windows install-pinned-macos install-lock-linux64 install-lock-linux-arm install-lock-windows install-lock-macos64 install-lock-macos-arm test checks clean-tests reset
 
 # Helper: Check if conda or mamba is installed and set CONDA_OR_MAMBA variable
 # mamba is preferred over conda if both are installed, unless PYPSA_PREFER_CONDA is set to true
@@ -35,19 +35,43 @@ _conda_check:
 	fi
 
 # Install environment
-# E.g. make install or make install name=myenv
-install: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/environment.yaml -n $(or $(name), pypsa-eur)
+# Install from conda-lock files (recommended)
+install-lock-linux64: _conda_check
+	$(CONDA_OR_MAMBA) env create -f envs/linux-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
-# Install pinned environment
+
+install-lock-windows: _conda_check
+	$(CONDA_OR_MAMBA) env create -f envs/win-64.lock.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
+install-lock-macos64: _conda_check
+	$(CONDA_OR_MAMBA) env create -f envs/osx-64.lock.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
+install-lock-macos-arm: _conda_check
+	$(CONDA_OR_MAMBA) env create -f envs/osx-arm64.lock.yaml -n $(or $(name), pypsa-eur)
+	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
+# Install pinned environment (deprecated, but maintained for backward compatibility)
 install-pinned-linux: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/linux-pinned.yaml -n $(or $(name), pypsa-eur)
+	@echo "WARNING: The 'install-pinned-linux' target is deprecated and will be removed in a future release."
+	@echo "Please use 'install-lock-linux64' (for x86_64) or 'install-lock-linux-arm' (for ARM) instead"
+	@echo "Or directly use: conda env create -f envs/linux-64.lock.yaml"
+	$(CONDA_OR_MAMBA) env create -f envs/linux-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
 install-pinned-windows: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/windows-pinned.yaml -n $(or $(name), pypsa-eur)
+	@echo "WARNING: The 'install-pinned-windows' target is deprecated and will be removed in a future release."
+	@echo "Please use 'install-lock-windows' instead"
+	@echo "Or directly use: conda env create -f envs/win-64.lock.yaml"
+	$(CONDA_OR_MAMBA) env create -f envs/win-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
+
 install-pinned-macos: _conda_check
-	$(CONDA_OR_MAMBA) env create -f envs/macos-pinned.yaml -n $(or $(name), pypsa-eur)
+	@echo "WARNING: The 'install-pinned-macos' target is deprecated and will be removed in a future release."
+	@echo "Please use 'install-lock-macos64' (for Intel) or 'install-lock-macos-arm' (for Apple Silicon) instead"
+	@echo "Or directly use: conda env create -f envs/osx-64.lock.yaml"
+	$(CONDA_OR_MAMBA) env create -f envs/osx-64.lock.yaml -n $(or $(name), pypsa-eur)
 	$(CONDA_OR_MAMBA) run -n $(or $(name), pypsa-eur) pre-commit install
 
 
