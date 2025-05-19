@@ -1427,8 +1427,10 @@ rule prepare_sector_network:
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        ates_potentials=resources(
-            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
+        ates_potentials=lambda w: (
+            resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
+            if config_provider("sector", "ates", "enable")(w)
+            else []
         ),
     output:
         resources(
