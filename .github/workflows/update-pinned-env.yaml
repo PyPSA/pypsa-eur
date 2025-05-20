@@ -1,5 +1,4 @@
-name: Update pinned envs
-
+name: Update locked envs
 on:
   push:
     paths:
@@ -12,22 +11,13 @@ env:
   BASE_ENV: envs/environment.yaml
 
 jobs:
-  update-pinned-environment:
+  update-locked-environment:
     if: ${{ github.ref == 'refs/heads/master' }}
     name: Update pinned envs
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu, macos, windows]
-        include:
-        - os: ubuntu
-          suffix: "linux"
-        - os: macos
-          suffix: "macos"
-        - os: windows
-          suffix: "windows"
-
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v4
 
@@ -39,53 +29,72 @@ jobs:
         channel-priority: strict
         environment-file: ${{ env.BASE_ENV }}
 
-    - name: Update pinned environment per OS
+    - name: Install conda-lock
       run: |
-        conda env export --name ${{ github.event.repository.name }} --no-builds -c conda-forge -c bioconda --override-channels > envs/${{ matrix.suffix }}-pinned.yaml
+        conda install -c conda-forge conda-lock
 
-    - name: Add SPDX header
-      if: ${{ matrix.suffix != 'windows' }}
+    - name: Generate lockfiles for all platforms
+      run: |
+        conda-lock -f ${{ env.BASE_ENV }} \
+        -p linux-64 -p osx-64 -p win-64 -p osx-arm64 \
+        -k env --filename-template "envs/{platform}.lock"
+
+        # Rename to .yaml extension
+        for file in envs/*.lock.yml; do
+          mv "$file" "${file%.yml}.yaml"
+        done
+    - name: Add SPDX headers to lock files
       run: |
         SPDX_HEADER="# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n# SPDX-License-Identifier: CC0-1.0\n"
-        echo -e "$SPDX_HEADER" | cat - envs/${{ matrix.suffix }}-pinned.yaml > temp && mv temp envs/${{ matrix.suffix }}-pinned.yaml
 
-    - name: Add SPDX header (windows)
-      if: ${{ matrix.suffix == 'windows' }}
+        # Add header to all generated lock files
+        for file in envs/*.lock.yaml; do
+          echo "Adding header to $file"
+          echo -e "$SPDX_HEADER" | cat - "$file" > temp && mv temp "$file"
+        done
+
+    - name: Insert environment name in lock files
       run: |
-        $SPDX_HEADER = "# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>`r`n# SPDX-License-Identifier: CC0-1.0`r`n`r`n"
-        $CurrentContent = Get-Content "envs/${{ matrix.suffix }}-pinned.yaml" -Raw
-        $NewContent = $SPDX_HEADER + $CurrentContent
-        $NewContent | Set-Content "envs/${{ matrix.suffix }}-pinned.yaml"
+        for file in envs/*.lock.yaml; do
+          if [ -f "$file" ]; then
+            echo "Processing $file"
+            if ! grep -q "name: pypsa-eur" "$file"; then
+              # Insert name: pypsa-eur before channels section
+              sed -i '7a name: pypsa-eur' "$file"
+            else
+              echo "name: pypsa-eur already exists in $file"
+            fi
+          fi
+        done
 
-    - name: Cache environment files
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.suffix }}-pinned
-        path: envs/${{ matrix.suffix }}-pinned.yaml
+        name: lockfiles
+        path: envs/*.lock.yaml
 
   create-pull-request:
-    needs: update-pinned-environment
+    needs: update-locked-environment
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Download all artifacts
       uses: actions/download-artifact@v4
-
-    - name: Prepare files for commit
-      run: |
-        mkdir -p envs
-        mv linux-pinned/* envs/linux-pinned.yaml
-        mv macos-pinned/* envs/macos-pinned.yaml
-        mv windows-pinned/* envs/windows-pinned.yaml
+      with:
+        name: lockfiles
+        path: envs/
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v7
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: update-pinned-environment
-        title: "[github-actions.ci] Update pinned envs"
+        branch: update-locked-environment
+        title: "[github-actions.ci] Update locked envs"
         body: |
-          Automatically generated PR to update pinned environment files for Windows, macOS, and Linux.
+          Automatically generated PR to update locked environment files for Windows, macOS, and Linux.
+
+          These files were generated using conda-lock for improved dependency resolution and reproducibility.
 
           **Note: Do not merge without manual test execution. Either update the branch to trigger tests, or use `workflow_dispatch` to run tests manually. Unlike standard PRs, tests will not run automatically.**
-        commit-message: "Update pinned environment files for all platforms"
+        commit-message: "Update locked environment files for all platforms"
