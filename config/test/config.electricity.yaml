@@ -35,7 +35,6 @@ electricity:
     Link: [H2 pipeline]
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
-  
   estimate_renewable_capacities:
     enable: true
     from_gem: true
