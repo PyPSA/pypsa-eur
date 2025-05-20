@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: CC0-1.0
 exclude: "^LICENSES"
 
+ci:
+  autoupdate_schedule: quarterly
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
@@ -14,7 +17,7 @@ repos:
 # Run ruff to lint and format
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: v0.11.6
+  rev: v0.11.8
   hooks:
     # Run the linter.
   - id: ruff
@@ -27,7 +30,7 @@ repos:
   rev: v2.4.1
   hooks:
   - id: codespell
-    args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom,appartment,bage,ore,setis,tabacco,berfore,vor,pris'] # Ignore capital case words, e.g. country codes
+    args: ['--ignore-regex="(\b[A-Z]+\b)"', '--ignore-words-list=fom,appartment,bage,ore,setis,tabacco,berfore,vor,pris,bund'] # Ignore capital case words, e.g. country codes
     types_or: [python, rst, markdown]
     files: ^(scripts|doc)/
 
@@ -44,7 +47,7 @@ repos:
   rev: v2.14.0
   hooks:
   - id: pretty-format-yaml
-    exclude: pinned\.yaml$
+    exclude: (pinned\.yaml|\.lock\.yaml)$
     args: [--autofix, --indent, "2", --preserve-quotes]
 
   # Format Snakemake rule / workflow files
