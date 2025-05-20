@@ -30,7 +30,7 @@ from bokeh.plotting import figure
 logger = logging.getLogger(__name__)
 
 
-def get_bus_balance(n, bus_name):
+def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
     """
     Calculate the energy balance for a specific bus.
 
@@ -76,7 +76,6 @@ def get_bus_balance(n, bus_name):
     # Load from links (only taking links with bus_name as bus0)
     for link in n.links.index[n.links.bus0 == bus_name]:
         carrier = n.links.carrier[link]
-        eff = n.links.efficiency[link]
         p0 = n.links_t.p0[link]
         if f"{carrier} load" not in carriers:
             carriers[f"{carrier} load"] = 0.0
@@ -111,7 +110,7 @@ def get_bus_balance(n, bus_name):
     return result
 
 
-def prepare_all_buses_data(n):
+def prepare_all_buses_data(n: pypsa.Network) -> dict:
     """
     Prepare data for all buses in the network.
 
@@ -140,16 +139,16 @@ def prepare_all_buses_data(n):
             # Only add buses that have non-empty carrier data
             if len([col for col in bus_balance.columns if col != "time"]) > 0:
                 buses_data[bus] = bus_balance
-                logger.info(f"Successfully processed bus: {bus}")
         except Exception as e:
-            logger.warning(f"Error processing bus {bus}: {e}")
-
+            raise RuntimeError(
+                f"Error processing bus {bus}: {e}"
+            )
     logger.info(f"Successfully processed {len(buses_data)} buses with carrier data")
 
     return buses_data
 
 
-def create_dispatch_plot(bus_data, bus_name):
+def create_dispatch_plot(bus_data, default_bus_name):
     """
     Create an interactive Bokeh plot for carrier dispatch.
 
@@ -157,7 +156,7 @@ def create_dispatch_plot(bus_data, bus_name):
     ----------
     bus_data : dict
         Dictionary with bus names as keys and carrier dispatch DataFrames as values
-    bus_name : str
+    default_bus_name : str
         Name of the default bus to display
 
     Returns
@@ -169,23 +168,17 @@ def create_dispatch_plot(bus_data, bus_name):
     buses = sorted(bus_data.keys())
 
     # If the requested bus is not in the data, use the first available bus
-    if bus_name not in buses:
+    if default_bus_name not in buses:
         if buses:
-            bus_name = buses[0]
+            default_bus_name = buses[0]
         else:
             logger.error("No buses found with dispatch data")
             return None
-
-    # Get data for the selected bus
-    df = bus_data[bus_name]
 
     # Create a ColumnDataSource for each bus
     sources = {}
     for bus, data in bus_data.items():
         sources[bus] = ColumnDataSource(data)
-
-    # Create a ColumnDataSource for the current selection
-    source = sources[bus_name]
 
     # Create a dictionary to track carriers and colors for each bus
     bus_carriers = {}
@@ -288,7 +281,7 @@ def create_dispatch_plot(bus_data, bus_name):
         plots[bus] = p
 
         # Initially hide all plots except for the default bus
-        if bus != bus_name:
+        if bus != default_bus_name:
             p.visible = False
 
     # Create a container to hold all plots
@@ -299,7 +292,7 @@ def create_dispatch_plot(bus_data, bus_name):
     # Create bus selector dropdown
     bus_select = Select(
         title="Select Bus:",
-        value=bus_name,
+        value=default_bus_name,
         options=buses,
         width=400,
     )
@@ -347,10 +340,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_bus_carrier_dispatch",
-            clusters=48,
-            opts="Co2L0-24H",
-            sector_opts="T-H-B-I-A-solar+p3-dist1",
-            planning_horizons=2030,
+            clusters=10,
+            opts="",
+            sector_opts="",
+            planning_horizons="2030",
         )
 
     logging.basicConfig(
