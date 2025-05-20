@@ -367,16 +367,46 @@ def update_dynamic_ptes_capacity(
     ].values
 
 
+def reduce_capacities(n, year):
+    load_dict = {
+        "Haber-Bosch": ["NH3"],
+        "methanolisation": ["shipping methanol", "industry methanol"],
+        "naphtha steam cracker": ["HVC"],
+        "cement plant": ["cement"],
+    }
+    for carrier in load_dict.keys():
+        load = n.loads[n.loads.carrier.isin(load_dict[carrier])].p_set.sum()
+        plants = n.links[(n.links.carrier==carrier) & ~(n.links.p_nom_extendable)].index
+        # multiply with efficiency
+        installed_cap = n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+        if installed_cap > load:
+            logger.info(f"Scaling down {carrier} capacity in {year} by factor {installed_cap/load} to avoid numerical issues due to low {carrier} demand.")
+            cap_decrease = installed_cap/load  * 1.1
+            n.links.loc[plants, "p_nom"] /= cap_decrease        
+    
+    # special case steel
+    steel_load = n.loads[n.loads.carrier=="steel"].p_set.sum()
+    plants = n.links[(n.links.carrier.isin(["BF-BOF", "DRI-EAF"])) & ~(n.links.p_nom_extendable)].index
+    installed_cap = n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+    if installed_cap > steel_load:
+        logger.info(f"Scaling down BOF and EAF capacity by factor {installed_cap/steel_load} to avoid numerical issues due to low steel demand.")
+        cap_decrease = installed_cap/steel_load * 1.1
+        n.links.loc[plants, "p_nom"] /= cap_decrease
+
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_brownfield",
+            configfiles="config/industry_config.yaml",
             clusters="39",
             opts="",
             sector_opts="",
-            planning_horizons=2050,
+            planning_horizons=2040,
+            run="base_eu_deindustrial",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -411,6 +441,8 @@ if __name__ == "__main__":
     )
 
     disable_grid_expansion_if_limit_hit(n)
+
+    reduce_capacities(n, year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

@@ -23,10 +23,10 @@ from scripts._helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import load_costs, sanitize_carriers, calculate_annuity
-from build_energy_totals import cartesian
-from definitions.heat_system import HeatSystem
-from prepare_sector_network import cluster_heat_buses, define_spatial, calculate_steel_parameters
+from scripts.add_electricity import load_costs, sanitize_carriers, calculate_annuity
+from scripts.build_energy_totals import cartesian
+from scripts.definitions.heat_system import HeatSystem
+from scripts.prepare_sector_network import cluster_heat_buses, define_spatial, calculate_steel_parameters
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -736,8 +736,17 @@ def add_steel_industry_existing(n):
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
     bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
-    if options['endo_industry']['regional_steel_demand']:
-        min_part_load_steel = 0
+    # if options['endo_industry']['regional_steel_demand']:
+    #     min_part_load_steel = 0
+    
+    # check if existing capacity is bigger than demand
+    steel_load = n.loads[n.loads.carrier=="steel"].p_set.sum()
+    installed_cap = p_nom_eaf.sum() / bof['iron input'] + p_nom_bof.sum() / eaf_ng['iron input'] # times 1/efficiency
+    if installed_cap > steel_load:
+        logger.info(f"Scaling down BOF and EAF capacity by factor {installed_cap/steel_load} to avoid numerical issues due to low steel demand.")
+        cap_decrease = installed_cap/steel_load * 1.1
+    else:
+        cap_decrease = 1
 
     n.add(
         "Link",
@@ -749,7 +758,7 @@ def add_steel_industry_existing(n):
         bus3=nodes,
         bus4=spatial.co2.bof,
         carrier="BF-BOF",
-        p_nom=p_nom_bof * bof['iron input'],
+        p_nom=p_nom_bof/cap_decrease * bof['iron input'],
         p_nom_extendable=False,
         p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_bof,
@@ -770,7 +779,7 @@ def add_steel_industry_existing(n):
         bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
         bus3=nodes,
         carrier="DRI-EAF",
-        p_nom=p_nom_eaf *  eaf_ng['iron input'],
+        p_nom=p_nom_eaf/cap_decrease *  eaf_ng['iron input'],
         p_nom_extendable=False,
         p_min_pu=min_part_load_steel,
         #marginal_cost=-0.1,#opex_eaf,
@@ -802,6 +811,15 @@ def add_cement_industry_existing(n):
 
     p_nom = capacities / nhours  # get the hourly production capacity
 
+    # check if existing capacity is bigger than demand
+    cement_load = n.loads[n.loads.carrier=="cement"].p_set.sum()
+    installed_cap = p_nom.sum() / 1.28 # times 1/efficiency
+    if installed_cap > cement_load:
+        logger.info(f"Scaling down cement capacity by factor {installed_cap/cement_load} to avoid numerical issues due to low cement demand.")
+        cap_decrease = installed_cap/cement_load * 1.1
+    else:
+        cap_decrease = 1
+
     ########### Add existing cement production capacities ############
 
     # Lifetimes
@@ -811,8 +829,8 @@ def add_cement_industry_existing(n):
     discount_rate = 0.04
     capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
     min_part_load_cement = 0.3
-    if options['endo_industry']['regional_cement_demand']:
-        min_part_load_cement = 0
+    # if options['endo_industry']['regional_cement_demand']:
+    #     min_part_load_cement = 0
 
     n.add(
         "Link",
@@ -823,7 +841,7 @@ def add_cement_industry_existing(n):
         bus2=spatial.gas.nodes,
         bus3=spatial.co2.cement,
         carrier="cement plant",
-        p_nom=p_nom,
+        p_nom=p_nom/cap_decrease,
         p_nom_extendable=False,
         p_min_pu=min_part_load_cement,
         efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
@@ -855,10 +873,18 @@ def add_chemicals_industry_existing(n, options):
 
     p_nom_nh3 = capacities_nh3 / nhours  # get the hourly production capacity
 
+    # check if existing capacity is bigger than demand
+    nh3_load = n.loads[n.loads.carrier=="NH3"].p_set.sum()
+    installed_cap = p_nom_nh3.sum() / costs.at["Haber-Bosch", "electricity-input"] # times 1/efficiency
+    if installed_cap > nh3_load:
+        logger.info(f"Scaling down ammonia capacity by factor {installed_cap/nh3_load} to avoid numerical issues due to low ammonia demand.")
+        cap_decrease = installed_cap/nh3_load  * 1.1
+    else:
+        cap_decrease = 1
     ########### Add existing ammonia production capacities ############
-    min_part_load_hb=0.25
-    if options['ammonia'] == 'regional':
-        min_part_load_hb = 0
+    min_part_load_hb=0.3
+    # if options['ammonia'] == 'regional':
+    #     min_part_load_hb = 0
 
     n.add(
         "Link",
@@ -868,7 +894,7 @@ def add_chemicals_industry_existing(n, options):
         bus1=spatial.ammonia.nodes,
         bus2=nodes + " H2",
         p_nom_extendable=False,
-        p_nom=p_nom_nh3,
+        p_nom=p_nom_nh3/cap_decrease,
         p_min_pu=min_part_load_hb,
         carrier="Haber-Bosch",
         efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
@@ -896,6 +922,15 @@ def add_chemicals_industry_existing(n, options):
 
     p_nom_meth = capacities_meth / nhours  # get the hourly production capacity
 
+    # check if existing capacity is bigger than demand
+    meth_load = n.loads[n.loads.carrier.isin(["shipping methanol", "industry methanol"])].p_set.sum()
+    installed_cap = p_nom_meth.sum() * options["MWh_MeOH_per_MWh_H2"] # times 1/efficiency
+    if installed_cap > meth_load:
+        logger.info(f"Scaling down methanol capacity by factor {installed_cap/meth_load} to avoid numerical issues due to low methanol demand.")
+        cap_decrease = installed_cap/meth_load  * 1.1
+    else:
+            cap_decrease = 1
+
     ########### Add existing methanol production capacities ############
 
     n.add(
@@ -909,7 +944,7 @@ def add_chemicals_industry_existing(n, options):
         bus3=spatial.co2.nodes,
         carrier="methanolisation",
         p_nom_extendable=False,
-        p_nom=p_nom_meth,
+        p_nom=p_nom_meth/cap_decrease,
         p_min_pu=options["min_part_load_methanolisation"],
         capital_cost=costs.at["methanolisation", "capital_cost"]
         * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
@@ -936,16 +971,25 @@ def add_chemicals_industry_existing(n, options):
         p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
 
         p_nom_hvc = capacities_hvc / nhours  # get the hourly production capacity in ktHVC/h
+        naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+        
+        # check if existing capacity is bigger than demand
+        hvc_load = n.loads[n.loads.carrier=="HVC"].p_set.sum()
+        installed_cap = p_nom_hvc.sum() / naphtha_to_hvc # times 1/efficiency
+        if installed_cap > hvc_load:
+            logger.info(f"Scaling down HVC capacity by factor {installed_cap/hvc_load} to avoid numerical issues due to low HVC demand.")
+            cap_decrease = installed_cap/hvc_load  * 1.1
+        else:
+            cap_decrease = 1
 
         ########### Add existing HVC production capacities ############
 
-        naphtha_to_hvc = 2.31 * 12.47 * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
         # we need to account for CO2 emissions from HVC decay
         decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
         min_part_load_hvc = 0.3
 
-        if options['endo_industry']['regional_hvc']:
-            min_part_load_hvc = 0
+        #if options['endo_industry']['regional_hvc']:
+        #    min_part_load_hvc = 0
         
         n.add(
             "Link",
@@ -959,7 +1003,7 @@ def add_chemicals_industry_existing(n, options):
             carrier="naphtha steam cracker",
             p_nom_extendable=False,
             p_min_pu=min_part_load_hvc,
-            p_nom=p_nom_hvc,
+            p_nom=p_nom_hvc/cap_decrease,
             capital_cost=2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC
             efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
             efficiency2= 21 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
