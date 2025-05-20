@@ -11,6 +11,33 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+**Breaking Changes**
+
+* Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
+
+  - Added platform-specific lock files for all major platforms (Linux, macOS, Windows) and architectures (x86_64, ARM).
+
+  - Updated documentation, Makefile, Dockerfile, and CI workflows to use the new lock files.
+
+  - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
+
+**Changes**
+* Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
+
+* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
+
+* Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
+
+* Developer note: Scripts now use absolute imporys. When using `mock_snakemake` this 
+  might require you to add the working directory to the PYTHONPATH or in your IDE.
+  
+* Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
+
+* Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
+
+* Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
+
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 

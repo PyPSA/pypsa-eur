@@ -73,13 +73,14 @@ import logging
 import atlite
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_cutout", cutout="europe-2013-sarah3-era5")
     configure_logging(snakemake)
@@ -99,7 +100,7 @@ if __name__ == "__main__":
         cutout_params["x"] = slice(*cutout_params["x"])
         cutout_params["y"] = slice(*cutout_params["y"])
 
-    logging.info(f"Preparing cutout with parameters {cutout_params}.")
+    logger.info(f"Preparing cutout with parameters {cutout_params}.")
     features = cutout_params.pop("features", None)
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
     cutout.prepare(features=features)

@@ -9,22 +9,23 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import (
+from packaging.version import Version, parse
+from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
+from pypsa.statistics import get_transmission_carriers
+
+from scripts._helpers import (
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
-from packaging.version import Version, parse
-from plot_power_network import load_projection
-from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
-from pypsa.statistics import get_transmission_carriers
+from scripts.add_electricity import sanitize_carriers
+from scripts.plot_power_network import load_projection
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "plot_balance_map",

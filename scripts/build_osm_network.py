@@ -11,13 +11,14 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
 from pyproj import Transformer
 from shapely import prepare
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
 from tqdm import tqdm
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -1649,7 +1650,7 @@ def build_network(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_osm_network")
 

@@ -330,6 +330,89 @@ rule build_geothermal_heat_potential:
         "../scripts/build_geothermal_heat_potential.py"
 
 
+rule build_ates_potentials:
+    params:
+        max_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "max_top_temperature",
+        ),
+        min_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "min_bottom_temperature",
+        ),
+        suitable_aquifer_types=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "suitable_aquifer_types",
+        ),
+        aquifer_volumetric_heat_capacity=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "aquifer_volumetric_heat_capacity",
+        ),
+        fraction_of_aquifer_area_available=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "fraction_of_aquifer_area_available",
+        ),
+        effective_screen_length=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "effective_screen_length",
+        ),
+        dh_area_buffer=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "dh_area_buffer",
+        ),
+        ignore_missing_regions=config_provider(
+            "sector",
+            "district_heating",
+            "ates",
+            "ignore_missing_regions",
+        ),
+        countries=config_provider("countries"),
+    input:
+        aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
+        aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
+        aquifer_shapes_dbf="data/bgr/ihme1500_aquif_ec4060_v12_poly.dbf",
+        aquifer_shapes_cpg="data/bgr/ihme1500_aquif_ec4060_v12_poly.cpg",
+        aquifer_shapes_prj="data/bgr/ihme1500_aquif_ec4060_v12_poly.prj",
+        aquifer_shapes_sbn="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbn",
+        aquifer_shapes_sbx="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbx",
+        dh_areas="data/dh_areas.gpkg",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    output:
+        ates_potentials=resources(
+            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_ates_potentials_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_ates_potentials_geothermal_s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_ates_potentials.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -355,6 +438,9 @@ rule build_cop_profiles:
         ),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
+        temp_ptes_total=resources(
+            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+        ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
@@ -368,6 +454,64 @@ rule build_cop_profiles:
         "../envs/environment.yaml"
     script:
         "../scripts/build_cop_profiles/run.py"
+
+
+rule build_ptes_operations:
+    params:
+        max_ptes_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "max_top_temperature",
+        ),
+        min_ptes_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "min_bottom_temperature",
+        ),
+        # enable_supplemental_heating=config_provider(
+        #     "sector",
+        #     "district_heating",
+        #     "ptes",
+        #     "supplemental_heating",
+        #     "enable",
+        # ),
+        # enable_dynamic_capacity=config_provider(
+        #     "sector",
+        #     "district_heating",
+        #     "ptes",
+        #     "dynamic_capacity",
+        # ),
+        snapshots=config_provider("snapshots"),
+    input:
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        ptes_direct_utilisation_profiles=resources(
+            "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_top_temperature_profiles=resources(
+            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ptes_e_max_pu_profiles=resources(
+            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_ptes_operations_s_{clusters}_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_ptes_operations_s_{clusters}_{planning_horizons}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_ptes_operations/run.py"
 
 
 rule build_direct_heat_source_utilisation_profiles:
@@ -401,45 +545,6 @@ rule build_direct_heat_source_utilisation_profiles:
         "../envs/environment.yaml"
     script:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
-
-
-rule build_tes_capacity_profiles:
-    params:
-        max_top_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "max_top_temperature",
-        ),
-        min_bottom_temperature=config_provider(
-            "sector",
-            "district_heating",
-            "ptes",
-            "min_bottom_temperature",
-        ),
-        snapshots=config_provider("snapshots"),
-    input:
-        central_heating_forward_temperature_profiles=resources(
-            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        central_heating_return_temperature_profiles=resources(
-            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-    output:
-        ptes_e_max_pu_profiles=resources(
-            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-    resources:
-        mem_mb=2000,
-    log:
-        logs("build_tes_capacity_profiles_s_{clusters}_{planning_horizons}.log"),
-    benchmark:
-        benchmarks("build_tes_capacity_profiles/s_{clusters}_{planning_horizons}")
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_tes_capacity/run.py"
 
 
 def solar_thermal_cutout(wildcards):
@@ -1201,6 +1306,9 @@ rule prepare_sector_network:
         limited_heat_sources=config_provider(
             "sector", "district_heating", "limited_heat_sources"
         ),
+        temperature_limited_stores=config_provider(
+            "sector", "district_heating", "temperature_limited_stores"
+        ),
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
@@ -1273,13 +1381,22 @@ rule prepare_sector_network:
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
-        ptes_e_max_pu_profiles=(
+        ptes_e_max_pu_profiles=lambda w: (
             resources(
                 "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "dynamic_capacity"
+            )(w)
+            else []
+        ),
+        ptes_direct_utilisation_profiles=lambda w: (
+            resources(
+                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
             )
+            if config_provider(
+                "sector", "district_heating", "ptes", "supplemental_heating", "enable"
+            )(w)
             else []
         ),
         solar_thermal_total=lambda w: (
@@ -1309,6 +1426,9 @@ rule prepare_sector_network:
         ),
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        ates_potentials=resources(
+            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
         ),
     output:
         resources(
