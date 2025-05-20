@@ -11,8 +11,9 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from cluster_gas_network import load_bus_regions
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def read_scigrid_gas(fn):
     expanded_param = df.param.apply(json.loads).apply(pd.Series)
     df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
-    df = df.loc[:, ~df.columns.duplicated()]  # duplicated counntry_code column
+    df = df.loc[:, ~df.columns.duplicated()]  # duplicated country_code column
     return df
 
 
@@ -143,11 +144,11 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",
-            clusters="128",
+            clusters="10",
         )
 
     configure_logging(snakemake)

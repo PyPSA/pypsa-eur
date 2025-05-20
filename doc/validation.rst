@@ -7,22 +7,11 @@
 Validation
 ##########################################
 
-The PyPSA-Eur model workflow provides a built-in mechanism for validation. This allows users to contrast the outcomes of network optimization against the historical behaviour of the European power system. The snakemake rule ``validate_elec_networks`` enables this by generating comparative figures that encapsulate key data points such as dispatch carrier, cross-border flows, and market prices per price zone.
+The PyPSA-Eur model workflow has been validated by contrasting the outcomes of network optimization against the historical behaviour of the European power system.
+These comparisons utilize data from the 2019 ENTSO-E Transparency Platform.
+The setup uses monthly varying fuel prices for gas, lignite, coal and oil as well as CO2 prices, which are created by the script :mod:`build_monthly_prices`.
 
-These comparisons utilize data from the 2019 ENTSO-E Transparency Platform. To enable this, an ENTSO-E API key must be inserted into the ``config.yaml`` file. Detailed steps for this process can be found in the user guide `here <https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html>`__.
-
-Once the API key is set, the validation workflow can be triggered by running the following command:
-
-    snakemake validate_elec_networks --configfile config/config.validation.yaml -c8
-
-
-The setup uses monthly varying fuel prices for gas, lignite, coal and oil as well as CO2 prices, which are created by the script ``build_monthly_prices``. Upon completion of the validation process, the resulting network and generated figures will be stored in the ``results/validation`` directory for further analysis.
-
-
-Results
-=======
-
-By the time of writing the comparison with the historical data shows partially accurate, partially improvable results. The following figures show the comparison of the dispatch of the different carriers.
+The comparison with the historical data shows partially accurate, partially improvable results. The following figures show the comparison of the dispatch of the different carriers.
 
 .. image:: img/validation_seasonal_operation_area_elec_s_37_ec_lv1.0_Ept.png
    :width: 100%

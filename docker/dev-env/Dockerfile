@@ -18,7 +18,7 @@ WORKDIR /pypsa-eur
 
 COPY ./envs ./temp
 
-RUN conda env create -n pypsa-eur -f temp/linux-pinned.yaml
+RUN conda env create -n pypsa-eur -f temp/linux-64.lock.yaml
 RUN conda init bash
 RUN echo "conda activate pypsa-eur" >> ~/.bashrc
 

@@ -31,7 +31,8 @@ from itertools import product
 import country_converter as coco
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -372,7 +373,7 @@ def build_nodal_distribution_key(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_industrial_distribution_key",

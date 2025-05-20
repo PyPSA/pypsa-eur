@@ -18,9 +18,10 @@ import numpy as np
 import pandas as pd
 import rasterio
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
 from rasterio.mask import mask
 from shapely.geometry import MultiPolygon, Polygon, box
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -490,7 +491,7 @@ def calc_gdp_pop(country, regions, gdp_non_nuts3, pop_non_nuts3):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_shapes")
     configure_logging(snakemake)

@@ -24,9 +24,9 @@ import logging
 import zipfile
 from pathlib import Path
 
-import atlite
 import rioxarray
-from _helpers import configure_logging, set_scenario_config
+
+from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def determine_cutout_xXyY(cutout_name):
     -------
     A list of extent coordinates in the order [x, X, y, Y].
     """
-    cutout = atlite.Cutout(cutout_name)
+    cutout = load_cutout(cutout_name)
     assert cutout.crs.to_epsg() == 4326
     x, X, y, Y = cutout.extent
     dx, dy = cutout.dx, cutout.dy
@@ -58,7 +58,7 @@ def determine_cutout_xXyY(cutout_name):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_ship_raster")
     configure_logging(snakemake)
