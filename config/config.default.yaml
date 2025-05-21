@@ -465,10 +465,10 @@ sector:
       max_forward_temperature_baseyear:
         FR: 110
         DK: 75
-        DE: 109
+        DE: 150
         CZ: 130
         FI: 115
-        PL: 130
+        PL: 180
         SE: 102
         IT: 90
       min_forward_temperature_baseyear:
@@ -482,8 +482,9 @@ sector:
     ptes:
       dynamic_capacity: true
       supplemental_heating:
-        enable: false
-        booster_heat_pump: false
+        enable: true
+        booster_heat_pump: true
+        booster_resistive_heater: true
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:

@@ -106,3 +106,19 @@ class PtesTemperatureApproximator:
             self.max_ptes_top_temperature - self.bottom_temperature
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+
+
+    @property
+    def reheat_ratio(self) -> xr.DataArray:
+        """
+        Calculate the reheat ratio:
+            (clipped_top_temperature - bottom_temperature)
+            -----------------------------------------------
+            (forward_temperature_celsius - clipped_top_temperature)
+        Returns
+        -------
+        xr.DataArray
+            The reheat ratio profile; squared if supplemental heating is enabled.
+        """
+        return (1 + (self.forward_temperature - self.top_temperature) /
+                (self.top_temperature - self.return_temperature))

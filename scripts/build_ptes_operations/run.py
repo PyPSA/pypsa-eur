@@ -116,3 +116,11 @@ if __name__ == "__main__":
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
     )
+
+    # Get PTES reheat ratio for boiler
+    logger.info(
+        f"Saving PTES reheat ratio profiles to {snakemake.output.ptes_reheat_ratio_profiles}"
+    )
+    ptes_temperature_approximator.reheat_ratio.to_netcdf(
+        snakemake.output.ptes_reheat_ratio_profiles
+    )
