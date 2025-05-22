@@ -204,7 +204,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_bidding_zones")
+        snakemake = mock_snakemake("build_bidding_zones", configfiles="config/test/config.clusters.yaml")
 
     # Load core bidding zones and country shapes
     countries = snakemake.params.countries
@@ -234,12 +234,14 @@ if __name__ == "__main__":
             "SI": 0.01,
         }
     }
-    bidding_zones = replace_country(
-        source=bidding_zones,
-        reference=bidding_zones_entsoe,
-        country="IT",
-        tolerance_dict=tolerance_dict,
-    )
+
+    if "IT" in countries:
+        bidding_zones = replace_country(
+            source=bidding_zones,
+            reference=bidding_zones_entsoe,
+            country="IT",
+            tolerance_dict=tolerance_dict,
+        )
 
     if snakemake.params.remove_islands:
         # manual corrections: remove islands
