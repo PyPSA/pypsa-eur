@@ -25,6 +25,8 @@ Release Notes
 
 * Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
 
+* Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp-raw` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
+
 * Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
 
 * Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
