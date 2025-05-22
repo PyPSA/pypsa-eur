@@ -561,7 +561,7 @@ def attach_wind_and_solar(
 
                 # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
                 midcar = car.split("-", 2)[1]
-                if midcar == 'float':
+                if midcar == "float":
                     capital_cost = (
                         costs.at[car, "capital_cost"]
                         + costs.at[car + "-station", "capital_cost"]

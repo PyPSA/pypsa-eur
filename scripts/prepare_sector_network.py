@@ -486,7 +486,7 @@ def update_wind_solar_costs(
 
             # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
             midtech = tech.split("-", 2)[1]
-            if midtech == 'float':
+            if midtech == "float":
                 capital_cost = (
                     costs.at[tech, "capital_cost"]
                     + costs.at[tech + "-station", "capital_cost"]
