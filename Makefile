@@ -82,6 +82,7 @@ test:
 	snakemake -call --configfile config/test/config.overnight.yaml
 	snakemake -call --configfile config/test/config.myopic.yaml
 	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml
+	snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml
 	snakemake -call --configfile config/test/config.scenarios.yaml -n
 	echo "All tests completed successfully."
 
@@ -94,6 +95,7 @@ clean-tests:
 	snakemake -call --configfile config/test/config.overnight.yaml --delete-all-output
 	snakemake -call --configfile config/test/config.myopic.yaml --delete-all-output
 	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml --delete-all-output
+	snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml --delete-all-output
 	snakemake -call --configfile config/test/config.scenarios.yaml -n --delete-all-output
 
 # Removes all created files except for large cutout files (similar to fresh clone)
