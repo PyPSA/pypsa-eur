@@ -1212,6 +1212,10 @@ def add_methanol_to_hvc(n, costs):
         costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
         + costs.at["methanolisation", "carbondioxide-input"]
     )
+    decay_emis = costs.at['methanol','CO2 intensity']
+    # To endogenize the co2 emissions from methanol
+    # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
+    
 
     n.add(
         "Link",
@@ -1229,7 +1233,7 @@ def add_methanol_to_hvc(n, costs):
         efficiency=1 / costs.at[tech, "methanol-input"],
         efficiency2=-costs.at[tech, "electricity-input"]
         / costs.at[tech, "methanol-input"],
-        efficiency3=co2_release,
+        efficiency3=decay_emis,
     )
 
 
@@ -1527,8 +1531,8 @@ def add_ammonia(
     )
     min_part_load_hb=0.3
 
-    if options['ammonia'] == 'regional':
-        min_part_load_hb = 0
+    #if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+    #    min_part_load_hb = 0.1
 
     n.add(
         "Link",
@@ -5330,8 +5334,8 @@ def add_steel_industry(n, investment_year, steel_data, options):
     # PARAMETERS
     bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
 
-    if options['endo_industry']['regional_steel_demand']:
-        min_part_load_steel = 0
+    #if (options['endo_industry']['regional_steel_demand']) or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+    #    min_part_load_steel = 0.1
 
     n.add(
         "Link",
@@ -5537,8 +5541,8 @@ def add_cement_industry(n, investment_year, cement_data, options):
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
     min_part_load_cement = 0.3
 
-    if options['endo_industry']['regional_cement_demand']:
-        min_part_load_cement = 0
+    #if (options['endo_industry']['regional_cement_demand']) or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+    #    min_part_load_cement = 0.1
     
     n.add(
         "Link",
@@ -5673,6 +5677,7 @@ def add_methanol_load(n,investment_year, methanol_data, options):
 
     # Remove the previous industry methanol load, which is based on a different quantification of energy demand
     # Methanol load for shipping is added on top of this, and it was 0 in historical years
+    # Do not remove the link connecting it to emissions otherwise you remove the endogeneity
     n.loads.drop(n.loads.index[n.loads.carrier == "industry methanol"], inplace=True)
 
     # Add the new methanol load to the network
@@ -5683,6 +5688,7 @@ def add_methanol_load(n,investment_year, methanol_data, options):
         carrier="industry methanol",
         p_set=p_set,
     )
+    
     
 def add_hvc(n, investment_year, hvc_data, options):
     """
@@ -5737,13 +5743,13 @@ def add_hvc(n, investment_year, hvc_data, options):
     )
     print(f"LOAD HVC {p_set}")
   
-    naphtha_to_hvc = (2.31 * 12.47) * 1000 # t oil / t HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+    naphtha_to_hvc = (2.31 * 12.47) * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
     # we need to account for CO2 emissions from HVC decay
     decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
     min_part_load_hvc = 0.3
 
-    if options['endo_industry']['regional_hvc']:
-        min_part_load_hvc = 0
+    #if (options['endo_industry']['regional_hvc']) or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+    #    min_part_load_hvc = 0.1
 
     n.add(
         "Link",
@@ -5759,7 +5765,7 @@ def add_hvc(n, investment_year, hvc_data, options):
         p_min_pu=min_part_load_hvc,
         capital_cost= 2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
         # Raillard Cazanove says 725 but prices were too low
-        efficiency=1/ naphtha_to_hvc, # MWh oil / kt HVC
+        efficiency=1/ naphtha_to_hvc, # kt HVC / MWh oil
         efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
         efficiency3= decay_emis, # tCO2 / MWh oil # should remove the first process emissions term
         # To be sure I include all C embedded in the plastics it's better to directly put the emission factor of oil
