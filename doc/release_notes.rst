@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
+
 **Breaking Changes**
 
 * Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
@@ -38,7 +40,6 @@ Release Notes
 * Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
-
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
