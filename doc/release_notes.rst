@@ -347,6 +347,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   issue with finding missing input/output files in solving rules.
   (https://github.com/PyPSA/pypsa-eur/pull/1535)
 
+* Bugfix: Change CDIR definition in ``Snakefile`` to utilize pathlib to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1602)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
