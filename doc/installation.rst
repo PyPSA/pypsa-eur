@@ -33,15 +33,30 @@ using the package manager `conda <https://docs.anaconda.com/miniconda/>` or
 your environments.
 
 The package requirements are curated in the ``envs/environment.yaml`` file.
-There are also regularly updated pinned environment files for each operating system to
-ensure reproducibility (``envs/windows-pinned.yaml``, ``envs/linux-pinned.yaml``, ``envs/macos-pinned.yaml``).
-We recommend using the pinned files for a stable environment.
+There are also regularly updated locked environment files for each platform generated with conda-lock to
+ensure reproducibility. Choose the correct file for your platform:
+
+* For Intel/AMD processors:
+
+  - Linux: ``envs/linux-64.lock.yaml``
+
+  - macOS: ``envs/osx-64.lock.yaml``
+
+  - Windows: ``envs/win-64.lock.yaml``
+
+* For ARM processors:
+
+  - macOS (Apple Silicon): ``envs/osx-arm64.lock.yaml``
+
+  - Linux (ARM): Currently not supported via lock files; requires building certain packages, such as ``PySCIPOpt``, from source
+
+We recommend using these locked files for a stable environment.
 
 .. code:: console
 
     $ conda update conda
 
-    $ conda env create -f envs/linux-pinned.yaml # replace for your os
+    $ conda env create -f envs/linux-64.lock.yaml # select the appropriate file for your platform
 
     $ conda activate pypsa-eur
 

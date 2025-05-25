@@ -11,7 +11,26 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+
 * Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
+
+**Breaking Changes**
+
+* Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
+
+  - Added platform-specific lock files for all major platforms (Linux, macOS, Windows) and architectures (x86_64, ARM).
+
+  - Updated documentation, Makefile, Dockerfile, and CI workflows to use the new lock files.
+
+  - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
+
+**Changes**
+
+* Improved balance map plotting: Carriers in the balance map legends which can serve as both supply and consumption (e.g. H2 for industry) are now placed in the legend category where its total absolute value is larger in the total system balance.
+
+* Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
+
+* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 
