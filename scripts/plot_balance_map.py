@@ -201,12 +201,25 @@ if __name__ == "__main__":
 
     pad = 0.18
     n.carriers.loc["", "color"] = "None"
-    supp_carriers = bus_sizes[bus_sizes > 0].index.unique("carrier").sort_values()
-    cons_carriers = (
-        bus_sizes[bus_sizes < 0]
-        .index.unique("carrier")
-        .difference(supp_carriers)
-        .sort_values()
+
+    # Get lists for supply and consumption carriers
+    pos_carriers = bus_sizes[bus_sizes > 0].index.unique("carrier")
+    neg_carriers = bus_sizes[bus_sizes < 0].index.unique("carrier")
+
+    # Determine larger total absolute value for supply and consumption for a carrier if carrier exists as both supply and consumption
+    common_carriers = pos_carriers.intersection(neg_carriers)
+
+    def get_total_abs(carrier, sign):
+        values = bus_sizes.loc[:, carrier]
+        return values[values * sign > 0].abs().sum()
+
+    supp_carriers = sorted(
+        set(pos_carriers) - set(common_carriers)
+        | {c for c in common_carriers if get_total_abs(c, 1) >= get_total_abs(c, -1)}
+    )
+    cons_carriers = sorted(
+        set(neg_carriers) - set(common_carriers)
+        | {c for c in common_carriers if get_total_abs(c, 1) < get_total_abs(c, -1)}
     )
 
     # Add supply carriers
