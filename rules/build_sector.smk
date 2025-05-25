@@ -550,9 +550,11 @@ rule build_direct_heat_source_utilisation_profiles:
 def solar_thermal_cutout(wildcards):
     c = config_provider("solar_thermal", "cutout")(wildcards)
     if c == "default":
-        return CDIR + config_provider("atlite", "default_cutout")(wildcards) + ".nc"
+        return CDIR.joinpath(
+            config_provider("atlite", "default_cutout")(wildcards) + ".nc"
+        ).as_posix()
     else:
-        return CDIR + c + ".nc"
+        return CDIR.joinpath(c + ".nc").as_posix()
 
 
 rule build_solar_thermal_profiles:
@@ -1427,8 +1429,10 @@ rule prepare_sector_network:
         direct_heat_source_utilisation_profiles=resources(
             "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        ates_potentials=resources(
-            "ates_potentials_base_s_{clusters}_{planning_horizons}.csv"
+        ates_potentials=lambda w: (
+            resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
+            if config_provider("sector", "district_heating", "ates", "enable")(w)
+            else []
         ),
     output:
         resources(
