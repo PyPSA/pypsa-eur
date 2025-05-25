@@ -11,6 +11,10 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
+
+* Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
+
 **Breaking Changes**
 
 * Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
@@ -38,7 +42,6 @@ Release Notes
 * Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
-
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
@@ -346,6 +349,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   issue with finding missing input/output files in solving rules.
   (https://github.com/PyPSA/pypsa-eur/pull/1535)
 
+* Bugfix: Change CDIR definition in ``Snakefile`` to utilize pathlib to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1602)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
