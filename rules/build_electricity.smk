@@ -77,6 +77,7 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
+        links=config_provider("links"),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -162,11 +163,11 @@ if config["enable"].get("build_cutout", False):
             regions_onshore=resources("regions_onshore.geojson"),
             regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR + "{cutout}.nc"),
+            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
         log:
-            logs(CDIR + "build_cutout/{cutout}.log"),
+            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
         benchmark:
-            "benchmarks/" + CDIR + "build_cutout_{cutout}"
+            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
@@ -552,6 +553,7 @@ rule simplify_network:
             "clustering", "aggregation_strategies", default={}
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
