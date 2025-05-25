@@ -484,11 +484,20 @@ def update_wind_solar_costs(
                 distance * submarine_cost + landfall_length * underground_cost
             )
 
-            capital_cost = (
-                costs.at["offwind", "capital_cost"]
-                + costs.at[tech + "-station", "capital_cost"]
-                + connection_cost
-            )
+            # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
+            midtech = tech.split("-", 2)[1]
+            if midtech == "float":
+                capital_cost = (
+                    costs.at[tech, "capital_cost"]
+                    + costs.at[tech + "-station", "capital_cost"]
+                    + connection_cost
+                )
+            else:
+                capital_cost = (
+                    costs.at["offwind", "capital_cost"]
+                    + costs.at[tech + "-station", "capital_cost"]
+                    + connection_cost
+                )
 
             logger.info(
                 f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
@@ -4275,7 +4284,8 @@ def add_biomass(
             carrier="electrobiofuels",
             lifetime=costs.at["electrobiofuels", "lifetime"],
             efficiency=costs.at["electrobiofuels", "efficiency-biomass"],
-            efficiency2=-costs.at["electrobiofuels", "efficiency-hydrogen"],
+            efficiency2=-costs.at["electrobiofuels", "efficiency-biomass"]
+            / costs.at["electrobiofuels", "efficiency-hydrogen"],
             efficiency3=-costs.at["solid biomass", "CO2 intensity"]
             + costs.at["BtL", "CO2 stored"]
             * (1 - costs.at["Fischer-Tropsch", "capture rate"]),

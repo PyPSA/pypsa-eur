@@ -483,7 +483,7 @@ sector:
       dynamic_capacity: true
       supplemental_heating:
         enable: false
-        booster_heat_pump: true
+        booster_heat_pump: false
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
