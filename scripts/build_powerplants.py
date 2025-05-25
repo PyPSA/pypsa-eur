@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Retrieves conventional powerplant capacities and locations from
 `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`_, assigns
@@ -70,8 +70,9 @@ import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
-from _helpers import configure_logging, set_scenario_config
 from powerplantmatching.export import map_country_bus
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,7 @@ def replace_natural_gas_fueltype(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_powerplants")
     configure_logging(snakemake)
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     )
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
-        logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
+        logger.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     # Add "everywhere powerplants" to all bus locations
     ppl = add_everywhere_powerplants(
@@ -196,7 +197,7 @@ if __name__ == "__main__":
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
-        logging.warning(
+        logger.warning(
             f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
             "Removing them from the powerplants list."
         )

@@ -48,8 +48,9 @@ from functools import partial
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
+
+from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -313,7 +314,7 @@ def separate_basic_chemicals(demand, year):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
     configure_logging(snakemake)

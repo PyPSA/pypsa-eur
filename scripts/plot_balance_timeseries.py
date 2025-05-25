@@ -15,8 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, get_snapshots, set_scenario_config
 from tqdm import tqdm
+
+from scripts._helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +158,12 @@ def process_carrier(group_item, balance, months, colors, config, output_dir):
     mask = balance.index.get_level_values("bus_carrier").isin(carriers)
     df = balance[mask].groupby("carrier").sum().div(1e3).T
 
+    if df.empty:
+        logger.warning(
+            f"No carriers of group '{group}' in energy balance. Skipping carrier group: '{group}'"
+        )
+        return
+
     kwargs = dict(
         ylabel=group,
         colors=colors,
@@ -181,7 +188,7 @@ def process_carrier(group_item, balance, months, colors, config, output_dir):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "plot_balance_timeseries",
