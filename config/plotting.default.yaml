@@ -423,6 +423,9 @@ plotting:
     urban central water pits: "#d96f4c"
     urban central water pits charger: "#a85d47"
     urban central water pits discharger: "#b36452"
+    aquifer thermal energy storage: "#6d00fc"
+    aquifer thermal energy storage charger: "#6d00fc"
+    aquifer thermal energy storage discharger: "#6d00fc"
     # heat demand
     Heat load: '#cc1f1f'
     heat: '#cc1f1f'
@@ -448,6 +451,8 @@ plotting:
     services urban decentral air heat pump: '#5af95d'
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
+    ptes heat pump: '#5dade2'
+    urban central ptes heat pump: '#3498db'
     urban central geothermal heat pump: '#4f2144'
     geothermal heat pump: '#4f2144'
     geothermal heat direct utilisation: '#ba91b1'

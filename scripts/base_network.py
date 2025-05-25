@@ -346,8 +346,9 @@ def _set_electrical_parameters_links_eg(links, config, links_p_nom):
         return links
 
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
-    links["p_min_pu"] = -p_max_pu
+    links["p_min_pu"] = p_min_pu
 
     links_p_nom = pd.read_csv(links_p_nom)
 
@@ -378,8 +379,9 @@ def _set_electrical_parameters_links_osm(links, config):
         return links
 
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
-    links["p_min_pu"] = -p_max_pu
+    links["p_min_pu"] = p_min_pu
     links["carrier"] = "DC"
     links["dc"] = True
 
@@ -388,8 +390,9 @@ def _set_electrical_parameters_links_osm(links, config):
 
 def _set_electrical_parameters_converters(converters, config):
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     converters["p_max_pu"] = p_max_pu
-    converters["p_min_pu"] = -p_max_pu
+    converters["p_min_pu"] = p_min_pu
 
     # if column "p_nom" does not exist, set to 2000
     if "p_nom" not in converters:

@@ -77,6 +77,7 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
+        links=config_provider("links"),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -486,13 +487,6 @@ rule add_transmission_projects_and_dlr:
         "../scripts/add_transmission_projects_and_dlr.py"
 
 
-def input_profile_tech(w):
-    return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
-        for tech in config_provider("electricity", "renewable_carriers")(w)
-    }
-
-
 def input_class_regions(w):
     return {
         f"class_regions_{tech}": resources(
@@ -559,6 +553,7 @@ rule simplify_network:
             "clustering", "aggregation_strategies", default={}
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
