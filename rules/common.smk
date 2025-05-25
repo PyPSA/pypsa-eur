@@ -113,7 +113,7 @@ def input_custom_extra_functionality(w):
     return []
 
 
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
     to a reliable server like Zenodo.
@@ -152,6 +152,6 @@ def input_cutout(wildcards, cutout_names="default"):
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)
     if isinstance(cutout_names, list):
-        return [CDIR + cn + ".nc" for cn in cutout_names]
+        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
     else:
-        return CDIR + cutout_names + ".nc"
+        return CDIR.joinpath(cutout_names + ".nc").as_posix()
