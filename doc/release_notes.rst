@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
+
 * Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
 
 **Breaking Changes**

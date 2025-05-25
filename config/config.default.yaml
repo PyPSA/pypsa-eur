@@ -336,8 +336,10 @@ transformers:
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
-  interpolate_limit: 3
-  time_shift_for_large_gaps: 1w
+  fill_gaps:
+    enable: true
+    interpolate_limit: 3
+    time_shift_for_large_gaps: 1w
   manual_adjustments: true # false
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
