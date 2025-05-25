@@ -26,7 +26,7 @@ run:
     policy: false
     exclude: []
   shared_cutouts: true
-  use_shadow_directory: true # Set to false if problems regarding missing directories occur
+  use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
@@ -976,7 +976,7 @@ solving:
       fractional_last_unit_size: false
     keep_files: false
     model_kwargs:
-      solver_dir: "/tmp"
+      solver_dir: ""
 
   agg_p_nom_limits:
     agg_offwind: false
