@@ -163,11 +163,11 @@ if config["enable"].get("build_cutout", False):
             regions_onshore=resources("regions_onshore.geojson"),
             regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR + "{cutout}.nc"),
+            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
         log:
-            logs(CDIR + "build_cutout/{cutout}.log"),
+            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
         benchmark:
-            "benchmarks/" + CDIR + "build_cutout_{cutout}"
+            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
