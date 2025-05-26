@@ -312,11 +312,10 @@ def create_interactive_cop_plot(
         code="""
         const region = region_select.value;
         const regionColumn = region_dim;  // Use the provided region dimension name
-        
+
         // Update timeseries plot
         const tsData = all_timeseries_data.data;
         const tsOut = {};
-        
         // Filter data for selected region
         const tsIndices = [];
         for (let i = 0; i < tsData[regionColumn].length; i++) {
@@ -324,22 +323,22 @@ def create_interactive_cop_plot(
                 tsIndices.push(i);
             }
         }
-        
+
         // Get all column names
         const tsColumns = Object.keys(tsData);
-        
+
         // For each column, filter the data
         for (let col of tsColumns) {
             tsOut[col] = tsIndices.map(i => tsData[col][i]);
         }
-        
+
         // Update the source data
         timeseries_source.data = tsOut;
-        
+
         // Update monthly plot
         const monthlyData = all_monthly_data.data;
         const monthlyOut = {};
-        
+
         // Filter monthly data for selected region
         const monthlyIndices = [];
         for (let i = 0; i < monthlyData[regionColumn].length; i++) {
@@ -347,22 +346,22 @@ def create_interactive_cop_plot(
                 monthlyIndices.push(i);
             }
         }
-        
+
         // Get all column names
         const monthlyColumns = Object.keys(monthlyData);
-        
+
         // For each column, filter the data
         for (let col of monthlyColumns) {
             monthlyOut[col] = monthlyIndices.map(i => monthlyData[col][i]);
         }
-        
+
         // Update the source data
         monthly_source.data = monthlyOut;
-        
+
         // Update the plot titles
         p_timeseries.title.text = `Heat Pump COP Profiles for ${region}`;
         p_monthly.title.text = `Monthly Average COP for ${region}`;
-        
+
         // Update x-range for bar chart to ensure proper ordering
         if (monthlyOut.month_name && monthlyOut.month_name.length > 0) {
             p_monthly.x_range.factors = monthlyOut.month_name;
