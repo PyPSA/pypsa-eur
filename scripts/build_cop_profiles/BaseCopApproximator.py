@@ -61,14 +61,6 @@ class BaseCopApproximator(ABC):
         """
         ret_val = self._approximate_cop()
 
-        # Fix for multi-dimensional xarray DataArrays
-        # if isinstance(ret_val, xr.DataArray):
-        #     # Use xarray's where method instead of direct indexing
-        #     ret_val = ret_val.where(ret_val >= 1, 0)
-        # else:
-        #     # For numpy arrays, keep the original indexing
-        #     ret_val[ret_val < 1] = 0
-
         if isinstance(ret_val, xr.DataArray):
             # Use xarray's where method for DataArray
             ret_val = ret_val.where(ret_val >= 1, 0)
