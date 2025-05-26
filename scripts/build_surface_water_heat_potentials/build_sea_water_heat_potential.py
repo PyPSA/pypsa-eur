@@ -13,11 +13,11 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from dask.distributed import Client, LocalCluster
+from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 
 logger = logging.getLogger(__name__)
 
 
-from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
 
 
 def get_regional_result(

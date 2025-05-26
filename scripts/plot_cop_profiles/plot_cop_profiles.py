@@ -69,7 +69,6 @@ def prepare_cop_data(cop_profiles, heat_system_type: HeatSystemType, region_dim=
         logger.info(f"Selected '{heat_system_type}' heat system")
     except Exception as e:
         raise RuntimeError(f"Error selecting heat system: {e}")
-        cop_data = cop_profiles
 
     # Get the name of the region dimension
     # Capture heat source names before pivoting
