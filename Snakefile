@@ -175,11 +175,11 @@ rule all:
             run=config["run"]["name"],
         ),
         expand(
-                RESULTS
-                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
+            RESULTS
+            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
         directory(
             expand(
                 RESULTS
@@ -189,11 +189,11 @@ rule all:
             ),
         ),
         expand(
-                RESULTS
-                + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
+            RESULTS
+            + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
 
 
 rule create_scenarios:
