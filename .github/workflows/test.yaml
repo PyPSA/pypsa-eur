@@ -22,7 +22,7 @@ env:
 
 jobs:
   run-tests-conda:
-    name: OS (conda)
+    name: conda
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -116,7 +116,7 @@ jobs:
         retention-days: 3
 
   run-tests-uv:
-    name: OS (uv)
+    name: uv
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -155,7 +155,7 @@ jobs:
     - name: Run pylint check on scripts
       # check for undefined variables to reuse functions across scripts
       run: |
-        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
+        uv run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
       run: |
