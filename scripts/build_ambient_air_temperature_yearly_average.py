@@ -33,9 +33,8 @@ def get_data_in_geometry(
     Get the mask for the geometry border.
 
     Args:
-        ds (xr.Dataset): The dataset.
+        data (xr.DataArray): The data array.
         geometry: The geometry.
-        scale_buffer (float): The scale buffer.
 
     Returns:
         xr.DataArray: The mask.
