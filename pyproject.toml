@@ -75,6 +75,7 @@ Documentation = "https://pypsa-eur.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
 dev = [
+    "pytest",
     "jupyter",
     "ipython",
     "pre-commit",
