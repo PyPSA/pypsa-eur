@@ -223,9 +223,7 @@ class HeatSystem(Enum):
         str
             The name for the heat pump costs.
         """
-        if heat_source in ["sea_water"]:
-            return f"{self.central_or_decentral} air-sourced heat pump"
-        elif heat_source in ["river_water"]:
+        if heat_source in ["ptes", "sea_water", "river_water"]:
             return f"{self.central_or_decentral} excess-heat-sourced heat pump"
         else:
             return f"{self.central_or_decentral} {heat_source}-sourced heat pump"

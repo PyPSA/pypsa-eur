@@ -82,6 +82,7 @@ test:
 	snakemake -call --configfile config/test/config.overnight.yaml
 	snakemake -call --configfile config/test/config.myopic.yaml
 	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml
+	snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml
 	snakemake -call --configfile config/test/config.scenarios.yaml -n
 	echo "All tests completed successfully."
 
@@ -94,17 +95,17 @@ clean-tests:
 	snakemake -call --configfile config/test/config.overnight.yaml --delete-all-output
 	snakemake -call --configfile config/test/config.myopic.yaml --delete-all-output
 	snakemake -call make_summary_perfect --configfile config/test/config.perfect.yaml --delete-all-output
+	snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml --delete-all-output
 	snakemake -call --configfile config/test/config.scenarios.yaml -n --delete-all-output
 
 # Removes all created files except for large cutout files (similar to fresh clone)
 reset:
-	@echo "Do you really wanna continue? This will remove config/config.yaml, logs, resources, benchmarks, results, and .snakemake directories (y/n): " && \
+	@echo "Do you really wanna continue? This will remove logs, resources, benchmarks, results, and .snakemake directories (config/config.yaml will not be deleted) (y/n): " && \
 	read ans && [ $${ans} = y ] && ( \
 		rm -r ./logs || true; \
 		rm -r ./resources || true; \
 		rm -r ./benchmarks || true; \
 		rm -r ./results || true; \
 		rm -r ./.snakemake || true; \
-		rm ./config/config.yaml || true; \
 		echo "Reset completed." \
 	) || echo "Reset cancelled."

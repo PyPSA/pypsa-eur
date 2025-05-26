@@ -77,6 +77,7 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
+        links=config_provider("links"),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -121,8 +122,34 @@ rule build_osm_boundaries:
         "../scripts/build_osm_boundaries.py"
 
 
+rule build_bidding_zones:
+    params:
+        countries=config_provider("countries"),
+        remove_islands=config_provider(
+            "clustering", "build_bidding_zones", "remove_islands"
+        ),
+        aggregate_to_tyndp=config_provider(
+            "clustering", "build_bidding_zones", "aggregate_to_tyndp"
+        ),
+    input:
+        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+    output:
+        file=resources("bidding_zones.geojson"),
+    log:
+        logs("build_bidding_zones.log"),
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_bidding_zones.py"
+
+
 rule build_shapes:
     params:
+        config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
@@ -133,6 +160,11 @@ rule build_shapes:
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
         other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
@@ -162,11 +194,11 @@ if config["enable"].get("build_cutout", False):
             regions_onshore=resources("regions_onshore.geojson"),
             regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR + "{cutout}.nc"),
+            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
         log:
-            logs(CDIR + "build_cutout/{cutout}.log"),
+            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
         benchmark:
-            "benchmarks/" + CDIR + "build_cutout_{cutout}"
+            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
@@ -486,13 +518,6 @@ rule add_transmission_projects_and_dlr:
         "../scripts/add_transmission_projects_and_dlr.py"
 
 
-def input_profile_tech(w):
-    return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
-        for tech in config_provider("electricity", "renewable_carriers")(w)
-    }
-
-
 def input_class_regions(w):
     return {
         f"class_regions_{tech}": resources(
@@ -559,6 +584,7 @@ rule simplify_network:
             "clustering", "aggregation_strategies", default={}
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
@@ -584,11 +610,24 @@ rule simplify_network:
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
 def input_custom_busmap(w):
-    if config_provider("clustering", "mode", default="busmap")(w) == "custom_busmap":
+
+    custom_busmap = []
+    custom_busshapes = []
+
+    mode = config_provider("clustering", "mode", default="busmap")(w)
+
+    if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
-        return {"custom_busmap": custom_busmap}
-    return {"custom_busmap": []}
+
+    if mode == "custom_busshapes":
+        base_network = config_provider("electricity", "base_network")(w)
+        custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
+
+    return {
+        "custom_busmap": custom_busmap,
+        "custom_busshapes": custom_busshapes,
+    }
 
 
 rule cluster_network:
@@ -607,10 +646,17 @@ rule cluster_network:
         ),
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
+        cluster_mode=config_provider("clustering", "mode"),
+        copperplate_regions=config_provider("clustering", "copperplate_regions"),
     input:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         hac_features=lambda w: (
