@@ -38,7 +38,6 @@ dependencies:
 - libgdal-netcdf
 - networkx
 - scipy
-- glpk
 - shapely>=2.0
 - matplotlib
 - proj
