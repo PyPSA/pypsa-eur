@@ -12,6 +12,7 @@ import sys
 import geopandas as gpd
 import numpy as np
 import pytest
+from numpy.testing import assert_array_almost_equal
 
 sys.path.append("./scripts")
 
@@ -56,7 +57,7 @@ def test_simplify_polys(tolerance, expected_tuple, italy_shape):
         np.round(gdf_country_simplified["perimeter"][0], 2),
     )
     assert len(output_tuple) == len(expected_tuple)
-    assert all([x == y for x, y in zip(output_tuple, expected_tuple)])
+    assert_array_almost_equal([output_tuple, expected_tuple])
 
 
 @pytest.mark.parametrize(
