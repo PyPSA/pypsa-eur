@@ -21,8 +21,8 @@ env:
   BASE_ENV: envs/environment.yaml
 
 jobs:
-  run-tests:
-    name: OS
+  run-tests-conda:
+    name: OS (conda)
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -108,7 +108,68 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: results-${{ matrix.os }}
+        name: results-${{ matrix.os }}-conda
+        path: |
+          logs
+          .snakemake/log
+          results
+        retention-days: 3
+
+  run-tests-uv:
+    name: OS (uv)
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ github.event.schedule == '0 5 * * 0' && fromJson('["ubuntu", "macos", "windows"]') || fromJson('["ubuntu"]') }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          envs/**/*.yaml
+          **/pyproject.toml
+
+    - name: Install the project
+      run: uv sync --locked --all-extras --dev
+
+    - name: Setup cache keys
+      run: |
+        echo "WEEK=$(date +'%Y%U')" >> $GITHUB_ENV # data and cutouts
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          data
+          cutouts
+        key: data-cutouts-${{ env.WEEK }}
+
+    - name: Run pylint check on scripts
+      # check for undefined variables to reuse functions across scripts
+      run: |
+        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
+
+    - name: Run snakemake test workflows
+      run: |
+        uv run make test
+
+    - name: Run unit tests
+      run: |
+        uv run make unit-test
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: results-${{ matrix.os }}-uv
         path: |
           logs
           .snakemake/log
