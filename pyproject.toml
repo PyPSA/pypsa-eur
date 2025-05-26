@@ -1,0 +1,137 @@
+# Warning
+# Currently this pyproject.toml is only used for dependency management and
+# no package can be built from it.
+
+[project]
+name = "pypsa-eur"
+version = "2025.4.0"
+description =" A Sector-Coupled Open Optimisation Model of the European Energy System "
+readme = "README.md"
+authors=[{name = "PyPSA-Eur Developers & Contributors", email = "t.brown@tu-berlin.de"}]
+
+requires-python = ">=3.11"
+
+dependencies = [
+    # Inhouse packages
+    "pypsa>0.32.1",
+    "atlite>=0.3",
+    "linopy>=0.4.4",
+    "powerplantmatching>=0.5.15",
+
+    # Dependencies of the workflow itself
+    "dask[distributed]",
+    "xlrd",
+    "openpyxl",
+    "seaborn",
+    "snakemake>=9",
+    "memory_profiler",
+    "PyYAML",
+    "tables",
+    "lxml",
+    "numpy",
+    "pandas>=2.1",
+    "geopandas>=1",
+    "xarray>=2024.03.0",
+    "rioxarray",
+    "netcdf4",
+    "networkx",
+    "scipy",
+    "shapely>=2.0",
+    "matplotlib",
+    "proj",
+    "fiona",
+    "country_converter",
+    "geopy",
+    "tqdm",
+    "pytz",
+    "jpype1",
+    "pyxlsb",
+    "graphviz",
+    "geojson",
+
+    # GIS dependencies:
+    "cartopy",
+    "descartes",
+    "rasterio",
+
+    "gurobipy",
+    "highspy",
+    "pyscipopt", # See https://github.com/scipopt/PySCIPOpt/issues/944
+    "tsam>=2.3.1",
+    "entsoe-py",
+    "snakemake-storage-plugin-http>=0.3",
+    "snakemake-executor-plugin-slurm",
+    "snakemake-executor-plugin-cluster-generic",
+]
+
+[project.urls]
+Homepage = "https://github.com/PyPSA/PyPSA-Eur"
+Source = "https://github.com/PyPSA/PyPSA-Eur"
+Documentation = "https://pypsa-eur.readthedocs.io/en/latest/"
+Issue Tracker = "https://github.com/PyPSA/pypsa-eur/issues"
+
+[project.optional-dependencies]
+dev = [
+    "jupyter",
+    "ipython",
+    "pre-commit",
+    "ruff",
+    "pylint",
+]
+
+# Formatter and linter settings
+
+[tool.ruff]
+extend-include = ['*.ipynb']
+
+
+
+[tool.ruff.lint]
+select = [
+    'F',   # pyflakes
+    'E',   # pycodestyle: Error
+    'W',   # pycodestyle: Warning
+    'I',   # isort
+    'D',   # pydocstyle
+    'UP',  # pyupgrade
+    # 'ANN', # flake-8 annotations
+    'TID', # flake8-tidy-imports
+    # 'NPY', # numpy
+    # 'RUF', # ruff
+]
+
+ignore = [
+    'ANN401', # Dynamically typed expressions are forbidden
+    'E712', # comparison to False should be 'if cond is False:' or 'if not cond:'
+    'E741', # ambiguous variable names
+    'D203', # 1 blank line required before class docstring
+    'D212', # Multi-line docstring summary should start at the second line
+    'D401', # First line should be in imperative mood
+    ]
+
+
+[tool.ruff.lint.per-file-ignores]
+# pydocstyle ignores, which could be enabled in future when existing
+# issues are fixed
+"!**/{xxx.py}" = [
+    'E501', # line too long
+    'D100', # Missing docstring in public module
+    'D101', # Missing docstring in public class
+    'D102', # Missing docstring in public method
+    'D103', # Missing docstring in public function
+    'D104', # Missing docstring in public package
+    'D105', # Missing docstring in magic method
+    'D107', # Missing docstring in __init__
+    'D200', # One-line docstring should fit on one line with quotes
+    'D202', # No blank lines allowed after function docstring
+    'D205', # 1 blank line required between summary line and description
+    'D400', # First line should end with a period
+    'D404', # First word of the docstring should not be "This
+    'D413', # Missing blank line after last section
+    'D415', # First line should end with a period, question mark, or exclamation point
+    'D417', # Missing argument descriptions in the docstring
+    # Include once available
+    # https://github.com/astral-sh/ruff/issues/2310
+    ]
+
+
