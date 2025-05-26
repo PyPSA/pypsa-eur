@@ -9,12 +9,12 @@ import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from functools import partial, wraps
 from os.path import exists
 from pathlib import Path
 from shutil import copyfile
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
 
 import atlite
 import fiona
@@ -1058,7 +1058,7 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.

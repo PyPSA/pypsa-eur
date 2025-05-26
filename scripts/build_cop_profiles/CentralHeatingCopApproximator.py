@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-from typing import Union
-
 import numpy as np
 import xarray as xr
 
@@ -94,10 +92,10 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
 
     def __init__(
         self,
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
-        source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
-        return_temperature_celsius: Union[xr.DataArray, np.array],
-        source_outlet_temperature_celsius: Union[xr.DataArray, np.array],
+        forward_temperature_celsius: xr.DataArray | np.array,
+        source_inlet_temperature_celsius: xr.DataArray | np.array,
+        return_temperature_celsius: xr.DataArray | np.array,
+        source_outlet_temperature_celsius: xr.DataArray | np.array,
         delta_t_pinch_point: float = 5,
         isentropic_compressor_efficiency: float = 0.8,
         heat_loss: float = 0.0,
@@ -140,7 +138,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         self.heat_loss = heat_loss
         self.delta_t_pinch = delta_t_pinch_point
 
-    def approximate_cop(self) -> Union[xr.DataArray, np.array]:
+    def approximate_cop(self) -> xr.DataArray | np.array:
         """
         Calculate the coefficient of performance (COP) for the system.
 
@@ -180,7 +178,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         )
 
     @property
-    def t_sink_mean_kelvin(self) -> Union[xr.DataArray, np.array]:
+    def t_sink_mean_kelvin(self) -> xr.DataArray | np.array:
         """
         Calculate the logarithmic mean temperature difference between the cold
         and hot sinks.
@@ -195,7 +193,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         )
 
     @property
-    def t_source_mean_kelvin(self) -> Union[xr.DataArray, np.array]:
+    def t_source_mean_kelvin(self) -> xr.DataArray | np.array:
         """
         Calculate the logarithmic mean temperature of the heat source.
 
@@ -209,7 +207,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         )
 
     @property
-    def delta_t_lift(self) -> Union[xr.DataArray, np.array]:
+    def delta_t_lift(self) -> xr.DataArray | np.array:
         """
         Calculate the temperature lift as the difference between the
         logarithmic sink and source temperatures.
@@ -222,7 +220,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return self.t_sink_mean_kelvin - self.t_source_mean_kelvin
 
     @property
-    def ideal_lorenz_cop(self) -> Union[xr.DataArray, np.array]:
+    def ideal_lorenz_cop(self) -> xr.DataArray | np.array:
         """
         Ideal Lorenz coefficient of performance (COP).
 
@@ -237,7 +235,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return self.t_sink_mean_kelvin / self.delta_t_lift
 
     @property
-    def delta_t_refrigerant_source(self) -> Union[xr.DataArray, np.array]:
+    def delta_t_refrigerant_source(self) -> xr.DataArray | np.array:
         """
         Calculate the temperature difference between the refrigerant source
         inlet and outlet.
@@ -252,7 +250,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         )
 
     @property
-    def delta_t_refrigerant_sink(self) -> Union[xr.DataArray, np.array]:
+    def delta_t_refrigerant_sink(self) -> xr.DataArray | np.array:
         """
         Temperature difference between the refrigerant and the sink based on
         approximation.
@@ -265,7 +263,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return self._approximate_delta_t_refrigerant_sink()
 
     @property
-    def ratio_evaporation_compression_work(self) -> Union[xr.DataArray, np.array]:
+    def ratio_evaporation_compression_work(self) -> xr.DataArray | np.array:
         """
         Calculate the ratio of evaporation to compression work based on
         approximation.
@@ -278,7 +276,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return self._ratio_evaporation_compression_work_approximation()
 
     @property
-    def delta_t_sink(self) -> Union[xr.DataArray, np.array]:
+    def delta_t_sink(self) -> xr.DataArray | np.array:
         """
         Calculate the temperature difference at the sink.
 
@@ -290,8 +288,8 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return self.t_sink_out_kelvin - self.t_sink_in_kelvin
 
     def _approximate_delta_t_refrigerant_source(
-        self, delta_t_source: Union[xr.DataArray, np.array]
-    ) -> Union[xr.DataArray, np.array]:
+        self, delta_t_source: xr.DataArray | np.array
+    ) -> xr.DataArray | np.array:
         """
         Approximates the temperature difference between the refrigerant and the
         source.
@@ -314,7 +312,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         a: float = {"ammonia": 0.2, "isobutane": -0.0011},
         b: float = {"ammonia": 0.2, "isobutane": 0.3},
         c: float = {"ammonia": 0.016, "isobutane": 2.4},
-    ) -> Union[xr.DataArray, np.array]:
+    ) -> xr.DataArray | np.array:
         """
         Approximates the temperature difference between the refrigerant and
         heat sink.
@@ -359,7 +357,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         a: float = {"ammonia": 0.0014, "isobutane": 0.0035},
         b: float = {"ammonia": -0.0015, "isobutane": -0.0033},
         c: float = {"ammonia": 0.039, "isobutane": 0.053},
-    ) -> Union[xr.DataArray, np.array]:
+    ) -> xr.DataArray | np.array:
         """
         Calculate the ratio of evaporation to compression work approximation.
 
