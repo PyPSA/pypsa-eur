@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Warning
 # Currently this pyproject.toml is only used for dependency management and
 # no package can be built from it.
