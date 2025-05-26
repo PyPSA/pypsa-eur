@@ -42,11 +42,11 @@ sector:
         booster_heat_pump: true
     heat_pump_sources:
       urban central:
-        - air
-        - ptes
-        - river_water
-        - sea_water
-        - geothermal
+      - air
+      - ptes
+      - river_water
+      - sea_water
+      - geothermal
 
 electricity:
   extendable_carriers:
