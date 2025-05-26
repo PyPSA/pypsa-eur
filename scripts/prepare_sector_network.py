@@ -6445,8 +6445,8 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     for k, v in options["transmission_efficiency"].items():
-        if (k in options["transmission_efficiency"]["enable"]) or not (
-            k == "DC" and snakemake.params.base == "tyndp-raw"
+        if (k in options["transmission_efficiency"]["enable"]) and (
+            k == "DC" and snakemake.params != "tyndp-raw"
         ):
             lossy_bidirectional_links(n, k, v)
 
