@@ -299,6 +299,11 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
 * Add customisable memory logging frequency for :mod:`solve_network`.
   (https://github.com/PyPSA/pypsa-eur/pull/1521)
 
+* The ``config/config.yaml`` will no longer be created when running snakemake. It will 
+  still be used by the workflow if it exists, but ignored otherwise and is not required.
+  See :ref:`defaultconfig` for more information. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1649)
+
 **Bugfixes and Compatibility**
 
 * Support for Snakemake 9. This is the new minimum version.

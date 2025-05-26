@@ -97,21 +97,3 @@ Nevertheless, you can still use open-source solvers for smaller problems.
         $ conda install -c gurobi gurobi"=12.0.1"
 
     Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
-
-
-.. _defaultconfig:
-
-Handling Configuration Files
-============================
-
-PyPSA-Eur has several configuration options that users can specify in a
-``config/config.yaml`` file. The default configuration
-``config/config.default.yaml`` is maintained in the repository. More details on
-the configuration options are in :ref:`config`.
-
-You can also use ``snakemake`` to specify another file, e.g.
-``config/config.mymodifications.yaml``, to update the settings of the ``config/config.yaml``.
-
-.. code:: console
-
-    $ snakemake -call --configfile config/config.mymodifications.yaml
