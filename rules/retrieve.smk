@@ -133,6 +133,23 @@ if config["enable"]["retrieve"]:
 
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_bidding_zones:
+        output:
+            file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+            file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        log:
+            "logs/retrieve_bidding_zones.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_bidding_zones.py"
+
+
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
@@ -141,9 +158,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
                 "https://zenodo.org/records/14936211/files/{cutout}.nc",
             ),
         output:
-            CDIR + "{cutout}.nc",
+            CDIR.joinpath("{cutout}.nc").as_posix(),
         log:
-            "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
+            Path("logs").joinpath(CDIR, "retrieve_cutout_{cutout}.log").as_posix(),
         resources:
             mem_mb=5000,
         retries: 2
@@ -668,7 +685,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
             isi_heat_potentials=storage(
-                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.3/12/Results_DH_Matching_Cluster.xlsx",
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
                 keep_local=True,
             ),
         output:
@@ -687,10 +704,9 @@ if config["enable"]["retrieve"]:
                 keep_local=True,
             ),
         output:
-            lau_regions="data/lau_regions.geojson",
+            lau_regions="data/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
-            lau_regions="data/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
         threads: 1
@@ -720,3 +736,52 @@ if config["enable"]["retrieve"]:
                     with open(output_path, "wb") as f:
                         f.write(response.content)
 
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_aquifer_data_bgr:
+        input:
+            zip=storage(
+                "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
+            ),
+        output:
+            aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
+            aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
+            aquifer_shapes_dbf="data/bgr/ihme1500_aquif_ec4060_v12_poly.dbf",
+            aquifer_shapes_cpg="data/bgr/ihme1500_aquif_ec4060_v12_poly.cpg",
+            aquifer_shapes_prj="data/bgr/ihme1500_aquif_ec4060_v12_poly.prj",
+            aquifer_shapes_sbn="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbn",
+            aquifer_shapes_sbx="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbx",
+        params:
+            filename_shp="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shp",
+            filename_shx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shx",
+            filename_dbf="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.dbf",
+            filename_cpg="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.cpg",
+            filename_prj="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.prj",
+            filename_sbn="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbn",
+            filename_sbx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbx",
+        run:
+            with ZipFile(input.zip, "r") as zip_ref:
+                for fn, outpt in zip(
+                    params,
+                    output,
+                ):
+                    zip_ref.extract(fn, Path(outpt).parent)
+                    extracted_file = Path(outpt).parent / fn
+                    extracted_file.rename(outpt)
+
+    rule retrieve_dh_areas:
+        input:
+            dh_areas=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
+                keep_local=True,
+            ),
+        output:
+            dh_areas="data/dh_areas.gpkg",
+        log:
+            "logs/retrieve_dh_areas.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
