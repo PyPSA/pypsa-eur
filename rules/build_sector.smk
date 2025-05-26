@@ -468,7 +468,9 @@ def input_heat_source_temperature(
         f"temp_{heat_source_name}": resources(
             "temp_"
             + replace_names.get(heat_source_name, heat_source_name)
-            + "_base_s_{clusters}.nc"
+            + "_base_s_{clusters}"
+            + ("_{planning_horizons}" if heat_source_name == "ptes" else "")
+            + ".nc"
         )
         for heat_source_name in heat_pump_sources
         # remove heat sources with constant temperature - i.e. no temperature profile file (currently only geothermal)
@@ -579,10 +581,10 @@ rule build_ptes_operations:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         ptes_direct_utilisation_profiles=resources(
-            "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+            "ptes_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
-            "temp_ptes_top_profiles_s_{clusters}_{planning_horizons}.nc"
+            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -1479,7 +1481,7 @@ rule prepare_sector_network:
         ),
         ptes_direct_utilisation_profiles=lambda w: (
             resources(
-                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+                "ptes_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"
