@@ -53,6 +53,8 @@ plotting:
       - residential rural heat
       - services urban decentral heat
       - services rural heat
+  interactive_bus_balance:
+    bus_name_pattern: None
   heatmap_timeseries:
     marginal_price:
     - AC

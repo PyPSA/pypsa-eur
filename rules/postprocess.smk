@@ -547,7 +547,7 @@ rule plot_cop_profiles:
         "../scripts/plot_cop_profiles/plot_cop_profiles.py"
 
 
-rule plot_bus_carrier_dispatch:
+rule plot_interactive_bus_balance:
     params:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
@@ -559,33 +559,14 @@ rule plot_bus_carrier_dispatch:
         rc="matplotlibrc",
     output:
         directory=directory(RESULTS
-        + "graphics/carrier_dispatch/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"),
+        + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"),
     log:
         RESULTS
-        + "logs/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        + "logs/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         RESULTS
-        +"benchmarks/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        +"benchmarks/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
     resources:
         mem_mb=20000,
     script:
-        "../scripts/plot_bus_carrier_dispatch.py"
-
-
-# rule plot_bus_annual_balance:
-#     params:
-#         plotting=config_provider("plotting"),
-#     input:
-#         network=RESULTS
-#         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-#     output:
-#         html=RESULTS
-#         + "plots/annual_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
-#     log:
-#         RESULTS
-#         + "logs/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
-#     benchmark:
-#         RESULTS
-#         + "benchmarks/plot_bus_annual_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-#     script:
-#         "../scripts/plot_bus_annual_balance.py"
+        "../scripts/plot_interactive_bus_balance.py"

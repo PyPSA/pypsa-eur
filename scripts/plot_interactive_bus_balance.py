@@ -75,22 +75,39 @@ def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
             carriers[carrier] = 0.0
         carriers[carrier] += n.storage_units_t.p[su]
 
-    # Generation from links (only taking links with bus_name as bus1)
+    # Handle links connected to the bus via any bus connection (bus0, bus1, bus2, bus3)
+    
+    # Links with bus_name as bus0 (input power p0)
+    for link in n.links.index[n.links.bus0 == bus_name]:
+        carrier = n.links.carrier[link]
+        if carrier not in carriers:
+            carriers[carrier] = 0.0
+        carriers[carrier] += -n.links_t.p0[link]  # negative sign for consumption at bus0
+    
+    # Links with bus_name as bus1 (output power p1)
     for link in n.links.index[n.links.bus1 == bus_name]:
         carrier = n.links.carrier[link]
         if carrier not in carriers:
             carriers[carrier] = 0.0
-        carriers[carrier] += -n.links_t.p1[
-            link
-        ]  # negative sign because bus1 is outflow
-
-    # Load from links (only taking links with bus_name as bus0)
-    for link in n.links.index[n.links.bus0 == bus_name]:
+        carriers[carrier] += -n.links_t.p1[link]  # negative sign because p1 is outflow from link perspective
+    
+    # Links with bus_name as bus2 (output power p2)
+    bus2_links = n.links.index[n.links.bus2 == bus_name]
+    for link in bus2_links:
         carrier = n.links.carrier[link]
-        p0 = n.links_t.p0[link]
         if carrier not in carriers:
             carriers[carrier] = 0.0
-        carriers[carrier] += -p0  # negative sign for consumption
+        if link in n.links_t.p2.columns:
+            carriers[carrier] += -n.links_t.p2[link]  # negative sign because p2 is outflow from link perspective
+    
+    # Links with bus_name as bus3 (output power p3)
+    bus3_links = n.links.index[n.links.bus3 == bus_name]
+    for link in bus3_links:
+        carrier = n.links.carrier[link]
+        if carrier not in carriers:
+            carriers[carrier] = 0.0
+        if link in n.links_t.p3.columns:
+            carriers[carrier] += -n.links_t.p3[link]  # negative sign because p3 is outflow from link perspective
 
     # Conventional load
     loads = n.loads.index[n.loads.bus == bus_name]
@@ -114,6 +131,17 @@ def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
 
     # Create a dataframe with all carriers
     result = pd.DataFrame(carriers, index=n.snapshots)
+    
+    # Remove columns (carriers) that have no contribution (all zeros or all NaN)
+    # First fill NaN with 0 to properly check for zero columns
+    result_filled = result.fillna(0)
+    
+    # Keep only columns that have at least one non-zero value
+    non_zero_columns = result_filled.columns[result_filled.abs().sum() > 1e-2]
+    result = result[non_zero_columns]
+    
+    # Drop rows (time periods) where all carriers are zero/NaN
+    result = result.dropna(axis=0, how='all')
 
     return result
 
@@ -388,26 +416,27 @@ if __name__ == "__main__":
     bus_data = prepare_all_buses_data(n, bus_name_pattern=bus_name_pattern)
     if len(bus_data) == 0:
         logger.warning(f"No buses found matching the pattern {bus_name_pattern}. Exiting.")
-        exit(1)
 
-    # Get colors for carriers
-    n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
-    colors = n.carriers.color.copy().replace("", "grey")
-    # Process each carrier group in partial
-    threads = snakemake.threads
-    tqdm_kwargs = dict(
-        ascii=False,
-        unit=" carrier",
-        total=len(bus_data.keys()),
-        desc="Plotting carrier balance time series",
-    )
-    func = partial(
-        process_carrier,
-        bus_data=bus_data,
-        colors=colors,
-        output_dir=output_dir,
-    )
-    with Pool(processes=min(threads, len(bus_data.keys()))) as pool:
-        list(tqdm(pool.imap(func, bus_data.keys()), **tqdm_kwargs))
+    else:
+        logger.info(f"Found {len(bus_data)} buses with carrier data for plotting.")
+        # Get colors for carriers
+        n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
+        colors = n.carriers.color.copy().replace("", "grey")
+        # Process each carrier group in partial
+        threads = snakemake.threads
+        tqdm_kwargs = dict(
+            ascii=False,
+            unit=" carrier",
+            total=len(bus_data.keys()),
+            desc="Plotting carrier balance time series",
+        )
+        func = partial(
+            process_carrier,
+            bus_data=bus_data,
+            colors=colors,
+            output_dir=output_dir,
+        )
+        with Pool(processes=min(threads, len(bus_data.keys()))) as pool:
+            list(tqdm(pool.imap(func, bus_data.keys()), **tqdm_kwargs))
 
 
