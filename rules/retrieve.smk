@@ -158,9 +158,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
                 "https://zenodo.org/records/14936211/files/{cutout}.nc",
             ),
         output:
-            CDIR + "{cutout}.nc",
+            CDIR.joinpath("{cutout}.nc").as_posix(),
         log:
-            "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
+            Path("logs").joinpath(CDIR, "retrieve_cutout_{cutout}.log").as_posix(),
         resources:
             mem_mb=5000,
         retries: 2

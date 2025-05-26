@@ -48,6 +48,7 @@ sector:
     ptes:
       supplemental_heating:
         enable: true
+        booster_heat_pump: true
     ates:
       enable: true
 

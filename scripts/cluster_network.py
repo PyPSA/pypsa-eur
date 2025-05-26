@@ -224,7 +224,7 @@ def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
     # Add new lines with infinite capacity within each zone
     for zone, buses in regions_to_buses.items():
         if len(buses) > 1:
-            logger.info(
+            logging.info(
                 f"Copperplating together the following buses: {', '.join(buses)}"
             )
 
@@ -414,6 +414,11 @@ def clustering_for_n_clusters(
     bus_strategies = aggregation_strategies.get("buses", dict())
     bus_strategies.setdefault("substation_lv", lambda x: bool(x.sum()))
     bus_strategies.setdefault("substation_off", lambda x: bool(x.sum()))
+
+    # TODO Quick Fix for osm-prebuilt-version 0.6
+    for way_i in ["way/140248154", "way/975637991"]:
+        if way_i in n.buses.index:
+            n.buses.loc[way_i, "carrier"] = "AC"
 
     clustering = get_clustering_from_busmap(
         n,
@@ -616,7 +621,7 @@ if __name__ == "__main__":
         .reindex(n.buses.index, fill_value=0.0)
     )
 
-    if snakemake.wildcards.clusters == "all" or params.base == "tyndp-raw":
+    if snakemake.wildcards.clusters == "all":
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()

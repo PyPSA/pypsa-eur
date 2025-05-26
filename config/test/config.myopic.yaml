@@ -39,6 +39,7 @@ sector:
     ptes:
       supplemental_heating:
         enable: true
+        booster_heat_pump: true
 
 electricity:
   extendable_carriers:

@@ -370,6 +370,7 @@ plotting:
     unsustainable bioliquids: '#32CD32'
     electrobiofuels: 'red'
     BioSNG: '#123456'
+    BioSNG CC: '#45233b'
     solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'

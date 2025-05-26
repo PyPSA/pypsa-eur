@@ -6,7 +6,7 @@ run:
   name: "test-elec-clusters"
   disable_progressbar: true
   shared_resources:
-    policy: "test"
+    policy: false
   shared_cutouts: true
 
 scenario:
@@ -25,12 +25,12 @@ clustering:
     level: bz
   copperplate_regions:
   - [DE00, LUG1]
-  - [UKNI, IE00]
-  simplify_network:
-    remove_stubs: true
-    remove_stubs_across_borders: true
+  - [GBNI, IE00]
   temporal:
     resolution_elec: 24h
+  simplify_network:
+    remove_stubs: true
+    remove_stubs_across_borders: false
 
 solving:
   solver:
