@@ -29,6 +29,8 @@ Release Notes
 
 **Changes**
 
+* Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
+
 * Improved balance map plotting: Carriers in the balance map legends which can serve as both supply and consumption (e.g. H2 for industry) are now placed in the legend category where its total absolute value is larger in the total system balance.
 
 * Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
@@ -296,6 +298,11 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
 
 * Add customisable memory logging frequency for :mod:`solve_network`.
   (https://github.com/PyPSA/pypsa-eur/pull/1521)
+
+* The ``config/config.yaml`` will no longer be created when running snakemake. It will 
+  still be used by the workflow if it exists, but ignored otherwise and is not required.
+  See :ref:`defaultconfig` for more information. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1649)
 
 **Bugfixes and Compatibility**
 
