@@ -521,7 +521,6 @@ sector:
     urban central:
     - air
     - ptes
-    - sea_water
     - river_water
     urban decentral:
     - air

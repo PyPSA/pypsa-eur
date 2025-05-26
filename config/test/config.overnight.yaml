@@ -68,6 +68,14 @@ sector:
         booster_heat_pump: true
     ates:
       enable: true
+    heat_pump_sources:
+      urban central:
+        - air
+        - ptes
+        - river_water
+        - sea_water
+        - geothermal
+
 
 
 industry:
