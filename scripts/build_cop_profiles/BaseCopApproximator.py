@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from abc import ABC, abstractmethod
+from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -34,8 +35,8 @@ class BaseCopApproximator(ABC):
 
     def __init__(
         self,
-        forward_temperature_celsius: xr.DataArray | np.array,
-        source_inlet_temperature_celsius: xr.DataArray | np.array,
+        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
     ):
         """
         Initialize CopApproximator.
@@ -50,7 +51,7 @@ class BaseCopApproximator(ABC):
         pass
 
     @abstractmethod
-    def approximate_cop(self) -> xr.DataArray | np.array:
+    def approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
         Approximate heat pump coefficient of performance (COP).
 
@@ -63,8 +64,8 @@ class BaseCopApproximator(ABC):
 
     @staticmethod
     def celsius_to_kelvin(
-        t_celsius: float | xr.DataArray | np.array,
-    ) -> float | xr.DataArray | np.array:
+        t_celsius: Union[float, xr.DataArray, np.array],
+    ) -> Union[float, xr.DataArray, np.array]:
         """
         Convert temperature from Celsius to Kelvin.
 
@@ -86,9 +87,9 @@ class BaseCopApproximator(ABC):
 
     @staticmethod
     def logarithmic_mean(
-        t_hot: float | xr.DataArray | np.ndarray,
-        t_cold: float | xr.DataArray | np.ndarray,
-    ) -> float | xr.DataArray | np.ndarray:
+        t_hot: Union[float, xr.DataArray, np.ndarray],
+        t_cold: Union[float, xr.DataArray, np.ndarray],
+    ) -> Union[float, xr.DataArray, np.ndarray]:
         """
         Calculate the logarithmic mean temperature difference.
 
