@@ -448,7 +448,7 @@ rule build_river_heat_potential:
 
 
 def input_heat_source_temperature(
-    w, replace_names={"air": "air_total", "ground": "soil_total"}
+    w, replace_names={"air": "air_total", "ground": "soil_total", "ptes": "ptes_top_profiles"}
 ):
 
     heat_pump_sources = set(
@@ -534,9 +534,6 @@ rule build_cop_profiles:
         ),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        temp_ptes_total=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
-        ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
@@ -566,19 +563,6 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        # enable_supplemental_heating=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "supplemental_heating",
-        #     "enable",
-        # ),
-        # enable_dynamic_capacity=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "dynamic_capacity",
-        # ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -593,7 +577,7 @@ rule build_ptes_operations:
             "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+            "temp_ptes_top_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
