@@ -69,7 +69,12 @@ class BaseCopApproximator(ABC):
         #     # For numpy arrays, keep the original indexing
         #     ret_val[ret_val < 1] = 0
 
-        ret_val = ret_val.where(ret_val >= 1, 0)
+        if isinstance(ret_val, xr.DataArray):
+            # Use xarray's where method for DataArray
+            ret_val = ret_val.where(ret_val >= 1, 0)
+        else:
+            # Use NumPy indexing for ndarray
+            ret_val[ret_val < 1] = 0
         return ret_val
 
     @abstractmethod
