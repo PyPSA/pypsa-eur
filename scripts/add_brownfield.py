@@ -15,10 +15,11 @@ import xarray as xr
 from scripts._helpers import (
     configure_logging,
     get_snapshots,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import flatten
+from scripts.add_electricity import flatten, sanitize_carriers
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
@@ -371,4 +372,7 @@ if __name__ == "__main__":
     disable_grid_expansion_if_limit_hit(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    sanitize_custom_columns(n)
+    sanitize_carriers(n, snakemake.config)
     n.export_to_netcdf(snakemake.output[0])
