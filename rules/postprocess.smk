@@ -552,12 +552,14 @@ rule plot_bus_carrier_dispatch:
         plotting=config_provider("plotting"),
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
+        bus_name_pattern=config_provider("plotting", "interactive_bus_balance", "bus_name_pattern"),
     input:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
     output:
-        html=RESULTS
-        + "graphs/carrier_dispatch_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.html",
+        directory=directory(RESULTS
+        + "graphics/carrier_dispatch/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"),
     log:
         RESULTS
         + "logs/plot_bus_carrier_dispatch/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",

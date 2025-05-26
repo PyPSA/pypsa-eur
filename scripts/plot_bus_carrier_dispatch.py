@@ -2,33 +2,44 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""
-Plot carrier dispatch time series for different buses with interactive dropdown selection.
-"""
-
+import fnmatch
 import logging
 import os
-from pathlib import Path
+from functools import partial
+from multiprocessing import Pool
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pypsa
-from bokeh.io import output_file, save
+from tqdm import tqdm
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-# Import layout components with aliases to avoid naming conflicts
-from bokeh.layouts import column as bokeh_column
-from bokeh.layouts import row as bokeh_row
-from bokeh.models import (
-    ColumnDataSource,
-    CustomJS,
-    Div,
-    HoverTool,
-    Select,
-)
-from bokeh.palettes import Category20
-from bokeh.plotting import figure
+from scripts._helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
+# Add a function to convert matplotlib color codes to Plotly compatible colors
+def convert_color_for_plotly(color):
+    """Convert matplotlib color codes to Plotly-compatible color formats."""
+    # Common matplotlib single letter color codes
+    mpl_to_plotly = {
+        'k': 'black',
+        'b': 'blue',
+        'r': 'red',
+        'g': 'green',
+        'y': 'yellow',
+        'c': 'cyan',
+        'm': 'magenta',
+        'w': 'white',
+    }
+    
+    if color in mpl_to_plotly:
+        return mpl_to_plotly[color]
+    return color
 
 def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
     """
@@ -77,17 +88,17 @@ def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
     for link in n.links.index[n.links.bus0 == bus_name]:
         carrier = n.links.carrier[link]
         p0 = n.links_t.p0[link]
-        if f"{carrier} load" not in carriers:
-            carriers[f"{carrier} load"] = 0.0
-        carriers[f"{carrier} load"] += -p0  # negative sign for consumption
+        if carrier not in carriers:
+            carriers[carrier] = 0.0
+        carriers[carrier] += -p0  # negative sign for consumption
 
     # Conventional load
     loads = n.loads.index[n.loads.bus == bus_name]
     for load in loads:
         carrier = n.loads.carrier[load]
-        if f"{carrier} load" not in carriers:
-            carriers[f"{carrier} load"] = 0.0
-        carriers[f"{carrier} load"] += -n.loads_t.p[
+        if carrier not in carriers:
+            carriers[carrier] = 0.0
+        carriers[carrier] += -n.loads_t.p[
             load
         ]  # negative sign for consumption
 
@@ -95,29 +106,29 @@ def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
     stores = n.stores.index[n.stores.bus == bus_name]
     for store in stores:
         carrier = n.stores.carrier[store]
-        if f"{carrier} charge" not in carriers:
-            carriers[f"{carrier} charge"] = 0.0
-        carriers[f"{carrier} charge"] += -n.stores_t.p[
+        if carrier not in carriers:
+            carriers[carrier] = 0.0
+        carriers[carrier] += -n.stores_t.p[
             store
         ]  # negative sign for consumption
 
     # Create a dataframe with all carriers
     result = pd.DataFrame(carriers, index=n.snapshots)
 
-    # Add a datetime column for plotting
-    result["time"] = pd.to_datetime(result.index)
-
     return result
 
 
-def prepare_all_buses_data(n: pypsa.Network) -> dict:
+def prepare_all_buses_data(n: pypsa.Network, bus_name_pattern: str = None) -> dict:
     """
-    Prepare data for all buses in the network.
+    Prepare data for all buses in the network, optionally filtering by a pattern.
 
     Parameters
     ----------
     n : pypsa.Network
         PyPSA network
+    bus_name_pattern : str, optional
+        Shell-style pattern to filter bus names (e.g., 'DE*')
+        If set to "NONE_BY_DEFAULT", no buses will be selected.
 
     Returns
     -------
@@ -126,9 +137,16 @@ def prepare_all_buses_data(n: pypsa.Network) -> dict:
     """
     buses_data = {}
 
+    # Check for the special "NONE_BY_DEFAULT" pattern
+    if bus_name_pattern == "NONE_BY_DEFAULT":
+        logger.info("No buses selected for plotting due to NONE_BY_DEFAULT pattern. Set a different pattern to plot specific buses.")
+        return buses_data
+
     # Get all buses from the network
     all_buses = list(n.buses.index)
-    logger.info(f"Found {len(all_buses)} total buses in network")
+    if bus_name_pattern:
+        all_buses = [bus for bus in all_buses if fnmatch.fnmatch(bus, bus_name_pattern)]
+    logger.info(f"Found {len(all_buses)} buses matching pattern '{bus_name_pattern}'" if bus_name_pattern else f"Found {len(all_buses)} total buses in network")
 
     # Process all buses
     for bus in all_buses:
@@ -147,245 +165,249 @@ def prepare_all_buses_data(n: pypsa.Network) -> dict:
 
     return buses_data
 
+def plot_stacked_area_steplike(
+    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series = {}
+):
+    """Plot stacked area chart with step-like transitions."""
+    if isinstance(colors, pd.Series):
+        colors = colors.to_dict()
 
-def create_dispatch_plot(bus_data, default_bus_name):
-    """
-    Create an interactive Bokeh plot for carrier dispatch.
+    df_cum = df.cumsum(axis=1)
+    previous_series = np.zeros_like(df_cum.iloc[:, 0].values)
 
-    Parameters
-    ----------
-    bus_data : dict
-        Dictionary with bus names as keys and carrier dispatch DataFrames as values
-    default_bus_name : str
-        Name of the default bus to display
-
-    Returns
-    -------
-    bokeh.layouts.column
-        Bokeh layout with interactive plot
-    """
-    # Get list of all buses
-    buses = sorted(bus_data.keys())
-
-    # If the requested bus is not in the data, use the first available bus
-    if default_bus_name not in buses:
-        if buses:
-            default_bus_name = buses[0]
-        else:
-            logger.error("No buses found with dispatch data")
-            return None
-
-    # Create a ColumnDataSource for each bus
-    sources = {}
-    for bus, data in bus_data.items():
-        sources[bus] = ColumnDataSource(data)
-
-    # Create a dictionary to track carriers and colors for each bus
-    bus_carriers = {}
-
-    for bus, data in bus_data.items():
-        current_carriers = [col for col in data.columns if col != "time"]
-        # Determine positive (generation) and negative (consumption) carriers
-        pos_carriers = []
-        neg_carriers = []
-        for carrier in current_carriers:
-            if data[carrier].mean() >= 0:
-                pos_carriers.append(carrier)
-            else:
-                neg_carriers.append(carrier)
-
-        # Store them for this bus
-        bus_carriers[bus] = {
-            "all": current_carriers,
-            "positive": pos_carriers,
-            "negative": neg_carriers,
-        }
-
-    # Create a consistent color mapping across all buses
-    # Collect all unique carriers
-    all_unique_carriers = set()
-    for bus_data in bus_carriers.values():
-        all_unique_carriers.update(bus_data["all"])
-
-    # Create a palette with enough colors
-    color_palette = Category20[20] * ((len(all_unique_carriers) // 20) + 1)
-    color_palette = color_palette[: len(all_unique_carriers)]
-
-    # Create a mapping from carrier to color
-    carrier_colors = dict(zip(sorted(all_unique_carriers), color_palette))
-
-    # DIFFERENT APPROACH: Instead of creating one plot with multiple renderers,
-    # we'll create a separate plot for each bus (initially hidden) and switch between them.
-    # This ensures each plot has its own properly configured legend.
-
-    plots = {}
-    for bus, bus_source in sources.items():
-        # Create a new figure for this bus
-        p = figure(
-            width=900,
-            height=500,
-            title=f"Carrier Dispatch for {bus}",
-            x_axis_type="datetime",
-            toolbar_location="above",
-            tools=["pan", "wheel_zoom", "box_zoom", "reset", "save"],
+    for col in df_cum.columns:
+        ax.fill_between(
+            df_cum.index,
+            previous_series,
+            df_cum[col],
+            step="pre",
+            linewidth=0,
+            color=colors.get(col, "grey"),
+            label=col,
         )
+        previous_series = df_cum[col].values
 
-        # Get carriers for this bus
-        pos_carriers = bus_carriers[bus]["positive"]
-        neg_carriers = bus_carriers[bus]["negative"]
 
-        # Create stacked areas for positive (generation) carriers
-        if pos_carriers:
-            pos_colors = [carrier_colors[carrier] for carrier in pos_carriers]
-            p.varea_stack(
-                pos_carriers,
-                x="time",
-                color=pos_colors,
-                legend_label=pos_carriers,
-                source=bus_source,
+def setup_time_axis(ax: plt.Axes, timespan: pd.Timedelta):
+    """Configure time axis formatting based on timespan."""
+    long_time_frame = timespan > pd.Timedelta(weeks=5)
+
+    if not long_time_frame:
+        ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MONDAY))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%e\n%b"))
+        ax.xaxis.set_minor_locator(mdates.DayLocator())
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter("%e"))
+    else:
+        ax.xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%e\n%b"))
+        ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=15))
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter("%e"))
+
+    ax.tick_params(axis="x", which="minor", labelcolor="grey")
+
+
+def plot_energy_balance_timeseries(
+    df: pd.DataFrame,
+    time: pd.DatetimeIndex | None = None,
+    ylim: float | None = None,
+    resample: str | None = None,
+    rename: dict = {},
+    ylabel: str = "",
+    colors: dict | pd.Series = {},
+    directory="",
+):
+    """Create interactive energy balance time series plot with positive/negative stacked areas."""
+    if time is not None:
+        df = df.loc[time]
+
+    if rename:
+        df = df.T.groupby(df.columns.map(lambda a: rename.get(a, a))).sum().T
+
+    # Upsample to hourly resolution to handle overlapping snapshots
+    if resample is not None:
+        df = df.resample("1h").ffill().resample(resample).mean()
+
+    # Sort columns alphabetically
+    order = df.columns.sort_values()
+    
+    df = df.loc[:, order]
+
+    # Split into positive and negative values
+    pos = df.where(df > 0).fillna(0.0)
+    neg = df.where(df < 0).fillna(0.0)
+
+    # Convert matplotlib color codes to Plotly compatible formats
+    plotly_colors = {carrier: convert_color_for_plotly(color) for carrier, color in colors.items()}
+    
+    # Create plotly figure
+    fig = make_subplots(specs=[[{"secondary_y": False}]])
+    
+    # Keep track of carriers already added to avoid duplicates
+    carriers_added = set()
+    
+    # Plot positive values
+    pos_reset = pos.reset_index()
+    date_col = pos_reset.columns[0]  # Get the actual name of the reset index column
+    pos_df_melt = pos_reset.melt(id_vars=date_col, var_name="carrier", value_name="value")
+    
+    for carrier in pos.columns:
+        carrier_df = pos_df_melt[pos_df_melt["carrier"] == carrier]
+        # Only add if carrier has actual positive values and hasn't been added yet
+        if not carrier_df.empty and carrier_df["value"].max() > 0:
+            fig.add_trace(
+                go.Scatter(
+                    x=carrier_df[date_col],
+                    y=carrier_df["value"],
+                    mode='lines',
+                    name=carrier,
+                    line=dict(width=0, color=plotly_colors.get(carrier, "grey")),
+                    stackgroup='positive',
+                    fill='tonexty',
+                    hovertemplate=f"{carrier}: %{{y:.2f}}<extra></extra>"
+                )
             )
-
-        # Create stacked areas for negative (consumption) carriers
-        if neg_carriers:
-            neg_colors = [carrier_colors[carrier] for carrier in neg_carriers]
-            p.varea_stack(
-                neg_carriers,
-                x="time",
-                color=neg_colors,
-                legend_label=neg_carriers,
-                source=bus_source,
+            carriers_added.add(carrier)
+    
+    # Plot negative values
+    neg_reset = neg.reset_index()
+    date_col_neg = neg_reset.columns[0]
+    neg_df_melt = neg_reset.melt(id_vars=date_col_neg, var_name="carrier", value_name="value")
+    
+    for carrier in neg.columns:
+        carrier_df = neg_df_melt[neg_df_melt["carrier"] == carrier]
+        # Only add if carrier has actual negative values and hasn't been added yet
+        if not carrier_df.empty and carrier_df["value"].min() < 0 and carrier not in carriers_added:
+            fig.add_trace(
+                go.Scatter(
+                    x=carrier_df[date_col_neg],
+                    y=carrier_df["value"],
+                    mode='lines',
+                    name=carrier,
+                    line=dict(width=0, color=plotly_colors.get(carrier, "grey")),
+                    stackgroup='negative',
+                    fill='tonexty',
+                    hovertemplate=f"{carrier}: %{{y:.2f}}<extra></extra>"
+                )
             )
+            carriers_added.add(carrier)
 
-        # Create hover tooltips dynamically based on the bus carriers
-        tooltips = [("Time", "@time{%F %H:%M}")]
-        for carrier in bus_carriers[bus]["all"]:
-            tooltips.append((carrier, f"@{{{carrier}}}{{0.00}} MW"))
+    # Set y-axis limits
+    if ylim is None:
+        # ensure y-axis extent is symmetric around origin in steps of 50 units
+        ylim = np.ceil(max(-neg.sum(axis=1).min(), pos.sum(axis=1).max()) / 50) * 50
+    
+    # Set layout
+    unit = "kt/h" if "co2" in ylabel.lower() else "GW"
+    fig.update_layout(
+        title="",
+        yaxis_title=f"{ylabel} balance [{unit}]",
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        yaxis=dict(range=[-ylim, ylim]),
+        plot_bgcolor="white",
+    )
+    
+    # Add a horizontal line at y=0
+    fig.add_shape(
+        type="line",
+        x0=df.index[0],
+        y0=0,
+        x1=df.index[-1],
+        y1=0,
+        line=dict(color="grey", width=1)
+    )
+    
+    # Add grid lines
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgrey')
+    
+    # Save as interactive HTML
+    if resample is None:
+        resample = f"native-{time if time is not None else 'default'}"
+    fn = f"ts-balance-{ylabel.replace(' ', '_')}-{resample}.html"
+    fig.write_html(f"{directory}/{fn}")
 
-        hover = HoverTool(
-            tooltips=tooltips,
-            formatters={"@time": "datetime"},
-            mode="vline",
-        )
-        p.add_tools(hover)
 
-        # Style the plot
-        p.title.text_font_size = "14pt"
-        p.xaxis.axis_label = "Time"
-        p.yaxis.axis_label = "Power [MW]"
-        p.axis.axis_label_text_font_style = "normal"
-        p.grid.grid_line_alpha = 0.3
-        p.legend.location = "right"
-        p.legend.click_policy = "hide"
 
-        # Store the plot with its bus name
-        plots[bus] = p
+def process_carrier(bus_name, bus_data, colors, output_dir):
+    """Process carrier data and create plots for specific carrier group."""
 
-        # Initially hide all plots except for the default bus
-        if bus != default_bus_name:
-            p.visible = False
 
-    # Create a container to hold all plots
-    plot_container = bokeh_column(
-        children=[plot for plot in plots.values()], sizing_mode="stretch_width"
+    df = bus_data[bus_name]
+
+    kwargs = dict(
+        ylabel=bus_name,
+        colors=colors,
+        directory=output_dir,
     )
 
-    # Create bus selector dropdown
-    bus_select = Select(
-        title="Select Bus:",
-        value=default_bus_name,
-        options=buses,
-        width=400,
+    plot_energy_balance_timeseries(
+        df, resample=None, **kwargs
     )
-
-    # Simple callback to show/hide plots based on selection
-    callback = CustomJS(
-        args=dict(plots=plots, bus_select=bus_select),
-        code="""
-        // Get the selected bus name
-        const selected_bus = bus_select.value;
-        
-        // Show/hide plots based on selection
-        Object.keys(plots).forEach(bus => {
-            plots[bus].visible = (bus === selected_bus);
-        });
-        """,
-    )
-
-    # Connect callback to dropdown
-    bus_select.js_on_change("value", callback)
-
-    # Create info text
-    info_div = Div(
-        text="""
-        <p>This plot shows the carrier dispatch for different buses in the network.</p>
-        <p>Positive values (above the x-axis) represent generation or inflow.</p>
-        <p>Negative values (below the x-axis) represent consumption or outflow.</p>
-        <p>Select a bus from the dropdown to view its carrier dispatch.</p>
-        <p>Click on legend items to hide/show specific carriers.</p>
-        """,
-        width=400,
-        styles={"font-size": "12px"},
-    )
-
-    # Create layout
-    controls = bokeh_column(bus_select, info_div, width=400)
-    layout = bokeh_row(controls, plot_container)
-
-    return layout
-
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_bus_carrier_dispatch",
-            clusters=10,
+            "plot_balance_timeseries",
+            simpl="",
+            clusters="10",
             opts="",
             sector_opts="",
-            planning_horizons="2030",
+            planning_horizons=2050,
         )
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(snakemake.log[0], mode="w"),
-        ],
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
+
+    plt.style.use(["bmh", snakemake.input.rc])
+
+    # Load network and prepare data
+    n = pypsa.Network(snakemake.input.network)
+    # config = snakemake.params.plotting["balance_timeseries"]
+    output_dir = snakemake.output[0]
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Get bus name pattern from Snakemake params (preferred) or config (fallback)
+    bus_name_pattern = snakemake.params.get("bus_name_pattern", snakemake.params.bus_name_pattern)
+
+    # Get month ranges for plotting
+    sns = snakemake.params.snapshots
+    drop_leap_day = snakemake.params.drop_leap_day
+    months = get_snapshots(sns, drop_leap_day, freq="ME").map(
+        lambda x: x.strftime("%Y-%m")
     )
 
-    # Load network
-    network = pypsa.Network(snakemake.input.network)
-    logger.info(f"Loaded network with {len(network.buses)} buses")
+    # Calculate energy balance
+    bus_data = prepare_all_buses_data(n, bus_name_pattern=bus_name_pattern)
+    if len(bus_data) == 0:
+        logger.warning(f"No buses found matching the pattern {bus_name_pattern}. Exiting.")
+        exit(1)
 
-    # Apply time subset if specified in the parameters
-    if "snapshots" in snakemake.params and snakemake.params["snapshots"]:
-        logger.info(f"Selecting time subset: {snakemake.params['snapshots']}")
-        network.set_snapshots(network.snapshots[snakemake.params["snapshots"]])
+    # Get colors for carriers
+    n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
+    colors = n.carriers.color.copy().replace("", "grey")
+    # Process each carrier group in partial
+    threads = snakemake.threads
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" carrier",
+        total=len(bus_data.keys()),
+        desc="Plotting carrier balance time series",
+    )
+    func = partial(
+        process_carrier,
+        bus_data=bus_data,
+        colors=colors,
+        output_dir=output_dir,
+    )
+    with Pool(processes=min(threads, len(bus_data.keys()))) as pool:
+        list(tqdm(pool.imap(func, bus_data.keys()), **tqdm_kwargs))
 
-    # Prepare data for all buses
-    logger.info("Preparing carrier dispatch data for all buses")
-    bus_data = prepare_all_buses_data(network)
-    logger.info(f"Processed carrier dispatch for {len(bus_data)} buses")
 
-    # Create output directory if it doesn't exist
-    output_path = Path(snakemake.output.html)
-    os.makedirs(output_path.parent, exist_ok=True)
-
-    # Configure the output file
-    output_file(snakemake.output.html, title="Bus Carrier Dispatch")
-
-    # Create plot (starting with the first bus for now)
-    if bus_data:
-        default_bus = list(bus_data.keys())[0]
-        logger.info(f"Creating plot with default bus: {default_bus}")
-        layout = create_dispatch_plot(bus_data, default_bus)
-
-        # Save the plot
-        save(layout)
-        logger.info(
-            f"Interactive carrier dispatch plot saved to {snakemake.output.html}"
-        )
-    else:
-        logger.error("No bus data available for plotting")
