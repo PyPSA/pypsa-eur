@@ -92,7 +92,7 @@ select = [
     'W',   # pycodestyle: Warning
     'I',   # isort
     'D',   # pydocstyle
-    'UP',  # pyupgrade
+    # 'UP',  # pyupgrade
     # 'ANN', # flake-8 annotations
     'TID', # flake8-tidy-imports
     # 'NPY', # numpy
