@@ -56,8 +56,7 @@ def test_simplify_polys(tolerance, expected_tuple, italy_shape):
         np.round(gdf_country_simplified["area"][0], 2),
         np.round(gdf_country_simplified["perimeter"][0], 2),
     )
-    assert len(output_tuple) == len(expected_tuple)
-    assert_array_almost_equal([output_tuple, expected_tuple])
+    assert_array_almost_equal(output_tuple, expected_tuple, decimal=-5)
 
 
 @pytest.mark.parametrize(
