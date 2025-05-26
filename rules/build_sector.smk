@@ -448,7 +448,12 @@ rule build_river_heat_potential:
 
 
 def input_heat_source_temperature(
-    w, replace_names={"air": "air_total", "ground": "soil_total", "ptes": "ptes_top_profiles"}
+    w,
+    replace_names={
+        "air": "air_total",
+        "ground": "soil_total",
+        "ptes": "ptes_top_profiles",
+    },
 ):
 
     heat_pump_sources = set(
