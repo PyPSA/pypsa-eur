@@ -98,7 +98,7 @@ clean-tests:
 
 # Removes all created files except for large cutout files (similar to fresh clone)
 reset:
-	@echo "Do you really wanna continue? This will remove logs, resources, benchmarks, results, and .snakemake directories (y/n): " && \
+	@echo "Do you really wanna continue? This will remove logs, resources, benchmarks, results, and .snakemake directories (config/config.yaml will not be deleted) (y/n): " && \
 	read ans && [ $${ans} = y ] && ( \
 		rm -r ./logs || true; \
 		rm -r ./resources || true; \
