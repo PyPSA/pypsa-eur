@@ -500,7 +500,7 @@ rule build_sea_heat_potential:
     log:
         logs("build_sea_water_heat_potential_base_s_{clusters}.log"),
     benchmark:
-        benchmarks("build_sea_water_heat_poetential_base_s_{clusters}")
+        benchmarks("build_sea_water_heat_potential_base_s_{clusters}")
     threads: config["atlite"].get("nprocesses", 4)
     conda:
         "../envs/environment.yaml"
