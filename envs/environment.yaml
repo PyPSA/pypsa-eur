@@ -53,6 +53,7 @@ dependencies:
 - geojson
 - copernicusmarine
 - pyscipopt
+- plotly
 
 # GIS dependencies:
 - cartopy

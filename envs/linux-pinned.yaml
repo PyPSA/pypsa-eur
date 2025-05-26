@@ -348,6 +348,7 @@ dependencies:
   - pkgutil-resolve-name=1.3.10
   - plac=1.4.5
   - platformdirs=4.3.7
+  - plotly=6.0.1
   - pluggy=1.5.0
   - polars=1.27.1
   - powerplantmatching=0.7.1
