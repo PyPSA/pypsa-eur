@@ -627,6 +627,10 @@ if __name__ == "__main__":
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
+        if "tyndp" in snakemake.params.base_network:
+            raise ValueError(
+                "Unable to perform clustering: TYNDP base network cannot be clustered."
+            )
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
         if mode == "administrative":
