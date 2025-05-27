@@ -911,6 +911,8 @@ rule build_industrial_distribution_key:
 
 
 rule build_industrial_production_per_node:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
@@ -940,6 +942,8 @@ rule build_industrial_production_per_node:
 
 
 rule build_industrial_energy_demand_per_node:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industry_sector_ratios=resources(
             "industry_sector_ratios_{planning_horizons}.csv"
@@ -1002,6 +1006,8 @@ rule build_industrial_energy_demand_per_country_today:
 
 
 rule build_industrial_energy_demand_per_node_today:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
@@ -1436,6 +1442,7 @@ rule prepare_sector_network:
         industrial_demand=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
+        # This previous input takes less sectors if endo_industry is enabled
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_base_s_{clusters}.nc"
         ),

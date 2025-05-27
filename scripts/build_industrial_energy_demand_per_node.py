@@ -76,7 +76,10 @@ if __name__ == "__main__":
     }
     nodal_df.rename(columns=rename_sectors, inplace=True)
 
-    nodal_df["current electricity"] = nodal_today["electricity"]
+    if snakemake.params.endo_industry:
+        nodal_df["current electricity"] = nodal_today["all sectors electricity"]
+    else:
+        nodal_df["current electricity"] = nodal_today["electricity"]
 
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 

@@ -24,25 +24,73 @@ from scripts._helpers import configure_logging, set_scenario_config
 logger = logging.getLogger(__name__)
 
 # map JRC/our sectors to hotmaps sector, where mapping exist
-sector_mapping = {
-    "Electric arc": "EAF",
-    "Integrated steelworks": "Integrated steelworks",
-    "DRI + Electric arc": "DRI + EAF",
-    "Ammonia": "Ammonia",
-    "Basic chemicals (without ammonia)": "Chemical industry",
-    "Other chemicals": "Chemical industry",
-    "Pharmaceutical products etc.": "Chemical industry",
-    "Cement": "Cement",
-    "Ceramics & other NMM": "Non-metallic mineral products",
-    "Glass production": "Glass",
-    "Pulp production": "Paper and printing",
-    "Paper production": "Paper and printing",
-    "Printing and media reproduction": "Paper and printing",
-    "Alumina production": "Non-ferrous metals",
-    "Aluminium - primary production": "Non-ferrous metals",
-    "Aluminium - secondary production": "Non-ferrous metals",
-    "Other non-ferrous metals": "Non-ferrous metals",
-}
+# Modification to endogenize industry: I remove the sector that I put endogenous
+
+if snakemake.params.endo_industry:
+    sector_mapping = {
+        "Chlorine": "Chemical industry",
+        "Other chemicals": "Chemical industry",
+        "Pharmaceutical products etc.": "Chemical industry",
+        "Ceramics & other NMM": "Non-metallic mineral products",
+        "Glass production": "Glass",
+        "Pulp production": "Paper and printing",
+        "Paper production": "Paper and printing",
+        "Printing and media reproduction": "Paper and printing",
+        "Alumina production": "Non-ferrous metals",
+        "Aluminium - primary production": "Non-ferrous metals",
+        "Aluminium - secondary production": "Non-ferrous metals",
+        "Other non-ferrous metals": "Non-ferrous metals",
+    }
+
+    sector_mapping_all = {
+        "Electric arc": "EAF",
+        "Integrated steelworks": "Integrated steelworks",
+        "DRI + Electric arc": "DRI + EAF",
+        "Ammonia": "Ammonia",
+        "HVC": "Chemical industry",
+        "HVC (mechanical recycling)": "Chemical industry",
+        "HVC (chemical recycling)": "Chemical industry",
+        "Methanol": "Chemical industry",
+        "Chlorine": "Chemical industry",
+        "Other chemicals": "Chemical industry",
+        "Pharmaceutical products etc.": "Chemical industry",
+        "Cement": "Cement",
+        "Ceramics & other NMM": "Non-metallic mineral products",
+        "Glass production": "Glass",
+        "Pulp production": "Paper and printing",
+        "Paper production": "Paper and printing",
+        "Printing and media reproduction": "Paper and printing",
+        "Alumina production": "Non-ferrous metals",
+        "Aluminium - primary production": "Non-ferrous metals",
+        "Aluminium - secondary production": "Non-ferrous metals",
+        "Other non-ferrous metals": "Non-ferrous metals",
+    }
+
+else: 
+    sector_mapping = {
+        "Electric arc": "EAF",
+        "Integrated steelworks": "Integrated steelworks",
+        "DRI + Electric arc": "DRI + EAF",
+        "Ammonia": "Ammonia",
+        "HVC": "Chemical industry",
+        "HVC (mechanical recycling)": "Chemical industry",
+        "HVC (chemical recycling)": "Chemical industry",
+        "Methanol": "Chemical industry",
+        "Chlorine": "Chemical industry",
+        "Other chemicals": "Chemical industry",
+        "Pharmaceutical products etc.": "Chemical industry",
+        "Cement": "Cement",
+        "Ceramics & other NMM": "Non-metallic mineral products",
+        "Glass production": "Glass",
+        "Pulp production": "Paper and printing",
+        "Paper production": "Paper and printing",
+        "Printing and media reproduction": "Paper and printing",
+        "Alumina production": "Non-ferrous metals",
+        "Aluminium - primary production": "Non-ferrous metals",
+        "Aluminium - secondary production": "Non-ferrous metals",
+        "Other non-ferrous metals": "Non-ferrous metals",
+    }
+
 
 
 def build_nodal_industrial_energy_demand():
@@ -62,6 +110,7 @@ def build_nodal_industrial_energy_demand():
 
     for country, sector in product(countries, sectors):
         buses = keys.index[keys.country == country]
+
         mapping = sector_mapping.get(sector, "population")
 
         key = keys.loc[buses, mapping]
@@ -74,6 +123,31 @@ def build_nodal_industrial_energy_demand():
         nodal_demand.loc[buses] += outer
 
     nodal_demand.index.name = "TWh/a"
+    
+    if snakemake.params.endo_industry:
+
+        nodal_demand_all = pd.DataFrame(
+            0.0, dtype=float, index=keys.index, columns=industrial_demand.index
+            )
+
+        countries = keys.country.unique()
+        sectors = industrial_demand.columns.unique(1)
+
+        for country, sector in product(countries, sectors):
+            buses = keys.index[keys.country == country]
+
+            mapping = sector_mapping_all.get(sector, "population")
+
+            key = keys.loc[buses, mapping]
+            demand = industrial_demand[country, sector]
+
+            outer = pd.DataFrame(
+                np.outer(key, demand), index=key.index, columns=demand.index
+            )
+
+            nodal_demand_all.loc[buses] += outer
+
+        nodal_demand['all sectors electricity'] = nodal_demand_all['electricity']
 
     nodal_demand.to_csv(snakemake.output.industrial_energy_demand_per_node_today)
 

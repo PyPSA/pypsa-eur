@@ -6,8 +6,8 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
-  - base_eu_regain
+  name: "all"
+  #- base_eu_regain
   #- base_eu_deindustrial
   #- base_reg_regain
   #- policy_reg_regain
@@ -165,6 +165,9 @@ sector:
   use_methanation_waste_heat: false
   use_fuel_cell_waste_heat: false
   use_electrolysis_waste_heat: false
+
+industry:
+  oil_refining_emissions: 0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:
