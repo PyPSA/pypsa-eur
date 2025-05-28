@@ -1,0 +1,241 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+import logging
+from abc import ABC
+
+import numpy as np
+import shapely
+import xarray as xr
+
+logger = logging.getLogger(__name__)
+
+
+class SurfaceWaterHeatApproximator(ABC):
+    """
+    A class for calculating heat source potential for seawater-sourced heat pumps.
+
+    This class encapsulates the full workflow for loading oceanographic data,
+    calculating heat potential, resampling, masking to regions of interest,
+    and visualizing results.
+
+    Attributes:
+        results (xr.Dataset): The results of the calculation. Contains `total_power` and `average_temperature`. Coordinates are `time`.
+    """
+
+    TIME = "time"
+    EPSG = 3035
+
+    def __init__(
+        self,
+        volume_flow: xr.DataArray,
+        water_temperature: xr.DataArray,
+        region: shapely.geometry.polygon.Polygon,
+        max_relative_volume_flow: float = 1.0,
+        delta_t_max: float = 4,
+        min_outlet_temperature: float = 1,
+        min_distance_meters: int = 2000,
+    ):
+        """
+        Initialize the SeawaterThermalApproximator. This is an abstract class and should not be instantiated directly.
+
+        Args:
+            volume_flow: Volume flow data
+            water_temperature: Water temperature data
+            region_geometry: Region of interest geometry
+            max_relative_volume_flow: Maximum relative volume flow
+            delta_t_max: Maximum temperature difference
+            min_outlet_temperature: Minimum outlet temperature
+            min_distance_meters: Minimum distance between projects in meters
+        """
+        # Set instance variables
+        self.volume_flow = volume_flow
+        self.water_temperature = water_temperature
+        self.region = region
+        self.max_relative_volume_flow = max_relative_volume_flow
+        self.delta_t_max = delta_t_max
+        self.min_outlet_temperature = min_outlet_temperature
+        self.min_distance_meters = min_distance_meters
+
+        # Validate inputs and potentially reproject data
+        # self._validate_and_reproject_input()
+
+        # Create masked data for processing
+        self._clip_data_to_region()
+
+        # Calculate power based on masked data
+        self._calculate_power_in_region(
+            temperature=self._water_temperature_in_region,
+            volume_flow=self._volume_flow_in_region,
+        )
+
+    def get_spatial_aggregate(self):
+        """Get the spatial aggregate of water temperature and power."""
+        total_power = self._power_in_region.sum(dim=["x", "y"]) * self._scaling_factor
+
+        # Calculate power-weighted average temperature
+        average_water_temperature = (
+            self._water_temperature_in_region * self._power_in_region
+        ).sum(dim=["x", "y"]) / (self._power_in_region.sum(dim=["x", "y"]) + 0.001)
+
+        # Combine into a single dataset
+        return xr.Dataset(
+            data_vars={
+                "total_power": total_power,
+                "average_temperature": average_water_temperature,
+            }
+        )
+
+    def get_temporal_aggregate(self):
+        """Get the spatial aggregate of water temperature and power."""
+        total_energy = self._power_in_region.sum(dim=[self.TIME]) * self._scaling_factor
+
+        # Calculate power-weighted average temperature
+        average_water_temperature = (
+            self._water_temperature_in_region * self._power_in_region
+        ).sum(dim=[self.TIME]) / (self._power_in_region.sum(dim=[self.TIME]) + 0.001)
+
+        # Combine into a single dataset
+        return xr.Dataset(
+            data_vars={
+                "total_energy": total_energy,
+                "average_temperature": average_water_temperature,
+            }
+        )
+
+    def _validate_and_reproject_input(self):
+        """
+        Validate input data and ensure proper CRS alignment.
+
+        Updates self.volume_flow and self.water_temperature with properly
+        projected data if needed.
+
+        Raises:
+            ValueError: If inputs are invalid or incompatible
+        """
+        # Check if data has rio attribute and CRS information
+        for name, data in [
+            ("water_temperature", self.water_temperature),
+            ("volume_flow", self.volume_flow),
+        ]:
+            # Ensure data has rioxarray capabilities
+            if not hasattr(data, "rio"):
+                raise ValueError(f"{name} must have rioxarray capabilities")
+
+            # Ensure data has CRS information
+            if not data.rio.crs:
+                raise ValueError(
+                    f"{name} must have CRS information (use rio.write_crs)"
+                )
+
+        # Project data to target CRS if needed
+        if self.water_temperature.rio.crs.to_epsg() != self.EPSG:
+            try:
+                self.water_temperature = self.water_temperature.rio.reproject(
+                    f"EPSG:{self.EPSG}"
+                )
+                logger.info(f"Reprojected water_temperature to EPSG:{self.EPSG}")
+            except Exception as e:
+                raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
+
+        if self.volume_flow.rio.crs.to_epsg() != self.EPSG:
+            try:
+                self.volume_flow = self.volume_flow.rio.reproject(f"EPSG:{self.EPSG}")
+                logger.info(f"Reprojected volume_flow to EPSG:{self.EPSG}")
+            except Exception as e:
+                raise ValueError(f"Failed to reproject volume_flow: {str(e)}")
+
+        # Check that datasets have the same dimensions
+        if not set(self.water_temperature.dims) == set(self.volume_flow.dims):
+            raise ValueError(
+                f"Dimensions mismatch: water_temperature has {self.water_temperature.dims}, "
+                f"volume_flow has {self.volume_flow.dims}"
+            )
+
+        # Check that x and y coordinates match
+        for coord in ["x", "y", self.TIME]:
+            if (
+                coord in self.water_temperature.coords
+                and coord in self.volume_flow.coords
+            ):
+                if not np.array_equal(
+                    self.water_temperature[coord].values, self.volume_flow[coord].values
+                ):
+                    raise ValueError(
+                        f"{coord} coordinates don't match between datasets"
+                    )
+            else:
+                raise ValueError(
+                    f"{coord} coordinate '{coord}' not found in both datasets"
+                )
+
+        # For region geometry, we just check the type
+        # if not isinstance(self.region, shapely.geometry.multipolygon.MultiPolygon):
+        #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
+
+    def _clip_data_to_region(self) -> None:
+        """Create masked data by clipping to the region geometry."""
+        self._volume_flow_in_region = self.volume_flow.rio.clip(
+            self.region.geometry, drop=False
+        )
+
+        self._water_temperature_in_region = self.water_temperature.rio.clip(
+            self.region.geometry, drop=False
+        )
+
+    @property
+    def _data_resolution(self) -> float:
+        """
+        Calculate scaling factor based on dataset resolution and minimum distance.
+        Assumes data is in EPSG:3035 (meters).
+        """
+        # Get resolution directly from rio
+        x_res, y_res = self.water_temperature.rio.resolution()
+
+        # Average resolution in meters (EPSG:3035 uses meters)
+        return (abs(x_res) + abs(y_res)) / 2
+
+    @property
+    def _scaling_factor(self) -> float:
+        # Return the ratio of resolution to minimum distance
+        return self._data_resolution / self.min_distance_meters
+
+    def _calculate_power_in_region(
+        self,
+        volume_flow: xr.DataArray,
+        temperature: xr.DataArray,
+        density_water: float = 1000,  # kg/m^3
+        heat_capacity_water: float = 4.18,  # kJ/kg/K
+        kJ_per_mwh: float = 3.6e6,  # kJ/MWh
+        seconds_per_hour: float = 3600,  # seconds/hour
+    ) -> xr.DataArray:
+        """
+        Get the power from flow and temperature.
+
+        Args:
+            volume_flow (xr.DataArray): The volume flow.
+            temperature (xr.DataArray): The temperature.
+            max_relative_volume_flow (float): The maximum relative volume flow.
+            density_water (float): The density of water.
+            heat_capacity_water (float): The heat capacity of water.
+            delta_t_max (float): The maximum temperature difference.
+            min_outlet_temperature (float): The minimum outlet temperature.
+
+        Returns:
+            xr.DataArray: Power.
+        """
+        # Mean Volume flow for the area of interest
+        usable_volume_flow = self.max_relative_volume_flow * volume_flow
+        # Calculate temperature difference for approximation of the heat flow
+        delta_t = (temperature - self.min_outlet_temperature).clip(
+            max=self.delta_t_max, min=0
+        )
+        # Calculate heat flow
+        self._power_in_region = (
+            usable_volume_flow
+            * density_water
+            * heat_capacity_water
+            * delta_t
+            / kJ_per_mwh
+            * seconds_per_hour
+        )

@@ -50,8 +50,27 @@ class BaseCopApproximator(ABC):
         """
         pass
 
+    @property
+    def cop(self) -> Union[xr.DataArray, np.array]:
+        """
+        Calculate the coefficient of performance (COP) for the system.
+
+        Returns
+        -------
+            Union[xr.DataArray, np.array]: The calculated COP values.
+        """
+        ret_val = self._approximate_cop()
+
+        if isinstance(ret_val, xr.DataArray):
+            # Use xarray's where method for DataArray
+            ret_val = ret_val.where(ret_val >= 1, 0)
+        else:
+            # Use NumPy indexing for ndarray
+            ret_val[ret_val < 1] = 0
+        return ret_val
+
     @abstractmethod
-    def approximate_cop(self) -> Union[xr.DataArray, np.array]:
+    def _approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
         Approximate heat pump coefficient of performance (COP).
 
