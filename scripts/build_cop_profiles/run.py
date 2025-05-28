@@ -80,6 +80,11 @@ def get_cop(
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
+            refrigerant=snakemake.params.heat_pump_cop_approximation_central_heating["refrigerant"],
+            delta_t_pinch_point=snakemake.params.heat_pump_cop_approximation_central_heating["heat_exchanger_pinch_point_temperature_difference"],
+            isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating["isentropic_compressor_efficiency"],
+            heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating["heat_loss"],
+            min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating["min_delta_t_lift"],
         ).approximate_cop()
 
     else:
@@ -96,7 +101,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=48,
+            clusters=8,
+            planning_horizons=2030,
         )
 
     set_scenario_config(snakemake)
