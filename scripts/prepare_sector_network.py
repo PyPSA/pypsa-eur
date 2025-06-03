@@ -3331,7 +3331,7 @@ def add_heat(
                 n.add(
                     "Link",
                     nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
+                    suffix=f" {heat_system} {heat_source} air heat pump",
                     bus0=nodes,
                     bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
@@ -3396,12 +3396,11 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits boosting", #boosting
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} resistive heater",
-                    efficiency=(-(1 / (ptes_reheat_ratio - 1))).where(ptes_reheat_ratio > 1, 0.0), #nochmal überprüfen, ob das soweit passt, IM AKTUELLEN RUN NICHT DRIN
-                    efficiency2=(ptes_reheat_ratio / (ptes_reheat_ratio - 1)).where(ptes_reheat_ratio > 1, 0.0) * (costs.at[key, "efficiency"]),
+                    efficiency=(costs.at[key, "efficiency"] / ptes_reheat_ratio).where(ptes_reheat_ratio > 0, 0.0),
+                    efficiency2=(costs.at[key, "efficiency"]) * (1 + (1 / ptes_reheat_ratio)).where(ptes_reheat_ratio > 0, 0.0),
                     capital_cost=(costs.at[key, "efficiency"]
                                  * costs.at[key, "capital_cost"]
                                  * overdim_factor),
-                                 #* (ptes_reheat_ratio.max() -1)),
                     p_nom_extendable=True,
                     lifetime=costs.at[key, "lifetime"],
                 )

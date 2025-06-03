@@ -96,7 +96,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=48,
+            clusters=8,
+            planning_horizons=2030
         )
 
     set_scenario_config(snakemake)
@@ -112,10 +113,22 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            if heat_source in ["ground", "air", "ptes"]:
+            if heat_source in ["ground", "air", #"ptes"
+                               ]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"
+                    ]
+                )
+            elif heat_source == "ptes": # just for the case that ptes is only boosted by air sourced hp
+                source_inlet_temperature_celsius = xr.open_dataarray(
+                    snakemake.input[
+                        f"temp_air_total"
+                    ]
+                )
+                ptes_temperature_celsius = xr.open_dataarray(
+                    snakemake.input[
+                        f"temp_{heat_source}_total"
                     ]
                 )
             elif heat_source in snakemake.params.limited_heat_sources.keys():
@@ -129,13 +142,22 @@ if __name__ == "__main__":
                     f"Unknown heat source {heat_source}. Must be one of [ground, air] or {snakemake.params.heat_sources.keys()}."
                 )
 
-            cop_da = get_cop(
-                heat_system_type=heat_system_type,
-                heat_source=heat_source,
-                source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-                forward_temperature_by_node_and_time=central_heating_forward_temperature,
-                return_temperature_by_node_and_time=central_heating_return_temperature,
-            )
+            if heat_source == "ptes":
+                cop_da = get_cop(
+                    heat_system_type=heat_system_type,
+                    heat_source=heat_source,
+                    source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+                    forward_temperature_by_node_and_time=central_heating_forward_temperature,
+                    return_temperature_by_node_and_time=ptes_temperature_celsius,
+                )
+            else:
+                cop_da = get_cop(
+                    heat_system_type=heat_system_type,
+                    heat_source=heat_source,
+                    source_inlet_temperature_celsius=source_inlet_temperature_celsius,
+                    forward_temperature_by_node_and_time=central_heating_forward_temperature,
+                    return_temperature_by_node_and_time=central_heating_return_temperature,
+                )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
             xr.concat(
