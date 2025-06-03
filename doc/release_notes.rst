@@ -11,6 +11,12 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
+
+* (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
+
+* Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
+
 **Breaking Changes**
 
 * Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
@@ -22,6 +28,11 @@ Release Notes
   - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
 
 **Changes**
+
+* Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
+
+* Improved balance map plotting: Carriers in the balance map legends which can serve as both supply and consumption (e.g. H2 for industry) are now placed in the legend category where its total absolute value is larger in the total system balance.
+
 * Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
 
 * Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
@@ -37,6 +48,11 @@ Release Notes
 
 * Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
 
+* Fix: DAG generation (`rulegraph` and `filegraph`) now correctly utilizes all 
+  configuration sources (default, file-based, and command-line overrides), resolving 
+  an issue where visualizations could misrepresent the actual workflow execution plan. 
+  SVG output format has also been added for these graphs, and error handling during 
+  graph generation has been enhanced.
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
@@ -283,6 +299,11 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
 * Add customisable memory logging frequency for :mod:`solve_network`.
   (https://github.com/PyPSA/pypsa-eur/pull/1521)
 
+* The ``config/config.yaml`` will no longer be created when running snakemake. It will 
+  still be used by the workflow if it exists, but ignored otherwise and is not required.
+  See :ref:`defaultconfig` for more information. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1649)
+
 **Bugfixes and Compatibility**
 
 * Support for Snakemake 9. This is the new minimum version.
@@ -344,6 +365,7 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   issue with finding missing input/output files in solving rules.
   (https://github.com/PyPSA/pypsa-eur/pull/1535)
 
+* Bugfix: Change CDIR definition in ``Snakefile`` to utilize pathlib to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1602)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================
