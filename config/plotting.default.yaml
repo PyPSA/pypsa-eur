@@ -423,6 +423,7 @@ plotting:
     urban central water pits: "#d96f4c"
     urban central water pits charger: "#a85d47"
     urban central water pits discharger: "#b36452"
+    urban central water pits boosting: "#ffa36c"
     aquifer thermal energy storage: "#6d00fc"
     aquifer thermal energy storage charger: "#6d00fc"
     aquifer thermal energy storage discharger: "#6d00fc"

@@ -120,5 +120,5 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The reheat ratio profile; squared if supplemental heating is enabled.
         """
-        return (1 + (self.forward_temperature - self.top_temperature) /
-                (self.top_temperature - self.return_temperature))
+        return ((self.forward_temperature - self.top_temperature)
+                / (self.top_temperature - self.return_temperature))

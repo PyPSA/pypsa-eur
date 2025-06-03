@@ -3086,30 +3086,10 @@ def add_heat(
                         "energy to power ratio",
                     ] = energy_to_power_ratio_water_pit
 
-#                    n.add(
-#                        "Link",
-#                        nodes,
-#                        suffix=f" {heat_system} water pits discharger",
-#                        bus0=nodes + f" {heat_system} water pits",
-#                        bus1=nodes + f" {heat_system} heat",
-#                        carrier=f"{heat_system} water pits discharger",
-#                        efficiency=costs.at[
-#                                       "central water pit discharger",
-#                                       "efficiency",
-#                                   ]
-#                                   * ptes_supplemental_heating_required,
-#                        p_nom_extendable=True,
-#                        lifetime=costs.at["central water pit storage", "lifetime"],
-#                    )
-##                    n.links.loc[
- #                       nodes + f" {heat_system} water pits charger",
- #                       "energy to power ratio",
- #                   ] = energy_to_power_ratio_water_pit
-
                 else:
                     ptes_supplemental_heating_required = 1
 
-                n.add(
+                    n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} water pits discharger",
@@ -3123,11 +3103,11 @@ def add_heat(
                     * ptes_supplemental_heating_required,
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
-                )
-                n.links.loc[
-                    nodes + f" {heat_system} water pits charger",
-                    "energy to power ratio",
-                ] = energy_to_power_ratio_water_pit
+                    )
+                    n.links.loc[
+                        nodes + f" {heat_system} water pits charger",
+                        "energy to power ratio",
+                    ] = energy_to_power_ratio_water_pit
 
                 if options["district_heating"]["ptes"]["dynamic_capacity"]:
                     # Load pre-calculated e_max_pu profiles
@@ -3336,7 +3316,7 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0), # (-(1 / (ptes_reheat_ratio - 1))).where(ptes_reheat_ratio > 1, 0.0)
+                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
                     efficiency2=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                     * costs.at[costs_name_heat_pump, "capital_cost"]
