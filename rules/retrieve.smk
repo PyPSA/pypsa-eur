@@ -714,7 +714,7 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
-    rule seawater_temperature:
+    rule retrieve_seawater_temperature:
         output:
             seawater_temperature="data/seawater_temperature.nc",
         log:
@@ -739,7 +739,9 @@ if config["enable"]["retrieve"]:
         shell:
             """
             wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA2013.nc -O {output.river_discharge}
+            nccopy -d 1 {output.river_discharge} {output.river_discharge}
             wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_2013.nc -O {output.ambient_temperature}
+            nccopy -d 1 {output.ambient_temperature} {output.ambient_temperature}
             """
 
 
