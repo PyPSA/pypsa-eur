@@ -35,9 +35,6 @@ doc/_build
 config/config.yaml
 config/scenarios.yaml
 
-config.yaml
-config/config.yaml
-
 dconf
 /data/links_p_nom.csv
 /data/*totals.csv

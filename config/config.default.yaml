@@ -26,7 +26,7 @@ run:
     policy: false
     exclude: []
   shared_cutouts: true
-  use_shadow_directory: true # Set to false if problems regarding missing directories occur
+  use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
@@ -304,6 +304,7 @@ lines:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
   p_max_pu: 1.0
+  p_min_pu: -1.0
   p_nom_max: .inf
   max_extension: 30000 #MW
   length_factor: 1.25
@@ -335,8 +336,10 @@ transformers:
 
 # docs-load in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#load
 load:
-  interpolate_limit: 3
-  time_shift_for_large_gaps: 1w
+  fill_gaps:
+    enable: true
+    interpolate_limit: 3
+    time_shift_for_large_gaps: 1w
   manual_adjustments: true # false
   scaling_factor: 1.0
   fixed_year: false # false or year (e.g. 2013)
@@ -912,6 +915,10 @@ clustering:
   administrative:
     level: 1
   focus_weights: false
+  copperplate_regions: []
+  build_bidding_zones:
+    remove_islands: false
+    aggregate_to_tyndp: false
   simplify_network:
     to_substations: false
     remove_stubs: true
@@ -976,7 +983,7 @@ solving:
       fractional_last_unit_size: false
     keep_files: false
     model_kwargs:
-      solver_dir: "/tmp"
+      solver_dir: ""
 
   agg_p_nom_limits:
     agg_offwind: false

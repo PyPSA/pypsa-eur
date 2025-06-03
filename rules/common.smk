@@ -152,6 +152,6 @@ def input_cutout(wildcards, cutout_names="default"):
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)
     if isinstance(cutout_names, list):
-        return [CDIR + cn + ".nc" for cn in cutout_names]
+        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
     else:
-        return CDIR + cutout_names + ".nc"
+        return CDIR.joinpath(cutout_names + ".nc").as_posix()

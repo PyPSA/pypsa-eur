@@ -559,11 +559,20 @@ def attach_wind_and_solar(
                     distance * submarine_cost + landfall_length * underground_cost
                 )
 
-                capital_cost = (
-                    costs.at["offwind", "capital_cost"]
-                    + costs.at[car + "-station", "capital_cost"]
-                    + connection_cost
-                )
+                # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
+                midcar = car.split("-", 2)[1]
+                if midcar == "float":
+                    capital_cost = (
+                        costs.at[car, "capital_cost"]
+                        + costs.at[car + "-station", "capital_cost"]
+                        + connection_cost
+                    )
+                else:
+                    capital_cost = (
+                        costs.at["offwind", "capital_cost"]
+                        + costs.at[car + "-station", "capital_cost"]
+                        + connection_cost
+                    )
                 logger.info(
                     f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
