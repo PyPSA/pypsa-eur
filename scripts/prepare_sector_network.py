@@ -3291,12 +3291,10 @@ def add_heat(
                 not options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_heat_pump"
-                ]
+                and "heat_pump" in options["district_heating"]["ptes"]["supplemental_heating"]["booster_technologies"]
             ):
                 raise ValueError(
-                    "'booster_heat_pump' is true, but 'enable' is false in 'supplemental_heating'."
+                    "Supplemental heating: 'booster_technologies' contains 'heat_pump', but 'enable' is false."
                 )
 
             if (
@@ -3304,10 +3302,15 @@ def add_heat(
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_heat_pump"
-                ]
+                and "heat_pump" in options["district_heating"]["ptes"]["supplemental_heating"]["booster_technologies"]
             ):
+                ptes_reheat_ratio = (
+                        xr.open_dataarray(ptes_reheat_ratio_profiles)
+                        .sel(name=nodes)
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                    )
+
                 n.add(
                     "Link",
                     nodes,
@@ -3316,8 +3319,8 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
-                    efficiency2=cop_heat_pump,
+                    efficiency=-(cop_heat_pump / ptes_reheat_ratio).where(ptes_reheat_ratio > 0, 0.0),
+                    efficiency2=(cop_heat_pump * (1 + (1 / ptes_reheat_ratio))).where(ptes_reheat_ratio > 0, 0.0),
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                     * costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
@@ -3358,8 +3361,19 @@ def add_heat(
                 lifetime=costs.at[key, "lifetime"],
             )
 
-            if options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_resistive_heater"] and heat_system == HeatSystem.URBAN_CENTRAL:
+            if (
+                not options["district_heating"]["ptes"]["supplemental_heating"]["enable"]
+                and "resistive_heater" in options["district_heating"]["ptes"]["supplemental_heating"][
+                "booster_technologies"]
+            ):
+                raise ValueError(
+                    "Supplemental heating: 'booster_technologies' contains 'resistive_heater', but 'enable' is false."
+                )
+            if (
+                "resistive_heaters" in options["district_heating"]["ptes"]["supplemental_heating"][
+                "booster_technologies"]
+                and heat_system == HeatSystem.URBAN_CENTRAL
+            ):
 
                 ptes_reheat_ratio = (
                         xr.open_dataarray(ptes_reheat_ratio_profiles)
@@ -3376,7 +3390,7 @@ def add_heat(
                     bus1=nodes + f" {heat_system} water pits boosting", #boosting
                     bus2=nodes + f" {heat_system} heat",
                     carrier=f"{heat_system} resistive heater",
-                    efficiency=(costs.at[key, "efficiency"] / ptes_reheat_ratio).where(ptes_reheat_ratio > 0, 0.0),
+                    efficiency=-(costs.at[key, "efficiency"] / ptes_reheat_ratio).where(ptes_reheat_ratio > 0, 0.0),
                     efficiency2=(costs.at[key, "efficiency"]) * (1 + (1 / ptes_reheat_ratio)).where(ptes_reheat_ratio > 0, 0.0),
                     capital_cost=(costs.at[key, "efficiency"]
                                  * costs.at[key, "capital_cost"]

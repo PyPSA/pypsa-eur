@@ -44,6 +44,8 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         The heat loss.
     min_delta_t_lift : float
         The minimum feasible temperature lift.
+    min_delta_t_condenser: float
+        The minimum feasible dT condenser.
 
     Methods
     -------
@@ -57,6 +59,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         isentropic_compressor_efficiency: float,
         heat_loss: float,
         min_delta_t_lift : float,
+        min_delta_t_condenser : float,
     ) -> None:
         Initializes the CentralHeatingCopApproximator object.
 
@@ -112,6 +115,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         isentropic_compressor_efficiency: float,
         heat_loss: float,
         min_delta_t_lift: float,
+        min_delta_t_condenser: float,
     ) -> None:
         """
         Initializes the CentralHeatingCopApproximator object.
@@ -136,6 +140,8 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             The heat loss.
         min_delta_t_lift : float
             The minimum feasible temperature lift.
+        min_delta_t_condenser : float
+            The minimum feasible dT condenser.
         """
         self.t_source_in_kelvin = BaseCopApproximator.celsius_to_kelvin(
             source_inlet_temperature_celsius
@@ -155,6 +161,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         self.heat_loss = heat_loss
         self.delta_t_pinch = delta_t_pinch_point
         self.min_delta_t_lift = min_delta_t_lift
+        self.min_delta_t_condenser = min_delta_t_condenser
 
     def approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
@@ -169,7 +176,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
         return xr.where(
-            self.delta_t_lift <= self.min_delta_t_lift,
+            (self.delta_t_lift < self.min_delta_t_lift) | (self.delta_t_sink < self.min_delta_t_condenser),
             0,
             self.ideal_lorenz_cop
             * (
@@ -209,6 +216,17 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         return BaseCopApproximator.logarithmic_mean(
             t_cold=self.t_sink_in_kelvin, t_hot=self.t_sink_out_kelvin
         )
+
+    def delta_t_sink(self) -> Union[xr.DataArray, np.array]:
+        """
+        Calculate the temperature difference between the cold and hot sinks.
+
+        Returns
+        -------
+        Union[xr.DataArray, np.array]
+            The temperature difference.
+        """
+        return self.t_sink_out_kelvin - self.t_sink_in_kelvin
 
     @property
     def t_source_mean_kelvin(self) -> Union[xr.DataArray, np.array]:

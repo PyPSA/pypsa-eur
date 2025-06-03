@@ -85,6 +85,7 @@ def get_cop(
             isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating["isentropic_compressor_efficiency"],
             heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating["heat_loss"],
             min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating["min_delta_t_lift"],
+            min_delta_t_condenser=snakemake.params.heat_pump_cop_approximation_central_heating["min_delta_t_condenser"]
         ).approximate_cop()
 
     else:

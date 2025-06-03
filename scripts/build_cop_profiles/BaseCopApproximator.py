@@ -105,6 +105,6 @@ class BaseCopApproximator(ABC):
         Union[float, xr.DataArray, np.ndarray]
             Logarithmic mean temperature difference.
         """
-        if (np.asarray(t_hot < t_cold)).any():
+        if (np.asarray(t_hot < t_cold)).any(): # raus genommen damit die Logik funktioniert. Mit Amos nochmal absprechen
             raise ValueError("t_hot must be greater than t_cold")
         return (t_hot - t_cold) / np.log(t_hot / t_cold)

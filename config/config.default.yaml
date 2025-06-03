@@ -483,8 +483,7 @@ sector:
       dynamic_capacity: true
       supplemental_heating:
         enable: true
-        booster_heat_pump: true
-        booster_resistive_heater: true
+        booster_technologies: ["heat_pump", "resistive_heater"]
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
@@ -505,6 +504,7 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
       min_delta_t_lift: 10 #K
+      min_delta_t_condenser: 5 #K
     limited_heat_sources:
       geothermal:
         constant_temperature_celsius: 65
