@@ -26,10 +26,10 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
 
     Attributes
     ----------
-    forward_temperature_celsius : Union[xr.DataArray, np.array]
-        The forward temperature in Celsius.
-    return_temperature_celsius : Union[xr.DataArray, np.array]
-        The return temperature in Celsius.
+    sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The sink outlet temperature in Celsius.
+    sink_inlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The sink inlet temperature in Celsius.
     source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
         The source inlet temperature in Celsius.
     source_outlet_temperature_celsius : Union[xr.DataArray, np.array]
@@ -50,9 +50,9 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     Methods
     -------
     __init__(
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
-        return_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_inlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         refrigerant: str,
         delta_t_pinch_point: float,
@@ -106,9 +106,9 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
 
     def __init__(
         self,
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
-        return_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_inlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         refrigerant : str,
         delta_t_pinch_point: float,
@@ -122,10 +122,10 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
 
         Parameters
         ----------
-        forward_temperature_celsius : Union[xr.DataArray, np.array]
-            The forward temperature in Celsius.
-        return_temperature_celsius : Union[xr.DataArray, np.array]
-            The return temperature in Celsius.
+        sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+            The sink outlet temperature in Celsius.
+        sink_inlet_temperature_celsius : Union[xr.DataArray, np.array]
+            The sink inlet temperature in Celsius.
         source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
             The source inlet temperature in Celsius.
         source_outlet_temperature_celsius : Union[xr.DataArray, np.array]
@@ -147,11 +147,11 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             source_inlet_temperature_celsius
         )
         self.t_sink_out_kelvin = BaseCopApproximator.celsius_to_kelvin(
-            forward_temperature_celsius
+            sink_outlet_temperature_celsius
         )
 
         self.t_sink_in_kelvin = BaseCopApproximator.celsius_to_kelvin(
-            return_temperature_celsius
+            sink_inlet_temperature_celsius
         )
         self.t_source_out = BaseCopApproximator.celsius_to_kelvin(
             source_outlet_temperature_celsius

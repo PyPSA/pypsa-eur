@@ -471,11 +471,13 @@ plotting:
     CHP electric: '#8a5751'
     district heating: '#e8beac'
     resistive heater: '#d8f9b8'
+    ptes resistive heater: '#a0e78d'
     residential rural resistive heater: '#bef5b5'
     residential urban decentral resistive heater: '#b2f1a9'
     services rural resistive heater: '#a5ed9d'
     services urban decentral resistive heater: '#98e991'
     urban central resistive heater: '#8cdf85'
+    urban central ptes resistive heater: '#71c96b'
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
     # hydrogen

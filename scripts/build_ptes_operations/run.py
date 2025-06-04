@@ -43,6 +43,8 @@ Outputs
     Binary indicator for additional heating (1 = direct PTES use, 0 = supplemental heating required).
 - `resources/<run_name>/ptes_e_max_pu_profiles.nc`
     Normalized PTES capacity profiles.
+- `resources/<run_name>/ptes_temperature_boost_ratio_profiles.nc`
+    Ratio of PTES charge that requires additional heating due to temperature differences.
 
 Source
 ------
@@ -117,10 +119,10 @@ if __name__ == "__main__":
         snakemake.output.ptes_e_max_pu_profiles
     )
 
-    # Get PTES reheat ratio for boiler
+    # Get PTES temperature boost ratio
     logger.info(
-        f"Saving PTES reheat ratio profiles to {snakemake.output.ptes_reheat_ratio_profiles}"
+        f"Saving PTES reheat ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
     )
-    ptes_temperature_approximator.reheat_ratio.to_netcdf(
-        snakemake.output.ptes_reheat_ratio_profiles
+    ptes_temperature_approximator.temperature_boost_ratio.to_netcdf(
+        snakemake.output.ptes_temperature_boost_ratio_profiles
     )

@@ -109,16 +109,18 @@ class PtesTemperatureApproximator:
 
 
     @property
-    def reheat_ratio(self) -> xr.DataArray:
+    def temperature_boost_ratio(self) -> xr.DataArray:
         """
-        Calculate the reheat ratio:
-            (clipped_top_temperature - bottom_temperature)
-            -----------------------------------------------
-            (forward_temperature_celsius - clipped_top_temperature)
+        Calculate the additional lift required between the store's
+        current top temperature and the forward temperature with the lift
+        already achieved inside the store.
+
         Returns
         -------
         xr.DataArray
-            The reheat ratio profile; squared if supplemental heating is enabled.
+            The resulting fraction of PTES charge that must be further heated.
         """
-        return ((self.forward_temperature - self.top_temperature)
-                / (self.top_temperature - self.return_temperature))
+        return (
+            (self.forward_temperature - self.top_temperature)
+            / (self.top_temperature - self.return_temperature)
+        )
