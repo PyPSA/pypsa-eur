@@ -72,7 +72,7 @@ def build_gem_prod_data(fn):
 
     p = pd.read_excel(fn, sheet_name="Gas extraction - production")
     p = p.set_index("GEM Unit ID")
-    p = p[p["Fuel description"].str.contains("gas")]
+    p = p[p["Fuel description"].str.contains("gas", case=False)]
 
     capacities = pd.DataFrame(index=df.index)
     for key in ["production", "production design capacity", "reserves"]:
