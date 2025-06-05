@@ -107,7 +107,6 @@ class PtesTemperatureApproximator:
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
 
-
     @property
     def temperature_boost_ratio(self) -> xr.DataArray:
         """
@@ -120,7 +119,6 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting fraction of PTES charge that must be further heated.
         """
-        return (
-            (self.forward_temperature - self.top_temperature)
-            / (self.top_temperature - self.return_temperature)
+        return (self.forward_temperature - self.top_temperature) / (
+            self.top_temperature - self.return_temperature
         )

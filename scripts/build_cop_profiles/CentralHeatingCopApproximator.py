@@ -108,7 +108,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
         sink_inlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_outlet_temperature_celsius: Union[xr.DataArray, np.array],
-        refrigerant : str,
+        refrigerant: str,
         delta_t_pinch_point: float,
         isentropic_compressor_efficiency: float,
         heat_loss: float,
@@ -373,7 +373,11 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             )
         return (
             a[refrigerant]
-            * (self.t_sink_out_kelvin - self.t_source_out_kelvin + 2 * self.delta_t_pinch)
+            * (
+                self.t_sink_out_kelvin
+                - self.t_source_out_kelvin
+                + 2 * self.delta_t_pinch
+            )
             + b[refrigerant] * self.delta_t_sink
             + c[refrigerant]
         )
@@ -417,7 +421,11 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             )
         return (
             a[refrigerant]
-            * (self.t_sink_out_kelvin - self.t_source_out_kelvin + 2 * self.delta_t_pinch)
+            * (
+                self.t_sink_out_kelvin
+                - self.t_source_out_kelvin
+                + 2 * self.delta_t_pinch
+            )
             + b[refrigerant] * self.delta_t_sink
             + c[refrigerant]
         )

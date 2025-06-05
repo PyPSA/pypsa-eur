@@ -53,7 +53,7 @@ sector:
       enable: true
   heat_pump_sources:
     urban central:
-      - ptes
+    - ptes
 
 
 atlite:

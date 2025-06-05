@@ -82,11 +82,21 @@ def get_cop(
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
-            refrigerant=snakemake.params.heat_pump_cop_approximation_central_heating["refrigerant"],
-            delta_t_pinch_point=snakemake.params.heat_pump_cop_approximation_central_heating["heat_exchanger_pinch_point_temperature_difference"],
-            isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating["isentropic_compressor_efficiency"],
-            heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating["heat_loss"],
-            min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating["min_delta_t_lift"],
+            refrigerant=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "refrigerant"
+            ],
+            delta_t_pinch_point=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "heat_exchanger_pinch_point_temperature_difference"
+            ],
+            isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "isentropic_compressor_efficiency"
+            ],
+            heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "heat_loss"
+            ],
+            min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "min_delta_t_lift"
+            ],
         ).approximate_cop()
 
     else:
@@ -121,17 +131,15 @@ if __name__ == "__main__":
         for heat_source in heat_sources:
             if heat_source == "ptes":
                 source_inlet_temperature_celsius = xr.open_dataarray(
-                    snakemake.input[
-                        f"temp_air_total"
-                    ]
+                    snakemake.input["temp_air_total"]
                 )
                 sink_inlet_temperature_celsius = xr.open_dataarray(
-                    snakemake.input[
-                        f"temp_{heat_source}_total"
-                    ]
+                    snakemake.input[f"temp_{heat_source}_total"]
                 )
-            elif heat_source in ["ground", "air",
-                               ]:
+            elif heat_source in [
+                "ground",
+                "air",
+            ]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"

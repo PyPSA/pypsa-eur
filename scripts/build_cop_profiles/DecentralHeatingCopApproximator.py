@@ -62,7 +62,9 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
             The source of the heat pump. Must be either 'air' or 'ground'.
         """
 
-        self.delta_t = sink_outlet_temperature_celsius - source_inlet_temperature_celsius
+        self.delta_t = (
+            sink_outlet_temperature_celsius - source_inlet_temperature_celsius
+        )
         if source_type not in ["air", "ground"]:
             raise ValueError("'source_type' must be one of ['air', 'ground']")
         else:
