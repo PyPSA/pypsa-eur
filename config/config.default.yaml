@@ -519,7 +519,6 @@ sector:
   heat_pump_sources:
     urban central:
     - air
-    - ptes
     urban decentral:
     - air
     rural:

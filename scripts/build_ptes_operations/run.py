@@ -27,6 +27,7 @@ Relevant Settings
                 supplemental_heating:
                     enable:
                 max_top_temperature:
+                min_bottom_temperature:
 
 Inputs
 ------

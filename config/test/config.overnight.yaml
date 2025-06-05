@@ -68,6 +68,9 @@ sector:
         booster_technologies: ["heat_pump", "resistive_heater"]
     ates:
       enable: true
+  heat_pump_sources:
+    urban central:
+      - ptes
 
 
 industry:
