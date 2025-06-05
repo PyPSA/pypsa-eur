@@ -140,7 +140,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         self.heat_loss = heat_loss
         self.delta_t_pinch = delta_t_pinch_point
 
-    def approximate_cop(self) -> Union[xr.DataArray, np.array]:
+    def _approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
         Calculate the coefficient of performance (COP) for the system.
 
