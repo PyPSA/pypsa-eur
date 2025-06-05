@@ -48,7 +48,7 @@ sector:
     ptes:
       supplemental_heating:
         enable: true
-        booster_technologies: ["heat_pump", "resistive_heater"]
+        booster_technologies: ["heat_pump", "resistive_heaters"]
     ates:
       enable: true
   heat_pump_sources:
