@@ -173,7 +173,7 @@ industry:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 2920h
+    resolution_sector: 3h
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting

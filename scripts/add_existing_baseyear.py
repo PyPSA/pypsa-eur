@@ -828,7 +828,7 @@ def add_cement_industry_existing(n):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-    min_part_load_cement = 0.3
+    min_part_load_cement = 0.5
     # if options['endo_industry']['regional_cement_demand']:
     #     min_part_load_cement = 0
 

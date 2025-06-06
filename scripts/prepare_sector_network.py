@@ -5445,6 +5445,14 @@ def add_steel_industry(n, investment_year, steel_data, options):
     else:
         raise ValueError(f"Invalid investment year: {investment_year}. Supported years are 2030, 2040, and 2050.")
 
+    electricity_input = (
+        costs.at["cement capture", "electricity-input"]
+        + costs.at["cement capture", "compression-electricity-input"]
+    )  # MWh_el / tCO2
+    heat_input = (
+        costs.at["cement capture", "heat-input"]
+        - costs.at["cement capture", "compression-heat-output"]
+    )  # MWh_th / tCO2
 
     n.add(
         "Link",
@@ -5456,11 +5464,11 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus3=nodes,
         carrier="steel process emissions CC",
         p_nom_extendable=True,
-        capital_cost= capital_cost_tgr ,
+        capital_cost= costs.at["cement capture", "investment"], #80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker ,
         efficiency= 1- costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3= - tgr['elec input'], # MWh el/tCO2 in
-        lifetime=tgr['lifetime'], 
+        efficiency3= -electricity_input * costs.at["cement capture", "capture_rate"], # MWh el/tCO2 in
+        lifetime=costs.at["cement capture", "lifetime"], 
     )
 
 
@@ -5550,7 +5558,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-    min_part_load_cement = 0.3
+    min_part_load_cement = 0.5
 
     #if (options['endo_industry']['regional_cement_demand']) or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
     #    min_part_load_cement = 0.1
@@ -5892,6 +5900,14 @@ def add_shipping(
     shipping_hydrogen_share = get(options["shipping_hydrogen_share"], investment_year)
     shipping_methanol_share = get(options["shipping_methanol_share"], investment_year)
     shipping_oil_share = get(options["shipping_oil_share"], investment_year)
+
+    co2_limit = get(snakemake.params.co2_budget, investment_year)
+    if co2_limit == 1:
+        shipping_methanol_share = 0
+        shipping_oil_share = 1- shipping_methanol_share
+    elif options["endo_industry"]["policy_scenario"] == 'deindustrial':
+        shipping_methanol_share /= 2
+        shipping_oil_share = 1- shipping_methanol_share
 
     total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
     if total_share != 1:
@@ -7281,7 +7297,7 @@ if __name__ == "__main__":
         if options["endo_industry"]["endo_hvc"]:
             hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
             add_hvc(n, investment_year, hvc_data, options)
-            add_methanol_to_hvc(n, costs)
+            #add_methanol_to_hvc(n, costs)
 
     if options["heating"]:
         add_waste_heat(n, costs, options, cf_industry)
