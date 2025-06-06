@@ -334,7 +334,7 @@ def distribute_n_clusters_to_countries(
     # leave out constant in objective (L * n_clusters) ** 2
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
-        logging.getLogger("gurobipy").propagate = False
+        logger.getLogger("gurobipy").propagate = False
     elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."
@@ -627,6 +627,10 @@ if __name__ == "__main__":
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
+        if "tyndp" in snakemake.params.base_network:
+            raise ValueError(
+                "Unable to perform clustering: TYNDP base network cannot be clustered."
+            )
         Nyears = n.snapshot_weightings.objective.sum() / 8760
 
         if mode == "administrative":

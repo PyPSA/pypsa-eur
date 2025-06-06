@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp-raw` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
+
 * Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
 
 * (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
