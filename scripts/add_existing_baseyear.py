@@ -553,7 +553,7 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
             assert valid_grouping_years.is_monotonic_increasing
-            
+
             if len(valid_grouping_years) == 0:
                 logger.warning(
                     f"No valid grouping years found for {heat_system}. "
