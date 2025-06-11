@@ -3416,9 +3416,9 @@ def add_heat(
                     nodes,
                     suffix=f" {heat_system} ptes resistive heater",
                     bus0=nodes,
-                    bus1=nodes + f" {heat_system} water pits boosting",  # boosting
+                    bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} resistive heater",
+                    carrier=f"{heat_system} ptes resistive heater",
                     efficiency=-(
                         costs.at[key, "efficiency"] / ptes_temperature_boost_ratio
                     ).where(ptes_temperature_boost_ratio > 0, 0.0),
