@@ -3270,9 +3270,7 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump).where(
-                        cop_heat_pump > 0, 0.0
-                    ),
+                    efficiency=(1 / cop_heat_pump).where(cop_heat_pump > 0, 0.0),
                     efficiency2=((cop_heat_pump - 1) / cop_heat_pump).where(
                         cop_heat_pump > 0, 0.0
                     ),
@@ -3345,8 +3343,11 @@ def add_heat(
                     bus2=nodes + f" {heat_system} water pits boosting",
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=(
-                            ptes_temperature_boost_ratio / ((1 + ptes_temperature_boost_ratio) * cop_heat_pump)
-                    ).where((ptes_temperature_boost_ratio > 0) & (cop_heat_pump > 0), 0.0),
+                        ptes_temperature_boost_ratio
+                        / ((1 + ptes_temperature_boost_ratio) * cop_heat_pump)
+                    ).where(
+                        (ptes_temperature_boost_ratio > 0) & (cop_heat_pump > 0), 0.0
+                    ),
                     efficiency2=(1 / (1 + ptes_temperature_boost_ratio)).where(
                         ptes_temperature_boost_ratio > 0, 0.0
                     ),
@@ -3354,7 +3355,10 @@ def add_heat(
                     p_max_pu=0,
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor
-                    * (ptes_temperature_boost_ratio / (1 + ptes_temperature_boost_ratio)).max(),
+                    * (
+                        ptes_temperature_boost_ratio
+                        / (1 + ptes_temperature_boost_ratio)
+                    ).max(),
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3367,9 +3371,7 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump).where(
-                        cop_heat_pump > 0, 0.0
-                    ),
+                    efficiency=(1 / cop_heat_pump).where(cop_heat_pump > 0, 0.0),
                     p_min_pu=-1,
                     p_max_pu=0,
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
