@@ -29,6 +29,8 @@ Release Notes
 
 **Changes**
 
+* Fix: Heat pump investment costs now calculated on the heat bus directly, with the nominal efficiency factor removed
+
 * Added resistive heaters as a temperature boosting technology for PTES. Additionally, the heat pump booster now uses ambient air as its heat source for boosting.
 
 * Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
