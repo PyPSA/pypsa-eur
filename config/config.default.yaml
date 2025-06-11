@@ -485,8 +485,8 @@ sector:
     ptes:
       dynamic_capacity: true
       supplemental_heating:
-        enable: false
-        booster_technologies: []
+        enable: true
+        booster_technologies: ["heat_pump", "resistive_heaters"]
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
@@ -517,7 +517,9 @@ sector:
     - ptes
   heat_pump_sources:
     urban central:
+    - ground
     - air
+    - ptes
     urban decentral:
     - air
     rural:

@@ -1576,7 +1576,7 @@ def insert_electricity_distribution_grid(
     n.links.loc[v2gs, "bus1"] += " low voltage"
 
     hps = n.links.index[n.links.carrier.str.contains("heat pump")]
-    n.links.loc[hps, "bus0"] += " low voltage"
+    n.links.loc[hps, "bus1"] += " low voltage"
 
     rh = n.links.index[n.links.carrier.str.contains("resistive heater")]
     n.links.loc[rh, "bus0"] += " low voltage"
@@ -3066,7 +3066,7 @@ def add_heat(
                         unit="MWh_th",
                     )
 
-                    ptes_supplemental_heating_required = (
+                    ptes_direct_utilisiation_profile = (
                         xr.open_dataarray(ptes_direct_utilisation_profile_file)
                         .sel(name=nodes)
                         .to_pandas()
@@ -3085,12 +3085,12 @@ def add_heat(
                             "central water pit discharger",
                             "efficiency",
                         ]
-                        * ptes_supplemental_heating_required,
+                        * ptes_direct_utilisiation_profile,
                         efficiency2=costs.at[
                             "central water pit discharger",
                             "efficiency",
                         ]
-                        * (ptes_supplemental_heating_required - 1)
+                        * (ptes_direct_utilisiation_profile - 1)
                         * (-1),
                         p_nom_extendable=True,
                         lifetime=costs.at["central water pit storage", "lifetime"],
@@ -3101,7 +3101,7 @@ def add_heat(
                     ] = energy_to_power_ratio_water_pit
 
                 else:
-                    ptes_supplemental_heating_required = 1
+                    ptes_direct_utilisiation_profile = 1
 
                     n.add(
                         "Link",
@@ -3114,7 +3114,7 @@ def add_heat(
                             "central water pit discharger",
                             "efficiency",
                         ]
-                        * ptes_supplemental_heating_required,
+                        * ptes_direct_utilisiation_profile,
                         p_nom_extendable=True,
                         lifetime=costs.at["central water pit storage", "lifetime"],
                     )
@@ -3266,14 +3266,19 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_carrier}",
-                    bus2=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
+                    bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
-                    efficiency2=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
+                    efficiency=(1 / cop_heat_pump).where(
+                        cop_heat_pump > 0, 0.0
+                    ),
+                    efficiency2=((cop_heat_pump - 1) / cop_heat_pump).where(
+                        cop_heat_pump > 0, 0.0
+                    ),
+                    p_min_pu=-1,
+                    p_max_pu=0,
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -3335,19 +3340,21 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_system} water pits boosting",
-                    bus2=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
+                    bus2=nodes + f" {heat_system} water pits boosting",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=-(cop_heat_pump / ptes_temperature_boost_ratio).where(
+                    efficiency=(
+                            ptes_temperature_boost_ratio / ((1 + ptes_temperature_boost_ratio) * cop_heat_pump)
+                    ).where((ptes_temperature_boost_ratio > 0) & (cop_heat_pump > 0), 0.0),
+                    efficiency2=(1 / (1 + ptes_temperature_boost_ratio)).where(
                         ptes_temperature_boost_ratio > 0, 0.0
                     ),
-                    efficiency2=(
-                        cop_heat_pump * (1 + (1 / ptes_temperature_boost_ratio))
-                    ).where(ptes_temperature_boost_ratio > 0, 0.0),
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
+                    p_min_pu=(ptes_direct_utilisiation_profile - 1),
+                    p_max_pu=0,
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
+                    * overdim_factor
+                    * (ptes_temperature_boost_ratio / (1 + ptes_temperature_boost_ratio)).max(),
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3357,12 +3364,15 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
+                    efficiency=(1 / cop_heat_pump).where(
+                        cop_heat_pump > 0, 0.0
+                    ),
+                    p_min_pu=-1,
+                    p_max_pu=0,
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -3416,9 +3426,9 @@ def add_heat(
                     nodes,
                     suffix=f" {heat_system} ptes resistive heater",
                     bus0=nodes,
-                    bus1=nodes + f" {heat_system} water pits boosting",  # boosting
+                    bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} resistive heater",
+                    carrier=f"{heat_system} ptes resistive heater",
                     efficiency=-(
                         costs.at[key, "efficiency"] / ptes_temperature_boost_ratio
                     ).where(ptes_temperature_boost_ratio > 0, 0.0),
@@ -6238,9 +6248,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
+            clusters="8",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
