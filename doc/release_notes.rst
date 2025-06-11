@@ -29,13 +29,15 @@ Release Notes
 
 **Changes**
 
+* Added resistive heaters as a temperature boosting technology for PTES. Additionally, the heat pump booster now uses ambient air as its heat source for boosting.
+
 * Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
 
 * Improved balance map plotting: Carriers in the balance map legends which can serve as both supply and consumption (e.g. H2 for industry) are now placed in the legend category where its total absolute value is larger in the total system balance.
 
 * Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
 
-* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
+* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` .
 
 * Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
 

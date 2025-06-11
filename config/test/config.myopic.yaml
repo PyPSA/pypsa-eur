@@ -39,7 +39,10 @@ sector:
     ptes:
       supplemental_heating:
         enable: true
-        booster_heat_pump: true
+        booster_technologies: ["heat_pump", "resistive_heaters"]
+  heat_pump_sources:
+    urban central:
+    - ptes
 
 electricity:
   extendable_carriers:
