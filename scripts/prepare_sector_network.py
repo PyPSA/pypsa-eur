@@ -5902,10 +5902,10 @@ def add_shipping(
     shipping_oil_share = get(options["shipping_oil_share"], investment_year)
 
     co2_limit = get(snakemake.params.co2_budget, investment_year)
-    if co2_limit == 1:
+    if co2_limit >= 1:
         shipping_methanol_share = 0
         shipping_oil_share = 1- shipping_methanol_share
-    elif options["endo_industry"]["policy_scenario"] == 'deindustrial':
+    else:
         shipping_methanol_share /= 2
         shipping_oil_share = 1- shipping_methanol_share
 
