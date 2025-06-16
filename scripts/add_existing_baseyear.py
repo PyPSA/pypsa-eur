@@ -68,6 +68,7 @@ def add_existing_renewables(
     costs: pd.DataFrame,
     df_agg: pd.DataFrame,
     countries: list[str],
+    renewable_carriers: list[str],
 ) -> None:
     """
     Add existing renewable capacities to conventional power plant data.
@@ -82,6 +83,8 @@ def add_existing_renewables(
         Network containing topology and generator data
     countries : list
         List of country codes to consider
+    renewable_carriers: list
+        List of renewable carriers in the network
 
     Returns
     -------
@@ -97,45 +100,46 @@ def add_existing_renewables(
     irena = irena.unstack().reset_index()
 
     for carrier, tech in tech_map.items():
-        df = (
-            irena[irena.Technology.str.contains(tech)]
-            .drop(columns=["Technology"])
-            .set_index("Country")
-        )
-        df.columns = df.columns.astype(int)
+        if carrier in renewable_carriers:
+            df = (
+                irena[irena.Technology.str.contains(tech)]
+                .drop(columns=["Technology"])
+                .set_index("Country")
+            )
+            df.columns = df.columns.astype(int)
 
-        # calculate yearly differences
-        df.insert(loc=0, value=0.0, column="1999")
-        df = df.diff(axis=1).drop("1999", axis=1).clip(lower=0)
+            # calculate yearly differences
+            df.insert(loc=0, value=0.0, column="1999")
+            df = df.diff(axis=1).drop("1999", axis=1).clip(lower=0)
 
-        # distribute capacities among generators potential (p_nom_max)
-        gen_i = n.generators.query("carrier == @carrier").index
-        carrier_gens = n.generators.loc[gen_i]
-        res_capacities = []
-        for country, group in carrier_gens.groupby(
-            carrier_gens.bus.map(n.buses.country)
-        ):
-            fraction = group.p_nom_max / group.p_nom_max.sum()
-            res_capacities.append(cartesian(df.loc[country], fraction))
-        res_capacities = pd.concat(res_capacities, axis=1).T
+            # distribute capacities among generators potential (p_nom_max)
+            gen_i = n.generators.query("carrier == @carrier").index
+            carrier_gens = n.generators.loc[gen_i]
+            res_capacities = []
+            for country, group in carrier_gens.groupby(
+                carrier_gens.bus.map(n.buses.country)
+            ):
+                fraction = group.p_nom_max / group.p_nom_max.sum()
+                res_capacities.append(cartesian(df.loc[country], fraction))
+            res_capacities = pd.concat(res_capacities, axis=1).T
 
-        for year in res_capacities.columns:
-            for gen in res_capacities.index:
-                bus_bin = re.sub(f" {carrier}.*", "", gen)
-                bus, bin_id = bus_bin.rsplit(" ", maxsplit=1)
-                name = f"{bus_bin} {carrier}-{year}"
-                capacity = res_capacities.loc[gen, year]
-                if capacity > 0.0:
-                    cost_key = carrier.split("-", maxsplit=1)[0]
-                    df_agg.at[name, "Fueltype"] = carrier
-                    df_agg.at[name, "Capacity"] = capacity
-                    df_agg.at[name, "DateIn"] = year
-                    df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
-                    df_agg.at[name, "DateOut"] = (
-                        year + costs.at[cost_key, "lifetime"] - 1
-                    )
-                    df_agg.at[name, "bus"] = bus
-                    df_agg.at[name, "resource_class"] = bin_id
+            for year in res_capacities.columns:
+                for gen in res_capacities.index:
+                    bus_bin = re.sub(f" {carrier}.*", "", gen)
+                    bus, bin_id = bus_bin.rsplit(" ", maxsplit=1)
+                    name = f"{bus_bin} {carrier}-{year}"
+                    capacity = res_capacities.loc[gen, year]
+                    if capacity > 0.0:
+                        cost_key = carrier.split("-", maxsplit=1)[0]
+                        df_agg.at[name, "Fueltype"] = carrier
+                        df_agg.at[name, "Capacity"] = capacity
+                        df_agg.at[name, "DateIn"] = year
+                        df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
+                        df_agg.at[name, "DateOut"] = (
+                            year + costs.at[cost_key, "lifetime"] - 1
+                        )
+                        df_agg.at[name, "bus"] = bus
+                        df_agg.at[name, "resource_class"] = bin_id
 
     df_agg["resource_class"] = df_agg["resource_class"].fillna(0)
 
@@ -149,6 +153,7 @@ def add_power_capacities_installed_before_baseyear(
     countries: list[str],
     capacity_threshold: float,
     lifetime_values: dict[str, float],
+    renewable_carriers: list[str],
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -171,6 +176,8 @@ def add_power_capacities_installed_before_baseyear(
         Minimum capacity threshold
     lifetime_values : dict
         Default values for missing data
+    renewable_carriers: list
+        List of renewable carriers in the network
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -223,6 +230,7 @@ def add_power_capacities_installed_before_baseyear(
         costs=costs,
         n=n,
         countries=countries,
+        renewable_carriers=renewable_carriers,
     )
     # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
@@ -719,6 +727,8 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
 
+    renewable_carriers = snakemake.params.carriers
+
     baseyear = snakemake.params.baseyear
 
     n = pypsa.Network(snakemake.input.network)
@@ -745,6 +755,7 @@ if __name__ == "__main__":
         countries=snakemake.config["countries"],
         capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
         lifetime_values=snakemake.params.costs["fill_values"],
+        renewable_carriers=renewable_carriers,
     )
 
     if options["heating"]:
