@@ -22,8 +22,9 @@ district_heating,--,,
 -- ptes,,,
 -- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent energy capacity of pit storage in district heating
 -- -- supplemental_heating,,,
--- -- -- enable,--,"{true, false}",Add option to enable supplemental heating of pit storage in district heating
--- -- -- booster_heat_pump: true,--,"{true, false}",Add option to enable a booster heat pump for supplemental heating of pit storage in district heating
+-- -- -- enable,--,"{true, false}",Add option to enable supplemental heating of pit storage (PTES) in district heating
+-- -- -- booster_technologies,--,List of booster technologies suitable for supplemental heating of PTES. Must be subset of ['heat_pump';
+          'resistive_heaters'],
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- ates,,,
@@ -47,6 +48,7 @@ district_heating,--,,
 -- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
+-- -- min_delta_t_lift,--,float,Minimum feasible temperature lift for heat pumps assumed for approximation.
 -- limited_heat_sources,--,Dictionary with names of limited heat sources (not air) for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) is used,
 -- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
