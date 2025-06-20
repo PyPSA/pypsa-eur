@@ -3101,8 +3101,6 @@ def add_heat(
                     ] = energy_to_power_ratio_water_pit
 
                 else:
-                    ptes_supplemental_heating_required = 1
-
                     n.add(
                         "Link",
                         nodes,
@@ -3113,8 +3111,7 @@ def add_heat(
                         efficiency=costs.at[
                             "central water pit discharger",
                             "efficiency",
-                        ]
-                        * ptes_supplemental_heating_required,
+                        ],
                         p_nom_extendable=True,
                         lifetime=costs.at["central water pit storage", "lifetime"],
                     )
@@ -3414,11 +3411,11 @@ def add_heat(
                 n.add(
                     "Link",
                     nodes,
-                    suffix=f" {heat_system} ptes resistive heater",
+                    suffix=f" {heat_system} water pits resistive heater",
                     bus0=nodes,
                     bus1=nodes + f" {heat_system} water pits boosting",
                     bus2=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} ptes resistive heater",
+                    carrier=f"{heat_system} water pits resistive heater",
                     efficiency=-(
                         costs.at[key, "efficiency"] / ptes_temperature_boost_ratio
                     ).where(ptes_temperature_boost_ratio > 0, 0.0),
@@ -6238,9 +6235,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
+            clusters="8",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
