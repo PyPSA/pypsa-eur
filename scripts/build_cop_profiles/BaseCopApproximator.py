@@ -16,14 +16,14 @@ class BaseCopApproximator(ABC):
 
     Attributes
     ----------
-    forward_temperature_celsius : Union[xr.DataArray, np.array]
-        The forward temperature in Celsius.
+    sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The sink outlet temperature in Celsius.
     source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
         The source inlet temperature in Celsius.
 
     Methods
     -------
-    __init__(self, forward_temperature_celsius, source_inlet_temperature_celsius)
+    __init__(self, sink_outlet_temperature_celsius, source_inlet_temperature_celsius)
         Initialize CopApproximator.
     approximate_cop(self)
         Approximate heat pump coefficient of performance (COP).
@@ -35,7 +35,7 @@ class BaseCopApproximator(ABC):
 
     def __init__(
         self,
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
     ):
         """
@@ -43,8 +43,8 @@ class BaseCopApproximator(ABC):
 
         Parameters
         ----------
-        forward_temperature_celsius : Union[xr.DataArray, np.array]
-            The forward temperature in Celsius.
+        sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+            The sink outlet temperature in Celsius.
         source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
             The source inlet temperature in Celsius.
         """
@@ -105,6 +105,10 @@ class BaseCopApproximator(ABC):
         Union[float, xr.DataArray, np.ndarray]
             Logarithmic mean temperature difference.
         """
-        if (np.asarray(t_hot <= t_cold)).any():
+        if (np.asarray(t_hot < t_cold)).any():
             raise ValueError("t_hot must be greater than t_cold")
-        return (t_hot - t_cold) / np.log(t_hot / t_cold)
+        return xr.where(
+            t_hot == t_cold,
+            t_hot,
+            (t_hot - t_cold) / np.log(t_hot / t_cold),
+        )
