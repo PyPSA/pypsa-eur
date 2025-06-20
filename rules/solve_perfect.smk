@@ -6,6 +6,7 @@ rule add_existing_baseyear:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
