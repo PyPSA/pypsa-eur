@@ -987,6 +987,7 @@ solving:
 
   agg_p_nom_limits:
     agg_offwind: false
+    agg_solar: false
     include_existing: false
     file: data/agg_p_nom_minmax.csv
 

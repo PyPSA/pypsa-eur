@@ -564,6 +564,13 @@ def add_CCL_constraints(
             "offwind": "offwind-all",
         }
         gens = gens.replace(rename_offwind)
+    if config["solving"]["agg_p_nom_limits"]["agg_solar"]:
+        rename_solar = {
+            "solar": "solar-all",
+            "solar-hsat": "solar-all",
+            "solar rooftop": "solar-all",
+        }
+        gens = gens.replace(rename_solar)
     grouper = pd.concat([gens.bus.map(n.buses.country), gens.carrier], axis=1)
     lhs = p_nom.groupby(grouper).sum().rename(bus="country")
 
@@ -576,6 +583,8 @@ def add_CCL_constraints(
         ]
         if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
             gens_cst = gens_cst.replace(rename_offwind)
+        if config["solving"]["agg_p_nom_limits"]["agg_solar"]:
+            gens_cst = gens_cst.replace(rename_solar)
         rhs_cst = (
             pd.concat(
                 [gens_cst.bus.map(n.buses.country), gens_cst[["carrier", "p_nom"]]],
