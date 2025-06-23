@@ -54,6 +54,8 @@ Release Notes
   SVG output format has also been added for these graphs, and error handling during 
   graph generation has been enhanced.
 
+* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies.
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
