@@ -3298,9 +3298,7 @@ def add_heat(
                     )
 
             if (
-                options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]
+                options["district_heating"]["ptes"]["supplemental_heating"]["enable"]
                 and not options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_technologies"
                 ]
@@ -3381,9 +3379,7 @@ def add_heat(
             )
 
             if (
-                options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]
+                options["district_heating"]["ptes"]["supplemental_heating"]["enable"]
                 and not options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_technologies"
                 ]
