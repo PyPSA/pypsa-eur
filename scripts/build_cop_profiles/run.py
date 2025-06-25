@@ -23,7 +23,6 @@ Relevant Settings
                 isentropic_compressor_efficiency:
                 heat_loss:
                 min_delta_t_lift:
-                min_delta_t_condenser:
             heat_pump_sources:
                 urban central:
                 urban decentral:

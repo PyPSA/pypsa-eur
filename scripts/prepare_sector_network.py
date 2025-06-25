@@ -3090,8 +3090,7 @@ def add_heat(
                             "central water pit discharger",
                             "efficiency",
                         ]
-                        * (ptes_supplemental_heating_required - 1)
-                        * (-1),
+                        * (1 - ptes_supplemental_heating_required),
                         p_nom_extendable=True,
                         lifetime=costs.at["central water pit storage", "lifetime"],
                     )
@@ -3299,16 +3298,15 @@ def add_heat(
                     )
 
             if (
-                not options["district_heating"]["ptes"]["supplemental_heating"][
+                options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and "heat_pump"
-                in options["district_heating"]["ptes"]["supplemental_heating"][
+                and not options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_technologies"
                 ]
             ):
                 raise ValueError(
-                    "Supplemental heating: 'booster_technologies' contains 'heat_pump', but 'enable' is false."
+                    "'booster_technologies' must not be empty when supplemental heating is enabled."
                 )
 
             if (
@@ -3383,17 +3381,17 @@ def add_heat(
             )
 
             if (
-                not options["district_heating"]["ptes"]["supplemental_heating"][
+                options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and "resistive_heaters"
-                in options["district_heating"]["ptes"]["supplemental_heating"][
+                and not options["district_heating"]["ptes"]["supplemental_heating"][
                     "booster_technologies"
                 ]
             ):
                 raise ValueError(
-                    "Supplemental heating: 'booster_technologies' contains 'resistive_heaters', but 'enable' is false."
+                    "'booster_technologies' must not be empty when supplemental heating is enabled."
                 )
+
             if (
                 "resistive_heaters"
                 in options["district_heating"]["ptes"]["supplemental_heating"][
