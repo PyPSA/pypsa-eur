@@ -51,7 +51,9 @@ dependencies:
 - pyxlsb
 - graphviz
 - geojson
+- copernicusmarine
 - pyscipopt
+- plotly
 
 # GIS dependencies:
 - cartopy

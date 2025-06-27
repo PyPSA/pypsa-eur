@@ -714,6 +714,34 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
+    rule seawater_temperature:
+        output:
+            seawater_temperature="data/seawater_temperature.nc",
+        log:
+            "logs/retrieve_seawater_data.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        shell:
+            """
+            wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
+            """
+
+    rule retrieve_hera_data:
+        output:
+            river_discharge="data/hera/river_discharge_2013.nc",
+            ambient_temperature="data/hera/ambient_temperature_2013.nc",
+        log:
+            "logs/retrieve_hera_data.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        shell:
+            """
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA2013.nc -O {output.river_discharge}
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_2013.nc -O {output.ambient_temperature}
+            """
+
 
 if config["enable"]["retrieve"]:
 

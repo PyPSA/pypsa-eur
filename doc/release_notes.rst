@@ -17,6 +17,8 @@ Release Notes
 
 * Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
 
+* Added support for river-water and sea-water sourced heat pumps. This is enabled by setting `sector: district_heating: heat_pump_sources:` accordingly.
+
 **Breaking Changes**
 
 * Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
