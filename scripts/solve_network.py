@@ -402,8 +402,12 @@ def add_retrofit_gas_boiler_constraint(
     dispatch = n.model["Link-p"]
     active = get_activity_mask(n, c, snapshots, gas_i)
     rhs = rhs[active]
-    p_gas = dispatch.sel(Link=gas_i)
-    p_h2 = dispatch.sel(Link=h2_i)
+    if PYPSA_V1:
+        p_gas = dispatch.sel(name=gas_i)
+        p_h2 = dispatch.sel(name=h2_i)
+    else:
+        p_gas = dispatch.sel(Link=gas_i)
+        p_h2 = dispatch.sel(Link=h2_i)
 
     lhs = p_gas + p_h2
 
