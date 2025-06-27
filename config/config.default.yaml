@@ -435,6 +435,7 @@ solar_thermal:
 existing_capacities:
   grouping_years_power: [1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # heat grouping years >= baseyear will be ignored
+  grouping_years_industry: [1995, 2000, 2005, 2010, 2015, 2020, 2025]
   threshold_capacity: 10
   default_heating_lifetime: 20
   conventional_carriers:
@@ -770,7 +771,7 @@ sector:
     var_cf: true
     sustainability_factor: 0.0025
   solid_biomass_import:
-    enable: false
+    enable: true
     price: 54 #EUR/MWh
     max_amount: 1390 # TWh
     upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
@@ -937,7 +938,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 8760H
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
