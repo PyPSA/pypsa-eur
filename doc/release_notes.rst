@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Invalid aquifer shape geometries are now fixed in `build_ates_potentials.py` (fixing https://github.com/PyPSA/pypsa-eur/issues/1696)
+
 * Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
 
 * (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
