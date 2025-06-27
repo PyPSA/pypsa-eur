@@ -100,46 +100,47 @@ def add_existing_renewables(
     irena = irena.unstack().reset_index()
 
     for carrier, tech in tech_map.items():
-        if carrier in renewable_carriers:
-            df = (
-                irena[irena.Technology.str.contains(tech)]
-                .drop(columns=["Technology"])
-                .set_index("Country")
-            )
-            df.columns = df.columns.astype(int)
+        if carrier not in renewable_carriers:
+            continue
+        df = (
+            irena[irena.Technology.str.contains(tech)]
+            .drop(columns=["Technology"])
+            .set_index("Country")
+        )
+        df.columns = df.columns.astype(int)
 
-            # calculate yearly differences
-            df.insert(loc=0, value=0.0, column="1999")
-            df = df.diff(axis=1).drop("1999", axis=1).clip(lower=0)
+        # calculate yearly differences
+        df.insert(loc=0, value=0.0, column="1999")
+        df = df.diff(axis=1).drop("1999", axis=1).clip(lower=0)
 
-            # distribute capacities among generators potential (p_nom_max)
-            gen_i = n.generators.query("carrier == @carrier").index
-            carrier_gens = n.generators.loc[gen_i]
-            res_capacities = []
-            for country, group in carrier_gens.groupby(
-                carrier_gens.bus.map(n.buses.country)
-            ):
-                fraction = group.p_nom_max / group.p_nom_max.sum()
-                res_capacities.append(cartesian(df.loc[country], fraction))
-            res_capacities = pd.concat(res_capacities, axis=1).T
+        # distribute capacities among generators potential (p_nom_max)
+        gen_i = n.generators.query("carrier == @carrier").index
+        carrier_gens = n.generators.loc[gen_i]
+        res_capacities = []
+        for country, group in carrier_gens.groupby(
+            carrier_gens.bus.map(n.buses.country)
+        ):
+            fraction = group.p_nom_max / group.p_nom_max.sum()
+            res_capacities.append(cartesian(df.loc[country], fraction))
+        res_capacities = pd.concat(res_capacities, axis=1).T
 
-            for year in res_capacities.columns:
-                for gen in res_capacities.index:
-                    bus_bin = re.sub(f" {carrier}.*", "", gen)
-                    bus, bin_id = bus_bin.rsplit(" ", maxsplit=1)
-                    name = f"{bus_bin} {carrier}-{year}"
-                    capacity = res_capacities.loc[gen, year]
-                    if capacity > 0.0:
-                        cost_key = carrier.split("-", maxsplit=1)[0]
-                        df_agg.at[name, "Fueltype"] = carrier
-                        df_agg.at[name, "Capacity"] = capacity
-                        df_agg.at[name, "DateIn"] = year
-                        df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
-                        df_agg.at[name, "DateOut"] = (
-                            year + costs.at[cost_key, "lifetime"] - 1
-                        )
-                        df_agg.at[name, "bus"] = bus
-                        df_agg.at[name, "resource_class"] = bin_id
+        for year in res_capacities.columns:
+            for gen in res_capacities.index:
+                bus_bin = re.sub(f" {carrier}.*", "", gen)
+                bus, bin_id = bus_bin.rsplit(" ", maxsplit=1)
+                name = f"{bus_bin} {carrier}-{year}"
+                capacity = res_capacities.loc[gen, year]
+                if capacity > 0.0:
+                    cost_key = carrier.split("-", maxsplit=1)[0]
+                    df_agg.at[name, "Fueltype"] = carrier
+                    df_agg.at[name, "Capacity"] = capacity
+                    df_agg.at[name, "DateIn"] = year
+                    df_agg.at[name, "lifetime"] = costs.at[cost_key, "lifetime"]
+                    df_agg.at[name, "DateOut"] = (
+                        year + costs.at[cost_key, "lifetime"] - 1
+                    )
+                    df_agg.at[name, "bus"] = bus
+                    df_agg.at[name, "resource_class"] = bin_id
 
     df_agg["resource_class"] = df_agg["resource_class"].fillna(0)
 
