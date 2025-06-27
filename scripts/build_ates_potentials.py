@@ -391,6 +391,8 @@ if __name__ == "__main__":
     aquifer_shapes = gpd.read_file(snakemake.input.aquifer_shapes_shp).to_crs(
         regions_onshore.crs
     )
+    # fix any invalid geometries
+    aquifer_shapes.geometry = aquifer_shapes.geometry.make_valid()
 
     dh_areas = gpd.read_file(snakemake.input.dh_areas).to_crs(regions_onshore.crs)
 
