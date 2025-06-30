@@ -1,13 +1,12 @@
-"source_name","version","recency","url","description","license"
-"osm","0.1","old","https://zenodo.org/records/12799202","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"osm","0.2","old","https://zenodo.org/records/13342577","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"osm","0.3","old","https://zenodo.org/records/13358976","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"osm","0.4","old","https://zenodo.org/records/13759222","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"osm","0.5","old","https://zenodo.org/records/13981528","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"osm","0.6","latest","https://zenodo.org/records/14144752","Pre-built data of high-voltage transmission grid in Europe from OpenStreetMap.","ODbL"
-"worldbank_urban_population","upstream","upstream","https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv","Contains share of urban population by country, for details see https://data.worldbank.org/indicator/SP.URB.TOTL.IN.ZS .","CC BY 4.0"
-"worldbank_urban_population","2025-05-07","latest","https://sandbox.zenodo.org/records/214937/files/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_86733.zip","Contains share of urban population by country, for details see https://data.worldbank.org/indicator/SP.URB.TOTL.IN.ZS .","CC BY 4.0"
-"gem_gspt","April-2024-V1","latest","https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx","Global Steel Plant Tracker by the Global Energy Monitor, tracking steel plants globally including details on exact location, production technologies, capacities.",CC BY 4.0
-# Original of the TUB mirror, for details see https://github.com/PyPSA/pypsa-eur/pull/1265
-# "gem_gspt","April-2024-V1","latest","https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx","Global Steel Plant Tracker by the Global Energy Monitor, tracking steel plants globally including details on exact location, production technologies, capacities.","CC BY 4.0"
-"gem_gspt","upstream","not supported","https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx","Global Steel Plant Tracker by the Global Energy Monitor, tracking steel plants globally including details on exact location, production technologies, capacities.",CC BY 4.0
+"dataset","source","version","tags","url","note"
+"gem_gspt","primary","March-2025-V1","['not-supported']",https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx",""
+"gem_gspt","primary","April-2024-V1","['latest','supported']","https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",""
+"gem_gspt","archive","April-2024-V1","['latest','supported']","https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx","Original of the TUB mirror, for details see https://github.com/PyPSA/pypsa-eur/pull/1265"
+"osm","archive","0.1","['deprecated','not-supported']","https://zenodo.org/records/12799202",""
+"osm","archive","0.2","['deprecated','not-supported']","https://zenodo.org/records/13342577",""
+"osm","archive","0.3","['deprecated','not-supported']","https://zenodo.org/records/13358976",""
+"osm","archive","0.4","['deprecated','not-supported']","https://zenodo.org/records/13759222",""
+"osm","archive","0.5","['deprecated','not-supported']","https://zenodo.org/records/13981528",""
+"osm","archive","0.6","['latest','supported']","https://zenodo.org/records/14144752",""
+"worldbank_urban_population","primary","unknown","['latest','might-work']","https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv","This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice."
+"worldbank_urban_population","archive","2025-05-07","['latest','supported']","https://sandbox.zenodo.org/records/214937/files/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_86733.zip",
