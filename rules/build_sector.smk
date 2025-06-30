@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent=f"data/worldbank_urban_population/{get_data_version('worldbank_urban_population')}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+        urban_percent=rules.retrieve_worldbank_urban_population.output["csv"],
         cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
     output:
         pop_layout_total=resources("pop_layout_total.nc"),

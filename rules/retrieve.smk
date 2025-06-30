@@ -372,15 +372,17 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["data"]["worldbank_urban_population"]["source"] in ["build", "archive"]:
-    WB_URB_POP_VERSION = get_data_version(source_name="worldbank_urban_population")
+if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            url=get_data_url(source_name="worldbank_urban_population"),
+            url=WB_URB_POP_DATASET["url"],
         output:
-            zip=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
-            csv=f"data/worldbank_urban_population/{WB_URB_POP_VERSION}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+            zip=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            csv=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
             import os
             import requests
@@ -419,14 +421,16 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["data"]["gem_gspt"]["source"] in ["build", "archive"]:
-    GEM_GSPT_VERSION = get_data_version("gem_gspt")
+if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_gem_steel_plant_tracker:
         input:
-            xlsx=storage(get_data_url("gem_gspt")),
+            xlsx=storage(GEM_GSPT_DATASET["url"]),
         output:
-            xlsx=f"data/gem_gspt/{GEM_GSPT_VERSION}/Global-Steel-Plant-Tracker.xlsx",
+            xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
             os.rename(input.xlsx, output.xlsx)
 
@@ -545,26 +549,27 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["data"]["osm"]["source"] == "archive":
-    OSM_VERSION = get_data_version("osm")
+if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
     OSM_FILES = [
         "buses.csv",
         "converters.csv",
         "lines.csv",
         "links.csv",
         "transformers.csv",
-    ]
-    if float(OSM_VERSION) >= 0.6:
         # Newer versions include the additional map.html file for visualisation
-        OSM_FILES.append("map.html")
+        *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
+    ]
 
-    OSM_URL = get_data_url(source_name="osm")
+    OSM_URL = dataset_version("osm")["url"]
 
     rule retrieve_osm_archive:
         input:
-            **{file: storage(f"{OSM_URL}/files/{file}") for file in OSM_FILES},
+            **{
+                file: storage(f"{OSM_DATASET['url']}/files/{file}")
+                for file in OSM_FILES
+            },
         output:
-            **{file: f"data/osm/{OSM_VERSION}/{file}" for file in OSM_FILES},
+            **{file: f"{OSM_DATASET['folder']}/{file}" for file in OSM_FILES},
         log:
             "logs/retrieve_osm_archive.log",
         threads: 1
@@ -576,17 +581,24 @@ if config["data"]["osm"]["source"] == "archive":
                 validate_checksum(output[key], input[key])
 
 
+elif OSM_DATASET["source"] == "build":
 
-if config["data"]["osm"]["source"] == "build":
-    OSM_VERSION = get_data_version("osm")
+    OSM_FILES = [
+        "cables_way.json",
+        "lines_way.json",
+        "routes_relation.json",
+        "substations_way.json",
+        "substations_relation.json",
+    ]
 
     rule retrieve_osm_raw:
         output:
-            cables_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/cables_way.json",
-            lines_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/lines_way.json",
-            routes_relation=f"data/osm/{OSM_VERSION}/raw/{{country}}/routes_relation.json",
-            substations_way=f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_way.json",
-            substations_relation=f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_relation.json",
+            **{
+                file.replace(
+                    ".json", ""
+                ): f"{OSM_DATASET['folder']}/raw/{{country}}/{file}"
+                for file in files
+            },
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
@@ -598,24 +610,9 @@ if config["data"]["osm"]["source"] == "build":
     rule retrieve_osm_raw_all:
         input:
             expand(
-                f"data/osm/{OSM_VERSION}/raw/{{country}}/cables_way.json",
+                f"{OSM_DATASET['folder']}/raw/{{country}}/{{file}}",
                 country=config_provider("countries"),
-            ),
-            expand(
-                f"data/osm/{OSM_VERSION}/raw/{{country}}/lines_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                f"data/osm/{OSM_VERSION}/raw/{{country}}/routes_relation.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                f"data/osm/{OSM_VERSION}/raw/{{country}}/substations_relation.json",
-                country=config_provider("countries"),
+                file=OSM_FILES,
             ),
 
 
