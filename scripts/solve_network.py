@@ -45,6 +45,7 @@ from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     get,
     set_scenario_config,
@@ -196,7 +197,7 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
         "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
         / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
     }
-    rename = {"Generator-ext": "Generator"}
+    rename = {} if PYPSA_V1 else {"Generator-ext": "Generator"}
 
     solar_carriers = ["solar", "solar-hsat"]
     solar = n.generators[
@@ -401,8 +402,12 @@ def add_retrofit_gas_boiler_constraint(
     dispatch = n.model["Link-p"]
     active = get_activity_mask(n, c, snapshots, gas_i)
     rhs = rhs[active]
-    p_gas = dispatch.sel(Link=gas_i)
-    p_h2 = dispatch.sel(Link=h2_i)
+    if PYPSA_V1:
+        p_gas = dispatch.sel(name=gas_i)
+        p_h2 = dispatch.sel(name=h2_i)
+    else:
+        p_gas = dispatch.sel(Link=gas_i)
+        p_h2 = dispatch.sel(Link=h2_i)
 
     lhs = p_gas + p_h2
 
@@ -556,11 +561,16 @@ def add_CCL_constraints(
     logger.info("Adding generation capacity constraints per carrier and country")
     p_nom = n.model["Generator-p_nom"]
 
-    gens = n.generators.query("p_nom_extendable").rename_axis(index="Generator-ext")
+    gens = n.generators.query("p_nom_extendable")
+
+    if not PYPSA_V1:
+        gens = gens.rename_axis(index="Generator-ext")
+
     if config["solving"]["agg_p_nom_limits"]["agg_offwind"]:
         rename_offwind = {
             "offwind-ac": "offwind-all",
             "offwind-dc": "offwind-all",
+            "offwind-float": "offwind-all",
             "offwind": "offwind-all",
         }
         gens = gens.replace(rename_offwind)
@@ -706,7 +716,9 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
     mincaps = pd.Series(config["electricity"]["BAU_mincapacities"])
     p_nom = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
-    ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
+    ext_carrier_i = xr.DataArray(ext_i.carrier)
+    if not PYPSA_V1:
+        ext_carrier_i = ext_carrier_i.rename_axis("Generator-ext")
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
@@ -786,11 +798,9 @@ def add_operational_reserve_margin(n, sns, config):
     vres_i = n.generators_t.p_max_pu.columns
     if not ext_i.empty and not vres_i.empty:
         capacity_factor = n.generators_t.p_max_pu[vres_i.intersection(ext_i)]
-        p_nom_vres = (
-            n.model["Generator-p_nom"]
-            .loc[vres_i.intersection(ext_i)]
-            .rename({"Generator-ext": "Generator"})
-        )
+        p_nom_vres = n.model["Generator-p_nom"].loc[vres_i.intersection(ext_i)]
+        if not PYPSA_V1:
+            p_nom_vres = p_nom_vres.rename({"Generator-ext": "Generator"})
         lhs = summed_reserve + (
             p_nom_vres * (-EPSILON_VRES * xr.DataArray(capacity_factor))
         ).sum("Generator")
@@ -816,9 +826,9 @@ def add_operational_reserve_margin(n, sns, config):
     dispatch = n.model["Generator-p"]
     reserve = n.model["Generator-r"]
 
-    capacity_variable = n.model["Generator-p_nom"].rename(
-        {"Generator-ext": "Generator"}
-    )
+    capacity_variable = n.model["Generator-p_nom"]
+    if not PYPSA_V1:
+        capacity_variable = capacity_variable.rename({"Generator-ext": "Generator"})
     capacity_fixed = n.generators.p_nom[fix_i]
 
     p_max_pu = get_as_dense(n, "Generator", "p_max_pu")
@@ -885,8 +895,9 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
         linear_expr_list.append(linear_expr)
 
     # Merge the individual expressions
+    dim = "Store-ext, Link-ext" if PYPSA_V1 else "name"
     merged_expr = linopy.expressions.merge(
-        linear_expr_list, dim="Store-ext, Link-ext", cls=type(linear_expr_list[0])
+        linear_expr_list, dim=dim, cls=type(linear_expr_list[0])
     )
 
     n.model.add_constraints(merged_expr == 0, name="TES_energy_to_power_ratio")
@@ -1022,7 +1033,7 @@ def add_chp_constraints(n):
         )
         n.model.add_constraints(lhs == 0, name="chplink-fix_p_nom_ratio")
 
-        rename = {"Link-ext": "Link"}
+        rename = {} if PYPSA_V1 else {"Link-ext": "Link"}
         lhs = (
             p.loc[:, electric_ext]
             + p.loc[:, heat_ext]
@@ -1065,7 +1076,9 @@ def add_pipe_retrofit_constraint(n):
 
     CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
-    rhs = n.links.p_nom[gas_pipes_i].rename_axis("Link-ext")
+    rhs = n.links.p_nom[gas_pipes_i]
+    if not PYPSA_V1:
+        rhs = rhs.rename_axis("Link-ext")
 
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 

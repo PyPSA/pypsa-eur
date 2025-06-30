@@ -14,6 +14,7 @@ from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicirc
 from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
@@ -122,7 +123,8 @@ if __name__ == "__main__":
     buses = n.buses.query("carrier in @carrier").index
     weights = n.snapshot_weightings.generators
     prices = weights @ n.buses_t.marginal_price[buses] / weights.sum()
-    price = prices.rename(n.buses.location).groupby(level="Bus").mean()
+    level = "name" if PYPSA_V1 else "Bus"
+    price = prices.rename(n.buses.location).groupby(level=level).mean()
 
     if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
         co2_price = n.global_constraints.loc["CO2Limit", "mu"]

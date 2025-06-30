@@ -837,7 +837,7 @@ def voronoi(points, outline, crs=4326):
         voronoi = gpd.GeoDataFrame(geometry=voronoi)
         joined = gpd.sjoin_nearest(pts, voronoi, how="right")
 
-    return joined.dissolve(by="Bus").reindex(points.index).squeeze()
+    return joined.dissolve(by="name").reindex(points.index).squeeze()
 
 
 def process_onshore_regions(
@@ -856,6 +856,7 @@ def process_onshore_regions(
         .drop_duplicates(subset=["x", "y", "country"], keep="first")[
             ["x", "y", "country"]
         ]
+        .rename_axis("name")
     )
     onshore_regions_adm = gpd.GeoDataFrame(
         {
@@ -891,7 +892,9 @@ def process_offshore_regions(
 
         c_b = buses.country == country
         offshore_shape = offshore_shapes[country]
-        offshore_locs = buses.loc[c_b & buses.substation_off, ["x", "y"]]
+        offshore_locs = buses.loc[c_b & buses.substation_off, ["x", "y"]].rename_axis(
+            "name"
+        )
         offshore_regions_c = gpd.GeoDataFrame(
             {
                 "name": offshore_locs.index,
