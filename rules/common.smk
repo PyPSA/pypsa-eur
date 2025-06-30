@@ -8,6 +8,7 @@ from functools import partial, lru_cache
 import os, sys, glob
 
 import pandas as pd
+import json
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
@@ -80,72 +81,74 @@ def config_provider(*keys, default=None):
         return partial(static_getter, keys=keys, default=default)
 
 
-DATA_VERSIONS = pd.read_csv(
-    "data/versions.csv", dtype=str, na_filter=False, delimiter=",", comment="#"
-)
-
-
-def get_data_version(source_name: str) -> str:
+def dataset_version(
+    name: str,
+) -> pd.Series:
     """
-    Provide the version of a data source based on the config and the data/versions.csv file.
+    Return the dataset version information and url for a given dataset name.
 
-    This translates special cases to specific versions, i.e.
-    * a lookup to the latest version if 'latest' is specified based on data/versions.csv
-    * returning 'upstream' if the data source in the config is set to 'build' from upstream
+    The dataset name is used to determine the source and version of the dataset from the configuration.
+    Then the 'data/versions.csv' file is queried to find the matching dataset entry.
+
+    Parameters:
+    name: str
+        The name of the dataset to retrieve version information for.
+
+    Returns:
+    pd.Series
+        A pandas Series containing the dataset version information, including source, version, tags, and URL
     """
-    version = config["data"][source_name][
-        "version"
-    ]  # TODO as is right now, it is not compatible with config_provider
-    source = config["data"][source_name][
-        "source"
-    ]  # TODO as is right now, it is not compatible with config_provider
 
-    if version == "latest":
-        # Get version from csv dataframe
-        version = DATA_VERSIONS.query(
-            f"`source_name` == '{source_name}' and `recency` == 'latest'"
-        )["version"]
-
-        # .item() will raise an error, if there isn't exactly one entry
-        # use this for checking that entries in the csv are consistent
-        try:
-            version = version.item()
-        except ValueError as e:
-            raise ValueError(
-                f"No or more than one versions tagged as 'latest' found for source '{source_name}' in `data/versions.csv`. "
-                f"Check the file for correct entries."
-            ) from e
-
-    if source == "build":
-        version = "upstream"
-    elif source == "archive":
-        pass
-    else:
-        raise ValueError(
-            f"Source '{source}' not recognized for data source '{source_name}'."
+    @lru_cache
+    def load_data_versions(file_path):
+        data_versions = pd.read_csv(
+            file_path, dtype=str, na_filter=False, delimiter=",", comment="#"
         )
 
-    return version
+        # Turn 'tags' column from string representation of list to individual columns
+        data_versions["tags"] = data_versions["tags"].apply(
+            lambda x: json.loads(x.replace("'", '"'))
+        )
+        exploded = data_versions.explode("tags")
+        dummies = pd.get_dummies(exploded["tags"], dtype=bool)
+        tags_matrix = dummies.groupby(dummies.index).max()
+        data_versions = data_versions.join(tags_matrix)
 
+        return data_versions
 
-def get_data_url(source_name: str):
-    """
-    Return the URL for a specific data source by taking into account the version set in the config.
-    """
+    dataset_config = config["data"][
+        name
+    ]  # TODO as is right now, it is not compatible with config_provider
+    data_versions = load_data_versions("data/versions.csv")
 
-    # Get and resolve the version
-    version = get_data_version(source_name)
+    assert not all(
+        {"version" in dataset_config, "latest" in dataset_config}
+    ), f"You cannot specify both 'version' and 'latest' in the dataset config for dataset '{name}'"
 
-    # Extract the URL
-    version = DATA_VERSIONS.query(
-        f"`source_name` == '{source_name}' and `version` == '{version}'"
-    )
+    dataset = data_versions.loc[
+        (data_versions["dataset"] == name)
+        & (data_versions["source"] == dataset_config["source"])
+        & (data_versions["supported"])  # Limit to supported versions only
+        & (
+            data_versions["version"] == dataset_config["version"]
+            if "version" in dataset_config
+            else True
+        )
+        & (data_versions["latest"] if "latest" in dataset_config else True)
+    ]
 
-    # Consistency check
-    if version.empty:
-        raise ValueError(f"Version '{version}' not found for source '{source_name}'.")
+    if dataset.empty:
+        raise ValueError(
+            f"Dataset '{name}' with source '{dataset_config['source']}' and version '{dataset_config.get('version', 'latest')}' not found in data/versions.csv."
+        )
 
-    return version["url"].item()
+    # Return single-row DataFrame as a Series
+    dataset = dataset.squeeze()
+
+    # Generate output folder path in the `data` directory
+    dataset["folder"] = Path("data", name, dataset["source"], dataset["version"])
+
+    return dataset
 
 
 def solver_threads(w):
