@@ -10,5 +10,6 @@ Closes # (if applicable).
 - [ ] Changed dependencies are added to `envs/environment.yaml`.
 - [ ] Changes in configuration options are added in `config/config.default.yaml`.
 - [ ] Changes in configuration options are documented in `doc/configtables/*.csv`.
+- [ ] OET license identifier is added to all edited or newly created code files.
 - [ ] Sources of newly added data are documented in `doc/data_sources.rst`.
 - [ ] A release note `doc/release_notes.rst` is added.
