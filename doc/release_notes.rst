@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
+
 * Fix: Invalid aquifer shape geometries are now fixed in `build_ates_potentials.py` (fixing https://github.com/PyPSA/pypsa-eur/issues/1696)
 
 * Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
@@ -30,8 +32,6 @@ Release Notes
   - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
 
 **Changes**
-
-* Added optional supplemental heating for PTES. To enable it, set ``ptes: supplemental_heating: enable: true`` . Booster technologies (e.g., resistive heater, heat pump with ambient air) must be listed under ``booster_technologies``.
 
 * Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
 
