@@ -85,3 +85,8 @@ merger-todos.md
 *.html
 # private dev folder
 dev/*
+
+# ai coding tools
+CLAUDE.md
+.claude/
+.github/copilot-instructions.md
