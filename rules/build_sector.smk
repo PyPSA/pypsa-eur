@@ -1379,6 +1379,15 @@ rule prepare_sector_network:
             )(w)
             else []
         ),
+        ptes_direct_utilisation_profiles= lambda w: (
+            resources(
+                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","supplemental_heating","enable"
+            )(w)
+            else[]
+        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)
