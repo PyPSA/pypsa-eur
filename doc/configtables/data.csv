@@ -8,4 +8,3 @@ worldbank_urban_population,,,
 gem_gspt,,,
 -- source,str,"{archive, primary}","Source of the Global Steel Plant Tracker data."
 -- version_or_latest,str,,"Version of the Global Steel Plant Tracker data to use. Uses
-
