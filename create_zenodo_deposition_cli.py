@@ -423,65 +423,6 @@ def get_deposition_by_url(url, token):
     return r.json()
 
 
-def get_deposition_metadata_from_row(row):
-    """
-    Generate Zenodo deposition metadata from a CSV row.
-
-    Parameters
-    ----------
-    row : dict
-        The row from the versions CSV.
-
-    Returns
-    -------
-    dict
-        The Zenodo metadata dictionary.
-    """
-    return {
-        "metadata": {
-            "title": row.get("dataset", "Dataset"),
-            "upload_type": "dataset",
-            "description": f"Version {row.get('version', '')} of {row.get('dataset', '')}",
-            "version": row.get("version", ""),
-            "creators": [{"name": "Unknown", "affiliation": ""}],
-            "license": "CC-BY-4.0",
-        }
-    }
-
-
-def prompt_metadata():
-    """
-    Prompt the user for Zenodo deposition metadata.
-
-    Returns
-    -------
-    dict
-        The Zenodo metadata dictionary.
-    """
-    typer.echo("Please provide the following metadata for the new deposition.")
-    title = typer.prompt("Title")
-    description = typer.prompt("Description")
-    version = typer.prompt("Version")
-    license_ = typer.prompt("License (e.g. CC-BY-4.0)")
-    creators = []
-    while True:
-        name = typer.prompt("Author name (leave blank to finish)")
-        if not name:
-            break
-        affiliation = typer.prompt("Affiliation")
-        creators.append({"name": name, "affiliation": affiliation})
-    return {
-        "metadata": {
-            "title": title,
-            "upload_type": "dataset",
-            "description": description,
-            "version": version,
-            "creators": creators,
-            "license": license_,
-        }
-    }
-
-
 def zenodo_create_deposition(token, metadata=None):
     """
     Create a new Zenodo deposition.
@@ -833,42 +774,6 @@ def main():
 
         typer.echo("✅ All done. Thank you and visit us again!")
         typer.Exit()
-
-    # elif action == "create":
-    #     primary_datasets = get_primary_datasets(rows)
-    #     dataset_name = prompt_choice(primary_datasets, "Select a dataset or choose Other", other_text="Other")
-    #     dataset_path = Path(f"data/{dataset_name}")
-    #     if dataset_name == "Other":
-    #         dataset_name = typer.prompt("Please specify the new dataset name")
-    #         dataset_path = Path(f"data/{dataset_name}")
-    #     if not dataset_path.exists():
-    #         typer.secho(
-    #             f"Dataset folder {dataset_path} does not exist.", fg=typer.colors.RED
-    #         )
-    #         raise typer.Exit()
-    #     archive_folders = get_archive_folders(dataset_name)
-    #     if not archive_folders:
-    #         typer.secho(
-    #             f"No archive folders found in {dataset_path}/archive.",
-    #             fg=typer.colors.RED,
-    #         )
-    #         raise typer.Exit()
-    #     folder = prompt_choice(
-    #         archive_folders, "Select a folder to upload as new version"
-    #     )
-    #     version_name = typer.prompt("Specify version name", default=folder)
-    #     metadata = prompt_metadata()
-    #     metadata["metadata"]["version"] = version_name
-    #     existing_deposition = zenodo_create_deposition(token, metadata)
-    #     bucket_url = existing_deposition["links"]["bucket"]
-    #     upload_files_to_bucket(bucket_url, Path(f"data/{dataset_name}/archive/{folder}"))
-    #     zenodo_publish_deposition(existing_deposition["id"], token)
-    #     rows = add_version_row(rows, dataset_name, version_name, existing_deposition["links"]["html"])
-    #     write_versions_csv(rows)
-    #     typer.secho(
-    #         f"New dataset '{dataset_name}' version '{version_name}' published and recorded.",
-    #         fg=typer.colors.GREEN,
-    #     )
 
 
 if __name__ == "__main__":
