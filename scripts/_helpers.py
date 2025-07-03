@@ -9,10 +9,10 @@ import logging
 import os
 import re
 import time
+from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
 
 import atlite
 import fiona
@@ -201,6 +201,23 @@ def mute_print():
             yield
 
 
+def prune_config_deletes(config: dict) -> dict:
+    """
+    Removes keys with `null` values to allow removing keys
+    """
+    remove = []
+    for key, value in config.items():
+        if isinstance(value, dict):
+            prune_config_deletes(value)
+        elif value is None:
+            remove.append(key)
+
+    for key in remove:
+        del config[key]
+
+    return config
+
+
 def set_scenario_config(snakemake):
     scenario = snakemake.config["run"].get("scenarios", {})
     if scenario.get("enable") and "run" in snakemake.wildcards.keys():
@@ -214,6 +231,7 @@ def set_scenario_config(snakemake):
             with open(root_dir / scenario["file"]) as f:
                 scenario_config = yaml.safe_load(f)
         update_config(snakemake.config, scenario_config[snakemake.wildcards.run])
+        prune_config_deletes(snakemake.config)
 
 
 def configure_logging(snakemake, skip_handlers=False):
@@ -1046,7 +1064,7 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
+    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.

@@ -10,8 +10,9 @@ import os, sys, glob
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from scripts._helpers import validate_checksum, update_config_from_wildcards
+from scripts._helpers import validate_checksum, update_config_from_wildcards, prune_config_deletes
 from snakemake.utils import update_config
+from scripts.config import validate_config
 
 
 def get_config(config, keys, default=None):
@@ -37,7 +38,10 @@ def merge_configs(base_config, scenario_config):
 @lru_cache
 def scenario_config(scenario_name):
     """Retrieve a scenario config based on the overrides from the scenario file."""
-    return merge_configs(config, scenarios[scenario_name])
+    merged = merge_configs(config, scenario[scenario_name])
+    prune_config_deletes(merged)
+    validate_config(merged)
+    return validate_config(prune_config_deletes(merge_configs(config, scenarios[scenario_name])))
 
 
 def static_getter(wildcards, keys, default):
