@@ -17,6 +17,7 @@ from tqdm.utils import CallbackIOWrapper
 app = typer.Typer()
 
 ZENODO_API_URL = "https://sandbox.zenodo.org/api/deposit/depositions"
+ZENODO_API_TOKEN = os.environ.get("ZENODO_ACCESS_TOKEN")
 VERSIONS_CSV = Path("data/versions.csv")
 
 
@@ -29,13 +30,11 @@ def get_access_token() -> str:
     str
         The Zenodo API access token.
     """
-    token = os.environ.get("ZENODO_ACCESS_TOKEN")
-    if not token:
-        token = typer.prompt(
+    if not ZENODO_API_TOKEN:
+        typer.prompt(
             "ZENODO_ACCESS_TOKEN not found in environment. You can set it up using 'export ZENODO_ACCESS_TOKEN='<token>'. "
             "Please enter your Zenodo API token"
         )
-    return token
 
 
 def read_versions_csv() -> list[dict]:
@@ -88,11 +87,10 @@ def write_versions_csv(rows: list[dict]):
 
 
 def prompt_choice(
-    options: list[str], prompt_text: str, other_text: str | None = None
+    options: list[str], prompt_text: str
 ) -> str:
     """
     Prompt the user to select an option from a list by number,
-    with optional support for a custom value ("other").
 
     Parameters
     ----------
@@ -100,8 +98,6 @@ def prompt_choice(
         The available options.
     prompt_text : str
         The prompt to display.
-    other_text : str or None, optional
-        The label for the custom value option (default is None, disables "other").
 
     Returns
     -------
@@ -109,30 +105,27 @@ def prompt_choice(
         The selected or custom value.
     """
     display_options = options.copy()
-    if other_text is not None:
-        display_options.append(other_text)
 
     # List options with prepended numbers
     typer.echo(prompt_text)
     for idx, option in enumerate(display_options, 1):
         typer.echo(f"{idx}: {option}")
 
-    # Prompt user for choice
-    if len(display_options) == 1:
-        # Only one option, use as default
-        choice = typer.prompt("Select (1)", default="1")
-    else:
-        choice = typer.prompt(f"Select (1-{len(display_options)})")
+    while True:
+        # Prompt user for choice
+        if len(display_options) == 1:
+            # Only one option, use as default
+            choice = typer.prompt("Select (1)", default="1")
+        else:
+            choice = typer.prompt(f"Select (1-{len(display_options)})")
 
-    # Validate choice
-    if choice.isdigit() and 1 <= int(choice) <= len(display_options):
-        selected = display_options[int(choice) - 1]
-        if other_text is not None and selected == other_text:
-            return typer.prompt("Please specify the new value")
-        return selected
-    typer.echo("Invalid selection. Please enter a number from the list.")
-
-    return prompt_choice(options, prompt_text, other_text)
+        # Valid choice
+        if choice.isdigit() and 1 <= int(choice) <= len(display_options):
+            return display_options[int(choice) - 1]
+        # Invalid choice; prompt user again
+        else:
+            typer.echo("Invalid selection. Please enter a number from the list.")
+            continue
 
 
 def get_latest_versions(rows, source):
@@ -159,25 +152,6 @@ def get_latest_versions(rows, source):
     return sorted(latest, key=lambda r: r["dataset"])
 
 
-def get_primary_datasets(rows):
-    """
-    Get the list of primary datasets not present in the archive.
-
-    Parameters
-    ----------
-    rows : list of dict
-        The rows from the versions CSV.
-
-    Returns
-    -------
-    list of str
-        The primary datasets.
-    """
-    primary = {row["dataset"] for row in rows if row["source"] == "primary"}
-    archive = {row["dataset"] for row in rows if row["source"] == "archive"}
-    return sorted(list(primary - archive))
-
-
 def get_dataset_versions(rows, dataset):
     """
     Get all versions for a given dataset.
@@ -195,34 +169,6 @@ def get_dataset_versions(rows, dataset):
         The versions for the dataset.
     """
     return [row["version"] for row in rows if row["dataset"] == dataset]
-
-
-def get_new_archive_folders(dataset, known_versions):
-    """
-    Get new archive folders for a dataset that are not in known versions.
-
-    Parameters
-    ----------
-    dataset : str
-        The dataset name.
-    known_versions : list of str
-        The known versions.
-
-    Returns
-    -------
-    list of str
-        The new archive folder names.
-    """
-    archive_path = Path(f"data/{dataset}/archive")
-    if not archive_path.exists():
-        return []
-    return sorted(
-        [
-            f.name
-            for f in archive_path.iterdir()
-            if f.is_dir() and f.name not in known_versions
-        ]
-    )
 
 
 def get_potential_datasets():
@@ -259,16 +205,12 @@ def get_archive_folders(dataset):
     return sorted([f.name for f in archive_path.iterdir() if f.is_dir()])
 
 
-def create_zenodo_deposition(
-    token: str, api_url: str, metadata: dict, files: list[Path]
-) -> requests.Response:
+def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Response:
     """
     Create a new Zenodo deposition with the specified metadata and files.
 
     Parameters
     ----------
-    token : str
-        The Zenodo API access token to use.
     api_url : str, optional
         The Zenodo API URL for depositions.
     metadata : dict, optional
@@ -282,8 +224,8 @@ def create_zenodo_deposition(
         The response from the Zenodo API after creating the deposition.
     """
     r = requests.post(
-        api_url,
-        params={"access_token": token},
+        ZENODO_API_URL,
+        params={"access_token": ZENODO_API_TOKEN},
         json={},
         headers={"Content-Type": "application/json"},
     )
@@ -295,7 +237,7 @@ def create_zenodo_deposition(
     # Update metadata of the deposition
     r = requests.put(
         deposition_url,
-        params={"access_token": token},
+        params={"access_token": ZENODO_API_TOKEN},
         json={"metadata": metadata},
         headers={"Content-Type": "application/json"},
     )
@@ -317,7 +259,7 @@ def create_zenodo_deposition(
                 upload_response = requests.put(
                     f"{bucket_url}/{file.name}",
                     data=wrapped_file,
-                    params={"access_token": token},
+                    params={"access_token": ZENODO_API_TOKEN},
                 )
                 upload_response.raise_for_status()
                 # Add done to the progress bar
@@ -326,14 +268,12 @@ def create_zenodo_deposition(
     return r
 
 
-def publish_zenodo_deposition(token: str, deposition_id: int) -> requests.Response:
+def publish_zenodo_deposition(deposition_id: int) -> requests.Response:
     """
     Publish a Zenodo deposition.
 
     Parameters
     ----------
-    token : str
-        The Zenodo API access token.
     deposition_id : int
         The ID of the deposition to publish.
 
@@ -344,7 +284,7 @@ def publish_zenodo_deposition(token: str, deposition_id: int) -> requests.Respon
     """
     r = requests.post(
         f"{ZENODO_API_URL}/{deposition_id}/actions/publish",
-        params={"access_token": token},
+        params={"access_token": ZENODO_API_TOKEN},
     )
     r.raise_for_status()
     return r
@@ -420,7 +360,7 @@ def add_version_row(
     return rows
 
 
-def get_deposition_by_url(url, token):
+def get_deposition_by_url(url) -> dict:
     """
     Retrieve a Zenodo deposition by its API URL.
 
@@ -428,116 +368,13 @@ def get_deposition_by_url(url, token):
     ----------
     url : str
         The Zenodo deposition API URL.
-    token : str
-        The Zenodo API access token.
 
     Returns
     -------
     dict
         The deposition metadata as a dictionary.
     """
-    r = requests.get(url, params={"access_token": token})
-    r.raise_for_status()
-    return r.json()
-
-
-def zenodo_create_deposition(token, metadata=None):
-    """
-    Create a new Zenodo deposition.
-
-    Parameters
-    ----------
-    token : str
-        The Zenodo API access token.
-    metadata : dict, optional
-        The metadata for the deposition.
-
-    Returns
-    -------
-    dict
-        The created deposition metadata.
-    """
-    headers = {"Content-Type": "application/json"}
-    r = requests.post(
-        ZENODO_API_URL,
-        params={"access_token": token},
-        json=metadata or {},
-        headers=headers,
-    )
-    r.raise_for_status()
-    return r.json()
-
-
-def zenodo_update_metadata(deposition_url, token, metadata):
-    """
-    Update the metadata for a Zenodo deposition.
-
-    Parameters
-    ----------
-    deposition_url : str
-        The Zenodo deposition API URL.
-    token : str
-        The Zenodo API access token.
-    metadata : dict
-        The metadata to update.
-
-    Returns
-    -------
-    dict
-        The updated deposition metadata.
-    """
-    headers = {"Content-Type": "application/json"}
-    r = requests.put(
-        deposition_url, params={"access_token": token}, json=metadata, headers=headers
-    )
-    r.raise_for_status()
-    return r.json()
-
-
-def zenodo_publish_deposition(deposition_id, token):
-    """
-    Publish a Zenodo deposition.
-
-    Parameters
-    ----------
-    deposition_id : str or int
-        The Zenodo deposition ID.
-    token : str
-        The Zenodo API access token.
-
-    Returns
-    -------
-    dict
-        The published deposition metadata.
-    """
-    r = requests.post(
-        f"{ZENODO_API_URL}/{deposition_id}/actions/publish",
-        params={"access_token": token},
-    )
-    r.raise_for_status()
-    return r.json()
-
-
-def zenodo_new_version(deposition_id, token):
-    """
-    Create a new version of a Zenodo deposition.
-
-    Parameters
-    ----------
-    deposition_id : str or int
-        The Zenodo deposition ID.
-    token : str
-        The Zenodo API access token.
-
-    Returns
-    -------
-    dict
-        The new version deposition metadata.
-    """
-    r = requests.post(
-        f"{ZENODO_API_URL}/{deposition_id}/actions/newversion",
-        params={"access_token": token},
-    )
+    r = requests.get(url, params={"access_token": ZENODO_API_TOKEN})
     r.raise_for_status()
     return r.json()
 
@@ -558,15 +395,13 @@ def extract_zenodo_deposition_url(record_url: str) -> str | None:
     """
     # Match both sandbox and production, with or without /files/...
     m = re.match(
-        r"https://(sandbox\.)?zenodo\.org/records/(\d+)(/files/.*)?", record_url
+        r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files/.*)?", record_url
     )
     if not m:
         return None
-    sandbox, record_id = m.group(1), m.group(2)
-    if sandbox:
-        return f"https://sandbox.zenodo.org/api/deposit/depositions/{record_id}"
-    else:
-        return f"https://zenodo.org/api/deposit/depositions/{record_id}"
+    record_id = m.group(1)
+
+    return f"{ZENODO_API_URL}/{record_id}"
 
 
 @app.command()
@@ -593,7 +428,7 @@ def main():
         ["release", "create"],
         "Select whether you want to (release) a new version to an existing dataset or (create) a new dataset?",
     )
-    token = get_access_token()
+    get_access_token()
     rows = read_versions_csv()
 
     # All datasets that are recorded in the data/versions.csv and have a 'latest' tag
@@ -675,7 +510,7 @@ def main():
         typer.echo(
             f"Retrieving existing deposition metadata from Zenodo for dataset '{dataset_name}' at {deposition_url}."
         )
-        existing_deposition = get_deposition_by_url(deposition_url, token)
+        existing_deposition = get_deposition_by_url(deposition_url)
 
         metadata = existing_deposition.get("metadata", {})
         if not metadata:
@@ -745,17 +580,14 @@ def main():
             "creators": creators,
         }
 
-        # Debug statement:
         typer.echo(f"New metadata created: {new_metadata}")
 
-    # Create deposition and upload files
+    # Create the new deposition and upload files
     typer.echo(
-        "Creating new Zenodo deposition with metadata:\n"
+        "ℹ️ Creating new Zenodo deposition with metadata:\n"
         + json.dumps(new_metadata, indent=2)
     )
     deposition = create_zenodo_deposition(
-        token,
-        ZENODO_API_URL,
         # Provide new metadata baed on the parent deposition
         metadata=new_metadata,
         # all files in the folder
@@ -766,26 +598,25 @@ def main():
         ],
     )
 
-    # Debug statement:
+    # Last confirmation before publishing
     typer.echo(
         f"✅ Created new deposition ready for publishing.\n"
-        f"➡️ You can now review it and make changes at: {deposition.json()['links']['html']}"
+        f"🔗 You can now review it and make changes at: {deposition.json()['links']['html']}"
     )
 
-    # Confirm publishing
     confirm = typer.confirm("Are you ready to publish the dataset now?", default=True)
     if confirm:
-        published_deposition = publish_zenodo_deposition(token, deposition.json()["id"])
+        published_deposition = publish_zenodo_deposition(deposition.json()["id"])
         published_deposition.raise_for_status()
         typer.secho(
             f"✅ Dataset '{dataset_name}' with version {version_name} has been successfully published.\n"
-            f"➡️ Link to new dataset: {published_deposition.json()['links']['html']}.",
+            f"🔗 Link to new dataset: {published_deposition.json()['links']['html']}.",
         )
     else:
         published_deposition = None
         typer.secho(
             f"❌ New dataset version not published. "
-            f"️️➡️ You can publish it later using the Zenodo web interface at: {deposition.json()['links']['html']}",
+            f"️️🔗 You can publish it later using the Zenodo web interface at: {deposition.json()['links']['html']}",
         )
 
     # Update the versions CSV file
@@ -798,6 +629,7 @@ def main():
     previous_version = [row for row in latest if row["dataset"] == dataset_name]
     previous_version = previous_version[0] if previous_version else {}
 
+    # We store different information depending on whether the deposition was published or not
     if published_deposition:
         tags = ["latest", "supported"]
     elif not published_deposition:
@@ -832,7 +664,6 @@ def main():
     )
 
     typer.echo("🎉🎉🎉 All done. Thank you and visit us again!")
-    typer.Exit()
 
 
 if __name__ == "__main__":
