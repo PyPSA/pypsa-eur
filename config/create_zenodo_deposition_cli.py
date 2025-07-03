@@ -28,16 +28,11 @@ VERSIONS_CSV = Path("data/versions.csv")
 
 def get_access_token() -> str:
     """
-    Retrieve the Zenodo API access token from the environment or prompt the user.
-
-    Returns
-    -------
-    str
-        The Zenodo API access token.
+    Prompt user for Zenodo API access token if undefined.
     """
     if not ZENODO_API_TOKEN:
         typer.prompt(
-            "ZENODO_ACCESS_TOKEN not found in environment. You can set it up using 'export ZENODO_ACCESS_TOKEN='<token>'. "
+            "\nZENODO_ACCESS_TOKEN not found in environment. You can set it up using 'export ZENODO_ACCESS_TOKEN='<token>'. "
             "Please enter your Zenodo API token"
         )
 
@@ -430,12 +425,12 @@ Sticking with this naming convention is important for PyPSA-Eur and for this scr
 You can pause here and create the folder and move the files into it if you haven't done so yet."""
     )
     typer.secho("=" * 80, fg=typer.colors.CYAN)
+    get_access_token()
 
     action = prompt_choice(
         ["release", "create"],
         "\nSelect whether you want to (release) a new version to an existing dataset or (create) a new dataset?",
     )
-    get_access_token()
     rows = read_versions_csv()
 
     # All datasets that are recorded in the data/versions.csv and have a 'latest' tag
