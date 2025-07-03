@@ -768,8 +768,8 @@ def main():
 
     # Debug statement:
     typer.echo(
-        f"Created new deposition ready for publishing.\n"
-        f"You can now review it and make changes at: {deposition.json()['links']['html']}"
+        f"✅ Created new deposition ready for publishing.\n"
+        f"➡️ You can now review it and make changes at: {deposition.json()['links']['html']}"
     )
 
     # Confirm publishing
@@ -794,8 +794,6 @@ def main():
         default=True,
         abort=True,
     )
-    # Debug statement:
-    typer.echo(json.dumps(deposition.json(), indent=2))
 
     previous_version = [row for row in latest if row["dataset"] == dataset_name]
     previous_version = previous_version[0] if previous_version else {}
