@@ -9,10 +9,13 @@
 Retrieving Data
 ###############
 
-Not all data dependencies are shipped with the git repository,
-since git is not suited for handling large changing files.
-Instead we provide separate data bundles which can be obtained
-using the ``retrieve*`` rules.
+Not all data dependencies are shipped with the git repository, since git is not suited for handling large changing files.
+Instead we provide separate data bundles which can be obtained using the ``retrieve*`` rules.
+
+Data is generally retrieved in a version-controlled manner, enabling control over input data versions, reproducibility and consistency of modelling runs.
+The rules download data into subfolders in the `data/` directory, following the structure 
+``data/{dataset}/{source}/{version}``, e.g. ``data/jrc_idees/primary/March-2025-V1/``.
+Which specific data version is retrieve can be controlled in the `data configuration <https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data>`__ .
 
 Rule ``retrieve_databundle``
 ============================
