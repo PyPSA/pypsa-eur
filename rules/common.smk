@@ -121,25 +121,25 @@ def dataset_version(
     ]  # TODO as is right now, it is not compatible with config_provider
     data_versions = load_data_versions("data/versions.csv")
 
-    assert not all(
-        {"version" in dataset_config, "latest" in dataset_config}
-    ), f"You cannot specify both 'version' and 'latest' in the dataset config for dataset '{name}'"
-
     dataset = data_versions.loc[
         (data_versions["dataset"] == name)
         & (data_versions["source"] == dataset_config["source"])
         & (data_versions["supported"])  # Limit to supported versions only
         & (
-            data_versions["version"] == dataset_config["version"]
-            if "version" in dataset_config
+            data_versions["version"] == dataset_config["version_or_latest"]
+            if "latest" != dataset_config["version_or_latest"]
             else True
         )
-        & (data_versions["latest"] if "latest" in dataset_config else True)
+        & (
+            data_versions["latest"]
+            if "latest" == dataset_config["version_or_latest"]
+            else True
+        )
     ]
 
     if dataset.empty:
         raise ValueError(
-            f"Dataset '{name}' with source '{dataset_config['source']}' and version '{dataset_config.get('version', 'latest')}' not found in data/versions.csv."
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version_or_latest']}' not found in data/versions.csv."
         )
 
     # Return single-row DataFrame as a Series
