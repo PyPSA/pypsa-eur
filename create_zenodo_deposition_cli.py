@@ -278,6 +278,16 @@ def create_zenodo_deposition(
     bucket_url = r.json()["links"]["bucket"]
     deposition_url = r.json()["links"]["self"]
 
+    # Update metadata of the deposition
+    r = requests.put(
+        deposition_url,
+        params={"access_token": token},
+        json={"metadata": metadata},
+        headers={"Content-Type": "application/json"},
+    )
+
+    r.raise_for_status()
+
     # Upload files one-by-one to the bucket
     for file in files:
         with open(file, "rb") as fp:
@@ -296,16 +306,8 @@ def create_zenodo_deposition(
                     params={"access_token": token},
                 )
                 upload_response.raise_for_status()
-
-    # Update metadata of the deposition
-    r = requests.put(
-        deposition_url,
-        params={"access_token": token},
-        json={"metadata": metadata},
-        headers={"Content-Type": "application/json"},
-    )
-
-    r.raise_for_status()
+                # Add done to the progress bar
+                pbar.update(file.stat().st_size)
 
     return r
 
