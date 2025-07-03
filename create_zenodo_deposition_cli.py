@@ -16,7 +16,12 @@ from tqdm.utils import CallbackIOWrapper
 
 app = typer.Typer()
 
-ZENODO_API_URL = "https://sandbox.zenodo.org/api/deposit/depositions"
+API_URLS = {
+    "sandbox": "https://sandbox.zenodo.org/api/deposit/depositions",
+    "production": "https://zenodo.org/api/deposit/depositions",
+}
+
+ZENODO_API_URL = None
 ZENODO_API_TOKEN = os.environ.get("ZENODO_ACCESS_TOKEN")
 VERSIONS_CSV = Path("data/versions.csv")
 
@@ -122,10 +127,9 @@ def prompt_choice(
         # Valid choice
         if choice.isdigit() and 1 <= int(choice) <= len(display_options):
             return display_options[int(choice) - 1]
+
         # Invalid choice; prompt user again
-        else:
-            typer.echo("Invalid selection. Please enter a number from the list.")
-            continue
+        typer.echo("Invalid selection. Please enter a number from the list.")
 
 
 def get_latest_versions(rows, source):
@@ -211,8 +215,6 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
 
     Parameters
     ----------
-    api_url : str, optional
-        The Zenodo API URL for depositions.
     metadata : dict, optional
         The metadata for the deposition.
     files : list of Path, optional
@@ -405,28 +407,33 @@ def extract_zenodo_deposition_url(record_url: str) -> str | None:
 
 
 @app.command()
-def main():
+def main(
+    sandbox: bool = typer.Option(
+        False,
+        "--sandbox",
+        help="Use Zenodo sandbox environment instead of production.",
+    )
+):
     """
     Guide the user through creating a new Zenodo deposition or version.
-
-    This function provides an interactive CLI for creating or releasing new versions
-    of datasets on Zenodo, uploading files, and updating the local versions CSV.
     """
-    typer.secho("=" * 60, fg=typer.colors.CYAN)
+    global ZENODO_API_URL
+    ZENODO_API_URL = API_URLS["sandbox"] if sandbox else API_URLS["production"]
+
+    typer.secho("=" * 80, fg=typer.colors.CYAN)
     typer.echo(
-        "Welcome! This script helps you create/upload a new dataset version on Zenodo."
+"""This script helps you create/upload a new dataset version on Zenodo.
+To create/upload a new dataset version:
+    * Place the dataset that you want to upload into the 'data/<dataset_name>/archive/<version_name>' folder.
+    * If this is a new dataset, create the folder 'data/<dataset_name>/archive/<version_name>' first.
+Sticking with this naming convention is important for PyPSA-Eur and for this script to work properly.
+You can pause here and create the folder and move the files into it if you haven't done so yet."""
     )
-    typer.echo(
-        "To create/upload a new dataset version, place the dataset in the data/<dataset_name>/archive/<version_name> folder."
-    )
-    typer.echo(
-        "Then run this script; it will guide you through the process and update data/versions.csv accordingly."
-    )
-    typer.secho("=" * 60, fg=typer.colors.CYAN)
+    typer.secho("=" * 80, fg=typer.colors.CYAN)
 
     action = prompt_choice(
         ["release", "create"],
-        "Select whether you want to (release) a new version to an existing dataset or (create) a new dataset?",
+        "\nSelect whether you want to (release) a new version to an existing dataset or (create) a new dataset?",
     )
     get_access_token()
     rows = read_versions_csv()
@@ -445,7 +452,7 @@ def main():
 
         dataset_names = [row["dataset"] for row in latest]
         dataset_name = prompt_choice(
-            dataset_names, "Select a dataset to create a new version release for"
+            dataset_names, "\nSelect a dataset to create a new version release for"
         )
     elif action == "create":
         dataset_names = get_potential_datasets()
@@ -459,7 +466,7 @@ def main():
                 fg=typer.colors.RED,
             )
             raise typer.Exit()
-        dataset_name = prompt_choice(dataset_names, "Select a new dataset to upload")
+        dataset_name = prompt_choice(dataset_names, "\nSelect a new dataset to upload")
 
     # Get potential folders for new version
     typer.echo("Fetching new version folders...")
@@ -488,10 +495,10 @@ def main():
 
     # Ask user which files from which folder to upload and how to call the new version
     folder_to_upload = prompt_choice(
-        potential_folders, "Select a folder to upload as new version"
+        potential_folders, "\nSelect a folder to upload as new version"
     )
     version_name = typer.prompt(
-        "Specify name for new version", default=folder_to_upload
+        "\nSpecify name for new version", default=folder_to_upload
     )
 
     if action == "release":
@@ -541,7 +548,7 @@ def main():
     elif action == "create":
         # Create new metadata based on user input
         typer.echo(
-            "Creating a new deposition requires metadata input.\n"
+            "\nCreating a new deposition requires metadata input.\n"
             "Please provide the following information for the new dataset."
             "You can also leave fields empty for now and fill them in later on Zenodo before publishing the dataset."
         )
@@ -604,7 +611,7 @@ def main():
         f"🔗 You can now review it and make changes at: {deposition.json()['links']['html']}"
     )
 
-    confirm = typer.confirm("Are you ready to publish the dataset now?", default=True)
+    confirm = typer.confirm("\nAre you ready to publish the dataset now?", default=True)
     if confirm:
         published_deposition = publish_zenodo_deposition(deposition.json()["id"])
         published_deposition.raise_for_status()
@@ -621,7 +628,7 @@ def main():
 
     # Update the versions CSV file
     typer.confirm(
-        "Proceed with updating the 'data/versions.csv' file with the new version information?",
+        "\nProceed with updating the 'data/versions.csv' file with the new version information?",
         default=True,
         abort=True,
     )
@@ -644,7 +651,7 @@ def main():
         note = previous_version["note"]
     else:
         note = typer.prompt(
-            "Please provide a note for the new version in 'data/versions.csv' (or leave empty)",
+            "\nPlease provide a note for the new version in 'data/versions.csv' (or leave empty)",
             default="",
         )
 
@@ -663,11 +670,8 @@ def main():
         f"✅ 'data/versions.csv' has been updated with: '{dataset_name}', 'archive', '{version_name}', '{tags}, '{link}', '{note}'",
     )
 
-    typer.echo("🎉🎉🎉 All done. Thank you and visit us again!")
+    typer.echo("\n🎉 All done. 🎉")
 
 
 if __name__ == "__main__":
-    """
-    Run the Typer CLI application.
-    """
     app()
