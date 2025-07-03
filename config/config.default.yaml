@@ -70,20 +70,6 @@ enable:
   retrieve_cutout: true
   drop_leap_day: true
 
-# Specify fixed versions of external data sources to use
-data:
-  # TODO implement
-  # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
-  osm:
-    source: "archive" # "archive" or "build"
-    version: "latest" # specific version from 'data/versions.csv', 'latest' or if 'source: "build"' is used, then use "upstream" here
-  worldbank_urban_population:
-    source: "archive"
-    version: "latest"
-  gem_gspt: # 
-    source: "archive"
-    version: "latest"
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
   2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
@@ -914,6 +900,20 @@ adjustments:
         electricity distribution grid:
           capital_cost: 1.0
     absolute: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
+data:
+  # TODO implement
+  # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
+  osm:
+    source: "archive" # "archive" or "build"
+    version_or_latest: "latest"
+  worldbank_urban_population:
+    source: "archive"
+    version_or_latest: "latest"
+  gem_gspt: # 
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

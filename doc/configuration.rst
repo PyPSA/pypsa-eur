@@ -570,6 +570,31 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 
 .. _solving_cf:
 
+``data``
+========
+
+Controls which versions of input data are used for building the model.
+Versions that are available for each dataset can be found in `data/versions.csv`.
+By default, we retrieve the `latest` supported version for each dataset from an archive source.
+This means that when upgrading between PyPSA-Eur versions, new versions of input data may also be downloaded and used.
+To freeze a model to a specific version of input data, you can set a specific version in the `version_or_latest` field for each dataset to one specific version as listed in `data/versions.csv`.
+
+Some datasets support `primary` or `build` as a source option, meaning that the data can be retrieved from the original
+data source or build it from the latest available data.
+See the `data/versions.csv` file for all available datasets and their sources/versions that are supported.
+
+.. literalinclude:: ../config/config.default.yaml
+   :language: yaml
+   :start-at: data:
+   :end-before: # docs
+
+.. csv-table::
+   :header-rows: 1
+   :widths: 22,7,22,33
+   :file: configtables/data.csv
+
+.. _solving_cf:
+
 ``solving``
 =============
 

@@ -1,0 +1,11 @@
+ ,Unit,Values,Description
+osm,,,
+-- source,str,"{archive, build}","Source of the OSM data. 'archive' retrieves pre-built OSM data, 'build' uses the latest OSM data to build the network."
+-- version_or_latest,str,,"Version of the OSM data to use. Uses the specific 'version' the the selected 'source' or the dataset tagged 'latest' for this source.
+worldbank_urban_population,,,
+-- source,str,"{archive, primary}","Source of the World Bank urban population data.
+-- version_or_latest,str,,"Version of the World Bank urban population data to use. Uses the specific 'version' the the selected 'source' or the dataset tagged 'latest' for this source."
+gem_gspt,,,
+-- source,str,"{archive, primary}","Source of the Global Steel Plant Tracker data."
+-- version_or_latest,str,,"Version of the Global Steel Plant Tracker data to use. Uses
+
