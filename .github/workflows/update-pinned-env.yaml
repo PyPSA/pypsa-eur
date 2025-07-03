@@ -3,6 +3,7 @@ on:
   push:
     paths:
     - envs/environment.yaml
+    - pyproject.toml
   schedule:
   - cron: "0 8 1,16 * *" # Bi-weekly
   workflow_dispatch:
@@ -20,6 +21,12 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Update `uv.lock`
+      run: uv lock --upgrade
 
     - name: Setup conda
       uses: conda-incubator/setup-miniconda@v3
