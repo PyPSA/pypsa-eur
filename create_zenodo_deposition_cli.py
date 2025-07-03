@@ -225,6 +225,20 @@ def get_new_archive_folders(dataset, known_versions):
     )
 
 
+def get_potential_datasets():
+    """
+    Get all dataset folders that have an archive subfolder and are thus potential candidates for a new upload.
+
+    Returns
+    -------
+    list of str
+        The dataset names that have an archive subfolder.
+    """
+    # Find all dataset folders in the 'data' directory;
+    # indicated by the presence of an 'archive' subfolder with contents
+    return sorted(set(f.parts[-3] for f in Path().rglob("data/*/archive/*/")))
+
+
 def get_archive_folders(dataset):
     """
     Get all archive folders for a dataset.
@@ -336,7 +350,9 @@ def publish_zenodo_deposition(token: str, deposition_id: int) -> requests.Respon
     return r
 
 
-def add_version_row(rows, dataset, source, version, tags, url, note, remove_latest=True):
+def add_version_row(
+    rows, dataset, source, version, tags, url, note, remove_latest=True
+):
     """
     Add a new version row to the list of rows.
 
@@ -580,63 +596,73 @@ def main():
     token = get_access_token()
     rows = read_versions_csv()
 
-    # Debug statement:
-    typer.echo(f"Versions CSV rows: {rows}")
+    # All datasets that are recorded in the data/versions.csv and have a 'latest' tag
+    latest = get_latest_versions(rows, "archive")
 
+    # Logic is slightly different for 'release' and 'create':
     if action == "release":
-        latest = get_latest_versions(rows, "archive")
         if not latest:
             typer.secho(
                 "No datasets with source 'archive' and a Zenodo URL found.",
                 fg=typer.colors.RED,
             )
             raise typer.Exit()
+
         dataset_names = [row["dataset"] for row in latest]
         dataset_name = prompt_choice(
-            dataset_names, "Select a dataset to create a new release for"
+            dataset_names, "Select a dataset to create a new version release for"
         )
-
-        # Debug statement:
-        typer.echo(f"Selected dataset: {dataset_name}")
-
-        # Get potential folders for new version
-        typer.echo("Fetching new version folders...")
-        potential_folders = get_archive_folders(dataset_name)
-
-        if not potential_folders:
-            typer.secho(
-                f"No archive folders found in data/{dataset_name}/archive. Please create a folder with the new version files first.",
-                fg=typer.colors.RED,
-            )
-            raise typer.Exit()
-
-        # Exclude all folders for which version entres already exist
-        known_versions = get_dataset_versions(rows, dataset_name)
-        potential_folders = [
-            folder for folder in potential_folders if folder not in known_versions
+    elif action == "create":
+        dataset_names = get_potential_datasets()
+        dataset_names = [
+            ds for ds in dataset_names if ds not in {l["dataset"] for l in latest}
         ]
-
-        if not potential_folders:
+        if not dataset_names:
             typer.secho(
-                f"All folder in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
-                f"To create a new version, please create a new folder with a new version name that includes the new files.",
+                "No new datasets found in 'data' that contain an 'archive' subfolder. "
+                "Please create a dataset folder with an 'archive' subfolder first in 'data/<dataset_name>/archive/<version_name>'.",
                 fg=typer.colors.RED,
             )
             raise typer.Exit()
+        dataset_name = prompt_choice(dataset_names, "Select a new dataset to upload")
 
-        # Ask user which files from which folder to upload and how to call the new version
-        folder_to_upload = prompt_choice(
-            potential_folders, "Select a folder to upload as new version"
-        )
-        version_name = typer.prompt(
-            "Specify name for new version", default=folder_to_upload
-        )
+    # Get potential folders for new version
+    typer.echo("Fetching new version folders...")
+    potential_folders = get_archive_folders(dataset_name)
 
+    if not potential_folders:
+        typer.secho(
+            f"No archive folders found in data/{dataset_name}/archive. Please create a folder with the new version files first.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit()
+
+    # Exclude all folders for which version entres already exist
+    known_versions = get_dataset_versions(rows, dataset_name)
+    potential_folders = [
+        folder for folder in potential_folders if folder not in known_versions
+    ]
+
+    if not potential_folders:
+        typer.secho(
+            f"All folder in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
+            f"To create a new version, please create a new folder with a new version name that includes the new files.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit()
+
+    # Ask user which files from which folder to upload and how to call the new version
+    folder_to_upload = prompt_choice(
+        potential_folders, "Select a folder to upload as new version"
+    )
+    version_name = typer.prompt(
+        "Specify name for new version", default=folder_to_upload
+    )
+
+    if action == "release":
+        # Retrieve information from previous version for the datset from Zenodo
         row = next(r for r in latest if r["dataset"] == dataset_name)
         deposition_url = extract_zenodo_deposition_url(row["url"])
-
-        # Debug statement:
-        typer.echo(f"Extracted deposition URL for previous version: {deposition_url}")
 
         if not deposition_url:
             typer.secho(
@@ -646,13 +672,10 @@ def main():
             )
             raise typer.Exit()
 
-        # Debug statement:
-        typer.echo(f"Using deposition URL: {deposition_url}")
-
+        typer.echo(
+            f"Retrieving existing deposition metadata from Zenodo for dataset '{dataset_name}' at {deposition_url}."
+        )
         existing_deposition = get_deposition_by_url(deposition_url, token)
-
-        # Debug statement:
-        typer.echo(f"Retrieved deposition: {existing_deposition}")
 
         metadata = existing_deposition.get("metadata", {})
         if not metadata:
@@ -661,9 +684,6 @@ def main():
                 fg=typer.colors.RED,
             )
             raise typer.Exit()
-
-        # Debug statement:
-        typer.echo(f"With metadata: {existing_deposition['metadata']}")
 
         new_metadata = {
             "title": metadata["title"],
@@ -683,99 +703,138 @@ def main():
                 }
             ],
         }
-
-        # Create deposition and upload files
-        deposition = create_zenodo_deposition(
-            token,
-            ZENODO_API_URL,
-            # Provide new metadata baed on the parent deposition
-            metadata=new_metadata,
-            # all files in the folder
-            files=[
-                f
-                for f in (
-                    Path(f"data/{dataset_name}/archive/{folder_to_upload}").glob("*")
-                )
-                if f.is_file()
-            ],
-        )
-
-        # Debug statement:
+    elif action == "create":
+        # Create new metadata based on user input
         typer.echo(
-            f"Created new deposition ready for publishing.\n"
-            f"You can now review it and make changes at: {deposition.json()['links']['html']}"
+            "Creating a new deposition requires metadata input.\n"
+            "Please provide the following information for the new dataset."
+            "You can also leave fields empty for now and fill them in later on Zenodo before publishing the dataset."
         )
+        title = typer.prompt("Title of the new dataset")
+        description = typer.prompt("Description of the new dataset")
+        license = typer.prompt(
+            "License for the new dataset (e.g. CC-BY-4.0)", default="cc-by-4.0"
+        )
+        upload_type = typer.prompt("Upload type for the new dataset", default="dataset")
+        access_right = typer.prompt("Access right for the new dataset", default="open")
+        # Prompt for creators and their affiliation (a list of dictionaries with keys "name" and "affiliation") until the user is done
+        typer.echo(
+            "Please provide the creators of the new dataset.\n"
+            "You need to provide at least on creator. You can add multiple creators.\n\n"
+            "Leave the name blank when you are done to continue."
+        )
+        creators = []
+        while True:
+            name = typer.prompt("Creator name (leave blank to finish)", default="")
+            if not name and len(creators) > 0:
+                break
+            affiliation = typer.prompt("Affiliation (or leave empty)", default="")
 
-        # Confirm publishing
-        confirm = typer.confirm(
-            "Are you ready to publish the dataset now?", default=True
-        )
-        if confirm:
-            published_deposition = publish_zenodo_deposition(
-                token, deposition.json()["id"]
-            )
-            published_deposition.raise_for_status()
-            typer.secho(
-                f"Dataset '{dataset_name}' with version {version_name} has been successfully published.\n"
-                f"Link to new dataset: {published_deposition.json()['links']['html']}.",
-            )
-        else:
-            published_deposition = None
-            typer.secho(
-                "New dataset version not published. "
-                "You can publish it later using the Zenodo web interface. "
-            )
+            if name:
+                creators.append({"name": name, "affiliation": affiliation})
 
-        # Update the versions CSV file
-        typer.confirm(
-            "Proceed with updating the 'data/versions.csv' file with the new version information?",
-            default=True,
-            abort=True,
-        )
+        # Create the new metadata dictionary
+        new_metadata = {
+            "title": title,
+            "description": description,
+            "version": version_name,
+            "publication_date": datetime.now().strftime("%Y-%m-%d"),
+            "license": license,
+            "upload_type": upload_type,
+            "access_right": access_right,
+            "creators": creators,
+        }
+
         # Debug statement:
-        typer.echo(deposition.json())
+        typer.echo(f"New metadata created: {new_metadata}")
 
-        previous_version = [
-            row for row in latest if row["dataset"] == dataset_name
-        ]
-        previous_version = previous_version[0] if previous_version else {}
+    # Create deposition and upload files
+    typer.echo(
+        "Creating new Zenodo deposition with metadata:\n"
+        + json.dumps(new_metadata, indent=2)
+    )
+    deposition = create_zenodo_deposition(
+        token,
+        ZENODO_API_URL,
+        # Provide new metadata baed on the parent deposition
+        metadata=new_metadata,
+        # all files in the folder
+        files=[
+            f
+            for f in (Path(f"data/{dataset_name}/archive/{folder_to_upload}").glob("*"))
+            if f.is_file()
+        ],
+    )
 
-        if published_deposition:
-            tags = ["latest", "supported"]
-        elif not published_deposition:
-            tags = ["draft", "supported"]
+    # Debug statement:
+    typer.echo(
+        f"Created new deposition ready for publishing.\n"
+        f"You can now review it and make changes at: {deposition.json()['links']['html']}"
+    )
 
-        if published_deposition:
-            link = published_deposition.json()["links"]["html"]
-        else:
-            link = deposition.json()["links"]["html"]
-
-        if previous_version:
-            note = previous_version["note"]
-        else:
-            note = typer.prompt(
-                "Please provide a note for the new version in 'data/versions.csv' or leave empty",
-                default="",
-            )
-
-        rows = add_version_row(
-            rows,
-            dataset_name,
-            "archive",
-            version_name,
-            tags=tags,
-            url=link,
-            note=note,
-            remove_latest=True if published_deposition else False,
-        )
-        write_versions_csv(rows)
+    # Confirm publishing
+    confirm = typer.confirm("Are you ready to publish the dataset now?", default=True)
+    if confirm:
+        published_deposition = publish_zenodo_deposition(token, deposition.json()["id"])
+        published_deposition.raise_for_status()
         typer.secho(
-            f"'data/versions.csv' has been updated with:\n"
-            f"'{dataset_name}', 'archive', '{version_name}', '{tags}, '{link}', '{note}'",
+            f"✅ Dataset '{dataset_name}' with version {version_name} has been successfully published.\n"
+            f"➡️ Link to new dataset: {published_deposition.json()['links']['html']}.",
+        )
+    else:
+        published_deposition = None
+        typer.secho(
+            f"❌ New dataset version not published. "
+            f"️️➡️ You can publish it later using the Zenodo web interface at: {deposition.json()['links']['html']}",
         )
 
-        typer.echo("✅ All done. Thank you and visit us again!")
-        typer.Exit()
+    # Update the versions CSV file
+    typer.confirm(
+        "Proceed with updating the 'data/versions.csv' file with the new version information?",
+        default=True,
+        abort=True,
+    )
+    # Debug statement:
+    typer.echo(json.dumps(deposition.json(), indent=2))
+
+    previous_version = [row for row in latest if row["dataset"] == dataset_name]
+    previous_version = previous_version[0] if previous_version else {}
+
+    if published_deposition:
+        tags = ["latest", "supported"]
+    elif not published_deposition:
+        tags = ["draft", "supported"]
+
+    if published_deposition:
+        link = published_deposition.json()["links"]["html"]
+    else:
+        link = deposition.json()["links"]["html"]
+
+    if previous_version:
+        note = previous_version["note"]
+    else:
+        note = typer.prompt(
+            "Please provide a note for the new version in 'data/versions.csv' (or leave empty)",
+            default="",
+        )
+
+    rows = add_version_row(
+        rows,
+        dataset_name,
+        "archive",
+        version_name,
+        tags=tags,
+        url=link,
+        note=note,
+        remove_latest=True if published_deposition else False,
+    )
+    write_versions_csv(rows)
+    typer.secho(
+        f"✅ 'data/versions.csv' has been updated with: '{dataset_name}', 'archive', '{version_name}', '{tags}, '{link}', '{note}'",
+    )
+
+    typer.echo("🎉🎉🎉 All done. Thank you and visit us again!")
+    typer.Exit()
 
 
 if __name__ == "__main__":
