@@ -52,6 +52,15 @@ logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
 
 
+specific_emissions = {
+    "oil" : 0.2571,
+    "oil primary" : 0.2571,
+    "gas" : 0.198,
+    "coal" : 0.3361,
+    "lignite" : 0.4069,
+}
+
+
 def add_land_use_constraint_perfect(n):
     """
     Add global constraints for tech capacity limit.
@@ -931,6 +940,65 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def add_co2limit_upstream(n):
+
+    co2_limit = n.global_constraints.loc["CO2Limit", "constant"]
+    logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {co2_limit} as upstream constraint")
+    config = n.config
+
+    lhs = []
+
+    for c in specific_emissions.keys():
+        i_fossil = n.generators.index[(n.generators.carrier == c)]
+        lhs.append((n.model["Generator-p"].loc[:, i_fossil]*specific_emissions[c]*n.snapshot_weightings.generators).sum())
+
+    # sequestration
+    i_sequestered = n.links.index[(n.links.carrier == "co2 sequestered")]
+    lhs.append((-1*n.model["Link-p"].loc[:, i_sequestered]*n.snapshot_weightings.generators).sum())
+
+    # process emissions load (negative load)
+    pe_load_i = n.loads.index[(n.loads.carrier == "process emissions")]
+    lhs.append(abs(n.loads.loc[pe_load_i, "p_set"]*n.snapshot_weightings.generators.sum()))
+
+    #lost oil emissions: this is the hvc sequestered emissions that are not accounted in the downstream constraint
+    if config["sector"]["regional_oil_demand"]:
+        nfi_load_i = n.loads.index[(n.loads.carrier == "naphtha for industry")]
+        nfi_load = n.loads.loc[nfi_load_i, "p_set"]*n.snapshot_weightings.generators.sum()
+        nfi_links_i = n.links.index[(n.links.carrier == "naphtha for industry") & (n.links.carrier == "naphtha for industry")]
+        lhs.append(nfi_load * ((1-n.links.loc[nfi_links_i].efficiency2) * specific_emissions["oil"] - n.links.loc[nfi_links_i].efficiency3))
+
+    # # process emissions
+    # i_pe = n.links.index[n.links.carrier == "process emissions"]
+    # lhs.append((n.model["Link-p"].loc[:, i_pe]*n.snapshot_weightings.generators).sum())
+
+    # i_pecc = n.links.index[n.links.carrier == "process emissions CC"]
+    # lhs.append((n.model["Link-p"].loc[:, i_pecc]*n.snapshot_weightings.generators).sum())
+
+    # # lost oil emissions: this is the hvc sequestered emissions that are not accounted in the downstream constraint
+    # i_nfi = n.links.index[(n.links.carrier == "naphtha for industry")]
+    # lhs.append(-1*((n.model["Link-p"].loc[:, i_nfi]*(1-n.links.loc[i_nfi, "efficiency2"])*specific_emissions["oil"]*n.snapshot_weightings.generators).sum()))
+
+    lhs = sum(lhs)
+
+    cname = "CO2LimitUpstream"
+
+    n.model.add_constraints(
+        lhs <= co2_limit,
+        name=f"GlobalConstraint-{cname}",
+    )
+
+    n.add(
+        "GlobalConstraint",
+        "CO2LimitUpstream",
+        constant=co2_limit,
+        sense="<=",
+        type="",
+        carrier_attribute="",
+    )
+
+    n.remove("GlobalConstraint", "CO2Limit")
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -970,6 +1038,8 @@ def extra_functionality(n, snapshots):
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
         add_retrofit_gas_boiler_constraint(n, snapshots)
+    elif constraints["CO2LimitUpstream"]:
+        add_co2limit_upstream(n)
     else:
         add_co2_atmosphere_constraint(n, snapshots)
 
