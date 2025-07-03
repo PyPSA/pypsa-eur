@@ -15,7 +15,7 @@ from scripts._helpers import (
     get_scenarios,
     get_rdir,
     get_shadow,
-    prune_config_deletes
+    prune_config_deletes,
 )
 from scripts.config import validate_config
 
@@ -23,6 +23,8 @@ from scripts.config import validate_config
 configfile: "config/config.default.yaml"
 configfile: "config/plotting.default.yaml"
 configfile: "config/config.yaml"
+
+
 prune_config_deletes(config)
 validate_config(config)
 
