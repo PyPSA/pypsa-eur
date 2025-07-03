@@ -45,9 +45,7 @@ def scenario_config(scenario_name):
     merged = merge_configs(config, scenario[scenario_name])
     prune_config_deletes(merged)
     validate_config(merged)
-    return validate_config(
-        prune_config_deletes(merge_configs(config, scenarios[scenario_name]))
-    )
+    return merged
 
 
 def static_getter(wildcards, keys, default):

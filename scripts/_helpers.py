@@ -201,7 +201,7 @@ def mute_print():
             yield
 
 
-def prune_config_deletes(config: dict) -> dict:
+def prune_config_deletes(config: dict) -> None:
     """
     Removes keys with `null` values to allow removing keys
     """
@@ -214,8 +214,6 @@ def prune_config_deletes(config: dict) -> dict:
 
     for key in remove:
         del config[key]
-
-    return config
 
 
 def set_scenario_config(snakemake):
