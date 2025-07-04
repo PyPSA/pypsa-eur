@@ -965,6 +965,18 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
+#def add_resistive_heater_boosting_constraints(n: pypsa.Network) -> None:
+#    """
+#    Add resistive heater boosting constraints.
+#    """
+#
+#    n.model[]
+
+# wenn resistive_boosting aktiv und es benötigt wird, dann multiplizieren mit reheat_ratio
+
+# wir greifen zu auf link-p mit dem indizes von resistive_heater, dann definieren wir, dass für den zeitpunkt, wo boosting benötigt wird resistive heater link-p >= reheat_boosting * link-p discharger * effizienz (damit wir das betrachten, was rausgeht) sein muss
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -1386,8 +1398,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network",
             opts="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="8",
+            #configfiles="config/test/config.overnight.yaml",
             sector_opts="",
             planning_horizons="2030",
         )

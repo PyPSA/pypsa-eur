@@ -27,6 +27,7 @@ Relevant Settings
                 supplemental_heating:
                     enable:
                 max_top_temperature:
+                min_bottom_temperature:
 
 Inputs
 ------
@@ -34,6 +35,8 @@ Inputs
     Forward temperature profiles for the district heating networks.
 - `resources/<run_name>/central_heating_return_temperature_profiles.nc`:
     Return temperature profiles for the district heating networks.
+- `resources/<run_name>/ptes_temperature_boost_ratio_profiles.nc`
+    Ratio of PTES charge that requires additional heating due to temperature differences.
 
 Outputs
 -------
@@ -115,4 +118,11 @@ if __name__ == "__main__":
     )
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
+    )
+    # Get PTES temperature boost ratio
+    logger.info(
+        f"Saving PTES reheat ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
+    )
+    ptes_temperature_approximator.temperature_boost_ratio.to_netcdf(
+        snakemake.output.ptes_temperature_boost_ratio_profiles
     )
