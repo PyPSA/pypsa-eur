@@ -1,0 +1,268 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+# This file is used to define the scenarios that are run by snakemake. Each entry on the first level is a scenario. Each scenario can contain configuration overrides with respect to the config/config.yaml settings.
+#
+# Example
+#
+# custom-scenario: # name of the scenario
+#   electricity:
+#       renewable_carriers: [wind, solar] # override the list of renewable carriers
+
+
+# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
+policy_eu_regain_26:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      regional_cement_demand: false
+      regional_hvc: false
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
+policy_eu_deindustrial_26:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      regional_cement_demand: false
+      regional_hvc: false
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
+base_reg_regain_26:
+  co2_budget:
+    2020: 10
+    2030: 10
+    2040: 10
+    2050: 10
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
+policy_reg_regain_26:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: NO, Relocation: NO, Industrial policy: DEINDUSTRIAL
+base_reg_deindustrial_26:
+  co2_budget:
+    2020: 10
+    2030: 10
+    2040: 10
+    2050: 10
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
+policy_reg_deindustrial_26:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 2-6
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: MIT
+
+# This file is used to define the scenarios that are run by snakemake. Each entry on the first level is a scenario. Each scenario can contain configuration overrides with respect to the config/config.yaml settings.
+#
+# Example
+#
+# custom-scenario: # name of the scenario
+#   electricity:
+#       renewable_carriers: [wind, solar] # override the list of renewable carriers
+
+
+# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
+policy_eu_regain_85:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      regional_cement_demand: false
+      regional_hvc: false
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
+policy_eu_deindustrial_85:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: false
+      regional_cement_demand: false
+      regional_hvc: false
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: false
+    ammonia: true
+
+# Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
+base_reg_regain_85:
+  co2_budget:
+    2020: 10
+    2030: 10
+    2040: 10
+    2050: 10
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
+policy_reg_regain_85:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: NO, Relocation: NO, Industrial policy: DEINDUSTRIAL
+base_reg_deindustrial_85:
+  co2_budget:
+    2020: 10
+    2030: 10
+    2040: 10
+    2050: 10
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+
+# Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
+policy_reg_deindustrial_85:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 8-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional

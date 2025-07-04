@@ -17,7 +17,7 @@ run:
   #- policy_eu_deindustrial
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios.yaml
+    file: config/industry_policy_scenarios_26_85.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
