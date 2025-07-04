@@ -568,7 +568,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
    :widths: 22,7,22,33
    :file: configtables/adjustments.csv
 
-.. _solving_cf:
+.. _data_cf:
 
 ``data``
 ========
