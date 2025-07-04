@@ -965,12 +965,61 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
-#def add_resistive_heater_boosting_constraints(n: pypsa.Network) -> None:
-#    """
-#    Add resistive heater boosting constraints.
-#    """
+def add_resistive_heater_boosting_constraints(
+    n: pypsa.Network,
+    ptes_direct_utilisation_profile_file: str,
+    ptes_temperature_boost_ratio_profile_file: str,
+    district_heat_share_file: str,
+):
+    """
+    Add resistive heater boosting constraints.
+    """
+
+    resistive_heater_name = n.links.index.str.contains("urban central resistive heater")
+    resistive_heater_ext = n.links[resistive_heater_name].query("p_nom_extendable").index
+
+
+    if not resistive_heater_ext.empty:
+
+        district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
+        dist_fraction = district_heat_info["district fraction of node"]
+        nodes = dist_fraction.index[dist_fraction > 0]
+
+        ptes_temperature_boost_ratio = (
+            xr.open_dataarray(ptes_temperature_boost_ratio_profile_file,
+                engine="scipy"
+            )
+            .sel(name=nodes)
+            .to_pandas()
+            .reindex(index=n.snapshots)
+        )
+
+        ptes_supplemental_heating_required = (
+            xr.open_dataarray(ptes_direct_utilisation_profile_file,
+                engine="scipy"
+        )
+        .sel(name=nodes)
+        .to_pandas()
+        .reindex(index=n.snapshots)
+        )
+        ptes_discharger_name = n.links.index.str.contains("urban central water pits discharger")
+        ptes_discharger_ext = n.links[ptes_discharger_name].query("p_nom_extendable").index
+
+        eff = n.links.efficiency[ptes_discharger_ext].values
+
+        p = n.model["Link-p"]
+
+        lhs = p.loc[resistive_heater_ext]
+        rhs = (p.loc[ptes_discharger_ext]
+               * ptes_temperature_boost_ratio
+               * eff
+               ).where(ptes_supplemental_heating_required == 0, 0)
+
+        n.model.add_constraints(lhs >= rhs, name="resistive_boosting_constraint")
 #
 #    n.model[]
+
+#
 
 # wenn resistive_boosting aktiv und es benötigt wird, dann multiplizieren mit reheat_ratio
 
@@ -1226,6 +1275,12 @@ def extra_functionality(
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    add_resistive_heater_boosting_constraints(
+        n,
+        district_heat_share_file=snakemake.input.district_heat_share,
+        ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
+        ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
+    )
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -1285,6 +1340,9 @@ def solve_network(
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     **kwargs,
+    district_heat_share_file: str,
+    ptes_direct_utilisation_profile_file: str,
+    ptes_temperature_boost_ratio_profile_file: str,
 ) -> None:
     """
     Solve network optimization problem.
@@ -1332,6 +1390,9 @@ def solve_network(
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = partial(
         extra_functionality, planning_horizons=planning_horizons
+        district_heat_share_file,
+        ptes_direct_utilisation_profile_file,
+        ptes_temperature_boost_ratio_profile_file,
     )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
@@ -1437,6 +1498,9 @@ if __name__ == "__main__":
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
+            district_heat_share_file=snakemake.input.district_heat_share,
+            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
+            ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
         )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
