@@ -143,6 +143,8 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
+      # features: [] 
+      # sarah_dir: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
