@@ -987,7 +987,6 @@ def add_resistive_heater_boosting_constraints(
 
         ptes_temperature_boost_ratio = (
             xr.open_dataarray(ptes_temperature_boost_ratio_profile_file,
-                engine="scipy"
             )
             .sel(name=nodes)
             .to_pandas()
@@ -996,7 +995,6 @@ def add_resistive_heater_boosting_constraints(
 
         ptes_supplemental_heating_required = (
             xr.open_dataarray(ptes_direct_utilisation_profile_file,
-                engine="scipy"
         )
         .sel(name=nodes)
         .to_pandas()
@@ -1340,9 +1338,6 @@ def solve_network(
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     **kwargs,
-    district_heat_share_file: str,
-    ptes_direct_utilisation_profile_file: str,
-    ptes_temperature_boost_ratio_profile_file: str,
 ) -> None:
     """
     Solve network optimization problem.
@@ -1389,11 +1384,7 @@ def solve_network(
     )
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = partial(
-        extra_functionality, planning_horizons=planning_horizons
-        district_heat_share_file,
-        ptes_direct_utilisation_profile_file,
-        ptes_temperature_boost_ratio_profile_file,
-    )
+        extra_functionality, planning_horizons=planning_horizons)
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
@@ -1498,9 +1489,6 @@ if __name__ == "__main__":
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
-            district_heat_share_file=snakemake.input.district_heat_share,
-            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
-            ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
         )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
