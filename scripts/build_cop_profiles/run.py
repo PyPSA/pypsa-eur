@@ -128,23 +128,18 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            if heat_source == "ptes":
-                source_inlet_temperature_celsius = xr.open_dataarray(
-                    snakemake.input["temp_air_total"]
-                )
-                sink_inlet_temperature_celsius = xr.open_dataarray(
-                    snakemake.input[f"temp_{heat_source}_total"]
-                )
-            elif heat_source in [
-                "ground",
-                "air",
-            ]:
+            if heat_source in ["ground", "air", "ptes"]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"
                     ]
                 )
-                sink_inlet_temperature_celsius = central_heating_return_temperature
+            elif heat_source in snakemake.params.limited_heat_sources.keys():
+                source_inlet_temperature_celsius = (
+                    snakemake.params.limited_heat_sources[heat_source][
+                        "constant_temperature_celsius"
+                    ]
+                )
             else:
                 raise ValueError(
                     f"Unknown heat source {heat_source}. Must be one of [ground, air] or {snakemake.params.heat_sources.keys()}."
@@ -155,7 +150,7 @@ if __name__ == "__main__":
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
-                sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
+                sink_inlet_temperature_celsius=central_heating_return_temperature,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
