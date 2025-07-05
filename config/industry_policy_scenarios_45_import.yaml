@@ -13,7 +13,7 @@
 
 # Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
 
-import_base_reg_regain_import:
+import_base_reg_regain:
   co2_budget:
     2020: 10
     2030: 10

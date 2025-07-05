@@ -786,25 +786,73 @@ def add_steel_industry_existing(n):
         build_year=start_dates_bof,
     )
 
-    n.add(
-        "Link",
-        nodes,
-        suffix=" DRI-EAF-2020",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=nodes,
-        carrier="DRI-EAF",
-        p_nom=p_nom_eaf/cap_decrease *  eaf_ng['iron input'],
-        p_nom_extendable=False,
-        p_min_pu=min_part_load_steel,
-        #marginal_cost=-0.1,#opex_eaf,
-        efficiency=1 / eaf_ng['iron input'],
-        efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
-        efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
-        lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-        build_year=start_dates_eaf,
-    )
+    if options["endo_industry"]["dri_import"]:
+
+        electricity_input = costs.at[
+            "direct iron reduction furnace", "electricity-input"
+        ] * 1e3 #MWh/kt
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" DRI-2020",
+            carrier="DRI",
+            p_nom_extendable=False,
+            p_nom=p_nom_eaf/cap_decrease *  eaf_ng['iron input'],
+            p_min_pu=min_part_load_steel,
+            bus0=spatial.iron.nodes,
+            bus1="EU HBI",
+            bus2=spatial.syngas_dri.nodes,
+            bus3=nodes,
+            efficiency=1 / eaf_ng['iron input'],
+            efficiency2= -1, # one unit of dri gas per kt iron
+            efficiency3=-electricity_input / eaf_ng['iron input'],
+            lifetime= eaf_ng['lifetime'],
+            build_year=start_dates_eaf,
+        )
+
+        electricity_input = costs.at["electric arc furnace", "electricity-input"]
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" EAF-2020",
+            carrier="EAF",
+            capital_cost=costs.at["electric arc furnace", "capital_cost"] *1e3 / electricity_input,
+            p_nom_extendable=False,
+            p_min_pu=min_part_load_steel,
+            p_nom=1e7, # fake capacity, the bottleneck is DRI
+            bus0=nodes,
+            bus1=spatial.steel.nodes,
+            bus2="EU HBI",
+            efficiency=1 / electricity_input,
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input,
+            lifetime= eaf_ng['lifetime'],
+            build_year=start_dates_eaf,
+        )
+
+    else:
+
+        n.add(
+            "Link",
+            nodes,
+            suffix=" DRI-EAF-2020",
+            bus0=spatial.iron.nodes,
+            bus1=spatial.steel.nodes,
+            bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
+            bus3=nodes,
+            carrier="DRI-EAF",
+            p_nom=p_nom_eaf/cap_decrease *  eaf_ng['iron input'],
+            p_nom_extendable=False,
+            p_min_pu=min_part_load_steel,
+            #marginal_cost=-0.1,#opex_eaf,
+            efficiency=1 / eaf_ng['iron input'],
+            efficiency2= -1 / eaf_ng['iron input'], # one unit of dri gas per kt iron
+            efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
+            lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+            build_year=start_dates_eaf,
+        )
 
 
 def add_cement_industry_existing(n):
