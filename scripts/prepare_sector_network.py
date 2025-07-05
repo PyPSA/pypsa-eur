@@ -5393,23 +5393,85 @@ def add_steel_industry(n, investment_year, steel_data, options):
         efficiency=1 / eaf_h2['h2 input'], # MWh hydrogen per one unit of dri gas
     )
 
-    n.add(
-        "Link",
-        nodes,
-        suffix=" DRI-EAF",
-        bus0=spatial.iron.nodes,
-        bus1=spatial.steel.nodes,
-        bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
-        bus3=nodes,
-        carrier="DRI-EAF",
-        p_nom_extendable=True,
-        p_min_pu=min_part_load_steel,
-        capital_cost= eaf_ng['capital cost'],
-        efficiency=1 / eaf_ng['iron input'],
-        efficiency2= -1, # one unit of dri gas per kt iron
-        efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
-        lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
-    )
+
+    if options["endo_industry"]["dri_import"]:
+
+        n.add(
+            "Bus",
+            "EU HBI",
+            location="EU",
+            carrier="HBI",
+            unit="kt/yr",
+        )
+
+        n.add(
+            "Generator",
+            "EU HBI import",
+            bus="EU HBI",
+            carrier="import HBI",
+            p_nom=1e7,
+            marginal_cost=395*1e3, #€/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308 
+        )
+
+        electricity_input = costs.at[
+            "direct iron reduction furnace", "electricity-input"
+        ] * 1e3 #MWh/kt
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" DRI",
+            carrier="DRI",
+            capital_cost=costs.at["direct iron reduction furnace", "fixed"] * 1e3 / eaf_ng['iron input'],
+            p_nom_extendable=True,
+            p_min_pu=min_part_load_steel,
+            bus0=spatial.iron.nodes,
+            bus1="EU HBI",
+            bus2=spatial.syngas_dri.nodes,
+            bus3=nodes,
+            efficiency=1 / eaf_ng['iron input'],
+            efficiency2= -1, # one unit of dri gas per kt iron
+            efficiency3=-electricity_input / eaf_ng['iron input'],
+            lifetime= eaf_ng['lifetime'],
+        )
+
+        electricity_input = costs.at["electric arc furnace", "electricity-input"]
+
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" EAF",
+            carrier="EAF",
+            capital_cost=costs.at["electric arc furnace", "fixed"] *1e3 / electricity_input,
+            p_nom_extendable=True,
+            p_min_pu=min_part_load_steel,
+            bus0=nodes,
+            bus1="EU steel",
+            bus2="EU HBI",
+            efficiency=1 / electricity_input,
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input,
+            lifetime= eaf_ng['lifetime'],
+        )
+
+    else:
+        n.add(
+            "Link",
+            nodes,
+            suffix=" DRI-EAF",
+            bus0=spatial.iron.nodes,
+            bus1=spatial.steel.nodes,
+            bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
+            bus3=nodes,
+            carrier="DRI-EAF",
+            p_nom_extendable=True,
+            p_min_pu=min_part_load_steel,
+            capital_cost= eaf_ng['capital cost'],
+            efficiency=1 / eaf_ng['iron input'],
+            efficiency2= -1, # one unit of dri gas per kt iron
+            efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
+            lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        )
 
     n.add(
         "Link",
@@ -7056,6 +7118,40 @@ def add_import_options(
             carrier="import H2",
             p_nom=p_nom,
             marginal_cost=import_options["H2"],
+        )
+
+    # ADB dding extra import from other countries
+    if "steel_adb" in import_options:
+        n.add(
+            "Generator",
+            spatial.steel.nodes,
+            suffix=" import",
+            bus=spatial.methanol.nodes,
+            carrier="import steel",
+            p_nom=1e7,
+            marginal_cost=import_options["steel_adb"],
+        )
+    
+    if "methanol_adb" in import_options:
+        n.add(
+            "Generator",
+            spatial.methanol.nodes,
+            suffix=" import",
+            bus=spatial.methanol.nodes,
+            carrier="import methanol",
+            p_nom=1e7,
+            marginal_cost=import_options["methanol_adb"],
+        )
+
+    if "ammonia_adb" in import_options:
+        n.add(
+            "Generator",
+            spatial.ammonia.nodes,
+            suffix=" import",
+            bus="import NH3",
+            carrier=spatial.ammonia.nodes,
+            p_nom=1e7,
+            marginal_cost=import_options["ammonia_adb"],
         )
 
 

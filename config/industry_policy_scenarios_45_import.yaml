@@ -11,49 +11,9 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-
-# Climate policy: YES, Relocation: YES, Industrial policy: REGAIN
-policy_eu_regain_85:
-  co2_budget:
-    2020: 1
-    2030: 0.450 # 55% reduction by 2030 (Ff55)
-    2040: 0.100 # 90% by 2040
-    2050: 0.000 # climate-neutral by 2050
-  weather_years:
-    enable: true
-    rcp: 8-5
-  sector:
-    endo_industry:
-      regional_steel_demand: false
-      regional_cement_demand: false
-      regional_hvc: false
-      policy_scenario: regain
-    methanol:
-      regional_methanol_demand: false
-    ammonia: true
-
-# Climate policy: YES, Relocation: YES, Industrial policy: DEINDUSTRIAL
-policy_eu_deindustrial_85:
-  co2_budget:
-    2020: 1
-    2030: 0.450 # 55% reduction by 2030 (Ff55)
-    2040: 0.100 # 90% by 2040
-    2050: 0.000 # climate-neutral by 2050
-  weather_years:
-    enable: true
-    rcp: 8-5
-  sector:
-    endo_industry:
-      regional_steel_demand: false
-      regional_cement_demand: false
-      regional_hvc: false
-      policy_scenario: deindustrial
-    methanol:
-      regional_methanol_demand: false
-    ammonia: true
-
 # Climate policy: NO, Relocation: NO, Industrial policy: REGAIN
-base_reg_regain_85:
+
+import_base_reg_regain_import:
   co2_budget:
     2020: 10
     2030: 10
@@ -61,19 +21,25 @@ base_reg_regain_85:
     2050: 10
   weather_years:
     enable: true
-    rcp: 8-5
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: true
+      dri_import: true
       regional_cement_demand: true
       regional_hvc: true
       policy_scenario: regain
     methanol:
       regional_methanol_demand: true
     ammonia: regional
+  imports:
+    enable: true
+    price:
+      methanol_adb: 137.65 #€/MWh methanol average
+      ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
-policy_reg_regain_85:
+import_policy_reg_regain:
   co2_budget:
     2020: 1
     2030: 0.450 # 55% reduction by 2030 (Ff55)
@@ -81,19 +47,25 @@ policy_reg_regain_85:
     2050: 0.000 # climate-neutral by 2050
   weather_years:
     enable: true
-    rcp: 8-5
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: true
+      dri_import: true
       regional_cement_demand: true
       regional_hvc: true
       policy_scenario: regain
     methanol:
       regional_methanol_demand: true
     ammonia: regional
+  imports:
+    enable: true
+    price:
+      methanol_adb: 137.65 #€/MWh methanol average
+      ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: NO, Relocation: NO, Industrial policy: DEINDUSTRIAL
-base_reg_deindustrial_85:
+import_base_reg_deindustrial:
   co2_budget:
     2020: 10
     2030: 10
@@ -101,19 +73,25 @@ base_reg_deindustrial_85:
     2050: 10
   weather_years:
     enable: true
-    rcp: 8-5
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: true
+      dri_import: true
       regional_cement_demand: true
       regional_hvc: true
       policy_scenario: deindustrial
     methanol:
       regional_methanol_demand: true
     ammonia: regional
+  imports:
+    enable: true
+    price:
+      methanol_adb: 137.65 #€/MWh methanol average
+      ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
-policy_reg_deindustrial_85:
+import_policy_reg_deindustrial:
   co2_budget:
     2020: 1
     2030: 0.450 # 55% reduction by 2030 (Ff55)
@@ -121,13 +99,19 @@ policy_reg_deindustrial_85:
     2050: 0.000 # climate-neutral by 2050
   weather_years:
     enable: true
-    rcp: 8-5
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: true
+      dri_import: true
       regional_cement_demand: true
       regional_hvc: true
       policy_scenario: deindustrial
     methanol:
       regional_methanol_demand: true
     ammonia: regional
+    imports:
+      enable: true
+      price:
+        methanol_adb: 137.65 #€/MWh methanol average
+        ammonia_adb: 116.65 #€/MWh ammonia average

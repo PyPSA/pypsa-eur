@@ -17,7 +17,7 @@ run:
   #- policy_eu_deindustrial
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios_26_85.yaml
+    file: config/industry_policy_scenarios_45_import.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
@@ -133,6 +133,7 @@ sector:
   endo_industry:
     enable: true
     regional_steel_demand: false
+    dri_import: false
     regional_cement_demand: false
     empirical_demand_growth: false
     endo_chemicals: true
@@ -141,7 +142,7 @@ sector:
     endo_hvc: true # Adding biomass_to_liquid and biomass_to_liquid_cc
     endo_methanol: true
     regional_hvc: false
-    policy_scenario: maintain
+    policy_scenario: deindustrial
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   tes: false
