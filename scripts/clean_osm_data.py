@@ -26,11 +26,8 @@ from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
 
-<<<<<<< HEAD
 from scripts._helpers import configure_logging, set_scenario_config
 
-=======
->>>>>>> 7f48713052f53f94cb950afc9a50bc4dc4a1f7bf
 logger = logging.getLogger(__name__)
 
 
