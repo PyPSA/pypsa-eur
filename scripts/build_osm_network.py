@@ -11,7 +11,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, set_scenario_config
 from pyproj import Transformer
 from shapely import prepare
 from shapely.algorithms.polylabel import polylabel
@@ -19,7 +19,7 @@ from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
 from tqdm import tqdm
 
-from scripts._helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +226,10 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     )
 
     for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
+        # TODO: In first draft, skip line splitting for lower voltage levels
+        if lines.loc[l, "voltage"] < 220000:
+            continue
+
         # bus indices being within tolerance from the line
         bus_in_tol_epsg = buses_epsgmod[
             buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
@@ -1060,6 +1064,12 @@ def _extend_lines_to_buses(connection, buses):
     lines_all.drop(columns=["bus_id"], inplace=True)
     lines_all.rename(columns={"geometry_right": "bus1_point"}, inplace=True)
 
+    # TODO: Relevant only for sub 220 kV AC lines: Implement fix for MultiLineStrings
+    # For now, remove MultiLineStrings, only 5 elements in Europe
+    b_multi = lines_all["geometry"].apply(lambda x: isinstance(x, MultiLineString))
+    if b_multi.any():
+        lines_all = lines_all[~b_multi]
+
     lines_all["geometry"] = lines_all.apply(
         lambda row: _add_point_to_line(row["geometry"], row["bus0_point"]), axis=1
     )
@@ -1653,7 +1663,10 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_osm_network")
+        snakemake = mock_snakemake(
+            "build_osm_network",
+            configfiles=["config/config.distribution-grid.yaml"]
+            )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
