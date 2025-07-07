@@ -974,54 +974,82 @@ def add_resistive_heater_boosting_constraints(
     """
     Add resistive heater boosting constraints.
     """
+    resistive_heater_ext = (
+        n.links[n.links.index.str.contains("urban central resistive heater")]
+        .query("p_nom_extendable").index
+    )
+    ptes_discharger_ext = (
+        n.links[n.links.index.str.contains("urban central water pits discharger")]
+        .query("p_nom_extendable").index
+    )
 
-    resistive_heater_name = n.links.index.str.contains("urban central resistive heater")
-    resistive_heater_ext = n.links[resistive_heater_name].query("p_nom_extendable").index
+    if resistive_heater_ext.empty or ptes_discharger_ext.empty:
+        return
 
+    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
+    nodes = district_heat_info.index[district_heat_info["district fraction of node"] > 0]
 
-    if not resistive_heater_ext.empty:
-
-        district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
-        dist_fraction = district_heat_info["district fraction of node"]
-        nodes = dist_fraction.index[dist_fraction > 0]
-
-        ptes_temperature_boost_ratio = (
-            xr.open_dataarray(ptes_temperature_boost_ratio_profile_file,
-            )
-            .sel(name=nodes)
-            .to_pandas()
-            .reindex(index=n.snapshots)
-        )
-
-        ptes_supplemental_heating_required = (
-            xr.open_dataarray(ptes_direct_utilisation_profile_file,
-        )
+    ptes_supplemental_heating_required = (
+        xr.open_dataarray(ptes_direct_utilisation_profile_file)
         .sel(name=nodes)
         .to_pandas()
         .reindex(index=n.snapshots)
+    )
+    # name the index correctly
+    discharger_link_suffix = " urban central water pits discharger"
+
+    ptes_supplemental_heating_required.columns = (
+        ptes_supplemental_heating_required.columns + discharger_link_suffix
+    )
+    ptes_supplemental_heating_required = ptes_supplemental_heating_required.reindex(
+        columns=ptes_discharger_ext
+    )
+
+    # build eff DataFrame for ptes discharger, multiplied with ptes_supplemental_heating_required to get zero values if boosting not required
+    eff_ptes_discharging = n.links.efficiency.loc[ptes_discharger_ext]
+    eff_ptes_discharging_df = pd.DataFrame(
+        np.tile(eff_ptes_discharging, (len(n.snapshots), 1)),
+        index=n.snapshots,
+        columns=ptes_discharger_ext,
+    ) * (1 - ptes_supplemental_heating_required)
+
+    ptes_supplemental_heating_required = ptes_supplemental_heating_required.rename(
+        columns=lambda col: col.replace(
+            discharger_link_suffix, " urban central resistive heater"
         )
-        ptes_discharger_name = n.links.index.str.contains("urban central water pits discharger")
-        ptes_discharger_ext = n.links[ptes_discharger_name].query("p_nom_extendable").index
+    )
 
-        eff = n.links.efficiency[ptes_discharger_ext].values
+    eff_rh = n.links.efficiency.loc[resistive_heater_ext]
+    eff_resistive_heater_df = pd.DataFrame(
+        np.tile(eff_rh.values, (len(n.snapshots), 1)),
+        index=n.snapshots,
+        columns=resistive_heater_ext,
+    ) * (1 - ptes_supplemental_heating_required)
 
-        p = n.model["Link-p"]
+    ptes_temperature_boost_ratio = (
+        xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
+        .sel(name=nodes)
+        .to_pandas()
+        .reindex(index=n.snapshots)
+    )
+    # name the index correctly
+    ptes_temperature_boost_ratio.columns = (
+        ptes_temperature_boost_ratio.columns + " urban central resistive heater"
+    )
+    ptes_temperature_boost_ratio = ptes_temperature_boost_ratio.reindex(
+        columns=resistive_heater_ext
+    )
 
-        lhs = p.loc[resistive_heater_ext]
-        rhs = (p.loc[ptes_discharger_ext]
-               * ptes_temperature_boost_ratio
-               * eff
-               ).where(ptes_supplemental_heating_required == 0, 0)
+    p = n.model["Link-p"]
 
-        n.model.add_constraints(lhs >= rhs, name="resistive_boosting_constraint")
-#
-#    n.model[]
+    # eigentlich müsste durch eff geteilt werden, aber division durch 0 nicht mölgich, muss ein anderer workaround gefunden werden
+    lhs = p.loc[:, resistive_heater_ext] * ptes_temperature_boost_ratio * eff_resistive_heater_df
+    rhs = (
+        p.loc[:, ptes_discharger_ext]
+         * eff_ptes_discharging_df
+    )
 
-#
-
-# wenn resistive_boosting aktiv und es benötigt wird, dann multiplizieren mit reheat_ratio
-
-# wir greifen zu auf link-p mit dem indizes von resistive_heater, dann definieren wir, dass für den zeitpunkt, wo boosting benötigt wird resistive heater link-p >= reheat_boosting * link-p discharger * effizienz (damit wir das betrachten, was rausgeht) sein muss
+    n.model.add_constraints(lhs >= rhs, name="resistive_heater_boosting_constraints")
 
 
 def add_battery_constraints(n):
@@ -1217,7 +1245,12 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    planning_horizons: str | None = None,
+    district_heat_share_file: str | None = None,
+    ptes_direct_utilisation_profile_file: str | None = None,
+    ptes_temperature_boost_ratio_profile_file: str | None = None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1275,9 +1308,9 @@ def extra_functionality(
     add_pipe_retrofit_constraint(n)
     add_resistive_heater_boosting_constraints(
         n,
-        district_heat_share_file=snakemake.input.district_heat_share,
-        ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
-        ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
+        district_heat_share_file=district_heat_share_file,
+        ptes_direct_utilisation_profile_file=ptes_direct_utilisation_profile_file,
+        ptes_temperature_boost_ratio_profile_file=ptes_temperature_boost_ratio_profile_file,
     )
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
@@ -1337,6 +1370,9 @@ def solve_network(
     solving: dict,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
+    district_heat_share_file: str | None = None,
+    ptes_direct_utilisation_profile_file: str | None = None,
+    ptes_temperature_boost_ratio_profile_file: str | None = None,
     **kwargs,
 ) -> None:
     """
@@ -1384,7 +1420,12 @@ def solve_network(
     )
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = partial(
-        extra_functionality, planning_horizons=planning_horizons)
+        extra_functionality,
+        planning_horizons=planning_horizons,
+        district_heat_share_file = district_heat_share_file,
+        ptes_direct_utilisation_profile_file = ptes_direct_utilisation_profile_file,
+        ptes_temperature_boost_ratio_profile_file = ptes_temperature_boost_ratio_profile_file,
+    )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
         "linearized_unit_commitment", False
@@ -1489,6 +1530,9 @@ if __name__ == "__main__":
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
+            district_heat_share_file=snakemake.input.district_heat_share,
+            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
+            ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
         )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
