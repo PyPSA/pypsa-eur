@@ -245,16 +245,19 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"]:
+if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_jrc_enspreso_biomass:
         input:
             storage(
-                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
+                f"{JRC_ENSPRESO_BIOMASS_DATASET["url"]}",
                 keep_local=True,
             ),
         output:
-            "data/ENSPRESO_BIOMASS.xlsx",
+            f"{JRC_ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
         run:
             move(input[0], output[0])

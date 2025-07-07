@@ -130,7 +130,11 @@ def dataset_version(
             if "latest" != dataset_config["version_or_latest"]
             else True
         )
-        & (data_versions["latest"] if "latest" == dataset_config["version_or_latest"] else True)
+        & (
+            data_versions["latest"]
+            if "latest" == dataset_config["version_or_latest"]
+            else True
+        )
     ]
 
     if dataset.empty:
