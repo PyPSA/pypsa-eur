@@ -1587,9 +1587,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "clean_osm_data",
-            configfiles=["config/config.distribution-grid.yaml"]
-            )
+            "clean_osm_data", configfiles=["config/config.distribution-grid.yaml"]
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

@@ -376,7 +376,7 @@ if __name__ == "__main__":
         name="Buses (DC)",
         zindex=103,
     )
-    
+
     map = lines.query("v_nom>=750").explore(
         color="purple",
         popup=True,
@@ -385,7 +385,7 @@ if __name__ == "__main__":
         zindex=104,
     )
 
-    map =lines.query("v_nom>=380 and v_nom<750").explore(
+    map = lines.query("v_nom>=380 and v_nom<750").explore(
         color="darkred",
         popup=True,
         m=map,
@@ -393,7 +393,7 @@ if __name__ == "__main__":
         zindex=105,
     )
 
-    map =lines.query("v_nom>=250 and v_nom<380").explore(
+    map = lines.query("v_nom>=250 and v_nom<380").explore(
         color="orange",
         popup=True,
         m=map,
@@ -401,7 +401,7 @@ if __name__ == "__main__":
         zindex=106,
     )
 
-    map =lines.query("v_nom>=200 and v_nom<250").explore(
+    map = lines.query("v_nom>=200 and v_nom<250").explore(
         color="green",
         popup=True,
         m=map,

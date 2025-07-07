@@ -11,7 +11,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
-from scripts._helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 from pyproj import Transformer
 from shapely import prepare
 from shapely.algorithms.polylabel import polylabel
@@ -19,7 +19,7 @@ from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
 from tqdm import tqdm
 
-from _helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -1664,9 +1664,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_osm_network",
-            configfiles=["config/config.distribution-grid.yaml"]
-            )
+            "build_osm_network", configfiles=["config/config.distribution-grid.yaml"]
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
