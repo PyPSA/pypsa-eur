@@ -8,11 +8,15 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 import requests
 import typer
+from dotenv import load_dotenv
 from tqdm import tqdm
 from tqdm.utils import CallbackIOWrapper
+
+load_dotenv()  # Load environment variables from .env file if it exists
 
 app = typer.Typer()
 
@@ -22,18 +26,36 @@ API_URLS = {
 }
 
 ZENODO_API_URL = None
-ZENODO_API_TOKEN = os.environ.get("ZENODO_ACCESS_TOKEN")
+ZENODO_API_KEY = None
 VERSIONS_CSV = Path("data/versions.csv")
 
 
-def get_access_token() -> str:
+def get_access_token(sandbox: bool):
     """
     Prompt user for Zenodo API access token if undefined.
     """
-    if not ZENODO_API_TOKEN:
+    global ZENODO_API_KEY
+    if sandbox:
+        ZENODO_API_KEY = os.getenv("ZENODO_SANDBOX_API_KEY")
+    else:
+        ZENODO_API_KEY = os.getenv("ZENODO_API_KEY")
+
+    if not ZENODO_API_KEY:
         typer.prompt(
-            "\nZENODO_ACCESS_TOKEN not found in environment. You can set it up using 'export ZENODO_ACCESS_TOKEN='<token>'. "
-            "Please enter your Zenodo API token"
+            "\n",
+            "ZENODO_API_KEY not found in environment.\n"
+            "You can set it up using a `.env` file or via "
+            + (
+                "'export ZENODO_API_KEY='<token>'"
+                if not sandbox
+                else "'export ZENODO_SANDBOX_API_KEY='<token>'"
+            )
+            + ".\n"
+            "To generate an API key, go to your Zenodo account settings under 'My profile' -> 'Settings' -> 'Applications' -> 'Personal access tokens'.\n"
+            "(https://zenodo.org/account/settings/applications/tokens/)"
+            if not sandbox
+            else "(https://sandbox.zenodo.org/account/settings/applications/tokens/)\n"
+            "Please enter your Zenodo API key now:",
         )
 
 
@@ -86,9 +108,7 @@ def write_versions_csv(rows: list[dict]):
         writer.writerows(rows)
 
 
-def prompt_choice(
-    options: list[str], prompt_text: str
-) -> str:
+def prompt_choice(options: list[str], prompt_text: str) -> str:
     """
     Prompt the user to select an option from a list by number,
 
@@ -222,7 +242,7 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
     """
     r = requests.post(
         ZENODO_API_URL,
-        params={"access_token": ZENODO_API_TOKEN},
+        params={"access_token": ZENODO_API_KEY},
         json={},
         headers={"Content-Type": "application/json"},
     )
@@ -234,7 +254,7 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
     # Update metadata of the deposition
     r = requests.put(
         deposition_url,
-        params={"access_token": ZENODO_API_TOKEN},
+        params={"access_token": ZENODO_API_KEY},
         json={"metadata": metadata},
         headers={"Content-Type": "application/json"},
     )
@@ -256,7 +276,7 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
                 upload_response = requests.put(
                     f"{bucket_url}/{file.name}",
                     data=wrapped_file,
-                    params={"access_token": ZENODO_API_TOKEN},
+                    params={"access_token": ZENODO_API_KEY},
                 )
                 upload_response.raise_for_status()
                 # Add done to the progress bar
@@ -281,7 +301,7 @@ def publish_zenodo_deposition(deposition_id: int) -> requests.Response:
     """
     r = requests.post(
         f"{ZENODO_API_URL}/{deposition_id}/actions/publish",
-        params={"access_token": ZENODO_API_TOKEN},
+        params={"access_token": ZENODO_API_KEY},
     )
     r.raise_for_status()
     return r
@@ -371,7 +391,7 @@ def get_deposition_by_url(url) -> dict:
     dict
         The deposition metadata as a dictionary.
     """
-    r = requests.get(url, params={"access_token": ZENODO_API_TOKEN})
+    r = requests.get(url, params={"access_token": ZENODO_API_KEY})
     r.raise_for_status()
     return r.json()
 
@@ -403,11 +423,12 @@ def extract_zenodo_deposition_url(record_url: str) -> str | None:
 
 @app.command()
 def main(
-    sandbox: bool = typer.Option(
-        False,
-        "--sandbox",
-        help="Use Zenodo sandbox environment instead of production.",
-    )
+    sandbox: Annotated[
+        bool,
+        typer.Option(
+            help="Use Zenodo sandbox environment instead of production.",
+        ),
+    ] = False,
 ):
     """
     Guide the user through creating a new Zenodo deposition or version.
@@ -415,17 +436,25 @@ def main(
     global ZENODO_API_URL
     ZENODO_API_URL = API_URLS["sandbox"] if sandbox else API_URLS["production"]
 
+    if sandbox:
+        typer.secho(
+            "************************\n"
+            "***** SANDBOX MODE *****\n"
+            "************************\n",
+            fg=typer.colors.YELLOW,
+        )
+
     typer.secho("=" * 80, fg=typer.colors.CYAN)
     typer.echo(
-"""This script helps you create/upload a new dataset version on Zenodo.
-To create/upload a new dataset version:
-    * Place the dataset that you want to upload into the 'data/<dataset_name>/archive/<version_name>' folder.
-    * If this is a new dataset, create the folder 'data/<dataset_name>/archive/<version_name>' first.
-Sticking with this naming convention is important for PyPSA-Eur and for this script to work properly.
-You can pause here and create the folder and move the files into it if you haven't done so yet."""
+        "This script helps you create/upload a new dataset version on Zenodo.\n"
+        "To create/upload a new dataset version:\n"
+        "    * Place the dataset that you want to upload into the 'data/<dataset_name>/archive/<version_name>' folder.\n"
+        "    * If this is a new dataset, create the folder 'data/<dataset_name>/archive/<version_name>' first.\n"
+        "Sticking with this naming convention is important for PyPSA-Eur and for this script to work properly.\n"
+        "You can pause here and create the folder and move the files into it if you haven't done so yet.\n"
     )
     typer.secho("=" * 80, fg=typer.colors.CYAN)
-    get_access_token()
+    get_access_token(sandbox)
 
     action = prompt_choice(
         ["release", "create"],
