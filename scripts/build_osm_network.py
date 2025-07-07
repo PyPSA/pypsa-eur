@@ -18,7 +18,7 @@ from shapely.geometry import LineString, MultiLineString, Point
 from shapely.ops import linemerge, split
 from tqdm import tqdm
 
-from scripts._helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -1650,7 +1650,7 @@ def build_network(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_osm_network")
 

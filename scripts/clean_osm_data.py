@@ -25,7 +25,7 @@ from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
 
-from scripts._helpers import configure_logging, set_scenario_config
+from _helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -1459,7 +1459,8 @@ def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     # difference with polygon
     linestring_new = linestring.difference(polygon_unary)
 
-    if linestring_new is MultiLineString:
+    # check if linestring_new is of instance MultiLineString
+    if isinstance(linestring_new, MultiLineString):
         # keep the longest line in the multilinestring
         linestring_new = max(linestring_new.geoms, key=lambda x: x.length)
 
@@ -1571,7 +1572,7 @@ def _check_if_ways_in_multi(list, longer_list):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from scripts._helpers import mock_snakemake
+        from _helpers import mock_snakemake
 
         snakemake = mock_snakemake("clean_osm_data")
 
@@ -1818,6 +1819,15 @@ if __name__ == "__main__":
     df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
 
     df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
+
+    # TEMPORARY: 
+    # Drop links with empty geometry
+    # Identify rows where geometry is not of instance geometry
+    b_not_valid = df_links["geometry"].apply(
+        lambda x: not isinstance(x, (LineString, MultiLineString))
+    )
+    df_links = df_links[~b_not_valid]
+
     df_links = _finalise_links(df_links)
     gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs).set_index(
         "link_id"
