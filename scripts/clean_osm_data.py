@@ -21,12 +21,16 @@ import re
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from _helpers import configure_logging, set_scenario_config
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
 
+<<<<<<< HEAD
 from scripts._helpers import configure_logging, set_scenario_config
 
+=======
+>>>>>>> 7f48713052f53f94cb950afc9a50bc4dc4a1f7bf
 logger = logging.getLogger(__name__)
 
 
@@ -1820,7 +1824,7 @@ if __name__ == "__main__":
 
     df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
 
-    # TEMPORARY: 
+    # TEMPORARY:
     # Drop links with empty geometry
     # Identify rows where geometry is not of instance geometry
     b_not_valid = df_links["geometry"].apply(
