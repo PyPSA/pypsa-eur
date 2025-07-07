@@ -58,6 +58,8 @@ Release Notes
 
 * Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies.
 
+* Chore: Replace licensing information in `.reuse/dep5` with `REUSE.toml` to be compliant with REUSE 3.2 (https://reuse.software/spec-3.2/#licensing-information).
+
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
 
