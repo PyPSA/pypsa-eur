@@ -8,7 +8,7 @@ aviation,--,"{true, false}",Flag to include aviation sector.
 agriculture,--,"{true, false}",Flag to include agriculture sector.
 fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels."
 district_heating,--,,
--- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
+-- potential,--,Dictionary with country codes as keys or float.,"Maximum fraction of urban demand which can be supplied by district heating. If given as dictionary, specify one value per country modeled or provide a default value with key `default` to fill values for all unspecified countries."
 -- progress,--,Dictionary with planning horizons as keys.,Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 -- supply_temperature_approximation,,,
