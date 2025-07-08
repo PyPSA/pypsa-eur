@@ -419,28 +419,31 @@ if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source
 
 
 
-if config["enable"]["retrieve"]:
+if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_co2stop:
-        params:
-            zip="data/co2jrc_openformats.zip",
         output:
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+            storage_table=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
+            storage_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+            traps_table1=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
+            traps_table2=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
+            traps_table3=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
+            traps_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
         run:
             import requests
 
             response = requests.get(
-                "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
+                CO2STOP_DATASET["url"],
             )
-            with open(params["zip"], "wb") as f:
+            zip_file = f"{CO2STOP_DATASET['folder']}/co2jrc_openformats.zip"
+            output_folder = CO2STOP_DATASET["folder"]
+
+            with open(zip_file, "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            unpack_archive(zip_file, output_folder)
 
 
 

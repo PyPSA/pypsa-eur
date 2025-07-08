@@ -32,13 +32,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
 - **Description:** Europe's NUTS administrative regions.
 
-``data/complete_map_2020_unit_Mt.geojson``
-
-- **Source:** SETIS
-- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
-- **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
-- **Description:** European CO2 storage database CO2StoP.
-
 ``data/myb1-2022-nitro-ert.xlsx``
 
 - **Source:** United States Geological Survey (USGS)

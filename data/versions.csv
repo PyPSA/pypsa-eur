@@ -1,4 +1,6 @@
 "dataset","source","version","tags","url","note"
+"co2stop","archive","26 AUGUST 2020","['latest', 'supported']","https://zenodo.org/records/15837736/files/co2jrc_openformats.zip",""
+"co2stop","primary","26 AUGUST 2020","['latest', 'supported']","https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",""
 "gem_gspt","archive","April-2024-V1","['latest', 'supported']","https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx","Original of the TUB mirror, for details see https://github.com/PyPSA/pypsa-eur/pull/1265"
 "gem_gspt","primary","March-2025-V1","['not-supported']","https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx""",""
 "gem_gspt","primary","April-2024-V1","['latest', 'supported']","https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",""

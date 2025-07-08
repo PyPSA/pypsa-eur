@@ -686,12 +686,12 @@ rule build_biomass_transport_costs:
 
 rule build_co2_sequestration_potentials:
     input:
-        storage_table="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-        storage_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
-        traps_table1="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
-        traps_table2="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
-        traps_table3="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
-        traps_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+        storage_table=rules.retrieve_co2stop.output["storage_table"],
+        storage_map=rules.retrieve_co2stop.output["storage_map"],
+        traps_table1=rules.retrieve_co2stop.output["traps_table1"],
+        traps_table2=rules.retrieve_co2stop.output["traps_table2"],
+        traps_table3=rules.retrieve_co2stop.output["traps_table3"],
+        traps_map=rules.retrieve_co2stop.output["traps_map"],
     output:
         resources("co2_sequestration_potentials.geojson"),
     threads: 1
@@ -884,7 +884,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
-        hotmaps=rules.hotmaps_industrial_sites.output[0],
+        hotmaps=rules.retrieve_hotmaps_industrial_sites.output[0],
         gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
