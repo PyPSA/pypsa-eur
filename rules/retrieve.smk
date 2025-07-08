@@ -304,15 +304,20 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
-    rule retrieve_usgs_ammonia_production:
+    rule retrieve_nitrogen_statistics:
         input:
             storage(
-                "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+                NITROGEN_STATISTICS_DATASET["url"],
             ),
         output:
-            "data/myb1-2022-nitro-ert.xlsx",
+            f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
         run:
             move(input[0], output[0])

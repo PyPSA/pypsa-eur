@@ -972,6 +972,9 @@ data:
   co2stop:
     source: "archive"
     version_or_latest: "latest"
+  nitrogen_statistics:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

@@ -32,13 +32,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
 - **Description:** Europe's NUTS administrative regions.
 
-``data/myb1-2022-nitro-ert.xlsx``
-
-- **Source:** United States Geological Survey (USGS)
-- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information
-- **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
-- **Description:** Statistics and information on the worldwide supply of, demand for, and flow of the mineral commodity nitrogen.
-
 ``data/Industrial_Database.csv``
 
 - **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
