@@ -6,6 +6,7 @@ rule add_existing_baseyear:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
@@ -147,10 +148,7 @@ rule make_summary_perfect:
         unpack(input_networks_make_summary_perfect),
         costs=resources("costs_2020.csv"),
     output:
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
-        cfs=RESULTS + "csvs/cfs.csv",
         costs=RESULTS + "csvs/costs.csv",
         capacities=RESULTS + "csvs/capacities.csv",
         curtailment=RESULTS + "csvs/curtailment.csv",

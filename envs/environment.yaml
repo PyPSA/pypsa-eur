@@ -21,8 +21,8 @@ dependencies:
 - xlrd
 - openpyxl
 - seaborn
-- snakemake-minimal<8.25 # See https://github.com/snakemake/snakemake/issues/3202
-- snakemake-storage-plugin-http
+- snakemake-minimal>=9
+- snakemake-storage-plugin-http>=0.3
 - snakemake-executor-plugin-slurm
 - snakemake-executor-plugin-cluster-generic
 - memory_profiler
@@ -32,7 +32,7 @@ dependencies:
 - numpy
 - pandas>=2.1
 - geopandas>=1
-- xarray>=2024.03.0
+- xarray>=2024.03.0,<2025.07.0
 - rioxarray
 - netcdf4
 - libgdal-netcdf
@@ -51,6 +51,7 @@ dependencies:
 - pyxlsb
 - graphviz
 - geojson
+- pyscipopt
 
 # GIS dependencies:
 - cartopy
@@ -69,6 +70,5 @@ dependencies:
 - pip:
   - gurobipy
   - highspy
-  - pyscipopt # See https://github.com/scipopt/PySCIPOpt/issues/944
   - tsam>=2.3.1
   - entsoe-py

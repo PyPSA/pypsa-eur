@@ -10,17 +10,15 @@ other metrics.
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import set_scenario_config
-from make_summary import (
-    assign_carriers,
-    assign_locations,
-    calculate_cfs,  # noqa: F401
-    calculate_nodal_cfs,  # noqa: F401
-    calculate_nodal_costs,  # noqa: F401
-)
-from prepare_sector_network import prepare_costs
 from pypsa.descriptors import get_active_assets
 from six import iteritems
+
+from scripts._helpers import set_scenario_config
+from scripts.add_electricity import load_costs
+from scripts.make_summary import (
+    assign_carriers,
+    assign_locations,
+)
 
 idx = pd.IndexSlice
 
@@ -656,10 +654,7 @@ def calculate_co2_emissions(n, label, df):
 
 
 outputs = [
-    "nodal_costs",
     "nodal_capacities",
-    "nodal_cfs",
-    "cfs",
     "costs",
     "capacities",
     "curtailment",
@@ -712,7 +707,7 @@ def to_csv(df):
 if __name__ == "__main__":
     # Detect running outside of snakemake and mock snakemake for testing
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("make_summary_perfect")
     set_scenario_config(snakemake)
@@ -733,10 +728,10 @@ if __name__ == "__main__":
     print(networks_dict)
 
     nyears = 1
-    costs_db = prepare_costs(
+    costs_db = load_costs(
         snakemake.input.costs,
         snakemake.config["costs"],
-        nyears,
+        nyears=nyears,
     )
 
     df = make_summaries(networks_dict)

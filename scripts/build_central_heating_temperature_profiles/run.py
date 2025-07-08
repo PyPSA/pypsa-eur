@@ -38,8 +38,9 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
-from central_heating_temperature_approximator import (
+
+from scripts._helpers import get_snapshots, set_scenario_config
+from scripts.build_central_heating_temperature_profiles.central_heating_temperature_approximator import (
     CentralHeatingTemperatureApproximator,
 )
 
@@ -188,7 +189,7 @@ def scale_temperature_to_investment_year(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
@@ -237,7 +238,9 @@ if __name__ == "__main__":
 
     # map forward and return temperatures specified on country-level to onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)["name"]
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
     max_forward_temperature_central_heating_by_node_and_time: xr.DataArray = (
         map_temperature_dict_to_onshore_regions(
             supply_temperature_by_country=max_forward_temperature_investment_year,

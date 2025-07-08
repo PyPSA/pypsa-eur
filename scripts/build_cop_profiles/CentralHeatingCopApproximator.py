@@ -7,7 +7,8 @@ from typing import Union
 
 import numpy as np
 import xarray as xr
-from BaseCopApproximator import BaseCopApproximator
+
+from scripts.build_cop_profiles.BaseCopApproximator import BaseCopApproximator
 
 
 class CentralHeatingCopApproximator(BaseCopApproximator):
@@ -152,7 +153,7 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
         return xr.where(
-            self.t_source_in_kelvin > self.t_sink_out_kelvin,
+            self.t_source_in_kelvin >= self.t_sink_out_kelvin,
             0,
             self.ideal_lorenz_cop
             * (

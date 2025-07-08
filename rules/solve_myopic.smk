@@ -8,6 +8,7 @@ rule add_existing_baseyear:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
@@ -74,6 +75,10 @@ rule add_brownfield:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
+        tes=config_provider("sector", "tes"),
+        dynamic_ptes_capacity=config_provider(
+            "sector", "district_heating", "ptes", "dynamic_capacity"
+        ),
     input:
         unpack(input_profile_tech_brownfield),
         simplify_busmap=resources("busmap_base_s.csv"),

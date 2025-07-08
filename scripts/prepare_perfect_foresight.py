@@ -10,16 +10,17 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import (
+from pypsa.descriptors import expand_series
+from six import iterkeys
+
+from scripts._helpers import (
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import sanitize_carriers
-from add_existing_baseyear import add_build_year_to_new_assets
-from pypsa.descriptors import expand_series
-from six import iterkeys
+from scripts.add_electricity import sanitize_carriers
+from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,9 @@ def adjust_electricity_grid(n: pypsa.Network, year: int, years: list[int]) -> No
 
 
 # --------------------------------------------------------------------
-def concat_networks(years: list[int], network_paths: list[str]) -> pypsa.Network:
+def concat_networks(
+    years: list[int], network_paths: list[str], social_discountrate: float
+) -> pypsa.Network:
     """
     Concat given pypsa networks and add build years.
 
@@ -194,6 +197,7 @@ def concat_networks(years: list[int], network_paths: list[str]) -> pypsa.Network
     """
     n = pypsa.Network()
 
+    # Loop over each input network file and its corresponding investment year
     for i, network_path in enumerate(network_paths):
         year = years[i]
         network = pypsa.Network(network_path)
@@ -223,12 +227,17 @@ def concat_networks(years: list[int], network_paths: list[str]) -> pypsa.Network
         snapshots = n.snapshots.drop("now", errors="ignore").union(network_sns)
         n.set_snapshots(snapshots)
 
+        # Iterate all component types in the loaded network
         for component in network.iterate_components():
             pnl = getattr(n, component.list_name + "_t")
             for k in iterkeys(component.pnl):
                 pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
                 if pnl_year.empty and (not (component.name == "Load" and k == "p_set")):
                     continue
+                if k not in pnl:
+                    # TODO: for some reason efficiency2 isn't available, used this workaround:
+                    #  initialize an empty time-series DataFrame for any missing key in pnl (e.g., 'efficiency2')
+                    pnl[k] = pd.DataFrame(index=snapshots)
                 if component.name == "Load":
                     static_load = network.loads.loc[network.loads.p_set != 0]
                     static_load_t = expand_series(static_load.p_set, network_sns).T
@@ -341,7 +350,7 @@ def set_phase_out(
     n.links.loc[assets_i, "lifetime"] = (phase_out_year - build_year).astype(float)
 
 
-def set_all_phase_outs(n: pypsa.Network) -> None:
+def set_all_phase_outs(n: pypsa.Network, years: list[int]) -> None:
     # TODO move this to a csv or to the config
     planned = [
         (["nuclear"], "DE", 2022),
@@ -596,16 +605,15 @@ def update_heat_pump_efficiency(n: pypsa.Network, years: list[int]) -> None:
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_perfect_foresight",
             opts="",
             clusters="37",
-            ll="v1.5",
             sector_opts="1p7-4380H-T-H-B-I-A-dist1",
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -621,7 +629,7 @@ if __name__ == "__main__":
     network_paths = [snakemake.input.brownfield_network] + [
         snakemake.input[f"network_{year}"] for year in years[1:]
     ]
-    n = concat_networks(years, network_paths)
+    n = concat_networks(years, network_paths, social_discountrate)
 
     # temporal aggregate
     solver_name = snakemake.config["solving"]["solver"]["name"]
@@ -637,7 +645,7 @@ if __name__ == "__main__":
     adjust_stores(n)
 
     # set phase outs
-    set_all_phase_outs(n)
+    set_all_phase_outs(n, years)
 
     # add H2 boiler
     add_H2_boilers(n)

@@ -13,18 +13,23 @@ The rule is executed in ``build_sector.smk``.
 
 import logging
 
-import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import configure_logging, get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+from scripts._helpers import (
+    configure_logging,
+    get_snapshots,
+    load_cutout,
+    set_scenario_config,
+)
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_solar_thermal_profiles", clusters=48)
     configure_logging(snakemake)
@@ -39,7 +44,7 @@ if __name__ == "__main__":
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
 
-    cutout = atlite.Cutout(snakemake.input.cutout).sel(time=time)
+    cutout = load_cutout(snakemake.input.cutout, time=time)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)

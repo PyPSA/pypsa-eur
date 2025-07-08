@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Lifts electrical transmission network to a single 380 kV voltage layer, removes
 dead-ends of the network, and reduces multi-hop HVDC connections to a single
@@ -47,10 +47,11 @@ import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
-from _helpers import configure_logging, set_scenario_config
-from cluster_network import busmap_for_admin_regions, cluster_regions
 from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.cluster_network import busmap_for_admin_regions, cluster_regions
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,9 @@ def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) ->
 
 
 def simplify_links(
-    n: pypsa.Network, p_max_pu: int | float
+    n: pypsa.Network,
+    p_max_pu: int | float,
+    p_min_pu: int | float,
 ) -> tuple[pypsa.Network, pd.Series]:
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
@@ -214,7 +217,7 @@ def simplify_links(
                     * n.links.loc[all_links, "underwater_fraction"]
                 ),
                 p_max_pu=p_max_pu,
-                p_min_pu=-p_max_pu,
+                p_min_pu=p_min_pu,
                 underground=False,
                 under_construction=False,
             )
@@ -259,7 +262,7 @@ def remove_stubs(
 
 
 def remove_stubs_within_admin(
-    n: pypsa.Network, admin_shapes: str
+    n: pypsa.Network, simplify_network: dict, admin_shapes: str
 ) -> tuple[pypsa.Network, pd.Series]:
     busmap = busmap_for_admin_regions(
         n,
@@ -269,7 +272,8 @@ def remove_stubs_within_admin(
     n.buses["admin"] = n.buses.index.map(busmap)
 
     logger.info("Removing stubs within administrative regions.")
-    matching_attrs = ["admin"]
+    across_borders = simplify_network["remove_stubs_across_borders"]
+    matching_attrs = [] if across_borders else ["admin"]
     busmap = busmap_by_stubs(n, matching_attrs)
 
     _remove_clustered_buses_and_branches(n, busmap)
@@ -416,7 +420,7 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("simplify_network")
     configure_logging(snakemake)
@@ -435,12 +439,14 @@ if __name__ == "__main__":
     n, converter_map = remove_converters(n)
     busmaps.append(converter_map)
 
-    n, simplify_links_map = simplify_links(n, params.p_max_pu)
+    n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
         if params.mode == "administrative":
-            n, stub_map = remove_stubs_within_admin(n, snakemake.input.admin_shapes)
+            n, stub_map = remove_stubs_within_admin(
+                n, params.simplify_network, snakemake.input.admin_shapes
+            )
             busmaps.append(stub_map)
         else:
             n, stub_map = remove_stubs(n, params.simplify_network)

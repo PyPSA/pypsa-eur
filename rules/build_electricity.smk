@@ -73,6 +73,7 @@ rule base_network:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         lines=config_provider("lines"),
+        links=config_provider("links"),
         transformers=config_provider("transformers"),
         clustering=config_provider("clustering", "mode"),
         admin_levels=config_provider("clustering", "administrative"),
@@ -117,8 +118,34 @@ rule build_osm_boundaries:
         "../scripts/build_osm_boundaries.py"
 
 
+rule build_bidding_zones:
+    params:
+        countries=config_provider("countries"),
+        remove_islands=config_provider(
+            "clustering", "build_bidding_zones", "remove_islands"
+        ),
+        aggregate_to_tyndp=config_provider(
+            "clustering", "build_bidding_zones", "aggregate_to_tyndp"
+        ),
+    input:
+        bidding_zones_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+        bidding_zones_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+    output:
+        file=resources("bidding_zones.geojson"),
+    log:
+        logs("build_bidding_zones.log"),
+    threads: 1
+    resources:
+        mem_mb=1500,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_bidding_zones.py"
+
+
 rule build_shapes:
     params:
+        config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
         eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
@@ -129,6 +156,11 @@ rule build_shapes:
         xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
         other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
@@ -153,17 +185,16 @@ if config["enable"].get("build_cutout", False):
 
     rule build_cutout:
         params:
-            snapshots=config_provider("snapshots"),
             cutouts=config_provider("atlite", "cutouts"),
         input:
             regions_onshore=resources("regions_onshore.geojson"),
             regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR + "{cutout}.nc"),
+            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
         log:
-            logs(CDIR + "build_cutout/{cutout}.log"),
+            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
         benchmark:
-            "benchmarks/" + CDIR + "build_cutout_{cutout}"
+            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
@@ -176,7 +207,7 @@ if config["enable"].get("build_cutout", False):
 rule build_ship_raster:
     input:
         ship_density="data/shipdensity_global.zip",
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),
     log:
@@ -215,9 +246,9 @@ rule determine_availability_matrix_MD_UA:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         availability_matrix=resources(
             "availability_matrix_MD-UA_{clusters}_{technology}.nc"
@@ -285,9 +316,9 @@ rule determine_availability_matrix:
             if w.technology in ("onwind", "solar", "solar-hsat")
             else resources("regions_offshore_base_s_{clusters}.geojson")
         ),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         resources("availability_matrix_{clusters}_{technology}.nc"),
     log:
@@ -311,12 +342,18 @@ rule build_renewable_profiles:
     input:
         availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
+        distance_regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        resource_regions=lambda w: (
+            resources("regions_onshore_base_s_{clusters}.geojson")
+            if w.technology in ("onwind", "solar", "solar-hsat")
+            else resources("regions_offshore_base_s_{clusters}.geojson")
+        ),
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
     output:
         profile=resources("profile_{clusters}_{technology}.nc"),
+        class_regions=resources("regions_by_class_{clusters}_{technology}.geojson"),
     log:
         logs("build_renewable_profile_{clusters}_{technology}.log"),
     benchmark:
@@ -362,10 +399,10 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff="data/era5-annual-runoff-per-country.csv",
-        cutout=lambda w: CDIR
-        + config_provider("renewable", "hydro", "cutout")(w)
-        + ".nc",
+        era5_runoff="data/bundle/era5-runoff-per-country.csv",
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", "hydro", "cutout")(w)
+        ),
     output:
         profile=resources("profile_hydro.nc"),
     log:
@@ -386,9 +423,9 @@ rule build_line_rating:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         base_network=resources("networks/base.nc"),
-        cutout=lambda w: CDIR
-        + config_provider("lines", "dynamic_line_rating", "cutout")(w)
-        + ".nc",
+        cutout=lambda w: input_cutout(
+            w, config_provider("lines", "dynamic_line_rating", "cutout")(w)
+        ),
     output:
         output=resources("dlr.nc"),
     log:
@@ -477,10 +514,13 @@ rule add_transmission_projects_and_dlr:
         "../scripts/add_transmission_projects_and_dlr.py"
 
 
-def input_profile_tech(w):
+def input_class_regions(w):
     return {
-        f"profile_{tech}": resources(f"profile_{tech}.nc")
-        for tech in config_provider("electricity", "renewable_carriers")(w)
+        f"class_regions_{tech}": resources(
+            f"regions_by_class_{{clusters}}_{tech}.geojson"
+        )
+        for tech in set(config_provider("electricity", "renewable_carriers")(w))
+        - {"hydro"}
     }
 
 
@@ -512,7 +552,7 @@ rule build_hac_features:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         features=config_provider("clustering", "cluster_network", "hac_features"),
     input:
-        cutout=lambda w: CDIR + config_provider("atlite", "default_cutout")(w) + ".nc",
+        cutout=lambda w: input_cutout(w),
         regions=resources("regions_onshore_base_s.geojson"),
     output:
         resources("hac_features.nc"),
@@ -540,6 +580,7 @@ rule simplify_network:
             "clustering", "aggregation_strategies", default={}
         ),
         p_max_pu=config_provider("links", "p_max_pu", default=1.0),
+        p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
@@ -565,11 +606,24 @@ rule simplify_network:
 
 # Optional input when using custom busmaps - Needs to be tailored to selected base_network
 def input_custom_busmap(w):
-    if config_provider("clustering", "mode", default="busmap")(w) == "custom_busmap":
+
+    custom_busmap = []
+    custom_busshapes = []
+
+    mode = config_provider("clustering", "mode", default="busmap")(w)
+
+    if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
-        return {"custom_busmap": custom_busmap}
-    return {"custom_busmap": []}
+
+    if mode == "custom_busshapes":
+        base_network = config_provider("electricity", "base_network")(w)
+        custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
+
+    return {
+        "custom_busmap": custom_busmap,
+        "custom_busshapes": custom_busshapes,
+    }
 
 
 rule cluster_network:
@@ -588,10 +642,17 @@ rule cluster_network:
         ),
         max_hours=config_provider("electricity", "max_hours"),
         length_factor=config_provider("lines", "length_factor"),
+        cluster_mode=config_provider("clustering", "mode"),
+        copperplate_regions=config_provider("clustering", "copperplate_regions"),
     input:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
+        bidding_zones=lambda w: (
+            resources("bidding_zones.geojson")
+            if config_provider("clustering", "mode")(w) == "administrative"
+            else []
+        ),
         regions_onshore=resources("regions_onshore_base_s.geojson"),
         regions_offshore=resources("regions_offshore_base_s.geojson"),
         hac_features=lambda w: (
@@ -665,6 +726,7 @@ rule add_electricity:
         exclude_carriers=config_provider("clustering", "exclude_carriers"),
     input:
         unpack(input_profile_tech),
+        unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(

@@ -13,7 +13,7 @@ import json
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from _helpers import validate_checksum, update_config_from_wildcards
+from scripts._helpers import validate_checksum, update_config_from_wildcards
 from snakemake.utils import update_config
 
 
@@ -186,7 +186,7 @@ def input_custom_extra_functionality(w):
     return []
 
 
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
     to a reliable server like Zenodo.
@@ -219,3 +219,12 @@ def solved_previous_horizon(w):
         + planning_horizon_p
         + ".nc"
     )
+
+
+def input_cutout(wildcards, cutout_names="default"):
+    if cutout_names == "default":
+        cutout_names = config_provider("atlite", "default_cutout")(wildcards)
+    if isinstance(cutout_names, list):
+        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
+    else:
+        return CDIR.joinpath(cutout_names + ".nc").as_posix()
