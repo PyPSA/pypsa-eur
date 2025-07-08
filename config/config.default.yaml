@@ -905,6 +905,9 @@ adjustments:
 data:
   # TODO implement
   # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
+  hotmaps_industrial_sites:
+    source: "archive"
+    version_or_latest: "latest"
   jrc_enspreso_biomass:
     source: "archive"
     version_or_latest: "latest"

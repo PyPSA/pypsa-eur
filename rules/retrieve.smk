@@ -245,7 +245,9 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("jrc_enspreso_biomass"))["source"] in [
+if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("jrc_enspreso_biomass"))[
+    "source"
+] in [
     "primary",
     "archive",
 ]:
@@ -263,16 +265,21 @@ if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("jrc_enspreso_biomass"))["so
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_hotmaps_industrial_sites:
         input:
             storage(
-                "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
+                HOTMAPS_INDUSTRIAL_SITES["url"],
                 keep_local=True,
             ),
         output:
-            "data/Industrial_Database.csv",
+            f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
         run:
             move(input[0], output[0])
