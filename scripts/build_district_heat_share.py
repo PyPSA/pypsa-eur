@@ -67,7 +67,10 @@ if __name__ == "__main__":
     # maximum potential of urban demand covered by district heating
     central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
     if isinstance(central_fraction, dict):
-        if pd.Index(pop_layout.ct.unique()).difference(central_fraction.keys()).any():
+        other_countries = set(pop_layout.ct.unique()).difference(
+            central_fraction.keys()
+        )
+        if other_countries:
             default_value = central_fraction.get("default")
             if default_value is None:
                 raise ValueError(
@@ -77,9 +80,11 @@ if __name__ == "__main__":
                 "Some countries do not have a district heating potential defined. "
                 f"Using default value {default_value:.2%} for these countries."
             )
-        else:
-            default_value = None
-        central_fraction = pop_layout.ct.map(central_fraction).fillna(default_value)
+            central_fraction = {
+                **central_fraction,
+                **{ct: default_value for ct in other_countries},
+            }
+        central_fraction = pop_layout.ct.map(central_fraction)
 
     # district heating share at each node
     dist_fraction_node = (
