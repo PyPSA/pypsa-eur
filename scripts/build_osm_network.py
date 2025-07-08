@@ -1535,8 +1535,12 @@ def build_network(
     lines = _merge_identical_lines(lines)
 
     # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
-    buses["voltage"] = (np.floor(buses["voltage"] / 1000) * 1000).astype(buses["voltage"].dtype)
-    lines["voltage"] = (np.floor(lines["voltage"] / 1000) * 1000).astype(lines["voltage"].dtype)
+    buses["voltage"] = (np.floor(buses["voltage"] / 1000) * 1000).astype(
+        buses["voltage"].dtype
+    )
+    lines["voltage"] = (np.floor(lines["voltage"] / 1000) * 1000).astype(
+        lines["voltage"].dtype
+    )
 
     ### DATA PROCESSING (AC)
     buses_line_endings = _add_line_endings(buses, lines)
@@ -1667,7 +1671,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_osm_network", configfiles=["config/test/config.distribution-grid.yaml"]
+            "build_osm_network",
+            configfiles=["config/test/config.distribution-grid.yaml"],
         )
 
     configure_logging(snakemake)
