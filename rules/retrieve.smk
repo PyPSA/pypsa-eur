@@ -245,7 +245,7 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
+if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("jrc_enspreso_biomass"))["source"] in [
     "primary",
     "archive",
 ]:
