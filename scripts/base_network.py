@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Creates the network topology from a `ENTSO-E map extract.
 <https://github.com/PyPSA/GridKit/tree/master/entsoe>`_ (March 2022)
@@ -30,12 +30,18 @@ import shapely
 import shapely.prepared
 import shapely.wkt
 import yaml
-from _helpers import REGION_COLS, configure_logging, get_snapshots, set_scenario_config
 from packaging.version import Version, parse
 from scipy.sparse import csgraph
 from scipy.spatial import KDTree
 from shapely.geometry import Point
 from tqdm import tqdm
+
+from scripts._helpers import (
+    REGION_COLS,
+    configure_logging,
+    get_snapshots,
+    set_scenario_config,
+)
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -340,8 +346,9 @@ def _set_electrical_parameters_links_eg(links, config, links_p_nom):
         return links
 
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
-    links["p_min_pu"] = -p_max_pu
+    links["p_min_pu"] = p_min_pu
 
     links_p_nom = pd.read_csv(links_p_nom)
 
@@ -372,8 +379,9 @@ def _set_electrical_parameters_links_osm(links, config):
         return links
 
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     links["p_max_pu"] = p_max_pu
-    links["p_min_pu"] = -p_max_pu
+    links["p_min_pu"] = p_min_pu
     links["carrier"] = "DC"
     links["dc"] = True
 
@@ -382,8 +390,9 @@ def _set_electrical_parameters_links_osm(links, config):
 
 def _set_electrical_parameters_converters(converters, config):
     p_max_pu = config["links"].get("p_max_pu", 1.0)
+    p_min_pu = config["links"].get("p_min_pu", -p_max_pu)
     converters["p_max_pu"] = p_max_pu
-    converters["p_min_pu"] = -p_max_pu
+    converters["p_min_pu"] = p_min_pu
 
     # if column "p_nom" does not exist, set to 2000
     if "p_nom" not in converters:
@@ -823,7 +832,7 @@ def voronoi(points, outline, crs=4326):
         voronoi = gpd.GeoDataFrame(geometry=voronoi)
         joined = gpd.sjoin_nearest(pts, voronoi, how="right")
 
-    return joined.dissolve(by="Bus").reindex(points.index).squeeze()
+    return joined.dissolve(by="name").reindex(points.index).squeeze()
 
 
 def process_onshore_regions(
@@ -842,6 +851,7 @@ def process_onshore_regions(
         .drop_duplicates(subset=["x", "y", "country"], keep="first")[
             ["x", "y", "country"]
         ]
+        .rename_axis("name")
     )
     onshore_regions_adm = gpd.GeoDataFrame(
         {
@@ -877,7 +887,9 @@ def process_offshore_regions(
 
         c_b = buses.country == country
         offshore_shape = offshore_shapes[country]
-        offshore_locs = buses.loc[c_b & buses.substation_off, ["x", "y"]]
+        offshore_locs = buses.loc[c_b & buses.substation_off, ["x", "y"]].rename_axis(
+            "name"
+        )
         offshore_regions_c = gpd.GeoDataFrame(
             {
                 "name": offshore_locs.index,
@@ -1290,14 +1302,18 @@ def get_nearest_neighbour(
         ["country", "geometry"],
     ]
 
-    nearest_neighbour = (
-        gdf.to_crs(epsg=3035)
-        .sjoin_nearest(
-            nearest_neighbours.to_crs(epsg=3035),
-            how="left",
-        )["index_right"]
-        .values[0]
-    )
+    try:
+        nearest_neighbour = (
+            gdf.to_crs(epsg=3035)
+            .sjoin_nearest(
+                nearest_neighbours.to_crs(epsg=3035),
+                how="left",
+            )["index_right"]
+            .values[0]
+        )
+    except KeyError:
+        logger.warning(f"Skipping for {country}")
+        nearest_neighbour = ""
 
     return nearest_neighbour
 
@@ -1438,6 +1454,7 @@ def build_admin_shapes(
         1: "level1",
         2: "level2",
         3: "level3",
+        "bz": "bidding_zone",
     }
 
     adm1_countries = ["BA", "MD", "UA", "XK"]
@@ -1450,6 +1467,7 @@ def build_admin_shapes(
 
     if clustering == "administrative":
         logger.info(f"Building bus regions at administrative level {level}")
+
         nuts3_regions["column"] = level_map[level]
 
         # Only keep the values whose keys are in countries
@@ -1474,7 +1492,7 @@ def build_admin_shapes(
             )
 
         # If GB is in the countries, set the level, aggregate London area to level 1 due to converging issues
-        if "GB" in countries:
+        if "GB" in countries and level != "bz":
             nuts3_regions.loc[nuts3_regions.level1 == "GBI", "column"] = "level1"
 
         nuts3_regions["admin"] = nuts3_regions.apply(
@@ -1485,14 +1503,8 @@ def build_admin_shapes(
         nuts3_regions["admin"] = nuts3_regions["country"]
 
     # Group by busmap
-    admin_shapes = nuts3_regions[["admin", "geometry"]]
-    admin_shapes = admin_shapes.groupby("admin")["geometry"].apply(
-        lambda x: x.union_all()
-    )
-    admin_shapes = gpd.GeoDataFrame(
-        admin_shapes, geometry="geometry", crs=nuts3_regions.crs
-    )
-    admin_shapes["country"] = admin_shapes.index.str[:2]
+    admin_shapes = nuts3_regions[["admin", "geometry", "country"]]
+    admin_shapes = admin_shapes.dissolve("admin")
 
     # Identify regions that do not contain buses and merge them with smallest
     # neighbouring area of the same parent region (NUTS3 -> NUTS2 -> NUTS1 -> country)
@@ -1547,7 +1559,8 @@ def build_admin_shapes(
             lambda row: [get_nearest_neighbour(row, admin_shapes)],
             axis=1,
         )
-
+        # remove detached regions that don't contain substations
+        admin_shapes = admin_shapes[~admin_shapes.isempty]
         admin_shapes = merge_regions_recursive(admin_shapes, neighbours_missing=False)
 
         # Update names
@@ -1564,7 +1577,7 @@ def build_admin_shapes(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("base_network")
     configure_logging(snakemake)

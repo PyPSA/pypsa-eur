@@ -34,7 +34,7 @@ including our own are reviewed by a second person before they are incorporated i
 
 If you are unfamiliar with pull requests, the GitHub help pages have a nice `guide <https://help.github.com/en/articles/about-pull-requests>`_.
 
-To ask and answer general usage questions, join the `PyPSA mailing list <https://groups.google.com/forum/#!forum/pypsa>`_.
+To **discuss** with other PyPSA users, organise projects, share news, and get in touch with the community you can use the `Discord server <https://discord.gg/AnuJBk23FU>`_.
 
 Contributing to the documentation
 ====================================
