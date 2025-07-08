@@ -21,8 +21,8 @@ load_dotenv()  # Load environment variables from .env file if it exists
 app = typer.Typer()
 
 API_URLS = {
-    "sandbox": "https://sandbox.zenodo.org/api/deposit/depositions",
-    "production": "https://zenodo.org/api/deposit/depositions",
+    "sandbox": "https://sandbox.zenodo.org/api",
+    "production": "https://zenodo.org/api",
 }
 
 ZENODO_API_URL = None
@@ -241,7 +241,7 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
         The response from the Zenodo API after creating the deposition.
     """
     r = requests.post(
-        ZENODO_API_URL,
+        f"{ZENODO_API_URL}/deposit/depositions",
         params={"access_token": ZENODO_API_KEY},
         json={},
         headers={"Content-Type": "application/json"},
@@ -300,7 +300,7 @@ def publish_zenodo_deposition(deposition_id: int) -> requests.Response:
         The response from the Zenodo API after publishing the deposition.
     """
     r = requests.post(
-        f"{ZENODO_API_URL}/{deposition_id}/actions/publish",
+        f"{ZENODO_API_URL}/deposit/depositions/{deposition_id}/actions/publish",
         params={"access_token": ZENODO_API_KEY},
     )
     r.raise_for_status()
@@ -377,7 +377,7 @@ def add_version_row(
     return rows
 
 
-def get_deposition_by_url(url) -> dict:
+def get_deposition_by_url(record_id, api_url, api_key) -> dict:
     """
     Retrieve a Zenodo deposition by its API URL.
 
@@ -391,12 +391,16 @@ def get_deposition_by_url(url) -> dict:
     dict
         The deposition metadata as a dictionary.
     """
-    r = requests.get(url, params={"access_token": ZENODO_API_KEY})
+    r = requests.get(
+        f"{api_url}/records/{record_id}",  # Use /records/ for Zenodo API instead of /deposit/depositions/ endpoint, to enable access to records that are not owned by the user
+        params={"access_token": api_key},
+        headers={"Content-Type": "application/json"},
+    )
     r.raise_for_status()
     return r.json()
 
 
-def extract_zenodo_deposition_url(record_url: str) -> str | None:
+def extract_zenodo_deposition_url(record_url: str) -> tuple[str, str]:
     """
     Given a Zenodo record or record file URL, return the corresponding deposition API URL.
 
@@ -407,6 +411,8 @@ def extract_zenodo_deposition_url(record_url: str) -> str | None:
 
     Returns
     -------
+    str
+        Zenodo record ID.
     str or None
         The Zenodo deposition API URL, or None if extraction fails.
     """
@@ -415,10 +421,10 @@ def extract_zenodo_deposition_url(record_url: str) -> str | None:
         r"https://(?:sandbox\.)?zenodo\.org/records/(\d+)(/files/.*)?", record_url
     )
     if not m:
-        return None
+        raise ValueError(f"Invalid Zenodo record URL format: {record_url}. ")
     record_id = m.group(1)
 
-    return f"{ZENODO_API_URL}/{record_id}"
+    return (record_id, f"{ZENODO_API_URL}/{record_id}")
 
 
 @app.command()
@@ -528,7 +534,7 @@ def main(
     if action == "release":
         # Retrieve information from previous version for the datset from Zenodo
         row = next(r for r in latest if r["dataset"] == dataset_name)
-        deposition_url = extract_zenodo_deposition_url(row["url"])
+        record_id, deposition_url = extract_zenodo_deposition_url(row["url"])
 
         if not deposition_url:
             typer.secho(
@@ -541,7 +547,11 @@ def main(
         typer.echo(
             f"Retrieving existing deposition metadata from Zenodo for dataset '{dataset_name}' at {deposition_url}."
         )
-        existing_deposition = get_deposition_by_url(deposition_url)
+        existing_deposition = get_deposition_by_url(
+            record_id,
+            ZENODO_API_URL,
+            ZENODO_API_KEY,
+        )
 
         metadata = existing_deposition.get("metadata", {})
         if not metadata:
@@ -550,6 +560,37 @@ def main(
                 fg=typer.colors.RED,
             )
             raise typer.Exit()
+
+        if "creators" not in metadata:
+            typer.secho(
+                "No creators found in the existing deposition metadata. "
+                "Please add them manually via the Zenodo web interface before publishing the new version.",
+                fg=typer.colors.YELLOW,
+            )
+            metadata["creators"] = [{"name": "", "affiliation": ""}]
+
+        if "description" not in metadata:
+            metadata["description"] = typer.prompt(
+                "No description found in the existing deposition metadata. Please provide a new description."
+            )
+
+        if "upload_type" not in metadata:
+            metadata["upload_type"] = typer.prompt(
+                "No upload type found in the existing deposition metadata. Please specify",
+                default="dataset",
+            )
+
+        if "license" not in metadata:
+            metadata["license"] = typer.prompt(
+                "No license found in the existing deposition metadata. Please specify",
+                default="cc-by-4.0",
+            )
+
+        if "access_right" not in metadata:
+            metadata["access_right"] = typer.prompt(
+                "No access right found in the existing deposition metadata. Please specify",
+                default="open",
+            )
 
         new_metadata = {
             "title": metadata["title"],
