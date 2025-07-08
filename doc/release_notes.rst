@@ -11,7 +11,7 @@ Release Notes
 .. Upcoming Release
 .. ================
 
-* Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp-raw` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
+* Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
 * Fix: Invalid aquifer shape geometries are now fixed in `build_ates_potentials.py` (fixing https://github.com/PyPSA/pypsa-eur/issues/1696)
 

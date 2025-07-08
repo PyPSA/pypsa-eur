@@ -6447,7 +6447,7 @@ if __name__ == "__main__":
 
     for k, v in options["transmission_efficiency"].items():
         if (k in options["transmission_efficiency"]["enable"]) and (
-            k == "DC" and snakemake.params != "tyndp-raw"
+            k == "DC" and snakemake.params != "tyndp"
         ):
             lossy_bidirectional_links(n, k, v)
 

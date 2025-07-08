@@ -25,7 +25,7 @@ enable:
   retrieve_tyndp_bundle: true
 
 electricity:
-  base_network: tyndp-raw
+  base_network: tyndp
   transmission_limit: v1.0
 
   extendable_carriers:
