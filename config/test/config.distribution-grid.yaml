@@ -78,7 +78,7 @@ co2_budget:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
-  voltages: [110, 132, 150, 220., 300., 330., 380., 400., 500., 750.]
+  voltages: [60., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
   base_network: osm-raw
   osm-prebuilt-version: 0.6
   gaslimit_enable: false
@@ -283,6 +283,7 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    60.: "94-AL1/15-ST1A 20.0"
     110.: "184-AL1/30-ST1A 110.0"
     132.: "243-AL1/39-ST1A 110.0"
     150.: "243-AL1/39-ST1A 110.0"

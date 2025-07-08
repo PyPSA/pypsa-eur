@@ -11,7 +11,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
 from pyproj import Transformer
 from shapely import prepare
 from shapely.algorithms.polylabel import polylabel
@@ -1535,6 +1534,10 @@ def build_network(
     lines = gpd.read_file(inputs["lines"])
     lines = _merge_identical_lines(lines)
 
+    # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
+    buses["voltage"] = (np.floor(buses["voltage"] / 1000) * 1000).astype(buses["voltage"].dtype)
+    lines["voltage"] = (np.floor(lines["voltage"] / 1000) * 1000).astype(lines["voltage"].dtype)
+
     ### DATA PROCESSING (AC)
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
@@ -1551,7 +1554,7 @@ def build_network(
     # Update length of lines
     lines["length"] = lines.to_crs(DISTANCE_CRS).length
 
-    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)
+    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)<
     merged_lines_map = _create_merge_mapping(lines, buses, buses_polygon)
     lines, buses = _merge_lines_over_virtual_buses(lines, buses, merged_lines_map)
 
@@ -1664,7 +1667,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_osm_network", configfiles=["config/config.distribution-grid.yaml"]
+            "build_osm_network", configfiles=["config/test/config.distribution-grid.yaml"]
         )
 
     configure_logging(snakemake)

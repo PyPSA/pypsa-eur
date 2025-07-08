@@ -21,7 +21,6 @@ import re
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import linemerge, unary_union
@@ -1587,7 +1586,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "clean_osm_data", configfiles=["config/config.distribution-grid.yaml"]
+            "clean_osm_data", configfiles=["config/test/config.distribution-grid.yaml"]
         )
 
     configure_logging(snakemake)
@@ -1595,7 +1594,7 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    min_voltage_ac = 110000  # [unit: V] Minimum voltage value to filter AC lines.
+    min_voltage_ac = 60000  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")
