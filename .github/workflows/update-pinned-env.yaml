@@ -43,15 +43,6 @@ jobs:
         for file in envs/*.lock.yml; do
           mv "$file" "${file%.yml}.yaml"
         done
-    - name: Add SPDX headers to lock files
-      run: |
-        SPDX_HEADER="# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>\n# SPDX-License-Identifier: CC0-1.0\n"
-
-        # Add header to all generated lock files
-        for file in envs/*.lock.yaml; do
-          echo "Adding header to $file"
-          echo -e "$SPDX_HEADER" | cat - "$file" > temp && mv temp "$file"
-        done
 
     - name: Insert environment name in lock files
       run: |

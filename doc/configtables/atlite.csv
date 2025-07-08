@@ -11,4 +11,5 @@ cutouts,,,
 -- -- dx,°,"Larger than 0.25","Grid resolution for longitude"
 -- -- dy,°,"Larger than 0.25","Grid resolution for latitude"
 -- -- time,,"Time interval within ['1979', '2018'] (with valid pandas date time strings)","Time span to download weather data for. If not defined, it defaults to the time interval spanned by the snapshots."
--- -- features,,"String or list of strings with valid cutout features ('inlfux', 'wind').","When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features."
+-- -- features,,"String or list of strings with valid cutout features ('influx', 'wind').","When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features."
+-- -- sarah_dir,,str,"Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."

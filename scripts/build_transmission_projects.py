@@ -48,7 +48,7 @@ def add_new_buses(n, new_ports):
     to_add = new_ports[~duplicated]
     added_buses = n.add(
         "Bus",
-        names=to_add.index,
+        name=to_add.index,
         suffix=" bus",
         x=to_add.x,
         y=to_add.y,
