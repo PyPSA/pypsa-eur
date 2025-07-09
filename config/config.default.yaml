@@ -975,6 +975,12 @@ data:
   nitrogen_statistics:
     source: "archive"
     version_or_latest: "latest"
+  eu_nuts2013:
+    source: "archive"
+    version_or_latest: "latest"
+  eu_nuts2021:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

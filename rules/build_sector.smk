@@ -639,7 +639,7 @@ rule build_biomass_potentials:
     input:
         enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
         eurostat="data/eurostat/Balances-April2023",
-        nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+        nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),

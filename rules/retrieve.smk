@@ -79,18 +79,19 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../scripts/retrieve_eurostat_household_data.py"
 
 
-if config["enable"]["retrieve"]:
+if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
+    "primary",
+    "archive",
+]:
 
-    rule retrieve_nuts_2013_shapes:
+    rule retrieve_eu_nuts_2013:
         input:
-            shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
-            ),
+            shapes=storage(EU_NUTS2013_DATASET["url"]),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+            shapes_level_3=f"{EU_NUTS2013_DATASET["folder"]}/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2013_DATASET["folder"]}/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+            zip_file=f"{EU_NUTS2013_DATASET['folder']}/ref-nuts-2013-03m.geojson.zip",
         run:
             os.rename(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
@@ -101,24 +102,26 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
-            os.remove(params.zip_file)
 
 
 
-if config["enable"]["retrieve"]:
+if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
+    "primary",
+    "archive",
+]:
 
-    rule retrieve_nuts_2021_shapes:
+    rule retrieve_eu_nuts_2021:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
+                EU_NUTS2021_DATASET["url"],
             ),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
+            shapes_level_3=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
+            zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
         run:
             os.rename(input.shapes, params.zip_file)
             with ZipFile(params.zip_file, "r") as zip_ref:
@@ -129,7 +132,6 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
-            os.remove(params.zip_file)
 
 
 
