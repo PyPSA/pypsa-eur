@@ -730,11 +730,15 @@ if config["enable"]["retrieve"]:
     # dynamic inputs/outputs for hera data retrieval
     if config["atlite"]["default_cutout"] == "be-03-2013-era5":
         hera_data_key = "be_2013-03-01_to_2013-03-08"
-        hera_data_url = storage(f"https://zenodo.org/records/15828866/files/hera_{hera_data_key}.zip")
+        hera_data_url = storage(
+            f"https://zenodo.org/records/15828866/files/hera_{hera_data_key}.zip"
+        )
 
         rule retrieve_hera_data:
             input:
-                hera_data_url = storage(f"https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip")
+                hera_data_url=storage(
+                    f"https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip"
+                ),
             output:
                 river_discharge=f"data/hera_be_2013-03-01_to_2013-03-08/river_discharge_be_2013-03-01_to_2013-03-08.nc",
                 ambient_temperature=f"data/hera_be_2013-03-01_to_2013-03-08/ambient_temp_be_2013-03-01_to_2013-03-08.nc",
@@ -766,6 +770,7 @@ if config["enable"]["retrieve"]:
                 wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{snapshot_year}.nc -O {output.river_discharge}
                 wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{snapshot_year}.nc -O {output.ambient_temperature}
                 """
+
 
 if config["enable"]["retrieve"]:
 

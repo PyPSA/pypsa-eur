@@ -421,6 +421,7 @@ else:
     snapshot_year = start_snapshot[:4]
     hera_data_key = snapshot_year
 
+
 rule build_river_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
