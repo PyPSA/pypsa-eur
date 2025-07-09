@@ -175,7 +175,7 @@ def get_latest_versions(rows, source):
     return sorted(latest, key=lambda r: r["dataset"])
 
 
-def get_dataset_versions(rows, dataset):
+def get_dataset_versions(rows, dataset, source):
     """
     Get all versions for a given dataset.
 
@@ -191,7 +191,11 @@ def get_dataset_versions(rows, dataset):
     list of str
         The versions for the dataset.
     """
-    return [row["version"] for row in rows if row["dataset"] == dataset]
+    return [
+        row["version"]
+        for row in rows
+        if row["dataset"] == dataset and row["source"] == source
+    ]
 
 
 def get_potential_datasets():
@@ -520,7 +524,7 @@ def main(
         raise typer.Exit()
 
     # Exclude all folders for which version entres already exist
-    known_versions = get_dataset_versions(rows, dataset_name)
+    known_versions = get_dataset_versions(rows, dataset_name, "archive")
     potential_folders = [
         folder for folder in potential_folders if folder not in known_versions
     ]
