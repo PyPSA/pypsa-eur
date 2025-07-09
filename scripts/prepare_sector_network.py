@@ -3302,6 +3302,8 @@ def add_heat(
                     p_min_pu=-1,
                     p_max_pu=0,
                     p_min_pu=-1,
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
