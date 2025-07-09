@@ -4,6 +4,7 @@
 
 import csv
 import json
+import logging
 import os
 import re
 from datetime import datetime
@@ -15,6 +16,9 @@ import typer
 from dotenv import load_dotenv
 from tqdm import tqdm
 from tqdm.utils import CallbackIOWrapper
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 load_dotenv()  # Load environment variables from .env file if it exists
 
@@ -171,7 +175,7 @@ def get_latest_versions(rows, source):
     return sorted(latest, key=lambda r: r["dataset"])
 
 
-def get_dataset_versions(rows, dataset):
+def get_dataset_versions(rows, dataset, source):
     """
     Get all versions for a given dataset.
 
@@ -187,7 +191,11 @@ def get_dataset_versions(rows, dataset):
     list of str
         The versions for the dataset.
     """
-    return [row["version"] for row in rows if row["dataset"] == dataset]
+    return [
+        row["version"]
+        for row in rows
+        if row["dataset"] == dataset and row["source"] == source
+    ]
 
 
 def get_potential_datasets():
@@ -240,22 +248,25 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
     Response
         The response from the Zenodo API after creating the deposition.
     """
+    logger.debug("Creating new Zenodo deposition")
     r = requests.post(
         f"{ZENODO_API_URL}/deposit/depositions",
         params={"access_token": ZENODO_API_KEY},
         json={},
         headers={"Content-Type": "application/json"},
     )
-
+    logger.debug(f"Response from Zenodo API: {r.status_code} {r.text}")
     r.raise_for_status()
     bucket_url = r.json()["links"]["bucket"]
     deposition_url = r.json()["links"]["self"]
 
+    logger.debug(f"Adding metadata to the deposition at {deposition_url}")
+    logger.debug(f"Metadata: {json.dumps(metadata, indent=2)}")
     # Update metadata of the deposition
     r = requests.put(
         deposition_url,
         params={"access_token": ZENODO_API_KEY},
-        json={"metadata": metadata},
+        data=json.dumps({"metadata": metadata}),
         headers={"Content-Type": "application/json"},
     )
 
@@ -435,6 +446,7 @@ def main(
             help="Use Zenodo sandbox environment instead of production.",
         ),
     ] = False,
+    debug: Annotated[bool, typer.Option(help="Enable debug mode.")] = False,
 ):
     """
     Guide the user through creating a new Zenodo deposition or version.
@@ -449,6 +461,9 @@ def main(
             "************************\n",
             fg=typer.colors.YELLOW,
         )
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+        typer.secho("Debug mode enabled.", fg=typer.colors.YELLOW)
 
     typer.secho("=" * 80, fg=typer.colors.CYAN)
     typer.echo(
@@ -510,14 +525,14 @@ def main(
         raise typer.Exit()
 
     # Exclude all folders for which version entres already exist
-    known_versions = get_dataset_versions(rows, dataset_name)
+    known_versions = get_dataset_versions(rows, dataset_name, "archive")
     potential_folders = [
         folder for folder in potential_folders if folder not in known_versions
     ]
 
     if not potential_folders:
         typer.secho(
-            f"All folder in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
+            f"All folders in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
             f"To create a new version, please create a new folder with a new version name that includes the new files.",
             fg=typer.colors.RED,
         )
@@ -620,7 +635,8 @@ def main(
         title = typer.prompt("Title of the new dataset")
         description = typer.prompt("Description of the new dataset")
         license = typer.prompt(
-            "License for the new dataset (e.g. CC-BY-4.0)", default="cc-by-4.0"
+            "License for the new dataset (e.g. CC-BY-4.0). Only standard licenses supported - use webinterface for custom license",
+            default="cc-by-4.0",
         )
         upload_type = typer.prompt("Upload type for the new dataset", default="dataset")
         access_right = typer.prompt("Access right for the new dataset", default="open")
@@ -637,8 +653,13 @@ def main(
                 break
             affiliation = typer.prompt("Affiliation (or leave empty)", default="")
 
+            creator = {"name": name}
+            # If affiliation is provided, add it to the creator dictionary
+            if affiliation:
+                creator["affiliation"] = affiliation
+
             if name:
-                creators.append({"name": name, "affiliation": affiliation})
+                creators.append(creator)
 
         # Create the new metadata dictionary
         new_metadata = {
