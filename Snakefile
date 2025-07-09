@@ -20,7 +20,11 @@ from scripts._helpers import (
 
 configfile: "config/config.default.yaml"
 configfile: "config/plotting.default.yaml"
-configfile: "config/config.yaml"
+
+
+if Path("config/config.yaml").exists():
+
+    configfile: "config/config.yaml"
 
 
 run = config["run"]
