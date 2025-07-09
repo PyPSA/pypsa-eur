@@ -578,3 +578,6 @@ plotting:
     import NH3: '#e2ed74'
     import oil: '#93eda2'
     import methanol: '#87d0e6'
+    # Endo industry
+    DRI: "red"
+    EAF: "red"

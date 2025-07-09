@@ -792,7 +792,7 @@ def add_steel_industry_existing(n):
             "direct iron reduction furnace", "electricity-input"
         ] * 1e3 #MWh/kt
 
-        n.madd(
+        n.add(
             "Link",
             nodes,
             suffix=" DRI-2020",
@@ -813,14 +813,14 @@ def add_steel_industry_existing(n):
 
         electricity_input = costs.at["electric arc furnace", "electricity-input"]
 
-        n.madd(
+        n.add(
             "Link",
             nodes,
             suffix=" EAF-2020",
             carrier="EAF",
             capital_cost=costs.at["electric arc furnace", "capital_cost"] *1e3 / electricity_input,
             p_nom_extendable=False,
-            p_min_pu=min_part_load_steel,
+            #p_min_pu=min_part_load_steel,
             p_nom=1e7, # fake capacity, the bottleneck is DRI
             bus0=nodes,
             bus1=spatial.steel.nodes,

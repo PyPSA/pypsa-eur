@@ -5417,7 +5417,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
             "direct iron reduction furnace", "electricity-input"
         ] * 1e3 #MWh/kt
 
-        n.madd(
+        n.add(
             "Link",
             nodes,
             suffix=" DRI",
@@ -5437,14 +5437,14 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
         electricity_input = costs.at["electric arc furnace", "electricity-input"]
 
-        n.madd(
+        n.add(
             "Link",
             nodes,
             suffix=" EAF",
             carrier="EAF",
             capital_cost=costs.at["electric arc furnace", "capital_cost"] *1e3 / electricity_input,
             p_nom_extendable=True,
-            p_min_pu=min_part_load_steel,
+            #p_min_pu=min_part_load_steel,
             bus0=nodes,
             bus1=spatial.steel.nodes,
             bus2="EU HBI",
@@ -7122,11 +7122,12 @@ def add_import_options(
 
     # ADB dding extra import from other countries
     if "steel_adb" in import_options:
+        
         n.add(
             "Generator",
             spatial.steel.nodes,
             suffix=" import",
-            bus=spatial.methanol.nodes,
+            bus=spatial.steel.nodes,
             carrier="import steel",
             p_nom=1e7,
             marginal_cost=import_options["steel_adb"],
@@ -7148,8 +7149,8 @@ def add_import_options(
             "Generator",
             spatial.ammonia.nodes,
             suffix=" import",
-            bus="import NH3",
-            carrier=spatial.ammonia.nodes,
+            bus=spatial.ammonia.nodes,
+            carrier="import NH3",
             p_nom=1e7,
             marginal_cost=import_options["ammonia_adb"],
         )

@@ -32,11 +32,11 @@ import_base_reg_regain:
     methanol:
       regional_methanol_demand: true
     ammonia: regional
-  imports:
-    enable: true
-    price:
-      methanol_adb: 137.65 #€/MWh methanol average
-      ammonia_adb: 116.65 #€/MWh ammonia average
+    imports:
+      enable: true
+      price:
+        methanol_adb: 137.65 #€/MWh methanol average
+        ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
 import_policy_reg_regain:
@@ -58,11 +58,11 @@ import_policy_reg_regain:
     methanol:
       regional_methanol_demand: true
     ammonia: regional
-  imports:
-    enable: true
-    price:
-      methanol_adb: 137.65 #€/MWh methanol average
-      ammonia_adb: 116.65 #€/MWh ammonia average
+    imports:
+      enable: true
+      price:
+        methanol_adb: 137.65 #€/MWh methanol average
+        ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: NO, Relocation: NO, Industrial policy: DEINDUSTRIAL
 import_base_reg_deindustrial:
@@ -84,11 +84,11 @@ import_base_reg_deindustrial:
     methanol:
       regional_methanol_demand: true
     ammonia: regional
-  imports:
-    enable: true
-    price:
-      methanol_adb: 137.65 #€/MWh methanol average
-      ammonia_adb: 116.65 #€/MWh ammonia average
+    imports:
+      enable: true
+      price:
+        methanol_adb: 137.65 #€/MWh methanol average
+        ammonia_adb: 116.65 #€/MWh ammonia average
 
 # Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
 import_policy_reg_deindustrial:

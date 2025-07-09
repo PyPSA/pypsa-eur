@@ -779,11 +779,11 @@ sector:
     limit: .inf
     limit_sense: <=
     price:
-      H2: 74
-      NH3: 97
-      methanol: 121
-      gas: 122
-      oil: 125
+      #H2: 74
+      #NH3: 97
+      #methanol: 121
+      #gas: 122
+      #oil: 125
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
