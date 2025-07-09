@@ -638,7 +638,7 @@ rule build_biomass_potentials:
         biomass=config_provider("biomass"),
     input:
         enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
@@ -829,7 +829,7 @@ rule build_industrial_production_per_country:
         ch_industrial_production="data/ch_industrial_production_per_subsector.csv",
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/jrc-idees-2021",
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -1343,7 +1343,7 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
