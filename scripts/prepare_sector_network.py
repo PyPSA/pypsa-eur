@@ -3230,8 +3230,8 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump.clip(upper=0),
-                    efficiency2=1 / (cop_heat_pump - 1).clip(upper=0),
+                    efficiency=1 / cop_heat_pump.clip(upper=1e-6),
+                    efficiency2=1 / (cop_heat_pump - 1).clip(upper=1e-6),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
@@ -3291,8 +3291,8 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_system} water pits",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / (cop_heat_pump - 1).clip(upper=0),
-                    efficiency2=1 / cop_heat_pump.clip(upper=0),
+                    efficiency=1 / (cop_heat_pump - 1).clip(upper=1e-6),
+                    efficiency2=1 / cop_heat_pump.clip(upper=1e-6),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
@@ -3315,7 +3315,7 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump,
+                    efficiency=1 / cop_heat_pump.clip(upper=1e-6),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_max_pu=0,
