@@ -413,15 +413,23 @@ rule build_ates_potentials:
         "../scripts/build_ates_potentials.py"
 
 
+# dynamic inputs/outputs for hera data retrieval
+if config["atlite"]["default_cutout"] == "be-03-2013-era5":
+    hera_data_key = "be_2013-03-01_to_2013-03-08"
+else:
+    start_snapshot = config["snapshots"]["start"]
+    snapshot_year = start_snapshot[:4]
+    hera_data_key = snapshot_year
+
 rule build_river_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
     input:
+        hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+        hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        hera_river_discharge="data/hera/river_discharge_2013.nc",
-        hera_ambient_temperature="data/hera/ambient_temperature_2013.nc",
         dh_areas="data/dh_areas.gpkg",
     output:
         heat_source_power=resources(

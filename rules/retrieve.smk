@@ -727,21 +727,45 @@ if config["enable"]["retrieve"]:
             wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
             """
 
-    rule retrieve_hera_data:
-        output:
-            river_discharge="data/hera/river_discharge_2013.nc",
-            ambient_temperature="data/hera/ambient_temperature_2013.nc",
-        log:
-            "logs/retrieve_hera_data.log",
-        resources:
-            mem_mb=10000,
-        retries: 2
-        shell:
-            """
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA2013.nc -O {output.river_discharge}
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_2013.nc -O {output.ambient_temperature}
-            """
+    # dynamic inputs/outputs for hera data retrieval
+    if config["atlite"]["default_cutout"] == "be-03-2013-era5":
+        hera_data_key = "be_2013-03-01_to_2013-03-08"
+        hera_data_url = storage(f"https://zenodo.org/records/15828866/files/hera_{hera_data_key}.zip")
 
+        rule retrieve_hera_data:
+            input:
+                hera_data_url = storage(f"https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip")
+            output:
+                river_discharge=f"data/hera_be_2013-03-01_to_2013-03-08/river_discharge_be_2013-03-01_to_2013-03-08.nc",
+                ambient_temperature=f"data/hera_be_2013-03-01_to_2013-03-08/ambient_temp_be_2013-03-01_to_2013-03-08.nc",
+            params:
+                folder="data",
+            log:
+                "logs/retrieve_hera_data.log",
+            resources:
+                mem_mb=10000,
+            retries: 2
+            run:
+                unpack_archive(input[0], params.folder)
+
+    else:
+        start_snapshot = config["snapshots"]["start"]
+        snapshot_year = start_snapshot[:4]
+
+        rule retrieve_hera_data:
+            output:
+                river_discharge=f"data/hera_{snapshot_year}/river_discharge_{snapshot_year}.nc",
+                ambient_temperature=f"data/hera_{snapshot_year}/ambient_temp_{snapshot_year}.nc",
+            log:
+                "logs/retrieve_hera_data.log",
+            resources:
+                mem_mb=10000,
+            retries: 2
+            shell:
+                f"""
+                wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{snapshot_year}.nc -O {output.river_discharge}
+                wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{snapshot_year}.nc -O {output.ambient_temperature}
+                """
 
 if config["enable"]["retrieve"]:
 
