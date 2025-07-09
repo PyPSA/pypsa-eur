@@ -52,7 +52,7 @@ def retrieve_bundle(url: str, to_fn: str, disable_progress: bool = False):
 
     # remove .zip file and __MACOSX
     os.remove(to_fn_zp)
-    shutil.rmtree(Path(to_fn, "__MACOSX"))
+    shutil.rmtree(Path(to_fn, "__MACOSX"), ignore_errors=True)
 
 
 if __name__ == "__main__":
