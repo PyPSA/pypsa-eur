@@ -592,7 +592,7 @@ rule build_energy_totals:
         swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
         idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
     output:
         transformation_output_coke=resources("transformation_output_coke.csv"),

@@ -359,7 +359,7 @@ rule plot_summary:
         costs=RESULTS + "csvs/costs.csv",
         energy=RESULTS + "csvs/energy.csv",
         balances=RESULTS + "csvs/energy_balance.csv",
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         co2="data/bundle/eea/UNFCCC_v23.csv",
     output:
         costs=RESULTS + "graphs/costs.svg",

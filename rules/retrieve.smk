@@ -47,16 +47,34 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_databundle.py"
 
-    rule retrieve_eurostat_data:
+
+if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_eurostat_balances:
+        params:
+            url=EUROSTAT_BALANCES_DATASET["url"],
         output:
-            directory("data/eurostat/Balances-April2023"),
-        log:
-            "logs/retrieve_eurostat_data.log",
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_eurostat_data.py"
+            zip=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
+            directory=directory(f"{EUROSTAT_BALANCES_DATASET['folder']}"),
+        run:
+            import os
+            import requests
+            from zipfile import ZipFile
+            from pathlib import Path
+
+            response = requests.get(params["url"])
+            with open(output.zip, "wb") as f:
+                f.write(response.content)
+
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output.zip, output_folder)
+
+
+
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_jrc_idees", True):
 
     rule retrieve_jrc_idees:
         output:

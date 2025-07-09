@@ -17,6 +17,8 @@
 "eu_nuts2013","primary","2015-12-03","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"," "
 "eu_nuts2021","archive","2021-01-01","['latest', 'supported']","https://zenodo.org/records/15846440/files/ref-nuts-2021-01m.geojson.zip",""
 "eu_nuts2021","primary","2021-01-01","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip",""
+"eurostat_balances","primary","2023-04","['latest', 'supported', 'broken link']","https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip","The link is broken, use the archived versions instead."
+"eurostat_balances","archive","2023-04","['latest', 'supported']","https://zenodo.org/records/15849144/files/balances.zip",""
 "osm","archive","0.1","['deprecated', 'not-supported']","https://zenodo.org/records/12799202",""
 "osm","archive","0.2","['deprecated', 'not-supported']","https://zenodo.org/records/13342577",""
 "osm","archive","0.3","['deprecated', 'not-supported']","https://zenodo.org/records/13358976",""
