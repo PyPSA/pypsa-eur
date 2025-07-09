@@ -1589,23 +1589,24 @@ def insert_electricity_distribution_grid(
     n.generators.loc[solar, "capital_cost"] = costs.at["solar-utility", "capital_cost"]
 
     fn = solar_rooftop_potentials_fn
-    potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
-    potential.index = potential.index.map(flatten) + " solar"
+    if len(fn) > 0:
+        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+        potential.index = potential.index.map(flatten) + " solar"
 
-    n.add(
-        "Generator",
-        solar,
-        suffix=" rooftop",
-        bus=n.generators.loc[solar, "bus"] + " low voltage",
-        carrier="solar rooftop",
-        p_nom_extendable=True,
-        p_nom_max=potential.loc[solar],
-        marginal_cost=n.generators.loc[solar, "marginal_cost"],
-        capital_cost=costs.at["solar-rooftop", "capital_cost"],
-        efficiency=n.generators.loc[solar, "efficiency"],
-        p_max_pu=n.generators_t.p_max_pu[solar],
-        lifetime=costs.at["solar-rooftop", "lifetime"],
-    )
+        n.add(
+            "Generator",
+            solar,
+            suffix=" rooftop",
+            bus=n.generators.loc[solar, "bus"] + " low voltage",
+            carrier="solar rooftop",
+            p_nom_extendable=True,
+            p_nom_max=potential.loc[solar],
+            marginal_cost=n.generators.loc[solar, "marginal_cost"],
+            capital_cost=costs.at["solar-rooftop", "capital_cost"],
+            efficiency=n.generators.loc[solar, "efficiency"],
+            p_max_pu=n.generators_t.p_max_pu[solar],
+            lifetime=costs.at["solar-rooftop", "lifetime"],
+        )
 
     n.add("Carrier", "home battery")
 

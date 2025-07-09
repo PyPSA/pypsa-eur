@@ -29,6 +29,7 @@ options,,,
 -- keep_files, bool, False, Whether to keep LPs and MPS files after solving.
 agg_p_nom_limits,,,Configure per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard.
 -- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint. Default is false.
+-- agg_solar,bool,"{'true','false'}",Aggregate together all the types of electric solar when writing the constraint. Default is false.
 -- include_existing,bool,"{'true','false'}",Take existing capacities into account when writing the constraint. Default is false.
 -- file,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries and planning horizons. Defaults to ``data/agg_p_nom_minmax.csv``.
 "constraints ",,,
