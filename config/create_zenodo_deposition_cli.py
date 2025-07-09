@@ -266,7 +266,7 @@ def create_zenodo_deposition(metadata: dict, files: list[Path]) -> requests.Resp
     r = requests.put(
         deposition_url,
         params={"access_token": ZENODO_API_KEY},
-        json={"metadata": metadata},
+        data=json.dumps({"metadata": metadata}),
         headers={"Content-Type": "application/json"},
     )
 
@@ -446,6 +446,7 @@ def main(
             help="Use Zenodo sandbox environment instead of production.",
         ),
     ] = False,
+    debug: Annotated[bool, typer.Option(help="Enable debug mode.")] = False,
 ):
     """
     Guide the user through creating a new Zenodo deposition or version.
@@ -531,7 +532,7 @@ def main(
 
     if not potential_folders:
         typer.secho(
-            f"All folder in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
+            f"All folders in 'data/{dataset_name}/archive already have versions in data/versions.csv. "
             f"To create a new version, please create a new folder with a new version name that includes the new files.",
             fg=typer.colors.RED,
         )
@@ -634,7 +635,8 @@ def main(
         title = typer.prompt("Title of the new dataset")
         description = typer.prompt("Description of the new dataset")
         license = typer.prompt(
-            "License for the new dataset (e.g. CC-BY-4.0)", default="cc-by-4.0"
+            "License for the new dataset (e.g. CC-BY-4.0). Only standard licenses supported - use webinterface for custom license",
+            default="cc-by-4.0",
         )
         upload_type = typer.prompt("Upload type for the new dataset", default="dataset")
         access_right = typer.prompt("Access right for the new dataset", default="open")
@@ -651,8 +653,13 @@ def main(
                 break
             affiliation = typer.prompt("Affiliation (or leave empty)", default="")
 
+            creator = {"name": name}
+            # If affiliation is provided, add it to the creator dictionary
+            if affiliation:
+                creator["affiliation"] = affiliation
+
             if name:
-                creators.append({"name": name, "affiliation": affiliation})
+                creators.append(creator)
 
         # Create the new metadata dictionary
         new_metadata = {
