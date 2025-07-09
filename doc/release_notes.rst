@@ -11,6 +11,10 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
+
+* Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
+
 * Fix: Invalid aquifer shape geometries are now fixed in `build_ates_potentials.py` (fixing https://github.com/PyPSA/pypsa-eur/issues/1696)
 
 * Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
