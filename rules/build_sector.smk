@@ -593,7 +593,7 @@ rule build_energy_totals:
         idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
-        eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
+        eurostat_households=rules.retrieve_eurostat_household_balances.output["csv"],
     output:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),

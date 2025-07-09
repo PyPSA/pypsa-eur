@@ -85,16 +85,29 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_jrc_idees", T
         script:
             "../scripts/retrieve_jrc_idees.py"
 
-    rule retrieve_eurostat_household_data:
+
+if (
+    EUROSTAT_HOUSEHOLD_BALANCES_DATASET := dataset_version(
+        "eurostat_household_balances"
+    )
+)["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_eurostat_household_balances:
+        params:
+            url=EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"],
         output:
-            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
-        log:
-            "logs/retrieve_eurostat_household_data.log",
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_eurostat_household_data.py"
+            csv=f"{EUROSTAT_HOUSEHOLD_BALANCES_DATASET['folder']}/nrg_d_hhq.csv",
+        run:
+            import requests
+
+            # Retrieve the data into a gzipped file
+            response = requests.get(params["url"])
+            with open(output["csv"], "wb") as f:
+                f.write(response.content)
+
 
 
 if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
