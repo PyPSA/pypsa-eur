@@ -32,7 +32,7 @@ dependencies:
 - numpy
 - pandas>=2.1
 - geopandas>=1
-- xarray>=2024.03.0
+- xarray>=2024.03.0,<2025.07.0
 - rioxarray
 - netcdf4
 - libgdal-netcdf
