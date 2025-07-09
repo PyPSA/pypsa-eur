@@ -23,7 +23,6 @@ Relevant Settings
                 isentropic_compressor_efficiency:
                 heat_loss:
                 min_delta_t_lift:
-                min_delta_t_condenser:
             heat_pump_sources:
                 urban central:
                 urban decentral:
@@ -156,7 +155,7 @@ if __name__ == "__main__":
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
-                sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
+                sink_inlet_temperature_celsius=central_heating_return_temperature,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(

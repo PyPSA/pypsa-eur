@@ -22,7 +22,13 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
     being approximated.
 
     Uses the minimum feasible temperature lift for heat pumps as stated
-    by Aleksandrs et al. (2020), referring to Meggers et al. (2010).
+    by Zajacs et al. (2020) “Analysis of low temperature lift heat pump
+    application in a district heating system for flue gas condenser
+    efficiency improvement”
+    (https://www.sciencedirect.com/science/article/pii/S2210670720301177),
+    referring to Meggers et al. (2010) “The missing link for low exergy
+    buildings: Low temperature-lift, ultra-high COP heat pumps”
+    (https://www.researchgate.net/publication/259284556_The_missing_link_for_low_exergy_buildings_low_temperature-lift_ultra-high_COP_heat_pumps).
 
     Attributes
     ----------
