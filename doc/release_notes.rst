@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
+
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
 
 * Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
