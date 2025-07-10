@@ -2753,7 +2753,7 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-    ptes_direct_utilisation_profile: str,
+    ptes_direct_utilisation_profile_file: str,
     ates_e_nom_max: str,
     ates_capex_as_fraction_of_geothermal_heat_source: float,
     ates_recovery_factor: float,
@@ -3051,18 +3051,6 @@ def add_heat(
                     ],
                 )
 
-                if options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]:
-                    ptes_supplemental_heating_required = (
-                        xr.open_dataarray(ptes_direct_utilisation_profile)
-                        .sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    ptes_supplemental_heating_required = 1
-
                 n.add(
                     "Link",
                     nodes,
@@ -3073,8 +3061,7 @@ def add_heat(
                     efficiency=costs.at[
                         "central water pit discharger",
                         "efficiency",
-                    ]
-                    * ptes_supplemental_heating_required,
+                    ],
                     p_nom_extendable=True,
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
@@ -3265,8 +3252,9 @@ def add_heat(
                 not options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_heat_pump"
+                and "heat_pump"
+                in options["district_heating"]["ptes"]["supplemental_heating"][
+                    "booster_technologies"
                 ]
             ):
                 raise ValueError(
@@ -3278,8 +3266,9 @@ def add_heat(
                 and options["district_heating"]["ptes"]["supplemental_heating"][
                     "enable"
                 ]
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_heat_pump"
+                and "heat_pump"
+                in options["district_heating"]["ptes"]["supplemental_heating"][
+                    "booster_technologies"
                 ]
             ):
                 n.add(
@@ -6270,7 +6259,7 @@ if __name__ == "__main__":
                 "recovery_factor"
             ],
             enable_ates=snakemake.params.sector["district_heating"]["ates"]["enable"],
-            ptes_direct_utilisation_profile=snakemake.input.ptes_direct_utilisation_profiles,
+            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,

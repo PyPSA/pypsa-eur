@@ -106,3 +106,38 @@ class PtesTemperatureApproximator:
             self.max_ptes_top_temperature - self.bottom_temperature
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+
+    @property
+    def temperature_boost_ratio(self) -> xr.DataArray:
+        """
+        Calculate the additional lift required between the store's
+        current top temperature and the forward temperature with the lift
+        already achieved inside the store.
+
+        Notes
+        -----
+        The total thermal output required to reach the forward temperature is:
+
+            Q_total = Q_source + Q_boost
+
+        The total heat transfer is partitioned into:
+
+            Q_source = Ṽ·ρ·cₚ·(T_max,store − T_return)
+            Q_boost  = Ṽ·ρ·cₚ·(T_forward − T_max,store)
+
+        Defining α as the ratio of required boost to available store energy:
+
+            α = Q_boost / Q_source
+              = (T_forward − T_max,store) / (T_max,store − T_return)
+
+        This expression quantifies the share of PTES output that needs
+        additional heating to meet the desired forward temperature.
+
+        Returns
+        -------
+        xr.DataArray
+            The resulting fraction of PTES charge that must be further heated.
+        """
+        return (self.forward_temperature - self.top_temperature) / (
+            self.top_temperature - self.return_temperature
+        )

@@ -489,6 +489,9 @@ rule build_ptes_operations:
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
+        ptes_temperature_boost_ratio_profiles=resources(
+            "ptes_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     resources:
         mem_mb=2000,
     log:
@@ -1387,6 +1390,15 @@ rule prepare_sector_network:
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"
             )(w)
             else []
+        ),
+        ptes_temperature_boost_ratio_profiles= lambda w: (
+            resources(
+                "ptes_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","supplemental_heating","enable"
+            )(w)
+            else[]
         ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
