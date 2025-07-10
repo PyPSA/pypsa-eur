@@ -96,7 +96,7 @@ def get_cop(
             min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating[
                 "min_delta_t_lift"
             ],
-        ).cop()
+        ).cop
 
     else:
         return DecentralHeatingCopApproximator(
