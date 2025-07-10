@@ -64,7 +64,9 @@ Release Notes
   SVG output format has also been added for these graphs, and error handling during 
   graph generation has been enhanced.
 
-* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies.
+* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies and included ``offwind-float`` in ``offwind`` technologies.
+
+* Fix: plotting the storage capacity in the H2 network map
 
 * Chore: Replace licensing information in `.reuse/dep5` with `REUSE.toml` to be compliant with REUSE 3.2 (https://reuse.software/spec-3.2/#licensing-information).
 
