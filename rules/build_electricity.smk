@@ -575,12 +575,15 @@ rule build_hac_features:
 
 rule build_cost_data:
     params:
-        custom_costs=config_provider("costs", "custom_costs"),
+        costs=config_provider("costs"),
+        max_hours=config_provider("electricity", "max_hours"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         costs=resources("costs_{planning_horizons}.csv"),
         custom_costs="data/custom_costs.csv",
     output:
-        resources("costs_{planning_horizons}_extended.csv"),
+        resources("costs_{planning_horizons}_prepped.csv"),
     wildcard_constraints:
         planning_horizons=r"\d{4}",  # Constrain to 4-digit years only
     log:
@@ -743,7 +746,6 @@ rule add_electricity:
         renewable=config_provider("renewable"),
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
-        costs=config_provider("costs"),
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         consider_efficiency_classes=config_provider(
@@ -757,7 +759,7 @@ rule add_electricity:
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}_prepped.csv"
         ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
@@ -795,8 +797,7 @@ rule prepare_network:
         co2limit=config_provider("electricity", "co2limit"),
         gaslimit_enable=config_provider("electricity", "gaslimit_enable", default=False),
         gaslimit=config_provider("electricity", "gaslimit"),
-        max_hours=config_provider("electricity", "max_hours"),
-        costs=config_provider("costs"),
+        emission_prices=config_provider("costs", "emission_prices"),
         adjustments=config_provider("adjustments", "electricity"),
         autarky=config_provider("electricity", "autarky", default={}),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -804,7 +805,7 @@ rule prepare_network:
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}_prepped.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
