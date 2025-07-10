@@ -892,6 +892,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
+  custom_costs: false
   overwrites: {}
   marginal_cost:
     solar: 0.01

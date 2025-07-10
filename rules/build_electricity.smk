@@ -573,6 +573,29 @@ rule build_hac_features:
         "../scripts/build_hac_features.py"
 
 
+rule build_cost_data:
+    params:
+        custom_costs=config_provider("costs", "custom_costs"),
+    input:
+        costs=resources("costs_{planning_horizons}.csv"),
+        custom_costs="data/custom_costs.csv",
+    output:
+        resources("costs_{planning_horizons}_extended.csv"),
+    wildcard_constraints:
+        planning_horizons=r"\d{4}",  # Constrain to 4-digit years only
+    log:
+        logs("build_cost_data_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_cost_data_{planning_horizons}")
+    threads: 1
+    resources:
+        mem_mb=10000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_cost_data.py"
+
+
 rule simplify_network:
     params:
         countries=config_provider("countries"),
