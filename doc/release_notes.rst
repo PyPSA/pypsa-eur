@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Allow district heating potentials to be optionally specified as a dictionary as an alternative to a float, with country codes as keys of the parameter `district_heating: potential`.
+
 * Fix: Adjusted the `modify_attribute` function in `prepare_network` to align with changes in the PyPSA API.
 
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
