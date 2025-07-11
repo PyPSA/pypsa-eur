@@ -2,19 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 """
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.14230568.svg
-  :target: https://doi.org/10.5281/zenodo.14230568
+The retrieved data includes the node list and the reference grids from the Ten-Year Network Development Plan (TYNDP) 2024.
 
-The data bundle contains input data for the 2024 TYNDP scenario building process.
-
-This rule downloads the TYNDP data bundle from `zenodo
-<https://doi.org/10.5281/zenodo.14230568>` and extracts it in the ``data``
-subdirectory, such that all files of the bundle are stored in the
-``data/tyndp_2024_bundle`` subdirectory.
+This rule downloads the TYNDP data bundle from the `ENTSOs website
+<https://2024.entsos-tyndp-scenarios.eu/download/>` and extracts it in the ``data/tyndp_2024_bundle``
+subdirectory.
 
 **Outputs**
 
-- ``data/tyndp_2024_bundle``: input data for TYNDP 2024 scenario building
+- ``data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx``: reference grid from TYNDP 2024
+- ``data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx``: list of nodes from TYNDP 2024
 
 """
 
