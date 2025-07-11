@@ -22,6 +22,7 @@ Relevant Settings
                 heat_exchanger_pinch_point_temperature_difference
                 isentropic_compressor_efficiency:
                 heat_loss:
+                min_delta_t_lift:
             heat_pump_sources:
                 urban central:
                 urban decentral:
@@ -53,8 +54,8 @@ def get_cop(
     heat_system_type: str,
     heat_source: str,
     source_inlet_temperature_celsius: xr.DataArray,
-    forward_temperature_by_node_and_time: xr.DataArray = None,
-    return_temperature_by_node_and_time: xr.DataArray = None,
+    sink_outlet_temperature_celsius: xr.DataArray = None,
+    sink_inlet_temperature_celsius: xr.DataArray = None,
 ) -> xr.DataArray:
     """
     Calculate the coefficient of performance (COP) for a heating system.
@@ -75,16 +76,31 @@ def get_cop(
     """
     if HeatSystemType(heat_system_type).is_central:
         return CentralHeatingCopApproximator(
-            forward_temperature_celsius=forward_temperature_by_node_and_time,
-            return_temperature_celsius=return_temperature_by_node_and_time,
+            sink_outlet_temperature_celsius=sink_outlet_temperature_celsius,
+            sink_inlet_temperature_celsius=sink_inlet_temperature_celsius,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_outlet_temperature_celsius=source_inlet_temperature_celsius
             - snakemake.params.heat_source_cooling_central_heating,
+            refrigerant=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "refrigerant"
+            ],
+            delta_t_pinch_point=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "heat_exchanger_pinch_point_temperature_difference"
+            ],
+            isentropic_compressor_efficiency=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "isentropic_compressor_efficiency"
+            ],
+            heat_loss=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "heat_loss"
+            ],
+            min_delta_t_lift=snakemake.params.heat_pump_cop_approximation_central_heating[
+                "min_delta_t_lift"
+            ],
         ).approximate_cop()
 
     else:
         return DecentralHeatingCopApproximator(
-            forward_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
+            sink_outlet_temperature_celsius=snakemake.params.heat_pump_sink_T_decentral_heating,
             source_inlet_temperature_celsius=source_inlet_temperature_celsius,
             source_type=heat_source,
         ).approximate_cop()
@@ -133,8 +149,8 @@ if __name__ == "__main__":
                 heat_system_type=heat_system_type,
                 heat_source=heat_source,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
-                forward_temperature_by_node_and_time=central_heating_forward_temperature,
-                return_temperature_by_node_and_time=central_heating_return_temperature,
+                sink_outlet_temperature_celsius=central_heating_forward_temperature,
+                sink_inlet_temperature_celsius=central_heating_return_temperature,
             )
             cop_this_system_type.append(cop_da)
         cop_all_system_types.append(
