@@ -334,7 +334,7 @@ def distribute_n_clusters_to_countries(
     # leave out constant in objective (L * n_clusters) ** 2
     m.objective = (clusters * clusters - 2 * clusters * L * n_clusters).sum()
     if solver_name == "gurobi":
-        logging.getLogger("gurobipy").propagate = False
+        logger.getLogger("gurobipy").propagate = False
     elif solver_name not in ["scip", "cplex", "xpress", "copt", "mosek"]:
         logger.info(
             f"The configured solver `{solver_name}` does not support quadratic objectives. Falling back to `scip`."

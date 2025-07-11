@@ -2037,6 +2037,8 @@ def add_storage_and_grids(
         h2_pipes = create_network_topology(
             n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
         )
+        h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
+        h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
 
         # TODO Add efficiency losses
         n.add(
