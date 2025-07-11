@@ -4,6 +4,14 @@
 """
 Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons and / or technologies using the 'all' identifier.
 
+Preparing the cost data includes:
+- aligning all units to conventional units (i.e. MW / MWh),
+- filling in missing data,
+- computing 'capital_cost' parameter (annualised investment costs and FOM),
+- computing 'marginal_cost' parameter (fuel costs and VOM),
+- computing storage costs for batteries and hydrogen,
+- (deprecated) overwriting attributes using config-based modifications.
+
 Inputs
 ------
 
