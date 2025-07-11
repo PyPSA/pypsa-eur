@@ -11,6 +11,8 @@ Release Notes
 .. Upcoming Release
 .. ================
 
+* Feature: Introduce a new method to overwrite costs (https://github.com/PyPSA/pypsa-eur/pull/1752). Modifications to the default technico-economic assumptions can now be enabled in the configuration using the `costs:custom_costs` setting (default value: `false`). When enabled, modifications specified in the file `data/custom_costs.csv` are applied to the default `resources/costs_{planning_horizons}.csv` files. The implementation maintains backwards compatibility with existing approaches via `costs:overwrites` and `costs:capital_cost`/`costs:marginal_cost` parameters.
+
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
 
 * Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
