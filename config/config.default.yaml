@@ -45,40 +45,40 @@ scenario:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
-  - AL
-  - AT
-  - BA
-  - BE
-  - BG
-  - CH
-  - CZ
-  - DE
-  - DK
-  - EE
-  - ES
-  - FI
-  - FR
-  - GB
-  - GR
-  - HR
-  - HU
-  - IE
-  - IT
-  - LT
-  - LU
-  - LV
-  - ME
-  - MK
-  - NL
-  - 'NO'
-  - PL
-  - PT
-  - RO
-  - RS
-  - SE
-  - SI
-  - SK
-  - XK
+- AL
+- AT
+- BA
+- BE
+- BG
+- CH
+- CZ
+- DE
+- DK
+- EE
+- ES
+- FI
+- FR
+- GB
+- GR
+- HR
+- HU
+- IE
+- IT
+- LT
+- LU
+- LV
+- ME
+- MK
+- NL
+- 'NO'
+- PL
+- PT
+- RO
+- RS
+- SE
+- SI
+- SK
+- XK
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -523,7 +523,7 @@ sector:
     ates:
       enable: false
       suitable_aquifer_types:
-        - Highly productive porous aquifers
+      - Highly productive porous aquifers
       aquifer_volumetric_heat_capacity: 2600
       fraction_of_aquifer_area_available: 0.2
       effective_screen_length: 20
@@ -716,8 +716,8 @@ sector:
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
-    - onshore  # more than 50 km from sea
-    - nearshore    # within 50 km of sea
+  - onshore    # more than 50 km from sea
+  - nearshore      # within 50 km of sea
     # - offshore
   methanol:
     regional_methanol_demand: false
