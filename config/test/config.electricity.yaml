@@ -65,7 +65,8 @@ renewable:
 
 
 costs:
-  custom_costs: true
+  custom_costs:
+    enable: true
 
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]

@@ -72,7 +72,8 @@ renewable:
     min_depth: false
 
 costs:
-  custom_costs: true
+  custom_costs:
+    enable: true
 
 clustering:
   temporal:

@@ -581,7 +581,6 @@ rule build_cost_data:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         costs=resources("costs_{planning_horizons}.csv"),
-        custom_costs="data/custom_costs.csv",
     output:
         resources("costs_{planning_horizons}_prepped.csv"),
     wildcard_constraints:

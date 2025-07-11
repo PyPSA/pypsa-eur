@@ -8,7 +8,7 @@ Inputs
 ------
 
 - ``resources/costs_{planning_horizons}.csv``: Default cost data for specified planning horizon
-- ``data/custom_costs.csv``: Custom cost modifications
+- (by default) ``data/custom_costs.csv``: Custom cost modifications (can be configured with `costs:custom_costs:file`
 
 Outputs
 -------
@@ -122,7 +122,7 @@ def prepare_costs(
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
             warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external 'data/custom_costs.csv' file instead.",
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
                 DeprecationWarning,
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
@@ -176,7 +176,7 @@ def prepare_costs(
             idx = overwrites.index.intersection(costs.index)
             costs.loc[idx, attr] = overwrites.loc[idx]
             warnings.warn(
-                "Config-based cost overwrites is deprecated. Use external 'data/custom_costs.csv' file instead.",
+                "Config-based cost overwrites is deprecated. Use external file instead (by default 'data/custom_costs.csv').",
                 DeprecationWarning,
             )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
@@ -201,12 +201,15 @@ if __name__ == "__main__":
     # Retrieve costs assumptions
     costs = pd.read_csv(snakemake.input.costs)
     custom_costs = (
-        pd.read_csv(snakemake.input.custom_costs, dtype={"planning_horizon": "object"})
+        pd.read_csv(
+            snakemake.params.costs["custom_costs"]["file"],
+            dtype={"planning_horizon": "object"},
+        )
         .query("planning_horizon in [@planning_horizon, 'all']")
         .drop("planning_horizon", axis=1)
     )
 
-    if config.get("custom_costs", False) and not custom_costs.empty:
+    if config["custom_costs"].get("enable", False) and not custom_costs.empty:
         # Expand "all" technologies across all available technologies from default costs
         custom_costs_expanded = expand_all_technologies(costs, custom_costs)
 
