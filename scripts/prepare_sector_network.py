@@ -3952,21 +3952,22 @@ def add_biomass(
             marginal_cost=costs.at["BtL", "VOM"],
         )
 
-    n.add(
-        "Link",
-        spatial.gas.biogas_to_gas,
-        bus0=spatial.gas.biogas,
-        bus1=spatial.gas.nodes,
-        bus2="co2 atmosphere",
-        carrier="biogas to gas",
-        capital_cost=costs.at["biogas", "capital_cost"]
-        + costs.at["biogas upgrading", "capital_cost"],
-        marginal_cost=costs.at["biogas upgrading", "VOM"],
-        efficiency=costs.at["biogas", "efficiency"],
-        efficiency2=-costs.at["gas", "CO2 intensity"],
-        p_nom_extendable=True,
-        lifetime=costs.at["biogas", "lifetime"],
-    )
+    if options["biogas_upgrading"]:
+        n.add(
+            "Link",
+            spatial.gas.biogas_to_gas,
+            bus0=spatial.gas.biogas,
+            bus1=spatial.gas.nodes,
+            bus2="co2 atmosphere",
+            carrier="biogas to gas",
+            capital_cost=costs.at["biogas", "capital_cost"]
+            + costs.at["biogas upgrading", "capital_cost"],
+            marginal_cost=costs.at["biogas upgrading", "VOM"],
+            efficiency=costs.at["biogas", "efficiency"],
+            efficiency2=-costs.at["gas", "CO2 intensity"],
+            p_nom_extendable=True,
+            lifetime=costs.at["biogas", "lifetime"],
+        )
 
     if options["biogas_upgrading_cc"]:
         # Assuming for costs that the CO2 from upgrading is pure, such as in amine scrubbing. I.e., with and without CC is
