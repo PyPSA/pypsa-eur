@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare and extend cost data with custom cost modifications.
+Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons and / or technologies using the 'all' identifier.
 
 Inputs
 ------
@@ -17,6 +17,7 @@ Outputs
 """
 
 import logging
+import warnings
 
 import pandas as pd
 from _helpers import get_snapshots
@@ -76,11 +77,12 @@ def prepare_costs(
     costs: pd.DataFrame, config: dict, max_hours: dict = None, nyears: float = 1.0
 ) -> pd.DataFrame:
     """
-    Prepare costs to standardize input costs data.
+    Standardize and prepare extended costs data.
 
     Parameters
     ----------
-    costs
+    costs : pd.DataFrame
+        DataFrame containing extended costs
     config : dict
         Dictionary containing cost-related configuration parameters
     max_hours : dict, optional
@@ -119,6 +121,10 @@ def prepare_costs(
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
+            warnings.warn(
+                "Config-based cost overwrites is deprecated. Use external 'data/custom_costs.csv' file instead.",
+                DeprecationWarning,
+            )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
     annuity_factor = calculate_annuity(costs["lifetime"], costs["discount rate"])
@@ -169,6 +175,10 @@ def prepare_costs(
             overwrites = pd.Series(overwrites)
             idx = overwrites.index.intersection(costs.index)
             costs.loc[idx, attr] = overwrites.loc[idx]
+            warnings.warn(
+                "Config-based cost overwrites is deprecated. Use external 'data/custom_costs.csv' file instead.",
+                DeprecationWarning,
+            )
             logger.info(f"Overwriting {attr} with:\n{overwrites}")
 
     return costs
@@ -178,9 +188,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_cost_data", clusters=5, planning_horizons=2030
-        )
+        snakemake = mock_snakemake("build_cost_data", planning_horizons=2030)
 
     config = snakemake.params.costs
 
@@ -188,9 +196,9 @@ if __name__ == "__main__":
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
     )
     nyears = len(snapshots) / 8760
+    planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions
-    planning_horizon = str(snakemake.wildcards.planning_horizons)
     costs = pd.read_csv(snakemake.input.costs)
     custom_costs = (
         pd.read_csv(snakemake.input.custom_costs, dtype={"planning_horizon": "object"})
@@ -202,7 +210,7 @@ if __name__ == "__main__":
         # Expand "all" technologies across all available technologies from default costs
         custom_costs_expanded = expand_all_technologies(costs, custom_costs)
 
-        # Combine costs assumptions with custom_costs superseding default costs values
+        # Combine default costs assumptions with custom costs superseding default values
         costs_extended = pd.concat(
             [costs, custom_costs_expanded], ignore_index=True
         ).drop_duplicates(subset=["technology", "parameter"], keep="last")

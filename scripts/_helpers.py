@@ -1079,7 +1079,7 @@ def load_cutout(
 
 def load_costs(cost_file: str) -> pd.DataFrame:
     """
-    Load cost data from CSV and prepare it.
+    Load prepared cost data from CSV.
 
     Parameters
     ----------
@@ -1089,7 +1089,7 @@ def load_costs(cost_file: str) -> pd.DataFrame:
     Returns
     -------
     costs : pd.DataFrame
-        DataFrame containing the processed cost data
+        DataFrame containing the prepared cost data
     """
 
     return pd.read_csv(cost_file, index_col=0).sort_index()
