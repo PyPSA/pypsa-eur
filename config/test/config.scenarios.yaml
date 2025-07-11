@@ -47,6 +47,10 @@ renewable:
   offwind-dc:
     max_depth: false
 
+costs:
+  custom_costs:
+    enable: true
+
 solving:
   solver:
     name: highs
