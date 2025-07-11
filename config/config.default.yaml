@@ -79,8 +79,7 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 330., 380., 400., 500., 750.]
-  base_network: osm-prebuilt
-  osm-prebuilt-version: 0.6
+  base_network: osm
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -950,6 +949,23 @@ adjustments:
         electricity distribution grid:
           capital_cost: 1.0
     absolute: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
+data:
+  # TODO implement
+  # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
+  jrc_enspreso_biomass:
+    source: "archive"
+    version_or_latest: "latest"
+  osm:
+    source: "archive" # "archive" or "build"
+    version_or_latest: "latest"
+  worldbank_urban_population:
+    source: "archive"
+    version_or_latest: "latest"
+  gem_gspt: # 
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

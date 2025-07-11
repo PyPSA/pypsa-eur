@@ -4,6 +4,8 @@
 
 master
 
+.env
+
 .snakemake*
 .ipynb_checkpoints
 __pycache__

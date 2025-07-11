@@ -32,14 +32,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
 - **Description:** Europe's NUTS administrative regions.
 
-``data/ENSPRESO_BIOMASS.xlsx``
-
-- **Source:** European Commission Joint Research Centre (JRC)
-- **Link:** https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
-- **License:** CC-BY 4.0
-- **Description:** Contains biomass potentials for Europe.
-
-``data/CO2JRC_OpenFormats``
+``data/complete_map_2020_unit_Mt.geojson``
 
 - **Source:** SETIS
 - **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
@@ -201,7 +194,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://www.protectedplanet.net/en/legal>`__
 - **Description:** Contains global protected marine areas.
 
-``data/osm-raw``
+``data/osm/build/raw``
 
 - **Source:** OpenStreetMap via Overpass API
 - **Link:** https://overpass-api.de/api/interpreter

@@ -7,6 +7,9 @@ from functools import partial, lru_cache
 
 import os, sys, glob
 
+import pandas as pd
+import json
+
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
@@ -76,6 +79,76 @@ def config_provider(*keys, default=None):
         return partial(dynamic_getter, keys=keys, default=default)
     else:
         return partial(static_getter, keys=keys, default=default)
+
+
+def dataset_version(
+    name: str,
+) -> pd.Series:
+    """
+    Return the dataset version information and url for a given dataset name.
+
+    The dataset name is used to determine the source and version of the dataset from the configuration.
+    Then the 'data/versions.csv' file is queried to find the matching dataset entry.
+
+    Parameters:
+    name: str
+        The name of the dataset to retrieve version information for.
+
+    Returns:
+    pd.Series
+        A pandas Series containing the dataset version information, including source, version, tags, and URL
+    """
+
+    @lru_cache
+    def load_data_versions(file_path):
+        data_versions = pd.read_csv(
+            file_path, dtype=str, na_filter=False, delimiter=",", comment="#"
+        )
+
+        # Turn 'tags' column from string representation of list to individual columns
+        data_versions["tags"] = data_versions["tags"].apply(
+            lambda x: json.loads(x.replace("'", '"'))
+        )
+        exploded = data_versions.explode("tags")
+        dummies = pd.get_dummies(exploded["tags"], dtype=bool)
+        tags_matrix = dummies.groupby(dummies.index).max()
+        data_versions = data_versions.join(tags_matrix)
+
+        return data_versions
+
+    dataset_config = config["data"][
+        name
+    ]  # TODO as is right now, it is not compatible with config_provider
+    data_versions = load_data_versions("data/versions.csv")
+
+    dataset = data_versions.loc[
+        (data_versions["dataset"] == name)
+        & (data_versions["source"] == dataset_config["source"])
+        & (data_versions["supported"])  # Limit to supported versions only
+        & (
+            data_versions["version"] == dataset_config["version_or_latest"]
+            if "latest" != dataset_config["version_or_latest"]
+            else True
+        )
+        & (
+            data_versions["latest"]
+            if "latest" == dataset_config["version_or_latest"]
+            else True
+        )
+    ]
+
+    if dataset.empty:
+        raise ValueError(
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version_or_latest']}' not found in data/versions.csv."
+        )
+
+    # Return single-row DataFrame as a Series
+    dataset = dataset.squeeze()
+
+    # Generate output folder path in the `data` directory
+    dataset["folder"] = Path("data", name, dataset["source"], dataset["version"])
+
+    return dataset
 
 
 def solver_threads(w):

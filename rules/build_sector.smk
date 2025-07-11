@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+        urban_percent=rules.retrieve_worldbank_urban_population.output["csv"],
         cutout=lambda w: input_cutout(w),
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
@@ -624,7 +624,7 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass="data/ENSPRESO_BIOMASS.xlsx",
+        enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
         eurostat="data/eurostat/Balances-April2023",
         nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
@@ -872,7 +872,7 @@ rule build_industrial_distribution_key:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
-        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
