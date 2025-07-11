@@ -21,9 +21,6 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
-enable:
-  retrieve_tyndp_bundle: true
-
 electricity:
   base_network: tyndp
   transmission_limit: v1.0
@@ -52,15 +49,20 @@ renewable:
     min_depth: false
 
 links:
-  p_max_pu: 1.0
   p_min_pu: 0
 
 transmission_projects:
-  enable: true
   include:
     tyndp2020: false
     nep: false
     manual: false
+
+sector:
+  transmission_efficiency:
+    enable:
+    - H2 pipeline
+    - gas pipeline
+    - electricity distribution grid
 
 clustering:
   mode: administrative
@@ -70,7 +72,7 @@ clustering:
     remove_islands: true
     aggregate_to_tyndp: true
   temporal:
-    resolution_sector: 24H
+    resolution_sector: 24h
 
 solving:
   solver:

@@ -2037,10 +2037,8 @@ def add_storage_and_grids(
         h2_pipes = create_network_topology(
             n, "H2 pipeline ", carriers=["DC", "gas pipeline"]
         )
-        h2_buses_loc = n.buses.query("carrier == 'H2'").location
-        h2_pipes = h2_pipes.loc[
-            (h2_pipes.bus0.isin(h2_buses_loc)) & (h2_pipes.bus1.isin(h2_buses_loc))
-        ]
+        h2_buses_loc = n.buses.query("carrier == 'H2'").location  # noqa: F841
+        h2_pipes = h2_pipes.query("bus0 in @h2_buses_loc and bus1 in @h2_buses_loc")
 
         # TODO Add efficiency losses
         n.add(
@@ -6446,9 +6444,7 @@ if __name__ == "__main__":
         add_electricity_grid_connection(n, costs)
 
     for k, v in options["transmission_efficiency"].items():
-        if (k in options["transmission_efficiency"]["enable"]) and (
-            k == "DC" and snakemake.params != "tyndp"
-        ):
+        if k in options["transmission_efficiency"]["enable"]:
             lossy_bidirectional_links(n, k, v)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties

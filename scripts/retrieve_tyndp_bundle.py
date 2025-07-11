@@ -65,7 +65,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
 
-    to_fn = Path(snakemake.output.dir)
+    to_fn = Path(snakemake.output.reference_grid).parents[1]
     urls = [
         url_electricity,
         url_buses,
