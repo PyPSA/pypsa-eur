@@ -13,6 +13,10 @@ Release Notes
 
 * Feature: Introduce a new method to overwrite costs (https://github.com/PyPSA/pypsa-eur/pull/1752). Modifications to the default technico-economic assumptions can now be enabled in the configuration using the `costs:custom_costs` setting (default value: `false`). When enabled, modifications specified in the file `data/custom_costs.csv` are applied to the default `resources/costs_{planning_horizons}.csv` files. The implementation maintains backwards compatibility with existing approaches via `costs:overwrites` and `costs:capital_cost`/`costs:marginal_cost` parameters.
 
+* Allow district heating potentials to be optionally specified as a dictionary as an alternative to a float, with country codes as keys of the parameter `district_heating: potential`.
+
+* Fix: Adjusted the `modify_attribute` function in `prepare_network` to align with changes in the PyPSA API.
+
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
 
 * Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
@@ -62,7 +66,9 @@ Release Notes
   SVG output format has also been added for these graphs, and error handling during 
   graph generation has been enhanced.
 
-* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies.
+* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies and included ``offwind-float`` in ``offwind`` technologies.
+
+* Fix: plotting the storage capacity in the H2 network map
 
 * Chore: Replace licensing information in `.reuse/dep5` with `REUSE.toml` to be compliant with REUSE 3.2 (https://reuse.software/spec-3.2/#licensing-information).
 
