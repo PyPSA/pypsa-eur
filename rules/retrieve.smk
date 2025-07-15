@@ -73,19 +73,6 @@ if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"]
             unpack_archive(output.zip, output_folder)
 
 
-
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_jrc_idees", True):
-
-    rule retrieve_jrc_idees:
-        output:
-            directory("data/jrc-idees-2021"),
-        log:
-            "logs/retrieve_jrc_idees.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_jrc_idees.py"
-
-
 if (
     EUROSTAT_HOUSEHOLD_BALANCES_DATASET := dataset_version(
         "eurostat_household_balances"
@@ -107,6 +94,31 @@ if (
             response = requests.get(params["url"])
             with open(output["csv"], "wb") as f:
                 f.write(response.content)
+
+                
+if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
+    "primary",
+    "archive",
+]:
+    rule retrieve_jrc_idees:
+        params:
+            url = f"{JRC_IDEES_DATASET["url"]}",
+        output:
+            zip = f"{JRC_IDEES_DATASET["folder"]}/jrc_idees.zip",
+            directory = directory(f"{JRC_IDEES_DATASET["folder"]}"),
+        run:
+            import os
+            import requests
+            from zipfile import ZipFile
+            from pathlib import Path
+
+            response = requests.get(params["url"])
+            with open(output.zip, "wb") as f:
+                f.write(response.content)
+
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output.zip, output_folder)
+
 
 
 

@@ -996,6 +996,9 @@ data:
   luisa_land_cover:
     source: "archive" # "primary" or "archive"
     version_or_latest: "latest" #
+  jrc_idees:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

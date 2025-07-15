@@ -36,3 +36,5 @@
 "worldbank_urban_population","primary","unknown","['latest', 'might-work']","https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv","This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice."
 "luisa_land_cover","primary","unknown","['latest', 'supported']","https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",""
 "luisa_land_cover","archive","2021-03-02","['latest', 'supported']","https://zenodo.org/records/15879466/files/LUISA_basemap_020321_50m.tif",""
+"jrc_idees","primary","unknown","['latest', 'supported']","https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip",""
+"jrc_idees","archive","2024-05-20","['latest', 'supported']","https://zenodo.org/records/15895830/files/JRC-IDEES-2021.zip",""
