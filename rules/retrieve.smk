@@ -238,17 +238,19 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             "../scripts/retrieve_cost_data.py"
 
 
-if config["enable"]["retrieve"] and (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
-        "primary",
-        "archive",
+if config["enable"]["retrieve"] and (
+    SCIGRID_GAS_DATASET := dataset_version("scigrid_gas")
+)["source"] in [
+    "primary",
+    "archive",
 ]:
 
     rule retrieve_gas_infrastructure_data:
-        params: 
-            url = f"{SCIGRID_GAS_DATASET['url']}"
+        params:
+            url=f"{SCIGRID_GAS_DATASET['url']}",
         output:
-            zip = f"{SCIGRID_GAS_DATASET["folder"]}/jrc_idees.zip",
-            directory = directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
+            zip=f"{SCIGRID_GAS_DATASET["folder"]}/jrc_idees.zip",
+            directory=directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
         run:
             import os
             import requests
@@ -261,7 +263,7 @@ if config["enable"]["retrieve"] and (SCIGRID_GAS_DATASET := dataset_version("sci
 
             output_folder = Path(output["zip"]).parent
             unpack_archive(output.zip, output_folder)
-    
+
 
 
 if config["enable"]["retrieve"]:
