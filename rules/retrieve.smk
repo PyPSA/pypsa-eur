@@ -515,80 +515,92 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
             os.rename(input.xlsx, output.xlsx)
 
 
-if config["enable"]["retrieve"]:
-    # Some logic to find the correct file URL
-    # Sometimes files are released delayed or ahead of schedule, check which file is currently available
+def get_wdpa_url(DATASET) -> str:
+    """
+    Find the right URL for the WDPA / WDPA marine dataset based on the source type.
+    """
+    if DATASET["source"] == "archive":
+        return DATASET["url"]
+    elif DATASET["source"] == "primary":
+        # Some logic to find the correct file URL from the WDPA website (primary source)
+        # Sometimes files are released delayed or ahead of schedule, check which file is currently available
+        def check_file_exists(url):
+            response = requests.head(url)
+            return response.status_code == 200
 
-    def check_file_exists(url):
-        response = requests.head(url)
-        return response.status_code == 200
+        # Basic pattern where WDPA files can be found
+        url_pattern = DATASET["url"]
 
-    # Basic pattern where WDPA files can be found
-    url_pattern = (
-        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
-    )
+        # 3-letter month + 4 digit year for current/previous/next month to test
+        current_monthyear = datetime.now().strftime("%b%Y")
+        prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
+        next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
 
-    # 3-letter month + 4 digit year for current/previous/next month to test
-    current_monthyear = datetime.now().strftime("%b%Y")
-    prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
-    next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+        # Test prioritised: current month -> previous -> next
+        for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+            url = url_pattern.format(bYYYY=bYYYY)
+            if check_file_exists(url):
+                return url
 
-    # Test prioritised: current month -> previous -> next
-    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
-        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
-            break
-        else:
-            # If None of the three URLs are working
-            url = False
+        raise ValueError(
+            f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+        )
 
-    assert (
-        url
-    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+
+if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
-    rule download_wdpa:
+    rule retrieve_wdpa:
         input:
-            zip=storage(url, keep_local=True),
-        params:
-            zip="data/WDPA_shp.zip",
-            folder=directory("data/WDPA"),
+            zip=storage(get_wdpa_url(WDPA_DATASET), keep_local=True),
         output:
-            gpkg="data/WDPA.gpkg",
+            zip=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
+            folder=directory({WDPA_DATASET["folder"]}),
+            gpkg=f"{WDPA_DATASET['folder']}/WDPA.gpkg",
         run:
-            shcopy(input.zip, params.zip)
-            unpack_archive(params.zip, params.folder)
+            shcopy(input.zip, output.zip)
+            unpack_archive(output.zip, output.folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
-                    f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                    f"/vsizip/{output.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
-    rule download_wdpa_marine:
+
+
+if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_wdpa_marine:
         # Downloading Marine protected area database from WDPA
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
             zip=storage(
-                f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
+                get_wdpa_url(WDPA_MARINE_DATASET),
                 keep_local=True,
             ),
-        params:
-            zip="data/WDPA_WDOECM_marine.zip",
-            folder=directory("data/WDPA_WDOECM_marine"),
         output:
-            gpkg="data/WDPA_WDOECM_marine.gpkg",
+            zip=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.zip",
+            folder=directory(WDPA_MARINE_DATASET["folder"]),
+            gpkg=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.gpkg",
         run:
-            shcopy(input.zip, params.zip)
-            unpack_archive(params.zip, params.folder)
+            shcopy(input.zip, output.zip)
+            unpack_archive(output.zip, output.folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
+                layer_path = f"/vsizip/{output.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 

@@ -987,6 +987,12 @@ data:
   eurostat_household_balances:
     source: "archive"
     version_or_latest: "latest"
+  wdpa:
+    source: "archive"
+    version_or_latest: "latest"
+  wdpa_marine:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

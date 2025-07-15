@@ -227,8 +227,8 @@ rule determine_availability_matrix_MD_UA:
         renewable=config_provider("renewable"),
     input:
         copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
-        wdpa="data/WDPA.gpkg",
-        wdpa_marine="data/WDPA_WDOECM_marine.gpkg",
+        wdpa=rules.retrieve_wdpa.output["gpkg"],
+        wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
             "data/bundle/gebco/GEBCO_2014_2D.nc"
             if config_provider("renewable", w.technology)(w).get("max_depth")
