@@ -967,64 +967,12 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
 
 def add_resistive_heater_boosting_constraints(
     n: pypsa.Network,
-    ptes_direct_utilisation_profile_file: str,
+    ptes_booster_technologies: list[str],
     ptes_temperature_boost_ratio_profile_file: str,
-    district_heat_share_file: str,
 ):
     """
     Add resistive heater boosting constraints.
     """
-    resistive_heater_ext = (
-        n.links[n.links.index.str.contains("urban central resistive heater")]
-        .query("p_nom_extendable").index
-    )
-    ptes_discharger_ext = (
-        n.links[n.links.index.str.contains("urban central water pits discharger")]
-        .query("p_nom_extendable").index
-    )
-
-    if resistive_heater_ext.empty or ptes_discharger_ext.empty:
-        return
-
-    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
-    nodes = district_heat_info.index[district_heat_info["district fraction of node"] > 0]
-
-    ptes_supplemental_heating_required = (
-        xr.open_dataarray(ptes_direct_utilisation_profile_file)
-        .sel(name=nodes)
-        .to_pandas()
-        .reindex(index=n.snapshots)
-    )
-    # name the index correctly
-    discharger_link_suffix = " urban central water pits discharger"
-
-    ptes_supplemental_heating_required.columns = (
-        ptes_supplemental_heating_required.columns + discharger_link_suffix
-    )
-    ptes_supplemental_heating_required = ptes_supplemental_heating_required.reindex(
-        columns=ptes_discharger_ext
-    )
-
-    # build eff DataFrame for ptes discharger, multiplied with ptes_supplemental_heating_required to get zero values if boosting not required
-    eff_ptes_discharging = n.links.efficiency.loc[ptes_discharger_ext]
-    eff_ptes_discharging_df = pd.DataFrame(
-        np.tile(eff_ptes_discharging, (len(n.snapshots), 1)),
-        index=n.snapshots,
-        columns=ptes_discharger_ext,
-    ) * (1 - ptes_supplemental_heating_required)
-
-    ptes_supplemental_heating_required = ptes_supplemental_heating_required.rename(
-        columns=lambda col: col.replace(
-            discharger_link_suffix, " urban central resistive heater"
-        )
-    )
-
-    eff_rh = n.links.efficiency.loc[resistive_heater_ext]
-    eff_resistive_heater_df = pd.DataFrame(
-        np.tile(eff_rh.values, (len(n.snapshots), 1)),
-        index=n.snapshots,
-        columns=resistive_heater_ext,
-    ) * (1 - ptes_supplemental_heating_required)
 
     ptes_temperature_boost_ratio = (
         xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
@@ -1032,24 +980,18 @@ def add_resistive_heater_boosting_constraints(
         .to_pandas()
         .reindex(index=n.snapshots)
     )
-    # name the index correctly
-    ptes_temperature_boost_ratio.columns = (
-        ptes_temperature_boost_ratio.columns + " urban central resistive heater"
-    )
-    ptes_temperature_boost_ratio = ptes_temperature_boost_ratio.reindex(
-        columns=resistive_heater_ext
-    )
 
-    p = n.model["Link-p"]
-
-    # eigentlich müsste durch eff geteilt werden, aber division durch 0 nicht mölgich, muss ein anderer workaround gefunden werden
-    lhs = p.loc[:, resistive_heater_ext] * ptes_temperature_boost_ratio * eff_resistive_heater_df
-    rhs = (
-        p.loc[:, ptes_discharger_ext]
-         * eff_ptes_discharging_df
+    heat_output_boosting_techs = n.model["Link-p1"].filter(like="urban central").filter(
+        lambda col: any(
+            tech in col for tech in ptes_booster_technologies
+        )
     )
+    heat_output_ptes = n.model["Link-p1"].filter(like="urban central water pits discharger")
 
-    n.model.add_constraints(lhs >= rhs, name="resistive_heater_boosting_constraints")
+    if heat_output_ptes.empty or heat_output_boosting_techs.empty:
+        return
+    else:
+        n.moodel.add_constraints(heat_output_boosting_techs.sum() >= ptes_temperature_boost_ratio * heat_output_ptes, name="resistive_heater_boosting")
 
 
 def add_battery_constraints(n):
