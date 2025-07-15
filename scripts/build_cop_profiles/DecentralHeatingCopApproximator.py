@@ -20,8 +20,8 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
     Attributes
     ----------
-    forward_temperature_celsius : Union[xr.DataArray, np.array]
-        The forward temperature in Celsius.
+    sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+        The sink outlet temperature in Celsius.
     source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
         The source inlet temperature in Celsius.
     source_type : str
@@ -29,7 +29,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
     Methods
     -------
-    __init__(forward_temperature_celsius, source_inlet_temperature_celsius, source_type)
+    __init__(sink_outlet_temperature_celsius, source_inlet_temperature_celsius, source_type)
         Initialize the DecentralHeatingCopApproximator object.
     approximate_cop()
         Compute the COP values using quadratic regression for air-/ground-source heat pumps.
@@ -45,7 +45,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
     def __init__(
         self,
-        forward_temperature_celsius: Union[xr.DataArray, np.array],
+        sink_outlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_inlet_temperature_celsius: Union[xr.DataArray, np.array],
         source_type: str,
     ):
@@ -54,15 +54,17 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
         Parameters
         ----------
-        forward_temperature_celsius : Union[xr.DataArray, np.array]
-            The forward temperature in Celsius.
+        sink_outlet_temperature_celsius : Union[xr.DataArray, np.array]
+            The sink outlet temperature in Celsius.
         source_inlet_temperature_celsius : Union[xr.DataArray, np.array]
             The source inlet temperature in Celsius.
         source_type : str
             The source of the heat pump. Must be either 'air' or 'ground'.
         """
 
-        self.delta_t = forward_temperature_celsius - source_inlet_temperature_celsius
+        self.delta_t = (
+            sink_outlet_temperature_celsius - source_inlet_temperature_celsius
+        )
         if source_type not in ["air", "ground"]:
             raise ValueError("'source_type' must be one of ['air', 'ground']")
         else:

@@ -8,7 +8,7 @@ aviation,--,"{true, false}",Flag to include aviation sector.
 agriculture,--,"{true, false}",Flag to include agriculture sector.
 fossil_fuels,--,"{true, false}","Flag to include imports of fossil fuels."
 district_heating,--,,
--- potential,--,float,maximum fraction of urban demand which can be supplied by district heating
+-- potential,--,Dictionary with country codes as keys or float.,"Maximum fraction of urban demand which can be supplied by district heating. If given as dictionary, specify one value per country modeled or provide a default value with key `default` to fill values for all unspecified countries."
 -- progress,--,Dictionary with planning horizons as keys.,Increase of today's district heating demand to potential maximum district heating share. Progress = 0 means today's district heating share. Progress = 1 means maximum fraction of urban demand is supplied by district heating
 -- district_heating_loss,--,float,Share increase in district heat demand in urban central due to heat losses
 -- supply_temperature_approximation,,,
@@ -47,6 +47,7 @@ district_heating,--,,
 -- -- heat_exchanger_pinch_point_temperature_difference,K,float,Heat pump pinch point temperature difference in heat exchangers assumed for approximation.
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
+-- -- min_delta_t_lift,--,float,"Minimum feasible temperature lift for heat pumps, used to approximate technical limits in heat pump operation. This value accounts for practical constraints in heat pump design."
 -- limited_heat_sources,--,Dictionary with names of limited heat sources (not air) for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) is used,
 -- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
