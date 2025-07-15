@@ -8,7 +8,7 @@ run:
   prefix: ""
   name: "all"
   #- import_policy_reg_deindustrial
-  #- base_eu_regain
+  #- import_policy_reg_regain
   #- base_eu_deindustrial
   #- base_reg_regain
   #- policy_reg_regain
@@ -18,7 +18,7 @@ run:
   #- policy_eu_deindustrial
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios_45_import.yaml
+    file: config/industry_policy_scenarios_45.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
@@ -130,7 +130,7 @@ sector:
     2045: 200
     2050: 200
   min_part_load_fischer_tropsch: 0.3 # 0.5 #ADB
-  H2_network: true
+  H2_network: false
   endo_industry:
     enable: true
     regional_steel_demand: false

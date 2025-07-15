@@ -172,14 +172,15 @@ def define_spatial(nodes, options):
 
     spatial.methanol = SimpleNamespace()
 
-    spatial.methanol.nodes = ["EU methanol"]
-    spatial.methanol.locations = ["EU"]
-
     if options["methanol"]["regional_methanol_demand"]:
+        spatial.methanol.nodes = nodes + [" methanol"]
+        spatial.methanol.locations = nodes
         spatial.methanol.demand_locations = nodes
         spatial.methanol.industry = nodes + " industry methanol"
         spatial.methanol.shipping = nodes + " shipping methanol"
     else:
+        spatial.methanol.nodes = ["EU methanol"]
+        spatial.methanol.locations = ["EU"]
         spatial.methanol.demand_locations = ["EU"]
         spatial.methanol.shipping = ["EU shipping methanol"]
         spatial.methanol.industry = ["EU industry methanol"]
@@ -1540,8 +1541,8 @@ def add_ammonia(
     )
     min_part_load_hb=0.3
 
-    #if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
-    #    min_part_load_hb = 0.1
+    if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+        min_part_load_hb = 0.1
 
     n.add(
         "Link",
@@ -5154,8 +5155,9 @@ def calculate_steel_parameters(nyears=1):
     discount_rate = 0.04
 
     capex_bof_mpp = 871.85 * 1e3 * 8760 # €/kt steel/h
+    opex_bof_mpp = ( 123.67  * 1e3 / capex_bof_mpp ) * 100 # €/kt steel/yr -> € of CAPEX
 
-    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof / 100.0) * capex_bof_mpp * nyears)
+    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof_mpp / 100.0) * capex_bof_mpp * nyears)
 
     bof = pd.Series({"iron input": iron_to_steel_bof,
                     "coal input": coal_to_steel_bof,
@@ -5179,8 +5181,9 @@ def calculate_steel_parameters(nyears=1):
     discount_rate = 0.04
 
     capex_eaf_mpp = 698.34 * 1e3 * 8760 # €/kt steel/h
+    opex_eaf_mpp = (118.27 * 1e3 / capex_eaf_ng) * 100  # €/kt steel/yr -> % of CAPEX
 
-    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
+    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_mpp / 100.0) * capex_eaf_mpp * nyears
 
 
     eaf_ng = pd.Series({"iron input": iron_to_steel_eaf_ng,
@@ -5214,6 +5217,8 @@ def calculate_steel_parameters(nyears=1):
     # Reference: Raillard-Cazanove et al. https://doi.org/10.1016/j.apenergy.2024.125206
     capex_tgr_2030 = 90 * 1e3 / em_factor_bof  # €/t CO2 in
     capex_tgr_2050 = 67 * 1e3 / em_factor_bof  # €/t CO2 in
+    capex_tgr_mpp = (1230.094 - 1066.851) * 1e3 / em_factor_bof  # €/t CO2 in
+    # We choose Raillard-Cazanove et al. values because they decrease in time
     opex_tgr = 5 #% CAPEX
     lifetime_tgr = 20 # years
     discount_rate = 0.04
@@ -5345,9 +5350,6 @@ def add_steel_industry(n, investment_year, steel_data, options):
 
     # PARAMETERS
     bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
-
-    #if (options['endo_industry']['regional_steel_demand']) or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
-    #    min_part_load_steel = 0.1
 
     n.add(
         "Link",
@@ -5725,9 +5727,6 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
         p_set=p_set,
     )
 
-    print(f"LOAD NH3 {p_set}")
-
-
 
 def add_methanol_load(n,investment_year, methanol_data, options):
     """
@@ -5823,7 +5822,6 @@ def add_hvc(n, investment_year, hvc_data, options):
         carrier="HVC",
         p_set=p_set,
     )
-    print(f"LOAD HVC {p_set}")
   
     naphtha_to_hvc = (2.31 * 12.47) * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
     # we need to account for CO2 emissions from HVC decay
@@ -7144,6 +7142,7 @@ def add_import_options(
             marginal_cost=import_options["methanol_adb"],
         )
 
+
     if "ammonia_adb" in import_options:
         n.add(
             "Generator",
@@ -7465,7 +7464,6 @@ if __name__ == "__main__":
     else:
         limit = get(co2_budget, investment_year)
 
-    print(f"Co2 limit {limit}")
     add_co2limit(
         n,
         options,

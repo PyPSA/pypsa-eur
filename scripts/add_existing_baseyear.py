@@ -931,6 +931,8 @@ def add_chemicals_industry_existing(n, options):
 
     start_dates_nh3 = round(start_dates_nh3)
     start_dates_nh3 = start_dates_nh3.where((start_dates_nh3 >= 1000) & np.isfinite(start_dates_nh3), 2000)
+    # Fix bug with 2050 deindustrialization
+    start_dates_nh3 = start_dates_nh3.where(start_dates_nh3 < 2020, 2019)
 
     nodes = pop_layout.index
     p_nom_nh3 = pd.DataFrame(index=nodes, columns=(["value"]))

@@ -581,3 +581,5 @@ plotting:
     # Endo industry
     DRI: "red"
     EAF: "red"
+    HBI: "blue"
+    "import HBI": "green"
