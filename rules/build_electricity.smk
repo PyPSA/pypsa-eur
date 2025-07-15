@@ -58,8 +58,8 @@ def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if base_network == "osm":
-        osm_version = get_data_version("osm")
-        inputs = {c: f"data/osm/{osm_version}/{c}.csv" for c in components}
+        OSM_DATASET = dataset_version("osm")
+        inputs = {c: f"{OSM_DATASET['folder']}/{c}.csv" for c in components}
     elif base_network == "entsoegridkit":
         inputs = {c: f"data/ensoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
