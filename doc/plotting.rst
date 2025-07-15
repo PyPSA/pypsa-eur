@@ -31,6 +31,11 @@ Rule ``plot_summary``
 
 .. automodule:: plot_summary
 
+Rule ``plot_base_network``
+=================================================
+
+.. automodule:: plot_base_network
+
 Rule ``plot_power_network_clustered``
 =================================================
 
