@@ -96,7 +96,7 @@ class PtesTemperatureApproximator:
         max and min temperature.
 
         Returns
-        -------
+    -------
         xr.DataArray
             Normalized delta T values between 0 and 1, representing the
             available storage capacity as a percentage of maximum capacity.
@@ -138,6 +138,6 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting fraction of PTES charge that must be further heated.
         """
-        return (self.forward_temperature - self.top_temperature) / (
+        return (self.forward_temperature - self.top_temperature).clip(lower=0) / (
             self.top_temperature - self.return_temperature
-        )
+        ).clip(lower=0.01)
