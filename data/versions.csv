@@ -38,3 +38,6 @@
 "luisa_land_cover","archive","2021-03-02","['latest', 'supported']","https://zenodo.org/records/15879466/files/LUISA_basemap_020321_50m.tif",""
 "jrc_idees","primary","unknown","['latest', 'supported']","https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/JRC-IDEES/JRC-IDEES-2021_v1/JRC-IDEES-2021.zip",""
 "jrc_idees","archive","2024-05-20","['latest', 'supported']","https://zenodo.org/records/15895830/files/JRC-IDEES-2021.zip",""
+"scigrid_gas","primary","1.1.2","['latest', 'supported']","https://zenodo.org/records/4767098/files/IGGIELGN.zip",""
+"scigrid_gas","primary","1.1.1","['deprecated', 'not-supported']","https://zenodo.org/records/4751038/files/IGGIELGN.zip",""
+"scigrid_gas","primary","1.1.0","['deprecated', 'not-supported']","https://zenodo.org/records/4642569/files/IGGIELGN.zip",""

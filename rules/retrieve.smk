@@ -238,25 +238,30 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             "../scripts/retrieve_cost_data.py"
 
 
-if config["enable"]["retrieve"]:
-    datafiles = [
-        "IGGIELGN_LNGs.geojson",
-        "IGGIELGN_BorderPoints.geojson",
-        "IGGIELGN_Productions.geojson",
-        "IGGIELGN_Storages.geojson",
-        "IGGIELGN_PipeSegments.geojson",
-    ]
+if config["enable"]["retrieve"] and (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
+        "primary",
+        "archive",
+]:
 
     rule retrieve_gas_infrastructure_data:
+        params: 
+            url = f"{SCIGRID_GAS_DATASET['url']}"
         output:
-            expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
-        log:
-            "logs/retrieve_gas_infrastructure_data.log",
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_gas_infrastructure_data.py"
+            zip = f"{SCIGRID_GAS_DATASET["folder"]}/jrc_idees.zip",
+            directory = directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
+        run:
+            import os
+            import requests
+            from zipfile import ZipFile
+            from pathlib import Path
+
+            response = requests.get(params["url"])
+            with open(output.zip, "wb") as f:
+                f.write(response.content)
+
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output.zip, output_folder)
+    
 
 
 if config["enable"]["retrieve"]:
