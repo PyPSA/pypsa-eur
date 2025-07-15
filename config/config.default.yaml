@@ -488,7 +488,7 @@ sector:
       dynamic_capacity: true
       supplemental_heating:
         enable: true
-        booster_technologies: ["resistive_heaters"]
+        booster_technologies: ["resistive heater", "air-sourced heat pump", "ptes-sourced heat pump"]
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
