@@ -1,3 +1,7 @@
+<!--
+SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+SPDX-License-Identifier: CC-BY-4.0
+-->
 # PyPSA-EUR Workflow Streamlining Implementation Plan
 
 **Reference**: GitHub Discussion #1529  
@@ -41,7 +45,7 @@ All configuration (clusters, opts, sector_opts, horizons) moves from wildcards t
 - `{clusters}`: 37, 128, 256, etc. → `config.clustering.cluster_network.n_clusters`
 - `{opts}`: electricity constraints → `config.electricity.extendable_carriers`, etc.
 - `{sector_opts}`: sector settings → `config.sector.*`  
-- `{planning_horizons}`: 2030, 2050 → `config.scenarios.planning_horizons`
+- `{planning_horizons}`: 2030, 2050 → `config.temporal.planning_horizons`
 
 ### Key Scripts Dependencies
 | Script | Main Functions | Snakemake Dependencies |
@@ -68,20 +72,18 @@ rules/compose.smk             # New workflow rules
 
 #### 1.2 Configuration Schema Updates
 ```yaml
-# New config structure (keeping existing for now)
-compose:
-  clustering:
-    n_clusters: 128
-    algorithm: "kmeans"
-  electricity:
-    extendable_carriers: ["OCGT", "CCGT", "solar", "onwind"]
-  sector:
-    transport: true
-    heating: true
-    industry: true
-  planning:
-    horizons: [2030, 2040, 2050]
-    foresight: "myopic"  # or "perfect", "overnight"
+# Remove scenario section entirely (no more wildcards!)
+# scenario:  # REMOVED - no more wildcard expansion
+
+# Add new temporal section for planning settings
+temporal:
+  planning_horizons: [2030, 2040, 2050]
+  foresight: "myopic"  # or "perfect", "overnight"
+
+# Everything else uses existing config sections directly:
+# - clustering.cluster_network.n_clusters (was {clusters})
+# - electricity.* settings (was {opts})
+# - sector.* settings (was {sector_opts})
 ```
 
 #### 1.3 New Workflow Rules Structure
@@ -142,10 +144,12 @@ def main():
     
     # Determine current planning horizon and foresight mode
     current_horizon = int(snakemake.wildcards.horizon)
-    foresight = params.foresight
+    temporal_config = config["temporal"]
+    foresight = temporal_config["foresight"]
+    horizons = temporal_config["planning_horizons"]
     
     # Load base network - either clustered.nc or previous horizon's output
-    if current_horizon != params.horizons[0]:
+    if current_horizon != horizons[0]:
         # Multi-horizon case: load previous network
         if foresight == "myopic":
             # For myopic, input is solved network from previous horizon
@@ -167,7 +171,7 @@ def main():
         network = pypsa.Network(snakemake.input.clustered)
     
     # Step 1: Add electricity components (from add_electricity.py main section)
-    Nyears = params.get("Nyears", 1)
+    Nyears = params.Nyears
     costs = load_costs(snakemake.input.tech_costs, params.costs, Nyears)
     
     ppl, ppl_map = load_and_aggregate_powerplants(
@@ -198,11 +202,11 @@ def main():
         params.renewable
     )
     
-    if params.electricity.get("extendable_carriers"):
+    if params.electricity["extendable_carriers"]:
         attach_storageunits(network, costs, params.electricity)
     
     # Step 2: Add sector components if enabled (from prepare_sector_network.py main section)
-    if params.sector.get("enabled", False):
+    if params.sector["enabled"]:
         patch_electricity_network(network, params)
         
         spatial = define_spatial(network.buses.index, params)
@@ -219,11 +223,11 @@ def main():
         
         add_industry(network, snakemake.input, costs, params)
         
-        if params.sector.get("cluster_heat_buses"):
+        if params.sector["cluster_heat_buses"]:
             cluster_heat_buses(network, params.sector)
     
     # Step 3: Add existing capacities if baseyear (from add_existing_baseyear.py)
-    if params.get("existing_capacities", {}).get("enabled", False):
+    if params.existing_capacities["enabled"]:
         add_build_year_to_new_assets(network, params.baseyear)
         
         add_power_capacities_installed_before_baseyear(
@@ -247,7 +251,7 @@ def main():
     if params.co2limit:
         add_co2limit(network, params.co2limit, Nyears)
         
-    if params.electricity.get("transmission_limit"):
+    if params.electricity["transmission_limit"]:
         set_transmission_limit(network, params.electricity["transmission_limit"])
     
     add_emission_prices(network, snakemake.input.co2_price, params)
@@ -327,9 +331,10 @@ compose_2030 → compose_2040 → ... → compose_2050 → solve_2050 (all horiz
 def get_compose_inputs(wildcards):
     """Determine inputs for compose rule based on foresight and horizon."""
     config = get_config()
-    foresight = config["compose"]["planning"]["foresight"]
+    temporal = config["temporal"]
+    foresight = temporal["foresight"]
     horizon = int(wildcards.horizon)
-    horizons = config["compose"]["planning"]["horizons"]
+    horizons = temporal["planning_horizons"]
     
     inputs = {"clustered": f"networks/{wildcards.run}/clustered.nc"}
     
@@ -344,12 +349,15 @@ def get_compose_inputs(wildcards):
             # Perfect foresight uses composed network from previous horizon
             inputs["network_previous"] = f"networks/{wildcards.run}/composed_{prev_horizon}.nc"
     
-    # Add other required inputs (costs, demand data, etc.)
+    # Add other required inputs using resource functions with {run} paths
     inputs.update({
-        "tech_costs": "resources/costs.csv",
-        "powerplants": "resources/powerplants.csv",
-        "load": "resources/electricity_demand.csv",
-        # ... other inputs as needed
+        "tech_costs": resources("costs_{horizon}.csv"),
+        "powerplants": resources("powerplants.csv"),
+        "load": resources("electricity_demand.csv"),
+        "busmap": resources("busmap.csv"),
+        "profile_solar": resources("profile_{run}/solar.nc"),
+        "profile_onwind": resources("profile_{run}/onwind.nc"),
+        # ... other inputs as needed, some with {horizon} wildcard
     })
     
     return inputs
@@ -358,16 +366,19 @@ rule compose_network:
     input: unpack(get_compose_inputs)
     output: "networks/{run}/composed_{horizon}.nc"
     params:
-        foresight=config["compose"]["planning"]["foresight"],
-        horizons=config["compose"]["planning"]["horizons"],
-        # ... other parameters
+        temporal=config["temporal"],
+        electricity=config["electricity"],
+        sector=config["sector"],
+        clustering=config["clustering"],
+        existing_capacities=config["existing_capacities"],
+        # Cherry-pick other config sections as needed
     script: "../scripts/compose_network.py"
 
 rule solve_network:
     input: "networks/{run}/composed_{horizon}.nc"
     output: "networks/{run}/solved_{horizon}.nc"
     params:
-        foresight=config["compose"]["planning"]["foresight"],
+        temporal=config["temporal"],
         solver=config["solving"]["solver"]
     script: "../scripts/solve_network.py"
 
@@ -393,11 +404,12 @@ def main():
     params = snakemake.params
     
     # Prepare solver options
-    solver_options = params.get("solver", {})
-    solver_name = solver_options.get("solver_name", "highs")
+    solver_options = params.solver
+    solver_name = solver_options["solver_name"]
     
     # Determine if we need to pass snapshots (for myopic only)
-    foresight = params.get("foresight", "overnight")
+    temporal = params.temporal
+    foresight = temporal["foresight"]
     current_horizon = int(snakemake.wildcards.horizon)
     
     if foresight == "myopic":
@@ -435,43 +447,53 @@ rule solve_networks:
     input:
         lambda w: expand(
             "networks/{run}/solved_{horizon}.nc",
-            run=config["run"],
-            horizon=config["compose"]["planning"]["horizons"][-1]
+            run=config["run"]["name"],  # Note: run.name can be a list
+            horizon=config["temporal"]["planning_horizons"][-1]
         )
 
 rule prepare_networks:
     input: 
         lambda w: expand(
             "networks/{run}/composed_{horizon}.nc",
-            run=config["run"],
-            horizon=config["compose"]["planning"]["horizons"][-1]
+            run=config["run"]["name"],  # Note: run.name can be a list
+            horizon=config["temporal"]["planning_horizons"][-1]
         )
 
 rule cluster_networks:
     input:
         expand(
             "networks/{run}/clustered.nc",
-            run=config["run"]
+            run=config["run"]["name"]  # Note: run.name can be a list
         )
 ```
 
 #### 4.2 Configuration Migration
-- Keep existing config structure initially
-- Add new `compose` section alongside existing sections
-- Gradually migrate wildcards to config over time
-- Provide migration script for existing scenarios
+- Remove `scenario` section entirely (no wildcard expansion)
+- Add new `temporal` section for planning horizons and foresight
+- Use existing config sections directly (clustering, electricity, sector)
+- No migration script needed - clean break from wildcards
 
 #### 4.3 Testing Strategy
 ```bash
-# Test commands for validation
+# Basic workflow validation
 snakemake cluster_networks -n  # Dry run clustering step
 snakemake prepare_networks -n  # Dry run compose step
 snakemake solve_networks -n    # Dry run solve step
+
+# Test each foresight mode specifically
+snakemake networks/test-run/solved_2050.nc -n  # Overnight mode
+snakemake networks/test-myopic/solved_2050.nc -n  # Myopic mode  
+snakemake networks/test-perfect/solved_2050.nc -n  # Perfect foresight mode
 
 # Validate results match current workflow  
 python scripts/validate_results.py \
   --old networks/base_s_128_Co2L-3H_sector.nc \
   --new networks/{run}/solved_{last_horizon}.nc
+
+# Test horizon-specific input handling
+snakemake networks/test-run/composed_2030.nc -n  # First horizon
+snakemake networks/test-run/composed_2040.nc -n  # Middle horizon
+snakemake networks/test-run/composed_2050.nc -n  # Last horizon
 ```
 
 ---
