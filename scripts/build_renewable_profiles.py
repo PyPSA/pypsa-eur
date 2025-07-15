@@ -198,7 +198,9 @@ if __name__ == "__main__":
     resource_regions = gpd.read_file(fn).set_index("name").rename_axis("bus").geometry
 
     # indicator matrix for which cells touch which regions
-    I = np.ceil(cutout.availabilitymatrix(resource_regions, ExclusionContainer()))
+    kwargs = dict(nprocesses=nprocesses, disable_progressbar=noprogress)
+    I = cutout.availabilitymatrix(resource_regions, ExclusionContainer(), **kwargs)
+    I = np.ceil(I)
     cf_by_bus = capacity_factor * I.where(I > 0)
 
     epsilon = 1e-3
