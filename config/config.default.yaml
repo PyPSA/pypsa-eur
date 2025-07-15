@@ -954,7 +954,7 @@ adjustments:
 data:
   # TODO implement
   # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
-  jrc_enspreso_biomass:
+  enspreso_biomass:
     source: "archive"
     version_or_latest: "latest"
   osm:
