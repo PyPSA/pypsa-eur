@@ -11,17 +11,9 @@ run:
     policy: false
   shared_cutouts: true
 
-foresight: perfect
-
-scenario:
-  clusters:
-  - 5
-  sector_opts:
-  - ''
-  planning_horizons:
-  - 2030
-  - 2040
-  - 2050
+temporal:
+  foresight: perfect
+  planning_horizons: [2030, 2040, 2050]
 
 countries: ['BE']
 
@@ -29,8 +21,19 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
-electricity:
+sector:
+  central_heat_vent: true
+  solid_biomass_import:
+    enable: true
+  district_heating:
+    ates:
+      enable: true
+    ptes:
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
 
+electricity:
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]
@@ -39,19 +42,8 @@ electricity:
 
   renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
-sector:
-  min_part_load_fischer_tropsch: 0
-  min_part_load_methanolisation: 0
-  solid_biomass_import:
-    enable: true
-  district_heating:
-    ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
-    ates:
-      enable: true
-
+  estimate_renewable_capacities:
+    enable: false
 
 atlite:
   default_cutout: be-03-2013-era5
@@ -73,11 +65,16 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 8760h
+    resolution_sector: 24h
+  cluster_network:
+    algorithm: kmeans
+    n_clusters: 5  # Small number for testing
+    hac_features:
+    - wnd100m
+    - influx_direct
 
 industry:
   St_primary_fraction:
-    2020: 0.8
     2030: 0.6
     2040: 0.5
     2050: 0.4
@@ -87,10 +84,6 @@ solving:
     name: highs
     options: highs-simplex
   mem: 4000
-
-  check_objective:
-    enable: false
-    expected_value: 1.3778753459e+10
 
 plotting:
   map:

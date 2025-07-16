@@ -11,14 +11,10 @@ run:
     policy: false
   shared_cutouts: true
 
+temporal:
+  foresight: overnight
+  planning_horizons: 2040
 
-scenario:
-  clusters:
-  - 5
-  sector_opts:
-  - ''
-  planning_horizons:
-  - 2030
 
 countries: ['BE']
 
@@ -57,6 +53,8 @@ renewable:
 clustering:
   temporal:
     resolution_sector: 24h
+  cluster_network:
+    n_clusters: 5
 
 sector:
   gas_network: true
