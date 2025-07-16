@@ -49,7 +49,7 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
         return
     change_dict = adjustments[modification]
     for c in change_dict.keys():
-        if c not in n.components.keys():
+        if c not in n.component_attrs.keys():
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in change_dict[c].keys():

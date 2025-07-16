@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#top-level-configuration
-version: v2025.04.0
+version: v2025.07.0
 tutorial: false
 
 logging:
@@ -35,21 +35,50 @@ foresight: overnight
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   clusters:
-  - 39
-  - 128
-  - 256
+  - 50
   opts:
   - ''
   sector_opts:
   - ''
   planning_horizons:
-  # - 2020
-  # - 2030
-  # - 2040
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
+countries:
+- AL
+- AT
+- BA
+- BE
+- BG
+- CH
+- CZ
+- DE
+- DK
+- EE
+- ES
+- FI
+- FR
+- GB
+- GR
+- HR
+- HU
+- IE
+- IT
+- LT
+- LU
+- LV
+- ME
+- MK
+- NL
+- 'NO'
+- PL
+- PT
+- RO
+- RS
+- SE
+- SI
+- SK
+- XK
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#snapshots
 snapshots:
@@ -130,7 +159,7 @@ electricity:
 atlite:
   cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
-  nprocesses: 4
+  nprocesses: 16
   show_progress: false
   cutouts:
     # use 'base' to determine geographical bounds and time span from config
@@ -143,6 +172,8 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
+      # features: [] 
+      # sarah_dir: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
@@ -185,7 +216,7 @@ renewable:
     max_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
-    landfall_length: 10
+    landfall_length: 20
   offwind-dc:
     cutout: default
     resource:
@@ -204,7 +235,7 @@ renewable:
     min_shore_distance: 30000
     excluder_resolution: 200
     clip_p_max_pu: 1.e-2
-    landfall_length: 10
+    landfall_length: 30
   offwind-float:
     cutout: default
     resource:
@@ -226,7 +257,7 @@ renewable:
     min_depth: 60
     max_depth: 1000
     clip_p_max_pu: 1.e-2
-    landfall_length: 10
+    landfall_length: 40
   solar:
     cutout: default
     resource:
@@ -263,7 +294,7 @@ renewable:
     cutout: default
     carriers: [ror, PHS, hydro]
     PHS_max_hours: 6
-    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
+    hydro_max_hours: energy_capacity_totals_by_country # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     flatten_dispatch: false
     flatten_dispatch_buffer: 0.2
     clip_min_inflow: 1.0
@@ -276,24 +307,24 @@ conventional:
   unit_commitment: false
   dynamic_fuel_price: false
   nuclear:
-    p_max_pu: "data/nuclear_p_max_pu.csv" # float of file name
+    p_max_pu: data/nuclear_p_max_pu.csv # float of file name
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
-    220.: "Al/St 240/40 2-bundle 220.0"
-    300.: "Al/St 240/40 3-bundle 300.0"
-    330.: "Al/St 240/40 3-bundle 300.0"
-    380.: "Al/St 240/40 4-bundle 380.0"
-    400.: "Al/St 240/40 4-bundle 380.0"
-    500.: "Al/St 240/40 4-bundle 380.0"
-    750.: "Al/St 560/50 4-bundle 750.0"
+    220.: Al/St 240/40 2-bundle 220.0
+    300.: Al/St 240/40 3-bundle 300.0
+    330.: Al/St 240/40 3-bundle 300.0
+    380.: Al/St 240/40 4-bundle 380.0
+    400.: Al/St 240/40 4-bundle 380.0
+    500.: Al/St 240/40 4-bundle 380.0
+    750.: Al/St 560/50 4-bundle 750.0
   s_max_pu: 0.7
   s_nom_max: .inf
   max_extension: 20000 #MW
   length_factor: 1.25
   reconnect_crimea: true
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+  under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
   dynamic_line_rating:
     activate: false
     cutout: default
@@ -308,7 +339,7 @@ links:
   p_nom_max: .inf
   max_extension: 30000 #MW
   length_factor: 1.25
-  under_construction: 'keep' # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
+  under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
@@ -340,9 +371,9 @@ load:
     enable: true
     interpolate_limit: 3
     time_shift_for_large_gaps: 1w
-  manual_adjustments: true # false
+  manual_adjustments: true
   scaling_factor: 1.0
-  fixed_year: false # false or year (e.g. 2013)
+  fixed_year: false
   supplement_synthetic: true
   distribution_key:
     gdp: 0.6
@@ -407,17 +438,17 @@ biomass:
     - Municipal waste
   share_unsustainable_use_retained:
     2020: 1
-    2025: 0.66
-    2030: 0.33
-    2035: 0
+    2025: 1
+    2030: 0.66
+    2035: 0.33
     2040: 0
     2045: 0
     2050: 0
   share_sustainable_potential_available:
     2020: 0
-    2025: 0.33
-    2030: 0.66
-    2035: 1
+    2025: 0
+    2030: 0.33
+    2035: 0.66
     2040: 1
     2045: 1
     2050: 1
@@ -457,11 +488,11 @@ sector:
     potential: 0.6
     progress:
       2020: 0.0
-      2025: 0.15
-      2030: 0.3
-      2035: 0.45
-      2040: 0.6
-      2045: 0.8
+      2025: 0.1
+      2030: 0.25
+      2035: 0.4
+      2040: 0.55
+      2045: 0.75
       2050: 1.0
     district_heating_loss: 0.15
     supply_temperature_approximation:
@@ -491,7 +522,8 @@ sector:
       min_bottom_temperature: 35
     ates:
       enable: false
-      suitable_aquifer_types: ['Highly productive porous aquifers']
+      suitable_aquifer_types:
+      - Highly productive porous aquifers
       aquifer_volumetric_heat_capacity: 2600
       fraction_of_aquifer_area_available: 0.2
       effective_screen_length: 20
@@ -506,6 +538,7 @@ sector:
       heat_exchanger_pinch_point_temperature_difference: 5 #K
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
+      min_delta_t_lift: 10 #K
     limited_heat_sources:
       geothermal:
         constant_temperature_celsius: 65
@@ -517,7 +550,6 @@ sector:
   heat_pump_sources:
     urban central:
     - air
-    - ptes
     urban decentral:
     - air
     rural:
@@ -525,7 +557,7 @@ sector:
     - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
-  bev_dsm_restriction_value: 0.75
+  bev_dsm_restriction_value: 0.8
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
   transport_heating_deadband_lower: 15.
@@ -551,16 +583,16 @@ sector:
     2050: 0
   land_transport_electric_share:
     2020: 0
-    2025: 0.15
-    2030: 0.3
+    2025: 0.05
+    2030: 0.2
     2035: 0.45
     2040: 0.7
     2045: 0.85
     2050: 1
   land_transport_ice_share:
     2020: 1
-    2025: 0.85
-    2030: 0.7
+    2025: 0.95
+    2030: 0.8
     2035: 0.55
     2040: 0.3
     2045: 0.15
@@ -568,8 +600,8 @@ sector:
   transport_electric_efficiency: 53.19 # 1 MWh_el = 53.19*100 km
   transport_fuel_cell_efficiency: 30.003 # 1 MWh_H2 = 30.003*100 km
   transport_ice_efficiency: 16.0712 # 1 MWh_oil = 16.0712 * 100 km
-  agriculture_machinery_electric_share: 0
-  agriculture_machinery_oil_share: 1
+  agriculture_machinery_electric_share: 0.5
+  agriculture_machinery_oil_share: 0.5
   agriculture_machinery_fuel_efficiency: 0.7
   agriculture_machinery_electric_efficiency: 0.3
   MWh_MeOH_per_MWh_H2: 0.8787
@@ -586,19 +618,19 @@ sector:
     2050: 0
   shipping_methanol_share:
     2020: 0
-    2025: 0.15
-    2030: 0.3
-    2035: 0.5
-    2040: 0.7
-    2045: 0.85
+    2025: 0
+    2030: 0.15
+    2035: 0.35
+    2040: 0.55
+    2045: 0.8
     2050: 1
   shipping_oil_share:
     2020: 1
-    2025: 0.85
-    2030: 0.7
-    2035: 0.5
-    2040: 0.3
-    2045: 0.15
+    2025: 1
+    2030: 0.85
+    2035: 0.65
+    2040: 0.45
+    2045: 0.2
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
@@ -652,13 +684,13 @@ sector:
   marginal_cost_heat_vent: 0.02
   allam_cycle_gas: false
   hydrogen_fuel_cell: true
-  hydrogen_turbine: false
+  hydrogen_turbine: true
   SMR: true
   SMR_cc: true
-  regional_oil_demand: false
+  regional_oil_demand: true
   regional_coal_demand: false
   regional_co2_sequestration_potential:
-    enable: false
+    enable: true
     attribute:
     - conservative estimate Mt
     - conservative estimate GAS Mt
@@ -671,21 +703,21 @@ sector:
   co2_sequestration_potential:
     2020: 0
     2025: 0
-    2030: 50
+    2030: 40
     2035: 100
-    2040: 200
-    2045: 200
-    2050: 200
-  co2_sequestration_cost: 10
+    2040: 180
+    2045: 250
+    2050: 250
+  co2_sequestration_cost: 30
   co2_sequestration_lifetime: 50
-  co2_spatial: false
-  co2_network: false
+  co2_spatial: true
+  co2_network: true
   co2_network_cost_factor: 1
   cc_fraction: 0.9
   hydrogen_underground_storage: true
   hydrogen_underground_storage_locations:
-    # - onshore  # more than 50 km from sea
-  - nearshore    # within 50 km of sea
+  - onshore    # more than 50 km from sea
+  - nearshore      # within 50 km of sea
     # - offshore
   methanol:
     regional_methanol_demand: false
@@ -695,11 +727,11 @@ sector:
     methanol_to_power:
       ccgt: false
       ccgt_cc: false
-      ocgt: false
+      ocgt: true
       allam: false
-    biomass_to_methanol: false
+    biomass_to_methanol: true
     biomass_to_methanol_cc: false
-  ammonia: false
+  ammonia: true
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -707,7 +739,7 @@ sector:
   use_haber_bosch_waste_heat: 0.25
   use_methanolisation_waste_heat: 0.25
   use_methanation_waste_heat: 0.25
-  use_fuel_cell_waste_heat: 0.25
+  use_fuel_cell_waste_heat: 1
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
@@ -730,20 +762,21 @@ sector:
     electricity distribution grid:
       efficiency_static: 0.97
   H2_network: true
-  gas_network: false
+  gas_network: true
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0
-  biomass_spatial: false
+  biomass_spatial: true
   biomass_transport: false
+  biogas_upgrading: true
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
-  biomass_to_liquid: false
+  biomass_to_liquid: true
   biomass_to_liquid_cc: false
-  electrobiofuels: false
+  electrobiofuels: true
   biosng: false
   biosng_cc: false
   bioH2: false
@@ -826,9 +859,9 @@ industry:
   #fractions refer to the total primary HVC production in 2020
   #assumes 6.7 Mtplastics produced from recycling in 2020
   HVC_primary_fraction:
-    2020: 1.0
-    2025: 0.9
-    2030: 0.8
+    2020: 0.88
+    2025: 0.85
+    2030: 0.78
     2035: 0.7
     2040: 0.6
     2045: 0.5
@@ -854,11 +887,11 @@ industry:
   waste_to_energy_cc: false
   sector_ratios_fraction_future:
     2020: 0.0
-    2025: 0.1
-    2030: 0.3
-    2035: 0.5
+    2025: 0.05
+    2030: 0.2
+    2035: 0.45
     2040: 0.7
-    2045: 0.9
+    2045: 0.85
     2050: 1.0
   basic_chemicals_without_NH3_production_today: 69. #Mt/a, = 86 Mtethylene-equiv - 17 MtNH3
   HVC_production_today: 52.
@@ -878,8 +911,8 @@ industry:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
-  year: 2030
-  version: v0.10.1
+  year: 2050
+  version: v0.13.2
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1021,10 +1054,10 @@ solving:
       dual_feasibility_tolerance: 1e-5
       random_seed: 123
     gurobi-default:
-      threads: 8
+      threads: 32
       method: 2 # barrier
       crossover: 0
-      BarConvTol: 1.e-6
+      BarConvTol: 1.e-5
       Seed: 123
       AggFill: 0
       PreDual: 0
@@ -1075,6 +1108,6 @@ solving:
     atol: 1_000_000
     rtol: 0.01
 
-  mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-  memory_logging_frequency: 30 # in seconds
-  runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
+  mem_mb: 128000
+  memory_logging_frequency: 5 # in seconds
+  runtime: 48h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/

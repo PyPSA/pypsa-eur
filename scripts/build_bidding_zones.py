@@ -228,16 +228,16 @@ if __name__ == "__main__":
         columns={"zoneName": "zone_name"}
     )
 
-    tolerance_dict = {
-        "IT_NORD": {
-            "FR": 0.05,
-            "CH": 0.04,
-            "AT": 0.024,
-            "SI": 0.01,
-        }
-    }
-
     if "IT" in countries:
+        tolerance_dict = {
+            "IT_NORD": {
+                "FR": 0.05,
+                "CH": 0.04,
+                "AT": 0.024,
+                "SI": 0.01,
+            }
+        }
+
         bidding_zones = replace_country(
             source=bidding_zones,
             reference=bidding_zones_entsoe,
