@@ -78,18 +78,6 @@ class PtesTemperatureApproximator:
         return self.min_ptes_bottom_temperature
 
     @property
-    def direct_utilisation_profile(self) -> xr.DataArray:
-        """
-        Identify timesteps requiring supplemental heating.
-
-        Returns
-        -------
-        xr.DataArray
-            Array with 1 for direct PTES usage, 0 if supplemental heating is needed.
-        """
-        return (self.forward_temperature <= self.max_ptes_top_temperature).astype(int)
-
-    @property
     def e_max_pu(self) -> xr.DataArray:
         """
         Calculate the normalized delta T for TES capacity in relation to
@@ -140,4 +128,13 @@ class PtesTemperatureApproximator:
         """
         return (self.forward_temperature - self.top_temperature) / (
             self.top_temperature - self.return_temperature
+        )
+
+    def forward_temperature_boost_ratio(self) -> xr.DataArray:
+        """
+        Calculate the additional lift required between the forward temperature and the maximum possible store's
+        tmeperature to increase the maximum storage capacity.
+        """
+        return (self.forward_temperature - self.return_temperature) / (
+            self.max_ptes_top_temperature - self.forward_temperature
         )

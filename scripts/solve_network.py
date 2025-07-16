@@ -967,7 +967,6 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
 
 def add_resistive_heater_boosting_constraints(
     n: pypsa.Network,
-    ptes_direct_utilisation_profile_file: str,
     ptes_temperature_boost_ratio_profile_file: str,
     district_heat_share_file: str,
     ptes_booster_technologies: list[str],
@@ -980,126 +979,68 @@ def add_resistive_heater_boosting_constraints(
         .query("p_nom_extendable").index
     )
 
-    resistive_heater_ext = n.links[
-        n.links.index.str.contains("urban central") &
-        n.links.index.map(lambda idx: any(tech in idx for tech in ptes_booster_technologies))
+    # Get resistive heater links for each booster technology
+    resistive_heater_ext_by_tech = {
+        tech: n.links[
+            n.links.index.str.contains("urban central") &
+            n.links.index.str.contains(tech)
         ].query("p_nom_extendable").index
+        for tech in ptes_booster_technologies
+    }
 
-    # irgendein error check, wenn die namen aus ptes_booster_technologies mit keinem der indiezes übereinstimmen
+    # Exit early if no matching links
+#    if ptes_discharger_ext.empty or all(idx.empty for idx in resistive_heater_ext_by_tech.values()):
+#        return
 
-    if resistive_heater_ext.empty or ptes_discharger_ext.empty:
-        return
-
-    district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
-    nodes = district_heat_info.index[district_heat_info["district fraction of node"] > 0]
-
-    ptes_temperature_boost_ratio = (
-        xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
-        .sel(name=nodes)
-        .to_pandas()
-        .reindex(index=n.snapshots)
-    )
-
-    # name the index correctly
-    ptes_temperature_boost_ratio.columns = (
-        ptes_temperature_boost_ratio.columns + " urban central water pits discharger"
-    )
-    ptes_temperature_boost_ratio = ptes_temperature_boost_ratio.reindex(
-        columns=ptes_discharger_ext
-    )
-
+    # Get model variable for Link dispatch
     p = n.model["Link-p"]
 
-    lhs = p.loc[:, resistive_heater_ext] - ptes_temperature_boost_ratio * p.loc[:, ptes_discharger_ext]
-#    rhs = ptes_temperature_boost_ratio * p.loc[:, ptes_discharger_ext]
-#    heat_output_ptes = n.model["Link-p"].filter(like="urban central water pits discharger")
+    # boost ratio so abspeichern, dass name nicht nodes sind, sondern die namen der booster technologies
+    # und so abspeichern, dass wir zwsichen den speichertechnologien unterscheiden , da diese mit unterschiedlichen ratios laufen
 
-    n.model.add_constraints(lhs >= 0, name="resistive_heater_boosting")
 
-    # name the index correctly
-#    discharger_link_suffix = " urban central water pits discharger"
-#
-#    ptes_supplemental_heating_required.columns = (
-#        ptes_supplemental_heating_required.columns + discharger_link_suffix
-#    )
-#    ptes_supplemental_heating_required = ptes_supplemental_heating_required.reindex(
-#        columns=ptes_discharger_ext
-#    )
-#
-#    # build eff DataFrame for ptes discharger, multiplied with ptes_supplemental_heating_required to get zero values if boosting not required
-#    eff_ptes_discharging = n.links.efficiency.loc[ptes_discharger_ext]
-#    eff_ptes_discharging_df = pd.DataFrame(
-#        np.tile(eff_ptes_discharging, (len(n.snapshots), 1)),
-#        index=n.snapshots,
-#        columns=ptes_discharger_ext,
-#    ) * (1 - ptes_supplemental_heating_required)
-#
-#    ptes_supplemental_heating_required = ptes_supplemental_heating_required.rename(
-#        columns=lambda col: col.replace(
-#            discharger_link_suffix, " urban central resistive heater"
-#        )
-#    )
-#
-#    eff_rh = n.links.efficiency.loc[resistive_heater_ext]
-#    eff_resistive_heater_df = pd.DataFrame(
-#        np.tile(eff_rh.values, (len(n.snapshots), 1)),
-#        index=n.snapshots,
-#        columns=resistive_heater_ext,
-#    ) * (1 - ptes_supplemental_heating_required)
-#
-#    ptes_temperature_boost_ratio = (
-#        xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
-#        .sel(name=nodes)
-#        .to_pandas()
-#        .reindex(index=n.snapshots)
-#    )
-#    # name the index correctly
-#    ptes_temperature_boost_ratio.columns = (
-#        ptes_temperature_boost_ratio.columns + " urban central resistive heater"
-#    )
-#    ptes_temperature_boost_ratio = ptes_temperature_boost_ratio.reindex(
-#        columns=resistive_heater_ext
-#    )
-#
-#    p = n.model["Link-p"]
-#
-#    # eigentlich müsste durch eff geteilt werden, aber division durch 0 nicht mölgich, muss ein anderer workaround gefunden werden
-#    lhs = p.loc[:, resistive_heater_ext] * ptes_temperature_boost_ratio * eff_resistive_heater_df
-#    rhs = (
-#        p.loc[:, ptes_discharger_ext]
-#         * eff_ptes_discharging_df
-#    )
-#
-#    n.model.add_constraints(lhs >= rhs, name="resistive_heater_boosting_constraints")
-#
-#
-#def add_resistive_heater_boosting_constraints(
-#    n: pypsa.Network,
-#    ptes_booster_technologies: list[str],
-#    ptes_temperature_boost_ratio_profile_file: str,
-#):
-#    """
-#    Add resistive heater boosting constraints.
-#    """
-#
-#    ptes_temperature_boost_ratio = (
-#        xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
-#        .sel(name=nodes)
-#        .to_pandas()
-#        .reindex(index=n.snapshots)
-#    )
-#
-#    heat_output_boosting_techs = n.model["Link-p1"].filter(like="urban central").filter(
-#        lambda col: any(
-#            tech in col for tech in ptes_booster_technologies
-#        )
-#    )
-#    heat_output_ptes = n.model["Link-p1"].filter(like="urban central water pits discharger")
-#
-#    if heat_output_ptes.empty or heat_output_boosting_techs.empty:
-#        return
-#    else:
-#        n.moodel.add_constraints(heat_output_boosting_techs.sum() >= ptes_temperature_boost_ratio * heat_output_ptes, name="resistive_heater_boosting")
+    # Build RHS = boost ratio * PTES discharging
+    rhs =  p.loc[:, ptes_discharger_ext]
+
+    # load once
+    ptes_temperature_boost_ratio_dataaray = xr.open_dataarray(ptes_temperature_boost_ratio_profile_file)
+
+    # Build LHS from all booster techs
+    lhs = None
+
+    for tech_links in resistive_heater_ext_by_tech.values():
+        if tech_links.empty:
+            continue
+
+        # Check if dynamic efficiency is defined
+        if set(tech_links).issubset(n.links_t.efficiency.columns):
+            eff = n.links_t.efficiency.loc[:, tech_links]
+        # if not get the static efficiency
+        else:
+            eff = pd.DataFrame(
+                np.tile(n.links.efficiency.loc[tech_links].values, (len(n.snapshots), 1)),
+                index=n.snapshots,
+                columns=tech_links,
+            )
+
+        ptes_temperature_boost_ratio = (
+            ptes_temperature_boost_ratio_dataaray
+            .to_pandas()
+            .reindex(index=n.snapshots)
+            .set_axis(tech_links, axis=1)
+        )
+
+        ptes_temperature_boost_ratio_revered = (1 / ptes_temperature_boost_ratio).where(ptes_temperature_boost_ratio>0 , 0)
+
+        # per‑tech expression
+        expr = p.loc[:, tech_links] * eff * ptes_temperature_boost_ratio_revered
+
+        # accumulate
+        lhs = expr if lhs is None else lhs + expr
+
+    # Add the constraint to the model
+    n.model.add_constraints(lhs >= rhs, name="resistive_heater_boosting")
+
 
 
 def add_battery_constraints(n):
@@ -1299,7 +1240,6 @@ def extra_functionality(
     snapshots: pd.DatetimeIndex,
     planning_horizons: str | None = None,
     district_heat_share_file: str | None = None,
-    ptes_direct_utilisation_profile_file: str | None = None,
     ptes_temperature_boost_ratio_profile_file: str | None = None,
 ) -> None:
     """
@@ -1359,7 +1299,6 @@ def extra_functionality(
     add_resistive_heater_boosting_constraints(
         n,
         district_heat_share_file=district_heat_share_file,
-        ptes_direct_utilisation_profile_file=ptes_direct_utilisation_profile_file,
         ptes_temperature_boost_ratio_profile_file=ptes_temperature_boost_ratio_profile_file,
         ptes_booster_technologies=n.config['sector']['district_heating']['ptes']['supplemental_heating']['booster_technologies']
     )
@@ -1422,7 +1361,6 @@ def solve_network(
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     district_heat_share_file: str | None = None,
-    ptes_direct_utilisation_profile_file: str | None = None,
     ptes_temperature_boost_ratio_profile_file: str | None = None,
     **kwargs,
 ) -> None:
@@ -1474,7 +1412,6 @@ def solve_network(
         extra_functionality,
         planning_horizons=planning_horizons,
         district_heat_share_file = district_heat_share_file,
-        ptes_direct_utilisation_profile_file = ptes_direct_utilisation_profile_file,
         ptes_temperature_boost_ratio_profile_file = ptes_temperature_boost_ratio_profile_file,
     )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
@@ -1582,7 +1519,6 @@ if __name__ == "__main__":
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
             district_heat_share_file=snakemake.input.district_heat_share,
-            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
             ptes_temperature_boost_ratio_profile_file=snakemake.input.ptes_temperature_boost_ratio_profiles,
         )
 

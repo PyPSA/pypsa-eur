@@ -55,8 +55,9 @@ Approximate thermal energy storage (TES) top temperature and identify need for s
 
 import logging
 
+#import pandas as pd
 import xarray as xr
-from _helpers import set_scenario_config
+from scripts._helpers import set_scenario_config
 
 from scripts.build_ptes_operations.ptes_temperature_approximator import (
     PtesTemperatureApproximator,
@@ -66,11 +67,11 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_ptes_operations",
-            clusters=5,
+            clusters=8,
             planning_horizons="2030",
         )
 
@@ -100,15 +101,6 @@ if __name__ == "__main__":
         snakemake.output.ptes_top_temperature_profiles
     )
 
-    # if snakemake.params.enable_supplemental_heating:
-    # Get PTES supplemental heating profiles
-    logger.info(
-        f"Saving PTES direct utilisation profile to {snakemake.output.ptes_direct_utilisation_profiles}"
-    )
-    ptes_temperature_approximator.direct_utilisation_profile.to_netcdf(
-        snakemake.output.ptes_direct_utilisation_profiles
-    )
-
     # if snakemake.params.enable_dynamic_capacity:
     logger.info("Calculating dynamic PTES capacity profiles")
 
@@ -119,10 +111,36 @@ if __name__ == "__main__":
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
     )
+
+    # if snakemake.params.supplemental_heating.required:
+    logger.info("Calculating PTES temperature boost ratio")
+
     # Get PTES temperature boost ratio
     logger.info(
-        f"Saving PTES reheat ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
+        f"Saving PTES temperature boost ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
     )
     ptes_temperature_approximator.temperature_boost_ratio.to_netcdf(
         snakemake.output.ptes_temperature_boost_ratio_profiles
     )
+
+#    ptes_boost_ratio = ptes_temperature_approximator.temperature_boost_ratio
+#
+#    # 2) relabel each node by appending the heat‑system tag
+#    nodes = ptes_boost_ratio.coords["name"].values
+#    ptes_boost_ratio_names = ptes_boost_ratio.assign_coords(
+#        name=[
+#            f"{node} {HeatSystem.URBAN_CENTRAL.value}"
+#            for node in nodes
+#        ]
+#    )
+#
+#    # 3) broadcast the labeled array across all booster technologies
+#    ptes_boost_ratio_dataarray = ptes_boost_ratio_names.expand_dims(
+#        component=pd.Index(
+#            snakemake.params.booster_technologies,
+#            name="component"
+#        )
+#    )
+#
+#    # now ratio_da.dims == ("component", "time", "name") → (2, 8760, 8)
+#    ptes_boost_ratio_dataarray.to_netcdf(snakemake.output.ptes_temperature_boost_ratio_profiles)

@@ -2753,7 +2753,6 @@ def add_heat(
     direct_heat_source_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-    ptes_direct_utilisation_profile_file: str,
     ates_e_nom_max: str,
     ates_capex_as_fraction_of_geothermal_heat_source: float,
     ates_recovery_factor: float,
@@ -2787,8 +2786,6 @@ def add_heat(
         Path to NetCDF file containing direct heat source utilisation profiles
     hourly_heat_demand_total_file : str
         Path to CSV file containing hourly heat demand data
-    ptes_supplemental_heating_required_file: str
-        Path to CSV file indicating when supplemental heating for thermal energy storage (TES) is needed
     district_heat_share_file : str
         Path to CSV file containing district heating share information
     solar_thermal_total_file : str
@@ -3248,46 +3245,11 @@ def add_heat(
                         p_nom_extendable=True,
                     )
 
-            if (
-                not options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]
-                and "heat_pump"
-                in options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_technologies"
-                ]
-            ):
-                raise ValueError(
-                    "'booster_heat_pump' is true, but 'enable' is false in 'supplemental_heating'."
-                )
-
-            if (
-                heat_source in params.temperature_limited_stores
-                and options["district_heating"]["ptes"]["supplemental_heating"][
-                    "enable"
-                ]
-                and "heat_pump"
-                in options["district_heating"]["ptes"]["supplemental_heating"][
-                    "booster_technologies"
-                ]
-            ):
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_system} water pits",
-                    bus2=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
-                    efficiency2=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_nom_extendable=True,
-                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
-
+# cop wird weiterhin für ptes berechnet, problem tritt auf, dass wir zwei unterschiedliche ptes cop berechnen müssen. Einmal luft und wasser wasser
+# cop wird in wasser wasser fall gneutzt um ein Alpha value zu berechnen, dieser ist cop - 1.
+#            or "ptes heat pump" in options["district_heating"]["ptes"]["supplemental_heating"][
+#                "booster_technologies"
+#            ]
             else:
                 n.add(
                     "Link",
@@ -6124,9 +6086,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="10",
+            clusters="8",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -6259,7 +6221,6 @@ if __name__ == "__main__":
                 "recovery_factor"
             ],
             enable_ates=snakemake.params.sector["district_heating"]["ates"]["enable"],
-            ptes_direct_utilisation_profile_file=snakemake.input.ptes_direct_utilisation_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
