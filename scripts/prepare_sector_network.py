@@ -5181,9 +5181,9 @@ def calculate_steel_parameters(nyears=1):
     discount_rate = 0.04
 
     capex_eaf_mpp = 698.34 * 1e3 * 8760 # €/kt steel/h
-    opex_eaf_mpp = (118.27 * 1e3 / capex_eaf_ng) * 100  # €/kt steel/yr -> % of CAPEX
+    opex_eaf_mpp = (118.27 * 1e3 / capex_eaf_mpp) * 100  # €/kt steel/yr -> % of CAPEX
 
-    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_mpp / 100.0) * capex_eaf_mpp * nyears
+    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
 
 
     eaf_ng = pd.Series({"iron input": iron_to_steel_eaf_ng,
