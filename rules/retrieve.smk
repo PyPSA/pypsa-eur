@@ -758,10 +758,10 @@ if config["enable"]["retrieve"]:
 
         rule retrieve_hera_data:
             output:
-                river_discharge=f"data/hera_{config_provider("snapshots", "start")[:4]}/river_discharge_{snapshot_year}.nc",
-                ambient_temperature=f"data/hera_{config_provider("snapshots", "start")[:4]}/ambient_temp_{config_provider("snapshots", "start")[:4]}.nc",
+                river_discharge=f"data/hera_{snapshot_year}/river_discharge_{snapshot_year}.nc",
+                ambient_temperature=f"data/hera_{snapshot_year}/ambient_temp_{snapshot_year}.nc",
             params:
-                snapshot_year=config_provider("snapshots", "start")[:4],
+                snapshot_year=snapshot_year,
             log:
                 "logs/retrieve_hera_data.log",
             resources:
