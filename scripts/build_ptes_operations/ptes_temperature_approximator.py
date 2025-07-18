@@ -126,15 +126,16 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting fraction of PTES charge that must be further heated.
         """
-        return (self.forward_temperature - self.top_temperature) / (
-            self.top_temperature - self.return_temperature
-        )
+        return ((self.top_temperature - self.return_temperature) / (
+                self.forward_temperature - self.top_temperature
+        )).where(self.forward_temperature > self.top_temperature, 0)
 
+    @property
     def forward_temperature_boost_ratio(self) -> xr.DataArray:
         """
         Calculate the additional lift required between the forward temperature and the maximum possible store's
         tmeperature to increase the maximum storage capacity.
         """
-        return (self.forward_temperature - self.return_temperature) / (
+        return ((self.forward_temperature - self.return_temperature) / (
             self.max_ptes_top_temperature - self.forward_temperature
-        )
+        )).where(self.forward_temperature <= self.max_ptes_top_temperature, 0)

@@ -123,6 +123,17 @@ if __name__ == "__main__":
         snakemake.output.ptes_temperature_boost_ratio_profiles
     )
 
+    # if snakemake.params.supplemental_heating.required:
+    logger.info("Calculating PTES forward temperature boost ratio")
+
+    # Get PTES forward temperature boost ratio
+    logger.info(
+        f"Saving PTES forward temperature boost ratio profiles to {snakemake.output.ptes_forward_temperature_boost_ratio_profiles}"
+    )
+    ptes_temperature_approximator.forward_temperature_boost_ratio.to_netcdf(
+        snakemake.output.ptes_forward_temperature_boost_ratio_profiles
+    )
+
 #    ptes_boost_ratio = ptes_temperature_approximator.temperature_boost_ratio
 #
 #    # 2) relabel each node by appending the heat‑system tag

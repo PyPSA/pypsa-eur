@@ -496,6 +496,9 @@ rule build_ptes_operations:
         ptes_temperature_boost_ratio_profiles=resources(
             "ptes_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
+        ptes_forward_temperature_boost_ratio_profiles=resources(
+            "ptes_forward_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     resources:
         mem_mb=2000,
     log:

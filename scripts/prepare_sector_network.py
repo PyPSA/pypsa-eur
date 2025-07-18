@@ -43,6 +43,7 @@ from scripts.build_energy_totals import (
 from scripts.build_transport_demand import transport_degree_factor
 from scripts.definitions.heat_sector import HeatSector
 from scripts.definitions.heat_system import HeatSystem
+from scripts.definitions.tes_system import TesSystem
 from scripts.prepare_network import maybe_adjust_costs_and_potentials
 
 spatial = SimpleNamespace()
@@ -2941,81 +2942,81 @@ def add_heat(
         )
 
         if options["tes"]:
-            n.add("Carrier", f"{heat_system} water tanks")
-
-            n.add(
-                "Bus",
-                nodes + f" {heat_system} water tanks",
-                location=nodes,
-                carrier=f"{heat_system} water tanks",
-                unit="MWh_th",
-            )
-
-            energy_to_power_ratio_water_tanks = costs.at[
-                heat_system.central_or_decentral + " water tank storage",
-                "energy to power ratio",
-            ]
-
-            n.add(
-                "Link",
-                nodes,
-                suffix=f" {heat_system} water tanks charger",
-                bus0=nodes + f" {heat_system} heat",
-                bus1=nodes + f" {heat_system} water tanks",
-                efficiency=costs.at[
-                    heat_system.central_or_decentral + " water tank charger",
-                    "efficiency",
-                ],
-                carrier=f"{heat_system} water tanks charger",
-                p_nom_extendable=True,
-                marginal_cost=costs.at["water tank charger", "marginal_cost"],
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
-
-            n.add(
-                "Link",
-                nodes,
-                suffix=f" {heat_system} water tanks discharger",
-                bus0=nodes + f" {heat_system} water tanks",
-                bus1=nodes + f" {heat_system} heat",
-                carrier=f"{heat_system} water tanks discharger",
-                efficiency=costs.at[
-                    heat_system.central_or_decentral + " water tank discharger",
-                    "efficiency",
-                ],
-                p_nom_extendable=True,
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
-
-            n.links.loc[
-                nodes + f" {heat_system} water tanks charger", "energy to power ratio"
-            ] = energy_to_power_ratio_water_tanks
-
+#            n.add("Carrier", f"{heat_system} water tanks")
+#
+#            n.add(
+#                "Bus",
+#                nodes + f" {heat_system} water tanks",
+#                location=nodes,
+#                carrier=f"{heat_system} water tanks",
+#                unit="MWh_th",
+#            )
+#
+#            energy_to_power_ratio_water_tanks = costs.at[
+#                heat_system.central_or_decentral + " water tank storage",
+#                "energy to power ratio",
+#            ]
+#
+#            n.add(
+#                "Link",
+#                nodes,
+#                suffix=f" {heat_system} water tanks charger",
+#                bus0=nodes + f" {heat_system} heat",
+#                bus1=nodes + f" {heat_system} water tanks",
+#                efficiency=costs.at[
+#                    heat_system.central_or_decentral + " water tank charger",
+#                    "efficiency",
+#                ],
+#                carrier=f"{heat_system} water tanks charger",
+#                p_nom_extendable=True,
+#                marginal_cost=costs.at["water tank charger", "marginal_cost"],
+#                lifetime=costs.at[
+#                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+#                ],
+#            )
+#
+#            n.add(
+#                "Link",
+#                nodes,
+#                suffix=f" {heat_system} water tanks discharger",
+#                bus0=nodes + f" {heat_system} water tanks",
+#                bus1=nodes + f" {heat_system} heat",
+#                carrier=f"{heat_system} water tanks discharger",
+#                efficiency=costs.at[
+#                    heat_system.central_or_decentral + " water tank discharger",
+#                    "efficiency",
+#                ],
+#                p_nom_extendable=True,
+#                lifetime=costs.at[
+#                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+#                ],
+#            )
+#
+#            n.links.loc[
+#                nodes + f" {heat_system} water tanks charger", "energy to power ratio"
+#            ] = energy_to_power_ratio_water_tanks
+#
             tes_time_constant_days = options["tes_tau"][
                 heat_system.central_or_decentral
             ]
-
-            n.add(
-                "Store",
-                nodes,
-                suffix=f" {heat_system} water tanks",
-                bus=nodes + f" {heat_system} water tanks",
-                e_cyclic=True,
-                e_nom_extendable=True,
-                carrier=f"{heat_system} water tanks",
-                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
-                capital_cost=costs.at[
-                    heat_system.central_or_decentral + " water tank storage",
-                    "capital_cost",
-                ],
-                lifetime=costs.at[
-                    heat_system.central_or_decentral + " water tank storage", "lifetime"
-                ],
-            )
+#
+#            n.add(
+#                "Store",
+#                nodes,
+#                suffix=f" {heat_system} water tanks",
+#                bus=nodes + f" {heat_system} water tanks",
+#                e_cyclic=True,
+#                e_nom_extendable=True,
+#                carrier=f"{heat_system} water tanks",
+#                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+#                capital_cost=costs.at[
+#                    heat_system.central_or_decentral + " water tank storage",
+#                    "capital_cost",
+#                ],
+#                lifetime=costs.at[
+#                    heat_system.central_or_decentral + " water tank storage", "lifetime"
+#                ],
+#            )
 
             if heat_system == HeatSystem.URBAN_CENTRAL:
                 n.add("Carrier", f"{heat_system} water pits")
@@ -3246,6 +3247,24 @@ def add_heat(
                         carrier=f"{heat_system} {heat_source} heat direct utilisation",
                         p_nom_extendable=True,
                     )
+
+            if heat_source in {tes_system.value for tes_system in TesSystem}:
+                   #in technologies for technologies in params["sector"]["district_heating"]["ptes"]["supplemental_heating"]["booster_technologies"]):
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes,
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=1,
+                    p_max_pu=(1/cop_heat_pump).where(cop_heat_pump > 0, 0),
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
+                                 * overdim_factor,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                )
 
 # cop wird weiterhin für ptes berechnet, problem tritt auf, dass wir zwei unterschiedliche ptes cop berechnen müssen. Einmal luft und wasser wasser
 # cop wird in wasser wasser fall gneutzt um ein Alpha value zu berechnen, dieser ist cop - 1.

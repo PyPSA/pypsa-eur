@@ -514,10 +514,10 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: true
+      dynamic_capacity: false
       supplemental_heating:
         required: true
-        booster_technologies: ["resistive heater", "ptes heat pump"]
+        booster_technologies: ["resistive heater", "air heat pump", "ptes"] # wie damit umgehen, dass ptes auch eine booster_technologie ist
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
@@ -545,10 +545,9 @@ sector:
         ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
-    temperature_limited_stores:
-    - ptes
   heat_pump_sources:
     urban central:
+    - ptes
     - air
     urban decentral:
     - air
