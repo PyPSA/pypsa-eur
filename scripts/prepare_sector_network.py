@@ -1577,7 +1577,7 @@ def insert_electricity_distribution_grid(
     n.links.loc[v2gs, "bus1"] += " low voltage"
 
     hps = n.links.index[n.links.carrier.str.contains("heat pump")]
-    n.links.loc[hps, "bus0"] += " low voltage"
+    n.links.loc[hps, "bus1"] += " low voltage"
 
     rh = n.links.index[n.links.carrier.str.contains("resistive heater")]
     n.links.loc[rh, "bus0"] += " low voltage"
@@ -3213,16 +3213,17 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_carrier}",
-                    bus2=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
+                    bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
-                    efficiency2=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
+                    efficiency=1 / cop_heat_pump.clip(upper=-0.01),
+                    efficiency2=1 / (cop_heat_pump - 1).clip(upper=-0.01),
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
@@ -3263,6 +3264,8 @@ def add_heat(
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                                  * overdim_factor,
                     p_nom_extendable=True,
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
@@ -3276,13 +3279,14 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_system} heat",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
+                    efficiency=1 / cop_heat_pump.clip(upper=-0.01),
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
