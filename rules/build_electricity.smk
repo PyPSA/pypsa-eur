@@ -585,8 +585,6 @@ rule build_cost_data:
         costs=resources("costs_{planning_horizons}.csv"),
     output:
         resources("costs_{planning_horizons}_prepped.csv"),
-    wildcard_constraints:
-        planning_horizons=r"\d{4}",  # Constrain to 4-digit years only
     log:
         logs("build_cost_data_{planning_horizons}.log"),
     benchmark:

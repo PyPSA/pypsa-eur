@@ -189,8 +189,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             version=config_provider("costs", "version"),
         output:
             resources("costs_{year}.csv"),
-        wildcard_constraints:
-            year=r"\d{4}",  # Constrain to 4-digit years only
         log:
             logs("retrieve_cost_data_{year}.log"),
         resources:
