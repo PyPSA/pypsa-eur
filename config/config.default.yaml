@@ -924,7 +924,7 @@ costs:
     "CO2 intensity": 0
     "discount rate": 0.07
   custom_costs:
-    enable: false
+    enable: true
     file: data/custom_costs.csv
   overwrites: {}
   emission_prices:

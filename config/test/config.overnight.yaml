@@ -54,10 +54,6 @@ renewable:
     max_depth: false
     min_depth: false
 
-costs:
-  custom_costs:
-    enable: true
-
 clustering:
   temporal:
     resolution_sector: 24h
