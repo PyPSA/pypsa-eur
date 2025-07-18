@@ -356,11 +356,11 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
+            zip="World_EEZ_v12_20231025_LR.zip",
         output:
             gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
+        shadow: "minimal"
         run:
-            import os
             import requests
             from uuid import uuid4
 
@@ -383,7 +383,7 @@ if config["enable"]["retrieve"]:
 
             with open(params["zip"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
+            output_folder = Path(output.gpkg).parent.parent
             unpack_archive(params["zip"], output_folder)
             os.remove(params["zip"])
 
