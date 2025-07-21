@@ -550,7 +550,6 @@ sector:
     - geothermal
   heat_pump_sources:
     urban central:
-    - ptes
     - air
     urban decentral:
     - air

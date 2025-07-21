@@ -989,12 +989,13 @@ def add_storage_temperature_boosting_constraints(
     cop = xr.open_dataarray(cop_profiles_file)
     tes_systems = {t.value for t in TesSystem}
 
-    # Get model variable for Link dispatch
     ptes_direct_utilisation_profiles = (
         ptes_direct_utilisation_profiles_dataary.to_pandas()
         .reindex(index=n.snapshots)
         .set_axis(ptes_discharger_ext, axis=1)
     )
+
+    # Get model variable for Link dispatch
     p = (n.model["Link-p"])
     rhs = p.loc[:, ptes_discharger_ext] * (1 - ptes_direct_utilisation_profiles)
     lhs = None
@@ -1060,12 +1061,13 @@ def add_forward_temperature_boosting_constraints(
     ptes_direct_utilisation_profiles_dataary = xr.open_dataarray(ptes_direct_utilisation_profiles_file)
     tes_values = {t.value for t in TesSystem}
 
-    # Get model variable for Link dispatch
     ptes_direct_utilisation_profiles = (
         ptes_direct_utilisation_profiles_dataary.to_pandas()
         .reindex(index=n.snapshots)
         .set_axis(ptes_charger_ext, axis=1)
     )
+
+    # Get model variable for Link dispatch
     p = (n.model["Link-p"])
     rhs = p.loc[:, ptes_charger_ext] * ptes_direct_utilisation_profiles
     lhs = None

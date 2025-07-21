@@ -3283,11 +3283,6 @@ def add_heat(
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
-# cop wird weiterhin für ptes berechnet, problem tritt auf, dass wir zwei unterschiedliche ptes cop berechnen müssen. Einmal luft und wasser wasser
-# cop wird in wasser wasser fall gneutzt um ein Alpha value zu berechnen, dieser ist cop - 1.
-#            or "ptes heat pump" in options["district_heating"]["ptes"]["supplemental_heating"][
-#                "booster_technologies"
-#            ]
             else:
                 n.add(
                     "Link",
