@@ -399,21 +399,19 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            zip_file="API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
         output:
             gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+        shadow: "minimal"
         run:
-            import os
-            import requests
-
             response = requests.get(
                 "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output.gpkg).parent
+            unpack_archive(params["zip_file"], output_folder)
 
             for f in os.listdir(output_folder):
                 if f.startswith(
