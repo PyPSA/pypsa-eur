@@ -360,7 +360,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="World_EEZ_v12_20231025_LR.zip",
+            zip_file="World_EEZ_v12_20231025_LR.zip",
         output:
             gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         shadow: "minimal"
@@ -385,11 +385,10 @@ if config["enable"]["retrieve"]:
                 },
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
             output_folder = Path(output.gpkg).parent.parent
-            unpack_archive(params["zip"], output_folder)
-            os.remove(params["zip"])
+            unpack_archive(params["zip_file"], output_folder)
 
 
 
@@ -521,7 +520,7 @@ if config["enable"]["retrieve"]:
         output:
             gpkg="data/WDPA.gpkg",
         run:
-            shcopy(input.zip, params.zip)
+            shcopy2(input.zip, params.zip)
             unpack_archive(params.zip, params.folder)
 
             for i in range(3):
@@ -547,7 +546,7 @@ if config["enable"]["retrieve"]:
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
-            shcopy(input.zip, params.zip)
+            shcopy2(input.zip, params.zip)
             unpack_archive(params.zip, params.folder)
 
             for i in range(3):
