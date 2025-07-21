@@ -5440,7 +5440,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
             lifetime= eaf_ng['lifetime'],
         )
 
-        electricity_input = costs.at["electric arc furnace", "electricity-input"]
+        electricity_input = costs.at["electric arc furnace", "electricity-input"] *1e3 #MWh/kt steel
 
         n.add(
             "Link",
@@ -7135,15 +7135,43 @@ def add_import_options(
         )
     
     if "methanol_adb" in import_options:
+
+        #n.add(
+        #    "Generator",
+        #    spatial.methanol.nodes,
+        #    suffix=" import",
+        #    bus=spatial.methanol.nodes,
+        #    carrier="import methanol",
+        #    p_nom=1e7,
+        #    marginal_cost=import_options["methanol_adb"],
+        #)
+     
+        co2_intensity = costs.at["methanolisation", "carbondioxide-input"]
+
         n.add(
-            "Generator",
-            spatial.methanol.nodes,
+            "Link",
+            spatial.methanol.industry,
             suffix=" import",
-            bus=spatial.methanol.nodes,
             carrier="import methanol",
+            bus0="co2 atmosphere",
+            bus1=spatial.methanol.industry,
+            efficiency=1 / co2_intensity,
+            marginal_cost=import_options["methanol_adb"] / co2_intensity,
             p_nom=1e7,
-            marginal_cost=import_options["methanol_adb"],
         )
+
+        n.add(
+            "Link",
+            spatial.methanol.shipping,
+            suffix=" import",
+            carrier="import methanol",
+            bus0="co2 atmosphere",
+            bus1=spatial.methanol.shipping,
+            efficiency=1 / co2_intensity,
+            marginal_cost=import_options["methanol_adb"] / co2_intensity,
+            p_nom=1e7,
+        )
+
 
 
     if "ammonia_adb" in import_options:
