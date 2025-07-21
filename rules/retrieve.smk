@@ -426,24 +426,23 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_co2stop:
         params:
-            zip="data/co2jrc_openformats.zip",
+            zip_file="co2jrc_openformats.zip",
         output:
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+        shadow: "minimal"
         run:
-            import requests
-
             response = requests.get(
                 "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
             )
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output[0]).parent.parent.parent
+            unpack_archive(params["zip_file"], output_folder)
 
 
 
