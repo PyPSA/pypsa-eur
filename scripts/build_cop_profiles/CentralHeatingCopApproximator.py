@@ -175,12 +175,6 @@ class CentralHeatingCopApproximator(BaseCopApproximator):
         -------
             Union[xr.DataArray, np.array]: The calculated COP values.
         """
-        # müsste dies 1/                 (
-        #                     1
-        #                     + (self.delta_t_refrigerant_sink + self.delta_t_pinch)
-        #                     / self.t_sink_mean_kelvin
-        #                 )
-        # sein, damit es penalty auf den ideal_lorenz_cop gibt
         return xr.where(
             (self.delta_t_lift < self.min_delta_t_lift),
             0,

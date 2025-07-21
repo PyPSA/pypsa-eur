@@ -63,9 +63,9 @@ sector:
   H2_retrofit: true
   district_heating:
     ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
+      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
+      storage_temperature_boosting: true
+      forward_temperature_boosting: true
     ates:
       enable: true
   hydrogen_turbine: false

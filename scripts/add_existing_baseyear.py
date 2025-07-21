@@ -617,8 +617,8 @@ def add_heating_capacities_installed_before_baseyear(
                 "Link",
                 nodes,
                 suffix=f" {heat_system} resistive heater-{grouping_year}",
-                bus0=nodes_elec,
-                bus1=nodes + " " + heat_system.value + " heat",
+                bus0=nodes + " " + heat_system.value + " heat",
+                bus1=nodes_elec,
                 carrier=heat_system.value + " resistive heater",
                 efficiency=costs.at[
                     heat_system.resistive_heater_costs_name, "efficiency"

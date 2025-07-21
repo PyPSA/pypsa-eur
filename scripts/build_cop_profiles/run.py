@@ -125,12 +125,11 @@ if __name__ == "__main__":
         snakemake.input.central_heating_return_temperature_profiles
     )
 
-# Achtung hier müsste ich beim COP noch mit reinnehmen, dass wenn wir die nacherhitzung an haben, wir keine dynamic_capacity erlauben (nicht hier rein) ABER die ptes top temperature ist konstant 90°C
     cop_all_system_types = []
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            if heat_source in ["ground", "air", "ptes"]: # das auch nochmal überprüfen, ob das stimmt
+            if heat_source in ["ground", "air", "ptes"]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
                         f"temp_{heat_source.replace('ground', 'soil')}_total"

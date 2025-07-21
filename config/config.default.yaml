@@ -514,12 +514,15 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: false
-      supplemental_heating:
-        required: true
-        booster_technologies: ["resistive heater", "air heat pump", "ptes"] # wie damit umgehen, dass ptes auch eine booster_technologie ist
+      enable: true
+      dynamic_capacity: true
+      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
+      storage_temperature_boosting: false
+      forward_temperature_boosting: false
       max_top_temperature: 90
       min_bottom_temperature: 35
+    ttes:
+      enable: true
     ates:
       enable: false
       suitable_aquifer_types:
