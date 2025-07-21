@@ -540,22 +540,25 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            zip=storage(
+            zip_file=storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
         params:
-            zip="data/WDPA_WDOECM_marine.zip",
-            folder=directory("data/WDPA_WDOECM_marine"),
+            zip_file="WDPA_WDOECM_marine.zip",
+            folder_name="WDPA_WDOECM_marine",
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
+        shadow: "minimal"
         run:
-            shcopy2(input.zip, params.zip)
-            unpack_archive(params.zip, params.folder)
+            shcopy2(input.zip_file, params.zip_file)
+            os.chmod(params.zip_file, 0o644)  # rw-r--r--
+            output_folder = Path(output.gpkg).parent / params.folder_name
+            unpack_archive(params.zip_file, output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
+                layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
