@@ -765,7 +765,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_aquifer_data_bgr:
         input:
-            zip=storage(
+            zip_file=storage(
                 "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
             ),
         output:
@@ -785,7 +785,7 @@ if config["enable"]["retrieve"]:
             filename_sbn="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbn",
             filename_sbx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbx",
         run:
-            with ZipFile(input.zip, "r") as zip_ref:
+            with ZipFile(input.zip_file, "r") as zip_ref:
                 for fn, outpt in zip(
                     params,
                     output,
