@@ -368,7 +368,6 @@ if config["enable"]["retrieve"]:
             gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         shadow: "minimal"
         run:
-            import requests
             from uuid import uuid4
 
             name = str(uuid4())[:8]
@@ -452,8 +451,6 @@ if config["enable"]["retrieve"]:
         output:
             "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
-            import requests
-
             # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
             url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
             response = requests.get(url)
@@ -468,8 +465,6 @@ if config["enable"]["retrieve"]:
         output:
             "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         run:
-            import requests
-
             # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
             url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
             response = requests.get(url)
@@ -745,8 +740,6 @@ if config["enable"]["retrieve"]:
             ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
         run:
-            import requests
-
             urls = {
                 "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
                 "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
