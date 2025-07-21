@@ -91,9 +91,13 @@ if config["enable"]["retrieve"]:
             shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
             shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+            zip_file="ref-nuts-2013-03m.geojson.zip",
+        shadow: "minimal"
         run:
-            os.rename(input.shapes, params.zip_file)
+            # Copy file and ensure proper permissions
+            shcopy2(input.shapes, params.zip_file)
+            os.chmod(params.zip_file, 0o644)  # rw-r--r--
+
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2"]:
                     filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
@@ -102,7 +106,6 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
-            os.remove(params.zip_file)
 
 
 
