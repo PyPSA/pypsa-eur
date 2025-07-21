@@ -608,6 +608,8 @@ def add_heating_capacities_installed_before_baseyear(
                         nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
                     * ratio,
+                    p_max_pu=0,
+                    p_min_pu=-1,
                     build_year=int(grouping_year),
                     lifetime=costs.at[costs_name, "lifetime"],
                 )
