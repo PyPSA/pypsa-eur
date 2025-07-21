@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
-from shutil import copy as shcopy
+from shutil import copy2 as shcopy2
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -118,9 +119,13 @@ if config["enable"]["retrieve"]:
             shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
             shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
+            zip_file="ref-nuts-2021-01m.geojson.zip",
+        shadow: "minimal"
         run:
-            os.rename(input.shapes, params.zip_file)
+            # Copy file and ensure proper permissions
+            shcopy2(input.shapes, params.zip_file)
+            os.chmod(params.zip_file, 0o644)  # rw-r--r--
+
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
                     filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
@@ -129,7 +134,6 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
-            os.remove(params.zip_file)
 
 
 
