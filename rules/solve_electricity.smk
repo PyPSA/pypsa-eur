@@ -13,6 +13,10 @@ rule solve_network:
         custom_extra_functionality=input_custom_extra_functionality,
     input:
         network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
+        ptes_temperature_boost_ratio_profiles= [],
+        cop_profiles= [],
+        ptes_forward_temperature_boost_ratio_profiles= [],
+        ptes_direct_utilisation_profiles= [],
     output:
         network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
         config=RESULTS + "configs/config.base_s_{clusters}_elec_{opts}.yaml",

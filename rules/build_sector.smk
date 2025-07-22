@@ -471,7 +471,7 @@ rule build_ptes_operations:
             "min_bottom_temperature",
         ),
         snapshots=config_provider("snapshots"),
-        forward_temperature_boosting=config_provider(
+        ptes_forward_temperature_boosting=config_provider(
             "sector",
             "district_heating",
             "ptes",

@@ -516,13 +516,13 @@ sector:
     ptes:
       enable: true
       dynamic_capacity: true
-      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
-      storage_temperature_boosting: false
-      forward_temperature_boosting: false
+      booster_technologies: ["resistive heater", ] #"air heat pump", ptes
+      storage_temperature_boosting: false  # postheating
+      forward_temperature_boosting: false # preheating
       max_top_temperature: 90
       min_bottom_temperature: 35
     ttes:
-      enable: true
+      enable: false
     ates:
       enable: false
       suitable_aquifer_types:

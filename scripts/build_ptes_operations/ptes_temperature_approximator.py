@@ -30,6 +30,7 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_ptes_top_temperature: float,
         min_ptes_bottom_temperature: float,
+        forward_temperature_boosting: bool,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -40,15 +41,18 @@ class PtesTemperatureApproximator:
             The forward temperature profile from the district heating network.
         return_temperature : xr.DataArray
             The return temperature profile from the district heating network.
-        max_ptes_top_temperature : float, optional
+        max_ptes_top_temperature : float
             Maximum operational temperature of top layer in PTES.
-        min_ptes_bottom_temperature : float, optional
+        min_ptes_bottom_temperature : float
             Minimum operational temperature of bottom layer in PTES.
+        forward_temperature_boosting : bool,
+            Clip forward_temperature at max_ptes_top_temperature if True.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
         self.max_ptes_top_temperature = max_ptes_top_temperature
         self.min_ptes_bottom_temperature = min_ptes_bottom_temperature
+        self.forward_temperature_boosting = forward_temperature_boosting
 
     @property
     def top_temperature(self) -> xr.DataArray:
@@ -60,10 +64,9 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting top temperature profile for PTES.
         """
-        return self.forward_temperature.where(
-            self.forward_temperature <= self.max_ptes_top_temperature,
-            self.max_ptes_top_temperature,
-        )
+        return self._get_effective_forward_temperature(
+            self.forward_temperature
+        ).clip(max=self.max_ptes_top_temperature)
 
     @property
     def bottom_temperature(self) -> xr.DataArray:
@@ -81,6 +84,7 @@ class PtesTemperatureApproximator:
     def direct_utilisation_profile(self) -> xr.DataArray:
         """
         Identify timesteps requiring supplemental heating.
+
         Returns
         -------
         xr.DataArray
@@ -181,3 +185,24 @@ class PtesTemperatureApproximator:
         return ((self.forward_temperature - self.return_temperature) / (
             self.max_ptes_top_temperature - self.forward_temperature
         )).where(self.forward_temperature < self.max_ptes_top_temperature, 0)
+
+    def _get_effective_forward_temperature(
+        self, forward_temperature: xr.DataArray
+    ) -> xr.DataArray:
+        """
+        Return the forward profile, flooring values below max_ptes_top_temperature
+        if boosting is enabled.
+
+        Parameters
+        ----------
+        forward_temperature : xr.DataArray
+            Raw forward temperature profile.
+
+        Returns
+        -------
+        xr.DataArray
+            Effective forward temperature for PTES.
+        """
+        if self.forward_temperature_boosting:
+            return forward_temperature.clip(min=self.max_ptes_top_temperature)
+        return forward_temperature
