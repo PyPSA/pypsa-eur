@@ -608,7 +608,7 @@ def add_heating_capacities_installed_before_baseyear(
                     ]
                     * ratio,
                     p_max_pu=0,
-                    p_min_pu=-1*efficiency / efficiency.clip(lower=0.001),
+                    p_min_pu=-1 * efficiency / efficiency.clip(lower=0.001),
                     build_year=int(grouping_year),
                     lifetime=costs.at[costs_name, "lifetime"],
                 )
