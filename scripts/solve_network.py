@@ -1020,7 +1020,7 @@ def add_storage_temperature_boosting_constraints(
                 .set_axis(booster_technologies_links_ext, axis=1)
             )
             alpha = (cop_heat_pump - 1).clip(lower=0)
-            expr = p.loc[:, booster_technologies_links_ext] * alpha
+            expr = - (p.loc[:, booster_technologies_links_ext] * alpha)
             n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
 
         else:
@@ -1031,7 +1031,7 @@ def add_storage_temperature_boosting_constraints(
                 .set_axis(booster_technologies_links_ext, axis=1)
             )
             # per‑tech expression
-            expr = (p.loc[:, booster_technologies_links_ext] * ptes_temperature_boost_ratio)
+            expr = - (p.loc[:, booster_technologies_links_ext] * ptes_temperature_boost_ratio)
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
@@ -1091,7 +1091,7 @@ def add_forward_temperature_boosting_constraints(
             .set_axis(booster_technologies_links_ext, axis=1)
         )
         # per‑tech expression
-        expr = (p.loc[:, booster_technologies_links_ext] * ptes_forward_temperature_boost_ratio)
+        expr = - (p.loc[:, booster_technologies_links_ext] * ptes_forward_temperature_boost_ratio)
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
@@ -1552,8 +1552,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network",
             opts="",
-            clusters="8",
-            #configfiles="config/test/config.overnight.yaml",
+            clusters="5",
+            configfiles="config/test/config.overnight.yaml",
             sector_opts="",
             planning_horizons="2030",
         )

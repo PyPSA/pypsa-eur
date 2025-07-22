@@ -3312,8 +3312,7 @@ def add_heat(
                 bus1=nodes,
                 carrier=f"{heat_system} resistive heater",
                 efficiency=1 / costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "efficiency"]
-                * costs.at[key, "capital_cost"]
+                capital_cost=costs.at[key, "capital_cost"]
                 * overdim_factor,
                 p_max_pu=0,
                 p_min_pu=-1,
