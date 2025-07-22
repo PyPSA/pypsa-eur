@@ -3232,13 +3232,12 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
-                    efficiency2=(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(1000, 0),
+                    efficiency=-(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
+                    efficiency2=-(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(1000, 0),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_max_pu=0,
-                    p_min_pu=-1 * cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_max_pu=cop_heat_pump / cop_heat_pump.clip(lower=0.001),
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
@@ -3293,15 +3292,14 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_system} water pits",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(
+                    efficiency=-(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(
                         1000, 0
                     ),
-                    efficiency2=(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
+                    efficiency2=-(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_max_pu=0,
-                    p_min_pu=-1 * cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_max_pu=cop_heat_pump / cop_heat_pump.clip(lower=0.001),
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
 
@@ -3313,11 +3311,10 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
+                    efficiency=-(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_max_pu=0,
-                    p_min_pu=-1 * cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_max_pu=cop_heat_pump / cop_heat_pump.clip(lower=0.001),
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
