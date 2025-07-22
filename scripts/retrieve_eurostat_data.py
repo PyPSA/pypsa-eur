@@ -6,6 +6,7 @@ Retrieve and extract eurostat energy balances data.
 """
 
 import logging
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -31,14 +32,18 @@ if __name__ == "__main__":
         # "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip" # link down
         "https://tubcloud.tu-berlin.de/s/prkJpL7B9M3cDPb/download/Balances-April2023.zip"
     )
-    tarball_fn = Path("eurostat_2023.zip")
+
     to_fn = Path(f"{rootpath}/data/eurostat/Balances-April2023/")
 
     logger.info(f"Downloading Eurostat data from '{url_eurostat}'.")
-    progress_retrieve(url_eurostat, tarball_fn, disable=disable_progress)
 
-    logger.info("Extracting Eurostat data.")
-    with zipfile.ZipFile(tarball_fn, "r") as zip_ref:
-        zip_ref.extractall(to_fn)
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=True) as tarball:
+        logger.info(f"Using temporary file: {tarball.name}")
+        progress_retrieve(url_eurostat, tarball.name, disable=disable_progress)
 
-    logger.info(f"Eurostat data available in '{to_fn}'.")
+        logger.info("Extracting Eurostat data.")
+        with zipfile.ZipFile(tarball.name, "r") as zip_ref:
+            zip_ref.extractall(to_fn)
+
+        logger.info(f"Eurostat data available in '{to_fn}'.")
+        # Temporary file automatically deleted when context exits
