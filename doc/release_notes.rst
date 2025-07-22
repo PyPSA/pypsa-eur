@@ -11,6 +11,20 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `FileNotFoundError` bugs preventing pypsa from being run as a Snakemake
+  module. The cause of this bug was that intermediate zip files in rules were being
+  saved in directories that didn't exist yet (without creating the parent directories).
+  This didn't fail when using PyPSA-Eur as a standalone module, because the directory
+  was the same as the rule's output file. However, when using PyPSA-Eur as a Snakemake
+  module, this was not the case as Snakemake prepends a prefix to all the input and
+  output files, but not to any file locations listed as parameters. The fix was to use
+  Snakemake's built-in shadow directories and save intermediate zip files at the top
+  level within these. This was fixed for many rules in `retrieve.smk`, i.e.,
+  `retrieve_eez`, `retrieve_nuts_2021_shapes`, `retrieve_nuts_2013_shapes`,
+  `retrieve_worldbank_urban_population`, `retrieve_co2stop`, `download_wdpa`,
+  `download_wdpa_marine`.
+  (https://github.com/pypsa/pypsa-eur/pull/_PLACEHOLDER_)
+
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
