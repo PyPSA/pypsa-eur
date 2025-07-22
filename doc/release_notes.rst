@@ -22,7 +22,7 @@ Upcoming Release
   level within these. This was fixed for many rules in `retrieve.smk`, i.e.,
   `retrieve_eez`, `retrieve_nuts_2021_shapes`, `retrieve_nuts_2013_shapes`,
   `retrieve_worldbank_urban_population`, `retrieve_co2stop`, `download_wdpa`,
-  `download_wdpa_marine`.
+  `download_wdpa_marine`, `retrieve_eurostat_data`.
   (https://github.com/PyPSA/pypsa-eur/pull/1768)
 
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
