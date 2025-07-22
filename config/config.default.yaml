@@ -1005,6 +1005,9 @@ data:
   synthetic_electricity_demand:
     source: "primary"
     version_or_latest: "latest"
+  copernicus_land_cover:
+    source: "primary"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

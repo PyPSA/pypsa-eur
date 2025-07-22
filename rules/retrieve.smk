@@ -284,24 +284,6 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_electricity_demand.py"
 
 
-#if config["enable"]["retrieve"]:
-#
-#    rule retrieve_synthetic_electricity_demand:
-#        input:
-#            storage(
-#                "https://zenodo.org/records/10820928/files/demand_hourly.csv",
-#            ),
-#        output:
-#            "data/load_synthetic_raw.csv",
-#        log:
-#            "logs/retrieve_synthetic_electricity_demand.log",
-#        resources:
-#            mem_mb=5000,
-#        retries: 2
-#        run:
-#            move(input[0], output[0])
-
-
 if config["enable"]["retrieve"] and (SYNTHETIC_ELECTRICITY_DEMAND_DATASET := dataset_version("synthetic_electricity_demand"))[
     "source"
 ] in [
@@ -400,17 +382,19 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+if config["enable"]["retrieve"] and (COPERNICUS_LAND_COVER_DATASET:= dataset_version("copernicus_land_cover"))["source"] in [
+    "primary"
+]:
 
     # Downloading Copernicus Global Land Cover for land cover and land use:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
             storage(
-                "https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+                f"{COPERNICUS_LAND_COVER_DATASET["url"]}",
             ),
         output:
-            "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])

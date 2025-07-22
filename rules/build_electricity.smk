@@ -226,7 +226,7 @@ rule determine_availability_matrix_MD_UA:
     params:
         renewable=config_provider("renewable"),
     input:
-        copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        copernicus=rules.download_copernicus_land_cover.output[0],
         wdpa=rules.retrieve_wdpa.output["gpkg"],
         wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
