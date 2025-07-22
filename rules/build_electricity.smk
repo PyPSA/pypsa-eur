@@ -206,7 +206,7 @@ if config["enable"].get("build_cutout", False):
 
 rule build_ship_raster:
     input:
-        ship_density="data/shipdensity_global.zip",
+        ship_density=rules.retrieve_ship_raster.output[0],
         cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),

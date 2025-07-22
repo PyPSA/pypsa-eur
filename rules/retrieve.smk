@@ -303,16 +303,18 @@ if config["enable"]["retrieve"] and (SYNTHETIC_ELECTRICITY_DEMAND_DATASET := dat
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+if config["enable"]["retrieve"] and (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
+    "archive"
+]:
 
     rule retrieve_ship_raster:
         input:
             storage(
-                "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
+                f"{SHIP_RASTER_DATASET["url"]}",
                 keep_local=True,
             ),
         output:
-            "data/shipdensity_global.zip",
+            f"{SHIP_RASTER_DATASET["folder"]}/shipdensity_global.zip",
         log:
             "logs/retrieve_ship_raster.log",
         resources:
@@ -383,7 +385,8 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
 
 
 if config["enable"]["retrieve"] and (COPERNICUS_LAND_COVER_DATASET:= dataset_version("copernicus_land_cover"))["source"] in [
-    "primary"
+    "primary",
+    "archive"
 ]:
 
     # Downloading Copernicus Global Land Cover for land cover and land use:
