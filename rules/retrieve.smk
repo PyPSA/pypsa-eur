@@ -284,19 +284,38 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_electricity_demand.py"
 
 
-if config["enable"]["retrieve"]:
+#if config["enable"]["retrieve"]:
+#
+#    rule retrieve_synthetic_electricity_demand:
+#        input:
+#            storage(
+#                "https://zenodo.org/records/10820928/files/demand_hourly.csv",
+#            ),
+#        output:
+#            "data/load_synthetic_raw.csv",
+#        log:
+#            "logs/retrieve_synthetic_electricity_demand.log",
+#        resources:
+#            mem_mb=5000,
+#        retries: 2
+#        run:
+#            move(input[0], output[0])
 
+
+if config["enable"]["retrieve"] and (SYNTHETIC_ELECTRICITY_DEMAND_DATASET := dataset_version("synthetic_electricity_demand"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
     rule retrieve_synthetic_electricity_demand:
         input:
             storage(
-                "https://zenodo.org/records/10820928/files/demand_hourly.csv",
+                f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"]}",
+                keep_local=True,
             ),
         output:
-            "data/load_synthetic_raw.csv",
-        log:
-            "logs/retrieve_synthetic_electricity_demand.log",
-        resources:
-            mem_mb=5000,
+            f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
         retries: 2
         run:
             move(input[0], output[0])

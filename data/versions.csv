@@ -41,3 +41,5 @@
 "scigrid_gas","primary","1.1.2","['latest', 'supported']","https://zenodo.org/records/4767098/files/IGGIELGN.zip","the primary is already from Zenodo published by original authors"
 "scigrid_gas","archive","1.1.1","['deprecated', 'not-supported']","https://zenodo.org/records/4751038/files/IGGIELGN.zip",""
 "scigrid_gas","archive","1.1.0","['deprecated', 'not-supported']","https://zenodo.org/records/4642569/files/IGGIELGN.zip",""
+"synthetic_electricity_demand","primary","v2","['latest', 'supported']","https://zenodo.org/records/10820928/files/demand_hourly.csv","the primary is already from Zenodo published by original authors"
+"synthetic_electricity_demand","archive","0.1.0","['deprecated', 'not-supported']","https://zenodo.org/records/7070438/files/demand_hourly.csv",""

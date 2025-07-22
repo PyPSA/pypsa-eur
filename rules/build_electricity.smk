@@ -12,7 +12,7 @@ rule build_electricity_demand:
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
         synthetic=lambda w: (
-            ancient("data/load_synthetic_raw.csv")
+            ancient(rules.retrieve_synthetic_electricity_demand.output[0])
             if config_provider("load", "supplement_synthetic")(w)
             else []
         ),
