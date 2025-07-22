@@ -54,6 +54,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         log:
             "logs/retrieve_eurostat_data.log",
         retries: 2
+        shadow: "minimal"
         conda:
             "../envs/environment.yaml"
         script:
