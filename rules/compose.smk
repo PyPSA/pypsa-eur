@@ -29,12 +29,17 @@ def get_compose_inputs(wildcards):
     else:
         horizons = [int(h) for h in planning_horizons]
 
+    # Get cluster count from config
+    clusters = (
+        config.get("clustering", {}).get("cluster_network", {}).get("n_clusters", 50)
+    )
+
     inputs = {
         "clustered": f"networks/{wildcards.run}/clustered.nc",
-        "busmap": resources("busmap_elec_s_{clusters}.csv"),
+        "busmap": resources(f"busmap_elec_s_{clusters}.csv"),
         "tech_costs": resources(f"costs_{horizon}.csv"),
         "load": resources("electricity_demand.csv"),
-        "powerplants": resources("powerplants.csv"),
+        "powerplants": resources(f"powerplants_s_{clusters}.csv"),
     }
 
     # Add renewable profiles
@@ -83,7 +88,7 @@ def get_compose_inputs(wildcards):
     if config.get("sector", {}).get("enabled", True):
         inputs.update(
             {
-                "clustered_pop_layout": resources("pop_layout_elec_s_{clusters}.csv"),
+                "clustered_pop_layout": resources(f"pop_layout_elec_s_{clusters}.csv"),
                 "pop_weighted_energy_totals": resources(
                     "pop_weighted_energy_totals.csv"
                 ),
@@ -112,15 +117,15 @@ def get_compose_inputs(wildcards):
                         "pop_weighted_heat_totals.csv"
                     ),
                     "heating_efficiencies": resources("heating_efficiencies.csv"),
-                    "cop_profiles": resources("cop_profiles_elec_s_{clusters}.nc"),
+                    "cop_profiles": resources(f"cop_profiles_elec_s_{clusters}.nc"),
                     "hourly_heat_demand_total": resources(
-                        "hourly_heat_demand_total_elec_s_{clusters}.nc"
+                        f"hourly_heat_demand_total_elec_s_{clusters}.nc"
                     ),
                     "district_heat_share": resources(
-                        "district_heat_share_elec_s_{clusters}.csv"
+                        f"district_heat_share_elec_s_{clusters}.csv"
                     ),
                     "solar_thermal_total": (
-                        resources("solar_thermal_total_elec_s_{clusters}.csv")
+                        resources(f"solar_thermal_total_elec_s_{clusters}.csv")
                         if config.get("sector", {}).get("solar_thermal", False)
                         else []
                     ),
@@ -129,14 +134,14 @@ def get_compose_inputs(wildcards):
 
             # Add heat source profiles
             for source in config.get("limited_heat_sources", []):
-                inputs[source] = resources(f"{source}_elec_s_{{clusters}}.csv")
+                inputs[source] = resources(f"{source}_elec_s_{clusters}.csv")
 
         # Add transport profiles if transport is enabled
         if config.get("sector", {}).get("transport", False):
             inputs.update(
                 {
-                    "avail_profile": resources("avail_profile_elec_s_{clusters}.csv"),
-                    "dsm_profile": resources("dsm_profile_elec_s_{clusters}.csv"),
+                    "avail_profile": resources(f"avail_profile_elec_s_{clusters}.csv"),
+                    "dsm_profile": resources(f"dsm_profile_elec_s_{clusters}.csv"),
                 }
             )
 
@@ -144,7 +149,7 @@ def get_compose_inputs(wildcards):
         if config.get("sector", {}).get("H2_network", True):
             inputs["h2_cavern"] = resources("salt_cavern_potentials.csv")
             inputs["clustered_gas_network"] = resources(
-                "gas_network_elec_s_{clusters}.csv"
+                f"gas_network_elec_s_{clusters}.csv"
             )
 
         # Add CO2 infrastructure if enabled
@@ -189,6 +194,35 @@ def get_final_horizon():
 def get_solve_inputs(wildcards):
     """Get inputs for solve rule - just the composed network."""
     return {"network": f"networks/{wildcards.run}/composed_{wildcards.horizon}.nc"}
+
+
+# Cluster network rule - needed to generate clustered.nc input
+rule cluster_network:
+    input:
+        network=resources("base.nc"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        regions_offshore=resources("regions_offshore.geojson"),
+    output:
+        network="networks/{run}/clustered.nc",
+        busmap=lambda w: resources(
+            f"busmap_elec_s_{config.get('clustering',{}).get('cluster_network',{}).get('n_clusters',50)}.csv"
+        ),
+    params:
+        clusters=lambda w: config.get("clustering", {})
+        .get("cluster_network", {})
+        .get("n_clusters", 50),
+        focus_weights=lambda w: config.get("clustering", {}).get("focus_weights", None),
+        solver_name=lambda w: config["solving"]["solver"]["name"],
+        algorithm=lambda w: config.get("clustering", {})
+        .get("cluster_network", {})
+        .get("algorithm", "kmeans"),
+    log:
+        "logs/{run}/cluster_network.log",
+    threads: 1
+    resources:
+        mem_mb=6000,
+    script:
+        "../scripts/cluster_network.py"
 
 
 # Main composition rule - combines all network building steps
