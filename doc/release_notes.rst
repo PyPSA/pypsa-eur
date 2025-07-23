@@ -8,8 +8,8 @@
 Release Notes
 ##########################################
 
-.. Upcoming Release
-.. ================
+Upcoming Release
+================
 
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
 
@@ -39,36 +39,86 @@ Release Notes
 
 **Changes**
 
-* Introduce the ability to use the bidding zones as administrative zones for the clustering (https://github.com/PyPSA/pypsa-eur/pull/1578). This also introduces the ability to create a custom `busmap` from custom `busshapes`. To use bidding zones as clustering mode, a `bz` mode has been introduced for `administrative` clustering. This feature is compatible with the general NUTS clustering approach. Custom `busshapes` must be provided as `data/busshapes/base_s_{clusters}_{base_network}.geojson`.
+* Adjusted a series of default values in ``config.default.yaml``.
 
-* Improved balance map plotting: Carriers in the balance map legends which can serve as both supply and consumption (e.g. H2 for industry) are now placed in the legend category where its total absolute value is larger in the total system balance.
+* Non-sequestered high-value chemicals (e.g. plastic waste) is now allocated
+  based on the population instead of production. It can be either burned without
+  energetic utilization or, optionally, in CHPs.
+  (https://github.com/PyPSA/pypsa-eur/pull/1625)
 
-* Added aquifer thermal energy storage (ATES) to district heating. Some parameters (CAPEX, standing losses) might require tuning by the user. Eligibility computation is relatively basic. Turned off by default.
+* Allow district heating potentials to be specified as a dictionary, with
+  country codes as keys for `district_heating: potential:`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1742)
 
-* Added supplemental heating of thermal energy storages (currently implemented for PTES). This can be enabled by setting: ``sector: district_heating: ptes: supplemental_heating: true`` . To enable a boosting heat pump as the supplemental heating technology, use: ``sector: district_heating: ptes: supplemental_heating: booster_heat_pump: true``
+* Added configuration option for setting ``links: p_min_pu``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1637)
 
-* Non-sequestered HVC (plastic waste) is now allocated based on the population instead of production. It can be either burned without energetic utilization or in CHPs to support the district heating system.
+* Use of ``agg_p_nom_limits`` now allows aggregating all ``solar`` electric
+  technologies. Offshore floating wind (``offwind-float``)  was added.
+  (https://github.com/PyPSA/pypsa-eur/pull/1725,
+  https://github.com/PyPSA/pypsa-eur/pull/1727)
 
-* Developer note: Scripts now use absolute imporys. When using `mock_snakemake` this 
-  might require you to add the working directory to the PYTHONPATH or in your IDE.
+* The file ``config/config.yaml`` is now fully optional.
+  (https://github.com/PyPSA/pypsa-eur/pull/1745)
+
+* Small plotting improvements.
+  (https://github.com/PyPSA/pypsa-eur/pull/1694https://github.com/PyPSA/pypsa-eur/pull/1727)
+
+**Bugfixes and Compatibility**
+
+* Select correct capital costs for floating offshore wind. Previously, the same
+  as for offshore wind were used. (https://github.com/PyPSA/pypsa-eur/pull/1701)
+
+* Efficiency correction for electrobiofuels.
+  (https://github.com/PyPSA/pypsa-eur/pull/1683)
+
+* Configuration settings for heat pump COP approximation are now correctly
+  used. (https://github.com/PyPSA/pypsa-eur/pull/1729)
+
+* In :mod:`add_existing_baseyear`, renewable carriers are only added if listed
+  in ``electricity: renewable_carriers:``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1717)
+
+* Ensure that distribution losses are only deducted from electricity demand when
+  distribution losses are modelled.
+  (https://github.com/PyPSA/pypsa-eur/pull/1668)
+
+* Sanitize columns in :mod:`add_brownfield`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1676)
+
+* Adjustments to upcoming PyPSA API changes.
+  (https://github.com/PyPSA/pypsa-eur/pull/1720,
+  https://github.com/PyPSA/pypsa-eur/pull/1750)
   
-* Fix: wildcards of build_renewable_profiles for scenario management 'base' were not the same
+* Ensure consistent use of wildcards in :mod:`build_renewable_profiles` for
+  ``run: shared_resources: policy: base``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1641)
 
-* Fix: Revert default behaviour of `-cores` for `snakemake` (https://github.com/PyPSA/pypsa-eur/pull/1650).
+* Ensure solver logs are written to file.
+  (https://github.com/PyPSA/pypsa-eur/pull/1684)
 
-* Add era5 data sources that are meant to be retrieved as part of data bundle to datafiles list in ``retrieve.smk``
+* DAG generation (`rulegraph` and `filegraph`) now correctly utilizes all
+  configuration sources (default, file-based, and command-line overrides),
+  resolving an issue where visualizations could misrepresent the actual workflow
+  execution plan. SVG output format has also been added for these graphs, and
+  error handling during graph generation has been enhanced.
+  (https://github.com/PyPSA/pypsa-eur/pull/1678)
 
-* Fix: DAG generation (`rulegraph` and `filegraph`) now correctly utilizes all 
-  configuration sources (default, file-based, and command-line overrides), resolving 
-  an issue where visualizations could misrepresent the actual workflow execution plan. 
-  SVG output format has also been added for these graphs, and error handling during 
-  graph generation has been enhanced.
+* Chore: Replace licensing information in ``.reuse/dep5`` with ``REUSE.toml`` to
+  be compliant with REUSE 3.2
+  (https://reuse.software/spec-3.2/#licensing-information).
+  (https://github.com/PyPSA/pypsa-eur/pull/1739)
 
-* Improved the behavior of ``agg_p_nom_limits``: added the ability to aggregate all ``solar`` electric technologies and included ``offwind-float`` in ``offwind`` technologies.
+* Windows compatibility improvements.
+  (https://github.com/PyPSA/pypsa-eur/pull/1602,
+  https://github.com/PyPSA/pypsa-eur/pull/1702)
 
-* Fix: plotting the storage capacity in the H2 network map
+**Developers Note**
 
-* Chore: Replace licensing information in `.reuse/dep5` with `REUSE.toml` to be compliant with REUSE 3.2 (https://reuse.software/spec-3.2/#licensing-information).
+* Scripts now use absolute imports. When using ``mock_snakemake``, adding the
+  working directory to the PYTHONPATH or in your IDE is required.
+  (https://github.com/PyPSA/pypsa-eur/pull/1643)
+
 
 PyPSA-Eur v2025.04.0 (6th April 2025)
 ========================================
@@ -381,7 +431,6 @@ PyPSA-Eur v2025.04.0 (6th April 2025)
   issue with finding missing input/output files in solving rules.
   (https://github.com/PyPSA/pypsa-eur/pull/1535)
 
-* Bugfix: Change CDIR definition in ``Snakefile`` to utilize pathlib to properly function on Windows. (https://github.com/PyPSA/pypsa-eur/pull/1602)
 
 PyPSA-Eur v2025.01.0 (24th January 2025)
 ========================================

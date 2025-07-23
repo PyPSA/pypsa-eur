@@ -81,3 +81,12 @@ rule plot_balance_maps:
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
+
+
+rule plot_power_networks_clustered:
+    input:
+        expand(
+            resources("maps/power-network-s-{clusters}.pdf"),
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
