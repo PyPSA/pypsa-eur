@@ -155,7 +155,7 @@ def build_shapes(
         y=lambda df: df["node"].y,
     )
 
-    # Correct DK, IT, GR and SE coordinates
+    # Correct DK, IT, GR, SE and GB coordinates
     if "DK" in countries:
         country_shapes.loc["DK", ["node", "x", "y"]] = bidding_shapes.loc[
             "DKE1", ["node", "x", "y"]
@@ -171,6 +171,10 @@ def build_shapes(
     if "SE" in countries:
         country_shapes.loc["SE", ["node", "x", "y"]] = bidding_shapes.loc[
             "SE01", ["node", "x", "y"]
+        ]
+    if "GB" in countries:
+        country_shapes.loc["GB", ["node", "x", "y"]] = bidding_shapes.loc[
+            "GB00", ["node", "x", "y"]
         ]
 
     return bidding_shapes, country_shapes
@@ -202,6 +206,7 @@ def build_buses(
     """
     buses = (
         pd.read_excel(buses_fn)
+        .replace("UK", "GB", regex=True)
         .merge(
             bidding_shapes[["country", "node", "x", "y"]],
             how="outer",
