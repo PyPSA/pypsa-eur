@@ -421,34 +421,43 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+
+if config["enable"]["retrieve"] and (EEZ_DATASET := dataset_version("eez"))["source"] in [
+    "primary",
+    "archive"
+]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
+            zip=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR.zip",
         output:
-            gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
+            gpkg=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR/eez_{EEZ_DATASET["version"].split("_")[0]}_lowres.gpkg",
         run:
             import os
             import requests
             from uuid import uuid4
 
-            name = str(uuid4())[:8]
-            org = str(uuid4())[:8]
+            if EEZ_DATASET["source"] == "primary":
 
-            response = requests.post(
-                "https://www.marineregions.org/download_file.php",
-                params={"name": "World_EEZ_v12_20231025_LR.zip"},
-                data={
-                    "name": name,
-                    "organisation": org,
-                    "email": f"{name}@{org}.org",
-                    "country": "Germany",
-                    "user_category": "academia",
-                    "purpose_category": "Research",
-                    "agree": "1",
-                },
-            )
+                name = str(uuid4())[:8]
+                org = str(uuid4())[:8]
+
+                response = requests.post(
+                    f"{EEZ_DATASET["url"]}",
+                    params={"name": f"World_EEZ_{EEZ_DATASET["version"]}_LR.zip"},
+                    data={
+                        "name": name,
+                        "organisation": org,
+                        "email": f"{name}@{org}.org",
+                        "country": "Germany",
+                        "user_category": "academia",
+                        "purpose_category": "Research",
+                        "agree": "1",
+                    },
+                )
+
+            elif EEZ_DATASET["source"] == "archive":
+                response = requests.get(f"{EEZ_DATASET["url"]}")
 
             with open(params["zip"], "wb") as f:
                 f.write(response.content)

@@ -104,7 +104,7 @@ rule base_network:
 rule build_osm_boundaries:
     input:
         json="data/osm-boundaries/json/{country}_adm1.json",
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        eez=ancient(rules.retrieve_eez.output[0]),
     output:
         boundary="data/osm-boundaries/build/{country}_adm1.geojson",
     log:
@@ -148,8 +148,9 @@ rule build_shapes:
         config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        eez=ancient(rules.retrieve_eez.output[0]),
         nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
+        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
         ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
         md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
         ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
