@@ -31,7 +31,7 @@ def get_compose_inputs(wildcards):
 
     inputs = {
         "clustered": f"networks/{wildcards.run}/clustered.nc",
-        "busmap": resources(f"busmap_{wildcards.run}.csv"),
+        "busmap": resources("busmap_elec_s_{clusters}.csv"),
         "tech_costs": resources(f"costs_{horizon}.csv"),
         "load": resources("electricity_demand.csv"),
         "powerplants": resources("powerplants.csv"),
@@ -42,38 +42,24 @@ def get_compose_inputs(wildcards):
         cutout_year = config["atlite"]["default_cutout"].split("-")[1][:4]
         inputs.update(
             {
-                "profile_onwind": resources(
-                    f"profile_{wildcards.run}/onwind-{cutout_year}.nc"
-                ),
-                "profile_offwind-ac": resources(
-                    f"profile_{wildcards.run}/offwind-ac-{cutout_year}.nc"
-                ),
-                "profile_offwind-dc": resources(
-                    f"profile_{wildcards.run}/offwind-dc-{cutout_year}.nc"
-                ),
+                "profile_onwind": resources(f"profile_onwind-{cutout_year}.nc"),
+                "profile_offwind-ac": resources(f"profile_offwind-ac-{cutout_year}.nc"),
+                "profile_offwind-dc": resources(f"profile_offwind-dc-{cutout_year}.nc"),
                 "profile_offwind-float": resources(
-                    f"profile_{wildcards.run}/offwind-float-{cutout_year}.nc"
+                    f"profile_offwind-float-{cutout_year}.nc"
                 ),
-                "profile_solar": resources(
-                    f"profile_{wildcards.run}/solar-{cutout_year}.nc"
-                ),
+                "profile_solar": resources(f"profile_solar-{cutout_year}.nc"),
             }
         )
     else:
         # Fallback to generic profiles without year
         inputs.update(
             {
-                "profile_onwind": resources(f"profile_{wildcards.run}/onwind.nc"),
-                "profile_offwind-ac": resources(
-                    f"profile_{wildcards.run}/offwind-ac.nc"
-                ),
-                "profile_offwind-dc": resources(
-                    f"profile_{wildcards.run}/offwind-dc.nc"
-                ),
-                "profile_offwind-float": resources(
-                    f"profile_{wildcards.run}/offwind-float.nc"
-                ),
-                "profile_solar": resources(f"profile_{wildcards.run}/solar.nc"),
+                "profile_onwind": resources("profile_onwind.nc"),
+                "profile_offwind-ac": resources("profile_offwind-ac.nc"),
+                "profile_offwind-dc": resources("profile_offwind-dc.nc"),
+                "profile_offwind-float": resources("profile_offwind-float.nc"),
+                "profile_solar": resources("profile_solar.nc"),
             }
         )
 
@@ -81,7 +67,7 @@ def get_compose_inputs(wildcards):
     if "hydro" in config.get("electricity", {}).get("renewable_carriers", []):
         inputs.update(
             {
-                "profile_hydro": resources(f"profile_{wildcards.run}/hydro.nc"),
+                "profile_hydro": resources("profile_hydro.nc"),
                 "hydro_capacities": resources("hydro_capacities.csv"),
             }
         )
@@ -97,7 +83,7 @@ def get_compose_inputs(wildcards):
     if config.get("sector", {}).get("enabled", True):
         inputs.update(
             {
-                "clustered_pop_layout": resources(f"pop_layout_{wildcards.run}.csv"),
+                "clustered_pop_layout": resources("pop_layout_elec_s_{clusters}.csv"),
                 "pop_weighted_energy_totals": resources(
                     "pop_weighted_energy_totals.csv"
                 ),
@@ -109,12 +95,10 @@ def get_compose_inputs(wildcards):
                 "aviation_demand": resources(f"aviation_demand_{horizon}.csv"),
                 "transport_demand": resources(f"transport_demand_{horizon}.csv"),
                 "transport_data": resources("transport_data.csv"),
-                "temp_air_total": resources(f"temp_air_total_{wildcards.run}.nc"),
+                "temp_air_total": resources("temp_air_total.nc"),
                 "retro_cost": resources("retrofitting_cost_energy.csv"),
                 "floor_area": resources("floor_area.csv"),
-                "biomass_potentials": resources(
-                    f"biomass_potentials_{wildcards.run}.csv"
-                ),
+                "biomass_potentials": resources("biomass_potentials.csv"),
                 "biomass_transport_costs": resources("biomass_transport_costs.csv"),
                 "co2_price": resources(f"co2_price_{horizon}.csv"),
             }
@@ -128,15 +112,15 @@ def get_compose_inputs(wildcards):
                         "pop_weighted_heat_totals.csv"
                     ),
                     "heating_efficiencies": resources("heating_efficiencies.csv"),
-                    "cop_profiles": resources(f"cop_profiles_{wildcards.run}.nc"),
+                    "cop_profiles": resources("cop_profiles_elec_s_{clusters}.nc"),
                     "hourly_heat_demand_total": resources(
-                        f"hourly_heat_demand_total_{wildcards.run}.nc"
+                        "hourly_heat_demand_total_elec_s_{clusters}.nc"
                     ),
                     "district_heat_share": resources(
-                        f"district_heat_share_{wildcards.run}.csv"
+                        "district_heat_share_elec_s_{clusters}.csv"
                     ),
                     "solar_thermal_total": (
-                        resources(f"solar_thermal_total_{wildcards.run}.csv")
+                        resources("solar_thermal_total_elec_s_{clusters}.csv")
                         if config.get("sector", {}).get("solar_thermal", False)
                         else []
                     ),
@@ -145,14 +129,14 @@ def get_compose_inputs(wildcards):
 
             # Add heat source profiles
             for source in config.get("limited_heat_sources", []):
-                inputs[source] = resources(f"{source}_{wildcards.run}.csv")
+                inputs[source] = resources(f"{source}_elec_s_{{clusters}}.csv")
 
         # Add transport profiles if transport is enabled
         if config.get("sector", {}).get("transport", False):
             inputs.update(
                 {
-                    "avail_profile": resources(f"avail_profile_{wildcards.run}.csv"),
-                    "dsm_profile": resources(f"dsm_profile_{wildcards.run}.csv"),
+                    "avail_profile": resources("avail_profile_elec_s_{clusters}.csv"),
+                    "dsm_profile": resources("dsm_profile_elec_s_{clusters}.csv"),
                 }
             )
 
@@ -160,7 +144,7 @@ def get_compose_inputs(wildcards):
         if config.get("sector", {}).get("H2_network", True):
             inputs["h2_cavern"] = resources("salt_cavern_potentials.csv")
             inputs["clustered_gas_network"] = resources(
-                f"gas_network_{wildcards.run}.csv"
+                "gas_network_elec_s_{clusters}.csv"
             )
 
         # Add CO2 infrastructure if enabled
@@ -375,10 +359,4 @@ rule validate_results:
         "../scripts/validate_results.py"
 
 
-# Helper functions for resources
-def resources(filename):
-    """Return path to resource file."""
-    run_name = config["run"]["name"]
-    if isinstance(run_name, list):
-        run_name = run_name[0]  # Use first run for shared resources
-    return f"resources/{run_name}/{filename}"
+# No custom resources function needed - use existing path provider
