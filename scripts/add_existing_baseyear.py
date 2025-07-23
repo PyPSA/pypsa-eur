@@ -68,6 +68,7 @@ def add_existing_renewables(
     costs: pd.DataFrame,
     df_agg: pd.DataFrame,
     countries: list[str],
+    renewable_carriers: list[str],
 ) -> None:
     """
     Add existing renewable capacities to conventional power plant data.
@@ -82,6 +83,8 @@ def add_existing_renewables(
         Network containing topology and generator data
     countries : list
         List of country codes to consider
+    renewable_carriers: list
+        List of renewable carriers in the network
 
     Returns
     -------
@@ -97,6 +100,8 @@ def add_existing_renewables(
     irena = irena.unstack().reset_index()
 
     for carrier, tech in tech_map.items():
+        if carrier not in renewable_carriers:
+            continue
         df = (
             irena[irena.Technology.str.contains(tech)]
             .drop(columns=["Technology"])
@@ -149,6 +154,7 @@ def add_power_capacities_installed_before_baseyear(
     countries: list[str],
     capacity_threshold: float,
     lifetime_values: dict[str, float],
+    renewable_carriers: list[str],
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -171,6 +177,8 @@ def add_power_capacities_installed_before_baseyear(
         Minimum capacity threshold
     lifetime_values : dict
         Default values for missing data
+    renewable_carriers: list
+        List of renewable carriers in the network
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -223,6 +231,7 @@ def add_power_capacities_installed_before_baseyear(
         costs=costs,
         n=n,
         countries=countries,
+        renewable_carriers=renewable_carriers,
     )
     # drop assets which are already phased out / decommissioned
     phased_out = df_agg[df_agg["DateOut"] < baseyear].index
@@ -726,6 +735,8 @@ if __name__ == "__main__":
 
     options = snakemake.params.sector
 
+    renewable_carriers = snakemake.params.carriers
+
     baseyear = snakemake.params.baseyear
 
     n = pypsa.Network(snakemake.input.network)
@@ -752,6 +763,7 @@ if __name__ == "__main__":
         countries=snakemake.config["countries"],
         capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
         lifetime_values=snakemake.params.costs["fill_values"],
+        renewable_carriers=renewable_carriers,
     )
 
     if options["heating"]:

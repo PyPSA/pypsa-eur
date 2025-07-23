@@ -1,0 +1,25 @@
+version = 1
+SPDX-PackageName = "PyPSA-Eur"
+SPDX-PackageSupplier = "Tom Brown <t.brown@tu-berlin.de>"
+SPDX-PackageDownloadLocation = "https://github.com/pypsa/pypsa-eur"
+
+[[annotations]]
+path = [
+    "data/**",
+    "doc/configtables/*",
+    "doc/data.csv",
+    "doc/img/*",
+    "test/test_data/*",
+]
+SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    ".github/**",
+    "borg-it",
+    "envs/*.lock.yaml",
+    "matplotlibrc",
+]
+SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
+SPDX-License-Identifier = "CC0-1.0"
