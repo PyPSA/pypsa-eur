@@ -750,10 +750,7 @@ def add_steel_industry_existing(n):
 
     # PARAMETERS
     nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(nyears)
-
-    # if options['endo_industry']['regional_steel_demand']:
-    #     min_part_load_steel = 0
+    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(options, nyears)
     
     # check if existing capacity is bigger than demand
     steel_load = n.loads[n.loads.carrier=="steel"].p_set.sum()
@@ -892,9 +889,7 @@ def add_cement_industry_existing(n):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000/nhours * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-    min_part_load_cement = 0.5
-    # if options['endo_industry']['regional_cement_demand']:
-    #     min_part_load_cement = 0
+    min_part_load_cement = options["min_part_load_cement"]
 
     n.add(
         "Link",
@@ -948,9 +943,7 @@ def add_chemicals_industry_existing(n, options):
     else:
         cap_decrease = 1
     ########### Add existing ammonia production capacities ############
-    min_part_load_hb=0.3
-    # if options['ammonia'] == 'regional':
-    #     min_part_load_hb = 0
+    min_part_load_hb = options["min_part_load_hb"]
 
     n.add(
         "Link",
@@ -1052,10 +1045,7 @@ def add_chemicals_industry_existing(n, options):
 
         # we need to account for CO2 emissions from HVC decay
         decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
-        min_part_load_hvc = 0.3
-
-        #if options['endo_industry']['regional_hvc']:
-        #    min_part_load_hvc = 0
+        min_part_load_hvc = options["min_part_load_hvc"]
         
         n.add(
             "Link",
