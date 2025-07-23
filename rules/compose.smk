@@ -29,10 +29,10 @@ def get_compose_inputs(wildcards):
     else:
         horizons = [int(h) for h in planning_horizons]
 
-    # Get cluster count from config
-    clusters = (
-        config.get("clustering", {}).get("cluster_network", {}).get("n_clusters", 50)
-    )
+    # Get cluster count from config using config_provider
+    clusters = config_provider(
+        "clustering", "cluster_network", "n_clusters", default=50
+    )(wildcards)
 
     inputs = {
         "clustered": f"networks/{wildcards.run}/clustered.nc",
@@ -69,7 +69,10 @@ def get_compose_inputs(wildcards):
         )
 
     # Add hydro if enabled
-    if "hydro" in config.get("electricity", {}).get("renewable_carriers", []):
+    renewable_carriers = config_provider(
+        "electricity", "renewable_carriers", default=[]
+    )(wildcards)
+    if "hydro" in renewable_carriers:
         inputs.update(
             {
                 "profile_hydro": resources("profile_hydro.nc"),
@@ -78,14 +81,21 @@ def get_compose_inputs(wildcards):
         )
 
     # Add conventional inputs
-    if config.get("conventional", {}).get("unit_commitment", False):
+    unit_commitment = config_provider("conventional", "unit_commitment", default=False)(
+        wildcards
+    )
+    if unit_commitment:
         inputs["unit_commitment"] = resources("unit_commitment.csv")
 
-    if config.get("conventional", {}).get("dynamic_fuel_price", False):
+    dynamic_fuel_price = config_provider(
+        "conventional", "dynamic_fuel_price", default=False
+    )(wildcards)
+    if dynamic_fuel_price:
         inputs["fuel_price"] = resources("fuel_price.csv")
 
     # Add sector-specific inputs if sector coupling is enabled
-    if config.get("sector", {}).get("enabled", True):
+    sector_enabled = config_provider("sector", "enabled", default=True)(wildcards)
+    if sector_enabled:
         inputs.update(
             {
                 "clustered_pop_layout": resources(f"pop_layout_elec_s_{clusters}.csv"),
@@ -110,7 +120,8 @@ def get_compose_inputs(wildcards):
         )
 
         # Add heat-related inputs if heating is enabled
-        if config.get("sector", {}).get("heating", False):
+        heating_enabled = config_provider("sector", "heating", default=False)(wildcards)
+        if heating_enabled:
             inputs.update(
                 {
                     "pop_weighted_heat_totals": resources(
@@ -126,18 +137,26 @@ def get_compose_inputs(wildcards):
                     ),
                     "solar_thermal_total": (
                         resources(f"solar_thermal_total_elec_s_{clusters}.csv")
-                        if config.get("sector", {}).get("solar_thermal", False)
+                        if config_provider("sector", "solar_thermal", default=False)(
+                            wildcards
+                        )
                         else []
                     ),
                 }
             )
 
             # Add heat source profiles
-            for source in config.get("limited_heat_sources", []):
+            limited_heat_sources = config_provider("limited_heat_sources", default=[])(
+                wildcards
+            )
+            for source in limited_heat_sources:
                 inputs[source] = resources(f"{source}_elec_s_{clusters}.csv")
 
         # Add transport profiles if transport is enabled
-        if config.get("sector", {}).get("transport", False):
+        transport_enabled = config_provider("sector", "transport", default=False)(
+            wildcards
+        )
+        if transport_enabled:
             inputs.update(
                 {
                     "avail_profile": resources(f"avail_profile_elec_s_{clusters}.csv"),
@@ -146,14 +165,20 @@ def get_compose_inputs(wildcards):
             )
 
         # Add hydrogen infrastructure if enabled
-        if config.get("sector", {}).get("H2_network", True):
+        h2_network_enabled = config_provider("sector", "H2_network", default=True)(
+            wildcards
+        )
+        if h2_network_enabled:
             inputs["h2_cavern"] = resources("salt_cavern_potentials.csv")
             inputs["clustered_gas_network"] = resources(
                 f"gas_network_elec_s_{clusters}.csv"
             )
 
         # Add CO2 infrastructure if enabled
-        if config.get("sector", {}).get("co2_network", False):
+        co2_network_enabled = config_provider("sector", "co2_network", default=False)(
+            wildcards
+        )
+        if co2_network_enabled:
             inputs["sequestration_potential"] = resources(
                 "co2_sequestration_potential.csv"
             )
@@ -205,17 +230,17 @@ rule cluster_network:
     output:
         network="networks/{run}/clustered.nc",
         busmap=lambda w: resources(
-            f"busmap_elec_s_{config.get('clustering',{}).get('cluster_network',{}).get('n_clusters',50)}.csv"
+            f"busmap_elec_s_{config_provider('clustering', 'cluster_network', 'n_clusters', default=50)(w)}.csv"
         ),
     params:
-        clusters=lambda w: config.get("clustering", {})
-        .get("cluster_network", {})
-        .get("n_clusters", 50),
-        focus_weights=lambda w: config.get("clustering", {}).get("focus_weights", None),
-        solver_name=lambda w: config["solving"]["solver"]["name"],
-        algorithm=lambda w: config.get("clustering", {})
-        .get("cluster_network", {})
-        .get("algorithm", "kmeans"),
+        clusters=config_provider(
+            "clustering", "cluster_network", "n_clusters", default=50
+        ),
+        focus_weights=config_provider("clustering", "focus_weights", default=None),
+        solver_name=config_provider("solving", "solver", "name"),
+        algorithm=config_provider(
+            "clustering", "cluster_network", "algorithm", default="kmeans"
+        ),
     log:
         "logs/{run}/cluster_network.log",
     threads: 1
@@ -232,44 +257,42 @@ rule compose_network:
     output:
         "networks/{run}/composed_{horizon}.nc",
     params:
-        # Pass entire config sections
-        temporal=lambda w: config["temporal"],
-        electricity=lambda w: config.get("electricity", {}),
-        sector=lambda w: config.get("sector", {}),
-        clustering=lambda w: config.get("clustering", {}),
-        clustering_temporal=lambda w: config.get("clustering", {}).get("temporal", {}),
-        existing_capacities=lambda w: config.get("existing_capacities", {}),
-        pypsa_eur=lambda w: config.get("pypsa_eur", ["AC", "DC"]),
-        renewable=lambda w: config.get("renewable", {}),
-        conventional=lambda w: config.get("conventional", {}),
-        costs=lambda w: config.get("costs", {}),
-        load=lambda w: config.get("load", {}),
-        lines=lambda w: config.get("lines", {}),
-        links=lambda w: config.get("links", {}),
-        industry=lambda w: config.get("industry", {}),
-        limited_heat_sources=lambda w: config.get("limited_heat_sources", []),
+        # Pass entire config sections using config_provider
+        temporal=config_provider("temporal"),
+        electricity=config_provider("electricity", default={}),
+        sector=config_provider("sector", default={}),
+        clustering=config_provider("clustering", default={}),
+        clustering_temporal=config_provider("clustering", "temporal", default={}),
+        existing_capacities=config_provider("existing_capacities", default={}),
+        pypsa_eur=config_provider("pypsa_eur", default=["AC", "DC"]),
+        renewable=config_provider("renewable", default={}),
+        conventional=config_provider("conventional", default={}),
+        costs=config_provider("costs", default={}),
+        load=config_provider("load", default={}),
+        lines=config_provider("lines", default={}),
+        links=config_provider("links", default={}),
+        industry=config_provider("industry", default={}),
+        limited_heat_sources=config_provider("limited_heat_sources", default=[]),
         # Direct parameters
-        countries=lambda w: config.get("countries", []),
-        snapshots=lambda w: config.get("snapshots", {}),
-        drop_leap_day=lambda w: config.get("enable", {}).get("drop_leap_day", False),
+        countries=config_provider("countries", default=[]),
+        snapshots=config_provider("snapshots", default={}),
+        drop_leap_day=config_provider("enable", "drop_leap_day", default=False),
         # Run identification
-        run_name=lambda w: wildcards.run,
+        run_name=lambda w: w.run,
         # Derived parameters
-        energy_totals_year=lambda w: config.get("energy", {}).get(
-            "energy_totals_year", 2019
-        ),
+        energy_totals_year=config_provider("energy", "energy_totals_year", default=2019),
         # Brownfield settings (for myopic)
-        h2_retrofit=lambda w: config.get("sector", {}).get("H2_retrofit", False),
-        h2_retrofit_capacity_per_ch4=lambda w: config.get("sector", {}).get(
-            "H2_retrofit_capacity_per_CH4", 0.6
+        h2_retrofit=config_provider("sector", "H2_retrofit", default=False),
+        h2_retrofit_capacity_per_ch4=config_provider(
+            "sector", "H2_retrofit_capacity_per_CH4", default=0.6
         ),
-        capacity_threshold=lambda w: config.get("existing_capacities", {}).get(
-            "threshold_capacity", 10
+        capacity_threshold=config_provider(
+            "existing_capacities", "threshold_capacity", default=10
         ),
         # CO2 budget handling
-        co2_budget=lambda w: config.get("co2_budget", {}).get("budget_national", None),
-        emissions_scope=lambda w: config.get("co2_budget", {}).get(
-            "emissions_scope", "total"
+        co2_budget=config_provider("co2_budget", "budget_national", default=None),
+        emissions_scope=config_provider(
+            "co2_budget", "emissions_scope", default="total"
         ),
     log:
         "logs/{run}/compose_network_{horizon}.log",
@@ -288,17 +311,19 @@ rule solve_network:
         "networks/{run}/solved_{horizon}.nc",
         "logs/{run}/solver_{horizon}.log",
     params:
-        temporal=lambda w: config["temporal"],
-        solver=lambda w: config["solving"]["solver"],
-        solver_options=lambda w: config["solving"]["solver_options"][
-            config["solving"]["solver"]["name"]
-        ],
-        solving=lambda w: config["solving"],
+        temporal=config_provider("temporal"),
+        solver=config_provider("solving", "solver"),
+        solver_options=lambda w: config_provider(
+            "solving",
+            "solver_options",
+            config_provider("solving", "solver", "name")(w),
+        )(w),
+        solving=config_provider("solving"),
     log:
         python="logs/{run}/solve_network_{horizon}.log",
-    threads: config["solving"]["solver"]["threads"]
+    threads: lambda w: config_provider("solving", "solver", "threads")(w)
     resources:
-        mem_mb=config["solving"]["mem"],
+        mem_mb=lambda w: config_provider("solving", "mem")(w),
     shadow:
         "minimal"
     script:
@@ -311,11 +336,7 @@ rule prepare_networks:
     input:
         lambda w: expand(
             "networks/{run}/composed_{horizon}.nc",
-            run=(
-                config["run"]["name"]
-                if isinstance(config["run"]["name"], str)
-                else config["run"]["name"]
-            ),
+            run=config_provider("run", "name")(w),
             horizon=get_final_horizon(),
         ),
 
@@ -325,11 +346,7 @@ rule solve_networks:
     input:
         lambda w: expand(
             "networks/{run}/solved_{horizon}.nc",
-            run=(
-                config["run"]["name"]
-                if isinstance(config["run"]["name"], str)
-                else config["run"]["name"]
-            ),
+            run=config_provider("run", "name")(w),
             horizon=get_final_horizon(),
         ),
 
@@ -383,9 +400,9 @@ rule validate_results:
     output:
         validation_report="results/{run}/validation_report_{horizon}.html",
     params:
-        clusters=lambda w: config["clustering"]["cluster_network"]["n_clusters"],
-        opts=lambda w: config.get("opts", ""),
-        sector_opts=lambda w: config.get("sector_opts", ""),
+        clusters=config_provider("clustering", "cluster_network", "n_clusters"),
+        opts=config_provider("opts", default=""),
+        sector_opts=config_provider("sector_opts", default=""),
         planning_horizons=lambda w: w.horizon,
     log:
         "logs/{run}/validate_results_{horizon}.log",
