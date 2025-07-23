@@ -443,14 +443,15 @@ def prepare_network(
     pypsa.Network
         Modified PyPSA network with added constraints
     """
-    for df in (
-        n.generators_t.p_max_pu,
-        n.generators_t.p_min_pu,
-        n.links_t.p_max_pu,
-        n.links_t.p_min_pu,
-        n.storage_units_t.inflow,
-    ):
-        df = df.round(solve_opts["decimal_precision_p_min_max_pu"])
+    if "clip_p_max_pu" in solve_opts:
+        for df in (
+            n.generators_t.p_max_pu,
+            n.generators_t.p_min_pu,
+            n.links_t.p_max_pu,
+            n.links_t.p_min_pu,
+            n.storage_units_t.inflow,
+        ):
+            df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
     if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay

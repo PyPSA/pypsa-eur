@@ -985,7 +985,7 @@ adjustments:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
   options:
-    decimal_precision_p_min_max_pu: 5
+    clip_p_max_pu: 1.e-2
     load_shedding: false
     curtailment_mode: false
     noisy_costs: true
