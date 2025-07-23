@@ -1,0 +1,165 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Example configuration for streamlined workflow
+# This demonstrates the new 4-step workflow: base → clustered → composed → solved
+
+run:
+  name: streamlined-example  # Single run name, no wildcards
+  disable_progressbar: false
+  shared_resources:
+    policy: false
+    exclude: []
+  shared_cutouts: true
+
+# Enable streamlined workflow
+enable:
+  retrieve: auto
+  retrieve_databundle: true
+  retrieve_cost_data: true
+  build_cutout: false
+  retrieve_cutout: true
+  drop_leap_day: true
+  streamlined_workflow: true  # KEY: Enable new workflow
+
+# Temporal configuration replaces foresight and planning_horizons wildcards
+temporal:
+  foresight: myopic  # Options: overnight, myopic, perfect
+  planning_horizons: [2030, 2040, 2050]  # List for myopic/perfect, single value for overnight
+
+# No scenario section with wildcards!
+# All configuration is now direct:
+
+# Clustering configuration (replaces {clusters} wildcard)
+clustering:
+  focus_weights: false
+  cluster_network:
+    algorithm: kmeans
+    n_clusters: 128  # Direct value, not wildcard
+    hac_features:
+    - solar
+    - onwind
+    - offwind
+    - influx_direct
+    - influx_diffuse
+    - temperature
+    - wnd100m
+    temporal:
+      resolution_sector: 24h
+
+# Electricity options (replaces {opts} wildcard)
+electricity:
+  renewable_carriers:
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - offwind-float
+  - solar
+  - hydro
+  extendable_carriers:
+    Generator:
+    - onwind
+    - offwind-ac
+    - offwind-dc
+    - offwind-float
+    - solar
+    StorageUnit:
+    - battery
+    - H2
+  conventional_carriers:
+  - nuclear
+  - oil
+  - OCGT
+  - CCGT
+  - coal
+  - lignite
+  - geothermal
+  co2limit: 100.0e+6  # Direct value, not wildcard
+  transmission_limit: vopt
+  max_hours:
+    battery: 6
+    H2: 168
+
+# Sector configuration (replaces {sector_opts} wildcard)
+sector:
+  enabled: true
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  shipping: true
+  aviation: true
+  agriculture: true
+  dac: false
+  allam_cycle_gas: false
+  waste_incineration: true
+  electricity_transmission_grid: true
+  H2_network: true
+  gas_network: false
+  co2_network: false
+  cluster_heat_buses: true
+  co2limit_enable: true
+  gaslimit_enable: false
+
+  # Additional sector-specific options
+  conventional_generation:
+    OCGT: gas
+    CCGT: gas
+    coal: coal
+    oil: oil
+    nuclear: uranium
+
+  district_heating:
+    enable: true
+    progress: 0.6
+    potential: 0.6
+    costs_urban: true
+    costs_rural: false
+
+# Solving configuration
+solving:
+  solver:
+    name: highs
+    threads: 4
+  mem: 100000
+  runtime: 24h
+  options:
+    highs:
+      threads: 4
+      solver: ipm
+      run_crossover: "off"
+      small_matrix_value: 1e-6
+      large_matrix_value: 1e9
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      ipm_optimality_tolerance: 1e-4
+      parallel: "on"
+      random_seed: 123
+
+# Cost assumptions
+costs:
+  year: 2030
+  version: v0.9.0
+  social_discountrate: 0.02
+  fill_values:
+    FOM: 0
+    VOM: 0
+    efficiency: 1
+    fuel: 0
+    investment: 0
+    lifetime: 25
+    discount rate: 0.07
+
+# Countries to include
+countries: [AL, AT, BA, BE, BG, CH, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IT, LT, LU, LV, ME, MK, NL, NO, PL, PT, RO, RS, SE, SI, SK]
+
+# Snapshots configuration
+snapshots:
+  start: "2019-01-01"
+  end: "2020-01-01"
+  inclusive: 'left'
+
+# Example invocation:
+# snakemake -s Snakefile solve_networks --configfile config/config.streamlined-example.yaml
+# This will run the complete workflow for all planning horizons

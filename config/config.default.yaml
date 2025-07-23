@@ -31,6 +31,12 @@ run:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
 foresight: overnight
 
+# Temporal configuration for streamlined workflow
+# Only used when enable.streamlined_workflow is true
+temporal:
+  foresight: overnight  # overnight, myopic, or perfect
+  planning_horizons: 2050  # Single year or list [2030, 2040, 2050]
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
@@ -94,6 +100,7 @@ enable:
   build_cutout: false
   retrieve_cutout: true
   drop_leap_day: true
+  streamlined_workflow: false  # Enable new streamlined 4-step workflow
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:

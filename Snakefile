@@ -64,6 +64,12 @@ include: "rules/postprocess.smk"
 include: "rules/development.smk"
 
 
+# Include streamlined compose rules if enabled
+if config.get("enable", {}).get("streamlined_workflow", False):
+
+    include: "rules/compose.smk"
+
+
 if config["foresight"] == "overnight":
 
     include: "rules/solve_overnight.smk"
