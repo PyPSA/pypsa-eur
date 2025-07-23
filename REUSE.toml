@@ -23,3 +23,10 @@ path = [
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+    "report/**",
+]
+SPDX-FileCopyrightText = "Open Energy Transition gGmbH"
+SPDX-License-Identifier = "MIT"
