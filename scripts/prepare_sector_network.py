@@ -3233,7 +3233,9 @@ def add_heat(
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=(1 / cop_heat_pump.clip(lower=0.001)).replace(1000, 0),
-                    efficiency2=(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(1000, 0),
+                    efficiency2=(1 / (cop_heat_pump - 1).clip(lower=0.001)).replace(
+                        1000, 0
+                    ),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
