@@ -6,20 +6,22 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
+  name: "all"
   #- import_policy_reg_deindustrial
   #- import_policy_reg_regain
-  #- base_eu_deindustrial
+  #- base_reg_deindustrial
   #- base_reg_regain
-  - policy_reg_regain_flex
-  - policy_eu_regain_flex
-  - policy_reg_deindustrial_flex
-  - policy_eu_deindustrial_flex
+  #- policy_reg_regain
+  #- policy_reg_deindustrial
+  #- policy_eu_regain_flex
+  #- policy_reg_deindustrial_flex
+  #- policy_eu_deindustrial_flex
   #- policy_eu_regain
   #- policy_eu_deindustrial
+  #- policy_reg_deindustrial_pf
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios_45.yaml
+    file: config/industry_policy_scenarios_45_maintain.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
@@ -141,7 +143,6 @@ sector:
     regional_cement_demand: false
     empirical_demand_growth: false
     endo_chemicals: true
-    # Ammonia
     endo_ammonia: true # if true it also skips the ammonia cracker for simplicity
     endo_hvc: true # Adding biomass_to_liquid and biomass_to_liquid_cc
     endo_methanol: true

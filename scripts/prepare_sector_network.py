@@ -1542,8 +1542,8 @@ def add_ammonia(
 
     min_part_load_hb=options['min_part_load_hb']
 
-    if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
-        min_part_load_hb = 0.1
+    #if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
+    #    min_part_load_hb = 0.1
 
     n.add(
         "Link",
@@ -5251,14 +5251,6 @@ def clean_industry_df(df, sector):
 
 def add_steel_industry(n, investment_year, steel_data, options):
 
-    # Remove loads for previous iundustry
-    """
-    n.loads.drop(n.loads.index[n.loads.carrier == "gas for industry"], inplace=True)
-    n.loads.drop(n.loads.index[n.loads.carrier == "H2 for industry"], inplace=True)
-    n.loads.drop(n.loads.index[n.loads.carrier == "industry electricity"], inplace=True)
-    n.loads.drop(n.loads.index[n.loads.carrier == "process emissions"], inplace=True)
-    n.loads.drop(n.loads.index[n.loads.carrier == "coal for industry"], inplace=True)
-    """
     # Steel production demanded in Europe in Mton of steel products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
     capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
@@ -5627,7 +5619,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
-    min_part_load_cement = 0.5
+    min_part_load_cement = options["min_part_load_cement"]
     
     n.add(
         "Link",
