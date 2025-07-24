@@ -1,113 +1,185 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-"""Build district heating areas with missing country handling.
+"""
+Build and validate district heating areas for energy system modeling.
+District heating areas are used for computing heat source and storage potentials.
 
-This script processes district heating areas data and handles missing countries
-according to the configured strategy (ignore, fill, or raise).
+This script processes district heating (DH) areas data from external sources and
+ensures all modeled countries have consistent representation. It handles missing
+countries that exist in the onshore regions but lack district heating data according
+to configurable strategies.
+
+The script supports three strategies for handling missing countries:
+- 'ignore': Countries without DH data are assumed to have no district heating
+- 'fill': Countries are assigned their full onshore region as potential DH area  
+- 'raise': Missing countries cause an error to ensure explicit handling
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    countries: ['DE', 'FR', 'ES', ...]  # List of modeled countries
+    sector:
+        district_heating:
+            dh_areas:
+                handle_missing_countries: 'ignore'  # or 'fill' or 'raise'
+
+Inputs
+------
+- `data/dh_areas.gpkg`: District heating areas data (GeoPackage format)
+- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions for reference
+
+Outputs
+-------
+- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: Processed district heating areas with missing countries handled
 """
 
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from shapely.geometry import Polygon
+# shapely.geometry import removed as Polygon is not used in this script
 from scripts._helpers import set_scenario_config
 
 
 
 def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handle_mode):
-    """Add or fill missing countries in dh_areas according to handle_mode.
+    """Handle countries that exist in onshore regions but lack district heating data.
+    
+    This function ensures consistency between the modeled countries and the available
+    district heating areas data. It's common for some countries to lack detailed DH
+    infrastructure data, which needs to be handled explicitly to avoid modeling errors.
     
     Parameters
     ----------
     dh_areas : gpd.GeoDataFrame
-        Existing district heating areas data.
+        Existing district heating areas data with columns: Label, country, Dem_GWh, geometry
     regions_onshore : gpd.GeoDataFrame
-        Onshore regions data to use for filling missing countries.
+        Onshore regions data to use for filling missing countries
     missing_countries : pd.Index
-        Index of country codes that are missing from dh_areas.
+        Index of country codes (2-letter ISO codes) missing from dh_areas
     handle_mode : str
-        How to handle missing countries. Options:
-        - 'ignore': Add countries with no geometry
-        - 'fill': Add countries with onshore region geometry  
-        - 'raise': Raise an error
+        Strategy for handling missing countries:
+        - 'ignore': Assume no district heating exists (returns unchanged data)
+        - 'fill': Use full onshore region as potential DH area
+        - 'raise': Fail with informative error message
         
     Returns
     -------
     gpd.GeoDataFrame
-        Updated dh_areas with missing countries handled.
+        Updated dh_areas with missing countries handled according to strategy
         
     Raises
     ------
     ValueError
-        If handle_mode is 'raise' or an invalid mode is provided.
+        If handle_mode is 'raise' or an invalid mode is provided
     """
-    # Create new rows based on handling mode
     if handle_mode == "ignore":
-        return dh_areas # No changes, just return original GeoDataFrame
+        # Strategy: Assume missing countries have no district heating infrastructure
+        # This is conservative but may underestimate DH potential in some regions
+        return dh_areas  # No changes needed - missing countries simply won't appear
+    
     elif handle_mode == "fill":
-        # Add countries using their onshore region geometry
+        # Strategy: Use full onshore region geometry as potential DH area
+        # This is optimistic but ensures no country is excluded
+        # Create entries for missing countries using their onshore region boundaries
         new_rows = []
         for country_code in missing_countries:
-            # Filter regions for this country
+            # Find all regions belonging to this country
+            # Region names typically start with 2-letter country code (e.g., 'DE 1', 'FR 2')
             country_regions = regions_onshore[regions_onshore['name'].str.startswith(country_code)]
+            
+            # Merge all regions of this country into a single geometry
+            # This creates the maximum possible DH area for the country
             country_geometry = country_regions.union_all()
             
-            # Convert geometry to match dh_areas CRS
+            # Handle CRS conversion using temporary GeoSeries
             if country_geometry is not None and not country_geometry.is_empty:
-                # Create a temporary GeoSeries to handle CRS conversion
                 temp_geoseries = gpd.GeoSeries([country_geometry], crs=regions_onshore.crs)
                 country_geometry = temp_geoseries.to_crs(dh_areas.crs).iloc[0]
             
+            # Create new row with country's full onshore area as potential DH area
             new_rows.append({
-                "Label": np.nan,
-                "country": country_code,
-                "Dem_GWh": np.nan,
-                "geometry": country_geometry
+                "Label": np.nan,           # No specific DH area label
+                "country": country_code,   # 2-letter ISO country code
+                "Dem_GWh": np.nan,        # No demand data available
+                "geometry": country_geometry  # Full country geometry
             })
 
-        # Add new rows to the GeoDataFrame if any were created
-        new_gdf = gpd.GeoDataFrame(new_rows, geometry="geometry", crs=dh_areas.crs)
-        return pd.concat([dh_areas, new_gdf], ignore_index=True)
+        # Append new country entries to existing DH areas data
+        if new_rows:  # Only create GeoDataFrame if there are rows to add
+            new_gdf = gpd.GeoDataFrame(new_rows, geometry="geometry", crs=dh_areas.crs)
+            return pd.concat([dh_areas, new_gdf], ignore_index=True)
+        else:
+            return dh_areas  # No missing countries to add
     elif handle_mode == "raise":
+        # Strategy: Fail explicitly to force manual handling of missing countries
+        # This ensures users are aware of data gaps and make conscious decisions
         raise ValueError(
-            f"The following countries are missing in the district heating areas data: {missing_countries.to_list()}. Set `config:sector:district_heating:   handle_missing_countries` to 'ignore' to assume no district heating areas in these countries or 'fill' if you want to assume they have the same district heating areas as their onshore regions. `dh_areas` are used for the computation of some heat sources and storage potentials but not heat load."
+            f"Missing district heating data for countries: {missing_countries.to_list()}. "
+            f"Configure 'sector.district_heating.dh_areas.handle_missing_countries' to:\n"
+            f"  - 'ignore': Assume no DH infrastructure in missing countries\n"
+            f"  - 'fill': Use full onshore regions as potential DH areas\n"
+            f"  - 'raise': Current setting - requires explicit data or configuration\n\n"
+            f"Note: DH areas affect heat source/storage potential calculations but not heat demand."
         )
     else:
+        # Invalid configuration
         raise ValueError(
-            f"Invalid value for `config:sector:district_heating:   handle_missing_countries`: {handle_mode}. Valid values are 'ignore', 'fill', or 'raise'."
+            f"Invalid handle_missing_countries setting: '{handle_mode}'. "
+            f"Valid options: 'ignore', 'fill', 'raise'"
         )
 
 if __name__ == "__main__":
+    # Mock snakemake object for development/testing
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",
-            clusters=48,
-            planning_horizons="2050",
+            "build_cop_profiles",       # Rule name for testing
+            clusters=48,               # Number of network clusters
+            planning_horizons="2050",   # Planning year
         )
 
+    # Apply scenario configuration from Snakemake workflow
     set_scenario_config(snakemake)
 
-    # Load input data
+    # Load input geographic data
+    # District heating areas: contains existing DH infrastructure boundaries
     dh_areas: gpd.GeoDataFrame = gpd.read_file(snakemake.input.dh_areas)
+    
+    # Onshore regions: contains all modeled country/region boundaries
+    # Used as reference for identifying missing countries and potential fill geometries
     regions_onshore: gpd.GeoDataFrame = gpd.read_file(snakemake.input.regions_onshore)
 
-    # Identify countries present in onshore regions but missing from dh_areas
+    # Identify discrepancies between modeled countries and available DH data
+    # Extract country codes from region names (assumes format like 'DE 1', 'FR 2', etc.)
     region_countries = set([name.split()[0][:2] for name in regions_onshore['name']])
+    
+    # Get countries that already have DH area data
     dh_countries = set(dh_areas['country'].unique())
+    
+    # Find countries in the model but missing from DH areas data
+    # These countries need to be handled according to the configured strategy
     missing_countries = pd.Index(list(region_countries - dh_countries))
 
 
-    # Handle missing countries according to configuration
+    # Process missing countries according to configured strategy
     if not missing_countries.empty:
+        print(f"Found {len(missing_countries)} missing countries: {list(missing_countries)}")
+        print(f"Handling strategy: {snakemake.params['handle_missing_countries']}")
+        
         dh_areas = handle_missing_countries(
             dh_areas,
             regions_onshore,
             missing_countries,
             snakemake.params["handle_missing_countries"]
         )
+    else:
+        print("All modeled countries have district heating areas data")
 
-    # Save the processed district heating areas
+    # Save the processed district heating areas for downstream use
+    # Output format: GeoJSON for compatibility with other PyPSA-Eur scripts
     dh_areas.to_file(snakemake.output.dh_areas, driver="GeoJSON")
+    print(f"Saved {len(dh_areas)} district heating areas to {snakemake.output.dh_areas}")
