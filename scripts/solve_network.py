@@ -53,7 +53,7 @@ from scripts._helpers import (
 )
 
 logger = logging.getLogger(__name__)
-pypsa.pf.logger.setLevel(logging.WARNING)
+pypsa.network.power_flow.logger.setLevel(logging.WARNING)
 
 
 class ObjectiveValueError(Exception):
