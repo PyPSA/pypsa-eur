@@ -12,6 +12,19 @@ localrules:
     solve_sector_networks,
 
 
+rule build_costs:
+    input:
+        lambda w: (
+            [resources(f"costs_{config_provider('costs', 'year')(w)}_prepped.csv")]
+            if config_provider("foresight")(w) == "overnight"
+            else expand(
+                resources("costs_{planning_horizons}_prepped.csv"),
+                **config["scenario"],
+                run=config["run"]["name"],
+            )
+        ),
+
+
 rule cluster_networks:
     input:
         expand(

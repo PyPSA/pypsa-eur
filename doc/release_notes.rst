@@ -11,7 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Feature: Introduce a new method to overwrite costs (https://github.com/PyPSA/pypsa-eur/pull/1752). Modifications to the default technico-economic assumptions can now be enabled in the configuration using the `costs:custom_costs` setting (default value: `false`). When enabled, modifications specified in the file `data/custom_costs.csv` are applied to the default `resources/costs_{planning_horizons}.csv` files. The implementation maintains backwards compatibility with existing approaches via `costs:overwrites` and `costs:capital_cost`/`costs:marginal_cost` parameters.
+
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
+
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
