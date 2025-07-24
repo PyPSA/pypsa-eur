@@ -480,7 +480,6 @@ sector:
   heating: true
   biomass: true
   industry: true
-  shipping: true
   aviation: true
   agriculture: true
   fossil_fuels: true
