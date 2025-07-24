@@ -1356,7 +1356,9 @@ def extra_functionality(
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
-    if config['sector']['district_heating']['ptes']['storage_temperature_boosting']:
+    if config['foresight'] == 'perfect':
+        logger.warning("Boosting constraints are not used with perfect foresight.")
+    if config['sector']['district_heating']['ptes']['storage_temperature_boosting'] and not config['foresight'] == 'perfect':
         add_storage_temperature_boosting_constraints(
             n,
             ptes_temperature_boost_ratio_profile_file=ptes_temperature_boost_ratio_profile_file,
@@ -1364,7 +1366,7 @@ def extra_functionality(
             cop_profiles_file=cop_profiles_file,
             ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
         )
-    if config['sector']['district_heating']['ptes']['forward_temperature_boosting']:
+    if config['sector']['district_heating']['ptes']['forward_temperature_boosting'] and not config['foresight'] == 'perfect':
         add_forward_temperature_boosting_constraints(
             n,
             ptes_forward_temperature_boost_ratio_profile_file=ptes_forward_temperature_boost_ratio_profile_file,

@@ -548,6 +548,10 @@ sector:
         ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
+  tes: true
+  tes_tau:
+    decentral: 3
+    central: 180
   heat_pump_sources:
     urban central:
     - air
@@ -655,10 +659,6 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-  tes: true
-  tes_tau:
-    decentral: 3
-    central: 180
   boilers: true
   resistive_heaters: true
   oil_boilers: false
