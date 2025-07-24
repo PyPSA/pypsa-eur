@@ -292,6 +292,29 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
+rule build_dh_areas:
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
+        countries=config_provider("countries"), 
+    input:
+        dh_areas="data/dh_areas.gpkg",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_dh_areas_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_dh_areas_s/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"  
+    script:
+        "../scripts/build_dh_areas.py"
+
+
 rule build_geothermal_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -427,11 +450,18 @@ rule build_river_heat_potential:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+        # ignore_missing_regions=config_provider(
+        #     "sector",
+        #     "district_heating",
+        #     "limited_heat_sources",
+        #     "river_heat",
+        #     "ignore_missing_regions",
+        # ),
     input:
         hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
         hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        dh_areas="data/dh_areas.gpkg",
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
         heat_source_power=resources(
             "heat_source_power_river_water_base_s_{clusters}.csv"
@@ -505,7 +535,7 @@ rule build_sea_heat_potential:
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         seawater_temperature="data/seawater_temperature.nc",
-        dh_areas="data/dh_areas.gpkg",
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
         heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
         heat_source_temperature_temporal_aggregate=resources(
