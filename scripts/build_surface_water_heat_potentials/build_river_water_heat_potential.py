@@ -30,7 +30,7 @@ Relevant Settings
 Inputs
 ------
 - `data/hera_{year}/river_discharge_{year}.nc`: River discharge data from HERA
-- `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA  
+- `data/hera_{year}/ambient_temp_{year}.nc`: Ambient temperature data from HERA
 - `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions
 - `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: District heating areas
 
@@ -41,14 +41,13 @@ Outputs
 - `resources/<run_name>/temp_river_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated temperature data
 - `resources/<run_name>/heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated energy data
 """
+
 import logging
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
-from dask.distributed import Client, LocalCluster
-import shapely.geometry
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -56,18 +55,21 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from approximators.river_water_heat_approximator import RiverWaterHeatApproximator
+from dask.distributed import Client, LocalCluster
 
 logger = logging.getLogger(__name__)
 
 
-def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float) -> tuple:
+def _create_empty_datasets(
+    snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
+) -> tuple:
     """
     Create empty spatial and temporal aggregate datasets for regions without DH areas.
-    
+
     When a region has no intersection with district heating areas, we still need
     to provide valid datasets with zero values to maintain consistent data structure
     across all regions. This prevents errors in downstream processing.
-    
+
     Parameters
     ----------
     snapshots : pd.DatetimeIndex
@@ -76,7 +78,7 @@ def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, cente
         Longitude of region center (for fallback coordinate)
     center_lat : float
         Latitude of region center (for fallback coordinate)
-        
+
     Returns
     -------
     tuple
@@ -115,7 +117,7 @@ def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, cente
             ),
         }
     )
-    
+
     return spatial_aggregate, temporal_aggregate
 
 
@@ -140,7 +142,7 @@ def get_regional_result(
     dh_areas : geopandas.GeoDataFrame
         District heating areas to intersect with the region.
     snapshots : pd.DatetimeIndex
-        Time snapshots, used only for regions without dh_areas 
+        Time snapshots, used only for regions without dh_areas
 
     Returns
     -------
@@ -151,32 +153,32 @@ def get_regional_result(
     """
     # Store original region for fallback centroid calculation
     original_region = region.copy()
-    
+
     # Intersect region with district heating areas
     intersected_geometry = gpd.overlay(
         region.to_frame(),
         dh_areas,
         how="intersection",
     ).union_all()
-    
+
     region.geometry = intersected_geometry
 
     # Handle empty geometry case (no intersection with DH areas)
     # This occurs when a region has no district heating infrastructure
     if region.geometry.is_empty.any():
         logger.info("Region has no DH areas - returning empty datasets")
-        
+
         # Get the center of the original region (before intersection)
         # We use the original region to get a meaningful coordinate for the empty datasets
         region_center = original_region.to_crs("EPSG:4326").centroid.iloc[0]
         center_lon = region_center.x
         center_lat = region_center.y
-        
+
         # Return zero-filled datasets with proper structure
         spatial_aggregate, temporal_aggregate = _create_empty_datasets(
             snapshots, center_lon, center_lat
         )
-        
+
         return {
             "spatial aggregate": spatial_aggregate,
             "temporal aggregate": temporal_aggregate,
@@ -184,13 +186,13 @@ def get_regional_result(
 
     # Process region with valid DH area intersection
     # This is the main processing path for regions with district heating
-    
+
     # Get bounding box for efficient data clipping
     # We use total_bounds to get the minimal rectangular area covering all geometries
     minx, miny, maxx, maxy = region.total_bounds
 
     logging.info("Loading river-water data and boxing to region bounds...")
-    
+
     # Data processing strategy:
     # 1. Load HERA discharge and temperature data
     # 2. Clip to region bounds for efficiency
@@ -201,7 +203,11 @@ def get_regional_result(
     river_discharge = (
         xr.open_dataset(
             river_discharge_fn,
-            chunks={"time": "auto", "lat": "auto", "lon": "auto"},  # Chunking for memory efficiency
+            chunks={
+                "time": "auto",
+                "lat": "auto",
+                "lon": "auto",
+            },  # Chunking for memory efficiency
         )["dis"]  # Extract discharge variable (cubic meters per second)
         # Standardize coordinate names to match expected format
         .rename({"lat": "latitude", "lon": "longitude"})
@@ -217,7 +223,11 @@ def get_regional_result(
     ambient_temperature = (
         xr.open_dataset(
             ambient_temperature_fn,
-            chunks={"time": "auto", "lat": "auto", "lon": "auto"},  # Chunking for memory efficiency
+            chunks={
+                "time": "auto",
+                "lat": "auto",
+                "lon": "auto",
+            },  # Chunking for memory efficiency
         )["ta6"]  # Extract temperature variable (Kelvin or Celsius)
         # Apply same preprocessing pipeline as discharge data
         .rename({"lat": "latitude", "lon": "longitude"})
@@ -231,19 +241,19 @@ def get_regional_result(
     region = region.to_crs("EPSG:3035")
 
     logging.info("Approximating river-heat potential...")
-    
+
     # Initialize the river water heat approximator with prepared data
     # This class handles the complex thermodynamic calculations
     river_water_heat_approximator = RiverWaterHeatApproximator(
-        volume_flow=river_discharge,          # River discharge [m³/s]
+        volume_flow=river_discharge,  # River discharge [m³/s]
         ambient_temperature=ambient_temperature,  # Air temperature [K or °C]
-        region=region,                        # Geographic region of interest
+        region=region,  # Geographic region of interest
     )
-    
+
     # Calculate spatial aggregate (time series data for the region)
     # Contains total_power [MW] and average_temperature [°C] over time
     spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate().compute()
-    
+
     # Calculate temporal aggregate (spatial distribution data)
     # Contains energy and temperature maps for analysis/plotting
     temporal_aggregate = (
@@ -293,12 +303,11 @@ if __name__ == "__main__":
     dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
     dh_areas = dh_areas.to_crs("EPSG:4326")
 
-
     # Set up Dask cluster for parallel computation across regions
     # This enables processing multiple regions simultaneously for better performance
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),  # One worker per available thread
-        threads_per_worker=1,             # Single-threaded workers to avoid conflicts
+        threads_per_worker=1,  # Single-threaded workers to avoid conflicts
         memory_limit=f"{snakemake.resources.mem_mb / snakemake.threads}MB",  # Distribute memory evenly
     )
     client = Client(cluster)
@@ -308,10 +317,10 @@ if __name__ == "__main__":
     futures = []
     for region_name in regions_onshore.index:
         logging.info(f"Processing region {region_name}")
-        
+
         # Extract region geometry and create a copy to avoid modification conflicts
         region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
-        
+
         # Submit region processing task to Dask cluster
         # Each task will:
         # 1. Intersect region with DH areas
@@ -344,30 +353,35 @@ if __name__ == "__main__":
     # This ensures the time index exactly matches the energy system model requirements
     # Use "nearest" method to handle any minor timestamp differences due to floating point precision
     power = power.reindex(snapshots, method="nearest")
-    
+
     # Save power potentials as CSV for integration with PyPSA energy system model
     # Units: MW (megawatts)
     power.to_csv(snakemake.output.heat_source_power)
 
     # Concatenate average temperature for all regions into single dataset
     # This creates a 2D array: [time, regions] with temperature values
-    temperature = xr.concat(
-        [res["spatial aggregate"]["average_temperature"] for res in results], dim="name"
-    ).assign_coords(name=regions_onshore.index).dropna(dim="time")  # Remove invalid time points
+    temperature = (
+        xr.concat(
+            [res["spatial aggregate"]["average_temperature"] for res in results],
+            dim="name",
+        )
+        .assign_coords(name=regions_onshore.index)
+        .dropna(dim="time")
+    )  # Remove invalid time points
 
     # Align temperature data to simulation snapshots
     # This ensures temporal consistency with the energy system model
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
     )
-    
+
     # Save temperature profiles as NetCDF for heat pump COP calculations
     # Units: °C (degrees Celsius)
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Save temporal aggregate results for analysis and visualization
     # These are spatial maps showing energy and temperature distribution
-    
+
     # Energy temporal aggregate: spatial distribution of available energy
     # Units: MWh (megawatt-hours) - total energy potential per location
     xr.concat(

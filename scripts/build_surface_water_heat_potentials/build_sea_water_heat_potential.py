@@ -37,12 +37,13 @@ Outputs
 - `resources/<run_name>/temp_sea_water_base_s_{clusters}.nc`: Sea water temperature profiles by region
 - `resources/<run_name>/temp_sea_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated temperature data
 """
+
 import logging
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -55,14 +56,16 @@ from dask.distributed import Client, LocalCluster
 logger = logging.getLogger(__name__)
 
 
-def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float) -> tuple:
+def _create_empty_datasets(
+    snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
+) -> tuple:
     """
     Create empty spatial and temporal aggregate datasets for regions without DH areas.
-    
+
     When a region has no intersection with district heating areas (e.g., landlocked
     regions for sea water), we still need to provide valid datasets with zero values
     to maintain consistent data structure across all regions.
-    
+
     Parameters
     ----------
     snapshots : pd.DatetimeIndex
@@ -71,7 +74,7 @@ def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, cente
         Longitude of region center (for fallback coordinate)
     center_lat : float
         Latitude of region center (for fallback coordinate)
-        
+
     Returns
     -------
     tuple
@@ -100,13 +103,13 @@ def _create_empty_datasets(snapshots: pd.DatetimeIndex, center_lon: float, cente
             ),
         }
     )
-    
+
     return spatial_aggregate, temporal_aggregate
 
 
 def get_regional_result(
-    seawater_temperature_fn: str, 
-    region: gpd.GeoSeries, 
+    seawater_temperature_fn: str,
+    region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
 ) -> dict:
@@ -122,7 +125,7 @@ def get_regional_result(
     dh_areas : geopandas.GeoDataFrame
         District heating areas to intersect with the region.
     snapshots : pd.DatetimeIndex
-        Time snapshots, used only for regions without dh_areas 
+        Time snapshots, used only for regions without dh_areas
 
     Returns
     -------
@@ -133,33 +136,35 @@ def get_regional_result(
     """
     # Store original region for fallback centroid calculation
     original_region = region.copy()
-    
+
     # Intersect region with district heating areas
     intersected_geometry = gpd.overlay(
         region.to_frame(),
         dh_areas,
         how="intersection",
     ).union_all()
-    
+
     region.geometry = intersected_geometry
 
     # Handle empty geometry case (no intersection with DH areas)
     # This occurs when coastal regions have no district heating or inland regions
     # are processed (which shouldn't have sea water access)
     if region.geometry.is_empty.any():
-        logger.info("Region has no DH areas or no sea access - returning empty datasets")
-        
+        logger.info(
+            "Region has no DH areas or no sea access - returning empty datasets"
+        )
+
         # Get the center of the original region (before intersection)
         # We use the original region to get a meaningful coordinate for the empty datasets
         region_center = original_region.to_crs("EPSG:4326").centroid.iloc[0]
         center_lon = region_center.x
         center_lat = region_center.y
-        
+
         # Return zero-filled datasets with proper structure
         spatial_aggregate, temporal_aggregate = _create_empty_datasets(
             snapshots, center_lon, center_lat
         )
-        
+
         return {
             "spatial aggregate": spatial_aggregate,
             "temporal aggregate": temporal_aggregate,
@@ -167,7 +172,7 @@ def get_regional_result(
 
     # Process region with valid DH area intersection
     # This is the main processing path for coastal regions with district heating
-    
+
     # Get bounding box for efficient data clipping
     # We use total_bounds to get the minimal rectangular area covering all geometries
     minx, miny, maxx, maxy = region.total_bounds
@@ -182,17 +187,17 @@ def get_regional_result(
         xr.open_dataset(
             seawater_temperature_fn,
             chunks={
-                "time": "auto",           # Chunk time dimension for memory efficiency
-                "latitude": "auto",      # Chunk spatial dimensions
+                "time": "auto",  # Chunk time dimension for memory efficiency
+                "latitude": "auto",  # Chunk spatial dimensions
                 "longitude": "auto",
-                "depth": 1,               # Single depth chunk (usually surface only)
+                "depth": 1,  # Single depth chunk (usually surface only)
             },
             # engine="rasterio",  # Alternative engine for some data formats
-        )["thetao"]                   # Extract sea water potential temperature
-        .mean(dim="depth")            # Average over depth to get surface temperature
-        .rio.write_crs("EPSG:4326")    # Set CRS to WGS84 for geographic operations
+        )["thetao"]  # Extract sea water potential temperature
+        .mean(dim="depth")  # Average over depth to get surface temperature
+        .rio.write_crs("EPSG:4326")  # Set CRS to WGS84 for geographic operations
         .rio.clip_box(minx, miny, maxx, maxy)  # Clip to region bounds
-        .rio.reproject("EPSG:3035")   # Reproject to European grid for area calculations
+        .rio.reproject("EPSG:3035")  # Reproject to European grid for area calculations
     )
 
     # Reproject region to match data CRS for spatial calculations
@@ -203,20 +208,19 @@ def get_regional_result(
     # This class handles the temperature analysis for coastal heat pumps
     seawater_heat_approximator = SeaWaterHeatApproximator(
         water_temperature=water_temperature,  # Sea water temperature [°C or K]
-        region=region,                        # Geographic region of interest
+        region=region,  # Geographic region of interest
     )
 
     return {
         # Calculate spatial aggregate (time series data for the region)
         # Contains average_temperature [°C] over time for heat pump COP calculations
         "spatial aggregate": seawater_heat_approximator.get_spatial_aggregate().compute(),
-        
         # Calculate temporal aggregate (spatial distribution data)
         # Contains temperature maps for analysis/plotting - converted back to WGS84
         "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate()
-        .rio.reproject("EPSG:4326")           # Convert back to WGS84 for output consistency
+        .rio.reproject("EPSG:4326")  # Convert back to WGS84 for output consistency
         .rename({"x": "longitude", "y": "latitude"})  # Standardize coordinate names
-        .compute(),                           # Execute all lazy operations
+        .compute(),  # Execute all lazy operations
     }
 
 
@@ -247,7 +251,7 @@ if __name__ == "__main__":
     # Load geographic data for processing
     # Load onshore regions (countries/NUTS regions) for sea water analysis
     regions_onshore = gpd.read_file(snakemake.input["regions_onshore"])
-    regions_onshore.set_index("name", inplace=True)    # Use region name as index
+    regions_onshore.set_index("name", inplace=True)  # Use region name as index
     regions_onshore.set_crs("EPSG:4326", inplace=True)  # Ensure WGS84 CRS
 
     # Load and preprocess district heating areas
@@ -262,7 +266,7 @@ if __name__ == "__main__":
     # This enables processing multiple regions simultaneously for better performance
     cluster = LocalCluster(
         n_workers=int(snakemake.threads),  # One worker per available thread
-        threads_per_worker=1,             # Single-threaded workers to avoid conflicts
+        threads_per_worker=1,  # Single-threaded workers to avoid conflicts
         memory_limit=f"{snakemake.resources.mem_mb / snakemake.threads}MB",  # Distribute memory evenly
     )
     client = Client(cluster)
@@ -272,10 +276,10 @@ if __name__ == "__main__":
     futures = []
     for region_name in regions_onshore.index:
         logging.info(f"Processing region {region_name}")
-        
+
         # Extract region geometry and create a copy to avoid modification conflicts
         region = gpd.GeoSeries(regions_onshore.loc[region_name].copy(deep=True))
-        
+
         # Submit region processing task to Dask cluster
         # Each task will:
         # 1. Intersect region with DH areas (coastal access check)
@@ -296,9 +300,14 @@ if __name__ == "__main__":
 
     # Concatenate average temperature for all regions into single dataset
     # This creates a 2D array: [time, regions] with sea water temperature values
-    temperature = xr.concat(
-        [res["spatial aggregate"]["average_temperature"] for res in results], dim="name"
-    ).assign_coords(name=regions_onshore.index).dropna(dim="time")  # Remove invalid time points
+    temperature = (
+        xr.concat(
+            [res["spatial aggregate"]["average_temperature"] for res in results],
+            dim="name",
+        )
+        .assign_coords(name=regions_onshore.index)
+        .dropna(dim="time")
+    )  # Remove invalid time points
 
     # Align temperature data to simulation snapshots
     # This ensures temporal consistency with the energy system model
@@ -306,14 +315,14 @@ if __name__ == "__main__":
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
     )
-    
+
     # Save temperature profiles as NetCDF for heat pump COP calculations
     # Units: °C (degrees Celsius) - sea water temperature for coastal heat pumps
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Save temporal aggregate results for analysis and visualization
     # This is a spatial map showing temperature distribution along coastlines
-    
+
     # Temperature temporal aggregate: spatial distribution of sea water temperatures
     # Units: °C (degrees Celsius) - average temperature per coastal location
     # Used for detailed analysis and plotting of coastal heat pump potential

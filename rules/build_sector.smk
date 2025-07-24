@@ -297,7 +297,7 @@ rule build_dh_areas:
         handle_missing_countries=config_provider(
             "sector", "district_heating", "dh_areas", "handle_missing_countries"
         ),
-        countries=config_provider("countries"), 
+        countries=config_provider("countries"),
     input:
         dh_areas="data/dh_areas.gpkg",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
@@ -310,7 +310,7 @@ rule build_dh_areas:
     benchmark:
         benchmarks("build_dh_areas_s/s_{clusters}")
     conda:
-        "../envs/environment.yaml"  
+        "../envs/environment.yaml"
     script:
         "../scripts/build_dh_areas.py"
 
