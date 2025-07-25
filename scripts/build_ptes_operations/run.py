@@ -27,6 +27,7 @@ Relevant Settings
                 supplemental_heating:
                     enable:
                 max_top_temperature:
+                min_bottom_temperature:
 
 Inputs
 ------
@@ -34,6 +35,8 @@ Inputs
     Forward temperature profiles for the district heating networks.
 - `resources/<run_name>/central_heating_return_temperature_profiles.nc`:
     Return temperature profiles for the district heating networks.
+- `resources/<run_name>/ptes_temperature_boost_ratio_profiles.nc`
+    Ratio of PTES charge that requires additional heating due to temperature differences.
 
 Outputs
 -------
@@ -53,7 +56,7 @@ Approximate thermal energy storage (TES) top temperature and identify need for s
 import logging
 
 import xarray as xr
-from _helpers import set_scenario_config
+from scripts._helpers import set_scenario_config
 
 from scripts.build_ptes_operations.ptes_temperature_approximator import (
     PtesTemperatureApproximator,
@@ -63,11 +66,11 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_ptes_operations",
-            clusters=5,
+            clusters=8,
             planning_horizons="2030",
         )
 
@@ -77,16 +80,18 @@ if __name__ == "__main__":
     logger.info(
         "Loading district heating temperature profiles and constructing PTES temperature approximator"
     )
+
     # Initialize unified PTES temperature class
     ptes_temperature_approximator = PtesTemperatureApproximator(
         forward_temperature=xr.open_dataarray(
-            snakemake.input.central_heating_forward_temperature_profiles
+        snakemake.input.central_heating_forward_temperature_profiles
         ),
         return_temperature=xr.open_dataarray(
             snakemake.input.central_heating_return_temperature_profiles
         ),
         max_ptes_top_temperature=snakemake.params.max_ptes_top_temperature,
         min_ptes_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
+        forward_temperature_boosting=snakemake.params.ptes_forward_temperature_boosting,
     )
 
     # Get PTES clipped top temperature profiles
@@ -97,7 +102,7 @@ if __name__ == "__main__":
         snakemake.output.ptes_top_temperature_profiles
     )
 
-    # if snakemake.params.enable_supplemental_heating:
+    # if snakemake.params.storage_temperature_boosting:
     # Get PTES supplemental heating profiles
     logger.info(
         f"Saving PTES direct utilisation profile to {snakemake.output.ptes_direct_utilisation_profiles}"
@@ -115,4 +120,26 @@ if __name__ == "__main__":
     )
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
+    )
+
+    # if snakemake.params.storage_temperature_boosting:
+    logger.info("Calculating PTES temperature boost ratio")
+
+    # Get PTES temperature boost ratio
+    logger.info(
+        f"Saving PTES temperature boost ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
+    )
+    ptes_temperature_approximator.temperature_boost_ratio.to_netcdf(
+        snakemake.output.ptes_temperature_boost_ratio_profiles
+    )
+
+    # if snakemake.params.forward_temperature_boosting:
+    logger.info("Calculating PTES forward temperature boost ratio")
+
+    # Get PTES forward temperature boost ratio
+    logger.info(
+        f"Saving PTES forward temperature boost ratio profiles to {snakemake.output.ptes_forward_temperature_boost_ratio_profiles}"
+    )
+    ptes_temperature_approximator.forward_temperature_boost_ratio.to_netcdf(
+        snakemake.output.ptes_forward_temperature_boost_ratio_profiles
     )

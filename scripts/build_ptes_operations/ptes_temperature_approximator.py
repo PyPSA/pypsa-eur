@@ -19,17 +19,18 @@ class PtesTemperatureApproximator:
     return_temperature : xr.DataArray
         The return temperature profile from the district heating network.
     max_ptes_top_temperature : float
-        Maximum operational temperature of top layer in PTES, default 90°C.
+        Maximum operational temperature of top layer in PTES.
     min_ptes_bottom_temperature : float
-        Minimum operational temperature of bottom layer in PTES, default 35°C.
+        Minimum operational temperature of bottom layer in PTES.
     """
 
     def __init__(
         self,
         forward_temperature: xr.DataArray,
         return_temperature: xr.DataArray,
-        max_ptes_top_temperature: float = 90,
-        min_ptes_bottom_temperature: float = 35,
+        max_ptes_top_temperature: float,
+        min_ptes_bottom_temperature: float,
+        forward_temperature_boosting: bool,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -40,15 +41,18 @@ class PtesTemperatureApproximator:
             The forward temperature profile from the district heating network.
         return_temperature : xr.DataArray
             The return temperature profile from the district heating network.
-        max_ptes_top_temperature : float, optional
-            Maximum operational temperature of top layer in PTES, default 90°C.
-        min_ptes_bottom_temperature : float, optional
-            Minimum operational temperature of bottom layer in PTES, default 35°C.
+        max_ptes_top_temperature : float
+            Maximum operational temperature of top layer in PTES.
+        min_ptes_bottom_temperature : float
+            Minimum operational temperature of bottom layer in PTES.
+        forward_temperature_boosting : bool,
+            Clip forward_temperature at max_ptes_top_temperature if True.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
         self.max_ptes_top_temperature = max_ptes_top_temperature
         self.min_ptes_bottom_temperature = min_ptes_bottom_temperature
+        self.forward_temperature_boosting = forward_temperature_boosting
 
     @property
     def top_temperature(self) -> xr.DataArray:
@@ -60,10 +64,9 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting top temperature profile for PTES.
         """
-        return self.forward_temperature.where(
-            self.forward_temperature <= self.max_ptes_top_temperature,
-            self.max_ptes_top_temperature,
-        )
+        return self._get_effective_forward_temperature(
+            self.forward_temperature
+        ).clip(max=self.max_ptes_top_temperature)
 
     @property
     def bottom_temperature(self) -> xr.DataArray:
@@ -106,3 +109,100 @@ class PtesTemperatureApproximator:
             self.max_ptes_top_temperature - self.bottom_temperature
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+
+    @property
+    def temperature_boost_ratio(self) -> xr.DataArray:
+        """
+        Calculate the additional lift required between the store's
+        current top temperature and the forward temperature with the lift
+        already achieved inside the store.
+
+        Notes
+        -----
+        The total thermal output required to reach the forward temperature is:
+
+            Q_total = Q_source + Q_boost
+
+        The total heat transfer is partitioned into:
+
+            Q_source = Ṽ·ρ·cₚ·(T_max,store − T_return)
+            Q_boost  = Ṽ·ρ·cₚ·(T_forward − T_max,store)
+
+        Defining α as the ratio of required boost to available store energy:
+
+            α = Q_boost / Q_source
+              = (T_forward − T_max,store) / (T_max,store − T_return)
+
+        This expression quantifies the share of PTES output that is covered
+        by stored energy relative to the additional heating needed to meet
+        the desired forward temperature.
+
+        Returns
+        -------
+        xr.DataArray
+            The resulting fraction of PTES charge that must be further heated.
+        """
+        return ((self.top_temperature - self.return_temperature) / (
+                self.forward_temperature - self.top_temperature
+        )).where(self.forward_temperature > self.top_temperature, 0)
+
+    @property
+    def forward_temperature_boost_ratio(self) -> xr.DataArray:
+        """
+        Calculate how much of the total energy needed to fill the PTES to its
+        maximum capacity has already been delivered by charging up to the forward
+        temperature, versus how much extra energy remains to reach the maximum.
+
+        Notes
+        -----
+        To fill the storage from the return temperature all the way up to its
+        maximum top temperature, the total thermal energy required is split into:
+
+            Q_forward   = Ṽ·ρ·cₚ·(T_forward − T_return)
+            Q_boosting  = Ṽ·ρ·cₚ·(T_max_ptes_top − T_forward)
+
+        - Q_forward is the energy already delivered by charging to the forward setpoint.
+        - Q_boosting is the extra boost energy still needed to reach maximum capacity.
+
+        Defining α as the ratio of delivered energy to remaining boost energy:
+
+            α = Q_forward / Q_boosting
+              = (T_forward − T_return) /
+                (T_max_ptes_top − T_forward)
+
+        This ratio quantifies the share of the total charge process that has
+        already been completed (via Q_forward) relative to what is still
+        required (Q_boosting) to hit the maximum PTES top temperature.
+
+        Wherever the forward temperature meets or exceeds the maximum, α is set
+        to zero since no further boost is needed.
+
+        Returns
+        -------
+        xr.DataArray
+            The fraction of the PTES’s available storage capacity already used.
+        """
+        return ((self.forward_temperature - self.return_temperature) / (
+            self.max_ptes_top_temperature - self.forward_temperature
+        )).where(self.forward_temperature < self.max_ptes_top_temperature, 0)
+
+    def _get_effective_forward_temperature(
+        self, forward_temperature: xr.DataArray
+    ) -> xr.DataArray:
+        """
+        Return the forward profile, flooring values below max_ptes_top_temperature
+        if boosting is enabled.
+
+        Parameters
+        ----------
+        forward_temperature : xr.DataArray
+            Raw forward temperature profile.
+
+        Returns
+        -------
+        xr.DataArray
+            Effective forward temperature for PTES.
+        """
+        if self.forward_temperature_boosting:
+            return forward_temperature.clip(min=self.max_ptes_top_temperature)
+        return forward_temperature

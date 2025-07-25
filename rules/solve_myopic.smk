@@ -126,6 +126,41 @@ rule solve_sector_network_myopic:
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
         costs=resources("costs_{planning_horizons}.csv"),
+        ptes_temperature_boost_ratio_profiles= lambda w: (
+            resources(
+                "ptes_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","storage_temperature_boosting",
+            )(w)
+            else[]
+        ),
+        cop_profiles= lambda w: (
+            resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","storage_temperature_boosting",
+            )(w)
+            else[]
+        ),
+        ptes_forward_temperature_boost_ratio_profiles= lambda w: (
+            resources(
+                "ptes_forward_temperature_boost_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","forward_temperature_boosting",
+            )(w)
+            else[]
+        ),
+        ptes_direct_utilisation_profiles= lambda w: (
+            resources(
+                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+            )
+            if config_provider(
+                "sector","district_heating","ptes","storage_temperature_boosting",
+            )(w)
+            else []
+        ),
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
