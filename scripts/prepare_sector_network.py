@@ -3193,6 +3193,7 @@ def add_heat(
                 n.add(
                     "Bus",
                     nodes,
+                    location=nodes,
                     suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
                 )
