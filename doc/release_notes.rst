@@ -15,6 +15,8 @@ Upcoming Release
 
 * Fixed missing costs name for geothermal-sourced heat pump and allowed geothermal heat pumps in test configs.
 
+* Changed error handling for non-extendable heat storage in energy-to-power ratio constraints to warning.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
