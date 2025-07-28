@@ -11,6 +11,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country. ()
+
 * Fixed `FileNotFoundError` bugs preventing pypsa from being run as a Snakemake
   module. The cause of this bug was that intermediate zip files in rules were being
   saved in directories that didn't exist yet (without creating the parent directories).
