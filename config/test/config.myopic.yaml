@@ -38,8 +38,8 @@ sector:
       enable: true
     ptes:
       booster_technologies: ["resistive heater", "air heat pump", "ptes"]
-      storage_temperature_boosting: true
-      forward_temperature_boosting: true
+      discharger_temperature_boosting_required: true
+      charger_temperature_boosting_required: true
   heat_pump_sources:
     urban central:
       - ptes

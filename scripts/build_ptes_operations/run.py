@@ -5,10 +5,6 @@
 Approximate the top temperature of the pit thermal energy storage (PTES), ensuring that the temperature does not
 exceed the operational limit.
 
-Determine whether supplemental heating is needed. A binary indicator is generated:
-    - 1: The forward temperature is less than or equal to the TES maximum; direct usage is possible.
-    - 0: The forward temperature exceeds the TES maximum; supplemental heating (e.g., via a heat pump) is required.
-
 Calculate dynamic PTES capacity profiles based on district heating forward and return flow temperatures.
 The linear relation between temperature difference and capacity is taken from Sorknaes (2018).
 
@@ -23,9 +19,9 @@ Relevant Settings
     sector
         district_heating:
             ptes:
-                dynamic_ptes_capacity:
-                supplemental_heating:
-                    enable:
+                dynamic_capacity:
+                discharger_temperature_boosting_required:
+                charger_temperature_boosting_required:
                 max_top_temperature:
                 min_bottom_temperature:
 
@@ -42,10 +38,12 @@ Outputs
 -------
 - `resources/<run_name>/ptes_top_temperature_profiles.nc`
     Clipped PTES top temperature profile (in °C).
-- `resources/<run_name>/ptes_supplemental_heating_required.nc`
-    Binary indicator for additional heating (1 = direct PTES use, 0 = supplemental heating required).
 - `resources/<run_name>/ptes_e_max_pu_profiles.nc`
     Normalized PTES capacity profiles.
+- `ptes_temperature_boost_ratio_profiles` (netCDF):
+    Charging temperature boost ratio time series.
+- `ptes_forward_temperature_boost_ratio_profiles` (netCDF):
+    Forward flow temperature boost ratio time series.
 
 Source
 ------
@@ -91,7 +89,7 @@ if __name__ == "__main__":
         ),
         max_ptes_top_temperature=snakemake.params.max_ptes_top_temperature,
         min_ptes_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
-        forward_temperature_boosting=snakemake.params.ptes_forward_temperature_boosting,
+        charger_temperature_boosting_required=snakemake.params.charger_temperature_boosting_required,
     )
 
     # Get PTES clipped top temperature profiles
@@ -102,16 +100,6 @@ if __name__ == "__main__":
         snakemake.output.ptes_top_temperature_profiles
     )
 
-    # if snakemake.params.storage_temperature_boosting:
-    # Get PTES supplemental heating profiles
-    logger.info(
-        f"Saving PTES direct utilisation profile to {snakemake.output.ptes_direct_utilisation_profiles}"
-    )
-    ptes_temperature_approximator.direct_utilisation_profile.to_netcdf(
-        snakemake.output.ptes_direct_utilisation_profiles
-    )
-
-    # if snakemake.params.enable_dynamic_capacity:
     logger.info("Calculating dynamic PTES capacity profiles")
 
     # Get PTES capacity profiles
@@ -122,24 +110,22 @@ if __name__ == "__main__":
         snakemake.output.ptes_e_max_pu_profiles
     )
 
-    # if snakemake.params.storage_temperature_boosting:
     logger.info("Calculating PTES temperature boost ratio")
 
     # Get PTES temperature boost ratio
     logger.info(
-        f"Saving PTES temperature boost ratio profiles to {snakemake.output.ptes_temperature_boost_ratio_profiles}"
+        f"Saving PTES temperature boost ratio profiles to {snakemake.output.ptes_discharger_temperature_boosting_ratio}"
     )
-    ptes_temperature_approximator.temperature_boost_ratio.to_netcdf(
-        snakemake.output.ptes_temperature_boost_ratio_profiles
+    ptes_temperature_approximator.discharger_temperature_boosting_ratio.to_netcdf(
+        snakemake.output.ptes_discharger_temperature_boosting_ratio
     )
 
-    # if snakemake.params.forward_temperature_boosting:
     logger.info("Calculating PTES forward temperature boost ratio")
 
     # Get PTES forward temperature boost ratio
     logger.info(
-        f"Saving PTES forward temperature boost ratio profiles to {snakemake.output.ptes_forward_temperature_boost_ratio_profiles}"
+        f"Saving PTES forward temperature boost ratio profiles to {snakemake.output.ptes_charger_temperature_boosting_ratio}"
     )
-    ptes_temperature_approximator.forward_temperature_boost_ratio.to_netcdf(
-        snakemake.output.ptes_forward_temperature_boost_ratio_profiles
+    ptes_temperature_approximator.charger_temperature_boosting_ratio.to_netcdf(
+        snakemake.output.ptes_charger_temperature_boosting_ratio
     )

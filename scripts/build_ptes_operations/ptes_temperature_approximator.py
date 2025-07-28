@@ -30,7 +30,7 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_ptes_top_temperature: float,
         min_ptes_bottom_temperature: float,
-        forward_temperature_boosting: bool,
+        charger_temperature_boosting_required: bool,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -45,14 +45,14 @@ class PtesTemperatureApproximator:
             Maximum operational temperature of top layer in PTES.
         min_ptes_bottom_temperature : float
             Minimum operational temperature of bottom layer in PTES.
-        forward_temperature_boosting : bool,
+        charger_temperature_boosting_required : bool,
             Clip forward_temperature at max_ptes_top_temperature if True.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
         self.max_ptes_top_temperature = max_ptes_top_temperature
         self.min_ptes_bottom_temperature = min_ptes_bottom_temperature
-        self.forward_temperature_boosting = forward_temperature_boosting
+        self.charger_temperature_boosting_required = charger_temperature_boosting_required
 
     @property
     def top_temperature(self) -> xr.DataArray:
@@ -81,18 +81,6 @@ class PtesTemperatureApproximator:
         return self.min_ptes_bottom_temperature
 
     @property
-    def direct_utilisation_profile(self) -> xr.DataArray:
-        """
-        Identify timesteps requiring supplemental heating.
-
-        Returns
-        -------
-        xr.DataArray
-            Array with 1 for direct PTES usage, 0 if supplemental heating is needed.
-        """
-        return (self.forward_temperature <= self.max_ptes_top_temperature).astype(int)
-
-    @property
     def e_max_pu(self) -> xr.DataArray:
         """
         Calculate the normalized delta T for TES capacity in relation to
@@ -111,7 +99,7 @@ class PtesTemperatureApproximator:
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
 
     @property
-    def temperature_boost_ratio(self) -> xr.DataArray:
+    def discharger_temperature_boosting_ratio(self) -> xr.DataArray:
         """
         Calculate the additional lift required between the store's
         current top temperature and the forward temperature with the lift
@@ -147,7 +135,7 @@ class PtesTemperatureApproximator:
         )).where(self.forward_temperature > self.top_temperature, 0)
 
     @property
-    def forward_temperature_boost_ratio(self) -> xr.DataArray:
+    def charger_temperature_boosting_ratio(self) -> xr.DataArray:
         """
         Calculate how much of the total energy needed to fill the PTES to its
         maximum capacity has already been delivered by charging up to the forward
@@ -190,8 +178,8 @@ class PtesTemperatureApproximator:
         self, forward_temperature: xr.DataArray
     ) -> xr.DataArray:
         """
-        Return the forward profile, flooring values below max_ptes_top_temperature
-        if boosting is enabled.
+        Return the forward profile, and when boosting is enabled,
+        clip any values below max_ptes_top_temperature up to that threshold.
 
         Parameters
         ----------
@@ -203,6 +191,6 @@ class PtesTemperatureApproximator:
         xr.DataArray
             Effective forward temperature for PTES.
         """
-        if self.forward_temperature_boosting:
+        if self.charger_temperature_boosting_required:
             return forward_temperature.clip(min=self.max_ptes_top_temperature)
         return forward_temperature

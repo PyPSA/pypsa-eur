@@ -105,10 +105,6 @@ rule solve_sector_network_perfect:
             "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         ),
         costs=resources("costs_2030.csv"),
-        ptes_temperature_boost_ratio_profiles= [],
-        cop_profiles= [],
-        ptes_forward_temperature_boost_ratio_profiles= [],
-        ptes_direct_utilisation_profiles= [],
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
