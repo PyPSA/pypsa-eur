@@ -3193,6 +3193,7 @@ def add_heat(
                 n.add(
                     "Bus",
                     nodes,
+                    location=nodes,
                     suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
                 )
@@ -5707,7 +5708,7 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
             .map(lambda i: snapshot_weightings.index[i])
         )
 
-        m = n.copy(with_time=False)
+        m = n.copy(snapshots=[])
         m.set_snapshots(snapshot_weightings.index)
         m.snapshot_weightings = snapshot_weightings
 
