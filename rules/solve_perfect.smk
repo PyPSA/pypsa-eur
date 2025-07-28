@@ -19,7 +19,7 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            "costs_{}_prepped.csv".format(
+            "costs_{}_processed.csv".format(
                 config_provider("scenario", "planning_horizons", 0)(w)
             )
         ),
@@ -104,7 +104,7 @@ rule solve_sector_network_perfect:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         ),
-        costs=resources("costs_2030_prepped.csv"),
+        costs=resources("costs_2030_processed.csv"),
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
@@ -146,7 +146,7 @@ def input_networks_make_summary_perfect(w):
 rule make_summary_perfect:
     input:
         unpack(input_networks_make_summary_perfect),
-        costs=resources("costs_2020_prepped.csv"),
+        costs=resources("costs_2020_processed.csv"),
     output:
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
         costs=RESULTS + "csvs/costs.csv",

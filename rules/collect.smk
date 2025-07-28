@@ -15,10 +15,10 @@ localrules:
 rule build_costs:
     input:
         lambda w: (
-            [resources(f"costs_{config_provider('costs', 'year')(w)}_prepped.csv")]
+            [resources(f"costs_{config_provider('costs', 'year')(w)}_processed.csv")]
             if config_provider("foresight")(w) == "overnight"
             else expand(
-                resources("costs_{planning_horizons}_prepped.csv"),
+                resources("costs_{planning_horizons}_processed.csv"),
                 **config["scenario"],
                 run=config["run"]["name"],
             )

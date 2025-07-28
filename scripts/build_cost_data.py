@@ -21,7 +21,7 @@ Inputs
 Outputs
 -------
 
-- ``resources/costs_{planning_horizons}_prepped.csv``: Prepared cost data with custom modifications applied
+- ``resources/costs_{planning_horizons}_processed.csv``: Prepared cost data with custom modifications applied
 """
 
 import logging
@@ -229,8 +229,8 @@ if __name__ == "__main__":
         costs_extended = costs
 
     # Prepare costs
-    costs_prepped = prepare_costs(
+    costs_processed = prepare_costs(
         costs_extended, config, snakemake.params.max_hours, nyears
     )
 
-    costs_prepped.to_csv(snakemake.output[0])
+    costs_processed.to_csv(snakemake.output[0])
