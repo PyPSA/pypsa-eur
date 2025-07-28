@@ -214,7 +214,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Source:** `ERA5
   <https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>`__
   and `SARAH-3 <https://navigator.eumetsat.int/product/EO:EUM:DAT:0863>`__
-- **Link:** https://zenodo.org/records/12791128
+- **Link:** https://zenodo.org/records/15349674
 - **License:** CC-BY 4.0
 - **Description:** Contains weather data cutouts for Europe to read in with ``atlite``.
 

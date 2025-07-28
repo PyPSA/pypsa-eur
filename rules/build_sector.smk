@@ -1299,7 +1299,6 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
-        base=config_provider("electricity", "base_network"),
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),

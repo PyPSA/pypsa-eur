@@ -10,7 +10,7 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import expand_series
+from pypsa.common import expand_series
 from six import iterkeys
 
 from scripts._helpers import (
