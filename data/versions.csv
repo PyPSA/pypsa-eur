@@ -51,3 +51,4 @@
 "nuts3_population","primary","13-03-2025 ","['latest', 'supported']","https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true",""
 "nuts3_population","archive","13-03-2025 ","['latest', 'supported']","https://zenodo.org/records/16551424/files/nama_10r_3popgdp.tsv.gz","Earlier part of zenodo bundle"
 "gdp_per_capita","archive","2018-02-06","['latest', 'supported']","https://zenodo.org/records/16556029/files/GDP_per_capita_PPP_1990_2015_v2.nc","Earlier part of zenodo bundle"
+"population_count","archive","2018-11-01","['latest', 'supported']","https://zenodo.org/records/16558833/files/ppp_2019_1km_Aggregated.tif","Earlier part of zenodo bundle"

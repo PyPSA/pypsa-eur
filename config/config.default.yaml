@@ -1020,6 +1020,9 @@ data:
   gdp_per_capita:
     source: "archive"
     version_or_latest: "latest"
+  population_count:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

@@ -111,6 +111,7 @@ if config["enable"]["retrieve"] and (
         run:
             move(input[0], output[0])
 
+
 if config["enable"]["retrieve"] and (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
     "archive"
 ]:
@@ -121,6 +122,21 @@ if config["enable"]["retrieve"] and (GDP_PER_CAPITA_DATASET := dataset_version("
             ),
         output:
             f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
+        retries: 2,
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"] and (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] in [
+    "archive"
+]:
+    rule retrieve_population_count:
+        input: 
+            storage(
+                f"{POPULATION_COUNT_DATASET["url"]}",
+            ),
+        output:
+            f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2,
         run:
             move(input[0], output[0])

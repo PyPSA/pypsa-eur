@@ -163,7 +163,7 @@ rule build_shapes:
             else []
         ),
         other_gdp=rules.retrieve_gdp_per_capita.output[0],
-        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
+        other_pop=rules.retrieve_population_count.output[0],
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
