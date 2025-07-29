@@ -1000,7 +1000,7 @@ data:
     source: "archive" # "primary" or "archive"
     version_or_latest: "latest"
   scigrid_gas:
-    source: "primary" 
+    source: "primary"
     version_or_latest: "latest"
   synthetic_electricity_demand:
     source: "primary"
