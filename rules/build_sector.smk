@@ -587,7 +587,7 @@ rule build_energy_totals:
         energy=config_provider("energy"),
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        co2="data/bundle/eea/UNFCCC_v23.csv",
+        co2=rules.retrieve_ghg_emissions.output[0],
         swiss="data/switzerland-new_format-all_years.csv",
         swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
@@ -1354,7 +1354,7 @@ rule prepare_sector_network:
         avail_profile=resources("avail_profile_s_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
-        co2="data/bundle/eea/UNFCCC_v23.csv",
+        co2=rules.retrieve_ghg_emissions.output[0],
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),

@@ -1023,6 +1023,9 @@ data:
   population_count:
     source: "archive"
     version_or_latest: "latest"
+  ghg_emissions:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

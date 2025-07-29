@@ -142,6 +142,21 @@ if config["enable"]["retrieve"] and (POPULATION_COUNT_DATASET := dataset_version
             move(input[0], output[0])
 
 
+if config["enable"]["retrieve"] and (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
+    "archive"
+]:
+    rule retrieve_ghg_emissions:
+        input: 
+            storage(
+                f"{GHG_EMISSIONS_DATASET["url"]}",
+            ),
+        output:
+            f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
+        retries: 2,
+        run:
+            move(input[0], output[0])
+
+
 
 if config["enable"]["retrieve"] and (JRC_IDEES_DATASET := dataset_version("jrc_idees"))[
     "source"
