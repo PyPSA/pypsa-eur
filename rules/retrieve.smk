@@ -96,7 +96,23 @@ if (
                 f.write(response.content)
 
                 
-if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
+if config["enable"]["retrieve"] and (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] in [
+    "primary",
+    "archive"
+]:
+    rule retrieve_nuts3_population:
+        input: 
+            storage(
+                f"{NUTS3_POPULATION_DATASET["url"]}",
+            ),
+        output:
+            f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
+        retries: 2,
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"] and (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
     "primary",
     "archive",
 ]:
@@ -119,13 +135,6 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
 
             output_folder = Path(output["zip"]).parent
             unpack_archive(output.zip, output_folder)
-
-
-<<<<<<< HEAD
-=======
-
-if config["enable"]["retrieve"]:
->>>>>>> [pre-commit.ci] auto fixes from pre-commit.com hooks
 
 
 if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [

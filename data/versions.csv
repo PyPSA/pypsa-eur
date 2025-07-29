@@ -48,3 +48,5 @@
 "ship_raster","archive","v5","['latest', 'supported']","https://zenodo.org/records/12760663/files/shipdensity_global.zip","Part of Zenodo data bundle, needs to have a dedicated zenodo link, the primary source is a direct download link (https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density)"
 "eez","primary","v12_20231025","['latest', 'supported']","https://www.marineregions.org/download_file.php","API request used"
 "eez","archive","v12_20231025","['latest', 'supported']","https://zenodo.org/records/16355917/files/World_EEZ_v12_20231025_LR.zip",""
+"nuts3_population","primary","13-03-2025 ","['latest', 'supported']","https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/nama_10r_3popgdp?format=TSV&compressed=true",""
+"nuts3_population","archive","13-03-2025 ","['latest', 'supported']","https://zenodo.org/records/16551424/files/nama_10r_3popgdp.tsv.gz","Earlier part of zenodo bundle"

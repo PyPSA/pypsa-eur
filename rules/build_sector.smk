@@ -641,7 +641,7 @@ rule build_biomass_potentials:
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
+        nuts3_population=ancient(rules.retrieve_nuts3_population.output[0]),
         swiss_cantons=ancient("data/ch_cantons.csv"),
         swiss_population=ancient("data/bundle/je-e-21.03.02.xls"),
         country_shapes=resources("country_shapes.geojson"),
