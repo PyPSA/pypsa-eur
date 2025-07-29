@@ -162,7 +162,7 @@ rule build_shapes:
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
+        other_gdp=rules.retrieve_gdp_per_capita.output[0],
         other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
     output:
         country_shapes=resources("country_shapes.geojson"),
