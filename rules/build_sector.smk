@@ -1369,7 +1369,6 @@ rule prepare_sector_network:
         endo_industry=config_provider("sector", "endo_industry", "enable"),
         endo_ammonia=config_provider("sector", "endo_industry","endo_ammonia"),
         endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
-        co2_budget_apply=config_provider("co2_budget_apply"),
         weather_years=config_provider("weather_years","enable"),
         renewable_carriers=config_provider("electricity","renewable_carriers"),
         industrial_policy_scenario=config_provider("sector","endo_industry","policy_scenario")

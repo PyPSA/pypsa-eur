@@ -5402,13 +5402,16 @@ def add_steel_industry(n, investment_year, steel_data, options):
             unit="kt/yr",
         )
 
+        mc_dri = 395*1e3 if investment_year < 2040 else 1e7
+        #€/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308
+
         n.add(
             "Generator",
             "EU HBI import",
             bus="EU HBI",
             carrier="import HBI",
             p_nom=1e7,
-            marginal_cost=395*1e3, #€/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308 
+            marginal_cost=mc_dri,  
         )
 
         electricity_input = costs.at[
@@ -7122,19 +7125,10 @@ def add_import_options(
             marginal_cost=import_options["steel_adb"],
         )
 
-    if "methanol_adb" in import_options and investment_year >= 2040:
+    if "methanol_adb" in import_options:
 
-        #n.add(
-        #    "Generator",
-        #    spatial.methanol.nodes,
-        #    suffix=" import",
-        #    bus=spatial.methanol.nodes,
-        #    carrier="import methanol",
-        #    p_nom=1e7,
-        #    marginal_cost=import_options["methanol_adb"],
-        #)
-     
         co2_intensity = costs.at["methanolisation", "carbondioxide-input"]
+        mc_methanol = import_options["methanol_adb"] / co2_intensity if investment_year < 2040 else 1e7
 
         n.add(
             "Link",
@@ -7144,7 +7138,7 @@ def add_import_options(
             bus0="co2 atmosphere",
             bus1=spatial.methanol.industry,
             efficiency=1 / co2_intensity,
-            marginal_cost=import_options["methanol_adb"] / co2_intensity,
+            marginal_cost=mc_methanol,
             p_nom=1e7,
         )
 
@@ -7156,13 +7150,15 @@ def add_import_options(
             bus0="co2 atmosphere",
             bus1=spatial.methanol.shipping,
             efficiency=1 / co2_intensity,
-            marginal_cost=import_options["methanol_adb"] / co2_intensity,
+            marginal_cost=mc_methanol,
             p_nom=1e7,
         )
 
 
+    if "ammonia_adb" in import_options:
 
-    if "ammonia_adb" in import_options and investment_year >= 2040:
+        mc_ammonia = import_options["ammonia_adb"] if investment_year < 2040 else 1e7
+
         n.add(
             "Generator",
             spatial.ammonia.nodes,
@@ -7170,7 +7166,7 @@ def add_import_options(
             bus=spatial.ammonia.nodes,
             carrier="import NH3",
             p_nom=1e7,
-            marginal_cost=import_options["ammonia_adb"],
+            marginal_cost=mc_ammonia,
         )
 
 
