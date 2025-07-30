@@ -149,13 +149,8 @@ def add_brownfield(
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
-<<<<<<< HEAD
-            # n.add(c.pnl[tattr], c.name, tattr)
-            n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
-=======
             # TODO: Needs to be rewritten to
             n._import_series_from_df(c.pnl[tattr], c.name, tattr)
->>>>>>> 04e6428713126ab24c0e7914e47e491cba1e3674
 
     # deal with gas network
     if h2_retrofit:
