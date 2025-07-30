@@ -1365,6 +1365,7 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
+<<<<<<< HEAD
         base=config_provider("electricity", "base_network"),
         endo_industry=config_provider("sector", "endo_industry", "enable"),
         endo_ammonia=config_provider("sector", "endo_industry","endo_ammonia"),
@@ -1372,6 +1373,8 @@ rule prepare_sector_network:
         weather_years=config_provider("weather_years","enable"),
         renewable_carriers=config_provider("electricity","renewable_carriers"),
         industrial_policy_scenario=config_provider("sector","endo_industry","policy_scenario")
+=======
+>>>>>>> 04e6428713126ab24c0e7914e47e491cba1e3674
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
