@@ -5619,6 +5619,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Capital costs
     discount_rate = 0.04
     capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+    # * 8760 h/a (?)
     min_part_load_cement = options["min_part_load_cement"]
     
     n.add(
@@ -7120,8 +7121,8 @@ def add_import_options(
             p_nom=1e7,
             marginal_cost=import_options["steel_adb"],
         )
-    
-    if "methanol_adb" in import_options:
+
+    if "methanol_adb" in import_options and investment_year >= 2040:
 
         #n.add(
         #    "Generator",
@@ -7161,7 +7162,7 @@ def add_import_options(
 
 
 
-    if "ammonia_adb" in import_options:
+    if "ammonia_adb" in import_options and investment_year >= 2040:
         n.add(
             "Generator",
             spatial.ammonia.nodes,
