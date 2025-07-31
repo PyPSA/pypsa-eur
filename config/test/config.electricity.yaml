@@ -20,6 +20,23 @@ scenario:
 
 countries: ['BE']
 
+mga:
+  enable: true
+  epsilon: 0.01
+  sense: min
+  runs:
+    run0:
+      Generator:
+        regex: BE0.*(on|offwind)
+        variable: p_nom
+        weights: 1
+    run1:
+      Generator:
+        regex: BE0.*solar
+        variable: p_nom
+        weights: 0.5
+
+
 snapshots:
   start: "2013-03-01"
   end: "2013-03-08"

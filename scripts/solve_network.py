@@ -1371,6 +1371,187 @@ def solve_network(
             )
         check_objective_value(n, solving)
 
+    # MGA implementation
+    mga_params = params.get("mga", {})
+    if mga_params.get("enable", False):
+        logger.info("Starting MGA (Modelling to Generate Alternatives) optimization")
+
+        # Get MGA configuration
+        epsilon = mga_params.get("epsilon", 0.05)
+        sense = mga_params.get("sense", "min")
+        mga_runs = mga_params.get("runs", {})
+        solver_name = kwargs["solver_name"]
+
+        # Store the original objective value
+        original_objective = n.objective
+        logger.info(f"Original objective value: {original_objective}")
+
+        # MGA solver options
+        mga_solver_options = kwargs.get("solver_options", {})
+
+        # Get the specific MGA run from wildcards if available
+        mga_run_wildcard = (
+            getattr(snakemake.wildcards, "mga_run", None)
+            if "snakemake" in globals()
+            else None
+        )
+
+        # If mga_run wildcard is specified, only run that specific MGA run
+        if mga_run_wildcard:
+            if mga_run_wildcard in mga_runs:
+                mga_runs_to_process = {mga_run_wildcard: mga_runs[mga_run_wildcard]}
+                logger.info(
+                    f"Processing specific MGA run from wildcard: {mga_run_wildcard}"
+                )
+            else:
+                logger.error(f"MGA run '{mga_run_wildcard}' not found in configuration")
+                raise RuntimeError(
+                    f"MGA run '{mga_run_wildcard}' not found in mga_run configuration"
+                )
+        else:
+            # If no wildcard specified, process all runs (for backwards compatibility)
+            mga_runs_to_process = mga_runs
+            logger.info(f"Processing all MGA runs: {list(mga_runs.keys())}")
+
+        # Perform MGA for each defined run
+        for run_name, run_config in mga_runs_to_process.items():
+            logger.info(f"Running MGA for: {run_name}")
+
+            # Build weights dictionary for this MGA run
+            weights = {}
+
+            for component_type, component_config in run_config.items():
+                if component_type not in weights:
+                    weights[component_type] = {}
+
+                regex_pattern = component_config.get("regex", "")
+                variable = component_config.get("variable", "p_nom")
+                weight_value = component_config.get("weights", 1.0)
+
+                if component_type == "Generator":
+                    # Find all generators matching the regex pattern
+                    matching_generators = n.generators[
+                        n.generators.index.str.contains(
+                            regex_pattern, regex=True, na=False
+                        )
+                    ].index
+
+                    if not matching_generators.empty:
+                        weights[component_type][variable] = {}
+                        for gen_idx in matching_generators:
+                            weights[component_type][variable][gen_idx] = weight_value
+                        logger.info(
+                            f"Found {len(matching_generators)} generators matching pattern '{regex_pattern}': {list(matching_generators)}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No generators found matching pattern '{regex_pattern}'"
+                        )
+
+                elif component_type == "Link":
+                    # Find all links matching the regex pattern
+                    matching_links = n.links[
+                        n.links.index.str.contains(regex_pattern, regex=True, na=False)
+                    ].index
+
+                    if not matching_links.empty:
+                        weights[component_type][variable] = {}
+                        for link_idx in matching_links:
+                            weights[component_type][variable][link_idx] = weight_value
+                        logger.info(
+                            f"Found {len(matching_links)} links matching pattern '{regex_pattern}': {list(matching_links)}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No links found matching pattern '{regex_pattern}'"
+                        )
+
+                elif component_type == "StorageUnit":
+                    # Find all storage units matching the regex pattern
+                    matching_storage = n.storage_units[
+                        n.storage_units.index.str.contains(
+                            regex_pattern, regex=True, na=False
+                        )
+                    ].index
+
+                    if not matching_storage.empty:
+                        weights[component_type][variable] = {}
+                        for storage_idx in matching_storage:
+                            weights[component_type][variable][storage_idx] = (
+                                weight_value
+                            )
+                        logger.info(
+                            f"Found {len(matching_storage)} storage units matching pattern '{regex_pattern}': {list(matching_storage)}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No storage units found matching pattern '{regex_pattern}'"
+                        )
+
+            # Perform MGA optimization if weights are not empty
+            if weights:
+                logger.info(f"MGA weights for {run_name}: {weights}")
+
+                try:
+                    # Call PyPSA's native MGA function
+                    mga_status, mga_condition = n.optimize.optimize_mga(
+                        snapshots=None,
+                        multi_investment_periods=kwargs.get(
+                            "multi_investment_periods", False
+                        ),
+                        weights=weights,
+                        sense=sense,
+                        slack=epsilon,
+                        solver_name=solver_name,
+                        solver_options=mga_solver_options,
+                        model_kwargs=kwargs.get("model_kwargs", {}),
+                        keep_files=kwargs.get("keep_files", False),
+                        extra_functionality=kwargs.get("extra_functionality"),
+                        transmission_losses=kwargs.get("transmission_losses", False),
+                        linearized_unit_commitment=kwargs.get(
+                            "linearized_unit_commitment", False
+                        ),
+                        assign_all_duals=kwargs.get("assign_all_duals", False),
+                        io_api=kwargs.get("io_api", None),
+                    )
+
+                    logger.info(
+                        f"MGA {run_name} completed with status: {mga_status}, condition: {mga_condition}"
+                    )
+                    logger.info(f"MGA {run_name} objective value: {n.objective}")
+
+                    # Store MGA results in network metadata
+                    if not hasattr(n, "mga_results"):
+                        n.mga_results = {}
+                    n.mga_results[run_name] = {
+                        "objective": n.objective,
+                        "status": mga_status,
+                        "condition": mga_condition,
+                        "weights": weights,
+                        "sense": sense,
+                        "epsilon": epsilon,
+                    }
+
+                    if mga_status != "ok":
+                        logger.warning(
+                            f"MGA {run_name} status '{mga_status}' with condition '{mga_condition}'"
+                        )
+
+                    if "infeasible" in mga_condition:
+                        logger.error(f"MGA {run_name} is infeasible")
+
+                except Exception as e:
+                    logger.error(
+                        f"Error during MGA optimization for {run_name}: {str(e)}"
+                    )
+                    raise RuntimeError(
+                        f"MGA optimization failed for {run_name}: {str(e)}"
+                    )
+            else:
+                logger.warning(
+                    f"No valid weights found for MGA run {run_name}, skipping"
+                )
+
     if "warning" in condition:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
@@ -1434,11 +1615,13 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
-    with open(snakemake.output.config, "w") as file:
-        yaml.dump(
-            n.meta,
-            file,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+    # Only write config if not an MGA run
+    if not getattr(snakemake.wildcards, "mga_run", None):
+        with open(snakemake.output.config, "w") as file:
+            yaml.dump(
+                n.meta,
+                file,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )

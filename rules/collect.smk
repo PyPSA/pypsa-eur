@@ -50,6 +50,16 @@ rule solve_elec_networks:
         ),
 
 
+rule solve_elec_mga_networks:
+    input:
+        expand(
+            RESULTS + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}.nc",
+            **config["scenario"],
+            mga_run=config["mga"]["runs"],
+            run=config["run"]["name"],
+        ),
+
+
 rule solve_sector_networks:
     input:
         expand(

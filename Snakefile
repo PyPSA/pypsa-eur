@@ -52,6 +52,7 @@ wildcard_constraints:
     opts=r"[-+a-zA-Z0-9\.]*",
     sector_opts=r"[-+a-zA-Z0-9\.\s]*",
     planning_horizons=r"[0-9]{4}",
+    mga_run=r"[-+a-zA-Z0-9\.]*",
 
 
 include: "rules/common.smk"
