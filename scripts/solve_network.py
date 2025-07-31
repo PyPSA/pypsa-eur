@@ -43,6 +43,7 @@ import yaml
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 from snakemake.script import Snakemake
+
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
     PYPSA_V1,
