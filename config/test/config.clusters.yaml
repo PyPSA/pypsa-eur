@@ -9,6 +9,9 @@ run:
     policy: false
   shared_cutouts: true
 
+logging:
+  warnings_as_errors: true
+
 scenario:
   clusters:
   - "adm"
