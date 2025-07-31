@@ -1373,18 +1373,29 @@ def solve_network(
 
     # MGA implementation
     mga_params = params.get("mga", {})
-    if mga_params.get("enable", False):
+    if (
+        mga_params.get("enable", False)
+        and "snakemake" in globals()
+        and hasattr(snakemake.wildcards, "mga_run")
+    ):
         logger.info("Starting MGA (Modelling to Generate Alternatives) optimization")
 
-        # Get MGA configuration
-        epsilon = mga_params.get("epsilon", 0.05)
-        sense = mga_params.get("sense", "min")
+        # Get MGA configuration from wildcards if available, otherwise from config
+        if "snakemake" in globals() and hasattr(snakemake.wildcards, "epsilon"):
+            epsilon = float(snakemake.wildcards.epsilon)
+            sense = snakemake.wildcards.sense
+        else:
+            # If no wildcards available, use default values (not lists from config)
+            epsilon = 0.05  # default value
+            sense = "min"  # default value
+
         mga_runs = mga_params.get("runs", {})
         solver_name = kwargs["solver_name"]
 
         # Store the original objective value
         original_objective = n.objective
         logger.info(f"Original objective value: {original_objective}")
+        logger.info(f"MGA parameters: epsilon={epsilon}, sense={sense}")
 
         # MGA solver options
         mga_solver_options = kwargs.get("solver_options", {})

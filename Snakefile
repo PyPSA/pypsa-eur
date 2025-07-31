@@ -53,6 +53,8 @@ wildcard_constraints:
     sector_opts=r"[-+a-zA-Z0-9\.\s]*",
     planning_horizons=r"[0-9]{4}",
     mga_run=r"[-+a-zA-Z0-9\.]*",
+    epsilon=r"[0-9]+(\.[0-9]+)?",
+    sense=r"(min|max)",
 
 
 include: "rules/common.smk"

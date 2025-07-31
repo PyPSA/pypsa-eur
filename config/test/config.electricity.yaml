@@ -22,8 +22,8 @@ countries: ['BE']
 
 mga:
   enable: true
-  epsilon: 0.01
-  sense: min
+  epsilon: [0.01, 0.05]
+  sense: [min, max]
   runs:
     run0:
       Generator:

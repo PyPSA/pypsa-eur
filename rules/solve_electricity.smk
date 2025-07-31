@@ -49,18 +49,19 @@ rule solve_mga_network:
     input:
         network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
     output:
-        network=RESULTS + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}.nc",
+        network=RESULTS
+        + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}.nc",
     log:
         solver=normpath(
             RESULTS
-            + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}_solver.log"
+            + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}_eps{epsilon}_sense{sense}_solver.log"
         ),
         python=RESULTS
-        + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}_python.log",
+        + "logs/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}_eps{epsilon}_sense{sense}_python.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}"
+            + "benchmarks/solve_mga_network/base_s_{clusters}_elec_{opts}__{mga_run}_eps{epsilon}_sense{sense}"
         )
     threads: 4
     resources:

@@ -53,9 +53,51 @@ rule solve_elec_networks:
 rule solve_elec_mga_networks:
     input:
         expand(
-            RESULTS + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}.nc",
+            RESULTS
+            + "networks/mga/base_s_{clusters}_elec_{opts}_{mga_run}_eps{epsilon}_sense{sense}.nc",
             **config["scenario"],
             mga_run=config["mga"]["runs"],
+            epsilon=config["mga"]["epsilon"],
+            sense=config["mga"]["sense"],
+            run=config["run"]["name"],
+        ),
+
+
+rule solve_sector_mga_networks:
+    input:
+        expand(
+            RESULTS
+            + "networks/mga/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{mga_run}_eps{epsilon}_sense{sense}.nc",
+            **config["scenario"],
+            mga_run=config["mga"]["runs"],
+            epsilon=config["mga"]["epsilon"],
+            sense=config["mga"]["sense"],
+            run=config["run"]["name"],
+        ),
+
+
+rule solve_sector_mga_networks_myopic:
+    input:
+        expand(
+            RESULTS
+            + "networks/mga/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{mga_run}_eps{epsilon}_sense{sense}.nc",
+            **config["scenario"],
+            mga_run=config["mga"]["runs"],
+            epsilon=config["mga"]["epsilon"],
+            sense=config["mga"]["sense"],
+            run=config["run"]["name"],
+        ),
+
+
+rule solve_sector_mga_networks_perfect:
+    input:
+        expand(
+            RESULTS
+            + "networks/mga/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_{mga_run}_eps{epsilon}_sense{sense}.nc",
+            **config["scenario"],
+            mga_run=config["mga"]["runs"],
+            epsilon=config["mga"]["epsilon"],
+            sense=config["mga"]["sense"],
             run=config["run"]["name"],
         ),
 

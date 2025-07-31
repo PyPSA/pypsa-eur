@@ -133,6 +133,50 @@ rule solve_sector_network_perfect:
         "../scripts/solve_network.py"
 
 
+rule solve_sector_mga_network_perfect:
+    params:
+        solving=config_provider("solving"),
+        foresight=config_provider("foresight"),
+        sector=config_provider("sector"),
+        planning_horizons=config_provider("scenario", "planning_horizons"),
+        co2_sequestration_potential=config_provider(
+            "sector", "co2_sequestration_potential", default=200
+        ),
+        custom_extra_functionality=input_custom_extra_functionality,
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        costs=resources("costs_2030.csv"),
+    output:
+        network=RESULTS
+        + "networks/mga/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_{mga_run}_eps{epsilon}_sense{sense}.nc",
+    wildcard_constraints:
+        epsilon="|".join(
+            [
+                str(eps).replace(".", r"\.")
+                for eps in config.get("mga", {}).get("epsilon", [])
+            ]
+        ),
+        sense="|".join(config.get("mga", {}).get("sense", [])),
+        mga_run="|".join(config.get("mga", {}).get("runs", {}).keys()),
+    threads: 4
+    resources:
+        mem_mb=config_provider("solving", "mem"),
+        runtime=config_provider("solving", "runtime", default="24h"),
+    log:
+        solver=RESULTS
+        + "logs/solve_sector_mga_network_perfect/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_{mga_run}_eps{epsilon}_sense{sense}_solver.log",
+        python=RESULTS
+        + "logs/solve_sector_mga_network_perfect/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_{mga_run}_eps{epsilon}_sense{sense}_python.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/solve_sector_mga_network_perfect/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_{mga_run}_eps{epsilon}_sense{sense}"
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/solve_network.py"
+
+
 def input_networks_make_summary_perfect(w):
     return {
         f"networks_s_{clusters}_{opts}_{sector_opts}": RESULTS

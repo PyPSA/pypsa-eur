@@ -4,6 +4,8 @@
 
 tutorial: true
 
+foresight: overnight
+
 run:
   name: "test-sector-overnight"
   disable_progressbar: true
@@ -15,12 +17,30 @@ run:
 scenario:
   clusters:
   - 5
+  opts:
+  - ''
   sector_opts:
   - ''
   planning_horizons:
   - 2030
 
 countries: ['BE']
+
+mga:
+  enable: true
+  epsilon: [0.01, 0.05]
+  sense: [min, max]
+  runs:
+    run0:
+      Generator:
+        regex: BE0.*(on|offwind)
+        variable: p_nom
+        weights: 1
+    run1:
+      Generator:
+        regex: BE0.*solar
+        variable: p_nom
+        weights: 0.5
 
 snapshots:
   start: "2013-03-01"
