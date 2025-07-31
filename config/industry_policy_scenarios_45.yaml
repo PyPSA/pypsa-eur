@@ -334,8 +334,9 @@ policy_reg_regain_flex:
     min_part_load_cement: 0
     min_part_load_hvc: 0
 
+
 # Climate policy: YES, Relocation: NO, Industrial policy: REGAIN
-policy_reg_regain_1h:
+policy_reg_maintain:
   co2_budget:
     2020: 1
     2030: 0.450 # 55% reduction by 2030 (Ff55)
@@ -349,7 +350,7 @@ policy_reg_regain_1h:
       regional_steel_demand: true
       regional_cement_demand: true
       regional_hvc: true
-      policy_scenario: regain
+      policy_scenario: maintain
     methanol:
       regional_methanol_demand: true
     ammonia: regional
@@ -358,6 +359,4 @@ policy_reg_regain_1h:
     min_part_load_steel: 0.3
     min_part_load_cement: 0.5
     min_part_load_hvc: 0.3
-  clustering:
-    temporal:
-      resolution_sector: false
+  

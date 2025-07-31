@@ -6,9 +6,9 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
-  - import_policy_reg_deindustrial
-  - import_policy_reg_regain
+  name: "all"
+  #- import_policy_reg_deindustrial
+  #- import_policy_reg_regain
   #- base_reg_deindustrial
   #- base_reg_regain
   #- policy_reg_regain
@@ -19,10 +19,10 @@ run:
   #- policy_eu_regain
   #- policy_eu_deindustrial
   #- policy_reg_deindustrial_pf
-  - policy_reg_maintain
+  #- policy_reg_maintain
   scenarios:
     enable: true
-    file: config/industry_policy_scenarios_45_maintain.yaml
+    file: config/industry_policy_scenarios_45.yaml
   disable_progressbar: false
   shared_resources:
     policy: false
