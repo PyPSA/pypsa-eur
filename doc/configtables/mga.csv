@@ -1,0 +1,10 @@
+,Unit,Values,Description
+enable,bool,"{'true','false'}","Switch to enable Modelling to Generate Alternatives (MGA) optimization. When enabled, the workflow will generate alternative near-optimal solutions for each scenario in addition to the cost-optimal solution."
+epsilon,--,list of float,"List of epsilon values (relaxation parameters) for MGA optimization. Each epsilon value defines how much the objective function is allowed to deviate from the optimal solution as a fraction. For example, epsilon=0.05 allows solutions up to 5% worse than the optimal cost."
+sense,--,"list of {'min','max'}","List of optimization senses for MGA runs. 'min' minimizes the MGA objective (e.g., minimize renewable capacity), while 'max' maximizes it (e.g., maximize renewable capacity). Multiple senses allow exploring both extremes of the solution space."
+runs,--,dict,"Dictionary defining MGA run configurations. Each key represents a unique MGA run identifier (e.g., 'run0', 'run1') with nested parameters defining the optimization target."
+-- {run_name},--,dict,"Configuration for a specific MGA run, containing component type definitions and their optimization parameters."
+-- -- {component_type},--,dict,"PyPSA component type to optimize (e.g., 'Generator', 'Link', 'Store'). Multiple component types can be specified within a single run."
+-- -- -- regex,--,str,"Regular expression pattern to match component names within the specified component type. Used to select which specific components to include in the MGA objective (e.g., 'BE.*solar' for all solar generators in Belgium)."
+-- -- -- variable,--,str,"PyPSA variable to optimize for the matched components as specified in pypsa/data/variables.csv. Common variables include 'p_nom' (capacity), 'p' (dispatch), 'e_nom' (energy capacity). Must be a valid PyPSA optimization variable for the component type."
+-- -- -- weights,--,float,"Weight factor applied to the matched components in the MGA objective function. Positive weights penalize the variable, negative weights encourage it. Can be used to balance different technologies or regions."
