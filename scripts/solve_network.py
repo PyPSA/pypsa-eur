@@ -1165,7 +1165,6 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
-
 def check_objective_value(n: pypsa.Network, solving: dict) -> None:
     """
     Check if objective value matches expected value within tolerance.
@@ -1242,9 +1241,11 @@ def solve_network(
     ObjectiveValueError
         If objective value differs from expected value
     """
-    
+
     def extra_functionality(
-        n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+        n: pypsa.Network,
+        snapshots: pd.DatetimeIndex,
+        planning_horizons: str | None = None,
     ) -> None:
         """
         Add custom constraints and functionality.
