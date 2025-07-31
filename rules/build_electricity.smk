@@ -650,7 +650,6 @@ rule cluster_network:
         length_factor=config_provider("lines", "length_factor"),
         cluster_mode=config_provider("clustering", "mode"),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
-        base_network=config_provider("electricity", "base_network"),
     input:
         unpack(input_custom_busmap),
         network=resources("networks/base_s.nc"),

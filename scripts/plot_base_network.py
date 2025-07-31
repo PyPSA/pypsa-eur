@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Plot base network transmission network.
+Plot base transmission network.
 """
 
 import geopandas as gpd
