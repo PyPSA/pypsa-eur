@@ -104,7 +104,7 @@ class PtesTemperatureApproximator:
         if self.operational_mode == OperationalMode.CONSTANT_TEMPERATURE:
             return xr.full_like(self.return_temperature, self.min_ptes_bottom_temperature)
         elif self.operational_mode == OperationalMode.DYNAMIC_TEMPERATURE:
-            return self.min_ptes_bottom_temperature
+            return self.return_temperature
         else:
             raise NotImplementedError(f"Operational mode {self.operational_mode} not implemented")
 
@@ -120,9 +120,9 @@ class PtesTemperatureApproximator:
             Normalized delta T values between 0 and 1, representing the
             available storage capacity as a percentage of maximum capacity.
         """
-        delta_t = self.top_temperature - self.return_temperature
+        delta_t = self.top_temperature - self.bottom_temperature
         normalized_delta_t = delta_t / (
-            self.max_ptes_top_temperature - self.bottom_temperature
+            self.max_ptes_top_temperature - self.min_ptes_bottom_temperature
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
 
@@ -141,13 +141,13 @@ class PtesTemperatureApproximator:
 
         The total heat transfer is partitioned into:
 
-            Q_source = Ṽ·ρ·cₚ·(T_max,store − T_return)
-            Q_boost  = Ṽ·ρ·cₚ·(T_forward − T_max,store)
+            Q_source = Ṽ·ρ·cₚ·(T_top − T_bottom)
+            Q_boost  = Ṽ·ρ·cₚ·(T_forward − T_top)
 
-        Defining α as the ratio of required boost to available store energy:
+        Solving this to constant Ṽ gives α as the ratio of required boost to available store energy:
 
             α = Q_boost / Q_source
-              = (T_forward − T_max,store) / (T_max,store − T_return)
+              = (T_forward − T_top) / (T_top − T_bottom)
 
         This expression quantifies the share of PTES output that is covered
         by stored energy relative to the additional heating needed to meet
@@ -158,8 +158,8 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting fraction of PTES charge that must be further heated.
         """
-        return ((self.top_temperature - self.return_temperature) / (
-                self.forward_temperature - self.top_temperature
+        return ((self.forward_temperature - self.top_temperature) / (
+                self.top_temperature - self.bottom_temperature
         )).where(self.forward_temperature > self.top_temperature, 0)
 
     @property
@@ -174,17 +174,17 @@ class PtesTemperatureApproximator:
         To fill the storage from the return temperature all the way up to its
         maximum top temperature, the total thermal energy required is split into:
 
-            Q_forward   = Ṽ·ρ·cₚ·(T_forward − T_return)
-            Q_boosting  = Ṽ·ρ·cₚ·(T_max_ptes_top − T_forward)
+            Q_forward   = Ṽ·ρ·cₚ·(T_forward − T_bottom)
+            Q_boosting  = Ṽ·ρ·cₚ·(T_top − T_forward)
 
         - Q_forward is the energy already delivered by charging to the forward setpoint.
         - Q_boosting is the extra boost energy still needed to reach maximum capacity.
 
         Defining α as the ratio of delivered energy to remaining boost energy:
 
-            α = Q_forward / Q_boosting
-              = (T_forward − T_return) /
-                (T_max_ptes_top − T_forward)
+            α = Q_boosting / Q_forward
+              = (T_forward − T_bottom) /
+                (T_top − T_forward)
 
         This ratio quantifies the share of the total charge process that has
         already been completed (via Q_forward) relative to what is still
