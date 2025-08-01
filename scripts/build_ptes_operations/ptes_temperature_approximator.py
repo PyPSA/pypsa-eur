@@ -25,9 +25,9 @@ class PtesTemperatureApproximator:
         The forward temperature profile from the district heating network.
     return_temperature : xr.DataArray
         The return temperature profile from the district heating network.
-    max_ptes_top_temperature : float
+    max_top_temperature : float
         Maximum operational temperature of top layer in PTES.
-    min_ptes_bottom_temperature : float
+    min_bottom_temperature : float
         Minimum operational temperature of bottom layer in PTES.
     operational_mode : OperationalMode
         PTES operational mode.
@@ -37,8 +37,8 @@ class PtesTemperatureApproximator:
         self,
         forward_temperature: xr.DataArray,
         return_temperature: xr.DataArray,
-        max_ptes_top_temperature: float,
-        min_ptes_bottom_temperature: float,
+        max_top_temperature: float,
+        min_bottom_temperature: float,
         operational_mode: OperationalMode,
     ):
         """
@@ -50,23 +50,17 @@ class PtesTemperatureApproximator:
             The forward temperature profile from the district heating network.
         return_temperature : xr.DataArray
             The return temperature profile from the district heating network.
-        max_ptes_top_temperature : float
+        max_top_temperature : float
             Maximum operational temperature of top layer in PTES.
-        min_ptes_bottom_temperature : float
+        min_bottom_temperature : float
             Minimum operational temperature of bottom layer in PTES.
-        charger_temperature_boosting_required : bool,
-            Clip forward_temperature at max_ptes_top_temperature if True.
-        max_ptes_top_temperature : float, optional
-            Maximum operational temperature of top layer in PTES, default 90°C.
-        min_ptes_bottom_temperature : float, optional
-            Minimum operational temperature of bottom layer in PTES, default 35°C.
-        operational_mode : OperationalMode, optional
-            PTES operational mode, default VARIABLE_TEMPERATURE.
+        operational_mode : OperationalMode
+            PTES operational mode.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
-        self.max_ptes_top_temperature = max_ptes_top_temperature
-        self.min_ptes_bottom_temperature = min_ptes_bottom_temperature
+        self.max_top_temperature = max_top_temperature
+        self.min_bottom_temperature = min_bottom_temperature
         self.operational_mode = operational_mode
 
     @property
@@ -80,11 +74,11 @@ class PtesTemperatureApproximator:
             The resulting top temperature profile for PTES.
         """
         if self.operational_mode == OperationalMode.CONSTANT_TEMPERATURE:
-            return xr.full_like(self.forward_temperature, self.max_ptes_top_temperature)
+            return xr.full_like(self.forward_temperature, self.max_top_temperature)
         elif self.operational_mode == OperationalMode.DYNAMIC_TEMPERATURE:
             return self.forward_temperature.where(
-                self.forward_temperature <= self.max_ptes_top_temperature,
-                self.max_ptes_top_temperature,
+                self.forward_temperature <= self.max_top_temperature,
+                self.max_top_temperature,
             )
         else:
             raise NotImplementedError(f"Operational mode {self.operational_mode} not implemented")
@@ -100,7 +94,7 @@ class PtesTemperatureApproximator:
             The resulting bottom temperature profile for PTES.
         """
         if self.operational_mode == OperationalMode.CONSTANT_TEMPERATURE:
-            return xr.full_like(self.return_temperature, self.min_ptes_bottom_temperature)
+            return xr.full_like(self.return_temperature, self.min_bottom_temperature)
         elif self.operational_mode == OperationalMode.DYNAMIC_TEMPERATURE:
             return self.return_temperature
         else:
@@ -120,12 +114,12 @@ class PtesTemperatureApproximator:
         """
         delta_t = self.top_temperature - self.bottom_temperature
         normalized_delta_t = delta_t / (
-            self.max_ptes_top_temperature - self.min_ptes_bottom_temperature
+            self.max_top_temperature - self.min_bottom_temperature
         )
         return normalized_delta_t.clip(min=0)  # Ensure non-negative values
 
     @property
-    def discharger_temperature_boosting_ratio(self) -> xr.DataArray:
+    def boost_per_discharge(self) -> xr.DataArray:
         """
         Calculate the additional lift required between the store's
         current top temperature and the forward temperature with the lift
@@ -161,7 +155,7 @@ class PtesTemperatureApproximator:
         )).where(self.forward_temperature > self.top_temperature, 0)
 
     @property
-    def charger_temperature_boosting_ratio(self) -> xr.DataArray:
+    def boost_per_charge(self) -> xr.DataArray:
         """
         Calculate how much of the total energy needed to fill the PTES to its
         maximum capacity has already been delivered by charging up to the forward
@@ -194,8 +188,8 @@ class PtesTemperatureApproximator:
         Returns
         -------
         xr.DataArray
-            The fraction of the PTES’s available storage capacity already used.
+            The fraction of the PTES's available storage capacity already used.
         """
         return ((self.forward_temperature - self.return_temperature) / (
-            self.max_ptes_top_temperature - self.forward_temperature
-        )).where(self.forward_temperature < self.max_ptes_top_temperature, 0)
+            self.max_top_temperature - self.forward_temperature
+        )).where(self.forward_temperature < self.max_top_temperature, 0)
