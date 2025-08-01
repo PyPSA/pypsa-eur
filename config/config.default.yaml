@@ -514,12 +514,16 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: true
-      supplemental_heating:
-        enable: false
-        booster_heat_pump: false
+      enable: true
+      dynamic_capacity: false
+      discharge_boosting_required: false
+      charger_boosting_required: false
+      temperature_profile: 'constant'
+      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
       max_top_temperature: 90
       min_bottom_temperature: 35
+    ttes:
+      enable: true
     ates:
       enable: false
       suitable_aquifer_types:
@@ -545,8 +549,10 @@ sector:
         ignore_missing_regions: false
     direct_utilisation_heat_sources:
     - geothermal
-    temperature_limited_stores:
-    - ptes
+  tes: true
+  tes_tau:
+    decentral: 3
+    central: 180
   heat_pump_sources:
     urban central:
     - air
@@ -654,10 +660,6 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-  tes: true
-  tes_tau:
-    decentral: 3
-    central: 180
   boilers: true
   resistive_heaters: true
   oil_boilers: false

@@ -37,16 +37,19 @@ sector:
     ates:
       enable: true
     ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
-    heat_pump_sources:
-      urban central:
+      dynamic_capacity: true
+      discharge_boosting_required: true
+      charger_boosting_required: true
+      temperature_profile: 'dynamic'
+      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
+  heat_pump_sources:
+    urban central:
+      - ptes
       - air
-      - geothermal
-      urban decentral:
+#      - geothermal
+    urban decentral:
       - air
-      rural:
+    rural:
       - air
       - ground
   hydrogen_turbine: false
