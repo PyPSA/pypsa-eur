@@ -139,6 +139,7 @@ def industrial_energy_demand_per_country(country, year, jrc_dir, endogenous_ammo
 
     sel = ["Mining and quarrying", "Construction", "Non-specified"]
     df["Other industrial sectors"] = df[sel].sum(axis=1)
+
     df["Basic chemicals"] += df["Basic chemicals feedstock"]
 
     df.drop(columns=sel + ["Basic chemicals feedstock"], index="all", inplace=True)
@@ -184,6 +185,7 @@ def separate_basic_chemicals(demand, production):
         ammonia = ammonia_exo
 
     demand["Ammonia"] = ammonia.unstack().reindex(index=demand.index, fill_value=0.0)
+
     demand["HVC"] -= ammonia_exo.unstack().reindex(index=demand.index, fill_value=0.0)
 
     demand.drop(columns="Basic chemicals", inplace=True)

@@ -79,7 +79,7 @@ if config["foresight"] == "perfect":
     include: "rules/solve_perfect.smk"
 
 
-rule all:
+rule all_plots:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
         expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
@@ -149,6 +149,15 @@ rule all:
         ),
     default_target: True
 
+rule all:
+  input:
+    expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+  default_target: True
 
 rule create_scenarios:
     output:

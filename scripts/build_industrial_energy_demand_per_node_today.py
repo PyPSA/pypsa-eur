@@ -94,6 +94,7 @@ else:
 
 
 def build_nodal_industrial_energy_demand():
+    print(f"Sector mapping {sector_mapping}")
     fn = snakemake.input.industrial_energy_demand_per_country_today
     industrial_demand = pd.read_csv(fn, header=[0, 1], index_col=0)
 
@@ -107,6 +108,8 @@ def build_nodal_industrial_energy_demand():
 
     countries = keys.country.unique()
     sectors = industrial_demand.columns.unique(1)
+    if snakemake.params.endo_industry:
+        sectors = sector_mapping.keys()
 
     for country, sector in product(countries, sectors):
         buses = keys.index[keys.country == country]
@@ -125,29 +128,8 @@ def build_nodal_industrial_energy_demand():
     nodal_demand.index.name = "TWh/a"
     
     if snakemake.params.endo_industry:
-
-        nodal_demand_all = pd.DataFrame(
-            0.0, dtype=float, index=keys.index, columns=industrial_demand.index
-            )
-
-        countries = keys.country.unique()
-        sectors = industrial_demand.columns.unique(1)
-
-        for country, sector in product(countries, sectors):
-            buses = keys.index[keys.country == country]
-
-            mapping = sector_mapping_all.get(sector, "population")
-
-            key = keys.loc[buses, mapping]
-            demand = industrial_demand[country, sector]
-
-            outer = pd.DataFrame(
-                np.outer(key, demand), index=key.index, columns=demand.index
-            )
-
-            nodal_demand_all.loc[buses] += outer
-
-        nodal_demand['all sectors electricity'] = nodal_demand_all['electricity']
+        
+        nodal_demand['all sectors electricity'] = nodal_demand['electricity']
 
     nodal_demand.to_csv(snakemake.output.industrial_energy_demand_per_node_today)
 
