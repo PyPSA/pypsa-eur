@@ -41,11 +41,9 @@ import pandas as pd
 import pypsa
 import xarray as xr
 import yaml
-from pypsa.clustering.spatial import align_strategies, flatten_multiindex
-from pypsa.descriptors import get_activity_mask
+from pypsa.clustering.spatial import align_strategies
+from pypsa.descriptors import get_activity_mask, nominal_attrs
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from pypsa.descriptors import nominal_attrs
-from pypsa.io import import_components_from_dataframe, import_series_from_dataframe
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
@@ -237,9 +235,7 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
     # installed solar, including all solar carriers.
     lhs = (
         (
-            n.model["Generator-p_nom"]
-            .rename(rename)
-            .loc[all_solar_ext.index]
+            n.model["Generator-p_nom"].rename(rename).loc[all_solar_ext.index]
             * land_use.loc[all_solar_ext.index]
         )
         .groupby(all_solar_ext.bus)
@@ -1491,6 +1487,7 @@ def solve_network(
     config: dict,
     params: dict,
     solving: dict,
+    build_year_agg: dict,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     **kwargs,
