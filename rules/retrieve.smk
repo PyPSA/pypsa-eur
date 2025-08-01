@@ -1,10 +1,11 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
+from shutil import copy as shcopy
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -18,7 +19,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     datafiles = [
         "je-e-21.03.02.xls",
         "nama_10r_3popgdp.tsv.gz",
-        "nama_10r_3gdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "emobility/KFZ__count",
@@ -27,7 +27,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
         "GDP_per_capita_PPP_1990_2015_v2.nc",
-        "ppp_2013_1km_Aggregated.tif",
+        "ppp_2019_1km_Aggregated.tif",
+        "era5-HDD-per-country.csv",
+        "era5-runoff-per-country.csv",
     ]
 
     rule retrieve_databundle:
@@ -35,11 +37,13 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             expand("data/bundle/{file}", file=datafiles),
         log:
             "logs/retrieve_databundle.log",
+        benchmark:
+            "benchmarks/retrieve_databundle"
         resources:
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_databundle.py"
 
@@ -50,7 +54,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_eurostat_data.py"
 
@@ -70,14 +74,14 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "logs/retrieve_eurostat_household_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_eurostat_household_data.py"
 
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_nuts_shapes:
+    rule retrieve_nuts_2013_shapes:
         input:
             shapes=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
@@ -101,23 +105,81 @@ if config["enable"]["retrieve"]:
 
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_nuts_2021_shapes:
+        input:
+            shapes=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
+            ),
+        output:
+            shapes_level_3="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2="data/nuts/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
+        params:
+            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
+        run:
+            os.rename(input.shapes, params.zip_file)
+            with ZipFile(params.zip_file, "r") as zip_ref:
+                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
+                    filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
+                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
+                    extracted_file = Path(output.shapes_level_0).parent / filename
+                    extracted_file.rename(
+                        getattr(output, f"shapes_level_{level[-1]}")
+                    )
+            os.remove(params.zip_file)
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_bidding_zones:
+        output:
+            file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+            file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+        log:
+            "logs/retrieve_bidding_zones.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_bidding_zones.py"
+
+
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/12791128/files/{cutout}.nc",
+                "https://zenodo.org/records/15349674/files/{cutout}.nc",
             ),
         output:
-            "cutouts/" + CDIR + "{cutout}.nc",
+            CDIR.joinpath("{cutout}.nc").as_posix(),
         log:
-            "logs/" + CDIR + "retrieve_cutout_{cutout}.log",
+            Path("logs").joinpath(CDIR, "retrieve_cutout_{cutout}.log").as_posix(),
         resources:
             mem_mb=5000,
         retries: 2
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_tyndp_bundle:
+        output:
+            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
+            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
+        log:
+            "logs/retrieve_tyndp_bundle.log",
+        retries: 2
+        script:
+            "../scripts/retrieve_tyndp_bundle.py"
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
@@ -133,7 +195,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             mem_mb=1000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_cost_data.py"
 
@@ -154,7 +216,7 @@ if config["enable"]["retrieve"]:
             "logs/retrieve_gas_infrastructure_data.log",
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_gas_infrastructure_data.py"
 
@@ -172,7 +234,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_electricity_demand.py"
 
@@ -254,21 +316,6 @@ if config["enable"]["retrieve"]:
             ),
         output:
             "data/myb1-2022-nitro-ert.xlsx",
-        retries: 1
-        run:
-            move(input[0], output[0])
-
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_geological_co2_storage_potential:
-        input:
-            storage(
-                "https://raw.githubusercontent.com/ericzhou571/Co2Storage/main/resources/complete_map_2020_unit_Mt.geojson",
-                keep_local=True,
-            ),
-        output:
-            "data/complete_map_2020_unit_Mt.geojson",
         retries: 1
         run:
             move(input[0], output[0])
@@ -373,23 +420,27 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    # Download directly from naciscdn.org which is a redirect from naturalearth.com
-    # (https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/)
-    # Use point-of-view (POV) variant of Germany so that Crimea is included.
-    rule retrieve_naturalearth_countries:
-        input:
-            storage(
-                "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_deu.zip"
-            ),
+    rule retrieve_co2stop:
         params:
-            zip="data/naturalearth/ne_10m_admin_0_countries_deu.zip",
+            zip="data/co2jrc_openformats.zip",
         output:
-            countries="data/naturalearth/ne_10m_admin_0_countries_deu.shp",
+            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
+            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
+            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
+            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
+            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
         run:
-            move(input[0], params["zip"])
-            output_folder = Path(output["countries"]).parent
+            import requests
+
+            response = requests.get(
+                "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
+            )
+            with open(params["zip"], "wb") as f:
+                f.write(response.content)
+            output_folder = Path(params["zip"]).parent
             unpack_archive(params["zip"], output_folder)
-            os.remove(params["zip"])
+
 
 
 if config["enable"]["retrieve"]:
@@ -459,15 +510,16 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            storage(url, keep_local=True),
+            zip=storage(url, keep_local=True),
         params:
             zip="data/WDPA_shp.zip",
             folder=directory("data/WDPA"),
         output:
             gpkg="data/WDPA.gpkg",
         run:
-            shell("cp {input} {params.zip}")
-            shell("unzip -o {params.zip} -d {params.folder}")
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
@@ -481,7 +533,7 @@ if config["enable"]["retrieve"]:
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            storage(
+            zip=storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
@@ -491,8 +543,9 @@ if config["enable"]["retrieve"]:
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
-            shell("cp {input} {params.zip}")
-            shell("unzip -o {params.zip} -d {params.folder}")
+            shcopy(input.zip, params.zip)
+            unpack_archive(params.zip, params.folder)
+
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
@@ -506,7 +559,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_monthly_co2_prices:
         input:
             storage(
-                "https://www.eex.com/fileadmin/EEX/Downloads/EUA_Emission_Spot_Primary_Market_Auction_Report/Archive_Reports/emission-spot-primary-market-auction-report-2019-data.xls",
+                "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
                 keep_local=True,
             ),
         output:
@@ -531,7 +584,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
@@ -539,44 +592,41 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and (
     config["electricity"]["base_network"] == "osm-prebuilt"
 ):
-    # Dictionary of prebuilt versions, e.g. 0.3 : "13358976"
-    osm_prebuilt_version = {
+    OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
+    OSM_FILES = [
+        "buses.csv",
+        "converters.csv",
+        "lines.csv",
+        "links.csv",
+        "transformers.csv",
+    ]
+    if OSM_VERSION >= 0.6:
+        OSM_FILES.append("map.html")
+    OSM_ZENODO_IDS = {
         0.1: "12799202",
         0.2: "13342577",
         0.3: "13358976",
         0.4: "13759222",
+        0.5: "13981528",
+        0.6: "14144752",
     }
 
     # update rule to use the correct version
     rule retrieve_osm_prebuilt:
         input:
-            buses=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/buses.csv"
-            ),
-            converters=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/converters.csv"
-            ),
-            lines=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/lines.csv"
-            ),
-            links=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/links.csv"
-            ),
-            transformers=storage(
-                f"https://zenodo.org/records/{osm_prebuilt_version[config['electricity']['osm-prebuilt-version']]}/files/transformers.csv"
-            ),
+            **{
+                file: storage(
+                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
+                )
+                for file in OSM_FILES
+            },
         output:
-            buses=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/buses.csv",
-            converters=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/converters.csv",
-            lines=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/lines.csv",
-            links=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/links.csv",
-            transformers=f"data/osm-prebuilt/{config['electricity']['osm-prebuilt-version']}/transformers.csv",
+            **{file: f"data/osm-prebuilt/{OSM_VERSION}/{file}" for file in OSM_FILES},
         log:
             "logs/retrieve_osm_prebuilt.log",
         threads: 1
         resources:
             mem_mb=500,
-        retries: 2
         run:
             for key in input.keys():
                 move(input[key], output[key])
@@ -592,14 +642,14 @@ if config["enable"]["retrieve"] and (
         output:
             cables_way="data/osm-raw/{country}/cables_way.json",
             lines_way="data/osm-raw/{country}/lines_way.json",
-            links_relation="data/osm-raw/{country}/links_relation.json",
+            routes_relation="data/osm-raw/{country}/routes_relation.json",
             substations_way="data/osm-raw/{country}/substations_way.json",
             substations_relation="data/osm-raw/{country}/substations_relation.json",
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
-            "../envs/retrieve.yaml"
+            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_data.py"
 
@@ -619,7 +669,7 @@ if config["enable"]["retrieve"] and (
                 country=config_provider("countries"),
             ),
             expand(
-                "data/osm-raw/{country}/links_relation.json",
+                "data/osm-raw/{country}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             expand(
@@ -630,3 +680,121 @@ if config["enable"]["retrieve"] and (
                 "data/osm-raw/{country}/substations_relation.json",
                 country=config_provider("countries"),
             ),
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_osm_boundaries:
+        output:
+            json="data/osm-boundaries/json/{country}_adm1.json",
+        log:
+            "logs/retrieve_osm_boundaries_{country}_adm1.log",
+        threads: 1
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_osm_boundaries.py"
+
+    rule retrieve_geothermal_heat_utilisation_potentials:
+        input:
+            isi_heat_potentials=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
+                keep_local=True,
+            ),
+        output:
+            "data/isi_heat_utilisation_potentials.xlsx",
+        log:
+            "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+    rule retrieve_lau_regions:
+        input:
+            lau_regions=storage(
+                "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
+                keep_local=True,
+            ),
+        output:
+            lau_regions="data/lau_regions.zip",
+        log:
+            "logs/retrieve_lau_regions.log",
+        log:
+            "logs/retrieve_lau_regions.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_jrc_ardeco:
+        output:
+            ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+            ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        run:
+            import requests
+
+            urls = {
+                "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
+                "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
+            }
+
+            for key, url in urls.items():
+                response = requests.get(url)
+                output_path = output[key] if key in urls else None
+                if output_path:
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_aquifer_data_bgr:
+        input:
+            zip=storage(
+                "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
+            ),
+        output:
+            aquifer_shapes_shp="data/bgr/ihme1500_aquif_ec4060_v12_poly.shp",
+            aquifer_shapes_shx="data/bgr/ihme1500_aquif_ec4060_v12_poly.shx",
+            aquifer_shapes_dbf="data/bgr/ihme1500_aquif_ec4060_v12_poly.dbf",
+            aquifer_shapes_cpg="data/bgr/ihme1500_aquif_ec4060_v12_poly.cpg",
+            aquifer_shapes_prj="data/bgr/ihme1500_aquif_ec4060_v12_poly.prj",
+            aquifer_shapes_sbn="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbn",
+            aquifer_shapes_sbx="data/bgr/ihme1500_aquif_ec4060_v12_poly.sbx",
+        params:
+            filename_shp="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shp",
+            filename_shx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shx",
+            filename_dbf="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.dbf",
+            filename_cpg="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.cpg",
+            filename_prj="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.prj",
+            filename_sbn="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbn",
+            filename_sbx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbx",
+        run:
+            with ZipFile(input.zip, "r") as zip_ref:
+                for fn, outpt in zip(
+                    params,
+                    output,
+                ):
+                    zip_ref.extract(fn, Path(outpt).parent)
+                    extracted_file = Path(outpt).parent / fn
+                    extracted_file.rename(outpt)
+
+    rule retrieve_dh_areas:
+        input:
+            dh_areas=storage(
+                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
+                keep_local=True,
+            ),
+        output:
+            dh_areas="data/dh_areas.gpkg",
+        log:
+            "logs/retrieve_dh_areas.log",
+        threads: 1
+        retries: 2
+        run:
+            move(input[0], output[0])

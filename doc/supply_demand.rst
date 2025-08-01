@@ -1,5 +1,5 @@
 ..
-  SPDX-FileCopyrightText: 2021-2024 The PyPSA-Eur Authors
+  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 
   SPDX-License-Identifier: CC-BY-4.0
 
@@ -50,7 +50,7 @@ Annual heat demands per country are retrieved from `JRC-IDEES  <https://op.europ
 
 The space heating demand can be exogenously reduced by retrofitting measures that improve the buildings’ thermal envelopes.
 
-.. literalinclude:: ../config.default.yaml
+.. literalinclude:: ../config/config.default.yaml
     :language: yaml
     :lines: 205
 

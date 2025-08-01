@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2024- The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Retrieve and extract eurostat household energy balances data.
 """
 
-
 import gzip
 import logging
 import shutil
 from pathlib import Path
 
-from _helpers import configure_logging, progress_retrieve, set_scenario_config
+from scripts._helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("retrieve_eurostat_data")
         rootpath = ".."
