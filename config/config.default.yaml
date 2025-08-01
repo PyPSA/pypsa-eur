@@ -554,8 +554,7 @@ sector:
     decentral: 3
     central: 180
   heat_pump_sources:
-    urban central:    - ptes
-
+    urban central:
     - air
     urban decentral:
     - air
