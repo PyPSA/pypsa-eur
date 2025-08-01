@@ -470,13 +470,31 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        snapshots=config_provider("snapshots"),
-        charger_temperature_boosting_required=config_provider(
+        ptes_temperature_profile=config_provider(
             "sector",
             "district_heating",
             "ptes",
-            "charger_temperature_boosting_required",
-        )
+            "temperature_profile",
+        ),
+        charge_boosting_required=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "charge_boosting_required",
+        ),
+        discharge_boosting_required=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "discharge_boosting_required",
+        ),
+        dynamic_capacity=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "dynamic_capacity",
+        ),
+        snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -486,17 +504,17 @@ rule build_ptes_operations:
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
-        ptes_top_temperature_profiles=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+        ptes_top_temperature_profile=resources(
+           "ptes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_e_max_pu_profiles=resources(
-            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ptes_e_max_pu_profile=resources(
+            "ptes_e_max_pu_profile_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_discharger_temperature_boosting_ratio=resources(
-            "ptes_discharger_temperature_boosting_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        boost_per_discharge_profile=resources(
+            "boost_per_discharge_profile_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        ptes_charger_temperature_boosting_ratio=resources(
-            "ptes_charger_temperature_boosting_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        boost_per_charge_profile=resources(
+            "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=2000,
@@ -1379,14 +1397,14 @@ rule prepare_sector_network:
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
-        ptes_e_max_pu_profiles=lambda w: (
-            resources(
-                "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
-            )
-            if config_provider(
-                "sector", "district_heating", "ptes", "dynamic_capacity"
-            )(w)
-            else []
+        ptes_e_max_pu_profiles=resources(
+            "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        boost_per_discharge_profile=resources(
+            "boost_per_discharge_profile_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        boost_per_charge_profile=resources(
+            "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
         ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")

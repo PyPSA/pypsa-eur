@@ -58,6 +58,7 @@ from scripts._helpers import set_scenario_config
 
 from scripts.build_ptes_operations.ptes_temperature_approximator import (
     PtesTemperatureApproximator,
+    TesTemperatureProfile,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,56 +77,43 @@ if __name__ == "__main__":
 
     # Load temperature profiles
     logger.info(
-        "Loading district heating temperature profiles and constructing PTES temperature approximator"
+        f"Loading district heating temperature profiles and approximating PTES temperatures"
+    )
+    logger.info(
+        f"PTES configuration: temperature_profile={snakemake.params.ptes_temperature_profile}, "
+        f"charge_boosting_required={snakemake.params.charge_boosting_required}, "
+        f"discharge_boosting_required={snakemake.params.discharge_boosting_required}, "
+        f"dynamic_capacity={snakemake.params.dynamic_capacity}"
     )
 
     # Initialize unified PTES temperature class
     ptes_temperature_approximator = PtesTemperatureApproximator(
         forward_temperature=xr.open_dataarray(
-        snakemake.input.central_heating_forward_temperature_profiles
+            snakemake.input.central_heating_forward_temperature_profiles
         ),
         return_temperature=xr.open_dataarray(
             snakemake.input.central_heating_return_temperature_profiles
         ),
-        max_ptes_top_temperature=snakemake.params.max_ptes_top_temperature,
-        min_ptes_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
-        charger_temperature_boosting_required=snakemake.params.charger_temperature_boosting_required,
+        max_top_temperature=snakemake.params.max_ptes_top_temperature,
+        min_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
+        temperature_profile=TesTemperatureProfile(snakemake.params.ptes_temperature_profile),
+        charge_boosting_required=snakemake.params.charge_boosting_required,
+        discharge_boosting_required=snakemake.params.discharge_boosting_required,
+        dynamic_capacity=snakemake.params.dynamic_capacity,
     )
 
-    # Get PTES clipped top temperature profiles
-    logger.info(
-        f"Saving TES top temperature profile to {snakemake.output.ptes_top_temperature_profiles}"
-    )
     ptes_temperature_approximator.top_temperature.to_netcdf(
-        snakemake.output.ptes_top_temperature_profiles
+        snakemake.output.ptes_top_temperature_profile
     )
 
-    logger.info("Calculating dynamic PTES capacity profiles")
-
-    # Get PTES capacity profiles
-    logger.info(
-        f"Saving PTES capacity profiles to {snakemake.output.ptes_e_max_pu_profiles}"
-    )
     ptes_temperature_approximator.e_max_pu.to_netcdf(
-        snakemake.output.ptes_e_max_pu_profiles
+        snakemake.output.ptes_e_max_pu_profile
+    )
+    
+    ptes_temperature_approximator.boost_per_discharge.to_netcdf(
+        snakemake.output.boost_per_discharge_profile
     )
 
-    logger.info("Calculating PTES temperature boost ratio")
-
-    # Get PTES temperature boost ratio
-    logger.info(
-        f"Saving PTES temperature boost ratio profiles to {snakemake.output.ptes_discharger_temperature_boosting_ratio}"
-    )
-    ptes_temperature_approximator.discharger_temperature_boosting_ratio.to_netcdf(
-        snakemake.output.ptes_discharger_temperature_boosting_ratio
-    )
-
-    logger.info("Calculating PTES forward temperature boost ratio")
-
-    # Get PTES forward temperature boost ratio
-    logger.info(
-        f"Saving PTES forward temperature boost ratio profiles to {snakemake.output.ptes_charger_temperature_boosting_ratio}"
-    )
-    ptes_temperature_approximator.charger_temperature_boosting_ratio.to_netcdf(
-        snakemake.output.ptes_charger_temperature_boosting_ratio
+    ptes_temperature_approximator.boost_per_charge.to_netcdf(
+        snakemake.output.boost_per_charge_profile
     )

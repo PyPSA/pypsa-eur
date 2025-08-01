@@ -5,11 +5,24 @@
 import xarray as xr
 from enum import Enum
 
-
-class OperationalMode(Enum):
-    """PTES operational modes."""
-    CONSTANT_TEMPERATURE = "constant temperature"
-    DYNAMIC_TEMPERATURE = "dynamic temperature"
+class TesTemperatureProfile(Enum):
+    """
+    TES temperature profile assumptions.
+    
+    CONSTANT: Assumes fixed temperatures at operational limits.
+        - Top temperature: constant at max_top_temperature
+        - Bottom temperature: constant at min_bottom_temperature
+        - Assumes charge-boosting to maintain top temperature.
+        - NOTE: Assuming bottom_temperature = min_bottom_temperature ignores that cooling of the return temperature might be necessary in practice.
+        
+    DYNAMIC: Assumes temperatures follow network conditions.
+        - Top temperature: follows forward_temperature (clipped at max_top_temperature)
+        - Bottom temperature: follows return_temperature
+        - Does not assume charge-boosting.
+        - Note: This ignores that the TES temperatures do not match the supply temperatures due to thermal losses or other factors.
+    """
+    CONSTANT = "constant"
+    DYNAMIC = "dynamic"
 
 
 class PtesTemperatureApproximator:
@@ -29,8 +42,14 @@ class PtesTemperatureApproximator:
         Maximum operational temperature of top layer in PTES.
     min_bottom_temperature : float
         Minimum operational temperature of bottom layer in PTES.
-    operational_mode : OperationalMode
-        PTES operational mode.
+    temperature_profile : TesTemperatureProfile
+        TES temperature profile assumption.
+    charge_boosting_required : bool
+        Whether charge boosting is required/allowed.
+    discharge_boosting_required : bool
+        Whether discharge boosting is required/allowed.
+    dynamic_capacity : bool
+        Whether storage capacity varies with temperature. If False, assumes constant capacity.
     """
 
     def __init__(
@@ -39,7 +58,10 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_top_temperature: float,
         min_bottom_temperature: float,
-        operational_mode: OperationalMode,
+        temperature_profile: TesTemperatureProfile,
+        charge_boosting_required: bool,
+        discharge_boosting_required: bool,
+        dynamic_capacity: bool,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -54,14 +76,23 @@ class PtesTemperatureApproximator:
             Maximum operational temperature of top layer in PTES.
         min_bottom_temperature : float
             Minimum operational temperature of bottom layer in PTES.
-        operational_mode : OperationalMode
-            PTES operational mode.
+        temperature_profile : TesTemperatureProfile
+            TES temperature profile assumption.
+        charge_boosting_required : bool
+            Whether charge boosting is required/allowed.
+        discharge_boosting_required : bool
+            Whether discharge boosting is required/allowed.
+        dynamic_capacity : bool
+            Whether storage capacity varies with temperature. If False, assumes constant capacity.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
         self.max_top_temperature = max_top_temperature
         self.min_bottom_temperature = min_bottom_temperature
-        self.operational_mode = operational_mode
+        self.temperature_profile = temperature_profile
+        self.charge_boosting_required = charge_boosting_required
+        self.discharge_boosting_required = discharge_boosting_required
+        self.dynamic_capacity = dynamic_capacity
 
     @property
     def top_temperature(self) -> xr.DataArray:
@@ -73,15 +104,15 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting top temperature profile for PTES.
         """
-        if self.operational_mode == OperationalMode.CONSTANT_TEMPERATURE:
+        if self.temperature_profile == TesTemperatureProfile.CONSTANT:
             return xr.full_like(self.forward_temperature, self.max_top_temperature)
-        elif self.operational_mode == OperationalMode.DYNAMIC_TEMPERATURE:
+        elif self.temperature_profile == TesTemperatureProfile.DYNAMIC:
             return self.forward_temperature.where(
                 self.forward_temperature <= self.max_top_temperature,
                 self.max_top_temperature,
             )
         else:
-            raise NotImplementedError(f"Operational mode {self.operational_mode} not implemented")
+            raise NotImplementedError(f"Temperature profile {self.temperature_profile} not implemented")
 
     @property
     def bottom_temperature(self) -> xr.DataArray:
@@ -93,12 +124,12 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting bottom temperature profile for PTES.
         """
-        if self.operational_mode == OperationalMode.CONSTANT_TEMPERATURE:
+        if self.temperature_profile == TesTemperatureProfile.CONSTANT:
             return xr.full_like(self.return_temperature, self.min_bottom_temperature)
-        elif self.operational_mode == OperationalMode.DYNAMIC_TEMPERATURE:
+        elif self.temperature_profile == TesTemperatureProfile.DYNAMIC:
             return self.return_temperature
         else:
-            raise NotImplementedError(f"Operational mode {self.operational_mode} not implemented")
+            raise NotImplementedError(f"Temperature profile {self.temperature_profile} not implemented")
 
     @property
     def e_max_pu(self) -> xr.DataArray:
@@ -111,12 +142,16 @@ class PtesTemperatureApproximator:
         xr.DataArray
             Normalized delta T values between 0 and 1, representing the
             available storage capacity as a percentage of maximum capacity.
+            If dynamic_capacity is False, returns constant capacity of 1.0.
         """
-        delta_t = self.top_temperature - self.bottom_temperature
-        normalized_delta_t = delta_t / (
-            self.max_top_temperature - self.min_bottom_temperature
-        )
-        return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+        if self.dynamic_capacity:
+            delta_t = self.top_temperature - self.bottom_temperature
+            normalized_delta_t = delta_t / (
+                self.max_top_temperature - self.min_bottom_temperature
+            )
+            return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+        else:
+            return xr.ones_like(self.forward_temperature)
 
     @property
     def boost_per_discharge(self) -> xr.DataArray:
@@ -150,9 +185,12 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting fraction of PTES charge that must be further heated.
         """
-        return ((self.forward_temperature - self.top_temperature) / (
+        if self.discharge_boosting_required:
+            return ((self.forward_temperature - self.top_temperature) / (
                 self.top_temperature - self.bottom_temperature
-        )).where(self.forward_temperature > self.top_temperature, 0)
+            )).where(self.forward_temperature > self.top_temperature, 0)
+        else:
+            return xr.zeros_like(self.forward_temperature)
 
     @property
     def boost_per_charge(self) -> xr.DataArray:
@@ -190,6 +228,9 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The fraction of the PTES's available storage capacity already used.
         """
-        return ((self.forward_temperature - self.return_temperature) / (
-            self.max_top_temperature - self.forward_temperature
-        )).where(self.forward_temperature < self.max_top_temperature, 0)
+        if self.charge_boosting_required:
+            return ((self.forward_temperature - self.return_temperature) / (
+                self.max_top_temperature - self.forward_temperature
+            )).where(self.forward_temperature < self.max_top_temperature, 0)
+        else:
+            return xr.zeros_like(self.forward_temperature)

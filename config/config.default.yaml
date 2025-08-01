@@ -515,10 +515,11 @@ sector:
       relative_annual_temperature_reduction: 0.01
     ptes:
       enable: true
-      dynamic_capacity: true
-      booster_technologies: []
-      discharger_temperature_boosting_required: false
-      charger_temperature_boosting_required: false
+      dynamic_capacity: false
+      discharge_boosting_required: false
+      charger_boosting_required: false
+      temperature_profile: 'constant'
+      booster_technologies: ["resistive heater", "air heat pump", "ptes"]
       max_top_temperature: 90
       min_bottom_temperature: 35
     ttes:

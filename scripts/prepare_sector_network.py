@@ -3072,16 +3072,14 @@ def add_heat(
                     "energy to power ratio",
                 ] = energy_to_power_ratio_water_pit
 
-                if options["district_heating"]["ptes"]["dynamic_capacity"]:
-                    # Load pre-calculated e_max_pu profiles
-                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
-                    e_max_pu = (
-                        e_max_pu_data.sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    e_max_pu = 1
+                # Load pre-calculated e_max_pu profiles
+                # (flat ones if dynamic capacity disabled)
+                e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
+                e_max_pu = (
+                    e_max_pu_data.sel(name=nodes)
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
+                )
 
                 n.add(
                     "Store",
