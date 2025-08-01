@@ -39,7 +39,6 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_ptes_top_temperature: float,
         min_ptes_bottom_temperature: float,
-        charger_temperature_boosting_required: bool,
         operational_mode: OperationalMode,
     ):
         """
@@ -68,7 +67,6 @@ class PtesTemperatureApproximator:
         self.return_temperature = return_temperature
         self.max_ptes_top_temperature = max_ptes_top_temperature
         self.min_ptes_bottom_temperature = min_ptes_bottom_temperature
-        self.charger_temperature_boosting_required = charger_temperature_boosting_required
         self.operational_mode = operational_mode
 
     @property
