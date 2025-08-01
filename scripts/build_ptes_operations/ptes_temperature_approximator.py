@@ -201,24 +201,3 @@ class PtesTemperatureApproximator:
         return ((self.forward_temperature - self.return_temperature) / (
             self.max_ptes_top_temperature - self.forward_temperature
         )).where(self.forward_temperature < self.max_ptes_top_temperature, 0)
-
-    def _get_effective_forward_temperature(
-        self, forward_temperature: xr.DataArray
-    ) -> xr.DataArray:
-        """
-        Return the forward profile, and when boosting is enabled,
-        clip any values below max_ptes_top_temperature up to that threshold.
-
-        Parameters
-        ----------
-        forward_temperature : xr.DataArray
-            Raw forward temperature profile.
-
-        Returns
-        -------
-        xr.DataArray
-            Effective forward temperature for PTES.
-        """
-        if self.charger_temperature_boosting_required:
-            return forward_temperature.clip(min=self.max_ptes_top_temperature)
-        return forward_temperature
