@@ -66,6 +66,7 @@ sector:
       dynamic_capacity: true
       discharge_boosting_required: true
       charger_boosting_required: true
+      temperature_profile: 'dynamic'
       booster_technologies: ["resistive heater", "air heat pump", "ptes"]
     ates:
       enable: true

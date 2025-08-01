@@ -333,7 +333,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="39",
+            clusters="5",
             opts="",
             sector_opts="",
             planning_horizons=2050,
