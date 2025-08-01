@@ -1400,12 +1400,6 @@ rule prepare_sector_network:
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
-        boost_per_discharge_profile=resources(
-            "boost_per_discharge_profile_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        boost_per_charge_profile=resources(
-            "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
-        ),
         solar_thermal_total=lambda w: (
             resources("solar_thermal_total_base_s_{clusters}.nc")
             if config_provider("sector", "solar_thermal")(w)

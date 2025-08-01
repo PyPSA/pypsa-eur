@@ -63,9 +63,10 @@ sector:
   H2_retrofit: true
   district_heating:
     ptes:
+      dynamic_capacity: true
+      discharge_boosting_required: true
+      charger_boosting_required: true
       booster_technologies: ["resistive heater", "air heat pump", "ptes"]
-      discharger_temperature_boosting_required: true
-      charger_temperature_boosting_required: true
     ates:
       enable: true
   heat_pump_sources:

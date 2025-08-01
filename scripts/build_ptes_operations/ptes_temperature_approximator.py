@@ -5,7 +5,7 @@
 import xarray as xr
 from enum import Enum
 
-class TesTemperatureProfile(Enum):
+class TesTemperatureMode(Enum):
     """
     TES temperature profile assumptions.
     
@@ -58,7 +58,7 @@ class PtesTemperatureApproximator:
         return_temperature: xr.DataArray,
         max_top_temperature: float,
         min_bottom_temperature: float,
-        temperature_profile: TesTemperatureProfile,
+        temperature_profile: TesTemperatureMode,
         charge_boosting_required: bool,
         discharge_boosting_required: bool,
         dynamic_capacity: bool,
@@ -104,9 +104,9 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting top temperature profile for PTES.
         """
-        if self.temperature_profile == TesTemperatureProfile.CONSTANT:
+        if self.temperature_profile == TesTemperatureMode.CONSTANT:
             return xr.full_like(self.forward_temperature, self.max_top_temperature)
-        elif self.temperature_profile == TesTemperatureProfile.DYNAMIC:
+        elif self.temperature_profile == TesTemperatureMode.DYNAMIC:
             return self.forward_temperature.where(
                 self.forward_temperature <= self.max_top_temperature,
                 self.max_top_temperature,
@@ -124,9 +124,9 @@ class PtesTemperatureApproximator:
         xr.DataArray
             The resulting bottom temperature profile for PTES.
         """
-        if self.temperature_profile == TesTemperatureProfile.CONSTANT:
+        if self.temperature_profile == TesTemperatureMode.CONSTANT:
             return xr.full_like(self.return_temperature, self.min_bottom_temperature)
-        elif self.temperature_profile == TesTemperatureProfile.DYNAMIC:
+        elif self.temperature_profile == TesTemperatureMode.DYNAMIC:
             return self.return_temperature
         else:
             raise NotImplementedError(f"Temperature profile {self.temperature_profile} not implemented")

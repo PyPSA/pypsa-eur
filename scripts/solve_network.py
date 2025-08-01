@@ -969,9 +969,9 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
-def add_discharger_temperature_boosting_constraints(
+def add_discharge_boosting_constraints(
     n: pypsa.Network,
-    ptes_discharger_temperature_boosting_ratio_profiles_files: str,
+    boost_per_discharge_profile_file: str,
     cop_profiles_file: str,
     ptes_booster_technologies: list[str],
 ):
@@ -994,7 +994,7 @@ def add_discharger_temperature_boosting_constraints(
     ----------
     n : pypsa.Network
         PyPSA network with urban central TES and booster links.
-    ptes_discharger_temperature_boosting_ratio_profiles_files : str
+    boost_per_discharge_profile_file : str
         Path to NetCDF of discharger boosting ratios γ_d(t,node).
     cop_profiles_file : str
         Path to NetCDF of COP profiles for heat pumps.
@@ -1010,8 +1010,8 @@ def add_discharger_temperature_boosting_constraints(
         n.links[n.links.index.str.contains("urban central water pits discharger")].index
     )
 
-    ptes_discharger_temperature_boosting_ratio_dataarray = xr.open_dataarray(
-        ptes_discharger_temperature_boosting_ratio_profiles_files
+    ptes_boost_per_discharge_dataarray = xr.open_dataarray(
+        boost_per_discharge_profile_file
     )
     cop = xr.open_dataarray(cop_profiles_file)
     tes_systems = {t.value for t in TesSystem}
@@ -1021,7 +1021,7 @@ def add_discharger_temperature_boosting_constraints(
     discharger_nodes_to_link = dict(zip(discharger_nodes, ptes_discharger))
 
     ptes_direct_utilisation_profiles = (
-        ptes_discharger_temperature_boosting_ratio_dataarray
+        ptes_boost_per_discharge_dataarray
         .to_pandas()
         .loc[n.snapshots, discharger_nodes]
         .dropna(axis=1, how="all")
@@ -1073,27 +1073,29 @@ def add_discharger_temperature_boosting_constraints(
             n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
 
         else:
-            ptes_discharger_temperature_boosting_ratio = (
-                ptes_discharger_temperature_boosting_ratio_dataarray
+            ptes_boost_per_discharge = (
+                ptes_boost_per_discharge_dataarray
                 .to_pandas()
                 .loc[n.snapshots, booster_nodes]
                 .dropna(axis=1, how="all")
                 .rename(columns=booster_node_to_link)
                 .reindex(columns=booster_technologies_links)
             )
+            alpha = (1 / ptes_boost_per_discharge).where(ptes_boost_per_discharge > 0, 0)
+
             # per‑tech expression
-            expr = - (p.loc[:, booster_technologies_links] * ptes_discharger_temperature_boosting_ratio)
+            expr = - (p.loc[:, booster_technologies_links] * alpha)
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
 
     # Add the constraint to the model
-    n.model.add_constraints(lhs >= rhs, name="ptes_discharger_temperature_boosting")
+    n.model.add_constraints(lhs >= rhs, name="ptes_discharge_boosting")
 
 
-def add_charger_temperature_boosting_constraints(
+def add_charge_boosting_constraints(
     n: pypsa.Network,
-    ptes_charger_temperature_boosting_ratio_profiles_files: str,
+    boost_per_charge_profile_file: str,
     ptes_booster_technologies: list[str],
 ):
     """
@@ -1113,7 +1115,7 @@ def add_charger_temperature_boosting_constraints(
     ----------
     n : pypsa.Network
         PyPSA network with urban central TES and charger links.
-    ptes_charger_temperature_boosting_ratio_profiles_files : str
+    boost_per_charge_profile_file : str
         Path to NetCDF of charger boosting ratios γ_c(t,node).
     ptes_booster_technologies : list[str]
         Booster technologies to include (excluding TES heat pump).
@@ -1127,8 +1129,8 @@ def add_charger_temperature_boosting_constraints(
         n.links[n.links.index.str.contains("urban central water pits charger")].index
     )
 
-    ptes_charger_temperature_boosting_ratio_dataaray = xr.open_dataarray(
-        ptes_charger_temperature_boosting_ratio_profiles_files
+    ptes_boost_per_charge_dataaray = xr.open_dataarray(
+        boost_per_charge_profile_file
     )
     tes_values = {t.value for t in TesSystem}
 
@@ -1137,7 +1139,7 @@ def add_charger_temperature_boosting_constraints(
     charger_node_to_link = dict(zip(charger_nodes, ptes_charger))
 
     ptes_direct_utilisation_profiles = (
-        ptes_charger_temperature_boosting_ratio_dataaray
+        ptes_boost_per_charge_dataaray
         .to_pandas()
         .loc[n.snapshots, charger_nodes]
         .dropna(axis=1, how="all")
@@ -1170,16 +1172,17 @@ def add_charger_temperature_boosting_constraints(
         booster_nodes = booster_technologies_links.str.extract(r"^(.*?) urban central")[0]
         booster_node_to_link = dict(zip(booster_nodes, booster_technologies_links))
 
-        ptes_charger_temperature_boosting_ratio = (
-            ptes_charger_temperature_boosting_ratio_dataaray
+        ptes_boost_per_charge = (
+            ptes_boost_per_charge_dataaray
             .to_pandas()
             .loc[n.snapshots, booster_nodes]
             .dropna(axis=1, how="all")
             .rename(columns=booster_node_to_link)
             .reindex(columns=booster_technologies_links)
         )
+        gamma = (1 / ptes_boost_per_charge).where(ptes_boost_per_charge > 0, 0)
         # per‑tech expression
-        expr = - (p.loc[:, booster_technologies_links] * ptes_charger_temperature_boosting_ratio)
+        expr = - (p.loc[:, booster_technologies_links] * gamma)
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
@@ -1384,8 +1387,8 @@ def extra_functionality(
     n: pypsa.Network,
     snapshots: pd.DatetimeIndex,
     planning_horizons: str | None = None,
-    ptes_discharger_temperature_boosting_ratio_profiles_files: str | None = None,
-    ptes_charger_temperature_boosting_ratio_profiles_files: str | None = None,
+    boost_per_discharge_profile_file: str | None = None,
+    boost_per_charge_profile_file: str | None = None,
     cop_profiles_file: str | None = None,
 ) -> None:
     """
@@ -1442,21 +1445,21 @@ def extra_functionality(
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
-    if config['sector']['district_heating']['ptes']['discharger_temperature_boosting_required']:
+    if config['sector']['district_heating']['ptes']['discharge_boosting_required']:
         if config['foresight'] == 'perfect':
             raise ValueError("Temperature boosting is not available with perfect foresight.")
-        add_discharger_temperature_boosting_constraints(
+        add_discharge_boosting_constraints(
             n,
-            ptes_discharger_temperature_boosting_ratio_profiles_files=ptes_discharger_temperature_boosting_ratio_profiles_files,
+            boost_per_discharge_profile_file=boost_per_discharge_profile_file,
             cop_profiles_file=cop_profiles_file,
             ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
         )
-    if config['sector']['district_heating']['ptes']['charger_temperature_boosting_required']:
+    if config['sector']['district_heating']['ptes']['charger_boosting_required']:
         if config['foresight'] == 'perfect':
             raise ValueError("Temperature boosting is not available with perfect foresight.")
-        add_charger_temperature_boosting_constraints(
+        add_charge_boosting_constraints(
             n,
-            ptes_charger_temperature_boosting_ratio_profiles_files=ptes_charger_temperature_boosting_ratio_profiles_files,
+            boost_per_charge_profile_file=boost_per_charge_profile_file,
             ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
         )
     if n._multi_invest:
@@ -1517,8 +1520,8 @@ def solve_network(
     solving: dict,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
-    ptes_discharger_temperature_boosting_ratio_profiles_files: str | None = None,
-    ptes_charger_temperature_boosting_ratio_profiles_files: str | None = None,
+    boost_per_discharge_profile_file: str | None = None,
+    boost_per_charge_profile_file: str | None = None,
     cop_profiles_file: str | None = None,
     **kwargs,
 ) -> None:
@@ -1569,8 +1572,8 @@ def solve_network(
     kwargs["extra_functionality"] = partial(
         extra_functionality,
         planning_horizons=planning_horizons,
-        ptes_discharger_temperature_boosting_ratio_profiles_files=ptes_discharger_temperature_boosting_ratio_profiles_files,
-        ptes_charger_temperature_boosting_ratio_profiles_files=ptes_charger_temperature_boosting_ratio_profiles_files,
+        boost_per_discharge_profile_file=boost_per_discharge_profile_file,
+        boost_per_charge_profile_file=boost_per_charge_profile_file,
         cop_profiles_file=cop_profiles_file
     )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
@@ -1669,11 +1672,11 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        ptes_discharger_temperature_boosting_ratio_profiles = getattr(
-            snakemake.input, "ptes_discharger_temperature_boosting_ratio_profiles", []
+        boost_per_discharge_profile = getattr(
+            snakemake.input, "boost_per_discharge_profile", []
         )
-        ptes_charger_temperature_boosting_ratio_profiles = getattr(
-            snakemake.input, "ptes_charger_temperature_boosting_ratio_profiles", []
+        boost_per_charge_profile = getattr(
+            snakemake.input, "boost_per_charge_profile", []
         )
         cop_profiles = getattr(snakemake.input, "cop_profiles", [])
         solve_network(
@@ -1684,8 +1687,8 @@ if __name__ == "__main__":
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
-            ptes_discharger_temperature_boosting_ratio_profiles_files=ptes_discharger_temperature_boosting_ratio_profiles,
-            ptes_charger_temperature_boosting_ratio_profiles_files=ptes_charger_temperature_boosting_ratio_profiles,
+            boost_per_discharge_profile_file=boost_per_discharge_profile,
+            boost_per_charge_profile_file=boost_per_charge_profile,
             cop_profiles_file=cop_profiles,
         )
 

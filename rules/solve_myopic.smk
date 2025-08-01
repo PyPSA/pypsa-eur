@@ -119,23 +119,21 @@ def ptes_operation_profiles(w):
     keyed by the same names you’d have used in `input:`
     """
     profiles = {}
-    # storage‑temperature‑boosting enabled?
     if config_provider(
-        "sector", "district_heating", "ptes", "discharger_temperature_boosting_required"
+        "sector", "district_heating", "ptes", "discharge_boosting_required"
     )(w):
-        profiles["ptes_discharger_temperature_boosting_ratio_profiles"] = resources(
-            "ptes_discharger_temperature_boosting_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        profiles["boost_per_discharge_profile"] = resources(
+            "boost_per_discharge_profile_base_s_{clusters}_{planning_horizons}.nc"
         )
         profiles["cop_profiles"] = resources(
             "cop_profiles_base_s_{clusters}_{planning_horizons}.nc"
         )
 
-    # forward‑temperature‑boosting enabled?
     if config_provider(
-        "sector", "district_heating", "ptes", "charger_temperature_boosting_required"
+        "sector", "district_heating", "ptes", "charger_boosting_required"
     )(w):
-        profiles["ptes_charger_temperature_boosting_ratio_profiles"] = resources(
-            "ptes_charger_temperature_boosting_ratio_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        profiles["boost_per_charge_profile"] = resources(
+            "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
         )
 
     return profiles
