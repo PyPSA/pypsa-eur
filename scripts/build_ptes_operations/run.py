@@ -58,7 +58,7 @@ from scripts._helpers import set_scenario_config
 
 from scripts.build_ptes_operations.ptes_temperature_approximator import (
     PtesTemperatureApproximator,
-    TesTemperatureProfile,
+    TesTemperatureMode,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         ),
         max_top_temperature=snakemake.params.max_ptes_top_temperature,
         min_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
-        temperature_profile=TesTemperatureProfile(snakemake.params.ptes_temperature_profile),
+        temperature_profile=TesTemperatureMode(snakemake.params.ptes_temperature_profile),
         charge_boosting_required=snakemake.params.charge_boosting_required,
         discharge_boosting_required=snakemake.params.discharge_boosting_required,
         dynamic_capacity=snakemake.params.dynamic_capacity,
