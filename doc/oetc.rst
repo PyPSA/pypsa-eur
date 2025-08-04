@@ -73,7 +73,7 @@ Usage
 =====
 
 Once configured, OETC integration works transparently with the standard PyPSA-Eur
-workflow. If a oetc configuration is present, PyPSA-Eur wil automatically use
+workflow. If a oetc configuration is present, PyPSA-Eur will automatically use
 the OETC platform for the model optimization during the solve network rule.
 
 An example of a log entry when using OETC:
