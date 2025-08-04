@@ -252,7 +252,15 @@ def load_costs(
     costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
-    for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel", "standing losses"):
+    for attr in (
+        "investment",
+        "lifetime",
+        "FOM",
+        "VOM",
+        "efficiency",
+        "fuel",
+        "standing losses",
+    ):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
