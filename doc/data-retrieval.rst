@@ -237,6 +237,20 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** GPL-3.0
 - **Description:** Contains matched dataset of powerplants in Europe.
 
+``data/busshapes/bidding_zones_electricitymaps.geojson``
+
+- **Source:** Electricity Maps, https://github.com/electricitymaps/electricitymaps-contrib
+- **Link:** https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/v1.238.0/web/geo/world.geojson
+- **License:** GNU-AGPLv3
+- **Description:** Contains bidding zones shape files.
+
+``data/busshapes/bidding_zones_entsoepy.geojson``
+
+- **Source:** Pecinovsky, J., & Boerman, F. entsoe-py. https://github.com/EnergieID/entsoe-py
+- **Link:** https://github.com/EnergieID/entsoe-py/tree/c03c604af36ef92e8ef6ee89dc57c56ca5e1dbac/entsoe/geo/geojson
+- **License:** MIT License
+- **Description:** Contains bidding zones shape files used to improve `data/busshapes/bidding_zones_electricitymaps.geojson` data.
+
 ``data/tyndp_2024_bundle``
 
 - **Source:** European Network of Transmission System Operators for Electricity (ENTSO-E) and European Network of Transmission System Operators for Gas (ENTSOG)
