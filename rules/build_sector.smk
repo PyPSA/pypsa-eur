@@ -450,6 +450,7 @@ rule build_river_heat_potential:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+        generate_temporal_aggregates=config_provider("plotting", "heat_sources", "generate_temporal_aggregates"),
         # ignore_missing_regions=config_provider(
         #     "sector",
         #     "district_heating",
@@ -474,12 +475,12 @@ rule build_river_heat_potential:
             "heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc"
         ),
     resources:
-        mem_mb=10000,
+        mem_mb=20000,
     log:
         logs("build_river_water_heat_potential_base_s_{clusters}.log"),
     benchmark:
         benchmarks("build_river_water_heat_potential_base_s_{clusters}")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: 2
     conda:
         "../envs/environment.yaml"
     script:

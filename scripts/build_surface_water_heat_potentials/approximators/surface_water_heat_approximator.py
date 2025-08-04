@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 import logging
 from abc import ABC
+from functools import cached_property
 
 import numpy as np
 import shapely
@@ -59,24 +60,17 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # Validate inputs and potentially reproject data
         # self._validate_and_reproject_input()
-
-        # Create masked data for processing
-        self._clip_data_to_region()
-
-        # Calculate power based on masked data
-        self._calculate_power_in_region(
-            temperature=self._water_temperature_in_region,
-            volume_flow=self._volume_flow_in_region,
-        )
+        
+        # All expensive computations are now lazy via cached_property
 
     def get_spatial_aggregate(self):
         """Get the spatial aggregate of water temperature and power."""
-        total_power = self._power_in_region.sum(dim=["x", "y"]) * self._scaling_factor
+        total_power = self._power_sum_spatial * self._scaling_factor
 
-        # Calculate power-weighted average temperature
+        # Calculate power-weighted average temperature using cached sum
         average_water_temperature = (
             self._water_temperature_in_region * self._power_in_region
-        ).sum(dim=["x", "y"]) / (self._power_in_region.sum(dim=["x", "y"]) + 0.001)
+        ).sum(dim=["x", "y"]) / (self._power_sum_spatial + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -87,13 +81,13 @@ class SurfaceWaterHeatApproximator(ABC):
         )
 
     def get_temporal_aggregate(self):
-        """Get the spatial aggregate of water temperature and power."""
-        total_energy = self._power_in_region.sum(dim=[self.TIME]) * self._scaling_factor
+        """Get the temporal aggregate of water temperature and power."""
+        total_energy = self._power_sum_temporal * self._scaling_factor
 
-        # Calculate power-weighted average temperature
+        # Calculate power-weighted average temperature using cached sum
         average_water_temperature = (
             self._water_temperature_in_region * self._power_in_region
-        ).sum(dim=[self.TIME]) / (self._power_in_region.sum(dim=[self.TIME]) + 0.001)
+        ).sum(dim=[self.TIME]) / (self._power_sum_temporal + 0.001)
 
         # Combine into a single dataset
         return xr.Dataset(
@@ -173,20 +167,20 @@ class SurfaceWaterHeatApproximator(ABC):
         # if not isinstance(self.region, shapely.geometry.multipolygon.MultiPolygon):
         #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
 
-    def _clip_data_to_region(self) -> None:
-        """Create masked data by clipping to the region geometry."""
-        self._volume_flow_in_region = self.volume_flow.rio.clip(
-            self.region.geometry, drop=False
-        )
+    @cached_property
+    def _volume_flow_in_region(self):
+        """Cache clipped volume flow data."""
+        return self.volume_flow.rio.clip(self.region.geometry, drop=False)
 
-        self._water_temperature_in_region = self.water_temperature.rio.clip(
-            self.region.geometry, drop=False
-        )
+    @cached_property
+    def _water_temperature_in_region(self):
+        """Cache clipped water temperature data."""
+        return self.water_temperature.rio.clip(self.region.geometry, drop=False)
 
-    @property
+    @cached_property
     def _data_resolution(self) -> float:
         """
-        Calculate scaling factor based on dataset resolution and minimum distance.
+        Cache resolution calculation based on dataset resolution.
         Assumes data is in EPSG:3035 (meters).
         """
         # Get resolution directly from rio
@@ -195,47 +189,45 @@ class SurfaceWaterHeatApproximator(ABC):
         # Average resolution in meters (EPSG:3035 uses meters)
         return (abs(x_res) + abs(y_res)) / 2
 
-    @property
+    @cached_property
     def _scaling_factor(self) -> float:
-        # Return the ratio of resolution to minimum distance
+        """Cache scaling factor calculation."""
         return self._data_resolution / self.min_distance_meters
 
-    def _calculate_power_in_region(
-        self,
-        volume_flow: xr.DataArray,
-        temperature: xr.DataArray,
-        density_water: float = 1000,  # kg/m^3
-        heat_capacity_water: float = 4.18,  # kJ/kg/K
-        kJ_per_mwh: float = 3.6e6,  # kJ/MWh
-        seconds_per_hour: float = 3600,  # seconds/hour
-    ) -> xr.DataArray:
+    @cached_property
+    def _power_in_region(self):
         """
-        Get the power from flow and temperature.
-
-        Args:
-            volume_flow (xr.DataArray): The volume flow.
-            temperature (xr.DataArray): The temperature.
-            max_relative_volume_flow (float): The maximum relative volume flow.
-            density_water (float): The density of water.
-            heat_capacity_water (float): The heat capacity of water.
-            delta_t_max (float): The maximum temperature difference.
-            min_outlet_temperature (float): The minimum outlet temperature.
-
+        Cache power calculation from flow and temperature.
+        
         Returns:
-            xr.DataArray: Power.
+            xr.DataArray: Power in MW.
         """
+        # Constants for power calculation
+        density_water = 1000  # kg/m^3
+        heat_capacity_water = 4.18  # kJ/kg/K
+        kJ_per_mwh = 3.6e6  # kJ/MWh
+        seconds_per_hour = 3600  # seconds/hour
+        
+        # Pre-calculate conversion factor
+        conversion_factor = (density_water * heat_capacity_water * seconds_per_hour) / kJ_per_mwh
+        
         # Mean Volume flow for the area of interest
-        usable_volume_flow = self.max_relative_volume_flow * volume_flow
+        usable_volume_flow = self.max_relative_volume_flow * self._volume_flow_in_region
+        
         # Calculate temperature difference for approximation of the heat flow
-        delta_t = (temperature - self.min_outlet_temperature).clip(
+        delta_t = (self._water_temperature_in_region - self.min_outlet_temperature).clip(
             max=self.delta_t_max, min=0
         )
-        # Calculate heat flow
-        self._power_in_region = (
-            usable_volume_flow
-            * density_water
-            * heat_capacity_water
-            * delta_t
-            / kJ_per_mwh
-            * seconds_per_hour
-        )
+        
+        # Calculate heat flow with single combined operation
+        return usable_volume_flow * delta_t * conversion_factor
+    
+    @cached_property
+    def _power_sum_spatial(self):
+        """Cache the expensive spatial sum of power."""
+        return self._power_in_region.sum(dim=["x", "y"])
+    
+    @cached_property
+    def _power_sum_temporal(self):
+        """Cache the expensive temporal sum of power."""
+        return self._power_in_region.sum(dim=[self.TIME])

@@ -54,13 +54,13 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
-    heat_pump_sources:
-      urban central:
-      - air
-      - ptes
-      - river_water
-      - sea_water
-      - geothermal
+  heat_pump_sources:
+    urban central:
+    - air
+    - ptes
+    - river_water
+    - sea_water
+    - geothermal
 
 electricity:
   extendable_carriers:
