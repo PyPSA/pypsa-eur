@@ -11,21 +11,37 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
+* Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
-* Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
+* Fixed missing costs name for geothermal-sourced heat pump and allowed geothermal heat pumps in test configs.
 
-* Fix: Invalid aquifer shape geometries are now fixed in `build_ates_potentials.py` (fixing https://github.com/PyPSA/pypsa-eur/issues/1696)
+* Changed error handling for non-extendable heat storage in energy-to-power ratio constraints to warning.
 
-* Fix: Ensure the `rulegraph` rule is compatible with Snakemake v9.7.1, and that the `config/config.yaml` file is completely optional (https://github.com/PyPSA/pypsa-eur/pull/1745)
+PyPSA-Eur v2025.07.0 (11th July 2025)
+=====================================
 
-* Fix: Sanitize columns in `add_brownfield` as it's done for `add_exisiting_baseyear` (https://github.com/PyPSA/pypsa-eur/pull/1676).
 
-* (Breaking) Consolidate gap-filling strategies options under a new configuration section `load:fill_gaps` and add a switch (https://github.com/PyPSA/pypsa-eur/pull/1677). The options `load:interpolate_limit` and `load:time_shift_for_large_gaps` are now located under `load:fill_gaps` as `load:fill_gaps:interpolate_limit` and `load:fill_gaps:time_shift_for_large_gaps`.
+**Features**
 
-* Added configuration option for `p_min_pu` in `links` settings, complementing the existing `p_max_pu` parameter.
+* Introduce the ability to use the bidding zones as administrative zones for the
+  clustering. This also introduces the ability to create a custom ``busmap``
+  from custom ``busshapes``. To use bidding zones as clustering mode, a ``bz``
+  mode has been introduced for ``administrative`` clustering. This feature is
+  compatible with the general NUTS clustering approach. Custom ``busshapes``
+  must be provided as
+  ``data/busshapes/base_s_{clusters}_{base_network}.geojson``.
+  (https://github.com/PyPSA/pypsa-eur/pull/1578)
 
-* Added support for river-water and sea-water sourced heat pumps. This is enabled by setting `sector: district_heating: heat_pump_sources:` accordingly.
+* Added aquifer thermal energy storage (ATES) to district heating. Some
+  parameters (CAPEX, standing losses) might require tuning by the user.
+  Eligibility computation is simplified. Turned off by default.
+  (https://github.com/PyPSA/pypsa-eur/pull/1665)
+
+* Added supplemental heating of thermal energy storage (PTES). This can be
+  enabled by setting: ``sector: district_heating: ptes: supplemental_heating:
+  true``. To enable a boosting heat pump as the supplemental heating
+  technology, use: ``sector: district_heating: ptes: supplemental_heating:
+  booster_heat_pump: true``. (https://github.com/PyPSA/pypsa-eur/pull/1692)
 
 **Breaking Changes**
 
