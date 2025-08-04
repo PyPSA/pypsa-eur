@@ -9,6 +9,20 @@ import numpy as np
 import pypsa
 from helper import override_component_attrs, update_config_with_sector_opts
 from vresutils.benchmark import memory_logger
+import xarray as xr
+import yaml
+from linopy.oetc import OetcSettings, OetcCredentials
+from pypsa.descriptors import get_activity_mask
+from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+
+from scripts._benchmark import memory_logger
+from scripts._helpers import (
+    PYPSA_V1,
+    configure_logging,
+    get,
+    set_scenario_config,
+    update_config_from_wildcards,
+)
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
@@ -280,6 +294,19 @@ def solve_network(n, config, opts="", **kwargs):
     # add to network for extra_functionality
     n.config = config
     n.opts = opts
+    oetc = solving.get("oetc", None)
+    if oetc:
+        oetc["credentials"] = OetcCredentials(
+            email=os.environ['OETC_EMAIL'],
+            password=os.environ['OETC_PASSWORD']
+        )
+        oetc["solver"] = kwargs["solver_name"]
+        oetc["solver_options"] = kwargs["solver_options"]
+        oetc_settings = OetcSettings(**oetc)
+        kwargs["oetc_settings"] = oetc_settings
+
+    kwargs["model_kwargs"] = cf_solving.get("model_kwargs", {})
+    kwargs["keep_files"] = cf_solving.get("keep_files", False)
 
     skip_iterations = cf_solving.get("skip_iterations", False)
     if not n.lines.s_nom_extendable.any():
