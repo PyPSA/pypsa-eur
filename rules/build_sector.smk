@@ -450,7 +450,9 @@ rule build_river_heat_potential:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
-        generate_temporal_aggregates=config_provider("plotting", "heat_sources", "generate_temporal_aggregates"),
+        generate_temporal_aggregates=config_provider(
+            "plotting", "heat_sources", "generate_temporal_aggregates"
+        ),
         # ignore_missing_regions=config_provider(
         #     "sector",
         #     "district_heating",

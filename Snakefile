@@ -147,7 +147,8 @@ rule all:
             RESULTS
             + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
             run=config["run"]["name"],
-            **config["scenario"]),
+            **config["scenario"],
+        ),
         # Explicitly list heat source types for temperature maps
         lambda w: expand(
             (

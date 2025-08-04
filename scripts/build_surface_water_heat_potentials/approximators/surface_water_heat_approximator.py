@@ -60,7 +60,7 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # Validate inputs and potentially reproject data
         # self._validate_and_reproject_input()
-        
+
         # All expensive computations are now lazy via cached_property
 
     def get_spatial_aggregate(self):
@@ -198,7 +198,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def _power_in_region(self):
         """
         Cache power calculation from flow and temperature.
-        
+
         Returns:
             xr.DataArray: Power in MW.
         """
@@ -207,26 +207,28 @@ class SurfaceWaterHeatApproximator(ABC):
         heat_capacity_water = 4.18  # kJ/kg/K
         kJ_per_mwh = 3.6e6  # kJ/MWh
         seconds_per_hour = 3600  # seconds/hour
-        
+
         # Pre-calculate conversion factor
-        conversion_factor = (density_water * heat_capacity_water * seconds_per_hour) / kJ_per_mwh
-        
+        conversion_factor = (
+            density_water * heat_capacity_water * seconds_per_hour
+        ) / kJ_per_mwh
+
         # Mean Volume flow for the area of interest
         usable_volume_flow = self.max_relative_volume_flow * self._volume_flow_in_region
-        
+
         # Calculate temperature difference for approximation of the heat flow
-        delta_t = (self._water_temperature_in_region - self.min_outlet_temperature).clip(
-            max=self.delta_t_max, min=0
-        )
-        
+        delta_t = (
+            self._water_temperature_in_region - self.min_outlet_temperature
+        ).clip(max=self.delta_t_max, min=0)
+
         # Calculate heat flow with single combined operation
         return usable_volume_flow * delta_t * conversion_factor
-    
+
     @cached_property
     def _power_sum_spatial(self):
         """Cache the expensive spatial sum of power."""
         return self._power_in_region.sum(dim=["x", "y"])
-    
+
     @cached_property
     def _power_sum_temporal(self):
         """Cache the expensive temporal sum of power."""
