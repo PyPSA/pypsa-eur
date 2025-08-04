@@ -40,13 +40,13 @@ sector:
       dynamic_capacity: true
       discharge_boosting_required: true
       charger_boosting_required: true
-      temperature_profile: 'dynamic'
+      temperature_profile: 'constant'
       booster_technologies: ["resistive heater", "air heat pump", "ptes"]
   heat_pump_sources:
     urban central:
       - ptes
       - air
-#      - geothermal
+      - geothermal
     urban decentral:
       - air
     rural:

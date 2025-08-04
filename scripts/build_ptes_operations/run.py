@@ -75,6 +75,12 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
+    if (snakemake.params.charge_boosting_required and
+            TesTemperatureMode(snakemake.params.ptes_temperature_profile) is TesTemperatureMode.DYNAMIC):
+        raise ValueError(
+            "Charger boosting cannot be used with 'dynamic' temperature profile"
+        )
+
     # Load temperature profiles
     logger.info(
         f"Loading district heating temperature profiles and approximating PTES temperatures"
