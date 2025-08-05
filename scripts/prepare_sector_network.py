@@ -1542,8 +1542,8 @@ def add_ammonia(
 
     min_part_load_hb=options['min_part_load_hb']
 
-    #if (options['ammonia'] == 'regional') or (options["endo_industry"]["policy_scenario"] == 'deindustrial'):
-    #    min_part_load_hb = 0.1
+    if (options["endo_industry"]["policy_scenario"] == 'deindustrial') and investment_year >= 2040 and options["imports"]["enable"] == False:
+        min_part_load_hb = 0.1
 
     n.add(
         "Link",
