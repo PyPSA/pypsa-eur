@@ -8,7 +8,7 @@ Future release
 .. note::
   This unreleased version currently may require the master branches of PyPSA, PyPSA-Eur, and the technology-data repository.
 
-* new feature
+* Added integration support for OETC platform
 
 
 PyPSA-Eur-Sec 0.7.0 (16th February 2023)
