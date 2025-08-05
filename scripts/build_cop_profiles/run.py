@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=8,
+            clusters=5,
             planning_horizons=2030,
         )
 
@@ -129,10 +129,10 @@ if __name__ == "__main__":
     for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
         cop_this_system_type = []
         for heat_source in heat_sources:
-            if heat_source in ["ground", "air", "ptes"]:
+            if heat_source in ["ground", "air", "water pits"]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
-                        f"temp_{heat_source.replace('ground', 'soil')}_total"
+                        f"temp_{heat_source.replace(" ", "_").replace('ground', 'soil')}_total"
                     ]
                 )
             elif heat_source in snakemake.params.limited_heat_sources.keys():

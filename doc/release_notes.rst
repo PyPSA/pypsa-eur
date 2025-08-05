@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Introduce temperature boosting for pit thermal energy storage (PTES) while discharging and charging, configurable via ``sector: ptes:`` in the configs. Available boosting technologies include resistive heaters, air heat pump, and water pit heat pump. This update supersedes and replaces PyPSA-Eur pull request #1692 (https://github.com/PyPSA/pypsa-eur/pull/1692).
+
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
 
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
