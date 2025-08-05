@@ -1646,7 +1646,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network_myopic",
             opts="",
-            clusters="30",
+            clusters="5",
             #configfiles="config/test/config.myopic.yaml",
             sector_opts="",
             planning_horizons="2050",
