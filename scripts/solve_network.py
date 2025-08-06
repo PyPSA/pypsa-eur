@@ -1012,7 +1012,8 @@ def add_discharge_boosting_constraints(
         If no links are found for a specified booster technology.
     """
     ptes_discharger = (
-        n.links[n.links.index.str.contains("urban central water pits discharger")].index
+        n.links.index[n.links.index.str.contains("urban central water pits discharger")]
+        & n.links.p_nom_extendable
     )
 
     ptes_boost_per_discharge_dataarray = xr.open_dataarray(
@@ -1131,7 +1132,8 @@ def add_charge_boosting_constraints(
         If no links are found for a specified booster technology.
     """
     ptes_charger = (
-        n.links[n.links.index.str.contains("urban central water pits charger")].index
+        n.links.index[n.links.index.str.contains("urban central water pits charger")]
+        & n.links.p_nom_extendable
     )
 
     ptes_boost_per_charge_dataaray = xr.open_dataarray(
