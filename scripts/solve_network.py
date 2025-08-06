@@ -1011,10 +1011,10 @@ def add_discharge_boosting_constraints(
     ValueError
         If no links are found for a specified booster technology.
     """
-    ptes_discharger = (
-        n.links.index[n.links.index.str.contains("urban central water pits discharger")]
+    ptes_discharger = n.links.index[
+        n.links.index.str.contains("urban central water pits discharger")
         & n.links.p_nom_extendable
-    )
+    ]
 
     ptes_boost_per_discharge_dataarray = xr.open_dataarray(
         boost_per_discharge_profile_file
@@ -1131,10 +1131,10 @@ def add_charge_boosting_constraints(
     ValueError
         If no links are found for a specified booster technology.
     """
-    ptes_charger = (
-        n.links.index[n.links.index.str.contains("urban central water pits charger")]
+    ptes_charger = n.links.index[
+        n.links.index.str.contains("urban central water pits charger")
         & n.links.p_nom_extendable
-    )
+    ]
 
     ptes_boost_per_charge_dataaray = xr.open_dataarray(
         boost_per_charge_profile_file
