@@ -803,7 +803,8 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
         p_nom_extendable=True,
     )
 
-    if options["regional_co2_sequestration_potential"]["enable"]:
+    # if options["regional_co2_sequestration_potential"]["enable"]:
+    if False:
         if sequestration_potential_file is None:
             raise ValueError(
                 "sequestration_potential_file must be provided when "
@@ -3207,7 +3208,7 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
+                if heat_source == "geothermal":
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source),
@@ -3218,9 +3219,18 @@ def add_heat(
                     lifetime = costs.at[
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
-                else:
+                    p_nom_max=p_max_source
+                    p_max_pu=1
+
+                elif heat_source == "river_water":
                     capital_cost = 0.0
                     lifetime = np.inf
+                    p_nom_max=p_max_source.max()
+                    p_max_pu=p_max_source / p_max_source.max()
+                else:
+                    raise NotImplementedError(
+                        f"Heat source {heat_source} not implemented for heat system {heat_system}."
+                    ) 
 
                 n.add(
                     "Generator",
@@ -3231,8 +3241,8 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=capital_cost,
                     lifetime=lifetime,
-                    p_nom_max=p_max_source.max(),
-                    p_max_pu=p_max_source / p_max_source.max(),
+                    p_nom_max=p_nom_max,
+                    p_max_pu=p_max_pu,
                 )
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
