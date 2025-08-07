@@ -4,7 +4,7 @@
 
 import requests
 from datetime import datetime, timedelta
-from shutil import move, unpack_archive
+from shutil import move, unpack_archive, rmtree
 from shutil import copy as shcopy
 from zipfile import ZipFile
 
@@ -167,19 +167,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
-
-
-if config["enable"]["retrieve"]:
-
-    rule retrieve_tyndp_bundle:
-        output:
-            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
-            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
-        log:
-            "logs/retrieve_tyndp_bundle.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_tyndp_bundle.py"
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
@@ -592,6 +579,34 @@ if config["enable"]["retrieve"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_monthly_fuel_prices.py"
+
+
+if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
+
+    rule retrieve_tyndp:
+        input:
+            line_data=storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
+            nodes=storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
+        output:
+            line_data_zip=f"{TYDNP_DATASET['folder']}/Line-data.zip",
+            nodes_zip=f"{TYDNP_DATASET['folder']}/Nodes.zip",
+            reference_grid=f"{TYDNP_DATASET['folder']}/Line data/ReferenceGrid_Electricity.xlsx",
+            nodes=f"{TYDNP_DATASET['folder']}/Nodes/LIST OF NODES.xlsx",
+        log:
+            "logs/retrieve_tyndp.log",
+        run:
+            for key in input.keys():
+                # Keep zip file
+                move(input[key], output[f"{key}_zip"])
+
+                # unzip
+                output_folder = Path(output[f"{key}_zip"]).parent
+                unpack_archive(output[f"{key}_zip"], output_folder)
+
+                # Remove __MACOSX directory if it exists
+                macosx_dir = output_folder / "__MACOSX"
+                rmtree(macosx_dir, ignore_errors=True)
+
 
 
 if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:

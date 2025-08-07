@@ -13,3 +13,5 @@
 "osm","build","unknown","['latest','supported']","","Latest dataset built using OSM data. No single URL available to access the data. See the related scripts and documentation for details."
 "worldbank_urban_population","archive","2025-05-07","['latest','supported']","https://sandbox.zenodo.org/records/214937/files/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_86733.zip",
 "worldbank_urban_population","primary","unknown","['latest','might-work']","https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv","This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice."
+"tyndp","primary","2024","['latest','supported']","https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs",""
+"tyndp","archive","2024","['latest','supported']","https://zenodo.org/records/16759672/files",""

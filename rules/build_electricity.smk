@@ -907,8 +907,8 @@ if config["electricity"]["base_network"] == "tyndp":
         params:
             countries=config_provider("countries"),
         input:
-            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
-            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
+            reference_grid=rules.retrieve_tyndp.output.reference_grid,
+            buses=rules.retrieve_tyndp.output.nodes,
             bidding_shapes=resources("bidding_zones.geojson"),
         output:
             lines=resources("tyndp/build/lines.csv"),
