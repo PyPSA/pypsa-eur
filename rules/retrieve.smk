@@ -187,6 +187,19 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
             "../scripts/retrieve_cost_data.py"
 
 
+if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
+    "primary",
+]:
+
+    rule retrieve_powerplants:
+        input:
+            storage(POWERPLANTS_DATASET["url"]),
+        output:
+            powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
+        run:
+            move(input[0], output[0])
+
+
 if config["enable"]["retrieve"]:
     datafiles = [
         "IGGIELGN_LNGs.geojson",
