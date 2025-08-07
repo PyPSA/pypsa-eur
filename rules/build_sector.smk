@@ -470,19 +470,6 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        # enable_supplemental_heating=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "supplemental_heating",
-        #     "enable",
-        # ),
-        # enable_dynamic_capacity=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "dynamic_capacity",
-        # ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -836,7 +823,7 @@ rule build_industrial_production_per_country:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_industrial_production_per_country.log"),
     benchmark:
@@ -986,7 +973,7 @@ rule build_industrial_energy_demand_per_country_today:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_industrial_energy_demand_per_country_today.log"),
     benchmark:

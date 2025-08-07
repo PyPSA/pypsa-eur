@@ -7,7 +7,7 @@
 Data Sources
 #############
 
-PyPSA-Eur is combiled from a variety of data sources. The following table provides an
+PyPSA-Eur is compiled from a variety of data sources. The following table provides an
 overview of the data sources used in PyPSA-Eur. Different licenses apply to the
 data sources.
 

@@ -10,10 +10,10 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import expand_series
 from six import iterkeys
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
@@ -21,6 +21,12 @@ from scripts._helpers import (
 )
 from scripts.add_electricity import sanitize_carriers
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
+
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
 
 logger = logging.getLogger(__name__)
 
