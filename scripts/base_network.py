@@ -675,11 +675,10 @@ def base_network(
     config,
 ):
     base_network = config["electricity"].get("base_network")
-    assert base_network in {
-        "entsoegridkit",
-        "osm",
-        "tyndp"
-    }, f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
+    osm_version = config["data"]["osm"]["version"]
+    assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
+        f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
+    )
     if base_network == "entsoegridkit":
         warnings.warn(
             "The 'entsoegridkit' base network is deprecated and will be removed in future versions. Please use 'osm' instead.",
@@ -718,7 +717,9 @@ def base_network(
         lines = _set_electrical_parameters_lines_raw(lines, config)
         links = _set_electrical_parameters_links_raw(links, config)
     else:
-        raise ValueError("base_network must be either 'entsoegridkit', 'osm', or 'tyndp'")
+        raise ValueError(
+            "base_network must be either 'entsoegridkit', 'osm', or 'tyndp'"
+        )
 
     # Set electrical parameters of transformers and converters
     transformers = _set_electrical_parameters_transformers(transformers, config)
