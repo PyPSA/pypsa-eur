@@ -675,7 +675,7 @@ def base_network(
     config,
 ):
     base_network = config["electricity"].get("base_network")
-    osm_version = config["data"]["osm"]["version"]
+    osm_version = config["data"]["osm"]["version_or_latest"]
     assert base_network in {"entsoegridkit", "osm", "tyndp"}, (
         f"base_network must be either 'entsoegridkit', 'osm' or 'tyndp', but got '{base_network}'"
     )
