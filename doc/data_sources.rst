@@ -19,6 +19,8 @@ data sources.
    ../data-retrieval
    ../data-repos
 
+.. _managing_data_versions:
+
 ######################
 Managing Data Versions
 ######################

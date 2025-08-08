@@ -910,8 +910,7 @@ industry:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
-  year: 2050
-  version: v0.13.2
+  year: 2030
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -1001,6 +1000,9 @@ data:
     source: "archive"
     version_or_latest: "latest"
   powerplants:
+    source: "primary"
+    version_or_latest: "latest"
+  costs:
     source: "primary"
     version_or_latest: "latest"
 

@@ -169,22 +169,17 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
+if (COSTS_DATASET := dataset_version("costs"))["source"] in [
+    "primary",
+]:
 
     rule retrieve_cost_data:
-        params:
-            version=config_provider("costs", "version"),
+        input:
+            storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
-            resources("costs_{year}.csv"),
-        log:
-            logs("retrieve_cost_data_{year}.log"),
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_cost_data.py"
+            costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
+        run:
+            move(input[0], output[0])
 
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [

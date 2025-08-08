@@ -17,3 +17,4 @@
 "tyndp","archive","2024","['latest','supported']","https://zenodo.org/records/16759672/files",""
 "powerplants","primary","0.7.1","['latest','supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/heads/v0.7.1/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
 "powerplants","primary","0.7.0","['supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/heads/v0.7.0/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"costs","primary","v0.13.2","['latest','supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.2/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."

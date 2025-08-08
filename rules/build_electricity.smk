@@ -732,9 +732,8 @@ rule add_electricity:
         unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
-        ),
+        tech_costs=lambda w: COSTS_DATASET["folder"]
+        / f"costs_{config_provider('costs', 'year')(w)}.csv",
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
@@ -779,9 +778,8 @@ rule prepare_network:
         transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
-        ),
+        tech_costs=lambda w: COSTS_DATASET["folder"]
+        / f"costs_{config_provider('costs', 'year')(w)}.csv",
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/base_s_{clusters}_elec_{opts}.nc"),

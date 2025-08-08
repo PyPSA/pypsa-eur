@@ -1345,10 +1345,11 @@ rule prepare_sector_network:
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
-        costs=lambda w: (
-            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
+        costs=lambda w: COSTS_DATASET["folder"]
+        / (
+            "costs_{}.csv".format(config_provider("costs", "year")(w))
             if config_provider("foresight")(w) == "overnight"
-            else resources("costs_{planning_horizons}.csv")
+            else "costs_{planning_horizons}.csv"
         ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
