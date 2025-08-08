@@ -43,6 +43,8 @@ import yaml
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
+from scripts.definitions.tes_system import TesSystem
+
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
     PYPSA_V1,
@@ -456,7 +458,7 @@ def prepare_network(
             n.links_t.p_min_pu,
             n.storage_units_t.inflow,
         ):
-            df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
+            df.where(df.abs() > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
     if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
@@ -972,6 +974,230 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
     n.model.add_constraints(lhs == 0, name="TES_charger_ratio")
 
 
+def add_discharge_boosting_constraints(
+    n: pypsa.Network,
+    boost_per_discharge_profile_file: str,
+    cop_profiles_file: str,
+    ptes_booster_technologies: list[str],
+):
+    """
+    Add TES discharger temperature‑boosting constraints.
+
+    For each discharger link d, enforce:
+        sum_over_heat_pumps(p_hp * (COP_ptes_hp − 1))
+      + sum_over_other_boosters(p_b * γ_b)
+      >= (γ_d / (γ_d + ε)) * p_d
+
+    where COP_hp is the coefficient of performance for ptes heat pump,
+    γ_b is the discharger boosting ratio for other technologies,
+    γ_d is the discharger’s boosting ratio profile, p_d its dispatch, and
+    ε a small constant. By the term γ_d / (γ_d + ε) we derive the PTES direct‑utilisation profile—
+    a value of zero means the discharge can be used directly, and a value of one means
+    it requires boosting.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        PyPSA network with urban central TES and booster links.
+    boost_per_discharge_profile_file : str
+        Path to NetCDF of discharger boosting ratios γ_d(t,node).
+    cop_profiles_file : str
+        Path to NetCDF of COP profiles for heat pumps.
+    ptes_booster_technologies : list[str]
+        Booster technologies to include.
+
+    Raises
+    ------
+    ValueError
+        If no links are found for a specified booster technology.
+    """
+    ptes_discharger = n.links.index[
+        n.links.index.str.contains("urban central water pits discharger")
+        & n.links.p_nom_extendable
+    ]
+
+    ptes_boost_per_discharge_dataarray = xr.open_dataarray(
+        boost_per_discharge_profile_file
+    )
+    cop = xr.open_dataarray(cop_profiles_file)
+    tes_systems = {f"{t.value} heat pump" for t in TesSystem}
+
+    # Extract mapping from node
+    discharger_nodes = ptes_discharger.str.extract(r"^(.*?) urban central")[0]
+    discharger_nodes_to_link = dict(zip(discharger_nodes, ptes_discharger))
+
+    ptes_direct_utilisation_profiles = (
+        ptes_boost_per_discharge_dataarray
+        .to_pandas()
+        .loc[n.snapshots, discharger_nodes]
+        .dropna(axis=1, how="all")
+        .rename(columns=discharger_nodes_to_link)
+        .reindex(columns=ptes_discharger)
+    )
+
+    # Get model variable for Link dispatch
+    p = (n.model["Link-p"])
+
+    rhs = (
+        ptes_direct_utilisation_profiles *
+        p.loc[:, ptes_discharger]
+        / (ptes_direct_utilisation_profiles + 1e-9)
+    )
+
+    lhs = None
+    for tech in ptes_booster_technologies:
+        booster_technologies_links = n.links.index[
+            n.links.index.str.contains("urban central") &
+            n.links.index.str.contains(tech)
+        ]
+
+        if booster_technologies_links.empty:
+            if tech in tes_systems:
+                raise ValueError(
+                    f"Booster technology {tech} not found: it may not be listed as a heat_pump_source for urban central heating"
+                )
+            raise ValueError(f"No links found for booster technology '{tech}', check if the component exists")
+
+        booster_nodes = booster_technologies_links.str.extract(r"^(.*?) urban central")[0]
+        booster_node_to_link = dict(zip(booster_nodes, booster_technologies_links))
+
+        if tech in tes_systems:
+            cop_heat_pump = (
+                cop.sel(
+                    heat_system="urban central",
+                    heat_source="water pits",
+                )
+                .to_pandas()
+                .loc[n.snapshots, booster_nodes]
+                .dropna(axis=1, how="all")
+                .rename(columns=booster_node_to_link)
+                .reindex(columns=booster_technologies_links)
+            )
+
+            alpha = (cop_heat_pump - 1).clip(lower=0)
+            expr = - (p.loc[:, booster_technologies_links] * alpha)
+            n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
+
+        else:
+            ptes_boost_per_discharge = (
+                ptes_boost_per_discharge_dataarray
+                .to_pandas()
+                .loc[n.snapshots, booster_nodes]
+                .dropna(axis=1, how="all")
+                .rename(columns=booster_node_to_link)
+                .reindex(columns=booster_technologies_links)
+            )
+            alpha = (1 / ptes_boost_per_discharge).where(ptes_boost_per_discharge > 0, 0)
+
+            # per‑tech expression
+            expr = - (p.loc[:, booster_technologies_links] * alpha)
+
+        # accumulate
+        lhs = expr if lhs is None else lhs + expr
+
+    # Add the constraint to the model
+    n.model.add_constraints(lhs >= rhs, name="ptes_discharge_boosting")
+
+
+def add_charge_boosting_constraints(
+    n: pypsa.Network,
+    boost_per_charge_profile_file: str,
+    ptes_booster_technologies: list[str],
+):
+    """
+    Add TES charger forward temperature‑boosting constraints.
+
+    For each charger link c, enforce:
+        sum_over_boosters(p_b * γ_b)
+      >= (γ_c / (γ_c + ε)) * p_c
+
+    where γ_b is the forward‑boosting ratio for each booster technology,
+    γ_c is the charger’s boosting ratio profile, p_c its dispatch, and
+    ε a small constant. By the term γ_c / (γ_c + ε) we derive the PTES
+    direct‑utilisation profile—a value of zero means the charge can be
+    used directly, and a value of one means it requires boosting.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        PyPSA network with urban central TES and charger links.
+    boost_per_charge_profile_file : str
+        Path to NetCDF of charger boosting ratios γ_c(t,node).
+    ptes_booster_technologies : list[str]
+        Booster technologies to include (excluding TES heat pump).
+
+    Raises
+    ------
+    ValueError
+        If no links are found for a specified booster technology.
+    """
+    ptes_charger = n.links.index[
+        n.links.index.str.contains("urban central water pits charger")
+        & n.links.p_nom_extendable
+    ]
+
+    ptes_boost_per_charge_dataaray = xr.open_dataarray(
+        boost_per_charge_profile_file
+    )
+    tes_values = {t.value for t in TesSystem}
+
+    # Extract mapping from node
+    charger_nodes = ptes_charger.str.extract(r"^(.*?) urban central")[0]
+    charger_node_to_link = dict(zip(charger_nodes, ptes_charger))
+
+    ptes_direct_utilisation_profiles = (
+        ptes_boost_per_charge_dataaray
+        .to_pandas()
+        .loc[n.snapshots, charger_nodes]
+        .dropna(axis=1, how="all")
+        .rename(columns=charger_node_to_link)
+        .reindex(columns=ptes_charger)
+    )
+
+    # Get model variable for Link dispatch
+    p = (n.model["Link-p"])
+
+    rhs = (
+        p.loc[:, ptes_charger]
+        * ptes_direct_utilisation_profiles
+        / (ptes_direct_utilisation_profiles + 1e-9)
+    )
+
+    lhs = None
+    for tech in ptes_booster_technologies:
+        booster_technologies_links = n.links.index[
+            n.links.index.str.contains("urban central") &
+            n.links.index.str.contains(tech)
+        ]
+
+        if booster_technologies_links.empty:
+            raise ValueError(f"No links found for booster technology '{tech}', check if the component exists")
+
+        if tech in tes_values:
+            continue
+
+        booster_nodes = booster_technologies_links.str.extract(r"^(.*?) urban central")[0]
+        booster_node_to_link = dict(zip(booster_nodes, booster_technologies_links))
+
+        ptes_boost_per_charge = (
+            ptes_boost_per_charge_dataaray
+            .to_pandas()
+            .loc[n.snapshots, booster_nodes]
+            .dropna(axis=1, how="all")
+            .rename(columns=booster_node_to_link)
+            .reindex(columns=booster_technologies_links)
+        )
+        gamma = (1 / ptes_boost_per_charge).where(ptes_boost_per_charge > 0, 0)
+        # per‑tech expression
+        expr = - (p.loc[:, booster_technologies_links] * gamma)
+
+        # accumulate
+        lhs = expr if lhs is None else lhs + expr
+
+    # Add the constraint to the model
+    n.model.add_constraints(lhs >= rhs, name="ptes_charger_temperature_boosting")
+
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -1165,7 +1391,12 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    planning_horizons: str | None = None,
+    boost_per_discharge_profile_file: str | None = None,
+    boost_per_charge_profile_file: str | None = None,
+    cop_profiles_file: str | None = None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1221,6 +1452,23 @@ def extra_functionality(
     add_battery_constraints(n)
     add_lossy_bidirectional_link_constraints(n)
     add_pipe_retrofit_constraint(n)
+    if config['sector']['district_heating']['ptes']['discharge_boosting_required']:
+        if config['foresight'] == 'perfect':
+            raise ValueError("Temperature boosting is not available with perfect foresight.")
+        add_discharge_boosting_constraints(
+            n,
+            boost_per_discharge_profile_file=boost_per_discharge_profile_file,
+            cop_profiles_file=cop_profiles_file,
+            ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
+        )
+    if config['sector']['district_heating']['ptes']['charger_boosting_required']:
+        if config['foresight'] == 'perfect':
+            raise ValueError("Temperature boosting is not available with perfect foresight.")
+        add_charge_boosting_constraints(
+            n,
+            boost_per_charge_profile_file=boost_per_charge_profile_file,
+            ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
+        )
     if n._multi_invest:
         add_carbon_constraint(n, snapshots)
         add_carbon_budget_constraint(n, snapshots)
@@ -1279,6 +1527,9 @@ def solve_network(
     solving: dict,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
+    boost_per_discharge_profile_file: str | None = None,
+    boost_per_charge_profile_file: str | None = None,
+    cop_profiles_file: str | None = None,
     **kwargs,
 ) -> None:
     """
@@ -1326,7 +1577,11 @@ def solve_network(
     )
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = partial(
-        extra_functionality, planning_horizons=planning_horizons
+        extra_functionality,
+        planning_horizons=planning_horizons,
+        boost_per_discharge_profile_file=boost_per_discharge_profile_file,
+        boost_per_charge_profile_file=boost_per_charge_profile_file,
+        cop_profiles_file=cop_profiles_file
     )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
@@ -1393,10 +1648,10 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network",
             opts="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="8",
+            #configfiles="config/test/config.myopic.yaml",
             sector_opts="",
-            planning_horizons="2030",
+            planning_horizons="2040",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1424,6 +1679,13 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
+        boost_per_discharge_profile = getattr(
+            snakemake.input, "boost_per_discharge_profile", []
+        )
+        boost_per_charge_profile = getattr(
+            snakemake.input, "boost_per_charge_profile", []
+        )
+        cop_profiles = getattr(snakemake.input, "cop_profiles", [])
         solve_network(
             n,
             config=snakemake.config,
@@ -1432,6 +1694,9 @@ if __name__ == "__main__":
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
+            boost_per_discharge_profile_file=boost_per_discharge_profile,
+            boost_per_charge_profile_file=boost_per_charge_profile,
+            cop_profiles_file=cop_profiles,
         )
 
     logger.info(f"Maximum memory usage: {mem.mem_usage}")

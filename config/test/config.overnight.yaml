@@ -63,18 +63,21 @@ sector:
   H2_retrofit: true
   district_heating:
     ptes:
-      supplemental_heating:
-        enable: true
-        booster_heat_pump: true
+      dynamic_capacity: true
+      discharge_boosting_required: true
+      charger_boosting_required: true
+      temperature_profile: 'constant'
+      booster_technologies: ["resistive heater", "air heat pump", "water pits heat pump"]
     ates:
       enable: true
-    heat_pump_sources:
-      urban central:
+  heat_pump_sources:
+    urban central:
+      - water pits
       - air
       - geothermal
-      urban decentral:
+    urban decentral:
       - air
-      rural:
+    rural:
       - air
       - ground
   hydrogen_turbine: false

@@ -20,10 +20,18 @@ district_heating,--,,
 -- -- rolling_window_ambient_temperature, h, int, Rolling window size for averaging ambient temperature when approximating supply temperature
 -- -- relative_annual_temperature_reduction,, float, Relative annual reduction of district heating forward and return temperature - defaults to 0.01 (1%)
 -- ptes,,,
+-- -- enable,--,"{true, false}",Enable investments in pit thermal energy storage in district heating
 -- -- dynamic_capacity,--,"{true, false}",Add option for dynamic temperature-dependent energy capacity of pit storage in district heating
--- -- supplemental_heating,,,
--- -- -- enable,--,"{true, false}",Add option to enable supplemental heating of pit storage in district heating
--- -- -- booster_heat_pump: true,--,"{true, false}",Add option to enable a booster heat pump for supplemental heating of pit storage in district heating
+-- -- discharge_boosting_required,--,"{true, false}",Require temperature boosting on discharge when the storage’s top temperature falls below the district heating forward temperature
+-- -- charger_boosting_required,--,"{true, false}",Require temperature boosting on charge when the forward temperature is below the storage’s maximum top temperature (only if temperature_profile = 'constant')
+-- -- temperature_profile,--,"{'constant', 'dynamic'}",Select the storage top and bottom temperature profile:
+        'constant' - fixed at max_top_temperature and min_bottom_temperature
+        'dynamic'  - temperature is bounded to distirct heatings forward and return temperature
+-- -- booster_technologies,--,List of available boosting technologies (note: ‘water pits heat pump’ is only used for discharge boosting). Must be subset of ['resistive heater';
+       'air heat pump';
+       'water pits heat pump'],
+-- ttes,,,,
+-- -- enable,--,"{true, false}",Enable investments in tank thermal energy storage in district heating
 -- -- max_top_temperature,C,float,The maximum top temperature of the pit storage according to DEA technology catalogue (2018)
 -- -- min_bottom_temperature,C,float,The minimum bottom temperature of the pit storage according to DEA technology catalogue (2018)
 -- ates,,,
@@ -59,6 +67,7 @@ district_heating,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
 -- -- rural,--,List of heat sources for heat pumps in rural heating,
+tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
@@ -108,7 +117,6 @@ retrofitting,,,
 -- annualise_cost,--,"{true, false}",Annualise the investment costs of retrofitting
 -- tax_weighting,--,"{true, false}",Weight the costs of retrofitting depending on taxes in countries
 -- construction_index,--,"{true, false}",Weight the costs of retrofitting depending on labour/material costs per country
-tes,--,"{true, false}",Add option for storing thermal energy in large water pits associated with district heating systems and individual thermal energy storage (TES)
 tes_tau,,,The time constant used to calculate the decay of thermal energy in thermal energy storage (TES): 1- :math:`e^{-1/24τ}`.
 -- decentral,days,float,The time constant in decentralized thermal energy storage (TES)
 -- central,days,float,The time constant in centralized thermal energy storage (TES)
