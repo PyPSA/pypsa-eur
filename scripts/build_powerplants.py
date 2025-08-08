@@ -154,9 +154,14 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     countries = snakemake.params.countries
 
+    # Steps copied from PPM: Usually run by PPM when using pm.powerplants(...) from cache
     ppl = (
-        pm.powerplants(from_url=True)
-        .powerplant.fill_missing_decommissioning_years()
+        pd.read_csv(snakemake.input.powerplants, index_col=0, header=[0])
+        .pipe(pm.collection.parse_string_to_dict, ["projectID", "EIC"])
+        .pipe(pm.collection.set_column_name, "Matched Data")
+    )
+    ppl = (
+        ppl.powerplant.fill_missing_decommissioning_years()
         .powerplant.convert_country_to_alpha2()
         .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
         .assign(Technology=replace_natural_gas_technology)

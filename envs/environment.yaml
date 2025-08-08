@@ -64,6 +64,8 @@ dependencies:
 - pre-commit
 - ruff
 - pylint
+- typer
+- python-dotenv
 
 - pip:
   - gurobipy

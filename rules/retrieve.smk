@@ -4,7 +4,7 @@
 
 import requests
 from datetime import datetime, timedelta
-from shutil import move, unpack_archive
+from shutil import move, unpack_archive, rmtree
 from shutil import copy as shcopy
 from zipfile import ZipFile
 
@@ -169,35 +169,30 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_tyndp_bundle:
-        output:
-            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
-            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
-        log:
-            "logs/retrieve_tyndp_bundle.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_tyndp_bundle.py"
-
-
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
+if (COSTS_DATASET := dataset_version("costs"))["source"] in [
+    "primary",
+]:
 
     rule retrieve_cost_data:
-        params:
-            version=config_provider("costs", "version"),
+        input:
+            storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
-            resources("costs_{year}.csv"),
-        log:
-            logs("retrieve_cost_data_{year}.log"),
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_cost_data.py"
+            costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
+        run:
+            move(input[0], output[0])
+
+
+if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
+    "primary",
+]:
+
+    rule retrieve_powerplants:
+        input:
+            storage(POWERPLANTS_DATASET["url"]),
+        output:
+            powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -277,16 +272,19 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"]:
+if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_jrc_enspreso_biomass:
         input:
             storage(
-                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
+                f"{JRC_ENSPRESO_BIOMASS_DATASET["url"]}",
                 keep_local=True,
             ),
         output:
-            "data/ENSPRESO_BIOMASS.xlsx",
+            f"{JRC_ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
         run:
             move(input[0], output[0])
@@ -389,31 +387,35 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            url=WB_URB_POP_DATASET["url"],
         output:
-            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+            zip=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            csv=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
             import os
             import requests
 
             response = requests.get(
-                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params["url"],
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(output["zip"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output["zip"], output_folder)
 
             for f in os.listdir(output_folder):
                 if f.startswith(
                     "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
                 ) and f.endswith(".csv"):
-                    os.rename(os.path.join(output_folder, f), output.gpkg)
+                    os.rename(os.path.join(output_folder, f), output.csv)
                     break
 
 
@@ -459,20 +461,18 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_gem_steel_plant_tracker:
+        input:
+            xlsx=storage(GEM_GSPT_DATASET["url"]),
         output:
-            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+            xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
-            import requests
-
-            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
-            response = requests.get(url)
-            with open(output[0], "wb") as f:
-                f.write(response.content)
-
+            os.rename(input.xlsx, output.xlsx)
 
 
 if config["enable"]["retrieve"]:
@@ -589,41 +589,57 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-prebuilt"
-):
-    OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
+if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
+
+    rule retrieve_tyndp:
+        input:
+            line_data=storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
+            nodes=storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
+        output:
+            line_data_zip=f"{TYDNP_DATASET['folder']}/Line-data.zip",
+            nodes_zip=f"{TYDNP_DATASET['folder']}/Nodes.zip",
+            reference_grid=f"{TYDNP_DATASET['folder']}/Line data/ReferenceGrid_Electricity.xlsx",
+            nodes=f"{TYDNP_DATASET['folder']}/Nodes/LIST OF NODES.xlsx",
+        log:
+            "logs/retrieve_tyndp.log",
+        run:
+            for key in input.keys():
+                # Keep zip file
+                move(input[key], output[f"{key}_zip"])
+
+                # unzip
+                output_folder = Path(output[f"{key}_zip"]).parent
+                unpack_archive(output[f"{key}_zip"], output_folder)
+
+                # Remove __MACOSX directory if it exists
+                macosx_dir = output_folder / "__MACOSX"
+                rmtree(macosx_dir, ignore_errors=True)
+
+
+
+if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
     OSM_FILES = [
         "buses.csv",
         "converters.csv",
         "lines.csv",
         "links.csv",
         "transformers.csv",
+        # Newer versions include the additional map.html file for visualisation
+        *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
     ]
-    if OSM_VERSION >= 0.6:
-        OSM_FILES.append("map.html")
-    OSM_ZENODO_IDS = {
-        0.1: "12799202",
-        0.2: "13342577",
-        0.3: "13358976",
-        0.4: "13759222",
-        0.5: "13981528",
-        0.6: "14144752",
-    }
 
-    # update rule to use the correct version
-    rule retrieve_osm_prebuilt:
+    OSM_URL = dataset_version("osm")["url"]
+
+    rule retrieve_osm_archive:
         input:
             **{
-                file: storage(
-                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
-                )
+                file: storage(f"{OSM_DATASET['url']}/files/{file}")
                 for file in OSM_FILES
             },
         output:
-            **{file: f"data/osm-prebuilt/{OSM_VERSION}/{file}" for file in OSM_FILES},
+            **{file: f"{OSM_DATASET['folder']}/{file}" for file in OSM_FILES},
         log:
-            "logs/retrieve_osm_prebuilt.log",
+            "logs/retrieve_osm_archive.log",
         threads: 1
         resources:
             mem_mb=500,
@@ -633,52 +649,38 @@ if config["enable"]["retrieve"] and (
                 validate_checksum(output[key], input[key])
 
 
+elif OSM_DATASET["source"] == "build":
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
+    OSM_FILES = [
+        "cables_way.json",
+        "lines_way.json",
+        "routes_relation.json",
+        "substations_way.json",
+        "substations_relation.json",
+    ]
 
-    rule retrieve_osm_data:
+    rule retrieve_osm_raw:
         output:
-            cables_way="data/osm-raw/{country}/cables_way.json",
-            lines_way="data/osm-raw/{country}/lines_way.json",
-            routes_relation="data/osm-raw/{country}/routes_relation.json",
-            substations_way="data/osm-raw/{country}/substations_way.json",
-            substations_relation="data/osm-raw/{country}/substations_relation.json",
+            **{
+                file.replace(
+                    ".json", ""
+                ): f"{OSM_DATASET['folder']}/raw/{{country}}/{file}"
+                for file in files
+            },
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/retrieve_osm_data.py"
+            "../scripts/retrieve_osm_raw.py"
 
-
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
-
-    rule retrieve_osm_data_all:
+    rule retrieve_osm_raw_all:
         input:
             expand(
-                "data/osm-raw/{country}/cables_way.json",
+                f"{OSM_DATASET['folder']}/raw/{{country}}/{{file}}",
                 country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/lines_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/routes_relation.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/substations_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/substations_relation.json",
-                country=config_provider("countries"),
+                file=OSM_FILES,
             ),
 
 
