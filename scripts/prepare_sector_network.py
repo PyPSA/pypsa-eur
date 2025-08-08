@@ -3197,6 +3197,10 @@ def add_heat(
                     parse_dates=True,
                 ).squeeze()[nodes]
 
+                # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
+                if p_max_source.ndim == 1:
+                    p_max_source = pd.DataFrame([p_max_source] * len(n.snapshots), index=n.snapshots, columns=nodes)
+                    
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
@@ -3208,7 +3212,10 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source == "geothermal":
+                if params.limited_heat_sources[heat_source]["zero_cost"]:
+                    capital_cost = 0.0
+                    lifetime = np.inf
+                else:
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source),
@@ -3219,18 +3226,7 @@ def add_heat(
                     lifetime = costs.at[
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
-                    p_nom_max=p_max_source
-                    p_max_pu=1
 
-                elif heat_source == "river_water":
-                    capital_cost = 0.0
-                    lifetime = np.inf
-                    p_nom_max=p_max_source.max()
-                    p_max_pu=p_max_source / p_max_source.max()
-                else:
-                    raise NotImplementedError(
-                        f"Heat source {heat_source} not implemented for heat system {heat_system}."
-                    ) 
 
                 n.add(
                     "Generator",
@@ -3241,8 +3237,8 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=capital_cost,
                     lifetime=lifetime,
-                    p_nom_max=p_nom_max,
-                    p_max_pu=p_max_pu,
+                    p_nom_max=p_max_source.max(),
+                    p_max_pu=p_max_source/p_max_source.max(),
                 )
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
