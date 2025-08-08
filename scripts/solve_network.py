@@ -1020,7 +1020,7 @@ def add_discharge_boosting_constraints(
         boost_per_discharge_profile_file
     )
     cop = xr.open_dataarray(cop_profiles_file)
-    tes_systems = {t.value for t in TesSystem}
+    tes_systems = {f"{t.value} heat pump" for t in TesSystem}
 
     # Extract mapping from node
     discharger_nodes = ptes_discharger.str.extract(r"^(.*?) urban central")[0]
@@ -1065,7 +1065,7 @@ def add_discharge_boosting_constraints(
             cop_heat_pump = (
                 cop.sel(
                     heat_system="urban central",
-                    heat_source=tech,
+                    heat_source="water pits",
                 )
                 .to_pandas()
                 .loc[n.snapshots, booster_nodes]
@@ -1646,12 +1646,12 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_myopic",
+            "solve_sector_network",
             opts="",
-            clusters="5",
+            clusters="8",
             #configfiles="config/test/config.myopic.yaml",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2040",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
