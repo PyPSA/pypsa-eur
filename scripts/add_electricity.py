@@ -252,7 +252,15 @@ def load_costs(
     costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
-    for attr in ("investment", "lifetime", "FOM", "VOM", "efficiency", "fuel"):
+    for attr in (
+        "investment",
+        "lifetime",
+        "FOM",
+        "VOM",
+        "efficiency",
+        "fuel",
+        "standing losses",
+    ):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
@@ -274,6 +282,8 @@ def load_costs(
     costs.at["solar", "capital_cost"] = costs.at["solar-utility", "capital_cost"]
     costs = costs.rename({"solar-utility single-axis tracking": "solar-hsat"})
 
+    costs = costs.rename(columns={"standing losses": "standing_losses"})
+
     # Calculate storage costs if max_hours is provided
     if max_hours is not None:
 
@@ -286,6 +296,7 @@ def load_costs(
                     "capital_cost": capital_cost,
                     "marginal_cost": 0.0,
                     "CO2 intensity": 0.0,
+                    "standing_losses": 0.0,
                 }
             )
 

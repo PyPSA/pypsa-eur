@@ -2998,10 +2998,6 @@ def add_heat(
                 nodes + f" {heat_system} water tanks charger", "energy to power ratio"
             ] = energy_to_power_ratio_water_tanks
 
-            tes_time_constant_days = options["tes_tau"][
-                heat_system.central_or_decentral
-            ]
-
             n.add(
                 "Store",
                 nodes,
@@ -3010,7 +3006,11 @@ def add_heat(
                 e_cyclic=True,
                 e_nom_extendable=True,
                 carrier=f"{heat_system} water tanks",
-                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                standing_loss=costs.at[
+                    heat_system.central_or_decentral + " water tank storage",
+                    "standing_losses",
+                ]
+                / 100,  # convert %/hour into unit/hour
                 capital_cost=costs.at[
                     heat_system.central_or_decentral + " water tank storage",
                     "capital_cost",
@@ -3105,7 +3105,10 @@ def add_heat(
                     e_nom_extendable=True,
                     e_max_pu=e_max_pu,
                     carrier=f"{heat_system} water pits",
-                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                    standing_loss=costs.at[
+                        "central water pit storage", "standing_losses"
+                    ]
+                    / 100,  # convert %/hour into unit/hour
                     capital_cost=costs.at["central water pit storage", "capital_cost"],
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
