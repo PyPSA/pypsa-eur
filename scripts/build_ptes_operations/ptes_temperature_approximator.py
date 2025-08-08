@@ -229,8 +229,8 @@ class PtesTemperatureApproximator:
             The fraction of the PTES's available storage capacity already used.
         """
         if self.charge_boosting_required:
-            return ((self.forward_temperature - self.return_temperature) / (
-                self.max_top_temperature - self.forward_temperature
+            return ((self.max_top_temperature - self.forward_temperature) / (
+                self.forward_temperature - self.return_temperature
             )).where(self.forward_temperature < self.max_top_temperature, 0)
         else:
             return xr.zeros_like(self.forward_temperature)
