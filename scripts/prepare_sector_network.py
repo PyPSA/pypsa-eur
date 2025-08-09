@@ -5403,7 +5403,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
             unit="kt/yr",
         )
 
-        mc_dri = 395*1e3 if investment_year < 2040 else 1e7
+        mc_dri = 395*1e3 if investment_year >= 2040 else 1e7
         #€/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308
 
         n.add(
@@ -7129,7 +7129,7 @@ def add_import_options(
     if "methanol_adb" in import_options:
 
         co2_intensity = costs.at["methanolisation", "carbondioxide-input"]
-        mc_methanol = import_options["methanol_adb"] / co2_intensity if investment_year < 2040 else 1e7
+        mc_methanol = import_options["methanol_adb"] / co2_intensity if investment_year >= 2040 else 1e7
 
         n.add(
             "Link",
@@ -7158,7 +7158,7 @@ def add_import_options(
 
     if "ammonia_adb" in import_options:
 
-        mc_ammonia = import_options["ammonia_adb"] if investment_year < 2040 else 1e7
+        mc_ammonia = import_options["ammonia_adb"] if investment_year >= 2040 else 1e7
 
         n.add(
             "Generator",
