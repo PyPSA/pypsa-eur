@@ -1063,6 +1063,7 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
+      BarHomogeneous: 1
     gurobi-numeric-focus:
       NumericFocus: 3       # Favour numeric stability over speed
       method: 2             # barrier

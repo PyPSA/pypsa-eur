@@ -182,12 +182,10 @@ import_policy_reg_deindustrial:
       regional_methanol_demand: true
     ammonia: regional
     # Minimum part loads
-    min_part_load_fischer_tropsch: 0
-    min_part_load_methanolisation: 0
-    min_part_load_hb: 0
-    min_part_load_steel: 0
-    min_part_load_cement: 0
-    min_part_load_hvc: 0
+    min_part_load_hb: 0.3
+    min_part_load_steel: 0.3
+    min_part_load_cement: 0.5
+    min_part_load_hvc: 0.3
     imports:
       enable: true
       price:
@@ -215,12 +213,10 @@ import_policy_reg_regain:
       regional_methanol_demand: true
     ammonia: regional
     # Minimum part loads
-    min_part_load_fischer_tropsch: 0
-    min_part_load_methanolisation: 0
-    min_part_load_hb: 0
-    min_part_load_steel: 0
-    min_part_load_cement: 0
-    min_part_load_hvc: 0
+    min_part_load_hb: 0.3
+    min_part_load_steel: 0.3
+    min_part_load_cement: 0.5
+    min_part_load_hvc: 0.3
     imports:
       enable: true
       price:
