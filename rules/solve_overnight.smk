@@ -2,6 +2,31 @@
 #
 # SPDX-License-Identifier: MIT
 
+def ptes_operation_profiles(w):
+    """
+    Return a dict of only the PTES profiles that are enabled in config,
+    keyed by the same names you’d have used in `input:`
+    """
+    profiles = {}
+    if config_provider(
+        "sector", "district_heating", "ptes", "discharge_boosting_required"
+    )(w):
+        profiles["boost_per_discharge_profile"] = resources(
+            "boost_per_discharge_profile_base_s_{clusters}_{planning_horizons}.nc"
+        )
+        profiles["cop_profiles"] = resources(
+            "cop_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        )
+
+    if config_provider(
+        "sector", "district_heating", "ptes", "charger_boosting_required"
+    )(w):
+        profiles["boost_per_charge_profile"] = resources(
+            "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
+        )
+
+    return profiles
+
 
 rule solve_sector_network:
     params:
@@ -12,6 +37,7 @@ rule solve_sector_network:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
+        unpack(ptes_operation_profiles),
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),

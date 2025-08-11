@@ -11,6 +11,12 @@ Release Notes
 Upcoming Release
 ================
 
+* Introduce temperature boosting for pit thermal energy storage (PTES) while discharging and charging, configurable via ``sector: ptes:`` in the configs. Available boosting technologies include resistive heaters, air heat pump, and water pit heat pump. This update supersedes and replaces PyPSA-Eur pull request #1692 (https://github.com/PyPSA/pypsa-eur/pull/1692).
+
+* Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
+
+* Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
+
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
 * Fixed missing costs name for geothermal-sourced heat pump and allowed geothermal heat pumps in test configs.
