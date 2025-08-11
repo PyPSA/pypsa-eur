@@ -985,7 +985,7 @@ def add_discharge_boosting_constraints(
 
     For each discharger link d, enforce:
         sum_over_heat_pumps(p_hp * (COP_ptes_hp − 1))
-      + sum_over_other_boosters(p_b * γ_b)
+      + sum_over_other_boosters(p_b * β_b)
       >= (γ_d / (γ_d + ε)) * p_d
 
     where COP_hp is the coefficient of performance for ptes heat pump,
@@ -1011,91 +1011,77 @@ def add_discharge_boosting_constraints(
     ValueError
         If no links are found for a specified booster technology.
     """
-    ptes_discharger = n.links.index[
+    p = n.model["Link-p"]
+    snapshot = p.coords["snapshot"]
+    tes_heat_pumps = {f"{t.value} heat pump" for t in TesSystem}
+
+    cop = xr.open_dataarray(cop_profiles_file).rename({"name": "node"})
+    ptes_boost_per_discharge_dataarray = xr.open_dataarray(boost_per_discharge_profile_file).rename({"name": "node"})
+
+    # --- RHS: ptes discharger
+    ptes_discharger_links = n.links.index[
         n.links.index.str.contains("urban central water pits discharger")
-        & n.links.p_nom_extendable
     ]
-
-    ptes_boost_per_discharge_dataarray = xr.open_dataarray(
-        boost_per_discharge_profile_file
+    ptes_discharger_node_da = xr.DataArray(
+        ptes_discharger_links.str.extract(r"^(\S+\s+\S+)")[0].to_numpy(),
+        coords={"Link": ptes_discharger_links},
+        dims="Link",
+        name="node"
     )
-    cop = xr.open_dataarray(cop_profiles_file)
-    tes_systems = {f"{t.value} heat pump" for t in TesSystem}
 
-    # Extract mapping from node
-    discharger_nodes = ptes_discharger.str.extract(r"^(.*?) urban central")[0]
-    discharger_nodes_to_link = dict(zip(discharger_nodes, ptes_discharger))
-
-    ptes_direct_utilisation_profiles = (
+    rhs_base = p.sel(Link=ptes_discharger_links).groupby(ptes_discharger_node_da).sum("Link")
+    gamma = (
         ptes_boost_per_discharge_dataarray
-        .to_pandas()
-        .loc[n.snapshots, discharger_nodes]
-        .dropna(axis=1, how="all")
-        .rename(columns=discharger_nodes_to_link)
-        .reindex(columns=ptes_discharger)
+        .sel(node=rhs_base.coords["node"])
+        .sel(time=snapshot)
+        .transpose("snapshot", "node")
     )
+    rhs = rhs_base * (gamma / (gamma + 1e-9))
 
-    # Get model variable for Link dispatch
-    p = (n.model["Link-p"])
-
-    rhs = (
-        ptes_direct_utilisation_profiles *
-        p.loc[:, ptes_discharger]
-        / (ptes_direct_utilisation_profiles + 1e-9)
-    )
-
+    # --- LHS: boosters
     lhs = None
     for tech in ptes_booster_technologies:
         booster_technologies_links = n.links.index[
-            n.links.index.str.contains("urban central") &
-            n.links.index.str.contains(tech)
+            n.links.index.str.contains("urban central") & n.links.index.str.contains(tech)
         ]
-
         if booster_technologies_links.empty:
-            if tech in tes_systems:
+            if tech in tes_heat_pumps:
                 raise ValueError(
                     f"Booster technology {tech} not found: it may not be listed as a heat_pump_source for urban central heating"
                 )
             raise ValueError(f"No links found for booster technology '{tech}', check if the component exists")
 
-        booster_nodes = booster_technologies_links.str.extract(r"^(.*?) urban central")[0]
-        booster_node_to_link = dict(zip(booster_nodes, booster_technologies_links))
+        booster_tech_nodes_da = xr.DataArray(
+            booster_technologies_links.str.extract(r"^(\S+\s+\S+)")[0].to_numpy(),
+            coords={"Link": booster_technologies_links},
+            dims="Link",
+            name="node",
+        )
+        lhs_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
 
-        if tech in tes_systems:
-            cop_heat_pump = (
-                cop.sel(
-                    heat_system="urban central",
-                    heat_source="water pits",
-                )
-                .to_pandas()
-                .loc[n.snapshots, booster_nodes]
-                .dropna(axis=1, how="all")
-                .rename(columns=booster_node_to_link)
-                .reindex(columns=booster_technologies_links)
+        if tech in tes_heat_pumps:
+            cop_heat_pump_da = (
+                cop.sel(heat_system="urban central", heat_source="water pits")
+                .sel(node=lhs_base.coords["node"])
+                .sel(time=snapshot)
+                .transpose("snapshot", "node")
             )
+            alpha = (cop_heat_pump_da - 1).clip(min=0)
+            expr = lhs_base * alpha
 
-            alpha = (cop_heat_pump - 1).clip(lower=0)
-            expr = - (p.loc[:, booster_technologies_links] * alpha)
+            # per-tech constraint
             n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
-
         else:
-            ptes_boost_per_discharge = (
-                ptes_boost_per_discharge_dataarray
-                .to_pandas()
-                .loc[n.snapshots, booster_nodes]
-                .dropna(axis=1, how="all")
-                .rename(columns=booster_node_to_link)
-                .reindex(columns=booster_technologies_links)
-            )
-            alpha = (1 / ptes_boost_per_discharge).where(ptes_boost_per_discharge > 0, 0)
+            ptes_booster_per_discharge_da = (ptes_boost_per_discharge_dataarray
+                         .sel(node=lhs_base.coords["node"])
+                         .sel(time=snapshot)
+                         .transpose("snapshot", "node")
+                         )
+            alpha = xr.where(ptes_booster_per_discharge_da > 0, 1.0 / ptes_booster_per_discharge_da, 0.0)
+            expr = lhs_base * alpha
 
-            # per‑tech expression
-            expr = - (p.loc[:, booster_technologies_links] * alpha)
+        lhs = expr if lhs is None else (lhs + expr)
 
-        # accumulate
-        lhs = expr if lhs is None else lhs + expr
-
-    # Add the constraint to the model
     n.model.add_constraints(lhs >= rhs, name="ptes_discharge_boosting")
 
 
@@ -1108,11 +1094,11 @@ def add_charge_boosting_constraints(
     Add TES charger forward temperature‑boosting constraints.
 
     For each charger link c, enforce:
-        sum_over_boosters(p_b * γ_b)
+        sum_over_boosters(p_b * β_b)
       >= (γ_c / (γ_c + ε)) * p_c
 
-    where γ_b is the forward‑boosting ratio for each booster technology,
-    γ_c is the charger’s boosting ratio profile, p_c its dispatch, and
+    where β_b is the forward‑boosting ratio for each booster technology,
+    γ._c is the charger’s boosting ratio profile, p_c its dispatch, and
     ε a small constant. By the term γ_c / (γ_c + ε) we derive the PTES
     direct‑utilisation profile—a value of zero means the charge can be
     used directly, and a value of one means it requires boosting.
@@ -1131,65 +1117,57 @@ def add_charge_boosting_constraints(
     ValueError
         If no links are found for a specified booster technology.
     """
-    ptes_charger = n.links.index[
+    p = n.model["Link-p"]
+    snapshot = p.coords["snapshot"]
+    tes_heat_pumps = {t.value for t in TesSystem}
+
+    ptes_boost_per_charge_dataaray = xr.open_dataarray(boost_per_charge_profile_file).rename({"name": "node"})
+
+    # --- RHS: ptes charger
+    ptes_charger_links = n.links.index[
         n.links.index.str.contains("urban central water pits charger")
-        & n.links.p_nom_extendable
     ]
-
-    ptes_boost_per_charge_dataaray = xr.open_dataarray(
-        boost_per_charge_profile_file
+    ptes_charger_node_da = xr.DataArray(
+        ptes_charger_links.str.extract(r"^(\S+\s+\S+)")[0].to_numpy(),
+        coords={"Link": ptes_charger_links},
+        dims="Link",
+        name="node"
     )
-    tes_values = {t.value for t in TesSystem}
 
-    # Extract mapping from node
-    charger_nodes = ptes_charger.str.extract(r"^(.*?) urban central")[0]
-    charger_node_to_link = dict(zip(charger_nodes, ptes_charger))
-
-    ptes_direct_utilisation_profiles = (
+    rhs_base = p.sel(Link=ptes_charger_links).groupby(ptes_charger_node_da).sum("Link")
+    gamma = (
         ptes_boost_per_charge_dataaray
-        .to_pandas()
-        .loc[n.snapshots, charger_nodes]
-        .dropna(axis=1, how="all")
-        .rename(columns=charger_node_to_link)
-        .reindex(columns=ptes_charger)
+        .sel(node=rhs_base.coords["node"])
+        .sel(time=snapshot)
+        .transpose("snapshot", "node")
     )
+    rhs = gamma / (gamma + 1e-9)
 
-    # Get model variable for Link dispatch
-    p = (n.model["Link-p"])
-
-    rhs = (
-        p.loc[:, ptes_charger]
-        * ptes_direct_utilisation_profiles
-        / (ptes_direct_utilisation_profiles + 1e-9)
-    )
-
+    # --- LHS: boosters
     lhs = None
     for tech in ptes_booster_technologies:
         booster_technologies_links = n.links.index[
             n.links.index.str.contains("urban central") &
             n.links.index.str.contains(tech)
         ]
-
         if booster_technologies_links.empty:
             raise ValueError(f"No links found for booster technology '{tech}', check if the component exists")
-
-        if tech in tes_values:
+        if tech in tes_heat_pumps:
             continue
 
-        booster_nodes = booster_technologies_links.str.extract(r"^(.*?) urban central")[0]
-        booster_node_to_link = dict(zip(booster_nodes, booster_technologies_links))
-
-        ptes_boost_per_charge = (
-            ptes_boost_per_charge_dataaray
-            .to_pandas()
-            .loc[n.snapshots, booster_nodes]
-            .dropna(axis=1, how="all")
-            .rename(columns=booster_node_to_link)
-            .reindex(columns=booster_technologies_links)
+        booster_tech_nodes_da = xr.DataArray(
+            booster_technologies_links.str.extract(r"^(\S+\s+\S+)")[0].to_numpy(),
+            coords={"Link": booster_technologies_links}, dims="Link", name="node"
         )
-        gamma = (1 / ptes_boost_per_charge).where(ptes_boost_per_charge > 0, 0)
-        # per‑tech expression
-        expr = - (p.loc[:, booster_technologies_links] * gamma)
+        lhs_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
+
+        ptes_booster_per_charge_da = (
+            ptes_boost_per_charge_dataaray
+            .sel(node=lhs_base.coords["node"])
+            .sel(time=snapshot)
+            .transpose("snapshot", "node"))
+        beta = xr.where(ptes_booster_per_charge_da > 0, 1.0 / ptes_booster_per_charge_da, 0.0)
+        expr = lhs_base * beta
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
@@ -1646,7 +1624,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
+            "solve_sector_network_myopic",
             opts="",
             clusters="8",
             #configfiles="config/test/config.myopic.yaml",
