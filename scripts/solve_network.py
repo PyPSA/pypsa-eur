@@ -1057,28 +1057,28 @@ def add_discharge_boosting_constraints(
             dims="Link",
             name="node",
         )
-        lhs_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
+        expr_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
 
         if tech in tes_heat_pumps:
             cop_heat_pump_da = (
                 cop.sel(heat_system="urban central", heat_source="water pits")
-                .sel(node=lhs_base.coords["node"])
+                .sel(node=expr_base.coords["node"])
                 .sel(time=snapshot)
                 .transpose("snapshot", "node")
             )
             alpha = (cop_heat_pump_da - 1).clip(min=0)
-            expr = lhs_base * alpha
+            expr = expr_base * alpha
 
             # per-tech constraint
             n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
         else:
             ptes_booster_per_discharge_da = (ptes_boost_per_discharge_dataarray
-                         .sel(node=lhs_base.coords["node"])
+                         .sel(node=expr_base.coords["node"])
                          .sel(time=snapshot)
                          .transpose("snapshot", "node")
                          )
             alpha = xr.where(ptes_booster_per_discharge_da > 0, 1.0 / ptes_booster_per_discharge_da, 0.0)
-            expr = lhs_base * alpha
+            expr = expr_base * alpha
 
         lhs = expr if lhs is None else (lhs + expr)
 
@@ -1119,7 +1119,7 @@ def add_charge_boosting_constraints(
     """
     p = n.model["Link-p"]
     snapshot = p.coords["snapshot"]
-    tes_heat_pumps = {t.value for t in TesSystem}
+    tes_heat_pumps = {f"{t.value} heat pump" for t in TesSystem}
 
     ptes_boost_per_charge_dataaray = xr.open_dataarray(boost_per_charge_profile_file).rename({"name": "node"})
 
@@ -1141,33 +1141,33 @@ def add_charge_boosting_constraints(
         .sel(time=snapshot)
         .transpose("snapshot", "node")
     )
-    rhs = gamma / (gamma + 1e-9)
+    rhs = rhs_base * (gamma / (gamma + 1e-9))
 
     # --- LHS: boosters
     lhs = None
     for tech in ptes_booster_technologies:
+        if tech in tes_heat_pumps:
+            continue
         booster_technologies_links = n.links.index[
             n.links.index.str.contains("urban central") &
             n.links.index.str.contains(tech)
         ]
         if booster_technologies_links.empty:
             raise ValueError(f"No links found for booster technology '{tech}', check if the component exists")
-        if tech in tes_heat_pumps:
-            continue
 
         booster_tech_nodes_da = xr.DataArray(
             booster_technologies_links.str.extract(r"^(\S+\s+\S+)")[0].to_numpy(),
             coords={"Link": booster_technologies_links}, dims="Link", name="node"
         )
-        lhs_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
+        expr_base = p.sel(Link=booster_technologies_links).groupby(booster_tech_nodes_da).sum("Link")
 
         ptes_booster_per_charge_da = (
             ptes_boost_per_charge_dataaray
-            .sel(node=lhs_base.coords["node"])
+            .sel(node=expr_base.coords["node"])
             .sel(time=snapshot)
             .transpose("snapshot", "node"))
         beta = xr.where(ptes_booster_per_charge_da > 0, 1.0 / ptes_booster_per_charge_da, 0.0)
-        expr = lhs_base * beta
+        expr = expr_base * beta
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
@@ -1629,7 +1629,7 @@ if __name__ == "__main__":
             clusters="8",
             #configfiles="config/test/config.myopic.yaml",
             sector_opts="",
-            planning_horizons="2040",
+            planning_horizons="2050",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
