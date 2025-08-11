@@ -29,9 +29,9 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.common import expand_series
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     get,
     load_costs,
@@ -39,6 +39,13 @@ from scripts._helpers import (
     update_config_from_wildcards,
 )
 from scripts.add_electricity import set_transmission_costs
+
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
+
 
 idx = pd.IndexSlice
 
