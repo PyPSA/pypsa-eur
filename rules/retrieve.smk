@@ -160,6 +160,46 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
+if config["enable"]["retrieve"] and (GEBCO_DATASET := dataset_version("gebco"))["source"] in [
+    "archive",
+    "primary"
+]:
+    rule retrieve_gebco:
+        params:
+            url = f"{GEBCO_DATASET["url"]}",
+        input:
+            storage(
+                f"{GEBCO_DATASET["url"]}",
+            ) if GEBCO_DATASET["source"] == 'archive' else [],
+        output:
+            f"{GEBCO_DATASET["folder"]}/GEBCO_2014_2D.nc",
+            zip=f"{GEBCO_DATASET["folder"]}/GEBCO_2014.zip" if GEBCO_DATASET["source"] == 'primary' else [],
+            directory=directory(f"{GEBCO_DATASET["folder"]}") if GEBCO_DATASET["source"] == 'primary' else [],
+        retries:2,
+        run:
+            if GEBCO_DATASET["source"] == 'primary':
+                import os
+                import requests
+                from zipfile import ZipFile
+                from pathlib import Path
+                import xarray as xr
+
+                response = requests.get(params["url"])
+                with open(output.zip, "wb") as f:
+                    f.write(response.content)
+
+                output_folder = Path(output["zip"]).parent
+                unpack_archive(output.zip, output_folder)
+
+                file_path = f"{GEBCO_DATASET["folder"]}/GEBCO_2014_2D.nc"
+                ds = xr.open_dataset(file_path)
+                ds_reqd = ds.sel(lat=slice(32,73),lon=slice(-21,45))
+                ds_reqd.to_netcdf(file_path)
+            else:
+                move(input[0], output[0])
+                validate_checksum(output[0], input[0])
+
+
 if config["enable"]["retrieve"] and (JRC_IDEES_DATASET := dataset_version("jrc_idees"))[
     "source"
 ] in [

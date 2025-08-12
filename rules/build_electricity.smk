@@ -231,7 +231,7 @@ rule determine_availability_matrix_MD_UA:
         wdpa=rules.retrieve_wdpa.output["gpkg"],
         wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
-            "data/bundle/gebco/GEBCO_2014_2D.nc"
+            rules.retrieve_gebco.output[0]
             if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
@@ -293,7 +293,7 @@ rule determine_availability_matrix:
         luisa=rules.retrieve_luisa_land_cover.output[0],
         gebco=ancient(
             lambda w: (
-                "data/bundle/gebco/GEBCO_2014_2D.nc"
+                rules.retrieve_gebco.output[0]
                 if (
                     config_provider("renewable", w.technology)(w).get("max_depth")
                     or config_provider("renewable", w.technology)(w).get("min_depth")
