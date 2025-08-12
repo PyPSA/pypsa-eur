@@ -91,15 +91,6 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
-    heat_pump_sources:
-      urban central:
-      - air
-      - ptes
-      - river_water
-      - sea_water
-      - geothermal
-
-
 
 industry:
   HVC_environment_sequestration_fraction: 0.5
