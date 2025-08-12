@@ -53,11 +53,11 @@ sector:
       enable: true
     heat_pump_sources:
       urban central:
-        - air
-        - ptes
-        - river_water
-        - sea_water
-        - geothermal
+      - air
+      - ptes
+      - river_water
+      - sea_water
+      - geothermal
       urban decentral:
       - air
       rural:

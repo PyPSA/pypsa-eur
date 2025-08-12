@@ -3199,8 +3199,12 @@ def add_heat(
 
                 # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
                 if p_max_source.ndim == 1:
-                    p_max_source = pd.DataFrame([p_max_source] * len(n.snapshots), index=n.snapshots, columns=nodes)
-                    
+                    p_max_source = pd.DataFrame(
+                        [p_max_source] * len(n.snapshots),
+                        index=n.snapshots,
+                        columns=nodes,
+                    )
+
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
@@ -3227,7 +3231,6 @@ def add_heat(
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
 
-
                 n.add(
                     "Generator",
                     nodes,
@@ -3238,7 +3241,7 @@ def add_heat(
                     capital_cost=capital_cost,
                     lifetime=lifetime,
                     p_nom_max=p_max_source.max(),
-                    p_max_pu=p_max_source/p_max_source.max(),
+                    p_max_pu=p_max_source / p_max_source.max(),
                 )
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
