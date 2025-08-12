@@ -150,17 +150,19 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_bidding_zones.py"
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
+if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
+    "archive",
+]:
 
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/15349674/files/{cutout}.nc",
+                CUTOUT_DATASET["url"] + "/files/{cutout}.nc",
             ),
         output:
-            CDIR.joinpath("{cutout}.nc").as_posix(),
+            CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:
-            Path("logs").joinpath(CDIR, "retrieve_cutout_{cutout}.log").as_posix(),
+            "logs/retrieve_cutout/{cutout}.log",
         resources:
             mem_mb=5000,
         retries: 2
