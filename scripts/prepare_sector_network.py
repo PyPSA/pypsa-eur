@@ -803,8 +803,7 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
         p_nom_extendable=True,
     )
 
-    # if options["regional_co2_sequestration_potential"]["enable"]:
-    if False:
+    if options["regional_co2_sequestration_potential"]["enable"]:
         if sequestration_potential_file is None:
             raise ValueError(
                 "sequestration_potential_file must be provided when "
