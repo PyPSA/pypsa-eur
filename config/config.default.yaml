@@ -1027,7 +1027,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   gebco:
-    source: "primary"
+    source: "archive"
+    version_or_latest: "latest"
+  attributed_ports:
+    source: "archive"
     version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving

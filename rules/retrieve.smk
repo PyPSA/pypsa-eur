@@ -200,6 +200,21 @@ if config["enable"]["retrieve"] and (GEBCO_DATASET := dataset_version("gebco"))[
                 validate_checksum(output[0], input[0])
 
 
+if config["enable"]["retrieve"] and (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] in [
+    "archive",
+    "primary"
+]:
+    rule retrieve_attributed_ports:
+        input:
+            storage(
+                f"{ATTRIBUTED_PORTS_DATASET["url"]}",
+            )
+        output:
+            f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
+        retries: 2,
+        run:
+            move(input[0], output[0])
+
 if config["enable"]["retrieve"] and (JRC_IDEES_DATASET := dataset_version("jrc_idees"))[
     "source"
 ] in [

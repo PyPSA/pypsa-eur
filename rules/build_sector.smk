@@ -1076,7 +1076,7 @@ rule build_population_weighted_energy_totals:
 
 rule build_shipping_demand:
     input:
-        ports="data/attributed_ports.json",
+        ports=rules.retrieve_attributed_ports.output[0],
         scope=resources("europe_shape.geojson"),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         demand=resources("energy_totals.csv"),
