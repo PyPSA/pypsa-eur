@@ -51,7 +51,6 @@ from _helpers import (
     update_config_from_wildcards,
 )
 from approximators.sea_water_heat_approximator import SeaWaterHeatApproximator
-from dask.distributed import Client, LocalCluster
 
 logger = logging.getLogger(__name__)
 
@@ -262,18 +261,9 @@ if __name__ == "__main__":
     dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
     dh_areas = dh_areas.to_crs("EPSG:4326")  # Convert back to WGS84 for intersection
 
-    # Set up Dask cluster for parallel computation across regions
-    # This enables processing multiple regions simultaneously for better performance
-    cluster = LocalCluster(
-        n_workers=int(snakemake.threads),  # One worker per available thread
-        threads_per_worker=1,  # Single-threaded workers to avoid conflicts
-        memory_limit=f"{snakemake.resources.mem_mb / snakemake.threads}MB",  # Distribute memory evenly
-    )
-    client = Client(cluster)
-
     # Process each region in parallel using Dask distributed computing
     # Each region is processed independently to calculate its sea water temperature
-    futures = []
+    results = []
     for region_name in regions_onshore.index:
         logging.info(f"Processing region {region_name}")
 
@@ -285,7 +275,7 @@ if __name__ == "__main__":
         # 1. Intersect region with DH areas (coastal access check)
         # 2. Load and clip sea water temperature data to region bounds
         # 3. Calculate temperature profiles using approximator
-        futures.append(
+        results.append(
             get_regional_result(
                 seawater_temperature_fn=snakemake.input["seawater_temperature"],
                 region=region,
@@ -293,10 +283,6 @@ if __name__ == "__main__":
                 snapshots=snapshots,
             )
         )
-
-    # Collect results from all parallel computations
-    # This blocks until all regions are processed
-    results = client.gather(futures)
 
     # Concatenate average temperature for all regions into single dataset
     # This creates a 2D array: [time, regions] with sea water temperature values

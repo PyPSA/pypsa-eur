@@ -480,6 +480,7 @@ sector:
   heating: true
   biomass: true
   industry: true
+  shipping: true
   aviation: true
   agriculture: true
   fossil_fuels: true
@@ -542,8 +543,10 @@ sector:
       geothermal:
         constant_temperature_celsius: 65
         ignore_missing_regions: false
+        zero_cost: false
       river_water:
         constant_temperature_celsius: false
+        zero_cost: true
     direct_utilisation_heat_sources:
     - geothermal
     temperature_limited_stores:
