@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 import warnings
+from typing import Union
 
+import geopandas as gpd
 import numpy as np
 import shapely
 import xarray as xr
@@ -17,12 +19,12 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         self,
         volume_flow: xr.DataArray,
         ambient_temperature: xr.DataArray,
-        region: shapely.geometry.polygon.Polygon,
+        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
         max_relative_volume_flow: float = 0.1,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
         min_distance_meters: int = 2000,
-    ):
+    ) -> None:
         water_temperature = self._approximate_river_temperature(
             ambient_temperature=ambient_temperature
         )
@@ -75,14 +77,24 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         k4: float = 0.137,
     ) -> xr.DataArray:
         """
-        Apply the formula for derivation of the river temperature from the ambient temperature (Triebs & Tsatsaronis 2022: Estimating the local renewable potentials for the transformation of district heating systems, ECOS 2022, pp. 479-490: https://orbit.dtu.dk/en/publications/proceedings-of-ecos-2022-the-35th-international-conference-on-eff)
+        Apply the formula for derivation of the river temperature from the ambient temperature.
+        
+        Based on Triebs & Tsatsaronis 2022: Estimating the local renewable potentials 
+        for the transformation of district heating systems, ECOS 2022, pp. 479-490.
 
         Parameters
         ----------
-        ambient_temperature_moving_average: xr.DataArray
-            DataArray containing the moving average of the ambient temperature in river areas.
-        k1, k2, k3, k4: float
-            Regression coefficients for the approximation of the river temperature.
+        ambient_temperature : xr.DataArray
+            DataArray containing ambient temperature in river areas
+        moving_average_num_days : int, optional
+            Number of days for moving average, by default 13
+        k1, k2, k3, k4 : float, optional
+            Regression coefficients for the approximation of the river temperature
+            
+        Returns
+        -------
+        xr.DataArray
+            Approximated river temperature
         """
         # Time steps per day
         time_steps_per_day = int(24 / float(ambient_temperature.time.dt.hour.frequency))

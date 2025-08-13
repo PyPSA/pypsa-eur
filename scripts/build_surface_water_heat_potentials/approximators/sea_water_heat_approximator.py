@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 import logging
+from typing import Union
 
+import geopandas as gpd
 import shapely
 import xarray as xr
 
@@ -17,9 +19,9 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def __init__(
         self,
         water_temperature: xr.DataArray,
-        region: shapely.geometry.polygon.Polygon,
+        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
         min_inlet_temperature: float = 1,
-    ):
+    ) -> None:
         # buffer the region geometry by half the data resolution
         # This way, offshore data points just outside the region are included
         self.water_temperature = water_temperature
@@ -34,7 +36,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         # Create masked data for processing
         self._clip_data_to_region()
 
-    def _validate_and_reproject_input(self):
+    def _validate_and_reproject_input(self) -> None:
         """
         Validate input data and ensure proper CRS alignment.
 
@@ -65,15 +67,24 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
             except Exception as e:
                 raise ValueError(f"Failed to reproject water_temperature: {str(e)}")
 
-    def _clip_data_to_region(self):
-        """Mask water temperature to the geometry."""
+    def _clip_data_to_region(self) -> None:
+        """
+        Mask water temperature to the geometry.
+        """
 
         self._water_temperature_in_region = self.water_temperature.rio.clip(
             self.region_geometry, drop=False
         )
 
-    def get_spatial_aggregate(self):
-        """Get the spatial aggregate of water temperature."""
+    def get_spatial_aggregate(self) -> xr.Dataset:
+        """
+        Get the spatial aggregate of water temperature.
+        
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing average_temperature
+        """
         average_water_temperature = self._water_temperature_in_region.mean(
             dim=["x", "y"], skipna=True
         )
@@ -87,8 +98,15 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
             }
         )
 
-    def get_temporal_aggregate(self):
-        """Get the temporal aggregate of water temperature."""
+    def get_temporal_aggregate(self) -> xr.Dataset:
+        """
+        Get the temporal aggregate of water temperature.
+        
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing average_temperature
+        """
         average_water_temperature = self._water_temperature_in_region.mean(
             dim=[self.TIME], skipna=True
         )
@@ -101,7 +119,19 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def _get_usable_water_temperature(
         self, water_temperature: xr.DataArray
     ) -> xr.DataArray:
-        """Get the usable water temperature."""
+        """
+        Get the usable water temperature.
+        
+        Parameters
+        ----------
+        water_temperature : xr.DataArray
+            Water temperature data
+            
+        Returns
+        -------
+        xr.DataArray
+            Usable water temperature with minimum threshold applied
+        """
         return xr.where(
             water_temperature > self.min_outlet_temperature,
             water_temperature,

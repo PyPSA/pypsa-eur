@@ -8,8 +8,8 @@ This script computes the thermal potential of sea water as a heat source for dis
 heating applications. It uses sea water temperature data to estimate average water
 temperatures across regions intersected with district heating areas.
 
-The approximation provides temperature profiles for coastal regions with access to
-sea water, supporting both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
+The approximation accounts for spatial variations in sea water temperature,
+providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
 
 Relevant Settings
 -----------------
@@ -18,13 +18,13 @@ Relevant Settings
 
     sector:
         district_heating:
-            dh_area_buffer: 1000  # Buffer around DH areas in meters
-            heat_source_cooling: 3  # Temperature reduction in heating system
+            dh_area_buffer: # Buffer around DH areas in meters to include nearby coastal areas
+            heat_source_cooling: # Exploitable temperature delta
     snapshots:
-        start: "2019-01-01"
-        end: "2019-12-31"
+        start:
+        end:
     enable:
-        drop_leap_day: true
+        drop_leap_day:
 
 Inputs
 ------
@@ -61,9 +61,9 @@ def _create_empty_datasets(
     """
     Create empty spatial and temporal aggregate datasets for regions without DH areas.
 
-    When a region has no intersection with district heating areas (e.g., landlocked
-    regions for sea water), we still need to provide valid datasets with zero values
-    to maintain consistent data structure across all regions.
+    When a region has no intersection with district heating areas, we still need
+    to provide valid datasets with zero values to maintain consistent data structure
+    across all regions. This prevents errors in downstream processing.
 
     Parameters
     ----------
@@ -80,7 +80,7 @@ def _create_empty_datasets(
         Tuple of (spatial_aggregate, temporal_aggregate) datasets with zero values
     """
     # Create spatial aggregate with time-series of zeros
-    # Represents no available sea water temperature over time
+    # This represents no available sea water temperature over time
     spatial_aggregate = xr.Dataset(
         data_vars={
             "average_temperature": xr.DataArray(
@@ -92,7 +92,7 @@ def _create_empty_datasets(
     )
 
     # Create temporal aggregate with single spatial point of zeros
-    # Represents no available sea water temperature spatially
+    # This represents no available sea water temperature spatially
     temporal_aggregate = xr.Dataset(
         data_vars={
             "average_temperature": xr.DataArray(
@@ -131,7 +131,7 @@ def get_regional_result(
     dict
         Dictionary with keys 'spatial aggregate' and 'temporal aggregate'.
         'spatial aggregate' contains average temperature.
-        'temporal aggregate' contains time series for temperature (for analysis/plotting).
+        'temporal aggregate' contains temperature for analysis/plotting.
     """
     # Store original region for fallback centroid calculation
     original_region = region.copy()
@@ -146,16 +146,15 @@ def get_regional_result(
     region.geometry = intersected_geometry
 
     # Handle empty geometry case (no intersection with DH areas)
-    # This occurs when coastal regions have no district heating or inland regions
-    # are processed (which shouldn't have sea water access)
+    # This occurs when a region has no district heating area
+    # Note: the region could still have district heating, as central heat demand is computed elsewhere
     if region.geometry.is_empty.any():
-        logger.info(
-            "Region has no DH areas or no sea access - returning empty datasets"
-        )
-
         # Get the center of the original region (before intersection)
         # We use the original region to get a meaningful coordinate for the empty datasets
-        region_center = original_region.to_crs("EPSG:4326").centroid.iloc[0]
+        # Project to EPSG:3035 for accurate centroid calculation, then back to EPSG:4326
+        region_center = (
+            original_region.to_crs("EPSG:3035").centroid.to_crs("EPSG:4326").iloc[0]
+        )
         center_lon = region_center.x
         center_lat = region_center.y
 
@@ -170,56 +169,52 @@ def get_regional_result(
         }
 
     # Process region with valid DH area intersection
-    # This is the main processing path for coastal regions with district heating
-
     # Get bounding box for efficient data clipping
-    # We use total_bounds to get the minimal rectangular area covering all geometries
     minx, miny, maxx, maxy = region.total_bounds
 
     # Load and preprocess sea water temperature data
-    # Data processing strategy:
-    # 1. Load sea water temperature from NetCDF file
-    # 2. Average over depth dimension (surface temperature)
-    # 3. Clip to region bounds for efficiency
-    # 4. Reproject to EPSG:3035 for accurate spatial calculations
     water_temperature = (
         xr.open_dataset(
             seawater_temperature_fn,
             chunks={
-                "time": "auto",  # Chunk time dimension for memory efficiency
-                "latitude": "auto",  # Chunk spatial dimensions
+                "time": "auto",
+                "latitude": "auto",
                 "longitude": "auto",
-                "depth": 1,  # Single depth chunk (usually surface only)
+                "depth": 1,
             },
-            # engine="rasterio",  # Alternative engine for some data formats
-        )["thetao"]  # Extract sea water potential temperature
-        .mean(dim="depth")  # Average over depth to get surface temperature
-        .rio.write_crs("EPSG:4326")  # Set CRS to WGS84 for geographic operations
-        .rio.clip_box(minx, miny, maxx, maxy)  # Clip to region bounds
-        .rio.reproject("EPSG:3035")  # Reproject to European grid for area calculations
+        )["thetao"]
+        .mean(dim="depth")
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
     )
 
     # Reproject region to match data CRS for spatial calculations
-    # EPSG:3035 provides accurate area/distance calculations for Europe
     region = region.to_crs("EPSG:3035")
 
-    # Initialize the sea water heat approximator with prepared data
-    # This class handles the temperature analysis for coastal heat pumps
     seawater_heat_approximator = SeaWaterHeatApproximator(
-        water_temperature=water_temperature,  # Sea water temperature [°C or K]
-        region=region,  # Geographic region of interest
+        water_temperature=water_temperature,
+        region=region,
     )
 
-    return {
-        # Calculate spatial aggregate (time series data for the region)
-        # Contains average_temperature [°C] over time for heat pump COP calculations
-        "spatial aggregate": seawater_heat_approximator.get_spatial_aggregate().compute(),
-        # Calculate temporal aggregate (spatial distribution data)
-        # Contains temperature maps for analysis/plotting - converted back to WGS84
-        "temporal aggregate": seawater_heat_approximator.get_temporal_aggregate()
+    # Calculate spatial aggregate (time series data for the entire region)
+    # Contains average_temperature [°C] over time
+    spatial_aggregate = seawater_heat_approximator.get_spatial_aggregate()
+
+    # Calculate temporal aggregate (spatial distribution data for plotting, no time dimension)
+    temporal_aggregate = (
+        seawater_heat_approximator.get_temporal_aggregate()
         .rio.reproject("EPSG:4326")  # Convert back to WGS84 for output consistency
-        .rename({"x": "longitude", "y": "latitude"})  # Standardize coordinate names
-        .compute(),  # Execute all lazy operations
+        .rename({"x": "longitude", "y": "latitude"})
+    )
+
+    # Compute results immediately to free Dask arrays
+    spatial_aggregate = spatial_aggregate.compute()
+    temporal_aggregate = temporal_aggregate.compute()
+
+    return {
+        "spatial aggregate": spatial_aggregate,
+        "temporal aggregate": temporal_aggregate,
     }
 
 
@@ -236,13 +231,12 @@ if __name__ == "__main__":
             planning_horizons=2050,
         )
 
-    # Configure logging and scenario settings from Snakemake
+    # Configure logging and scenario
     configure_logging(snakemake)
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    # Get simulation time snapshots from configuration
-    # This defines the temporal resolution of the energy system model
+    # Get simulation snapshots
     snapshots: pd.DatetimeIndex = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
@@ -261,7 +255,6 @@ if __name__ == "__main__":
     dh_areas["geometry"] = dh_areas.geometry.buffer(snakemake.params.dh_area_buffer)
     dh_areas = dh_areas.to_crs("EPSG:4326")  # Convert back to WGS84 for intersection
 
-    # Process each region in parallel using Dask distributed computing
     # Each region is processed independently to calculate its sea water temperature
     results = []
     for region_name in regions_onshore.index:
@@ -296,7 +289,6 @@ if __name__ == "__main__":
     )  # Remove invalid time points
 
     # Align temperature data to simulation snapshots
-    # This ensures temporal consistency with the energy system model
     # Use "nearest" method to handle any minor timestamp differences
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
@@ -306,12 +298,9 @@ if __name__ == "__main__":
     # Units: °C (degrees Celsius) - sea water temperature for coastal heat pumps
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
-    # Save temporal aggregate results for analysis and visualization
-    # This is a spatial map showing temperature distribution along coastlines
-
     # Temperature temporal aggregate: spatial distribution of sea water temperatures
-    # Units: °C (degrees Celsius) - average temperature per coastal location
-    # Used for detailed analysis and plotting of coastal heat pump potential
+    # Units: °C (degrees Celsius) - average water temperature per coastal region
+    # Used for analysis and plotting
     xr.concat(
         [res["temporal aggregate"]["average_temperature"] for res in results],
         dim=regions_onshore.index,

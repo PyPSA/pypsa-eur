@@ -9,7 +9,7 @@ heating applications. It uses HERA river discharge and ambient temperature data 
 estimate available heating power and average water temperatures across regions
 intersected with district heating areas.
 
-The approximation accounts for seasonal variations in river flow and temperature,
+The approximation accounts for temporal and spatial variations in river flow and temperature,
 providing both spatial and temporal aggregates. Temporal aggregates are only used for plotting.
 
 Relevant Settings
@@ -19,13 +19,13 @@ Relevant Settings
 
     sector:
         district_heating:
-            dh_area_buffer: 1000  # Buffer around DH areas in meters
-            heat_source_cooling: 3  # Temperature reduction in heating system
+            dh_area_buffer: # Buffer around DH areas in meters to include nearby rivers
+            heat_source_cooling: # Exploitable temperature delta
     snapshots:
-        start: "2019-01-01"
-        end: "2019-12-31"
+        start:
+        end:
     enable:
-        drop_leap_day: true
+        drop_leap_day:
 
 Inputs
 ------
@@ -168,7 +168,8 @@ def get_regional_result(
     region.geometry = intersected_geometry
 
     # Handle empty geometry case (no intersection with DH areas)
-    # This occurs when a region has no district heating infrastructure
+    # This occurs when a region has no district heating area
+    # Note: the region could still have district heating, as central heat demand is computed elsewhere
     if region.geometry.is_empty.any():
         # Get the center of the original region (before intersection)
         # We use the original region to get a meaningful coordinate for the empty datasets
@@ -190,10 +191,7 @@ def get_regional_result(
         }
 
     # Process region with valid DH area intersection
-    # This is the main processing path for regions with district heating
-
     # Get bounding box for efficient data clipping
-    # We use total_bounds to get the minimal rectangular area covering all geometries
     minx, miny, maxx, maxy = region.total_bounds
 
     # Data processing strategy:
@@ -203,22 +201,20 @@ def get_regional_result(
     # 4. Feed to approximator for heat potential calculation
 
     # Load and preprocess river discharge data from HERA dataset
-    # Use context manager to ensure proper file handle cleanup
-    # Use smaller chunks to reduce memory usage
     with xr.open_dataset(
         river_discharge_fn,
         chunks={
             "time": -1,
             "lat": 14,
             "lon": 4530,
-        },  # Smaller chunks to reduce memory footprint
+        },  # Original chunks in .nc file
     ) as river_ds:
         river_discharge = river_ds["dis"].chunk(
             {
                 "time": -1,
                 "lat": "auto",
                 "lon": "auto",
-            }  # Rechunk to match ambient temperature
+            }  # Rechunk
         )
 
         river_discharge = (
@@ -234,27 +230,24 @@ def get_regional_result(
         )
 
     # Load and preprocess ambient temperature data from HERA dataset
-    # Use context manager to ensure proper file handle cleanup
-    # Use smaller chunks to reduce memory usage
-    logging.info("Loading ambient temperature data...")
     with xr.open_dataset(
         ambient_temperature_fn,
         chunks={
             "time": -1,
             "lat": 990,
             "lon": 1510,
-        },  # Smaller chunks to reduce memory footprint
+        },  # Original chunks in .nc file
     ) as temp_ds:
         ambient_temperature = temp_ds["ta6"].chunk(
             {
                 "time": -1,
                 "lat": "auto",
                 "lon": "auto",
-            }  # Rechunk to match river discharge
+            }  # Rechunk
         )
 
         ambient_temperature = (
-            temp_ds["ta6"]  # Extract temperature variable (Kelvin or Celsius)
+            temp_ds["ta6"]  # Extract ambient temperature
             # Apply same preprocessing pipeline as discharge data
             .rename({"lat": "latitude", "lon": "longitude"})
             .rio.write_crs("EPSG:4326")
@@ -263,34 +256,31 @@ def get_regional_result(
         )
 
     # Reproject region to match data CRS for spatial calculations
-    # EPSG:3035 provides accurate area/distance calculations for Europe
     region = region.to_crs("EPSG:3035")
 
-    # Initialize the river water heat approximator with prepared data
     river_water_heat_approximator = RiverWaterHeatApproximator(
-        volume_flow=river_discharge,  # River discharge [m³/s]
-        ambient_temperature=ambient_temperature,  # Air temperature [K or °C]
+        volume_flow=river_discharge,  # River discharge (volume flow)
+        ambient_temperature=ambient_temperature,  # Air temperature
         region=region,  # Geographic region of interest
     )
 
-    # Calculate spatial aggregate (time series data for the region)
+    # Calculate spatial aggregate (time series data for the entire region)
     # Contains total_power [MW] and average_temperature [°C] over time
-    # Keep as lazy dask array - will be computed later when needed
     spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate()
 
-    # Calculate temporal aggregate only if needed (spatial distribution data for plotting)
+    # Calculate temporal aggregate only if needed (spatial distribution data for plotting, no time dimension)
     if generate_temporal_aggregates:
         temporal_aggregate = (
             river_water_heat_approximator.get_temporal_aggregate()
             .rio.reproject("EPSG:4326")  # Convert back to WGS84 for output consistency
             .rename({"x": "longitude", "y": "latitude"})  # Standardize coordinate names
         )
-        temporal_result = temporal_aggregate.compute()
+        temporal_aggregate = temporal_aggregate.compute()
     else:
-        temporal_result = None
+        temporal_aggregate = None
 
     # Compute results immediately to free Dask arrays and enable garbage collection
-    spatial_result = spatial_aggregate.compute()
+    spatial_aggregate = spatial_aggregate.compute()
 
     # Explicitly delete approximator and intermediate arrays
     del river_water_heat_approximator
@@ -300,12 +290,12 @@ def get_regional_result(
     gc.collect()
 
     result = {
-        "spatial aggregate": spatial_result,
+        "spatial aggregate": spatial_aggregate,
     }
 
     # Only include temporal aggregate if computed
-    if temporal_result is not None:
-        result["temporal aggregate"] = temporal_result
+    if temporal_aggregate is not None:
+        result["temporal aggregate"] = temporal_aggregate
 
     return result
 
@@ -391,25 +381,21 @@ if __name__ == "__main__":
         gc.collect()
 
     # Build DataFrame of total power for each region
-    # This creates a time-series matrix with regions as columns and time as rows
+    # Regions as columns and time as rows
     power = pd.DataFrame(
         {
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
             for region_name, res in zip(regions_onshore.index, results)
         }
-    ).dropna()  # Remove any NaN values that could cause issues downstream
+    ).dropna() 
 
-    # Align power DataFrame to simulation snapshots
-    # This ensures the time index exactly matches the energy system model requirements
-    # Use "nearest" method to handle any minor timestamp differences due to floating point precision
-    power = power.reindex(snapshots, method="nearest")
+    
+    power = power.reindex(snapshots, method="nearest")  # Use "nearest" method to handle any minor timestamp differences due to floating point precision
 
-    # Save power potentials as CSV for integration with PyPSA energy system model
-    # Units: MW (megawatts)
+    # Save power potentials in MW
     power.to_csv(snakemake.output.heat_source_power)
 
     # Concatenate average temperature for all regions into single dataset
-    # This creates a 2D array: [time, regions] with temperature values
     temperature = (
         xr.concat(
             [res["spatial aggregate"]["average_temperature"] for res in results],
@@ -417,10 +403,9 @@ if __name__ == "__main__":
         )
         .assign_coords(name=regions_onshore.index)
         .dropna(dim="time")
-    )  # Remove invalid time points
+    )
 
-    # Align temperature data to simulation snapshots
-    # This ensures temporal consistency with the energy system model
+    # Align temperature data to snapshots, use nearest to handle any minor decimal differences
     temperature = temperature.sel(time=snapshots, method="nearest").assign_coords(
         time=snapshots
     )
@@ -447,7 +432,6 @@ if __name__ == "__main__":
 
     else:
         # Create empty placeholder files to satisfy Snakemake outputs
-        # These are minimal NetCDF files that take almost no disk space
         empty_ds = xr.Dataset()
         empty_ds.to_netcdf(snakemake.output.heat_source_energy_temporal_aggregate)
         empty_ds.to_netcdf(snakemake.output.heat_source_temperature_temporal_aggregate)
