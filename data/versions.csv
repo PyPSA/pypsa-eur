@@ -15,6 +15,6 @@
 "worldbank_urban_population","primary","unknown","['latest','might-work']","https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv","This is the original World Bank API link, which is sometimes updated; it is not guaranteed to work with the current codebase and data changes without notice."
 "tyndp","primary","2024","['latest','supported']","https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs",""
 "tyndp","archive","2024","['latest','supported']","https://zenodo.org/records/16759672/files",""
-"powerplants","primary","0.7.1","['latest','supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/heads/v0.7.1/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
-"powerplants","primary","0.7.0","['supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/heads/v0.7.0/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"powerplants","primary","0.7.1","['latest','supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.1/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
+"powerplants","primary","0.7.0","['supported']","https://raw.githubusercontent.com/PyPSA/powerplantmatching/refs/tags/v0.7.0/powerplants.csv","Part of the `powerplantmatching` package and versioned on GitHub, i.e. no dedicated 'archive' entry."
 "costs","primary","v0.13.2","['latest','supported']","https://raw.githubusercontent.com/PyPSA/technology-data/v0.13.2/outputs","Part of the `technologydata` repository and versioned on GitHub, i.e. no dedicated 'archive' entry."
