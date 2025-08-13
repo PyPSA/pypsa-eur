@@ -72,6 +72,8 @@ sector:
       urban central:
       - air
       - geothermal
+      - river_water
+      - sea_water
       urban decentral:
       - air
       rural:

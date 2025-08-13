@@ -555,7 +555,6 @@ sector:
   heat_pump_sources:
     urban central:
     - air
-    - river_water
     urban decentral:
     - air
     rural:
