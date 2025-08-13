@@ -1005,6 +1005,12 @@ data:
   costs:
     source: "primary"
     version_or_latest: "latest"
+  country_runoff:
+    source: "archive"
+    version_or_latest: "latest"
+  country_hdd:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

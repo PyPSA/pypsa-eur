@@ -169,6 +169,30 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
             validate_checksum(output[0], input[0])
 
 
+if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_country_runoff:
+        input:
+            storage(COUNTRY_RUNOFF_DATASET["url"]),
+        output:
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        run:
+            move(input[0], output[0])
+
+
+if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archive"]:
+
+    rule retrieve_country_hdd:
+        input:
+            storage(COUNTRY_HDD_DATASET["url"]),
+        output:
+            era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        run:
+            move(input[0], output[0])
+
+
 if (COSTS_DATASET := dataset_version("costs"))["source"] in [
     "primary",
 ]:

@@ -603,7 +603,7 @@ rule build_energy_totals:
 
 rule build_heat_totals:
     input:
-        hdd="data/bundle/era5-HDD-per-country.csv",
+        era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
