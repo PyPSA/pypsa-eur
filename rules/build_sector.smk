@@ -601,6 +601,24 @@ rule build_energy_totals:
         "../scripts/build_energy_totals.py"
 
 
+if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"]:
+
+    rule build_country_hdd:
+        input:
+            cutouts="cutouts/europe-1940-2024-era5-temperature.nc",
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        log:
+            logs("build_country_hdd.log"),
+        benchmark:
+            benchmarks("build_country_hdd")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_hdd.py"
+
+
 rule build_heat_totals:
     input:
         era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",

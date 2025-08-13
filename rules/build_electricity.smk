@@ -392,6 +392,24 @@ rule build_monthly_prices:
         "../scripts/build_monthly_prices.py"
 
 
+if COUNTRY_RUNOFF_DATASET["source"] == "build":
+
+    rule build_country_runoff:
+        input:
+            cutouts="cutouts/europe-1940-2024-era5-runoff.nc",
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        log:
+            logs("build_country_runoff.log"),
+        benchmark:
+            benchmarks("build_country_runoff")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_runoff.py"
+
+
 rule build_hydro_profile:
     params:
         hydro=config_provider("renewable", "hydro"),
