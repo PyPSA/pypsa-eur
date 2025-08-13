@@ -102,5 +102,6 @@ if __name__ == "__main__":
 
     logger.info(f"Preparing cutout with parameters {cutout_params}.")
     features = cutout_params.pop("features", None)
+    monthly_requests = cutout_params.pop("features", False)
     cutout = atlite.Cutout(snakemake.output[0], **cutout_params)
-    cutout.prepare(features=features)
+    cutout.prepare(features=features, monthly_requests=monthly_requests)
