@@ -4,7 +4,9 @@
 import logging
 from abc import ABC
 from functools import cached_property
+from typing import Union
 
+import geopandas as gpd
 import numpy as np
 import shapely
 import xarray as xr
@@ -31,23 +33,31 @@ class SurfaceWaterHeatApproximator(ABC):
         self,
         volume_flow: xr.DataArray,
         water_temperature: xr.DataArray,
-        region: shapely.geometry.polygon.Polygon,
+        region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 4,
         min_outlet_temperature: float = 1,
         min_distance_meters: int = 2000,
-    ):
+    ) -> None:
         """
-        Initialize the SeawaterThermalApproximator. This is an abstract class and should not be instantiated directly.
+        Initialize the SurfaceWaterHeatApproximator. This is an abstract class and should not be instantiated directly.
 
-        Args:
-            volume_flow: Volume flow data
-            water_temperature: Water temperature data
-            region_geometry: Region of interest geometry
-            max_relative_volume_flow: Maximum relative volume flow
-            delta_t_max: Maximum temperature difference
-            min_outlet_temperature: Minimum outlet temperature
-            min_distance_meters: Minimum distance between projects in meters
+        Parameters
+        ----------
+        volume_flow : xr.DataArray
+            Volume flow data
+        water_temperature : xr.DataArray
+            Water temperature data
+        region : Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries]
+            Region of interest geometry
+        max_relative_volume_flow : float, optional
+            Maximum relative volume flow, by default 1.0
+        delta_t_max : float, optional
+            Maximum temperature difference, by default 4
+        min_outlet_temperature : float, optional
+            Minimum outlet temperature, by default 1
+        min_distance_meters : int, optional
+            Minimum distance between projects in meters, by default 2000
         """
         # Set instance variables
         self.volume_flow = volume_flow
@@ -63,8 +73,15 @@ class SurfaceWaterHeatApproximator(ABC):
 
         # All expensive computations are now lazy via cached_property
 
-    def get_spatial_aggregate(self):
-        """Get the spatial aggregate of water temperature and power."""
+    def get_spatial_aggregate(self) -> xr.Dataset:
+        """
+        Get the spatial aggregate of water temperature and power.
+        
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing total_power and average_temperature
+        """
         total_power = self._power_sum_spatial * self._scaling_factor
 
         # Calculate power-weighted average temperature using cached sum
@@ -80,8 +97,15 @@ class SurfaceWaterHeatApproximator(ABC):
             }
         )
 
-    def get_temporal_aggregate(self):
-        """Get the temporal aggregate of water temperature and power."""
+    def get_temporal_aggregate(self) -> xr.Dataset:
+        """
+        Get the temporal aggregate of water temperature and power.
+        
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing total_energy and average_temperature
+        """
         total_energy = self._power_sum_temporal * self._scaling_factor
 
         # Calculate power-weighted average temperature using cached sum
@@ -97,7 +121,7 @@ class SurfaceWaterHeatApproximator(ABC):
             }
         )
 
-    def _validate_and_reproject_input(self):
+    def _validate_and_reproject_input(self) -> None:
         """
         Validate input data and ensure proper CRS alignment.
 
@@ -168,13 +192,27 @@ class SurfaceWaterHeatApproximator(ABC):
         #     raise ValueError(f"region_geometry must be a shapely MultiPolygon, got {type(self.region)}")
 
     @cached_property
-    def _volume_flow_in_region(self):
-        """Cache clipped volume flow data."""
+    def _volume_flow_in_region(self) -> xr.DataArray:
+        """
+        Cache clipped volume flow data.
+        
+        Returns
+        -------
+        xr.DataArray
+            Volume flow data clipped to region
+        """
         return self.volume_flow.rio.clip(self.region.geometry, drop=False)
 
     @cached_property
-    def _water_temperature_in_region(self):
-        """Cache clipped water temperature data."""
+    def _water_temperature_in_region(self) -> xr.DataArray:
+        """
+        Cache clipped water temperature data.
+        
+        Returns
+        -------
+        xr.DataArray
+            Water temperature data clipped to region
+        """
         return self.water_temperature.rio.clip(self.region.geometry, drop=False)
 
     @cached_property
@@ -195,7 +233,7 @@ class SurfaceWaterHeatApproximator(ABC):
         return self._data_resolution / self.min_distance_meters
 
     @cached_property
-    def _power_in_region(self):
+    def _power_in_region(self) -> xr.DataArray:
         """
         Cache power calculation from flow and temperature.
 
@@ -225,11 +263,25 @@ class SurfaceWaterHeatApproximator(ABC):
         return usable_volume_flow * delta_t * conversion_factor
 
     @cached_property
-    def _power_sum_spatial(self):
-        """Cache the expensive spatial sum of power."""
+    def _power_sum_spatial(self) -> xr.DataArray:
+        """
+        Cache the expensive spatial sum of power.
+        
+        Returns
+        -------
+        xr.DataArray
+            Spatial sum of power over x and y dimensions
+        """
         return self._power_in_region.sum(dim=["x", "y"])
 
     @cached_property
-    def _power_sum_temporal(self):
-        """Cache the expensive temporal sum of power."""
+    def _power_sum_temporal(self) -> xr.DataArray:
+        """
+        Cache the expensive temporal sum of power.
+        
+        Returns
+        -------
+        xr.DataArray
+            Temporal sum of power over time dimension
+        """
         return self._power_in_region.sum(dim=[self.TIME])
