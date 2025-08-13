@@ -79,7 +79,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def get_spatial_aggregate(self) -> xr.Dataset:
         """
         Get the spatial aggregate of water temperature.
-        
+
         Returns
         -------
         xr.Dataset
@@ -101,7 +101,7 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     def get_temporal_aggregate(self) -> xr.Dataset:
         """
         Get the temporal aggregate of water temperature.
-        
+
         Returns
         -------
         xr.Dataset
@@ -121,12 +121,12 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
     ) -> xr.DataArray:
         """
         Get the usable water temperature.
-        
+
         Parameters
         ----------
         water_temperature : xr.DataArray
             Water temperature data
-            
+
         Returns
         -------
         xr.DataArray

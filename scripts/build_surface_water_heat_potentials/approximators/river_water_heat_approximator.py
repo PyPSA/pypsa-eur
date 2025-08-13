@@ -78,8 +78,8 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
     ) -> xr.DataArray:
         """
         Apply the formula for derivation of the river temperature from the ambient temperature.
-        
-        Based on Triebs & Tsatsaronis 2022: Estimating the local renewable potentials 
+
+        Based on Triebs & Tsatsaronis 2022: Estimating the local renewable potentials
         for the transformation of district heating systems, ECOS 2022, pp. 479-490.
 
         Parameters
@@ -90,7 +90,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
             Number of days for moving average, by default 13
         k1, k2, k3, k4 : float, optional
             Regression coefficients for the approximation of the river temperature
-            
+
         Returns
         -------
         xr.DataArray

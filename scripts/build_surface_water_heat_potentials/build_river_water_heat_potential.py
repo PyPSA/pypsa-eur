@@ -387,10 +387,11 @@ if __name__ == "__main__":
             region_name: res["spatial aggregate"]["total_power"].to_pandas()
             for region_name, res in zip(regions_onshore.index, results)
         }
-    ).dropna() 
+    ).dropna()
 
-    
-    power = power.reindex(snapshots, method="nearest")  # Use "nearest" method to handle any minor timestamp differences due to floating point precision
+    power = power.reindex(
+        snapshots, method="nearest"
+    )  # Use "nearest" method to handle any minor timestamp differences due to floating point precision
 
     # Save power potentials in MW
     power.to_csv(snakemake.output.heat_source_power)

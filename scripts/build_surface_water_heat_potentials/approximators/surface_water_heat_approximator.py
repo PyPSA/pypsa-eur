@@ -76,7 +76,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def get_spatial_aggregate(self) -> xr.Dataset:
         """
         Get the spatial aggregate of water temperature and power.
-        
+
         Returns
         -------
         xr.Dataset
@@ -100,7 +100,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def get_temporal_aggregate(self) -> xr.Dataset:
         """
         Get the temporal aggregate of water temperature and power.
-        
+
         Returns
         -------
         xr.Dataset
@@ -195,7 +195,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def _volume_flow_in_region(self) -> xr.DataArray:
         """
         Cache clipped volume flow data.
-        
+
         Returns
         -------
         xr.DataArray
@@ -207,7 +207,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def _water_temperature_in_region(self) -> xr.DataArray:
         """
         Cache clipped water temperature data.
-        
+
         Returns
         -------
         xr.DataArray
@@ -266,7 +266,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def _power_sum_spatial(self) -> xr.DataArray:
         """
         Cache the expensive spatial sum of power.
-        
+
         Returns
         -------
         xr.DataArray
@@ -278,7 +278,7 @@ class SurfaceWaterHeatApproximator(ABC):
     def _power_sum_temporal(self) -> xr.DataArray:
         """
         Cache the expensive temporal sum of power.
-        
+
         Returns
         -------
         xr.DataArray
