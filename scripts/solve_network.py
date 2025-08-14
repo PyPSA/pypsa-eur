@@ -1078,7 +1078,7 @@ def add_pipe_retrofit_constraint(n):
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
-    reversed = n.links.reversed if "reversed" in n.links.columns else False
+    reversed = n.links.reversed if "reversed" in n.links.columns else False  # noqa: F841
     gas_pipes_i = n.links.query(
         "carrier == 'gas pipeline' and p_nom_extendable and ~@reversed"
     ).index
