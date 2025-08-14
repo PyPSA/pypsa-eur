@@ -1382,16 +1382,28 @@ def aggregate_build_years(n, components, exclude_carriers):
             dynamic_strategies = align_strategies(strategies, c.dynamic, c.name)
             for attr in c.dynamic:
                 strategy = dynamic_strategies[attr]
-                # Find out which components have a time-varying attr
                 has_dynamic_attr = c.dynamic[attr].columns.intersection(idx_to_agg)
                 aggregated = idx_no_year.loc[has_dynamic_attr].unique()
-                # Aggregated time-varying data
-                n.dynamic(c.name)[attr][aggregated] = (
+                if len(aggregated) == 0:
+                    continue
+
+                # Build aggregated DF once
+                agg_dyn = (
                     c.dynamic[attr][has_dynamic_attr]
                     .T.groupby(idx_no_year)
                     .agg(strategy)
-                    .T[aggregated]
+                    .T
                 )
+                agg_dyn = agg_dyn.reindex(columns=aggregated)
+
+                # Fetch destination, add all missing columns at once, then set via .loc
+                dest = n.dynamic(c.name)[attr]
+                missing = agg_dyn.columns.difference(dest.columns)
+                if len(missing):
+                    dest = pd.concat([dest, agg_dyn[missing]], axis=1, copy=False)
+
+                dest.loc[:, agg_dyn.columns] = agg_dyn.values
+                n.dynamic(c.name)[attr] = dest
 
     logger.info(f"Aggregated build years in {time.time() - t:.1f} seconds")
 
