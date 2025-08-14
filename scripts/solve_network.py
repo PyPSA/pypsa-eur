@@ -1254,18 +1254,18 @@ def extra_functionality(
         custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
 
 
-strategies = dict(
+strategies = {
     # The following variables are stored in columns and restored
     # exactly after disaggregation.
-    p_nom="sum",
-    lifetime="mean",
+    "p_nom": "sum",
+    "lifetime": "mean",
     # p_nom_max should be infinite if any of summands are infinite
-    p_nom_max="sum",
+    "p_nom_max": "sum",
     # Capital cost is taken to be that of the most recent year. Note:
     # components without build year (that are not to be aggregated)
     # will be "trivially" aggregated as 1-element series; in that case
     # their name doesn't end in "-YYYY", hence the check.
-    capital_cost=(
+    "capital_cost": (
         lambda s: (
             s.iloc[pd.Series(s.index.map(lambda x: int(x[-4:]))).idxmax()]
             if len(s) > 1
@@ -1274,48 +1274,50 @@ strategies = dict(
     ),
     # Take mean efficiency, then disaggregate. NB: should
     # really be weighted by capacity.
-    efficiency="mean",
-    efficiency2="mean",
+    "efficiency": "mean",
+    "efficiency2": "mean",
     # Some urban decentral gas boilers have efficiency3 and
     # efficiency4 1.0, other NaN. (mean ignores NaN values).
-    efficiency3="mean",
-    efficiency4="mean",
-    p_nom_min="sum",
-    p_nom_extendable=lambda x: x.any(),
-    e_nom="sum",
-    e_nom_min="sum",
-    e_nom_max="sum",
-    e_nom_extendable=lambda x: x.any(),
+    "efficiency3": "mean",
+    "efficiency4": "mean",
+    "p_nom_min": "sum",
+    "p_nom_extendable": lambda x: x.any(),
+    "e_nom": "sum",
+    "e_nom_min": "sum",
+    "e_nom_max": "sum",
+    "e_nom_extendable": lambda x: x.any(),
+    # Energy to power ratio should also really be weighted by capacity.
+    "energy to power ratio": "mean",
     # length_original sometimes contains NaN values
-    length_original="mean",
+    "length_original": "mean",
     # The following two should really be the same, but equality is
     # difficult with floats. (Saving with compression, etc.)
-    marginal_cost="mean",
-    standing_loss="mean",
-    length="mean",
-    p_max_pu="mean",
-    p_min_pu="mean",
+    "marginal_cost": "mean",
+    "standing_loss": "mean",
+    "length": "mean",
+    "p_max_pu": "mean",
+    "p_min_pu": "mean",
     # Build year is set to 0; to be reset when disaggregating
-    build_year=lambda x: 0 if len(x) > 1 else x.squeeze(),
+    "build_year": lambda x: 0 if len(x) > 1 else x.squeeze(),
     # "weight" isn't meaningful at this stage; set to 1.
-    weight=lambda x: 1,
+    "weight": lambda x: 1,
     # Apparently "control" doesn't really matter; follow
     # pypsa.clustering.spatial by setting to ""
-    control=lambda x: "",
+    "control": lambda x: "",
     # The "reversed" attribute is sometimes 0, sometimes NaN, which is
     # the only reason for having an aggregation strategy.
-    reversed=lambda x: x.any(),
+    "reversed": lambda x: x.any(),
     # The remaining attributes are outputs, and allow the aggregation of solved networks.
-    p_nom_opt="sum",
-    e_nom_opt="sum",
-    p="sum",
-    e="sum",
-    p0="sum",
-    p1="sum",
-    p2="sum",
-    p3="sum",
-    p4="sum",
-)
+    "p_nom_opt": "sum",
+    "e_nom_opt": "sum",
+    "p": "sum",
+    "e": "sum",
+    "p0": "sum",
+    "p1": "sum",
+    "p2": "sum",
+    "p3": "sum",
+    "p4": "sum",
+}
 
 
 def aggregate_build_years(n, components, exclude_carriers):
