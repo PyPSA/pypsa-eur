@@ -23,10 +23,6 @@ import pypsa
 # Import all required functions from existing scripts
 from scripts._helpers import (
     configure_logging,
-    get_snapshots,
-    load_costs,
-    sanitize_carriers,
-    sanitize_locations,
     set_scenario_config,
     update_config_from_wildcards,
     update_p_nom_max,
@@ -42,6 +38,9 @@ from scripts.add_electricity import (
     attach_wind_and_solar,
     estimate_renewable_capacities,
     load_and_aggregate_powerplants,
+    load_costs,
+    sanitize_carriers,
+    sanitize_locations,
     set_transmission_costs,
 )
 from scripts.add_existing_baseyear import (
@@ -167,14 +166,6 @@ if __name__ == "__main__":
         else:  # overnight
             # Should not reach here for overnight with multiple horizons
             n = pypsa.Network(snakemake.input.clustered)
-
-    # Set snapshots (only for single-period networks, perfect foresight already has multi-period snapshots)
-    if foresight != "perfect" or is_first_horizon:
-        time = get_snapshots(
-            params.get("snapshots", params.get("time")),
-            params.get("drop_leap_day", False),
-        )
-        n.set_snapshots(time)
 
     # Calculate year weighting
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0

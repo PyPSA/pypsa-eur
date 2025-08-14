@@ -35,7 +35,7 @@ def get_compose_inputs(wildcards):
     )(wildcards)
 
     inputs = {
-        "clustered": f"networks/{wildcards.run}/clustered.nc",
+        "clustered": resources("networks/clustered.nc"),
         "busmap": resources(f"busmap_elec_s_{clusters}.csv"),
         "tech_costs": resources(f"costs_{horizon}.csv"),
         "load": resources("electricity_demand.csv"),
@@ -195,13 +195,11 @@ def get_compose_inputs(wildcards):
 
         if foresight == "myopic":
             # Myopic uses solved network from previous horizon
-            inputs["network_previous"] = (
-                f"networks/{wildcards.run}/solved_{prev_horizon}.nc"
-            )
+            inputs["network_previous"] = RESULTS + f"networks/solved_{prev_horizon}.nc"
         else:  # perfect foresight
             # Perfect foresight uses composed network from previous horizon
             inputs["network_previous"] = (
-                f"networks/{wildcards.run}/composed_{prev_horizon}.nc"
+                RESULTS + f"networks/composed_{prev_horizon}.nc"
             )
 
     return inputs
@@ -218,36 +216,7 @@ def get_final_horizon():
 
 def get_solve_inputs(wildcards):
     """Get inputs for solve rule - just the composed network."""
-    return {"network": f"networks/{wildcards.run}/composed_{wildcards.horizon}.nc"}
-
-
-# Cluster network rule - needed to generate clustered.nc input
-rule cluster_network:
-    input:
-        network=resources("base.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
-    output:
-        network="networks/{run}/clustered.nc",
-        busmap=lambda w: resources(
-            f"busmap_elec_s_{config_provider('clustering', 'cluster_network', 'n_clusters', default=50)(w)}.csv"
-        ),
-    params:
-        clusters=config_provider(
-            "clustering", "cluster_network", "n_clusters", default=50
-        ),
-        focus_weights=config_provider("clustering", "focus_weights", default=None),
-        solver_name=config_provider("solving", "solver", "name"),
-        algorithm=config_provider(
-            "clustering", "cluster_network", "algorithm", default="kmeans"
-        ),
-    log:
-        "logs/{run}/cluster_network.log",
-    threads: 1
-    resources:
-        mem_mb=6000,
-    script:
-        "../scripts/cluster_network.py"
+    return {"network": RESULTS + f"networks/composed_{wildcards.horizon}.nc"}
 
 
 # Main composition rule - combines all network building steps
@@ -255,7 +224,7 @@ rule compose_network:
     input:
         unpack(get_compose_inputs),
     output:
-        "networks/{run}/composed_{horizon}.nc",
+        RESULTS + "networks/composed_{horizon}.nc",
     params:
         # Pass entire config sections using config_provider
         temporal=config_provider("temporal"),
@@ -295,7 +264,7 @@ rule compose_network:
             "co2_budget", "emissions_scope", default="total"
         ),
     log:
-        "logs/{run}/compose_network_{horizon}.log",
+        logs("compose_network_{horizon}.log"),
     threads: 1
     resources:
         mem_mb=20000,
@@ -303,13 +272,13 @@ rule compose_network:
         "../scripts/compose_network.py"
 
 
-# Unified solving rule for all foresight approaches
-rule solve_network:
+# Unified solving rule for all foresight approaches in streamlined workflow
+rule solve_network_streamlined:
     input:
         unpack(get_solve_inputs),
     output:
-        "networks/{run}/solved_{horizon}.nc",
-        "logs/{run}/solver_{horizon}.log",
+        RESULTS + "networks/solved_{horizon}.nc",
+        RESULTS + "logs/solver_{horizon}.log",
     params:
         temporal=config_provider("temporal"),
         solver=config_provider("solving", "solver"),
@@ -320,7 +289,7 @@ rule solve_network:
         )(w),
         solving=config_provider("solving"),
     log:
-        python="logs/{run}/solve_network_{horizon}.log",
+        python=logs("solve_network_{horizon}.log"),
     threads: lambda w: config_provider("solving", "solver", "threads")(w)
     resources:
         mem_mb=lambda w: config_provider("solving", "mem")(w),
@@ -331,81 +300,79 @@ rule solve_network:
 
 
 # Collection rules for different workflow targets
-rule prepare_networks:
+rule prepare_networks_streamlined:
     """Target rule to prepare all composed networks up to final horizon."""
     input:
         lambda w: expand(
-            "networks/{run}/composed_{horizon}.nc",
-            run=config_provider("run", "name")(w),
+            RESULTS + "networks/composed_{horizon}.nc",
             horizon=get_final_horizon(),
         ),
 
 
-rule solve_networks:
+rule solve_networks_streamlined:
     """Target rule to solve all networks up to final horizon."""
     input:
         lambda w: expand(
-            "networks/{run}/solved_{horizon}.nc",
-            run=config_provider("run", "name")(w),
+            RESULTS + "networks/solved_{horizon}.nc",
             horizon=get_final_horizon(),
         ),
 
 
 # Postprocessing rules
-rule make_summary:
+rule make_summary_streamlined:
     """Create summary of solved network."""
     input:
-        network="networks/{run}/solved_{horizon}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         tech_costs=lambda w: resources(f"costs_{w.horizon}.csv"),
     output:
-        nodal_costs="results/{run}/csvs/nodal_costs_{horizon}.csv",
-        nodal_capacities="results/{run}/csvs/nodal_capacities_{horizon}.csv",
-        nodal_supply="results/{run}/csvs/nodal_supply_{horizon}.csv",
-        nodal_supply_energy="results/{run}/csvs/nodal_supply_energy_{horizon}.csv",
-        supply="results/{run}/csvs/supply_{horizon}.csv",
-        supply_energy="results/{run}/csvs/supply_energy_{horizon}.csv",
-        prices="results/{run}/csvs/prices_{horizon}.csv",
-        weighted_prices="results/{run}/csvs/weighted_prices_{horizon}.csv",
-        market_values="results/{run}/csvs/market_values_{horizon}.csv",
-        price_statistics="results/{run}/csvs/price_statistics_{horizon}.csv",
-        costs="results/{run}/csvs/costs_{horizon}.csv",
-        capacities="results/{run}/csvs/capacities_{horizon}.csv",
-        curtailment="results/{run}/csvs/curtailment_{horizon}.csv",
-        metrics="results/{run}/csvs/metrics_{horizon}.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs_{horizon}.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities_{horizon}.csv",
+        nodal_supply=RESULTS + "csvs/nodal_supply_{horizon}.csv",
+        nodal_supply_energy=RESULTS + "csvs/nodal_supply_energy_{horizon}.csv",
+        supply=RESULTS + "csvs/supply_{horizon}.csv",
+        supply_energy=RESULTS + "csvs/supply_energy_{horizon}.csv",
+        prices=RESULTS + "csvs/prices_{horizon}.csv",
+        weighted_prices=RESULTS + "csvs/weighted_prices_{horizon}.csv",
+        market_values=RESULTS + "csvs/market_values_{horizon}.csv",
+        price_statistics=RESULTS + "csvs/price_statistics_{horizon}.csv",
+        costs=RESULTS + "csvs/costs_{horizon}.csv",
+        capacities=RESULTS + "csvs/capacities_{horizon}.csv",
+        curtailment=RESULTS + "csvs/curtailment_{horizon}.csv",
+        metrics=RESULTS + "csvs/metrics_{horizon}.csv",
     log:
-        "logs/{run}/make_summary_{horizon}.log",
+        logs("make_summary_{horizon}.log"),
     script:
         "../scripts/make_summary.py"
 
 
-rule plot_network:
+rule plot_network_streamlined:
     """Plot the solved network."""
     input:
-        network="networks/{run}/solved_{horizon}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         regions="resources/regions_onshore_{run}.geojson",
     output:
-        map="results/{run}/plots/network_{horizon}.pdf",
+        map=RESULTS + "plots/network_{horizon}.pdf",
     log:
-        "logs/{run}/plot_network_{horizon}.log",
+        logs("plot_network_{horizon}.log"),
     script:
         "../scripts/plot_network.py"
 
 
 # Validation rule to compare old vs new workflow results
-rule validate_results:
+rule validate_results_streamlined:
     """Compare results between old wildcard-based and new config-driven workflow."""
     input:
         old_network="networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",  # Old format
-        new_network="networks/{run}/solved_{horizon}.nc",  # New format
+        new_network=RESULTS + "networks/solved_{horizon}.nc",  # New format
     output:
-        validation_report="results/{run}/validation_report_{horizon}.html",
+        validation_report=RESULTS + "validation_report_{horizon}.html",
     params:
         clusters=config_provider("clustering", "cluster_network", "n_clusters"),
         opts=config_provider("opts", default=""),
         sector_opts=config_provider("sector_opts", default=""),
         planning_horizons=lambda w: w.horizon,
     log:
-        "logs/{run}/validate_results_{horizon}.log",
+        logs("validate_results_{horizon}.log"),
     script:
         "../scripts/validate_results.py"
 
