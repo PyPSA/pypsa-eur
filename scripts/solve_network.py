@@ -872,10 +872,12 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
     indices_charger_p_nom_extendable = n.links.index[
         n.links.index.str.contains("water tanks charger|water pits charger")
         & n.links.p_nom_extendable
+        & n.links.active
     ]
     indices_stores_e_nom_extendable = n.stores.index[
         n.stores.index.str.contains("water tanks|water pits")
         & n.stores.e_nom_extendable
+        & n.stores.active
     ]
 
     if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
@@ -938,12 +940,14 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
             "water tanks charger|water pits charger|aquifer thermal energy storage charger"
         )
         & n.links.p_nom_extendable
+        & n.links.active
     ]
     indices_discharger_p_nom_extendable = n.links.index[
         n.links.index.str.contains(
             "water tanks discharger|water pits discharger|aquifer thermal energy storage discharger"
         )
         & n.links.p_nom_extendable
+        & n.links.active
     ]
 
     if (
@@ -985,8 +989,8 @@ def add_battery_constraints(n):
     if not n.links.p_nom_extendable.any():
         return
 
-    discharger_bool = n.links.index.str.contains("battery discharger")
-    charger_bool = n.links.index.str.contains("battery charger")
+    discharger_bool = n.links.index.str.contains("battery discharger") & n.links.active
+    charger_bool = n.links.index.str.contains("battery charger") & n.links.active
 
     dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
     chargers_ext = n.links[charger_bool].query("p_nom_extendable").index
@@ -1001,12 +1005,14 @@ def add_battery_constraints(n):
 
 
 def add_lossy_bidirectional_link_constraints(n):
-    if not n.links.p_nom_extendable.any() or not any(n.links.get("reversed", [])):
+    if not (n.links.p_nom_extendable & n.links.active).any() or not any(
+        n.links.get("reversed", [])
+    ):
         return
 
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
     backwards = n.links.query(
-        "carrier in @carriers and p_nom_extendable and reversed"
+        "carrier in @carriers and p_nom_extendable and reversed and active"
     ).index
     forwards = backwards.str.replace("-reversed", "")
     lhs = n.model["Link-p_nom"].loc[backwards]
