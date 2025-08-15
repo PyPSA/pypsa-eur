@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
 #
 # SPDX-License-Identifier: MIT
@@ -42,6 +41,8 @@ Description
 """
 
 import logging
+import shutil
+from pathlib import Path
 
 import atlite
 import geopandas as gpd
@@ -94,17 +95,24 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    x, X, y, Y = determine_cutout_xXyY(snakemake.input.cutout)
+    # Move the downloaded archive and unpack it
+    shutil.move(snakemake.input["online"], snakemake.output["zip"])
+    shutil.unpack_archive(snakemake.output["zip"], snakemake.output["raw"])
+
+    # Find the shapefile in the unpacked nested directory
+    shapefile = list(Path(snakemake.output["raw"]).rglob("*.shp"))[0]
+
+    x, X, y, Y = determine_cutout_xXyY(snakemake.input["cutout"])
     bounds = transform_bounds(4326, 3035, x, y, X, Y)
     transform, out_shape = get_transform_and_shape(bounds, res=100)
 
     # adjusted boundaries
-    shapes = gpd.read_file(snakemake.input.natura).to_crs(3035)
+    shapes = gpd.read_file(shapefile).to_crs(3035)
     raster = ~geometry_mask(shapes.geometry, out_shape, transform)
     raster = raster.astype(rio.uint8)
 
     with rio.open(
-        snakemake.output[0],
+        snakemake.output["raster"],
         "w",
         driver="GTiff",
         dtype=rio.uint8,

@@ -22,3 +22,6 @@
 "country_runoff","build","unknown","['latest','supported']","","Latest dataset built using ERA5 runoff data. This takes a very long time to build."
 "country_hdd","archive","","['latest','supported']","https://zenodo.org/records/16849356/files/era5-HDD-per-country.csv",""
 "country_hdd","build","unknown","['latest','supported']","","Latest dataset built using ERA5 runoff data. This takes a very long time to build."
+"natura","archive","2025-08-15","['latest','supported']","https://zenodo.org/records/16881818/files/natura.tiff",""
+"natura","archive","v0.8.2","['supported']","https://zenodo.org/records/16874772/files/natura.tiff",""
+"natura","build","unknown","['latest','supported']","https://sdi.eea.europa.eu/datashare/s/tWpGXaWdWGYcqsL/download",""

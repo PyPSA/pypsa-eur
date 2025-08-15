@@ -288,7 +288,7 @@ rule determine_availability_matrix:
         unpack(input_ua_md_availability_matrix),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
-            "data/bundle/natura/natura.tiff"
+            NATURA_DATASET["folder"] / "natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),

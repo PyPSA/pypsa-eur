@@ -24,7 +24,6 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
-        "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
         "GDP_per_capita_PPP_1990_2015_v2.nc",
         "ppp_2019_1km_Aggregated.tif",
@@ -706,6 +705,38 @@ elif OSM_DATASET["source"] == "build":
                 country=config_provider("countries"),
                 file=OSM_FILES,
             ),
+
+
+if (NATURA_DATASET := dataset_version("natura"))["source"] in ["archive"]:
+
+    rule retrieve_natura:
+        input:
+            storage(NATURA_DATASET["url"]),
+        output:
+            NATURA_DATASET["folder"] / "natura.tiff",
+        log:
+            "logs/retrieve_natura.log",
+        run:
+            move(input[0], output[0])
+
+elif NATURA_DATASET["source"] == "build":
+
+    rule build_natura_raster:
+        input:
+            online=storage(NATURA_DATASET["url"]),
+            cutout=lambda w: input_cutout(w),
+        output:
+            zip=NATURA_DATASET["folder"] / "raw/natura.zip",
+            raw=directory(NATURA_DATASET["folder"] / "raw"),
+            raster=NATURA_DATASET["folder"] / "natura.tiff",
+        resources:
+            mem_mb=5000,
+        log:
+            "logs/build_natura.log",
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_natura.py"
 
 
 if config["enable"]["retrieve"]:

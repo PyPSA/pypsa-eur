@@ -1025,6 +1025,9 @@ data:
   country_hdd:
     source: "archive"
     version_or_latest: "latest"
+  natura:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
