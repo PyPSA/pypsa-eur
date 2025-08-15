@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
-PYPSA_V1 = bool(re.match(r"^0\.35\.[1-9]\.post1", pypsa.__version__))
+PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
 
 
 def get_scenarios(run):
