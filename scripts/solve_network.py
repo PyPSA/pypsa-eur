@@ -1180,6 +1180,8 @@ def extra_functionality(
         The PyPSA network instance with config and params attributes
     snapshots : pd.DatetimeIndex
         Simulation timesteps
+    snakemake : snakemake.script.Snakemake
+        Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
 
@@ -1299,7 +1301,7 @@ def solve_network(
         Dictionary of solving parameters
     solving : Dict
         Dictionary of solving options and configuration
-    snakemake : smake.script.Snakemake
+    snakemake : snakemake.script.Snakemake
         Snakemake instance for accessing workflow parameters
     rule_name : str, optional
         Name of the snakemake rule being executed
