@@ -46,7 +46,7 @@ scenario:
   - ''
   sector_opts:
   - ''
-  planning_horizons:
+  horizon:
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries

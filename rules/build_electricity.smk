@@ -668,8 +668,8 @@ rule cluster_network:
         network=resources("networks/clustered.nc"),
         regions_onshore=resources("regions_onshore_clustered.geojson"),
         regions_offshore=resources("regions_offshore_clustered.geojson"),
-        busmap=resources("busmap_clustered.csv"),
-        linemap=resources("linemap_clustered.csv"),
+        busmap=resources("busmap.csv"),
+        linemap=resources("linemap.csv"),
     log:
         logs("cluster_network.log"),
     benchmark:

@@ -6,10 +6,6 @@
 localrules:
     all,
     cluster_networks,
-    prepare_elec_networks,
-    prepare_sector_networks,
-    solve_elec_networks,
-    solve_sector_networks,
 
 
 rule cluster_networks:

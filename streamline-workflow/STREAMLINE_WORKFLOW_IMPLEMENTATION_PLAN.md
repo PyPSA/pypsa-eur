@@ -17,36 +17,55 @@ This plan implements the proposal from discussion #1529 to harmonize electricity
 - **Config-driven**: Move from wildcards to configuration for file targeting
 - **Unified workflows**: Same approach for electricity-only and sector-coupled
 
-## 🎯 Status Update (July 2025)
+## 🎯 Status Update (August 2025)
 
-**✅ PROOF OF CONCEPT COMPLETED AND VALIDATED**
+**✅ PROOF OF CONCEPT COMPLETED**  
+**⚠️ PRODUCTION IMPLEMENTATION IN PROGRESS WITH ISSUES**
 
-The streamlined workflow concept has been successfully implemented and tested via `rules/test_streamlined.smk`. All three foresight modes are working correctly:
+The streamlined workflow concept has been successfully tested via `rules/test_streamlined.smk`, but the production implementation in `rules/compose.smk` currently has syntax errors that need resolution.
 
-### Validated Implementation
+### Current Implementation Status
 | Component | Status | Details |
 |-----------|--------|---------|
-| **4-Step Workflow** | ✅ Working | `base → clustered → composed_{horizon} → solved_{horizon}` |
-| **Config-Driven Approach** | ✅ Working | No wildcard expansion, `temporal` section replaces `scenario` |
-| **Multi-Foresight Support** | ✅ Working | Overnight (6 jobs), Myopic (10 jobs), Perfect (8 jobs) |
-| **Dynamic Dependencies** | ✅ Working | Sequential chaining based on foresight mode |
-| **Robust Parameter Handling** | ✅ Working | `.get()` methods with defaults for missing config sections |
-| **Horizon Flexibility** | ✅ Working | Handles both single values and lists for planning_horizons |
+| **4-Step Workflow** | ✅ Tested | `base → clustered → composed_{horizon} → solved_{horizon}` |
+| **Config-Driven Approach** | ✅ Tested | No wildcard expansion, `temporal` section replaces `scenario` |
+| **Multi-Foresight Support** | ✅ Tested | Overnight, Myopic, Perfect foresight modes validated |
+| **Test Implementation** | ✅ Working | `rules/test_streamlined.smk` functional |
+| **Production Rules** | ⚠️ Broken | `rules/compose.smk` has syntax errors (line 54-57, 161) |
+| **Compose Script** | ✅ Exists | `scripts/compose_network.py` (23KB) implemented |
+| **Test Configs** | ✅ Complete | Both original and streamlined configs exist |
 
-### Test Results Summary
-```bash
-# All working with dry-run validation:
-snakemake -s rules/test_streamlined.smk test_overnight -n --configfile config/test/config.overnight.yaml
-snakemake -s rules/test_streamlined.smk test_myopic -n --configfile config/test/config.myopic.yaml  
-snakemake -s rules/test_streamlined.smk test_perfect -n --configfile config/test/config.perfect.yaml
+### Recent Commits (streamline-workflow branch)
+```
+279b017e refac: brute force rename paths, remove wildcards, consolidate solve rule
+7f2ef1a9 add streamlined configs  
+051060db Implement streamlined workflow with compose_network.py
+685e1684 Refine implementation plan based on successful testing
+16bdb75d Implement streamlined workflow test framework
 ```
 
-### Created Files and Artifacts
-- **`rules/test_streamlined.smk`**: Complete test workflow with 204 lines, all 3 foresight modes
-- **`config/test/config.overnight.yaml`**: Single horizon (2040) test configuration  
-- **`config/test/config.myopic.yaml`**: Sequential horizons (2030, 2040, 2050) configuration
-- **`config/test/config.perfect.yaml`**: Multi-period optimization configuration
-- **Git commit `16bdb75d`**: All changes committed with proper SPDX licensing
+### Existing Files and Artifacts
+#### Test Implementation (Working)
+- **`rules/test_streamlined.smk`**: Complete test workflow (204 lines)
+- **`config/test/config.overnight.yaml`**: Original test config
+- **`config/test/config.myopic.yaml`**: Original test config
+- **`config/test/config.perfect.yaml`**: Original test config
+
+#### Production Implementation (In Progress)  
+- **`rules/compose.smk`**: Production rules (10KB) - **HAS SYNTAX ERRORS**
+- **`scripts/compose_network.py`**: Main composition script (23KB) - Implemented
+- **`config/test/config.streamlined-overnight.yaml`**: Streamlined config
+- **`config/test/config.streamlined-myopic.yaml`**: Streamlined config  
+- **`config/test/config.streamlined-perfect.yaml`**: Streamlined config
+
+### Critical Issues Fixed (August 16, 2025)
+1. **✅ FIXED: Syntax Error in `compose.smk`**: Dict construction mixing positional/keyword args
+   - Restructured to use `inputs.update()` pattern for proper merging
+2. **✅ FIXED: Duplicate Rule Names**: 
+   - `build_population_layouts` → `build_clustered_population_layouts`
+   - `build_co2_sequestration_potentials` → `build_clustered_co2_sequestration_potentials`
+3. **✅ FIXED: Missing Rule File**: Changed `solve_electricity.smk` → `solve.smk` in Snakefile
+4. **✅ FIXED: Wildcard Consistency**: Fixed log/benchmark wildcards in postprocess.smk rules
 
 ### Key Learnings from Testing
 1. **Horizon handling needs flexibility**: Single values vs lists require helper functions
@@ -213,15 +232,15 @@ def get_compose_inputs(wildcards):
     return inputs
 ```
 
-**Robust Parameter Handling:**
+**Strict Parameter Handling:**
 ```python
-# In rule params - use .get() with defaults for missing config sections
+# In rule params use the config_handler function 
 params:
-    temporal=lambda w: config["temporal"],
-    electricity=lambda w: config.get("electricity", {}),
-    sector=lambda w: config.get("sector", {}),
-    clustering=lambda w: config.get("clustering", {}),
-    existing_capacities=lambda w: config.get("existing_capacities", {}),
+    temporal=config_handler("temporal"),
+    electricity=config_handler("electricity"),
+    sector=config_handler("sector"),
+    clustering=config_handler("clustering"),
+    another_key=config_handler("electricity", "another_key"),
 ```
 
 **Dynamic Horizon Resolution:**
@@ -644,25 +663,70 @@ snakemake networks/test-run/composed_2050.nc -n  # Last horizon
 - [x] **Multi-horizon support** with flexible planning_horizons handling
 - [x] **End-to-end workflow validation** via dry-run testing
 
-### Phase 1: Script Implementation (Current Focus)
-- [ ] Create `scripts/compose_network.py` based on validated test framework
-- [ ] Import and integrate functions from existing scripts (add_electricity, prepare_sector_network, etc.)
+### ⚠️ Phase 1: Script Implementation (CURRENT - NEEDS FIXES)
+- [x] ~~Create `scripts/compose_network.py` based on validated test framework~~ **DONE**
+- [x] ~~Import and integrate functions from existing scripts~~ **DONE** 
+- [ ] **FIX CRITICAL**: Resolve syntax errors in `rules/compose.smk`
 - [ ] Implement network concatenation for perfect foresight
-- [ ] Add brownfield logic for myopic optimization
+- [ ] Add brownfield logic for myopic optimization  
 - [ ] Test with real input data and actual script execution
+- [ ] Verify integration with existing rule dependencies
 
-### Phase 2: Integration & Production
+### Phase 2: Integration & Production (BLOCKED BY PHASE 1)
 - [ ] Update main `Snakefile` to include compose rules
 - [ ] Create collection rules (`solve_networks`, `prepare_networks`)
 - [ ] Migrate configuration templates and examples
 - [ ] Comprehensive testing with full scenarios
 - [ ] Performance optimization and memory management
+- [ ] Resolve conflicts with existing workflow rules
 
 ### Phase 3: Documentation & Migration
 - [ ] Update user documentation with new workflow approach
 - [ ] Create migration guide for existing users
 - [ ] Add configuration validation and helpful error messages
 - [ ] Community feedback and iteration
+
+## 🚨 Immediate Actions Required
+
+### 1. Fix Syntax Errors in `compose.smk`
+The dict construction in `get_compose_inputs()` has mixed positional and keyword arguments:
+```python
+# BROKEN: Lines 54-57
+inputs = dict(
+    unpack(input_profile_tech),  # OK - positional at start
+    base_network=resources("..."),  # Keyword args
+    # ...
+    unpack(input_profile_offwind),  # ERROR: positional after keyword
+    unpack(input_heat_source_power),  # ERROR: positional after keyword
+    **rules.cluster_gas_network.output,  # Should use proper syntax
+)
+```
+
+**Solution**: Move all unpacked/positional arguments to the beginning or use `.update()` method.
+
+### 2. Verify Rule Dependencies
+- Check if `cluster_gas_network` and `build_gas_input_locations` rules exist
+- Ensure all referenced input functions (`input_profile_tech`, etc.) are defined
+- Validate that `config_provider` and `resources` functions work correctly
+
+### 3. Test Workflow Execution
+After fixing syntax errors:
+```bash
+# Test compose workflow with streamlined configs
+snakemake -s rules/compose.smk networks/test-run/composed_2040.nc \
+  --configfile config/test/config.streamlined-overnight.yaml -n
+
+# Verify all foresight modes
+for mode in overnight myopic perfect; do
+  snakemake -s rules/compose.smk test_${mode} \
+    --configfile config/test/config.streamlined-${mode}.yaml -n
+done
+```
+
+### 4. Integration Considerations
+- The workflow appears to have moved beyond the original plan with additional complexity
+- Recent commits show "brute force rename paths" and "remove wildcards" indicating aggressive refactoring
+- Need to ensure backward compatibility or clear migration path
 
 ---
 
@@ -698,6 +762,33 @@ snakemake networks/test-run/composed_2050.nc -n  # Last horizon
 
 ---
 
+## 🔍 Open Ends and Potential Issues
+
+### 🚩 Current State Assessment
+The implementation has diverged from the original plan with more aggressive changes than initially proposed:
+
+1. **Scope Creep**: Recent commits show "brute force rename paths" suggesting more invasive changes than the additive approach originally planned
+2. **Broken State**: Production rules have syntax errors preventing execution
+3. **Incomplete Testing**: While test framework exists, actual execution with real data hasn't been validated
+4. **Missing Integration**: No clear path from current broken state to working production
+
+### ⚠️ Technical Debt and Risks
+
+#### Immediate Issues
+- **Syntax Errors**: `compose.smk` cannot execute due to dict construction errors
+- **Undefined References**: Rules reference `cluster_gas_network` and `build_gas_input_locations` - need verification
+- **Path Inconsistencies**: Mix of old wildcard paths and new streamlined paths
+
+#### Integration Challenges  
+- **Parallel Development**: Main branch continues evolving while streamline-workflow diverges
+- **Testing Gap**: No evidence of end-to-end execution with actual data
+- **Config Migration**: Two sets of test configs (original vs streamlined) without clear relationship
+
+#### Architecture Concerns
+- **Aggressive Refactoring**: "Brute force" approach may have broken assumptions
+- **Missing Backwards Compatibility**: No migration path for existing users
+- **Unclear Dependencies**: Rule dependencies between compose and existing rules unclear
+
 ## 🔍 Open Questions for Discussion
 
 ### ✅ Resolved Questions (from Testing)
@@ -706,7 +797,7 @@ snakemake networks/test-run/composed_2050.nc -n  # Last horizon
 3. **~~Foresight Mode Implementation~~**: ✅ **SOLVED** - Single rule structure works for all modes
 4. **~~Parameter Robustness~~**: ✅ **SOLVED** - `.get()` methods with defaults prevent config errors
 
-### 🤔 Remaining Implementation Questions
+### 🤔 Critical Unresolved Questions
 
 1. **Network Concatenation Implementation**: What's the best approach for concatenating networks across horizons in PyPSA?
    - How to handle multi-indexed snapshots for perfect foresight?
@@ -742,12 +833,51 @@ snakemake networks/test-run/composed_2050.nc -n  # Last horizon
 
 ---
 
-## 📚 Next Steps
+## 📚 Recommended Recovery Path
 
-1. **Review and Approve Plan**: Get team feedback on approach and timeline
-2. **Start Implementation**: Begin with Phase 1 infrastructure setup  
-3. **Iterative Development**: Regular testing and refinement
-4. **Documentation**: Update user guides and developer documentation
-5. **Community Communication**: Share progress and gather feedback
+### Option 1: Fix and Continue (Recommended)
 
-This plan provides a comprehensive roadmap for implementing the workflow streamlining while maintaining all current functionality and providing a foundation for future modularity improvements.
+1. **Fix Syntax Errors**: Resolve dict construction issues in `compose.smk`
+2. **Test Incrementally**: Start with the simplest case (overnight) before complex (myopic/perfect)
+3. **Verify Dependencies**: Ensure all referenced rules and functions exist
+4. **Document Changes**: Update this plan with actual implementation details
+5. **Create Tests**: Add unit tests for compose_network.py functions
+
+### Option 2: Revert to Test Implementation
+
+1. **Use Working Test**: Start from `test_streamlined.smk` which is known to work
+2. **Gradual Migration**: Move functionality piece by piece to production
+3. **Maintain Stability**: Keep test and production separate until fully validated
+4. **Incremental Integration**: Merge with main workflow only after full validation
+
+### Option 3: Re-evaluate Approach
+
+1. **Review Original Goals**: Ensure current implementation aligns with discussion #1529
+2. **Consider Alternatives**: Less invasive approaches that maintain compatibility
+3. **Phased Rollout**: Implement as optional alternative workflow first
+4. **Community Input**: Get feedback before committing to breaking changes
+
+## 🎯 Priority Actions (Updated August 16, 2025)
+
+### ✅ Completed Actions
+1. **Fixed syntax errors** in compose.smk - dict construction restructured
+2. **Fixed duplicate rule names** in build_sector.smk - renamed to clustered variants
+3. **Fixed missing rule file** - corrected solve_electricity.smk to solve.smk
+4. **Fixed wildcard consistency** in postprocess.smk
+
+### 🚧 Remaining Actions
+1. **SHORT-TERM**: Complete network concatenation for perfect foresight
+2. **SHORT-TERM**: Implement brownfield logic for myopic optimization  
+3. **MEDIUM-TERM**: Validate with real data (not just test configs)
+4. **LONG-TERM**: Full migration guide and documentation
+
+## 📊 Success Metrics
+
+- [ ] Compose workflow executes without errors
+- [ ] Test cases pass for all three foresight modes  
+- [ ] Results match current workflow output
+- [ ] Performance is comparable or better
+- [ ] Clear migration path documented
+
+This plan provides a comprehensive assessment of the current state and a roadmap for completing the workflow streamlining implementation.
+

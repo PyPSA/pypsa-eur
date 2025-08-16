@@ -49,9 +49,7 @@ localrules:
 
 wildcard_constraints:
     clusters="[0-9]+(m|c)?|all|adm",
-    opts=r"[-+a-zA-Z0-9\.]*",
-    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
-    planning_horizons=r"[0-9]{4}",
+    horizon=r"[0-9]{4}",
 
 
 include: "rules/common.smk"
@@ -59,30 +57,10 @@ include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
-include: "rules/solve_electricity.smk"
+include: "rules/compose.smk"
+include: "rules/solve.smk"
 include: "rules/postprocess.smk"
 include: "rules/development.smk"
-
-
-# Include streamlined compose rules if enabled
-if config.get("enable", {}).get("streamlined_workflow", False):
-
-    include: "rules/compose.smk"
-
-
-if config["foresight"] == "overnight":
-
-    include: "rules/solve_overnight.smk"
-
-
-if config["foresight"] == "myopic":
-
-    include: "rules/solve_myopic.smk"
-
-
-if config["foresight"] == "perfect":
-
-    include: "rules/solve_perfect.smk"
 
 
 rule all:

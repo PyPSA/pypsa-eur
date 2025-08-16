@@ -12,51 +12,51 @@ if config["foresight"] != "perfect":
             network=resources("networks/base.nc"),
             regions_onshore=resources("regions_onshore.geojson"),
         output:
-            map=resources("maps/power-network.pdf"),
+            map=resources("maps/base-network.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
         benchmark:
-            benchmarks("plot_base_network/base")
+            benchmarks("plot_base_network")
         conda:
             "../envs/environment.yaml"
         script:
             "../scripts/plot_base_network.py"
 
-    rule plot_power_network_clustered:
+    rule plot_clustered_network:
         params:
             plotting=config_provider("plotting"),
         input:
             network=resources("networks/clustered.nc"),
             regions_onshore=resources("regions_onshore.geojson"),
         output:
-            map=resources("maps/power-network.pdf"),
+            map=resources("maps/clustered-network.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
         benchmark:
-            benchmarks("plot_power_network_clustered")
+            benchmarks("plot_power_network")
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/plot_power_network_clustered.py"
+            "../scripts/plot_power_network.py"
 
     rule plot_power_network:
         params:
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
-            network=RESULTS + "networks/composed.nc",
+            network=RESULTS + "networks/composed_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-costs-all_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-power_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS + "logs/plot_power_network.log",
+            RESULTS + "logs/plot_power_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_power_network/composed")
+            (RESULTS + "benchmarks/plot_power_network/composed_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -67,17 +67,17 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
         input:
-            network=RESULTS + "networks/composed.nc",
+            network=RESULTS + "networks/composed_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-h2_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-h2_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS + "logs/plot_hydrogen_network.log",
+            RESULTS + "logs/plot_hydrogen_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_hydrogen_network/composed")
+            (RESULTS + "benchmarks/plot_hydrogen_network/composed_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -87,17 +87,17 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS + "networks/composed.nc",
+            network=RESULTS + "networks/composed_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-ch4_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-ch4_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS + "logs/plot_gas_network.log",
+            RESULTS + "logs/plot_gas_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_gas_network/composed")
+            (RESULTS + "benchmarks/plot_gas_network/composed_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -107,7 +107,7 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS + "networks/composed.nc",
+            network=RESULTS + "networks/composed_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
             RESULTS + "maps/composed-balance_map_{carrier}.pdf",
@@ -151,35 +151,31 @@ if config["foresight"] == "perfect":
 
 rule make_summary:
     input:
-        network=RESULTS + "networks/composed.nc",
+        network=RESULTS + "networks/composed_{horizon}.nc",
     output:
-        nodal_costs=RESULTS + "csvs/individual/nodal_costs_{planning_horizons}.csv",
-        nodal_capacities=RESULTS
-        + "csvs/individual/nodal_capacities_{planning_horizons}.csv",
+        nodal_costs=RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
+        nodal_capacities=RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
         nodal_capacity_factors=RESULTS
-        + "csvs/individual/nodal_capacity_factors_{planning_horizons}.csv",
-        capacity_factors=RESULTS
-        + "csvs/individual/capacity_factors_{planning_horizons}.csv",
-        costs=RESULTS + "csvs/individual/costs_{planning_horizons}.csv",
-        capacities=RESULTS + "csvs/individual/capacities_{planning_horizons}.csv",
-        curtailment=RESULTS + "csvs/individual/curtailment_{planning_horizons}.csv",
-        energy=RESULTS + "csvs/individual/energy_{planning_horizons}.csv",
-        energy_balance=RESULTS
-        + "csvs/individual/energy_balance_{planning_horizons}.csv",
+        + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
+        capacity_factors=RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
+        costs=RESULTS + "csvs/individual/costs_{horizon}.csv",
+        capacities=RESULTS + "csvs/individual/capacities_{horizon}.csv",
+        curtailment=RESULTS + "csvs/individual/curtailment_{horizon}.csv",
+        energy=RESULTS + "csvs/individual/energy_{horizon}.csv",
+        energy_balance=RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
         nodal_energy_balance=RESULTS
-        + "csvs/individual/nodal_energy_balance_{planning_horizons}.csv",
-        prices=RESULTS + "csvs/individual/prices_{planning_horizons}.csv",
-        weighted_prices=RESULTS
-        + "csvs/individual/weighted_prices_{planning_horizons}.csv",
-        market_values=RESULTS + "csvs/individual/market_values_{planning_horizons}.csv",
-        metrics=RESULTS + "csvs/individual/metrics_{planning_horizons}.csv",
+        + "csvs/individual/nodal_energy_balance_{horizon}.csv",
+        prices=RESULTS + "csvs/individual/prices_{horizon}.csv",
+        weighted_prices=RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
+        market_values=RESULTS + "csvs/individual/market_values_{horizon}.csv",
+        metrics=RESULTS + "csvs/individual/metrics_{horizon}.csv",
     threads: 1
     resources:
         mem_mb=8000,
     log:
-        RESULTS + "logs/make_summary_{planning_horizons}.log",
+        RESULTS + "logs/make_summary_{horizon}.log",
     benchmark:
-        (RESULTS + "benchmarks/make_summary_{planning_horizons}")
+        (RESULTS + "benchmarks/make_summary_{horizon}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -192,72 +188,72 @@ rule make_global_summary:
         RDIR=RDIR,
     input:
         nodal_costs=expand(
-            RESULTS + "csvs/individual/nodal_costs_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_capacities=expand(
-            RESULTS + "csvs/individual/nodal_capacities_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_capacity_factors=expand(
-            RESULTS + "csvs/individual/nodal_capacity_factors_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         capacity_factors=expand(
-            RESULTS + "csvs/individual/capacity_factors_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         costs=expand(
-            RESULTS + "csvs/individual/costs_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/costs_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         capacities=expand(
-            RESULTS + "csvs/individual/capacities_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/capacities_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         curtailment=expand(
-            RESULTS + "csvs/individual/curtailment_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/curtailment_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         energy=expand(
-            RESULTS + "csvs/individual/energy_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/energy_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         energy_balance=expand(
-            RESULTS + "csvs/individual/energy_balance_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_energy_balance=expand(
-            RESULTS + "csvs/individual/nodal_energy_balance_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_energy_balance_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         prices=expand(
-            RESULTS + "csvs/individual/prices_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/prices_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         weighted_prices=expand(
-            RESULTS + "csvs/individual/weighted_prices_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         market_values=expand(
-            RESULTS + "csvs/individual/market_values_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/market_values_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         metrics=expand(
-            RESULTS + "csvs/individual/metrics_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/metrics_{horizon}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
@@ -346,20 +342,20 @@ rule plot_balance_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS + "networks/composed.nc",
+        network=RESULTS + "networks/composed_{horizon}.nc",
         rc="matplotlibrc",
     threads: 16
     resources:
         mem_mb=10000,
     log:
-        RESULTS + "logs/plot_balance_timeseries.log",
+        RESULTS + "logs/plot_balance_timeseries_{horizon}.log",
     benchmark:
         RESULTS
-        +"benchmarks/plot_balance_timeseries/composed"
+        +"benchmarks/plot_balance_timeseries_{horizon}"
     conda:
         "../envs/environment.yaml"
     output:
-        directory(RESULTS + "graphics/balance_timeseries_{planning_horizons}"),
+        directory(RESULTS + "graphics/balance_timeseries_{horizon}"),
     script:
         "../scripts/plot_balance_timeseries.py"
 
@@ -370,20 +366,20 @@ rule plot_heatmap_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS + "networks/composed.nc",
+        network=RESULTS + "networks/composed_{horizon}.nc",
         rc="matplotlibrc",
     threads: 16
     resources:
         mem_mb=10000,
     log:
-        RESULTS + "logs/plot_heatmap_timeseries.log",
+        RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
     benchmark:
         RESULTS
-        +"benchmarks/plot_heatmap_timeseries"
+        +"benchmarks/plot_heatmap_timeseries_{horizon}"
     conda:
         "../envs/environment.yaml"
     output:
-        directory(RESULTS + "graphics/heatmap_timeseries_{planning_horizons}"),
+        directory(RESULTS + "graphics/heatmap_timeseries_{horizon}"),
         {},
     script:
         "../scripts/plot_heatmap_timeseries.py"
