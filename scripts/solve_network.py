@@ -1439,7 +1439,7 @@ def extra_functionality(
             cop_profiles_file=cop_profiles_file,
             ptes_booster_technologies=config['sector']['district_heating']['ptes']['booster_technologies'],
         )
-    if config['sector']['district_heating']['ptes']['charger_boosting_required']:
+    if config['sector']['district_heating']['ptes']['charge_boosting_required']:
         if config['foresight'] == 'perfect':
             raise ValueError("Temperature boosting is not available with perfect foresight.")
         add_charge_boosting_constraints(
@@ -1624,12 +1624,12 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network_myopic",
+            "solve_sector_network",
             opts="",
-            clusters="8",
+            clusters="16",
             #configfiles="config/test/config.myopic.yaml",
             sector_opts="",
-            planning_horizons="2050",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

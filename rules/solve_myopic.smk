@@ -130,7 +130,7 @@ def ptes_operation_profiles(w):
         )
 
     if config_provider(
-        "sector", "district_heating", "ptes", "charger_boosting_required"
+        "sector", "district_heating", "ptes", "charge_boosting_required"
     )(w):
         profiles["boost_per_charge_profile"] = resources(
             "boost_per_charge_profile_base_s_{clusters}_{planning_horizons}.nc"
