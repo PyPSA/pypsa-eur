@@ -37,14 +37,14 @@ rule build_powerplants:
         everywhere_powerplants=config_provider("electricity", "everywhere_powerplants"),
         countries=config_provider("countries"),
     input:
-        network=resources("networks/base_s_{clusters}.nc"),
+        network=resources("networks/base_s.nc"),
         custom_powerplants="data/custom_powerplants.csv",
     output:
-        resources("powerplants_s_{clusters}.csv"),
+        resources("powerplants_s.csv"),
     log:
-        logs("build_powerplants_s_{clusters}.log"),
+        logs("build_powerplants_s.log"),
     benchmark:
-        benchmarks("build_powerplants_s_{clusters}")
+        benchmarks("build_powerplants_s")
     threads: 1
     resources:
         mem_mb=7000,
@@ -248,21 +248,19 @@ rule determine_availability_matrix_MD_UA:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
-            resources("regions_onshore_base_s_{clusters}.geojson")
+            resources("regions_onshore.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore_base_s_{clusters}.geojson")
+            else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        availability_matrix=resources(
-            "availability_matrix_MD-UA_{clusters}_{technology}.nc"
-        ),
+        availability_matrix=resources("availability_matrix_MD-UA_{technology}.nc"),
     log:
-        logs("determine_availability_matrix_MD_UA_{clusters}_{technology}.log"),
+        logs("determine_availability_matrix_MD_UA_{technology}.log"),
     benchmark:
-        benchmarks("determine_availability_matrix_MD_UA_{clusters}_{technology}")
+        benchmarks("determine_availability_matrix_MD_UA_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -278,7 +276,7 @@ def input_ua_md_availability_matrix(w):
     if {"UA", "MD"}.intersection(countries):
         return {
             "availability_matrix_MD_UA": resources(
-                "availability_matrix_MD-UA_{clusters}_{technology}.nc"
+                "availability_matrix_MD-UA_{technology}.nc"
             )
         }
     return {}
@@ -318,19 +316,19 @@ rule determine_availability_matrix:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
         regions=lambda w: (
-            resources("regions_onshore_base_s_{clusters}.geojson")
+            resources("regions_onshore.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore_base_s_{clusters}.geojson")
+            else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        resources("availability_matrix_{clusters}_{technology}.nc"),
+        resources("availability_matrix_{technology}.nc"),
     log:
-        logs("determine_availability_matrix_{clusters}_{technology}.log"),
+        logs("determine_availability_matrix_{technology}.log"),
     benchmark:
-        benchmarks("determine_availability_matrix_{clusters}_{technology}")
+        benchmarks("determine_availability_matrix_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -346,24 +344,24 @@ rule build_renewable_profiles:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         renewable=config_provider("renewable"),
     input:
-        availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
+        availability_matrix=resources("availability_matrix_{technology}.nc"),
         offshore_shapes=resources("offshore_shapes.geojson"),
-        distance_regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        distance_regions=resources("regions_onshore.geojson"),
         resource_regions=lambda w: (
-            resources("regions_onshore_base_s_{clusters}.geojson")
+            resources("regions_onshore.geojson")
             if w.technology in ("onwind", "solar", "solar-hsat")
-            else resources("regions_offshore_base_s_{clusters}.geojson")
+            else resources("regions_offshore.geojson")
         ),
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", w.technology, "cutout")(w)
         ),
     output:
-        profile=resources("profile_{clusters}_{technology}.nc"),
-        class_regions=resources("regions_by_class_{clusters}_{technology}.geojson"),
+        profile=resources("profile_{technology}.nc"),
+        class_regions=resources("regions_by_class_{technology}.geojson"),
     log:
-        logs("build_renewable_profile_{clusters}_{technology}.log"),
+        logs("build_renewable_profile_{technology}.log"),
     benchmark:
-        benchmarks("build_renewable_profile_{clusters}_{technology}")
+        benchmarks("build_renewable_profile_{technology}")
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
@@ -522,9 +520,7 @@ rule add_transmission_projects_and_dlr:
 
 def input_class_regions(w):
     return {
-        f"class_regions_{tech}": resources(
-            f"regions_by_class_{{clusters}}_{tech}.geojson"
-        )
+        f"class_regions_{tech}": resources(f"regions_by_class_{tech}.geojson")
         for tech in set(config_provider("electricity", "renewable_carriers")(w))
         - {"hydro"}
     }
@@ -669,15 +665,15 @@ rule cluster_network:
         ),
         load=resources("electricity_demand_base_s.nc"),
     output:
-        network=resources("networks/base_s_{clusters}.nc"),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
-        busmap=resources("busmap_base_s_{clusters}.csv"),
-        linemap=resources("linemap_base_s_{clusters}.csv"),
+        network=resources("networks/clustered.nc"),
+        regions_onshore=resources("regions_onshore_clustered.geojson"),
+        regions_offshore=resources("regions_offshore_clustered.geojson"),
+        busmap=resources("busmap_clustered.csv"),
+        linemap=resources("linemap_clustered.csv"),
     log:
-        logs("cluster_network_base_s_{clusters}.log"),
+        logs("cluster_network.log"),
     benchmark:
-        benchmarks("cluster_network_base_s_{clusters}")
+        benchmarks("cluster_network")
     threads: 1
     resources:
         mem_mb=10000,
@@ -690,9 +686,7 @@ rule cluster_network:
 def input_profile_tech(w):
     return {
         f"profile_{tech}": resources(
-            "profile_{clusters}_" + tech + ".nc"
-            if tech != "hydro"
-            else f"profile_{tech}.nc"
+            "profile_" + tech + ".nc" if tech != "hydro" else f"profile_{tech}.nc"
         )
         for tech in config_provider("electricity", "renewable_carriers")(w)
     }
@@ -734,12 +728,12 @@ rule add_electricity:
         unpack(input_profile_tech),
         unpack(input_class_regions),
         unpack(input_conventional),
-        base_network=resources("networks/base_s_{clusters}.nc"),
+        base_network=resources("networks/base_s.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
-        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        powerplants=resources("powerplants_s_{clusters}.csv"),
+        regions=resources("regions_onshore.geojson"),
+        powerplants=resources("powerplants_s.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
         unit_commitment="data/unit_commitment.csv",
         fuel_price=lambda w: (
@@ -748,13 +742,13 @@ rule add_electricity:
             else []
         ),
         load=resources("electricity_demand_base_s.nc"),
-        busmap=resources("busmap_base_s_{clusters}.csv"),
+        busmap=resources("busmap.csv"),
     output:
-        resources("networks/base_s_{clusters}_elec.nc"),
+        resources("networks/base_s_elec.nc"),
     log:
-        logs("add_electricity_{clusters}.log"),
+        logs("add_electricity.log"),
     benchmark:
-        benchmarks("add_electricity_{clusters}")
+        benchmarks("add_electricity")
     threads: 1
     resources:
         mem_mb=10000,
@@ -781,17 +775,17 @@ rule prepare_network:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
-        resources("networks/base_s_{clusters}_elec.nc"),
+        resources("networks/base_s_elec.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
-        resources("networks/base_s_{clusters}_elec_{opts}.nc"),
+        resources("networks/base_s_elec_{opts}.nc"),
     log:
-        logs("prepare_network_base_s_{clusters}_elec_{opts}.log"),
+        logs("prepare_network_elec_{opts}.log"),
     benchmark:
-        benchmarks("prepare_network_base_s_{clusters}_elec_{opts}")
+        benchmarks("prepare_network_elec_{opts}")
     threads: 1
     resources:
         mem_mb=4000,

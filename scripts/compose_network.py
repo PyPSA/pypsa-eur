@@ -139,9 +139,9 @@ if __name__ == "__main__":
                 n,
                 n_previous,
                 current_horizon,
-                h2_retrofit=params.get("h2_retrofit", False),
-                h2_retrofit_capacity_per_ch4=params.get("h2_retrofit_capacity_per_ch4"),
-                capacity_threshold=params.get("capacity_threshold"),
+                h2_retrofit=params["h2_retrofit"],
+                h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
+                capacity_threshold=params["capacity_threshold"],
             )
         elif foresight == "perfect":
             # For perfect foresight: use simpler approach - delegate to existing perfect foresight logic
@@ -184,11 +184,9 @@ if __name__ == "__main__":
     ppl = load_and_aggregate_powerplants(
         snakemake.input.powerplants,
         costs,
-        consider_efficiency_classes=params.conventional.get(
-            "consider_efficiency_classes", False
-        ),
-        aggregation_strategies=params.conventional.get("aggregation_strategies", {}),
-        exclude_carriers=params.electricity.get("exclude_carriers", []),
+        consider_efficiency_classes=params.conventional["consider_efficiency_classes"],
+        aggregation_strategies=params.conventional["aggregation_strategies"],
+        exclude_carriers=params.electricity["exclude_carriers"],
     )
 
     # Attach load
@@ -196,15 +194,15 @@ if __name__ == "__main__":
         n,
         snakemake.input.load,
         snakemake.input.busmap,
-        params.load.get("scaling_factor", 1.0),
+        params.load["scaling_factor"],
     )
 
     # Set transmission costs
     set_transmission_costs(
         n,
         costs,
-        params.lines.get("length_factor", 1.0),
-        params.links.get("length_factor", 1.0),
+        params.lines["length_factor"],
+        params.links["length_factor"],
     )
 
     # Define carrier sets
@@ -218,13 +216,13 @@ if __name__ == "__main__":
     }
 
     # Load unit commitment if enabled
-    if params.conventional.get("unit_commitment", False):
+    if params.conventional["unit_commitment"]:
         unit_commitment = pd.read_csv(snakemake.input.unit_commitment, index_col=0)
     else:
         unit_commitment = None
 
     # Load dynamic fuel prices if enabled
-    if params.conventional.get("dynamic_fuel_price", False):
+    if params.conventional["dynamic_fuel_price"]:
         fuel_price = pd.read_csv(
             snakemake.input.fuel_price, index_col=0, header=0, parse_dates=True
         )
@@ -259,13 +257,13 @@ if __name__ == "__main__":
         snakemake.input,
         renewable_carriers,
         extendable_carriers,
-        params.lines.get("length_factor", 1.0),
+        params.lines["length_factor"],
         landfall_lengths,
     )
 
     # Attach hydro if included
     if "hydro" in renewable_carriers:
-        hydro_params = params.renewable["hydro"].copy()
+        hydro_params = params.renewable["hydro"]
         carriers = hydro_params.pop("carriers", [])
         attach_hydro(
             n,
@@ -278,10 +276,8 @@ if __name__ == "__main__":
         )
 
     # Estimate renewable capacities if enabled and overnight mode
-    estimate_renewable_caps = params.electricity.get(
-        "estimate_renewable_capacities", {}
-    )
-    if estimate_renewable_caps.get("enable", False):
+    estimate_renewable_caps = params.electricity["estimate_renewable_capacities"]
+    if estimate_renewable_caps["enable"]:
         if foresight != "overnight":
             logger.info(
                 "Skipping renewable capacity estimation because they are added later "
@@ -292,7 +288,7 @@ if __name__ == "__main__":
             expansion_limit = estimate_renewable_caps["expansion_limit"]
             year = estimate_renewable_caps["year"]
 
-            if estimate_renewable_caps.get("from_gem", False):
+            if estimate_renewable_caps["from_gem"]:
                 attach_GEM_renewables(n, tech_map, snakemake.input)
 
             estimate_renewable_capacities(
@@ -309,7 +305,7 @@ if __name__ == "__main__":
 
     # ========== SECTOR COMPONENTS (from prepare_sector_network.py) ==========
 
-    if params.sector.get("enabled", True):
+    if params.sector["enabled"]:
         logger.info("Adding sector components")
 
         # Load additional data for sectors
@@ -319,13 +315,11 @@ if __name__ == "__main__":
             * Nyears
         )
 
-        # Check if heat totals input exists
-        if hasattr(snakemake.input, "pop_weighted_heat_totals"):
-            pop_weighted_heat_totals = (
-                pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0)
-                * Nyears
-            )
-            pop_weighted_energy_totals.update(pop_weighted_heat_totals)
+        # Load heat totals
+        pop_weighted_heat_totals = (
+            pd.read_csv(snakemake.input.pop_weighted_heat_totals, index_col=0) * Nyears
+        )
+        pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
         # Gas input nodes
         gas_input_nodes = pd.read_csv(
@@ -345,14 +339,11 @@ if __name__ == "__main__":
             n, costs, carriers_to_keep, profiles, landfall_lengths
         )
 
-        # Load heating efficiencies if available
-        if hasattr(snakemake.input, "heating_efficiencies"):
-            year = int(params.get("energy_totals_year", current_horizon))
-            heating_efficiencies = pd.read_csv(
-                snakemake.input.heating_efficiencies, index_col=[1, 0]
-            ).loc[year]
-        else:
-            heating_efficiencies = None
+        # Load heating efficiencies
+        year = int(params["energy_totals_year"])
+        heating_efficiencies = pd.read_csv(
+            snakemake.input.heating_efficiencies, index_col=[1, 0]
+        ).loc[year]
 
         # Define spatial scope
         spatial = define_spatial(pop_layout.index, params.sector)
@@ -380,7 +371,7 @@ if __name__ == "__main__":
             n,
             costs,
             params.sector,
-            sequestration_potential_file=snakemake.input.get("sequestration_potential"),
+            sequestration_potential_file=snakemake.input["sequestration_potential"],
         )
 
         # Add generation
@@ -388,7 +379,7 @@ if __name__ == "__main__":
             n=n,
             costs=costs,
             pop_layout=pop_layout,
-            conventionals=params.sector.get("conventional_generation", {}),
+            conventionals=params.sector["conventional_generation"],
             spatial=spatial,
             options=params.sector,
             cf_industry=params.industry,
@@ -399,18 +390,16 @@ if __name__ == "__main__":
             n=n,
             costs=costs,
             pop_layout=pop_layout,
-            h2_cavern_file=snakemake.input.get("h2_cavern"),
-            cavern_types=params.sector.get(
-                "hydrogen_underground_storage_locations", []
-            ),
-            clustered_gas_network_file=snakemake.input.get("clustered_gas_network"),
+            h2_cavern_file=snakemake.input["h2_cavern"],
+            cavern_types=params.sector["hydrogen_underground_storage_locations"],
+            clustered_gas_network_file=snakemake.input["clustered_gas_network"],
             gas_input_nodes=gas_input_nodes,
             spatial=spatial,
             options=params.sector,
         )
 
         # Add transport if enabled
-        if params.sector.get("transport", False):
+        if params.sector["transport"]:
             add_land_transport(
                 n=n,
                 costs=costs,
@@ -426,41 +415,37 @@ if __name__ == "__main__":
             )
 
         # Add heating if enabled
-        if params.sector.get("heating", False) and heating_efficiencies is not None:
+        if params.sector["heating"]:
             add_heat(
                 n=n,
                 costs=costs,
                 cop_profiles_file=snakemake.input.cop_profiles,
-                direct_heat_source_utilisation_profile_file=snakemake.input.get(
+                direct_heat_source_utilisation_profile_file=snakemake.input[
                     "direct_heat_source_utilisation_profiles"
-                ),
+                ],
                 hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
-                ptes_e_max_pu_file=snakemake.input.get("ptes_e_max_pu_profiles"),
-                ates_e_nom_max=snakemake.input.get("ates_potentials"),
-                ates_capex_as_fraction_of_geothermal_heat_source=params.sector.get(
-                    "district_heating", {}
-                )
-                .get("ates", {})
-                .get("capex_as_fraction_of_geothermal_heat_source", 0),
-                ates_marginal_cost_charger=params.sector.get("district_heating", {})
-                .get("ates", {})
-                .get("marginal_cost_charger", 0),
-                ates_recovery_factor=params.sector.get("district_heating", {})
-                .get("ates", {})
-                .get("recovery_factor", 0),
-                enable_ates=params.sector.get("district_heating", {})
-                .get("ates", {})
-                .get("enable", False),
-                ptes_direct_utilisation_profile=snakemake.input.get(
+                ptes_e_max_pu_file=snakemake.input["ptes_e_max_pu_profiles"],
+                ates_e_nom_max=snakemake.input["ates_potentials"],
+                ates_capex_as_fraction_of_geothermal_heat_source=params.sector[
+                    "district_heating"
+                ]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
+                ates_marginal_cost_charger=params.sector["district_heating"]["ates"][
+                    "marginal_cost_charger"
+                ],
+                ates_recovery_factor=params.sector["district_heating"]["ates"][
+                    "recovery_factor"
+                ],
+                enable_ates=params.sector["district_heating"]["ates"]["enable"],
+                ptes_direct_utilisation_profile=snakemake.input[
                     "ptes_direct_utilisation_profiles"
-                ),
+                ],
                 district_heat_share_file=snakemake.input.district_heat_share,
-                solar_thermal_total_file=snakemake.input.get("solar_thermal_total"),
+                solar_thermal_total_file=snakemake.input["solar_thermal_total"],
                 retro_cost_file=snakemake.input.retro_cost,
                 floor_area_file=snakemake.input.floor_area,
                 heat_source_profile_files={
                     source: snakemake.input[source]
-                    for source in params.get("limited_heat_sources", [])
+                    for source in params["limited_heat_sources"]
                     if source in snakemake.input.keys()
                 },
                 params=params,
@@ -473,7 +458,7 @@ if __name__ == "__main__":
             )
 
         # Add biomass if enabled
-        if params.sector.get("biomass", False):
+        if params.sector["biomass"]:
             add_biomass(
                 n=n,
                 costs=costs,
@@ -487,17 +472,17 @@ if __name__ == "__main__":
             )
 
         # Add ammonia if enabled
-        if params.sector.get("ammonia", False):
+        if params.sector["ammonia"]:
             add_ammonia(n, costs, pop_layout, spatial, params.industry)
 
         # Add methanol if enabled
-        if params.sector.get("methanol", False):
+        if params.sector["methanol"]:
             add_methanol(
                 n, costs, options=params.sector, spatial=spatial, pop_layout=pop_layout
             )
 
         # Add industry if enabled
-        if params.sector.get("industry", False):
+        if params.sector["industry"]:
             add_industry(
                 n=n,
                 costs=costs,
@@ -511,7 +496,7 @@ if __name__ == "__main__":
             )
 
         # Add shipping if enabled
-        if params.sector.get("shipping", False):
+        if params.sector["shipping"]:
             add_shipping(
                 n=n,
                 costs=costs,
@@ -524,7 +509,7 @@ if __name__ == "__main__":
             )
 
         # Add aviation if enabled
-        if params.sector.get("aviation", False):
+        if params.sector["aviation"]:
             add_aviation(
                 n=n,
                 costs=costs,
@@ -535,11 +520,11 @@ if __name__ == "__main__":
             )
 
         # Add waste heat if heating is enabled
-        if params.sector.get("heating", False):
+        if params.sector["heating"]:
             add_waste_heat(n, costs, params.sector, params.industry)
 
         # Add agriculture if enabled (requires H and I)
-        if params.sector.get("agriculture", False):
+        if params.sector["agriculture"]:
             add_agriculture(
                 n,
                 costs,
@@ -551,41 +536,39 @@ if __name__ == "__main__":
             )
 
         # Add DAC if enabled
-        if params.sector.get("dac", False):
+        if params.sector["dac"]:
             add_dac(n, costs)
 
         # Remove electricity transmission grid if disabled
-        if not params.sector.get("electricity_transmission_grid", True):
+        if not params.sector["electricity_transmission_grid"]:
             decentral(n)
 
         # Remove H2 network if disabled
-        if not params.sector.get("H2_network", True):
+        if not params.sector["H2_network"]:
             remove_h2_network(n)
 
         # Add CO2 network if enabled
-        if params.sector.get("co2_network", False):
+        if params.sector["co2_network"]:
             add_co2_network(
                 n,
                 costs,
-                co2_network_cost_factor=params.sector.get(
-                    "co2_network_cost_factor", 1.0
-                ),
+                co2_network_cost_factor=params.sector["co2_network_cost_factor"],
             )
 
         # Add Allam cycle gas if enabled
-        if params.sector.get("allam_cycle_gas", False):
+        if params.sector["allam_cycle_gas"]:
             add_allam_gas(n, costs, pop_layout=pop_layout, spatial=spatial)
 
         # Cluster heat buses if enabled
-        if params.sector.get("cluster_heat_buses", False):
+        if params.sector["cluster_heat_buses"]:
             cluster_heat_buses(n)
 
     # ========== EXISTING CAPACITIES (from add_existing_baseyear.py) ==========
 
-    if params.existing_capacities.get("enabled", False) and is_first_horizon:
+    if params.existing_capacities["enabled"] and is_first_horizon:
         logger.info("Adding existing capacities")
 
-        baseyear = params.existing_capacities.get("baseyear", 2019)
+        baseyear = params.existing_capacities["baseyear"]
 
         # Add build year to new assets
         add_build_year_to_new_assets(n, baseyear)
@@ -599,7 +582,7 @@ if __name__ == "__main__":
         )
 
         # Add heating capacities if sector coupling is enabled
-        if params.sector.get("enabled", True) and params.sector.get("heating", False):
+        if params.sector["enabled"] and params.sector["heating"]:
             add_heating_capacities_installed_before_baseyear(
                 n,
                 baseyear,
@@ -610,17 +593,15 @@ if __name__ == "__main__":
     # ========== NETWORK PREPARATION (from prepare_network.py) ==========
 
     # Apply temporal resolution averaging if specified
-    if hasattr(params, "time_resolution") and params.time_resolution:
-        offset = params.get("time_resolution_offset", "0h")
-        n = average_every_nhours(n, offset, params.get("drop_leap_day", False))
+    if params.time_resolution:
+        offset = params["time_resolution_offset"]
+        n = average_every_nhours(n, offset, params["drop_leap_day"])
 
     # Set temporal aggregation for sector components
-    if params.sector.get("enabled", True) and hasattr(
-        snakemake.input, "snapshot_weightings"
-    ):
-        time_resolution = getattr(params, "time_resolution", None)
+    if params.sector["enabled"]:
+        time_resolution = params.time_resolution
         if not time_resolution:
-            time_resolution = params.clustering_temporal.get("resolution_sector", "24h")
+            time_resolution = params.clustering_temporal["resolution_sector"]
 
         n = set_temporal_aggregation(
             n,
@@ -629,47 +610,45 @@ if __name__ == "__main__":
         )
 
     # Add CO2 limit if specified
-    co2limit = params.get("co2limit")
+    co2limit = params["co2limit"]
     if co2limit:
         add_co2limit(n, co2limit, Nyears)
 
     # Add gas limit if specified
-    gaslimit = params.get("gaslimit")
+    gaslimit = params["gaslimit"]
     if gaslimit:
         add_gaslimit(n, gaslimit, Nyears)
 
     # Set transmission limit if specified
-    transmission_limit = params.electricity.get("transmission_limit")
+    transmission_limit = params.electricity["transmission_limit"]
     if transmission_limit:
         set_transmission_limit(n, transmission_limit, "volume", costs, Nyears)
 
     # Add emission prices
-    emission_prices = params.costs.get("emission_prices", {})
+    emission_prices = params.costs["emission_prices"]
     if emission_prices:
         add_emission_prices(n, emission_prices, exclude_co2=False)
 
     # Add dynamic emission prices if available
-    if hasattr(snakemake.input, "co2_price") and os.path.exists(
-        snakemake.input.co2_price
-    ):
+    if os.path.exists(snakemake.input.co2_price):
         add_dynamic_emission_prices(n, snakemake.input.co2_price)
 
     # Set line s_max_pu if specified
-    s_max_pu = params.lines.get("s_max_pu", 0.7)
+    s_max_pu = params.lines["s_max_pu"]
     if s_max_pu:
         set_line_s_max_pu(n, s_max_pu)
 
     # Apply time segmentation if specified
-    if hasattr(params, "time_segmentation") and params.time_segmentation:
+    if params.time_segmentation:
         n = apply_time_segmentation(
             n,
-            params.time_segmentation.get("resolution", "24h"),
-            params.time_segmentation.get("segments", []),
+            params.time_segmentation["resolution"],
+            params.time_segmentation["segments"],
         )
 
     # Handle carbon budget for sector coupling
-    if params.sector.get("enabled", True):
-        co2_budget = params.get("co2_budget")
+    if params.sector["enabled"]:
+        co2_budget = params["co2_budget"]
         if co2_budget and isinstance(co2_budget, str) and co2_budget.startswith("cb"):
             # Skip complex carbon budget building for now in simplified workflow
             logger.info(

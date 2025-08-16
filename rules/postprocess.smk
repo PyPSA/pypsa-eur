@@ -27,15 +27,15 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=resources("networks/base_s_{clusters}.nc"),
-            regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=resources("networks/clustered.nc"),
+            regions_onshore=resources("regions_onshore.geojson"),
         output:
-            map=resources("maps/power-network-s-{clusters}.pdf"),
+            map=resources("maps/power-network.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
         benchmark:
-            benchmarks("plot_power_network_clustered/base_s_{clusters}")
+            benchmarks("plot_power_network_clustered")
         conda:
             "../envs/environment.yaml"
         script:
@@ -46,23 +46,17 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/composed.nc",
+            regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-costs-all_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS
-            + "logs/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_power_network.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_power_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_power_network/composed")
         conda:
             "../envs/environment.yaml"
         script:
@@ -73,23 +67,17 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/composed.nc",
+            regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-h2_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS
-            + "logs/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_hydrogen_network.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_hydrogen_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_hydrogen_network/composed")
         conda:
             "../envs/environment.yaml"
         script:
@@ -99,23 +87,17 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/composed.nc",
+            regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            map=RESULTS + "maps/solved-ch4_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
-            RESULTS
-            + "logs/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+            RESULTS + "logs/plot_gas_network.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_gas_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-            )
+            (RESULTS + "benchmarks/plot_gas_network/composed")
         conda:
             "../envs/environment.yaml"
         script:
@@ -125,23 +107,17 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/composed.nc",
+            regions=resources("regions_onshore.geojson"),
         output:
-            RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
+            RESULTS + "maps/composed-balance_map_{carrier}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
         log:
-            RESULTS
-            + "logs/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            RESULTS + "logs/plot_balance_map/composed_{carrier}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_balance_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
-            )
+            (RESULTS + "benchmarks/plot_balance_map/composed_{carrier}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -152,9 +128,7 @@ if config["foresight"] == "perfect":
 
     def output_map_year(w):
         return {
-            f"map_{year}": RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
-            + f"{year}.pdf"
+            f"map_{year}": RESULTS + "maps/solved-costs-all_" + f"{year}.pdf"
             for year in config_provider("scenario", "planning_horizons")(w)
         }
 
@@ -162,9 +136,8 @@ if config["foresight"] == "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS
-            + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            network=RESULTS + "networks/solved_brownfield_all_years.nc",
+            regions=resources("regions_onshore.geojson"),
         output:
             unpack(output_map_year),
         threads: 2
@@ -178,48 +151,35 @@ if config["foresight"] == "perfect":
 
 rule make_summary:
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/composed.nc",
     output:
-        nodal_costs=RESULTS
-        + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_costs=RESULTS + "csvs/individual/nodal_costs_{planning_horizons}.csv",
         nodal_capacities=RESULTS
-        + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/nodal_capacities_{planning_horizons}.csv",
         nodal_capacity_factors=RESULTS
-        + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/nodal_capacity_factors_{planning_horizons}.csv",
         capacity_factors=RESULTS
-        + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        costs=RESULTS
-        + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        capacities=RESULTS
-        + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        curtailment=RESULTS
-        + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        energy=RESULTS
-        + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/capacity_factors_{planning_horizons}.csv",
+        costs=RESULTS + "csvs/individual/costs_{planning_horizons}.csv",
+        capacities=RESULTS + "csvs/individual/capacities_{planning_horizons}.csv",
+        curtailment=RESULTS + "csvs/individual/curtailment_{planning_horizons}.csv",
+        energy=RESULTS + "csvs/individual/energy_{planning_horizons}.csv",
         energy_balance=RESULTS
-        + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/energy_balance_{planning_horizons}.csv",
         nodal_energy_balance=RESULTS
-        + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        prices=RESULTS
-        + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/nodal_energy_balance_{planning_horizons}.csv",
+        prices=RESULTS + "csvs/individual/prices_{planning_horizons}.csv",
         weighted_prices=RESULTS
-        + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        market_values=RESULTS
-        + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
-        metrics=RESULTS
-        + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        + "csvs/individual/weighted_prices_{planning_horizons}.csv",
+        market_values=RESULTS + "csvs/individual/market_values_{planning_horizons}.csv",
+        metrics=RESULTS + "csvs/individual/metrics_{planning_horizons}.csv",
     threads: 1
     resources:
         mem_mb=8000,
     log:
-        RESULTS
-        + "logs/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/make_summary_{planning_horizons}.log",
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/make_summary_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        )
+        (RESULTS + "benchmarks/make_summary_{planning_horizons}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -232,86 +192,72 @@ rule make_global_summary:
         RDIR=RDIR,
     input:
         nodal_costs=expand(
-            RESULTS
-            + "csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_costs_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_capacities=expand(
-            RESULTS
-            + "csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_capacities_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_capacity_factors=expand(
-            RESULTS
-            + "csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_capacity_factors_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         capacity_factors=expand(
-            RESULTS
-            + "csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/capacity_factors_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         costs=expand(
-            RESULTS
-            + "csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/costs_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         capacities=expand(
-            RESULTS
-            + "csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/capacities_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         curtailment=expand(
-            RESULTS
-            + "csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/curtailment_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         energy=expand(
-            RESULTS
-            + "csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/energy_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         energy_balance=expand(
-            RESULTS
-            + "csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/energy_balance_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         nodal_energy_balance=expand(
-            RESULTS
-            + "csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/nodal_energy_balance_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         prices=expand(
-            RESULTS
-            + "csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/prices_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         weighted_prices=expand(
-            RESULTS
-            + "csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/weighted_prices_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         market_values=expand(
-            RESULTS
-            + "csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/market_values_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
         metrics=expand(
-            RESULTS
-            + "csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            RESULTS + "csvs/individual/metrics_{planning_horizons}.csv",
             **config["scenario"],
             allow_missing=True,
         ),
@@ -400,25 +346,20 @@ rule plot_balance_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/composed.nc",
         rc="matplotlibrc",
     threads: 16
     resources:
         mem_mb=10000,
     log:
-        RESULTS
-        + "logs/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_balance_timeseries.log",
     benchmark:
         RESULTS
-        +"benchmarks/plot_balance_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        +"benchmarks/plot_balance_timeseries/composed"
     conda:
         "../envs/environment.yaml"
     output:
-        directory(
-            RESULTS
-            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory(RESULTS + "graphics/balance_timeseries_{planning_horizons}"),
     script:
         "../scripts/plot_balance_timeseries.py"
 
@@ -429,25 +370,21 @@ rule plot_heatmap_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/composed.nc",
         rc="matplotlibrc",
     threads: 16
     resources:
         mem_mb=10000,
     log:
-        RESULTS
-        + "logs/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_heatmap_timeseries.log",
     benchmark:
         RESULTS
-        +"benchmarks/plot_heatmap_timeseries/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        +"benchmarks/plot_heatmap_timeseries"
     conda:
         "../envs/environment.yaml"
     output:
-        directory(
-            RESULTS
-            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory(RESULTS + "graphics/heatmap_timeseries_{planning_horizons}"),
+        {},
     script:
         "../scripts/plot_heatmap_timeseries.py"
 
@@ -470,14 +407,12 @@ rule plot_base_statistics:
         plotting=config_provider("plotting"),
         barplots=STATISTICS_BARPLOTS,
     input:
-        network=RESULTS + "networks/base_s_{clusters}_elec_{opts}.nc",
+        network=RESULTS + "networks/solved.nc",
     output:
         **{
-            f"{plot}_bar": RESULTS
-            + f"figures/statistics_{plot}_bar_base_s_{{clusters}}_elec_{{opts}}.pdf"
+            f"{plot}_bar": RESULTS + f"figures/statistics_{plot}_bar.pdf"
             for plot in STATISTICS_BARPLOTS
         },
-        barplots_touch=RESULTS
-        + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
+        barplots_touch=RESULTS + "figures/.statistics_plots",
     script:
         "../scripts/plot_statistics.py"

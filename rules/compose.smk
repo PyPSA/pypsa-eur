@@ -16,11 +16,11 @@ from pathlib import Path
 from scripts._helpers import get_snapshots
 
 
-def get_compose_inputs(wildcards):
+def get_compose_inputs(w):
     """Determine inputs for compose rule based on foresight and horizon."""
     temporal = config["temporal"]
     foresight = temporal["foresight"]
-    horizon = int(wildcards.horizon)
+    horizon = int(w.horizon)
 
     # Handle both single value and list for planning_horizons
     planning_horizons = temporal["planning_horizons"]
@@ -32,156 +32,133 @@ def get_compose_inputs(wildcards):
     # Get cluster count from config using config_provider
     clusters = config_provider(
         "clustering", "cluster_network", "n_clusters", default=50
-    )(wildcards)
+    )(w)
 
-    inputs = {
-        "clustered": resources("networks/clustered.nc"),
-        "busmap": resources(f"busmap_elec_s_{clusters}.csv"),
-        "tech_costs": resources(f"costs_{horizon}.csv"),
-        "load": resources("electricity_demand.csv"),
-        "powerplants": resources(f"powerplants_s_{clusters}.csv"),
-    }
-
-    # Add renewable profiles
-    if config.get("atlite", {}).get("default_cutout", False):
-        cutout_year = config["atlite"]["default_cutout"].split("-")[1][:4]
-        inputs.update(
-            {
-                "profile_onwind": resources(f"profile_onwind-{cutout_year}.nc"),
-                "profile_offwind-ac": resources(f"profile_offwind-ac-{cutout_year}.nc"),
-                "profile_offwind-dc": resources(f"profile_offwind-dc-{cutout_year}.nc"),
-                "profile_offwind-float": resources(
-                    f"profile_offwind-float-{cutout_year}.nc"
-                ),
-                "profile_solar": resources(f"profile_solar-{cutout_year}.nc"),
-            }
-        )
-    else:
-        # Fallback to generic profiles without year
-        inputs.update(
-            {
-                "profile_onwind": resources("profile_onwind.nc"),
-                "profile_offwind-ac": resources("profile_offwind-ac.nc"),
-                "profile_offwind-dc": resources("profile_offwind-dc.nc"),
-                "profile_offwind-float": resources("profile_offwind-float.nc"),
-                "profile_solar": resources("profile_solar.nc"),
-            }
-        )
-
-    # Add hydro if enabled
-    renewable_carriers = config_provider(
-        "electricity", "renewable_carriers", default=[]
-    )(wildcards)
-    if "hydro" in renewable_carriers:
-        inputs.update(
-            {
-                "profile_hydro": resources("profile_hydro.nc"),
-                "hydro_capacities": resources("hydro_capacities.csv"),
-            }
-        )
-
-    # Add conventional inputs
-    unit_commitment = config_provider("conventional", "unit_commitment", default=False)(
-        wildcards
+    inputs = dict(
+        unpack(input_profile_tech),
+        unpack(input_class_regions),
+        unpack(input_conventional),
+        base_network=resources("networks/base_s.nc"),
+        tech_costs=resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        regions=resources("regions_onshore.geojson"),
+        powerplants=resources("powerplants_s.csv"),
+        hydro_capacities=ancient("data/hydro_capacities.csv"),
+        unit_commitment="data/unit_commitment.csv",
+        fuel_price=(
+            resources("monthly_fuel_price.csv")
+            if config_provider("conventional", "dynamic_fuel_price")(w)
+            else []
+        ),
+        load=resources("electricity_demand_base_s.nc"),
+        busmap=resources("busmap.csv"),
+        unpack(input_profile_offwind),
+        unpack(input_heat_source_power),
+        **rules.cluster_gas_network.output,
+        **rules.build_gas_input_locations.output,
+        snapshot_weightings=resources("snapshot_weightings_elec.csv"),
+        retro_cost=(
+            resources("retro_cost.csv")
+            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        floor_area=(
+            resources("floor_area_.csv")
+            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            else []
+        ),
+        biomass_transport_costs=(
+            resources("biomass_transport_costs.csv")
+            if config_provider("sector", "biomass_transport")(w)
+            or config_provider("sector", "biomass_spatial")(w)
+            else []
+        ),
+        sequestration_potential=(
+            resources("co2_sequestration_potential_.csv")
+            if config_provider(
+                "sector", "regional_co2_sequestration_potential", "enable"
+            )(w)
+            else []
+        ),
+        network=resources("networks/clustered.nc"),
+        eurostat="data/eurostat/Balances-April2023",
+        pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
+        pop_weighted_heat_totals=resources("pop_weighted_heat_totals.csv"),
+        shipping_demand=resources("shipping_demand.csv"),
+        transport_demand=resources("transport_demand.csv"),
+        transport_data=resources("transport_data.csv"),
+        avail_profile=resources("avail_profile.csv"),
+        dsm_profile=resources("dsm_profile.csv"),
+        co2_totals_name=resources("co2_totals.csv"),
+        co2="data/bundle/eea/UNFCCC_v23.csv",
+        biomass_potentials=resources("biomass_potentials_{horizon}.csv"),
+        costs=(
+            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
+            if config_provider("foresight")(w) == "overnight"
+            else resources("costs_{horizon}.csv")
+        ),
+        h2_cavern=resources("salt_cavern_potentials.csv"),
+        busmap_s=resources("busmap_base_s.csv"),
+        busmap=resources("busmap_.csv"),
+        clustered_pop_layout=resources("pop_layout_.csv"),
+        industrial_demand=resources("industrial_energy_demand__{horizon}.csv"),
+        hourly_heat_demand_total=resources("hourly_heat_demand_total_.nc"),
+        industrial_production=resources("industrial_production__{horizon}.csv"),
+        district_heat_share=resources("district_heat_share__{horizon}.csv"),
+        heating_efficiencies=resources("heating_efficiencies.csv"),
+        existing_heating_distribution=resources(
+            "existing_heating_distribution__{horizon}.csv"
+        ),
+        temp_soil_total=resources("temp_soil_total_.nc"),
+        temp_air_total=resources("temp_air_total_.nc"),
+        cop_profiles=resources("cop_profiles__{horizon}.nc"),
+        ptes_e_max_pu_profiles=(
+            resources("ptes_e_max_pu_profiles__{horizon}.nc")
+            if config_provider(
+                "sector", "district_heating", "ptes", "dynamic_capacity"
+            )(w)
+            else []
+        ),
+        ptes_direct_utilisation_profiles=(
+            resources("ptes_direct_utilisation_profiles_{horizon}.nc")
+            if config_provider(
+                "sector", "district_heating", "ptes", "supplemental_heating", "enable"
+            )(w)
+            else []
+        ),
+        solar_thermal_total=(
+            resources("solar_thermal_total_.nc")
+            if config_provider("sector", "solar_thermal")(w)
+            else []
+        ),
+        solar_rooftop_potentials=(
+            resources("solar_rooftop_potentials.csv")
+            if "solar" in config_provider("electricity", "renewable_carriers")(w)
+            else []
+        ),
+        egs_potentials=(
+            resources("egs_potentials.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        egs_overlap=(
+            resources("egs_overlap.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        egs_capacity_factors=(
+            resources("egs_capacity_factors.csv")
+            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            else []
+        ),
+        direct_heat_source_utilisation_profiles=resources(
+            "direct_heat_source_utilisation_profiles__{horizon}.nc"
+        ),
+        ates_potentials=(
+            resources("ates_potentials__{horizon}.csv")
+            if config_provider("sector", "district_heating", "ates", "enable")(w)
+            else []
+        ),
     )
-    if unit_commitment:
-        inputs["unit_commitment"] = resources("unit_commitment.csv")
-
-    dynamic_fuel_price = config_provider(
-        "conventional", "dynamic_fuel_price", default=False
-    )(wildcards)
-    if dynamic_fuel_price:
-        inputs["fuel_price"] = resources("fuel_price.csv")
-
-    # Add sector-specific inputs if sector coupling is enabled
-    sector_enabled = config_provider("sector", "enabled", default=True)(wildcards)
-    if sector_enabled:
-        inputs.update(
-            {
-                "clustered_pop_layout": resources(f"pop_layout_elec_s_{clusters}.csv"),
-                "pop_weighted_energy_totals": resources(
-                    "pop_weighted_energy_totals.csv"
-                ),
-                "gas_input_nodes_simplified": resources(
-                    "gas_input_nodes_simplified.csv"
-                ),
-                "industrial_demand": resources(f"industrial_demand_{horizon}.csv"),
-                "shipping_demand": resources(f"shipping_demand_{horizon}.csv"),
-                "aviation_demand": resources(f"aviation_demand_{horizon}.csv"),
-                "transport_demand": resources(f"transport_demand_{horizon}.csv"),
-                "transport_data": resources("transport_data.csv"),
-                "temp_air_total": resources("temp_air_total.nc"),
-                "retro_cost": resources("retrofitting_cost_energy.csv"),
-                "floor_area": resources("floor_area.csv"),
-                "biomass_potentials": resources("biomass_potentials.csv"),
-                "biomass_transport_costs": resources("biomass_transport_costs.csv"),
-                "co2_price": resources(f"co2_price_{horizon}.csv"),
-            }
-        )
-
-        # Add heat-related inputs if heating is enabled
-        heating_enabled = config_provider("sector", "heating", default=False)(wildcards)
-        if heating_enabled:
-            inputs.update(
-                {
-                    "pop_weighted_heat_totals": resources(
-                        "pop_weighted_heat_totals.csv"
-                    ),
-                    "heating_efficiencies": resources("heating_efficiencies.csv"),
-                    "cop_profiles": resources(f"cop_profiles_elec_s_{clusters}.nc"),
-                    "hourly_heat_demand_total": resources(
-                        f"hourly_heat_demand_total_elec_s_{clusters}.nc"
-                    ),
-                    "district_heat_share": resources(
-                        f"district_heat_share_elec_s_{clusters}.csv"
-                    ),
-                    "solar_thermal_total": (
-                        resources(f"solar_thermal_total_elec_s_{clusters}.csv")
-                        if config_provider("sector", "solar_thermal", default=False)(
-                            wildcards
-                        )
-                        else []
-                    ),
-                }
-            )
-
-            # Add heat source profiles
-            limited_heat_sources = config_provider("limited_heat_sources", default=[])(
-                wildcards
-            )
-            for source in limited_heat_sources:
-                inputs[source] = resources(f"{source}_elec_s_{clusters}.csv")
-
-        # Add transport profiles if transport is enabled
-        transport_enabled = config_provider("sector", "transport", default=False)(
-            wildcards
-        )
-        if transport_enabled:
-            inputs.update(
-                {
-                    "avail_profile": resources(f"avail_profile_elec_s_{clusters}.csv"),
-                    "dsm_profile": resources(f"dsm_profile_elec_s_{clusters}.csv"),
-                }
-            )
-
-        # Add hydrogen infrastructure if enabled
-        h2_network_enabled = config_provider("sector", "H2_network", default=True)(
-            wildcards
-        )
-        if h2_network_enabled:
-            inputs["h2_cavern"] = resources("salt_cavern_potentials.csv")
-            inputs["clustered_gas_network"] = resources(
-                f"gas_network_elec_s_{clusters}.csv"
-            )
-
-        # Add CO2 infrastructure if enabled
-        co2_network_enabled = config_provider("sector", "co2_network", default=False)(
-            wildcards
-        )
-        if co2_network_enabled:
-            inputs["sequestration_potential"] = resources(
-                "co2_sequestration_potential.csv"
-            )
 
     # Add brownfield inputs for non-first horizons
     if foresight == "overnight" and len(horizons) > 1:
@@ -246,10 +223,12 @@ rule compose_network:
         countries=config_provider("countries", default=[]),
         snapshots=config_provider("snapshots", default={}),
         drop_leap_day=config_provider("enable", "drop_leap_day", default=False),
-        # Run identification
-        run_name=lambda w: w.run,
         # Derived parameters
         energy_totals_year=config_provider("energy", "energy_totals_year", default=2019),
+        # Parameters from add_existing_baseyear
+        baseyear=config_provider("scenario", "planning_horizons", 0),
+        carriers=config_provider("electricity", "renewable_carriers"),
+        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         # Brownfield settings (for myopic)
         h2_retrofit=config_provider("sector", "H2_retrofit", default=False),
         h2_retrofit_capacity_per_ch4=config_provider(
@@ -257,6 +236,10 @@ rule compose_network:
         ),
         capacity_threshold=config_provider(
             "existing_capacities", "threshold_capacity", default=10
+        ),
+        tes=config_provider("sector", "tes"),
+        dynamic_ptes_capacity=config_provider(
+            "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
         # CO2 budget handling
         co2_budget=config_provider("co2_budget", "budget_national", default=None),
@@ -270,111 +253,3 @@ rule compose_network:
         mem_mb=20000,
     script:
         "../scripts/compose_network.py"
-
-
-# Unified solving rule for all foresight approaches in streamlined workflow
-rule solve_network_streamlined:
-    input:
-        unpack(get_solve_inputs),
-    output:
-        RESULTS + "networks/solved_{horizon}.nc",
-        RESULTS + "logs/solver_{horizon}.log",
-    params:
-        temporal=config_provider("temporal"),
-        solver=config_provider("solving", "solver"),
-        solver_options=lambda w: config_provider(
-            "solving",
-            "solver_options",
-            config_provider("solving", "solver", "name")(w),
-        )(w),
-        solving=config_provider("solving"),
-    log:
-        python=logs("solve_network_{horizon}.log"),
-    threads: lambda w: config_provider("solving", "solver", "threads")(w)
-    resources:
-        mem_mb=lambda w: config_provider("solving", "mem")(w),
-    shadow:
-        "minimal"
-    script:
-        "../scripts/solve_network.py"
-
-
-# Collection rules for different workflow targets
-rule prepare_networks_streamlined:
-    """Target rule to prepare all composed networks up to final horizon."""
-    input:
-        lambda w: expand(
-            RESULTS + "networks/composed_{horizon}.nc",
-            horizon=get_final_horizon(),
-        ),
-
-
-rule solve_networks_streamlined:
-    """Target rule to solve all networks up to final horizon."""
-    input:
-        lambda w: expand(
-            RESULTS + "networks/solved_{horizon}.nc",
-            horizon=get_final_horizon(),
-        ),
-
-
-# Postprocessing rules
-rule make_summary_streamlined:
-    """Create summary of solved network."""
-    input:
-        network=RESULTS + "networks/solved_{horizon}.nc",
-        tech_costs=lambda w: resources(f"costs_{w.horizon}.csv"),
-    output:
-        nodal_costs=RESULTS + "csvs/nodal_costs_{horizon}.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities_{horizon}.csv",
-        nodal_supply=RESULTS + "csvs/nodal_supply_{horizon}.csv",
-        nodal_supply_energy=RESULTS + "csvs/nodal_supply_energy_{horizon}.csv",
-        supply=RESULTS + "csvs/supply_{horizon}.csv",
-        supply_energy=RESULTS + "csvs/supply_energy_{horizon}.csv",
-        prices=RESULTS + "csvs/prices_{horizon}.csv",
-        weighted_prices=RESULTS + "csvs/weighted_prices_{horizon}.csv",
-        market_values=RESULTS + "csvs/market_values_{horizon}.csv",
-        price_statistics=RESULTS + "csvs/price_statistics_{horizon}.csv",
-        costs=RESULTS + "csvs/costs_{horizon}.csv",
-        capacities=RESULTS + "csvs/capacities_{horizon}.csv",
-        curtailment=RESULTS + "csvs/curtailment_{horizon}.csv",
-        metrics=RESULTS + "csvs/metrics_{horizon}.csv",
-    log:
-        logs("make_summary_{horizon}.log"),
-    script:
-        "../scripts/make_summary.py"
-
-
-rule plot_network_streamlined:
-    """Plot the solved network."""
-    input:
-        network=RESULTS + "networks/solved_{horizon}.nc",
-        regions="resources/regions_onshore_{run}.geojson",
-    output:
-        map=RESULTS + "plots/network_{horizon}.pdf",
-    log:
-        logs("plot_network_{horizon}.log"),
-    script:
-        "../scripts/plot_network.py"
-
-
-# Validation rule to compare old vs new workflow results
-rule validate_results_streamlined:
-    """Compare results between old wildcard-based and new config-driven workflow."""
-    input:
-        old_network="networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",  # Old format
-        new_network=RESULTS + "networks/solved_{horizon}.nc",  # New format
-    output:
-        validation_report=RESULTS + "validation_report_{horizon}.html",
-    params:
-        clusters=config_provider("clustering", "cluster_network", "n_clusters"),
-        opts=config_provider("opts", default=""),
-        sector_opts=config_provider("sector_opts", default=""),
-        planning_horizons=lambda w: w.horizon,
-    log:
-        logs("validate_results_{horizon}.log"),
-    script:
-        "../scripts/validate_results.py"
-
-
-# No custom resources function needed - use existing path provider

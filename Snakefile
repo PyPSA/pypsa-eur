@@ -90,20 +90,18 @@ rule all:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
         expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
         expand(
-            resources("maps/power-network-s-{clusters}.pdf"),
+            resources("maps/power-network.pdf"),
             run=config["run"]["name"],
             **config["scenario"],
         ),
         expand(
-            RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            RESULTS + "maps/solved-costs-all_{planning_horizons}.pdf",
             run=config["run"]["name"],
             **config["scenario"],
         ),
         lambda w: expand(
             (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                RESULTS + "maps/solved-h2_network_{planning_horizons}.pdf"
                 if config_provider("sector", "H2_network")(w)
                 else []
             ),
@@ -112,8 +110,7 @@ rule all:
         ),
         lambda w: expand(
             (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                RESULTS + "maps/solved-ch4_network_{planning_horizons}.pdf"
                 if config_provider("sector", "gas_network")(w)
                 else []
             ),
@@ -129,26 +126,21 @@ rule all:
             run=config["run"]["name"],
         ),
         lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
+            (RESULTS + "maps/solved_{planning_horizons}-balance_map_{carrier}.pdf"),
             **config["scenario"],
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
         directory(
             expand(
-                RESULTS
-                + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                RESULTS + "graphics/balance_timeseries_{planning_horizons}",
                 run=config["run"]["name"],
                 **config["scenario"],
             ),
         ),
         directory(
             expand(
-                RESULTS
-                + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+                RESULTS + "graphics/heatmap_timeseries_{planning_horizons}",
                 run=config["run"]["name"],
                 **config["scenario"],
             ),

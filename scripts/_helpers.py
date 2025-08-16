@@ -106,7 +106,7 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         )
         is_shared = no_relevant_wildcards and not_shared_rule
         shared_files = (
-            "networks/base_s_{clusters}.nc",
+            "networks/clustered.nc",
             "regions_onshore_base_s_{clusters}.geojson",
             "regions_offshore_base_s_{clusters}.geojson",
             "busmap_base_s_{clusters}.csv",

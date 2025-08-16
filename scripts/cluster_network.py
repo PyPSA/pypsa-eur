@@ -20,9 +20,9 @@ Outputs
     .. image:: img/regions_offshore_base_s_X.png
         :scale: 33 %
 
-- ``resources/busmap_base_s_{clusters}.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/base_s_{clusters}.nc``;
-- ``networks/base_s_{clusters}.nc``:
+- ``resources/busmap_base_s_{clusters}.csv``: Mapping of buses from ``networks/base.nc`` to ``networks/clustered.nc``;
+- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/clustered.nc``;
+- ``networks/clustered.nc``:
 
     .. image:: img/base_s_X.png
         :scale: 40  %
