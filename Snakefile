@@ -66,34 +66,35 @@ include: "rules/development.smk"
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
-        expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
+        expand(resources("maps/base_network.pdf"), run=config["run"]["name"]),
+        expand(resources("maps/clustered_network.pdf"), run=config["run"]["name"]),
         expand(
-            resources("maps/power-network.pdf"),
+            RESULTS + "maps/power_network_{horizon}.pdf",
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["temporal"]["planning_horizons"],
         ),
-        expand(
-            RESULTS + "maps/solved-costs-all_{planning_horizons}.pdf",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
+        # expand(
+        #     RESULTS + "maps/costs-all_{horizon}.pdf",
+        #     run=config["run"]["name"],
+        #     horizon=config["temporal"]["planning_horizons"],
+        # ),
         lambda w: expand(
             (
-                RESULTS + "maps/solved-h2_network_{planning_horizons}.pdf"
+                RESULTS + "maps/h2_network_{horizon}.pdf"
                 if config_provider("sector", "H2_network")(w)
                 else []
             ),
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["temporal"]["planning_horizons"],
         ),
         lambda w: expand(
             (
-                RESULTS + "maps/solved-ch4_network_{planning_horizons}.pdf"
+                RESULTS + "maps/ch4_network_{horizon}.pdf"
                 if config_provider("sector", "gas_network")(w)
                 else []
             ),
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["temporal"]["planning_horizons"],
         ),
         lambda w: expand(
             (
@@ -104,24 +105,20 @@ rule all:
             run=config["run"]["name"],
         ),
         lambda w: expand(
-            (RESULTS + "maps/solved_{planning_horizons}-balance_map_{carrier}.pdf"),
-            **config["scenario"],
+            (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
+            horizon=config["temporal"]["planning_horizons"],
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
-        directory(
-            expand(
-                RESULTS + "graphics/balance_timeseries_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
+        expand(
+            RESULTS + "graphics/balance_timeseries_{horizon}",
+            run=config["run"]["name"],
+            horizon=config["temporal"]["planning_horizons"],
         ),
-        directory(
-            expand(
-                RESULTS + "graphics/heatmap_timeseries_{planning_horizons}",
-                run=config["run"]["name"],
-                **config["scenario"],
-            ),
+        expand(
+            RESULTS + "graphics/heatmap_timeseries_{horizon}",
+            run=config["run"]["name"],
+            horizon=config["temporal"]["planning_horizons"],
         ),
     default_target: True
 

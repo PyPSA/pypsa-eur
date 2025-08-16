@@ -43,7 +43,7 @@ def get_compose_inputs(w):
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         "base_network": resources("networks/base_s.nc"),
-        "tech_costs": resources(f"costs_{config_provider('costs', 'year')(w)}.csv"),
+        "tech_costs": resources(f"costs_{horizon}.csv"),
         "regions": resources("regions_onshore.geojson"),
         "powerplants": resources("powerplants_s.csv"),
         "hydro_capacities": ancient("data/hydro_capacities.csv"),
@@ -183,11 +183,11 @@ def get_compose_inputs(w):
 
 def get_final_horizon():
     """Get the final planning horizon, handling both single values and lists."""
-    planning_horizons = config["temporal"]["planning_horizons"]
-    if isinstance(planning_horizons, (int, str)):
-        return int(planning_horizons)
+    horizons = config["temporal"]["planning_horizons"]
+    if isinstance(horizons, (int, str)):
+        return int(horizons)
     else:
-        return int(planning_horizons[-1])
+        return int(horizons[-1])
 
 
 def get_solve_inputs(wildcards):
@@ -200,7 +200,7 @@ rule compose_network:
     input:
         unpack(get_compose_inputs),
     output:
-        RESULTS + "networks/composed_{horizon}.nc",
+        resources("networks/composed_{horizon}.nc"),
     params:
         # Pass entire config sections using config_provider
         temporal=config_provider("temporal"),
@@ -225,7 +225,7 @@ rule compose_network:
         # Derived parameters
         energy_totals_year=config_provider("energy", "energy_totals_year", default=2019),
         # Parameters from add_existing_baseyear
-        baseyear=config_provider("scenario", "planning_horizons", 0),
+        baseyear=config_provider("temporal", "planning_horizons", 0),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         # Brownfield settings (for myopic)

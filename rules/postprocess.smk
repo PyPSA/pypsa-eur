@@ -12,7 +12,7 @@ if config["foresight"] != "perfect":
             network=resources("networks/base.nc"),
             regions_onshore=resources("regions_onshore.geojson"),
         output:
-            map=resources("maps/base-network.pdf"),
+            map=resources("maps/base_network.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
@@ -30,7 +30,7 @@ if config["foresight"] != "perfect":
             network=resources("networks/clustered.nc"),
             regions_onshore=resources("regions_onshore.geojson"),
         output:
-            map=resources("maps/clustered-network.pdf"),
+            map=resources("maps/clustered_network.pdf"),
         threads: 1
         resources:
             mem_mb=4000,
@@ -46,17 +46,17 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
-            network=RESULTS + "networks/composed_{horizon}.nc",
+            network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-power_network_{horizon}.pdf",
+            map=RESULTS + "maps/power_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS + "logs/plot_power_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_power_network/composed_{horizon}")
+            (RESULTS + "benchmarks/plot_power_network_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -67,17 +67,17 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             foresight=config_provider("foresight"),
         input:
-            network=RESULTS + "networks/composed_{horizon}.nc",
+            network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-h2_network_{horizon}.pdf",
+            map=RESULTS + "maps/h2_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS + "logs/plot_hydrogen_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_hydrogen_network/composed_{horizon}")
+            (RESULTS + "benchmarks/plot_hydrogen_network_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -87,17 +87,17 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS + "networks/composed_{horizon}.nc",
+            network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            map=RESULTS + "maps/solved-ch4_network_{horizon}.pdf",
+            map=RESULTS + "maps/ch4_network_{horizon}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
         log:
             RESULTS + "logs/plot_gas_network_{horizon}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_gas_network/composed_{horizon}")
+            (RESULTS + "benchmarks/plot_gas_network_{horizon}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -107,17 +107,17 @@ if config["foresight"] != "perfect":
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS + "networks/composed_{horizon}.nc",
+            network=RESULTS + "networks/solved_{horizon}.nc",
             regions=resources("regions_onshore.geojson"),
         output:
-            RESULTS + "maps/composed-balance_map_{carrier}.pdf",
+            RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
         log:
-            RESULTS + "logs/plot_balance_map/composed_{carrier}.log",
+            RESULTS + "logs/plot_balance_map_{horizon}-{carrier}.log",
         benchmark:
-            (RESULTS + "benchmarks/plot_balance_map/composed_{carrier}")
+            (RESULTS + "benchmarks/plot_balance_map_{horizon}-{carrier}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -128,15 +128,15 @@ if config["foresight"] == "perfect":
 
     def output_map_year(w):
         return {
-            f"map_{year}": RESULTS + "maps/solved-costs-all_" + f"{year}.pdf"
-            for year in config_provider("scenario", "planning_horizons")(w)
+            f"map_{year}": RESULTS + "maps/costs-all_" + f"{year}.pdf"
+            for year in config_provider("temporal", "planning_horizons")(w)
         }
 
     rule plot_power_network_perfect:
         params:
             plotting=config_provider("plotting"),
         input:
-            network=RESULTS + "networks/solved_brownfield_all_years.nc",
+            network=RESULTS + "networks_brownfield_all_years.nc",
             regions=resources("regions_onshore.geojson"),
         output:
             unpack(output_map_year),
@@ -151,7 +151,7 @@ if config["foresight"] == "perfect":
 
 rule make_summary:
     input:
-        network=RESULTS + "networks/composed_{horizon}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
     output:
         nodal_costs=RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
         nodal_capacities=RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
@@ -308,7 +308,7 @@ rule make_cumulative_costs:
 rule plot_summary:
     params:
         countries=config_provider("countries"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
+        planning_horizons=config_provider("temporal", "planning_horizons"),
         emissions_scope=config_provider("energy", "emissions"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
@@ -342,7 +342,7 @@ rule plot_balance_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS + "networks/composed_{horizon}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     threads: 16
     resources:
@@ -366,7 +366,7 @@ rule plot_heatmap_timeseries:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
-        network=RESULTS + "networks/composed_{horizon}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     threads: 16
     resources:

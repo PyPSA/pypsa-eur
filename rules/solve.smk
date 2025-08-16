@@ -7,7 +7,7 @@ rule solve_network:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("scenario", "planning_horizons"),
+        planning_horizons=config_provider("temporal", "planning_horizons"),
         sector=config_provider("sector"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
@@ -25,7 +25,7 @@ rule solve_network:
         (RESULTS + "benchmarks/solve_network_{horizon}.log")
     threads: solver_threads
     resources:
-        mem_mb=memory,
+        # mem_mb=memory, # TODO: renew memory function based on config
         runtime=config_provider("solving", "runtime", default="6h"),
     shadow:
         shadow_config

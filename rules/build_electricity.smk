@@ -779,7 +779,7 @@ rule prepare_network:
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
-        co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
+        # co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [], #TODO: move Ept to config
     output:
         resources("networks/base_s_elec_{opts}.nc"),
     log:

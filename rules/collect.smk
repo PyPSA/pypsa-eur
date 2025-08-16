@@ -38,7 +38,7 @@ rule solve_networks:
 rule plot_balance_maps:
     input:
         lambda w: expand(
-            (RESULTS + "maps/balance_map_{carrier}-{planning_horizon}.pdf"),
+            (RESULTS + "maps/balance_map_{carrier}-{horizon}.pdf"),
             **config["scenario"],
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),

@@ -136,9 +136,9 @@ def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -
 
 
 def solved_previous_horizon(w):
-    planning_horizons = config_provider("scenario", "planning_horizons")(w)
-    i = planning_horizons.index(int(w.planning_horizons))
-    planning_horizon_p = str(planning_horizons[i - 1])
+    horizons = config_provider("temporal", "planning_horizons")(w)
+    i = horizons.index(int(w.horizon))
+    planning_horizon_p = str(horizons[i - 1])
 
     return RESULTS + "networks/solved_" + planning_horizon_p + ".nc"
 
