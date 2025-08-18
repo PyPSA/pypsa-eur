@@ -17,7 +17,6 @@ if config["enable"]["retrieve"] is False:
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
-        "je-e-21.03.02.xls",
         "nama_10r_3popgdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
@@ -512,6 +511,22 @@ if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))
             csv=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         run:
             move(input["csv"], output["csv"])
+
+
+if (BFS_GDP_AND_POPULATION_DATASET := dataset_version("bfs_gdp_and_population"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_bfs_gdp_and_population:
+        input:
+            xlsx=storage(BFS_GDP_AND_POPULATION_DATASET["url"]),
+        output:
+            xlsx=f"{BFS_GDP_AND_POPULATION_DATASET['folder']}/gdp_and_population.xlsx",
+        run:
+            move(input["xlsx"], output["xlsx"])
 
 
 if config["enable"]["retrieve"]:
