@@ -660,6 +660,7 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
+  tes: true
   boilers: true
   resistive_heaters: true
   oil_boilers: false
@@ -776,6 +777,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
+    CCGT: gas
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   electrobiofuels: true
@@ -914,7 +916,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
-  version: v0.13.2
+  version: v0.13.3
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -925,6 +927,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
+    "standing losses": 0
   overwrites: {}
   marginal_cost:
     solar: 0.01
