@@ -156,13 +156,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** CC0 (`reference <https://www.eia.gov/about/copyrights_reuse.php>`__)
 - **Description:** Contains country-level hydro-electric generato for Europe by year.
 
-``data/gr-e-11.03.02.01.01-cc.csv``
-
-- **Source:** Swiss Federal Statistics Office
-- **Link:** https://www.bfs.admin.ch/asset/de/30305426
-- **License:** `custom (OPEN BY ASK) <https://www.bfs.admin.ch/bfs/en/home/fso/swiss-federal-statistical-office/terms-of-use.html>`__
-- **Description:** Stock of road motor vehicles in Switzerland.
-
 ``data/heat_load_profile_BDEW.csv``
 
 - **Source:** oemof/demandlib

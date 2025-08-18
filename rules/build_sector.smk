@@ -576,7 +576,7 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
-        swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
+        swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/Balances-April2023",

@@ -498,6 +498,22 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
             move(input["xlsx"], output["xlsx"])
 
 
+if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_bfs_road_vehicle_stock:
+        input:
+            csv=storage(BFS_ROAD_VEHICLE_STOCK_DATASET["url"]),
+        output:
+            csv=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
+        run:
+            move(input["csv"], output["csv"])
+
+
 if config["enable"]["retrieve"]:
     # Some logic to find the correct file URL
     # Sometimes files are released delayed or ahead of schedule, check which file is currently available
