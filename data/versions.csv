@@ -1,4 +1,6 @@
 "dataset","source","version","tags","url","note"
+"gem_europe_gas_tracker","archive","May 2024","['latest','supported']","https://zenodo.org/records/16893480/files/Europe-Gas-Tracker-2024-05.xlsx",""
+"gem_europe_gas_tracker","primary","May 2024","['latest','supported']","https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx",""
 "gem_gspt","archive","April 2024 V1","['latest','supported']","https://zenodo.org/records/16893375/files/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",""
 "gem_gspt","primary","March-2025 V1","['not-supported']",https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.xlsx",""
 "gem_gspt","primary","April 2024 V1","['latest','supported']","https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",""

@@ -1007,7 +1007,10 @@ data:
   worldbank_urban_population:
     source: "archive"
     version_or_latest: "latest"
-  gem_gspt: # 
+  gem_europe_gas_tracker:
+    source: "archive"
+    version_or_latest: "latest"
+  gem_gspt:
     source: "archive"
     version_or_latest: "latest"
   tyndp:

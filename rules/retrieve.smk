@@ -468,20 +468,20 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_gem_europe_gas_tracker:
+        input:
+            xlsx=storage(GEM_EUROPE_GAS_TRACKER_DATASET["url"]),
         output:
-            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+            xlsx="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
-            import requests
-
-            # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
-            response = requests.get(url)
-            with open(output[0], "wb") as f:
-                f.write(response.content)
-
+            move(input["xlsx"], output["xlsx"])
 
 
 if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
@@ -495,7 +495,7 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
         output:
             xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
-            os.rename(input.xlsx, output.xlsx)
+            move(input["xlsx"], output["xlsx"])
 
 
 if config["enable"]["retrieve"]:
