@@ -1067,7 +1067,7 @@ def add_discharge_boosting_constraints(
                 .transpose("snapshot", "node")
             )
             alpha = (cop_heat_pump_da - 1).clip(min=0)
-            expr = expr_base * alpha
+            expr = - (expr_base * alpha)
 
             # per-tech constraint
             n.model.add_constraints(expr <= rhs, name=f"{tech}_thermal_output_constraint")
@@ -1078,7 +1078,7 @@ def add_discharge_boosting_constraints(
                          .transpose("snapshot", "node")
                          )
             alpha = xr.where(ptes_booster_per_discharge_da > 0, 1.0 / ptes_booster_per_discharge_da, 0.0)
-            expr = expr_base * alpha
+            expr = - (expr_base * alpha)
 
         lhs = expr if lhs is None else (lhs + expr)
 
@@ -1167,7 +1167,7 @@ def add_charge_boosting_constraints(
             .sel(time=snapshot)
             .transpose("snapshot", "node"))
         beta = xr.where(ptes_booster_per_charge_da > 0, 1.0 / ptes_booster_per_charge_da, 0.0)
-        expr = expr_base * beta
+        expr = - (expr_base * beta)
 
         # accumulate
         lhs = expr if lhs is None else lhs + expr
