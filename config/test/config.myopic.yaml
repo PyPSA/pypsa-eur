@@ -39,7 +39,7 @@ sector:
     ptes:
       dynamic_capacity: true
       discharge_boosting_required: true
-      charger_boosting_required: true
+      charge_boosting_required: true
       temperature_profile: 'constant'
       booster_technologies: ["resistive heater", "air heat pump", "water pits heat pump"]
   heat_pump_sources:
