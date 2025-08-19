@@ -22,3 +22,4 @@ ghg_emissions,Total GHG emissions and removals in the EU,National emissions repo
 gebco,General Bathymetric Chart of the Oceans,Gridded Bathymetric data for ocean and land, providing elevation data in meters, on a 15 arc-second interval grid.,GEBCO Comilation Group,https://www.gebco.net/data-products/gridded-bathymetry-data, Public domain
 attributed_ports,Global - International Ports,"International ports with attributes describing name, port functions, total capacity and location",World bank Group,https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports, CC BY 4.0
 corine,CORINE Land Cover 2012,Pan European Land cover for 44 thematic classes with 2012 as reference year,Copernicus,https://land.copernicus.eu/en/products/corine-land-cover/clc-2012, Open
+emobility,"",Motor and passenger vehicles count,Bundesanstalt für Straßenwesen (BASt),https://www.bast.de/DE/Home/home_node.html,CC BY 4.0

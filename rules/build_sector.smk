@@ -1109,8 +1109,8 @@ rule build_transport_demand:
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
-        traffic_data_KFZ="data/bundle/emobility/KFZ__count",
-        traffic_data_Pkw="data/bundle/emobility/Pkw__count",
+        traffic_data_KFZ=f"{rules.retrieve_emobility.output[1]}/KFZ__count",
+        traffic_data_Pkw=f"{rules.retrieve_emobility.output[1]}/Pkw__count",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s_{clusters}.csv"),
