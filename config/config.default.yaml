@@ -517,7 +517,7 @@ sector:
       enable: true
       dynamic_capacity: false
       discharge_boosting_required: false
-      charger_boosting_required: false
+      charge_boosting_required: false
       temperature_profile: 'constant'
       booster_technologies: ["resistive heater", "air heat pump", "water pits heat pump"]
       max_top_temperature: 90
