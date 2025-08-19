@@ -735,7 +735,7 @@ rule build_clustered_co2_sequestration_potentials:
 
 rule build_salt_cavern_potentials:
     input:
-        salt_caverns="data/bundle/h2_salt_caverns_GWh_per_sqkm.geojson",
+        salt_caverns=rules.retrieve_h2_salt_caverns.output[0],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
     output:

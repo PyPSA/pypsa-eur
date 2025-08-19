@@ -149,6 +149,21 @@ if config["enable"]["retrieve"] and (EMOBILITY_DATASET := dataset_version("emobi
             unzip_folder(params,output)
 
 
+if config["enable"]["retrieve"] and (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
+    "archive"
+]:
+    rule retrieve_h2_salt_caverns:
+        input: 
+            storage(
+                f"{H2_SALT_CAVERNS_DATASET["url"]}",
+            ),
+        output:
+            f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
+        retries: 2,
+        run:
+            move(input[0], output[0])
+
+
 if config["enable"]["retrieve"] and (
     GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita")
 )["source"] in ["archive"]:
