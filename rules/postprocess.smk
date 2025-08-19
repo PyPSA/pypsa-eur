@@ -147,6 +147,49 @@ if config["foresight"] != "perfect":
         script:
             "../scripts/plot_balance_map.py"
 
+    rule plot_heat_source_map:
+        params:
+            plotting=config_provider("plotting"),
+            heat_sources=config_provider("sector", "heat_pump_sources"),
+        input:
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            heat_source_temperature=lambda w: (
+                resources(
+                    "temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc"
+                )
+                if w.carrier in ["river_water", "sea_water", "ambient_air"]
+                else []
+            ),
+            heat_source_energy=lambda w: (
+                resources(
+                    "heat_source_energy_"
+                    + w.carrier
+                    + "_base_s_{clusters}_temporal_aggregate.nc"
+                )
+                if w.carrier in ["river_water"]
+                else []
+            ),
+        output:
+            temp_map=RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
+            energy_map=RESULTS
+            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+        threads: 1
+        resources:
+            mem_mb=150000,
+        log:
+            RESULTS
+            + "logs/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_heat_source_map.py"
+
 
 if config["foresight"] == "perfect":
 
@@ -481,3 +524,71 @@ rule plot_base_statistics:
         + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
     script:
         "../scripts/plot_statistics.py"
+
+
+rule build_ambient_air_temperature_yearly_average:
+    input:
+        cutout=lambda w: input_cutout(w),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        average_ambient_air_temperature=resources(
+            "temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+    threads: 1
+    resources:
+        mem_mb=5000,
+    log:
+        RESULTS + "logs/build_ambient_air_temperature_yearly_average/base_s_{clusters}",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
+        )
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_ambient_air_temperature_yearly_average.py"
+
+
+rule plot_cop_profiles:
+    input:
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+    output:
+        html=RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
+    log:
+        RESULTS + "logs/plot_cop_profiles_s_{clusters}_{planning_horizons}.log",
+    benchmark:
+        RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}"
+    resources:
+        mem_mb=10000,
+    script:
+        "../scripts/plot_cop_profiles/plot_cop_profiles.py"
+
+
+rule plot_interactive_bus_balance:
+    params:
+        plotting=config_provider("plotting"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        bus_name_pattern=config_provider(
+            "plotting", "interactive_bus_balance", "bus_name_pattern"
+        ),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        rc="matplotlibrc",
+    output:
+        directory=directory(
+            RESULTS
+            + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        ),
+    log:
+        RESULTS
+        + "logs/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        RESULTS
+        +"benchmarks/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    resources:
+        mem_mb=20000,
+    script:
+        "../scripts/plot_interactive_bus_balance.py"

@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
+
 * Updated standing losses for PTES, central TTES, and decentral TTES, previously calculated using the ``tes_tau`` parameter, to the latest DEA technology data, and updated costs version to v0.13.3.
 
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
@@ -49,14 +51,13 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 
 **Breaking Changes**
 
-* Consolidated gap-filling strategies options under a new configuration section
-  `load: fill_gaps`. (https://github.com/PyPSA/pypsa-eur/pull/1677)
+* Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
 
-* Replaced pinned environment files with conda-lock generated lock files for
-  better dependency resolution and cross-platform reproducibility. Deprecated
-  old ``-pinned.yaml`` files with migration instructions. These files will not
-  be updated anymore and will be removed in a future release.
-  (https://github.com/PyPSA/pypsa-eur/pull/1660)
+  - Added platform-specific lock files for all major platforms (Linux, macOS, Windows) and architectures (x86_64, ARM).
+
+  - Updated documentation, Makefile, Dockerfile, and CI workflows to use the new lock files.
+
+  - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
 
 **Changes**
 
