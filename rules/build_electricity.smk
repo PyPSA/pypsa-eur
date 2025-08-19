@@ -284,7 +284,7 @@ rule determine_availability_matrix:
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
-        corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
+        corine=ancient(f"{rules.retrieve_corine.output[1]}/g250_clc06_V18_5.tif"),
         natura=lambda w: (
             "data/bundle/natura/natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)

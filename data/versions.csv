@@ -58,3 +58,4 @@
 "gebco","archive","2014","['latest', 'supported']","https://zenodo.org/records/16810417/files/GEBCO_2014_2D.nc","Earlier part of databundle"
 "attributed_ports","primary","2020-07-10","['latest', 'supported']","https://datacatalogfiles.worldbank.org/ddh-published/0038118/1/DR0046414/attributed_ports.geojson",""
 "attributed_ports","archive","2020-07-10","['latest', 'supported']","https://zenodo.org/records/16810901/files/attributed_ports.json","Moved from github repo `data/` folder"
+"corine","archive","v18_5","['latest', 'supported']","https://zenodo.org/records/16899113/files/corine.zip",""

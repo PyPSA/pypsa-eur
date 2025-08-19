@@ -112,10 +112,33 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
+
+if config["enable"]["retrieve"] and (CORINE_DATASET := dataset_version("corine"))["source"] in [
+    "archive"
+]:
+    rule retrieve_corine:
+        params:
+            url = f"{CORINE_DATASET["url"]}",
+        output:
+            zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+            directory=directory(f"{CORINE_DATASET["folder"]}"),
+        run:
+            import os
+            import requests
+            from zipfile import ZipFile
+            from pathlib import Path
+
+            response = requests.get(params["url"])
+            with open(output.zip, "wb") as f:
+                f.write(response.content)
+
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output.zip, output_folder)
+
+
 if config["enable"]["retrieve"] and (
     GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita")
 )["source"] in ["archive"]:
-
     rule retrieve_gdp_per_capita:
         input:
             storage(

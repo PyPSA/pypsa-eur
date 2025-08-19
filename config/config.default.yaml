@@ -1032,6 +1032,9 @@ data:
   attributed_ports:
     source: "archive"
     version_or_latest: "latest"
+  corine:
+    source: "archive"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
