@@ -53,6 +53,7 @@
 "nuts3_population","archive","13-03-2025","['latest', 'supported']","https://zenodo.org/records/16551424/files/nama_10r_3popgdp.tsv.gz","earlier part of zenodo bundle"
 "gdp_per_capita","archive","2018-02-06","['latest', 'supported']","https://zenodo.org/records/16556029/files/GDP_per_capita_PPP_1990_2015_v2.nc","Primary link is a direct download, earlier part of zenodo bundle"
 "population_count","archive","2018-11-01","['latest', 'supported']","https://zenodo.org/records/16558833/files/ppp_2019_1km_Aggregated.tif","Primary link is a direct download, earlier part of zenodo bundle"
+"ghg_emissions","primary","v23","['latest', 'supported']","https://web.archive.org/web/20200622130401/https://www.eea.europa.eu/data-and-maps/data/national-emissions-reported-to-the-unfccc-and-to-the-eu-greenhouse-gas-monitoring-mechanism-16/national-greenhouse-gas-inventories-ipcc-common-reporting-format-sector-classification/ascii-delimited-zip-2/at_download/file",""
 "ghg_emissions","archive","v23","['latest', 'supported']","https://zenodo.org/records/16561661/files/UNFCCC_v23.csv","Primary link is a direct download, earlier part of databundle"
 "gebco","primary","2014","['latest', 'supported']","https://www.bodc.ac.uk/data/open_download/gebco/GEBCO_30SEC/zip/","The dataset will be cut for the required regions after download"
 "gebco","archive","2014","['latest', 'supported']","https://zenodo.org/records/16810417/files/GEBCO_2014_2D.nc","Earlier part of databundle"
