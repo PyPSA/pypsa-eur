@@ -95,7 +95,6 @@ if config["enable"]["retrieve"]:
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.shapes, params.zip_file)
-            os.chmod(params.zip_file, 0o644)  # rw-r--r--
 
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2"]:
@@ -126,7 +125,6 @@ if config["enable"]["retrieve"]:
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.shapes, params.zip_file)
-            os.chmod(params.zip_file, 0o644)  # rw-r--r--
 
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
@@ -517,7 +515,6 @@ if config["enable"]["retrieve"]:
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.zip_file, params.zip_file)
-            os.chmod(params.zip_file, 0o644)  # rw-r--r--
             output_folder = Path(output.gpkg).parent / params.folder_name
             unpack_archive(params.zip_file, output_folder)
 
@@ -546,7 +543,6 @@ if config["enable"]["retrieve"]:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
             shcopy2(input.zip_file, params.zip_file)
-            os.chmod(params.zip_file, 0o644)  # rw-r--r--
             output_folder = Path(output.gpkg).parent / params.folder_name
             unpack_archive(params.zip_file, output_folder)
 
