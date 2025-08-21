@@ -2972,7 +2972,8 @@ def add_heat(
                     p_nom_extendable=True,
                     marginal_cost=costs.at["water tank charger", "marginal_cost"],
                     lifetime=costs.at[
-                        heat_system.central_or_decentral + " water tank storage", "lifetime"
+                        heat_system.central_or_decentral + " water tank storage",
+                        "lifetime",
                     ],
                 )
 
@@ -2989,12 +2990,14 @@ def add_heat(
                     ],
                     p_nom_extendable=True,
                     lifetime=costs.at[
-                        heat_system.central_or_decentral + " water tank storage", "lifetime"
+                        heat_system.central_or_decentral + " water tank storage",
+                        "lifetime",
                     ],
                 )
 
                 n.links.loc[
-                    nodes + f" {heat_system} water tanks charger", "energy to power ratio"
+                    nodes + f" {heat_system} water tanks charger",
+                    "energy to power ratio",
                 ] = energy_to_power_ratio_water_tanks
 
                 n.add(
@@ -3015,12 +3018,15 @@ def add_heat(
                         "capital_cost",
                     ],
                     lifetime=costs.at[
-                        heat_system.central_or_decentral + " water tank storage", "lifetime"
+                        heat_system.central_or_decentral + " water tank storage",
+                        "lifetime",
                     ],
                 )
 
-            if heat_system == HeatSystem.URBAN_CENTRAL and options["district_heating"]["ptes"]["enable"
-                ]:
+            if (
+                heat_system == HeatSystem.URBAN_CENTRAL
+                and options["district_heating"]["ptes"]["enable"]
+            ):
                 n.add("Carrier", f"{heat_system} water pits")
 
                 n.add(
@@ -3076,9 +3082,7 @@ def add_heat(
                 # (flat ones if dynamic capacity disabled)
                 e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
                 e_max_pu = (
-                    e_max_pu_data.sel(name=nodes)
-                    .to_pandas()
-                    .reindex(index=n.snapshots)
+                    e_max_pu_data.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
                 )
 
                 n.add(
@@ -3254,7 +3258,6 @@ def add_heat(
                     )
 
             if heat_source in {tes_system.value for tes_system in TesSystem}:
-
                 n.add(
                     "Link",
                     nodes,
@@ -3298,8 +3301,7 @@ def add_heat(
                 bus1=nodes,
                 carrier=f"{heat_system} resistive heater",
                 efficiency=1 / costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "capital_cost"]
-                * overdim_factor,
+                capital_cost=costs.at[key, "capital_cost"] * overdim_factor,
                 p_max_pu=0,
                 p_min_pu=-1,
                 p_nom_extendable=True,

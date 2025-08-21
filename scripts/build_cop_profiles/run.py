@@ -132,7 +132,7 @@ if __name__ == "__main__":
             if heat_source in ["ground", "air", "water pits"]:
                 source_inlet_temperature_celsius = xr.open_dataarray(
                     snakemake.input[
-                        f"temp_{heat_source.replace(" ", "_").replace('ground', 'soil')}_total"
+                        f"temp_{heat_source.replace(' ', '_').replace('ground', 'soil')}_total"
                     ]
                 )
             elif heat_source in snakemake.params.limited_heat_sources.keys():

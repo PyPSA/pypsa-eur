@@ -2,25 +2,28 @@
 #
 # SPDX-License-Identifier: MIT
 
-import xarray as xr
 from enum import Enum
+
+import xarray as xr
+
 
 class TesTemperatureMode(Enum):
     """
     TES temperature profile assumptions.
-    
+
     CONSTANT: Assumes fixed temperatures at operational limits.
         - Top temperature: constant at max_top_temperature
         - Bottom temperature: constant at min_bottom_temperature
         - Assumes charge-boosting to maintain top temperature.
         - NOTE: Assuming bottom_temperature = min_bottom_temperature ignores that cooling of the return temperature might be necessary in practice.
-        
+
     DYNAMIC: Assumes temperatures follow network conditions.
         - Top temperature: follows forward_temperature (clipped at max_top_temperature)
         - Bottom temperature: follows return_temperature
         - Does not assume charge-boosting.
         - Note: This ignores that the TES temperatures do not match the supply temperatures due to thermal losses or other factors.
     """
+
     CONSTANT = "constant"
     DYNAMIC = "dynamic"
 
@@ -112,7 +115,9 @@ class PtesTemperatureApproximator:
                 self.max_top_temperature,
             )
         else:
-            raise NotImplementedError(f"Temperature profile {self.temperature_profile} not implemented")
+            raise NotImplementedError(
+                f"Temperature profile {self.temperature_profile} not implemented"
+            )
 
     @property
     def bottom_temperature(self) -> xr.DataArray:
@@ -129,7 +134,9 @@ class PtesTemperatureApproximator:
         elif self.temperature_profile == TesTemperatureMode.DYNAMIC:
             return self.return_temperature
         else:
-            raise NotImplementedError(f"Temperature profile {self.temperature_profile} not implemented")
+            raise NotImplementedError(
+                f"Temperature profile {self.temperature_profile} not implemented"
+            )
 
     @property
     def e_max_pu(self) -> xr.DataArray:
@@ -186,9 +193,10 @@ class PtesTemperatureApproximator:
             The resulting fraction of PTES charge that must be further heated.
         """
         if self.discharge_boosting_required:
-            return ((self.forward_temperature - self.top_temperature) / (
-                self.top_temperature - self.bottom_temperature
-            )).where(self.forward_temperature > self.top_temperature, 0)
+            return (
+                (self.forward_temperature - self.top_temperature)
+                / (self.top_temperature - self.bottom_temperature)
+            ).where(self.forward_temperature > self.top_temperature, 0)
         else:
             return xr.zeros_like(self.forward_temperature)
 
@@ -229,8 +237,13 @@ class PtesTemperatureApproximator:
             The fraction of the PTES's available storage capacity already used.
         """
         if self.charge_boosting_required:
-            return ((self.max_top_temperature - self.forward_temperature) / (
-                self.forward_temperature - self.return_temperature
-            )).where(self.forward_temperature < self.max_top_temperature, 0).clip(max=1)
+            return (
+                (
+                    (self.max_top_temperature - self.forward_temperature)
+                    / (self.forward_temperature - self.return_temperature)
+                )
+                .where(self.forward_temperature < self.max_top_temperature, 0)
+                .clip(max=1)
+            )
         else:
             return xr.zeros_like(self.forward_temperature)

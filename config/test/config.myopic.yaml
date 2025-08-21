@@ -44,14 +44,14 @@ sector:
       booster_technologies: ["resistive heater", "air heat pump", "water pits heat pump"]
   heat_pump_sources:
     urban central:
-      - water pits
-      - air
-      - geothermal
+    - water pits
+    - air
+    - geothermal
     urban decentral:
-      - air
+    - air
     rural:
-      - air
-      - ground
+    - air
+    - ground
   hydrogen_turbine: false
   regional_oil_demand: false
   regional_co2_sequestration_potential:
