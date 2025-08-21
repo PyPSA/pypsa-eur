@@ -985,13 +985,12 @@ def add_discharge_boosting_constraints(
 
     For each discharger link d, enforce:
         sum_over_heat_pumps(p_hp * (COP_ptes_hp − 1))
-      + sum_over_other_boosters(p_b * β_b)
-      >= (γ_d / (γ_d + ε)) * p_d
+      + sum_over_other_boosters(p_b * α_b)
+      >= (α_d / (α_d + ε)) * p_d
 
     where COP_hp is the coefficient of performance for ptes heat pump,
-    γ_b is the discharger boosting ratio for other technologies,
-    γ_d is the discharger’s boosting ratio profile, p_d its dispatch, and
-    ε a small constant. By the term γ_d / (γ_d + ε) we derive the PTES direct‑utilisation profile—
+    α_b is the discharger boosting ratio, p_d its dispatch, and ε a small constant.
+    By the term α_d / (α_d + ε) we derive the PTES direct‑utilisation profile—
     a value of zero means the discharge can be used directly, and a value of one means
     it requires boosting.
 
@@ -1030,13 +1029,13 @@ def add_discharge_boosting_constraints(
     )
 
     rhs_base = p.sel(Link=ptes_discharger_links).groupby(ptes_discharger_node_da).sum("Link")
-    gamma = (
+    alpha_d = (
         ptes_boost_per_discharge_dataarray
         .sel(node=rhs_base.coords["node"])
         .sel(time=snapshot)
         .transpose("snapshot", "node")
     )
-    rhs = rhs_base * (gamma / (gamma + 1e-9))
+    rhs = rhs_base * (alpha_d / (alpha_d + 1e-9))
 
     # --- LHS: boosters
     lhs = None
@@ -1095,13 +1094,12 @@ def add_charge_boosting_constraints(
 
     For each charger link c, enforce:
         sum_over_boosters(p_b * β_b)
-      >= (γ_c / (γ_c + ε)) * p_c
+      >= (β_c / (β_c + ε)) * p_c
 
     where β_b is the forward‑boosting ratio for each booster technology,
-    γ._c is the charger’s boosting ratio profile, p_c its dispatch, and
-    ε a small constant. By the term γ_c / (γ_c + ε) we derive the PTES
-    direct‑utilisation profile—a value of zero means the charge can be
-    used directly, and a value of one means it requires boosting.
+    p_c the charging dispatch, and ε a small constant. By the term β_c / (β_c + ε)
+    we derive the PTES direct‑utilisation profile—a value of zero means
+    the charge can be used directly, and a value of one means it requires boosting.
 
     Parameters
     ----------
@@ -1135,13 +1133,13 @@ def add_charge_boosting_constraints(
     )
 
     rhs_base = p.sel(Link=ptes_charger_links).groupby(ptes_charger_node_da).sum("Link")
-    gamma = (
+    beta_c = (
         ptes_boost_per_charge_dataaray
         .sel(node=rhs_base.coords["node"])
         .sel(time=snapshot)
         .transpose("snapshot", "node")
     )
-    rhs = rhs_base * (gamma / (gamma + 1e-9))
+    rhs = rhs_base * (beta_c / (beta_c + 1e-9))
 
     # --- LHS: boosters
     lhs = None
@@ -1626,8 +1624,8 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "solve_sector_network",
             opts="",
-            clusters="16",
-            #configfiles="config/test/config.myopic.yaml",
+            clusters="5",
+            configfiles="config/test/config.overight.yaml",
             sector_opts="",
             planning_horizons="2030",
         )

@@ -20,8 +20,9 @@ Relevant Settings
         district_heating:
             ptes:
                 dynamic_capacity:
-                discharger_temperature_boosting_required:
-                charger_temperature_boosting_required:
+                discharge_boosting_required:
+                charge_boosting_required:
+                temperature_profile
                 max_top_temperature:
                 min_bottom_temperature:
 
@@ -69,7 +70,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_ptes_operations",
-            clusters=8,
+            clusters=5,
             planning_horizons="2030",
         )
 

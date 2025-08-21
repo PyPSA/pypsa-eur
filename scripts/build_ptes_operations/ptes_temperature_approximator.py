@@ -234,7 +234,3 @@ class PtesTemperatureApproximator:
             )).where(self.forward_temperature < self.max_top_temperature, 0).clip(max=1)
         else:
             return xr.zeros_like(self.forward_temperature)
-        # auf eins clip
-        # aus per dafault
-        # aktivierung von charge boosting problem weil die resistive heater die einspeisen
-        # beides aktivieren

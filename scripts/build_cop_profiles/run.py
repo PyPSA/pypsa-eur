@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_cop_profiles",
-            clusters=5,
+            clusters=48,
             planning_horizons=2030,
         )
 
