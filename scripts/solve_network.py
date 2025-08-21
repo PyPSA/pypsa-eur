@@ -988,8 +988,8 @@ def add_discharge_boosting_constraints(
       + sum_over_other_boosters(p_b * α_b)
       >= (α_d / (α_d + ε)) * p_d
 
-    where COP_hp is the coefficient of performance for ptes heat pump,
-    α_b is the discharger boosting ratio, p_d its dispatch, and ε a small constant.
+    where COP_hp is the coefficient of performance for ptes heat pump, α_b is the
+    discharger boosting ratio, p_d its dispatch, and ε a small constant.
     By the term α_d / (α_d + ε) we derive the PTES direct‑utilisation profile—
     a value of zero means the discharge can be used directly, and a value of one means
     it requires boosting.
