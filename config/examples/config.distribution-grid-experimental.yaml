@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+run:
+  prefix: ""
+  name: "distribution-grid-experimental"
+  scenarios:
+    enable: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+foresight: overnight
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+electricity:
+  voltages: [63., 66., 90., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
+  base_network: osm-raw
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
+lines:
+  types:
+    63.: "94-AL1/15-ST1A 20.0"
+    66.: "94-AL1/15-ST1A 20.0"
+    90.: "184-AL1/30-ST1A 110.0"
+    110.: "184-AL1/30-ST1A 110.0"
+    132.: "243-AL1/39-ST1A 110.0"
+    150.: "243-AL1/39-ST1A 110.0"
+    220.: "Al/St 240/40 2-bundle 220.0"
+    300.: "Al/St 240/40 3-bundle 300.0"
+    330.: "Al/St 240/40 3-bundle 300.0"
+    380.: "Al/St 240/40 4-bundle 380.0"
+    400.: "Al/St 240/40 4-bundle 380.0"
+    500.: "Al/St 240/40 4-bundle 380.0"
+    750.: "Al/St 560/50 4-bundle 750.0"
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
+transmission_projects:
+  enable: false
