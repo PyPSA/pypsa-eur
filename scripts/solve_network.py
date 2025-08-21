@@ -1625,7 +1625,7 @@ if __name__ == "__main__":
             "solve_sector_network",
             opts="",
             clusters="5",
-            configfiles="config/test/config.overight.yaml",
+            configfiles="config/test/config.overnight.yaml",
             sector_opts="",
             planning_horizons="2030",
         )
