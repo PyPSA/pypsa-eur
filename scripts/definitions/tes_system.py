@@ -4,9 +4,11 @@
 
 from enum import Enum
 
+
 class TesSystem(Enum):
     """
     Enumeration representing different types of thermal energy storage (TES) systems.
+
     Attributes
     ----------
     TTES : str

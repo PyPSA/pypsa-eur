@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 def ptes_operation_profiles(w):
     """
     Return a dict of only the PTES profiles that are enabled in config,

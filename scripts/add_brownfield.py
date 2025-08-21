@@ -323,9 +323,9 @@ def update_dynamic_ptes_capacity(
     ] + str(year)
     # update pit storage capacity in previous iteration in-place to capacity in this iteration
     if corresponding_idx_this_iteration.isin(n.stores_t.e_max_pu.columns).all():
-        n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = n.stores_t.e_max_pu[
-            corresponding_idx_this_iteration
-        ].values
+        n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = (
+            n.stores_t.e_max_pu[corresponding_idx_this_iteration].values
+        )
     else:
         logger.info(
             "Dynamic capacity time-series unavailable, falling back to static e_max_pu"

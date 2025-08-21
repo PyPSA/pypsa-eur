@@ -505,7 +505,7 @@ rule build_ptes_operations:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         ptes_top_temperature_profile=resources(
-           "ptes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
+            "ptes_top_temperature_profile_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profile=resources(
             "ptes_e_max_pu_profile_base_s_{clusters}_{planning_horizons}.nc"
