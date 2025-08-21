@@ -68,6 +68,29 @@ sector:
         booster_heat_pump: true
     ates:
       enable: true
+    heat_pump_sources:
+      urban central:
+      - air
+      - geothermal
+      urban decentral:
+      - air
+      rural:
+      - air
+      - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
 
 
 industry:
