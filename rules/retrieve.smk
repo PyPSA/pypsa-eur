@@ -181,7 +181,7 @@ if config["enable"]["retrieve"] and (
 
 if config["enable"]["retrieve"] and (
     POPULATION_COUNT_DATASET := dataset_version("population_count")
-)["source"] in ["archive"]:
+)["source"] in ["archive", "primary"]:
 
     rule retrieve_population_count:
         input:
@@ -193,6 +193,15 @@ if config["enable"]["retrieve"] and (
         retries: 2
         run:
             move(input[0], output[0])
+
+            if POPULATION_COUNT_DATASET["source"] == 'primary':
+                import xarray as xr
+                import rioxarray as rio
+                file_path = output[0]
+                ds = xr.open_dataarray(file_path)
+                ds_reqd = ds.sel(x=slice(15.55, 40.41), y=slice(52.49,41.72))
+                ds_reqd.rio.to_raster(file_path)
+            
 
 
 if config["enable"]["retrieve"] and (
