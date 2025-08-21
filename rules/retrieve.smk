@@ -92,8 +92,6 @@ if config["enable"]["retrieve"]:
             shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         params:
             zip_file="ref-nuts-2013-03m.geojson.zip",
-        shadow:
-            "minimal"
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.shapes, params.zip_file)
@@ -107,6 +105,7 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
+            os.remove(params.zip_file)
 
 
 
@@ -124,8 +123,6 @@ if config["enable"]["retrieve"]:
             shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         params:
             zip_file="ref-nuts-2021-01m.geojson.zip",
-        shadow:
-            "minimal"
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.shapes, params.zip_file)
@@ -139,6 +136,7 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(
                         getattr(output, f"shapes_level_{level[-1]}")
                     )
+            os.remove(params.zip_file)
 
 
 
@@ -368,8 +366,6 @@ if config["enable"]["retrieve"]:
             zip_file="World_EEZ_v12_20231025_LR.zip",
         output:
             gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
-        shadow:
-            "minimal"
         run:
             from uuid import uuid4
 
@@ -394,6 +390,7 @@ if config["enable"]["retrieve"]:
                 f.write(response.content)
             output_folder = Path(output.gpkg).parent.parent
             unpack_archive(params["zip_file"], output_folder)
+            os.remove(params["zip_file"])
 
 
 
@@ -404,8 +401,6 @@ if config["enable"]["retrieve"]:
             zip_file="API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
         output:
             gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
-        shadow:
-            "minimal"
         run:
             response = requests.get(
                 "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
@@ -422,6 +417,7 @@ if config["enable"]["retrieve"]:
                 ) and f.endswith(".csv"):
                     os.rename(os.path.join(output_folder, f), output.gpkg)
                     break
+            os.remove(params["zip_file"])
 
 
 
@@ -437,8 +433,6 @@ if config["enable"]["retrieve"]:
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
             "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
-        shadow:
-            "minimal"
         run:
             response = requests.get(
                 "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
@@ -447,6 +441,7 @@ if config["enable"]["retrieve"]:
                 f.write(response.content)
             output_folder = Path(output[0]).parent.parent.parent
             unpack_archive(params["zip_file"], output_folder)
+            os.remove(params["zip_file"])
 
 
 
@@ -519,8 +514,6 @@ if config["enable"]["retrieve"]:
             folder_name="WDPA",
         output:
             gpkg="data/WDPA.gpkg",
-        shadow:
-            "minimal"
         run:
             # Copy file and ensure proper permissions
             shcopy2(input.zip_file, params.zip_file)
@@ -535,6 +528,7 @@ if config["enable"]["retrieve"]:
                 )
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+            os.remove(params.zip_file)
 
     rule download_wdpa_marine:
         # Downloading Marine protected area database from WDPA
@@ -550,8 +544,6 @@ if config["enable"]["retrieve"]:
             folder_name="WDPA_WDOECM_marine",
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
-        shadow:
-            "minimal"
         run:
             shcopy2(input.zip_file, params.zip_file)
             os.chmod(params.zip_file, 0o644)  # rw-r--r--
@@ -563,6 +555,7 @@ if config["enable"]["retrieve"]:
                 layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+            os.remove(params.zip_file)
 
 
 
