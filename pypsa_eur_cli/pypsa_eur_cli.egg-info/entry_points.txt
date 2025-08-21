@@ -1,0 +1,2 @@
+[console_scripts]
+pypsa-eur = pypsa_eur.main:app

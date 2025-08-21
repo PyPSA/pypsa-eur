@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pypsa-eur-cli"
+version = "0.1.0"
+description = "PyPSA-Eur CLI tool"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "typer",
+    "pyyaml",
+    "tqdm",
+    "colorama",
+    "snakemake",
+]
+
+[project.scripts]
+pypsa-eur = "pypsa_eur.main:app"
+
+[tool.setuptools]
+packages = ["pypsa_eur"]
