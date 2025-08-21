@@ -17,6 +17,8 @@ scenario:
   - 5
   opts:
   - ''
+  planning_horizons:
+  - 2030
 
 countries: ['BE']
 
