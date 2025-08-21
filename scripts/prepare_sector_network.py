@@ -2942,10 +2942,6 @@ def add_heat(
         )
 
         if options["tes"]:
-            tes_time_constant_days = options["tes_tau"][
-                heat_system.central_or_decentral
-            ]
-
             if options["district_heating"]["ttes"]["enable"]:
                 n.add("Carrier", f"{heat_system} water tanks")
 
