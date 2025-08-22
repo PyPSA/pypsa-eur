@@ -1,40 +1,46 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Dec 10 11:23:41 2024
 
 @author: alice
 """
 
+
 def load_projection(plotting_params):
     proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
+
 def read_year(excel_dir, scenario, sheet, year):
-    df = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = sheet, index_col="Bus")
-    df = df[year]/1e3 # from kt to Mt of steel
-    
+    df = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name=sheet, index_col="Bus"
+    )
+    df = df[year] / 1e3  # from kt to Mt of steel
+
     return df
 
+
 def methanol_pie_preprocessing(excel_dir, scenario, config, year):
-    
-    methanol_prod = read_year(excel_dir, scenario, 'Methanol_Prod', year)
-    meth_lhv = 5.54 #MWh/t methanol
-    methanol_prod = methanol_prod / meth_lhv / 1e3 # kt NH3
+    methanol_prod = read_year(excel_dir, scenario, "Methanol_Prod", year)
+    meth_lhv = 5.54  # MWh/t methanol
+    methanol_prod = methanol_prod / meth_lhv / 1e3  # kt NH3
     # Hydrogen
     elec_h2prod = read_year(excel_dir, scenario, "Elec_H2Prod", year)
     smrcc_h2prod = read_year(excel_dir, scenario, "SMRCC_H2Prod", year)
     smr_h2prod = read_year(excel_dir, scenario, "SMR_H2Prod", year)
     nh3crack_h2prod = read_year(excel_dir, scenario, "NH3crack_H2Prod", year)
-    
-    green_h2_share = ((elec_h2prod + smrcc_h2prod) / ( elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)).fillna(0)
+
+    green_h2_share = (
+        (elec_h2prod + smrcc_h2prod)
+        / (elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)
+    ).fillna(0)
     green_meth_share = green_h2_share * methanol_prod
-    nongreen_meth_share = (1- green_h2_share) * methanol_prod
+    nongreen_meth_share = (1 - green_h2_share) * methanol_prod
 
     methanol_tech = pd.concat([green_meth_share, nongreen_meth_share], axis=1)
-    methanol_tech.columns = ['Green H2 Meth.', 'Grey H2 Meth.']
+    methanol_tech.columns = ["Green H2 Meth.", "Grey H2 Meth."]
     methanol_tech = methanol_tech[methanol_tech.sum(axis=1) >= 1]
-    
+
     return methanol_prod, methanol_tech
 
 
@@ -49,45 +55,44 @@ def assign_location(n):
             c.df.loc[names, "location"] = names.str[:i]
 
 
-def plot_pie_map(n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=None): 
-    
+def plot_pie_map(
+    n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=None
+):
     assign_location(n)
-    
-    regions["data"] = regions.index.str[:2].map(methanol_prod) 
+
+    regions["data"] = regions.index.str[:2].map(methanol_prod)
     regions["data"] = regions["data"].where(regions["data"] > 0.1, 0)
     regions["data"] = regions["data"].fillna(0)
-    
-    
+
     row_sums = methanol_tech.sum(axis=1)
-    methanol_prod_shares = round(methanol_tech.div(row_sums, axis=0),2)
+    methanol_prod_shares = round(methanol_tech.div(row_sums, axis=0), 2)
 
     regions = regions.to_crs(proj.proj4_init)
-    #max_value = steel_prod.values.max()
-    max_value=30
+    # max_value = steel_prod.values.max()
+    max_value = 30
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
-    
-       
+
     regions.plot(
         ax=ax,
         column="data",
         cmap="Oranges",
         linewidths=0.5,
-        edgecolor='black',
+        edgecolor="black",
         legend=(i == ncol - 1),
         vmax=max_value,
         vmin=0,
         legend_kwds={
             "label": "Methanol prod\n[kt CH3OH/yr]",
-            #"fontsize": 12,
+            # "fontsize": 12,
             "shrink": 0.5,
             "extend": "max",
         },
     )
-    
+
     # Adjust the colors for the five items
     idx_prefix = None
-    
+
     for idx, region in regions.iterrows():
         # Check if the first two characters of the current idx match the last processed one
         if idx[:2] == idx_prefix:
@@ -95,68 +100,71 @@ def plot_pie_map(n, methanol_prod, methanol_tech, regions, year, i, j, piecolors
             continue
         idx_prefix = idx[:2]
         # Get the centroid of each region
-        centroid = region['geometry'].centroid
-    
+        centroid = region["geometry"].centroid
+
         if idx_prefix in methanol_prod_shares.index:
             pie_values = [
-                methanol_prod_shares.loc[idx_prefix, 'Green H2 Meth.'],
-                methanol_prod_shares.loc[idx_prefix, 'Grey H2 Meth.'],
+                methanol_prod_shares.loc[idx_prefix, "Green H2 Meth."],
+                methanol_prod_shares.loc[idx_prefix, "Grey H2 Meth."],
             ]
-    
+
             # If all values are 0, skip plotting
             if sum(pie_values) == 0:
                 continue
-    
+
             # Normalize the size for the pie chart
             size = 75  # Adjust size scaling as needed
-    
+
             # If one value is 1 (or 100% share), plot a full circle
             if max(pie_values) == 1:
                 full_circle_color = piecolors[pie_values.index(max(pie_values))]
                 ax.scatter(
-                    centroid.x, centroid.y,
+                    centroid.x,
+                    centroid.y,
                     s=size,
                     color=full_circle_color,
-                    edgecolor='black',  # Black border for the full circle
+                    edgecolor="black",  # Black border for the full circle
                     linewidth=0.3,
-                    marker='o'  # Full circle
+                    marker="o",  # Full circle
                 )
                 continue
-    
+
             # Initialize the starting angle for the pie slices
             previous = 0
             markers = []
-    
+
             # Generate pie chart segments as markers
             for color, ratio in zip(piecolors, pie_values):
                 if ratio == 0:
                     continue
-    
+
                 this = 2 * np.pi * ratio + previous
                 x = [0] + np.cos(np.linspace(previous, this, 10)).tolist() + [0]
                 y = [0] + np.sin(np.linspace(previous, this, 10)).tolist() + [0]
                 xy = np.column_stack([x, y])
                 previous = this
-    
+
                 # Append marker settings for this pie slice
-                markers.append({
-                    'marker': xy,
-                    's': size,
-                    'facecolor': color,
-                    'edgecolor': 'black',
-                    'linewidth': 0.3
-                })
-    
+                markers.append(
+                    {
+                        "marker": xy,
+                        "s": size,
+                        "facecolor": color,
+                        "edgecolor": "black",
+                        "linewidth": 0.3,
+                    }
+                )
+
             # Scatter each pie slice
             for marker in markers:
                 ax.scatter(centroid.x, centroid.y, **marker)
 
-            
     ax.set_facecolor("white")
-    
+
     # Add a title and subtitle (if provided)
     if j == 0:
         ax.set_title(year, fontsize=14, loc="center")  # Main title
+
 
 # %%
 
@@ -169,10 +177,10 @@ regions_fn = root_dir + "resources/" + scenario + "regions_onshore_base_s_39.geo
 import cartopy.crs as ccrs
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pypsa
 import yaml
-import numpy as np
 
 with open(
     root_dir + res_dir + "baseline_eu_dem/configs/config.base_s_39_lvopt___2050.yaml"
@@ -189,26 +197,32 @@ config["plotting"]["projection"]["name"] = "EqualEarth"
 proj = load_projection(config["plotting"])
 
 years = [2030, 2040, 2050]
-piecolors = ['#42CF05', '#636161']
-pielabels = ['Green H2 Meth.', 'Grey H2 Meth.']
+piecolors = ["#42CF05", "#636161"]
+pielabels = ["Green H2 Meth.", "Grey H2 Meth."]
 
 excel_dir = "excels_24h/"
 
-scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
+scenarios = [
+    "baseline_eu_dem",
+    "policy_eu_dem",
+    "baseline_regional_dem",
+    "policy_regional_dem",
+]
 nrows = int(len(scenarios))
 ncol = int(len(years))
 
 fig, axes = plt.subplots(
-    nrows, ncol,
+    nrows,
+    ncol,
     figsize=(2.5 * nrows, 3.5 * ncol),
     constrained_layout=False,
     subplot_kw={"projection": proj},
-    #gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }
+    # gridspec_kw={'width_ratios': [0.805] + [1] * (ncol - 1) }
 )
 
 fig.subplots_adjust(wspace=-0.40, hspace=0)
 
-fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
+fn = root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc"
 n = pypsa.Network(fn)
 
 j = 0  # row index
@@ -216,38 +230,71 @@ i = 0  # column index
 
 for j, scenario in enumerate(scenarios):
     for i, year in enumerate(years):
-        
-        methanol_prod, methanol_tech = methanol_pie_preprocessing(excel_dir, scenario, config, year)
-    
+        methanol_prod, methanol_tech = methanol_pie_preprocessing(
+            excel_dir, scenario, config, year
+        )
+
         ax = axes[j, i]
-        plot_pie_map(n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=ax)
-        ax.axis('off')
-        
+        plot_pie_map(
+            n, methanol_prod, methanol_tech, regions, year, i, j, piecolors, ax=ax
+        )
+        ax.axis("off")
+
         if i == 0:
             if j == 0:
                 ax.annotate(
-                    "BASELINE\nEU DEM", xy=(-0.1, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "BASELINE\nEU DEM",
+                    xy=(-0.1, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
             elif j == 1:
                 ax.annotate(
-                    "POLICY\nEU DEM", xy=(-0.1, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "POLICY\nEU DEM",
+                    xy=(-0.1, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
             elif j == 2:
                 ax.annotate(
-                    "BASELINE\nREG. DEM", xy=(-0.1, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "BASELINE\nREG. DEM",
+                    xy=(-0.1, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
             elif j == 3:
                 ax.annotate(
-                    "POLICY\nREG. DEM", xy=(-0.1, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "POLICY\nREG. DEM",
+                    xy=(-0.1, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
 
-patches = [plt.Line2D([0], [0], marker='o', color=color, markersize=10, linestyle='None') for color in piecolors]
-fig.legend(patches, pielabels, loc="lower center", ncol=len(piecolors), fontsize=10, frameon=False,
-           bbox_to_anchor=(0.5, 0.05))
+patches = [
+    plt.Line2D([0], [0], marker="o", color=color, markersize=10, linestyle="None")
+    for color in piecolors
+]
+fig.legend(
+    patches,
+    pielabels,
+    loc="lower center",
+    ncol=len(piecolors),
+    fontsize=10,
+    frameon=False,
+    bbox_to_anchor=(0.5, 0.05),
+)
 
 """
 fig.legend(
@@ -262,9 +309,8 @@ fig.legend(
     title_fontsize=12,
     fontsize=10
 )
-"""          
-#plt.constrained_layout()
-#fig.suptitle('Year 2050', fontsize=16, y=1.02)
+"""
+# plt.constrained_layout()
+# fig.suptitle('Year 2050', fontsize=16, y=1.02)
 plt.savefig("graphs/methanol_pie_charts_years.png", bbox_inches="tight")
 plt.show()
-

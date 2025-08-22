@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Oct  9 11:46:12 2024
 
@@ -11,25 +10,39 @@ def load_projection(plotting_params):
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
+
 def ammonia_preprocessing(excel_dir, scenario, config):
-    ammonia_prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "Ammonia_Prod", index_col="Bus")
-    
+    ammonia_prod = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name="Ammonia_Prod", index_col="Bus"
+    )
+
     # Hydrogen
-    elec_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "Elec_H2Prod", index_col="Bus")
-    smrcc_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "SMRCC_H2Prod", index_col="Bus")
-    smr_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "SMR_H2Prod", index_col="Bus")
-    nh3crack_h2prod = pd.read_excel(excel_dir + scenario + ".xlsx", sheet_name = "NH3crack_H2Prod", index_col="Bus")
-    
-    green_h2_share = ((elec_h2prod + smrcc_h2prod) / ( elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)).fillna(0)
-    
-    if config['sector']['H2_network']:
+    elec_h2prod = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name="Elec_H2Prod", index_col="Bus"
+    )
+    smrcc_h2prod = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name="SMRCC_H2Prod", index_col="Bus"
+    )
+    smr_h2prod = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name="SMR_H2Prod", index_col="Bus"
+    )
+    nh3crack_h2prod = pd.read_excel(
+        excel_dir + scenario + ".xlsx", sheet_name="NH3crack_H2Prod", index_col="Bus"
+    )
+
+    green_h2_share = (
+        (elec_h2prod + smrcc_h2prod)
+        / (elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod)
+    ).fillna(0)
+
+    if config["sector"]["H2_network"]:
         # H2 network true -> let's do an average H2 green for Europe
         h2_prod = elec_h2prod + smrcc_h2prod + smr_h2prod + nh3crack_h2prod
         green_h2_prod = green_h2_share * h2_prod
-        green_h2_share = round(green_h2_prod.sum() / h2_prod.sum(),1)
-    
-    green_share = round((ammonia_prod / ammonia_prod) * green_h2_share*100)
-    
+        green_h2_share = round(green_h2_prod.sum() / h2_prod.sum(), 1)
+
+    green_share = round((ammonia_prod / ammonia_prod) * green_h2_share * 100)
+
     return ammonia_prod, green_share
 
 
@@ -45,25 +58,25 @@ def assign_location(n):
 
 
 def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
-
     assign_location(n)
-    #timestep = n.snapshot_weightings.iloc[0,0]
-    
-    df = pd.DataFrame(0, index = regions.index, columns = ['data'])
+    # timestep = n.snapshot_weightings.iloc[0,0]
+
+    df = pd.DataFrame(0, index=regions.index, columns=["data"])
     df["prefix"] = df.index.str.split().str[0].str[:2]
-    df["data"] = df["prefix"].map(excel_data[year]) # Assigns same values for one country two nodes for graph
+    df["data"] = df["prefix"].map(
+        excel_data[year]
+    )  # Assigns same values for one country two nodes for graph
     df["share"] = df["prefix"].map(share_data[year])
-  
-    
+
     df.drop(columns=["prefix"], inplace=True)
-    
+
     regions["data"] = df["data"]
     regions["data"] = regions["data"].where(regions["data"] > 0.1, 0)
     regions["data"] = regions["data"].fillna(0)
     regions["share"] = df["share"]
     regions["share"] = regions["share"].where(regions["share"] > 0.1, 0)
     regions["share"] = regions["share"].fillna(0)
-    
+
     regions = regions.to_crs(proj.proj4_init)
     max_value = excel_data.values.max()
 
@@ -86,7 +99,7 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
         },
     )
     ax.set_facecolor("white")
-    
+
     # Annotate centroids with share values
     prev_idx = 0
     for idx, region in regions.iterrows():
@@ -94,9 +107,9 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
             prev_idx = idx[:2]
             continue
         else:
-            centroid = region['geometry'].centroid
+            centroid = region["geometry"].centroid
             if region["data"] > 1:
-                color = "white" if region["data"] > (2/3) * max_value else "black"
+                color = "white" if region["data"] > (2 / 3) * max_value else "black"
                 ax.annotate(
                     text=f"{int(region['share'])}",  # Format share as a percentage
                     xy=(centroid.x, centroid.y),  # Use centroid coordinates
@@ -105,10 +118,8 @@ def plot_map(n, excel_data, share_data, regions, year, title, ax=None):
                     color=color,
                 )
             prev_idx = idx[:2]
-            
 
     ax.set_title(year, fontsize=14, loc="center")  # Main title
-
 
 
 # %%
@@ -155,32 +166,40 @@ fig, axes = plt.subplots(
     subplot_kw={"projection": proj},
 )
 
-fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc")
+fn = root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc"
 n = pypsa.Network(fn)
 
 for j, scenario in enumerate(scenarios):
-    
     ammonia_prod, green_share = ammonia_preprocessing(excel_dir, scenario, config)
 
     for i, year in enumerate(years):
-        
         ax = axes[j, i]
         plot_map(n, ammonia_prod, green_share, regions, year, title, ax=ax)
-        
+
         if i == 0:
             if j == 0:
                 ax.annotate(
-                    "BASELINE", xy=(-0.15, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "BASELINE",
+                    xy=(-0.15, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
             elif j == 1:
                 ax.annotate(
-                    "POLICY", xy=(-0.15, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "POLICY",
+                    xy=(-0.15, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
 
 plt.tight_layout()
-fig.suptitle('European demand', fontsize=16, y=1.02)
+fig.suptitle("European demand", fontsize=16, y=1.02)
 plt.savefig("graphs/ammonia_eu_dem.png", bbox_inches="tight")
 plt.show()
 
@@ -194,31 +213,41 @@ fig, axes = plt.subplots(
     subplot_kw={"projection": proj},
 )
 
-fn = (root_dir + "results_24h/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc")
+fn = (
+    root_dir + "results_24h/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2030.nc"
+)
 n = pypsa.Network(fn)
 
 for j, scenario in enumerate(scenarios):
-    
     ammonia_prod, green_share = ammonia_preprocessing(excel_dir, scenario, config)
 
     for i, year in enumerate(years):
-        
         ax = axes[j, i]
         plot_map(n, ammonia_prod, green_share, regions, year, title, ax=ax)
-        
+
         if i == 0:
             if j == 0:
                 ax.annotate(
-                    "BASELINE", xy=(-0.15, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "BASELINE",
+                    xy=(-0.15, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
             elif j == 1:
                 ax.annotate(
-                    "POLICY", xy=(-0.15, 0.5), xycoords='axes fraction',
-                    ha='center', va='center', fontsize=12, rotation=90
+                    "POLICY",
+                    xy=(-0.15, 0.5),
+                    xycoords="axes fraction",
+                    ha="center",
+                    va="center",
+                    fontsize=12,
+                    rotation=90,
                 )
 
 plt.tight_layout()
-fig.suptitle('Regional demand', fontsize=16, y=1.02)
+fig.suptitle("Regional demand", fontsize=16, y=1.02)
 plt.savefig("graphs/ammonia_regional_dem.png", bbox_inches="tight")
 plt.show()

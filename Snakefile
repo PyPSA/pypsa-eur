@@ -145,15 +145,17 @@ rule all_plots:
         ),
     default_target: True
 
+
 rule all:
-  input:
-    expand(
+    input:
+        expand(
             RESULTS
             + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
             run=config["run"]["name"],
             **config["scenario"],
         ),
-  default_target: True
+    default_target: True
+
 
 rule create_scenarios:
     output:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Dec  2 17:19:10 2024
 
@@ -6,17 +5,16 @@ Created on Mon Dec  2 17:19:10 2024
 """
 
 import cartopy.crs as ccrs
-import pypsa
-import pandas as pd
 import matplotlib.pyplot as plt
-import geopandas as gpd
-import yaml
-import numpy as np
+import pandas as pd
+import pypsa
+
 
 def load_projection(plotting_params):
     proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
+
 
 def assign_location(n):
     for c in n.iterate_components(n.one_port_components | n.branch_components):
@@ -28,13 +26,22 @@ def assign_location(n):
             names = ifind.index[ifind == i]
             c.df.loc[names, "location"] = names.str[:i]
 
+
 def calculate_steel(scenario):
     # Load data from Excel sheets
     excel_dir = "excels_24h/"
     root_dir = "C:/Users/alice/Desktop/CMCC/pypsa-adb-industry/"
-    eaf_prod = pd.read_excel(root_dir + "notebooks_december/" + excel_dir + f"{scenario}.xlsx", sheet_name="EAF_Prod", index_col="Bus")
-    bof_prod = pd.read_excel(root_dir + "notebooks_december/" +  excel_dir + f"{scenario}.xlsx", sheet_name="BOF_Prod", index_col="Bus")
-    
+    eaf_prod = pd.read_excel(
+        root_dir + "notebooks_december/" + excel_dir + f"{scenario}.xlsx",
+        sheet_name="EAF_Prod",
+        index_col="Bus",
+    )
+    bof_prod = pd.read_excel(
+        root_dir + "notebooks_december/" + excel_dir + f"{scenario}.xlsx",
+        sheet_name="BOF_Prod",
+        index_col="Bus",
+    )
+
     # Calculate green share and steel production
     steel_prod = eaf_prod + bof_prod
     steel_prod = steel_prod.sum(axis=1) / 1e3  # Convert to Mton for 3 years
@@ -45,89 +52,122 @@ def calculate_steel(scenario):
 # %%
 
 root_dir = "C:/Users/alice/Desktop/CMCC/pypsa-adb-industry/"
-scenarios = ["baseline_eu_dem", "policy_eu_dem", "baseline_regional_dem", "policy_regional_dem"]
-cool_names = ["Baseline European", "Policy European", "Baseline Regional", "Policy Regional"]
+scenarios = [
+    "baseline_eu_dem",
+    "policy_eu_dem",
+    "baseline_regional_dem",
+    "policy_regional_dem",
+]
+cool_names = [
+    "Baseline European",
+    "Policy European",
+    "Baseline Regional",
+    "Policy Regional",
+]
 years = [2030, 2040, 2050]
 columns_to_drop = ["cluster", "Unnamed: 1", "Unnamed: 3"]
 
-base_eu_nodal = pd.read_csv(root_dir + "results_24h/baseline_eu_dem/csvs/nodal_costs.csv")
-base_reg_nodal = pd.read_csv(root_dir + "results_24h/baseline_regional_dem/csvs/nodal_costs.csv")
+base_eu_nodal = pd.read_csv(
+    root_dir + "results_24h/baseline_eu_dem/csvs/nodal_costs.csv"
+)
+base_reg_nodal = pd.read_csv(
+    root_dir + "results_24h/baseline_regional_dem/csvs/nodal_costs.csv"
+)
 pol_eu_nodal = pd.read_csv(root_dir + "results_24h/policy_eu_dem/csvs/nodal_costs.csv")
-pol_reg_nodal = pd.read_csv(root_dir + "results_24h/policy_regional_dem/csvs/nodal_costs.csv")
+pol_reg_nodal = pd.read_csv(
+    root_dir + "results_24h/policy_regional_dem/csvs/nodal_costs.csv"
+)
 
 csvs = [base_eu_nodal, base_reg_nodal, pol_eu_nodal, pol_reg_nodal]
 csv_names = ["base_eu", "base_reg", "pol_eu", "pol_reg"]
 processed_csvs = []
 
 for df, name in zip(csvs, csv_names):
-        
-    df = df.drop(columns=columns_to_drop, errors='ignore')  # 'errors=ignore' avoids issues if some columns don't exist
+    df = df.drop(
+        columns=columns_to_drop, errors="ignore"
+    )  # 'errors=ignore' avoids issues if some columns don't exist
     df = df.dropna(subset=["Unnamed: 2"])
     df = df.set_index("Unnamed: 2")
     df = df[df.index.str.match(r"^[A-Z]")]
     df = df[~df.index.str.startswith("EU")]
     df = df[~df.index.str.startswith("H2")]
     df.columns = years
-    df = df.apply(pd.to_numeric, errors='coerce')
+    df = df.apply(pd.to_numeric, errors="coerce")
     df = df.groupby(df.index).sum(numeric_only=True)
     df["scenario"] = name
     df = df.set_index("scenario", append=True)
-    processed_csvs.append(df) 
+    processed_csvs.append(df)
 
 final_combined_df = pd.concat(processed_csvs)
-r = 0.04 # social discount rate
+r = 0.04  # social discount rate
 
 for year in years:
-    final_combined_df[f'Annualized_{year}'] = final_combined_df[year] / ((1 + r) ** (year - 2020))
+    final_combined_df[f"Annualized_{year}"] = final_combined_df[year] / (
+        (1 + r) ** (year - 2020)
+    )
 
-annualized_df = final_combined_df['Annualized_2030']  + final_combined_df['Annualized_2040'] + final_combined_df['Annualized_2050']
+annualized_df = (
+    final_combined_df["Annualized_2030"]
+    + final_combined_df["Annualized_2040"]
+    + final_combined_df["Annualized_2050"]
+)
 
 # %% Map of difference between pol_eu and pol_reg
 
 
 annualized_df = annualized_df.reset_index()
 
-annualized_df.columns = ['Country','Scenario','Cumulative_costs']
-annualized_df.index = annualized_df['Country']
-annualized_df = annualized_df.drop('Country', axis=1)
+annualized_df.columns = ["Country", "Scenario", "Cumulative_costs"]
+annualized_df.index = annualized_df["Country"]
+annualized_df = annualized_df.drop("Country", axis=1)
 # Weight by population
-pop = pd.read_csv(root_dir + "resources/baseline/pop_layout_base_s_39.csv", index_col = 0)
-pop = pop['total']
-annualized_df = annualized_df.merge(pop, left_index=True, right_index=True, how='left', suffixes=('', '_pop'))
-annualized_df['Costs_per_person'] = annualized_df['Cumulative_costs'] / annualized_df['total'] / 1e3 # €/person
+pop = pd.read_csv(root_dir + "resources/baseline/pop_layout_base_s_39.csv", index_col=0)
+pop = pop["total"]
+annualized_df = annualized_df.merge(
+    pop, left_index=True, right_index=True, how="left", suffixes=("", "_pop")
+)
+annualized_df["Costs_per_person"] = (
+    annualized_df["Cumulative_costs"] / annualized_df["total"] / 1e3
+)  # €/person
 
 annualized_df.index = annualized_df.index.str[:2]
 
 annualized_df = annualized_df.groupby(["Country", "Scenario"]).sum()
 
 annualized_df = annualized_df.reset_index()
-annualized_df.index = annualized_df['Country']
-annualized_df = annualized_df.drop(['Country','Cumulative_costs','total'], axis = 1)
+annualized_df.index = annualized_df["Country"]
+annualized_df = annualized_df.drop(["Country", "Cumulative_costs", "total"], axis=1)
 
-annualized_reg = annualized_df[annualized_df['Scenario'] == 'pol_reg']
-annualized_eu = annualized_df[annualized_df['Scenario'] == 'pol_eu'].drop('Scenario', axis = 1)
-annualized_change = annualized_reg.merge(annualized_eu, left_index=True, right_index=True, how='left', suffixes=('', '_REF'))
-annualized_change['Change'] = (annualized_change['Costs_per_person'] - annualized_change['Costs_per_person_REF'])
+annualized_reg = annualized_df[annualized_df["Scenario"] == "pol_reg"]
+annualized_eu = annualized_df[annualized_df["Scenario"] == "pol_eu"].drop(
+    "Scenario", axis=1
+)
+annualized_change = annualized_reg.merge(
+    annualized_eu, left_index=True, right_index=True, how="left", suffixes=("", "_REF")
+)
+annualized_change["Change"] = (
+    annualized_change["Costs_per_person"] - annualized_change["Costs_per_person_REF"]
+)
 
-annualized_change = annualized_change['Change']
-annualized_eu = annualized_eu['Costs_per_person']
+annualized_change = annualized_change["Change"]
+annualized_eu = annualized_eu["Costs_per_person"]
 
 # %% Get steel production for the graph
 
 # Call the function for different scenarios
 policy_reg_steel_prod = calculate_steel("policy_regional_dem")
-policy_eu_steel_prod = calculate_steel("policy_eu_dem") 
+policy_eu_steel_prod = calculate_steel("policy_eu_dem")
 
 delta_steel = policy_reg_steel_prod - policy_eu_steel_prod
 
 # %% Plot
 
-fn = (root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc")
+fn = root_dir + "results/" + scenarios[0] + "/postnetworks/base_s_39_lvopt___2050.nc"
 n = pypsa.Network(fn)
 res_dir = "results_24h/"
 
-df = pd.DataFrame(0, index = annualized_reg.index, columns = ['change','steel'])
-df["change"] = df.index.map(annualized_change) 
+df = pd.DataFrame(0, index=annualized_reg.index, columns=["change", "steel"])
+df["change"] = df.index.map(annualized_change)
 df["steel"] = df.index.map(delta_steel)
 
 # Extract data
@@ -156,26 +196,26 @@ fig, ax = plt.subplots(figsize=(10, 8))
 
 # Scatter plot for main data
 scatter = ax.scatter(
-    df['steel'],#_main["steel"],
-    df['change'],#_main["change"],
+    df["steel"],  # _main["steel"],
+    df["change"],  # _main["change"],
     c="blue",
     alpha=0.4,
-    edgecolor="black"
+    edgecolor="black",
 )
 
 
 # Annotate all data points (country names)
-for idx, row in df.iterrows():#_main.iterrows():
+for idx, row in df.iterrows():  # _main.iterrows():
     ax.text(
-        row["steel"]*1.05, 
-        row["change"]*1.05, 
+        row["steel"] * 1.05,
+        row["change"] * 1.05,
         f"{idx}",  # Show the country name
-        ha="center", 
-        va="center", 
-        fontsize=13, 
-        alpha=1
+        ha="center",
+        va="center",
+        fontsize=13,
+        alpha=1,
     )
-    
+
 reduction = 0.1
 
 """
@@ -241,55 +281,68 @@ plt.show()
 # %%
 
 # Irland check
-pol_reg_nodal['Unnamed: 2'] = pol_reg_nodal['Unnamed: 2'].fillna("")
-ie_pol_reg_nodal = pol_reg_nodal[pol_reg_nodal['Unnamed: 2'].str.contains('IE')]
-#ie_pol_reg_nodal['scenario'] = 'pol_reg'
+pol_reg_nodal["Unnamed: 2"] = pol_reg_nodal["Unnamed: 2"].fillna("")
+ie_pol_reg_nodal = pol_reg_nodal[pol_reg_nodal["Unnamed: 2"].str.contains("IE")]
+# ie_pol_reg_nodal['scenario'] = 'pol_reg'
 
-pol_eu_nodal['Unnamed: 2'] = pol_eu_nodal['Unnamed: 2'].fillna("")
-ie_pol_eu_nodal = pol_eu_nodal[pol_eu_nodal['Unnamed: 2'].str.contains('IE')]
-#ie_pol_eu_nodal['scenario'] = 'pol_eu'
+pol_eu_nodal["Unnamed: 2"] = pol_eu_nodal["Unnamed: 2"].fillna("")
+ie_pol_eu_nodal = pol_eu_nodal[pol_eu_nodal["Unnamed: 2"].str.contains("IE")]
+# ie_pol_eu_nodal['scenario'] = 'pol_eu'
 
-ie_names = ['pol_eu','pol_reg']
+ie_names = ["pol_eu", "pol_reg"]
 
-ie_df = [ie_pol_eu_nodal,ie_pol_reg_nodal]
+ie_df = [ie_pol_eu_nodal, ie_pol_reg_nodal]
 
 processed_csvs = []
-columns_to_drop =  ["cluster", "Unnamed: 1"]
+columns_to_drop = ["cluster", "Unnamed: 1"]
 
-years_tech = ['Tech'] + years
+years_tech = ["Tech"] + years
 
 for df, name in zip(ie_df, ie_names):
-        
-    df = df.drop(columns=columns_to_drop, errors='ignore')  # 'errors=ignore' avoids issues if some columns don't exist
+    df = df.drop(
+        columns=columns_to_drop, errors="ignore"
+    )  # 'errors=ignore' avoids issues if some columns don't exist
     df = df.dropna(subset=["Unnamed: 2"])
     df = df.set_index("Unnamed: 2")
-    #df = df[df.index.str.match(r"^[A-Z]")]
-    #df = df[~df.index.str.startswith("EU")]
-    #df = df[~df.index.str.startswith("H2")]
+    # df = df[df.index.str.match(r"^[A-Z]")]
+    # df = df[~df.index.str.startswith("EU")]
+    # df = df[~df.index.str.startswith("H2")]
     df.columns = years_tech
-    #df = df.apply(pd.to_numeric, errors='coerce')
+    # df = df.apply(pd.to_numeric, errors='coerce')
     df["scenario"] = name
     df = df.set_index("scenario", append=True)
-    processed_csvs.append(df) 
+    processed_csvs.append(df)
 
 ie_combined_df = pd.concat(processed_csvs)
 
-r = 0.04 # social discount rate
-ie_combined_df[years] = ie_combined_df[years].apply(pd.to_numeric, errors='coerce')
+r = 0.04  # social discount rate
+ie_combined_df[years] = ie_combined_df[years].apply(pd.to_numeric, errors="coerce")
 
 for year in years:
-    ie_combined_df[f'Annualized_{year}'] = ie_combined_df[year] / ((1 + r) ** (year - 2020))
+    ie_combined_df[f"Annualized_{year}"] = ie_combined_df[year] / (
+        (1 + r) ** (year - 2020)
+    )
 
-ie_combined_df['value'] = ie_combined_df['Annualized_2030']  + ie_combined_df['Annualized_2040'] + ie_combined_df['Annualized_2050']
+ie_combined_df["value"] = (
+    ie_combined_df["Annualized_2030"]
+    + ie_combined_df["Annualized_2040"]
+    + ie_combined_df["Annualized_2050"]
+)
 ie_combined_df = ie_combined_df.reset_index()
 
-ie_combined_df = ie_combined_df[['scenario','Tech','value']]
-ie_combined_df = ie_combined_df.groupby(['Tech', 'scenario'], as_index=False)['value'].sum()
+ie_combined_df = ie_combined_df[["scenario", "Tech", "value"]]
+ie_combined_df = ie_combined_df.groupby(["Tech", "scenario"], as_index=False)[
+    "value"
+].sum()
 
-ie_combined_df_wide = ie_combined_df.pivot(index='Tech', columns='scenario', values='value').reset_index()
-ie_combined_df_wide.index = ie_combined_df_wide['Tech']
-ie_combined_df_wide = ie_combined_df_wide.drop('Tech', axis=1)
+ie_combined_df_wide = ie_combined_df.pivot(
+    index="Tech", columns="scenario", values="value"
+).reset_index()
+ie_combined_df_wide.index = ie_combined_df_wide["Tech"]
+ie_combined_df_wide = ie_combined_df_wide.drop("Tech", axis=1)
 
-ie_combined_df_wide['reg-eu'] = ie_combined_df_wide['pol_reg'] - ie_combined_df_wide['pol_eu']
+ie_combined_df_wide["reg-eu"] = (
+    ie_combined_df_wide["pol_reg"] - ie_combined_df_wide["pol_eu"]
+)
 
 filtered_df = ie_combined_df_wide[ie_combined_df_wide["reg-eu"].abs() >= 1]

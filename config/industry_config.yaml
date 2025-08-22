@@ -122,7 +122,7 @@ energy:
   energy_totals_year: 2019
   base_emissions_year: 1990
   emissions: All greenhouse gases - (CO2 equivalent)
-  
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
   transport: true

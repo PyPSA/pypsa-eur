@@ -46,7 +46,7 @@ policy_eu_deindustrial:
     2050: 0.000 # climate-neutral by 2050
   weather_years:
     enable: true
-    rcp: 4-5 
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: false

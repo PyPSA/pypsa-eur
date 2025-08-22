@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Oct  9 11:46:12 2024
 
@@ -24,14 +23,12 @@ def assign_location(n):
 
 
 def retrieve_loads(df, suffix):
-
     filtered_df = df[[col for col in df.columns if col.endswith(suffix)]]
     filtered_df.columns = filtered_df.columns.str.split(" 0").str[0] + " 0"
     return filtered_df
 
 
 def retrieve_links(df, suffix):
-
     filtered_df = df.loc[
         :, n.links[(n.links.index.str.contains(suffix, case=False))].index
     ]  # .sum()
@@ -44,7 +41,6 @@ def retrieve_links(df, suffix):
 
 
 def plot_elec_prices_map(n, regions, year, ax=None):
-
     assign_location(n)
 
     mprice = n.buses_t.marginal_price

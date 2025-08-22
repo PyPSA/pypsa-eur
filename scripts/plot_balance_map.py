@@ -185,7 +185,7 @@ if __name__ == "__main__":
     vmin = abs(vmin) if vmin < 0 else vmin
     vmax = abs(vmax) if vmax < 0 else vmax
     """
-    
+
     regions.to_crs(crs.proj4_init).plot(
         ax=ax,
         column="price",

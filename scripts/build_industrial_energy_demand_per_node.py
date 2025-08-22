@@ -47,21 +47,25 @@ if __name__ == "__main__":
     fn = snakemake.input.industry_sector_ratios
     sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
 
-    remove_keywords = ['Electric arc',
-                       'DRI + Electric arc',
-                       'Integrated steelworks',
-                       'Cement',
-                       'Methanol',
-                       'Ammonia',
-                       'HVC',
-                       'HVC (mechanical recycling)',
-                       'HVC (chemical recycling)']  # Add any others you want to exclude
+    remove_keywords = [
+        "Electric arc",
+        "DRI + Electric arc",
+        "Integrated steelworks",
+        "Cement",
+        "Methanol",
+        "Ammonia",
+        "HVC",
+        "HVC (mechanical recycling)",
+        "HVC (chemical recycling)",
+    ]  # Add any others you want to exclude
 
     if snakemake.params.endo_industry:
         # Remove if the sector name (level=1) matches any of the keywords
         sector_ratios = sector_ratios.loc[
             :,
-            ~sector_ratios.columns.get_level_values(1).str.contains('|'.join(remove_keywords), case=False)
+            ~sector_ratios.columns.get_level_values(1).str.contains(
+                "|".join(remove_keywords), case=False
+            ),
         ]
 
     # material demand per node and industry (Mton/a)
@@ -70,7 +74,7 @@ if __name__ == "__main__":
 
     # For nodal_production, which has simple column index
     nodal_production = nodal_production.loc[
-        :, ~nodal_production.columns.str.contains('|'.join(remove_keywords), case=False)
+        :, ~nodal_production.columns.str.contains("|".join(remove_keywords), case=False)
     ]
 
     # energy demand today to get current electricity
@@ -83,7 +87,6 @@ if __name__ == "__main__":
 
     nodal_production_stacked = nodal_production.stack()
     nodal_production_stacked.index.names = [None, None]
-
 
     # final energy consumption per node and industry (TWh/a)
     nodal_df = (

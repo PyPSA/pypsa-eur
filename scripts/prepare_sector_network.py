@@ -8,7 +8,6 @@ technologies for the buildings, transport and industry sectors.
 
 import logging
 import os
-from collections import Counter
 from itertools import product
 from types import SimpleNamespace
 
@@ -242,7 +241,6 @@ def define_spatial(nodes, options):
         spatial.iron.nodes = ["EU iron"]
         spatial.iron.locations = ["EU"]
 
-
         if options["endo_industry"]["regional_steel_demand"]:
             # steel
             spatial.steel = SimpleNamespace()
@@ -255,7 +253,6 @@ def define_spatial(nodes, options):
             spatial.syngas_dri.locations = nodes
 
         else:
-
             # steel
             spatial.steel = SimpleNamespace()
             spatial.steel.nodes = ["EU steel"]
@@ -272,8 +269,7 @@ def define_spatial(nodes, options):
             spatial.cement.nodes = nodes + " cement"
             spatial.cement.locations = nodes
 
-        else: 
-
+        else:
             spatial.cement = SimpleNamespace()
             spatial.cement.nodes = ["EU cement"]
             spatial.cement.locations = ["EU"]
@@ -1228,10 +1224,9 @@ def add_methanol_to_hvc(n, costs):
         costs.at[tech, "carbondioxide-output"] / costs.at[tech, "methanol-input"]
         + costs.at["methanolisation", "carbondioxide-input"]
     )
-    decay_emis = costs.at['methanol','CO2 intensity']
+    decay_emis = costs.at["methanol", "CO2 intensity"]
     # To endogenize the co2 emissions from methanol
     # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
-    
 
     n.add(
         "Link",
@@ -1493,7 +1488,7 @@ def add_ammonia(
     pop_layout: pd.DataFrame,
     spatial: SimpleNamespace,
     cf_industry: dict,
-    endo_ammonia=False
+    endo_ammonia=False,
 ) -> None:
     """
     Add ammonia synthesis, cracking, and storage infrastructure to the network.
@@ -1546,9 +1541,13 @@ def add_ammonia(
         "Bus", spatial.ammonia.nodes, location=spatial.ammonia.locations, carrier="NH3"
     )
 
-    min_part_load_hb=options['min_part_load_hb']
+    min_part_load_hb = options["min_part_load_hb"]
 
-    if (options["endo_industry"]["policy_scenario"] == 'deindustrial') and investment_year >= 2040 and options["imports"]["enable"] == False:
+    if (
+        (options["endo_industry"]["policy_scenario"] == "deindustrial")
+        and investment_year >= 2040
+        and options["imports"]["enable"] == False
+    ):
         min_part_load_hb = 0.1
 
     n.add(
@@ -1595,7 +1594,9 @@ def add_ammonia(
             e_nom_extendable=True,
             e_cyclic=True,
             carrier="ammonia store",
-            capital_cost=costs.at["NH3 (l) storage tank incl. liquefaction", "capital_cost"],
+            capital_cost=costs.at[
+                "NH3 (l) storage tank incl. liquefaction", "capital_cost"
+            ],
             lifetime=costs.at["NH3 (l) storage tank incl. liquefaction", "lifetime"],
         )
 
@@ -5160,35 +5161,41 @@ def add_industry(
 
 
 def calculate_steel_parameters(options, nyears=1):
-
     # BF-BOF
     # Reference: Raillard-Cazanove et al. https://doi.org/10.1016/j.apenergy.2024.125206
-    iron_to_steel_bof = 1.8 # kt iron/kt steel
-    coal_to_steel_bof = 6342 # MWh coal/kt steel
-    elec_to_steel_bof = 194 # MWh el/kt steel
-    em_factor_bof = 1760 # tCO2/kt steel
+    iron_to_steel_bof = 1.8  # kt iron/kt steel
+    coal_to_steel_bof = 6342  # MWh coal/kt steel
+    elec_to_steel_bof = 194  # MWh el/kt steel
+    em_factor_bof = 1760  # tCO2/kt steel
 
-    capex_bof = 442 * 1e3 # €/kt steel
-    opex_bof = ( 53 * 1e3 / capex_bof ) * 100 # €/kt steel/yr -> € of CAPEX
+    capex_bof = 442 * 1e3  # €/kt steel
+    opex_bof = (53 * 1e3 / capex_bof) * 100  # €/kt steel/yr -> € of CAPEX
     lifetime_bof = 25
     discount_rate = 0.04
 
-    capex_bof_mpp = 871.85 * 1e3 * 8760 # €/kt steel/h
-    opex_bof_mpp = ( 123.67  * 1e3 / capex_bof_mpp ) * 100 # €/kt steel/yr -> € of CAPEX
+    capex_bof_mpp = 871.85 * 1e3 * 8760  # €/kt steel/h
+    opex_bof_mpp = (123.67 * 1e3 / capex_bof_mpp) * 100  # €/kt steel/yr -> € of CAPEX
 
-    capital_cost_bof = ((calculate_annuity(lifetime_bof, discount_rate) + opex_bof_mpp / 100.0) * capex_bof_mpp * nyears)
+    capital_cost_bof = (
+        (calculate_annuity(lifetime_bof, discount_rate) + opex_bof_mpp / 100.0)
+        * capex_bof_mpp
+        * nyears
+    )
 
-    bof = pd.Series({"iron input": iron_to_steel_bof,
-                    "coal input": coal_to_steel_bof,
-                    "elec input": elec_to_steel_bof,
-                    "emission factor": em_factor_bof,
-                    "capital cost": capital_cost_bof,
-                    "lifetime": lifetime_bof})
-
+    bof = pd.Series(
+        {
+            "iron input": iron_to_steel_bof,
+            "coal input": coal_to_steel_bof,
+            "elec input": elec_to_steel_bof,
+            "emission factor": em_factor_bof,
+            "capital cost": capital_cost_bof,
+            "lifetime": lifetime_bof,
+        }
+    )
 
     # DRI-EAF with NG
-    # Reference: Graupner et al. https://doi.org/10.1016/j.procir.2023.02.117 
-    iron_to_steel_eaf_ng = 1.36 # kt iron/kt steel 
+    # Reference: Graupner et al. https://doi.org/10.1016/j.procir.2023.02.117
+    iron_to_steel_eaf_ng = 1.36  # kt iron/kt steel
     gas_to_steel_eaf_ng = 2803  # MWh gas/kt steel
     elec_to_steel_eaf_ng = 554  # MWh el/kt steel
     em_factor_eaf_ng = 565  # tCO2/kt steel
@@ -5199,86 +5206,106 @@ def calculate_steel_parameters(options, nyears=1):
     lifetime_eaf_ng = 25
     discount_rate = 0.04
 
-    capex_eaf_mpp = 698.34 * 1e3 * 8760 # €/kt steel/h
+    capex_eaf_mpp = 698.34 * 1e3 * 8760  # €/kt steel/h
     opex_eaf_mpp = (118.27 * 1e3 / capex_eaf_mpp) * 100  # €/kt steel/yr -> % of CAPEX
 
-    capital_cost_eaf_ng = (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0) * capex_eaf_mpp * nyears
+    capital_cost_eaf_ng = (
+        (calculate_annuity(lifetime_eaf_ng, discount_rate) + opex_eaf_ng / 100.0)
+        * capex_eaf_mpp
+        * nyears
+    )
 
-
-    eaf_ng = pd.Series({"iron input": iron_to_steel_eaf_ng,
-                        "gas input": gas_to_steel_eaf_ng,
-                        "elec input": elec_to_steel_eaf_ng,
-                        "emission factor": em_factor_eaf_ng,
-                        "capital cost": capital_cost_eaf_ng,
-                        "lifetime": lifetime_eaf_ng})
+    eaf_ng = pd.Series(
+        {
+            "iron input": iron_to_steel_eaf_ng,
+            "gas input": gas_to_steel_eaf_ng,
+            "elec input": elec_to_steel_eaf_ng,
+            "emission factor": em_factor_eaf_ng,
+            "capital cost": capital_cost_eaf_ng,
+            "lifetime": lifetime_eaf_ng,
+        }
+    )
 
     # DRI-EAF with hydrogen
-    # Reference: Graupner et al. https://doi.org/10.1016/j.procir.2023.02.117 
-    iron_to_steel_eaf_h2 = 1.39 # kt iron/kt steel 
+    # Reference: Graupner et al. https://doi.org/10.1016/j.procir.2023.02.117
+    iron_to_steel_eaf_h2 = 1.39  # kt iron/kt steel
     h2_to_steel_eaf_h2 = 2211  # MWh H2/kt steel
-    elec_to_steel_eaf_h2 = 611 # MWh el/kt steel
-    em_factor_eaf_h2 = 76 # tCO2/kt steel
+    elec_to_steel_eaf_h2 = 611  # MWh el/kt steel
+    em_factor_eaf_h2 = 76  # tCO2/kt steel
 
     # Assumption: costs are the same as NG DRI-EAF (besides the fuel costs)
-    
-    eaf_h2 = pd.Series({"iron input": iron_to_steel_eaf_h2,
-                        "h2 input": h2_to_steel_eaf_h2,
-                        "elec input": elec_to_steel_eaf_h2,
-                        "emission factor": em_factor_eaf_h2,
-                        "capital cost": capital_cost_eaf_ng,
-                        "lifetime": lifetime_eaf_ng}) 
 
+    eaf_h2 = pd.Series(
+        {
+            "iron input": iron_to_steel_eaf_h2,
+            "h2 input": h2_to_steel_eaf_h2,
+            "elec input": elec_to_steel_eaf_h2,
+            "emission factor": em_factor_eaf_h2,
+            "capital cost": capital_cost_eaf_ng,
+            "lifetime": lifetime_eaf_ng,
+        }
+    )
 
     # Top Gas Recycling in BF-BOF
-    # Reference: Jin et al. https://doi.org/10.1016/j.resconrec.2015.07.008 
-    elec_tgr = 0.2705 # MWh el/tCO2 in
+    # Reference: Jin et al. https://doi.org/10.1016/j.resconrec.2015.07.008
+    elec_tgr = 0.2705  # MWh el/tCO2 in
 
     # Reference: Raillard-Cazanove et al. https://doi.org/10.1016/j.apenergy.2024.125206
     capex_tgr_2030 = 90 * 1e3 / em_factor_bof  # €/t CO2 in
     capex_tgr_2050 = 67 * 1e3 / em_factor_bof  # €/t CO2 in
     capex_tgr_mpp = (1230.094 - 1066.851) * 1e3 / em_factor_bof  # €/t CO2 in
     # We choose Raillard-Cazanove et al. values because they decrease in time
-    opex_tgr = 5 #% CAPEX
-    lifetime_tgr = 20 # years
+    opex_tgr = 5  # % CAPEX
+    lifetime_tgr = 20  # years
     discount_rate = 0.04
 
-    capital_cost_tgr_2030 = (calculate_annuity(lifetime_tgr, discount_rate) + opex_tgr / 100.0) * capex_tgr_2030 * nyears
-    capital_cost_tgr_2050 = (calculate_annuity(lifetime_tgr, discount_rate) + opex_tgr / 100.0) * capex_tgr_2050 * nyears
+    capital_cost_tgr_2030 = (
+        (calculate_annuity(lifetime_tgr, discount_rate) + opex_tgr / 100.0)
+        * capex_tgr_2030
+        * nyears
+    )
+    capital_cost_tgr_2050 = (
+        (calculate_annuity(lifetime_tgr, discount_rate) + opex_tgr / 100.0)
+        * capex_tgr_2050
+        * nyears
+    )
 
-    tgr = pd.Series({"elec input": elec_tgr,
-                    "capital cost 2030": capital_cost_tgr_2030,
-                    "capital cost 2050": capital_cost_tgr_2050,
-                    "lifetime": lifetime_tgr})
+    tgr = pd.Series(
+        {
+            "elec input": elec_tgr,
+            "capital cost 2030": capital_cost_tgr_2030,
+            "capital cost 2050": capital_cost_tgr_2050,
+            "lifetime": lifetime_tgr,
+        }
+    )
 
     min_part_load_steel = options["min_part_load_steel"]
 
     return bof, eaf_ng, eaf_h2, tgr, min_part_load_steel
 
+
 def clean_industry_df(df, sector):
-    df = (
-        df[df['sector'] == sector]
-        .drop(columns=['sector'])
-        .set_index('year')
-    )
+    df = df[df["sector"] == sector].drop(columns=["sector"]).set_index("year")
 
     return df
 
 
 def add_steel_industry(n, investment_year, steel_data, options):
-
     # Steel production demanded in Europe in Mton of steel products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
-    capacities = capacities[['EAF','DRI + EAF', 'Integrated steelworks']]
+    capacities = capacities[["EAF", "DRI + EAF", "Integrated steelworks"]]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_steel_production = (steel_data.loc[investment_year, scenario] * 1e3 / nhours)  # get the steel that needs to be produced hourly ktsteel/h
-    capacities = capacities.sum(axis = 1)
+    hourly_steel_production = (
+        steel_data.loc[investment_year, scenario] * 1e3 / nhours
+    )  # get the steel that needs to be produced hourly ktsteel/h
+    capacities = capacities.sum(axis=1)
 
     # Share of steel production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
     p_set = cap_share * hourly_steel_production
-    
+
     if options["endo_industry"]["regional_steel_demand"]:
         p_set.index += " steel"
     else:
@@ -5305,7 +5332,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus=spatial.iron.nodes,
         p_nom_extendable=True,
         carrier="iron",
-        marginal_cost=costs.at["iron ore DRI-ready", "commodity"]*1e3, # €/kt of iron
+        marginal_cost=costs.at["iron ore DRI-ready", "commodity"] * 1e3,  # €/kt of iron
     )
 
     n.add("Carrier", "steel")
@@ -5357,10 +5384,11 @@ def add_steel_industry(n, investment_year, steel_data, options):
         carrier="syn gas for DRI",
         unit="unit",
     )
-    
 
     # PARAMETERS
-    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(options, nyears)
+    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(
+        options, nyears
+    )
 
     n.add(
         "Link",
@@ -5374,13 +5402,14 @@ def add_steel_industry(n, investment_year, steel_data, options):
         carrier="BF-BOF",
         p_nom_extendable=True,
         p_min_pu=min_part_load_steel,
-        capital_cost=bof['capital cost'],
-        efficiency=1 / bof['iron input'],
-        efficiency2= - bof['coal input'] / bof['iron input'],  # MWhth coal per kt iron
-        efficiency3= - bof['elec input'] / bof['iron input'],  # MWh electricity per kt iron
-        efficiency4= bof['emission factor'] / bof['iron input'], # t CO2 per kt iron
-        lifetime= bof['lifetime'],  
-    )  
+        capital_cost=bof["capital cost"],
+        efficiency=1 / bof["iron input"],
+        efficiency2=-bof["coal input"] / bof["iron input"],  # MWhth coal per kt iron
+        efficiency3=-bof["elec input"]
+        / bof["iron input"],  # MWh electricity per kt iron
+        efficiency4=bof["emission factor"] / bof["iron input"],  # t CO2 per kt iron
+        lifetime=bof["lifetime"],
+    )
 
     n.add(
         "Link",
@@ -5391,8 +5420,10 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus2=spatial.co2.dri,
         carrier="DRI-EAF",
         p_nom_extendable=True,
-        efficiency=1 / eaf_ng['gas input'] , # MWh natural gas per one unit of dri gas
-        efficiency2= eaf_ng['emission factor'] / eaf_ng['iron input'] / eaf_ng['gas input'], # t CO2 per unit of dri gas
+        efficiency=1 / eaf_ng["gas input"],  # MWh natural gas per one unit of dri gas
+        efficiency2=eaf_ng["emission factor"]
+        / eaf_ng["iron input"]
+        / eaf_ng["gas input"],  # t CO2 per unit of dri gas
     )
 
     n.add(
@@ -5403,12 +5434,10 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus1=spatial.syngas_dri.nodes,
         carrier="DRI-EAF",
         p_nom_extendable=True,
-        efficiency=1 / eaf_h2['h2 input'], # MWh hydrogen per one unit of dri gas
+        efficiency=1 / eaf_h2["h2 input"],  # MWh hydrogen per one unit of dri gas
     )
 
-
     if options["endo_industry"]["dri_import"]:
-
         n.add(
             "Bus",
             "EU HBI",
@@ -5417,8 +5446,8 @@ def add_steel_industry(n, investment_year, steel_data, options):
             unit="kt/yr",
         )
 
-        mc_dri = 395*1e3 if investment_year >= 2040 else 1e7
-        #€/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308
+        mc_dri = 395 * 1e3 if investment_year >= 2040 else 1e7
+        # €/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308
 
         n.add(
             "Generator",
@@ -5426,48 +5455,54 @@ def add_steel_industry(n, investment_year, steel_data, options):
             bus="EU HBI",
             carrier="import HBI",
             p_nom=1e7,
-            marginal_cost=mc_dri,  
+            marginal_cost=mc_dri,
         )
 
-        electricity_input = costs.at[
-            "direct iron reduction furnace", "electricity-input"
-        ] * 1e3 #MWh/kt
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"] * 1e3
+        )  # MWh/kt
 
         n.add(
             "Link",
             nodes,
             suffix=" DRI",
             carrier="DRI",
-            capital_cost=costs.at["direct iron reduction furnace", "capital_cost"] * 1e3 / eaf_ng['iron input'],
+            capital_cost=costs.at["direct iron reduction furnace", "capital_cost"]
+            * 1e3
+            / eaf_ng["iron input"],
             p_nom_extendable=True,
             p_min_pu=min_part_load_steel,
             bus0=spatial.iron.nodes,
             bus1="EU HBI",
             bus2=spatial.syngas_dri.nodes,
             bus3=nodes,
-            efficiency=1 / eaf_ng['iron input'],
-            efficiency2= -1, # one unit of dri gas per kt iron
-            efficiency3=-electricity_input / eaf_ng['iron input'],
-            lifetime= eaf_ng['lifetime'],
+            efficiency=1 / eaf_ng["iron input"],
+            efficiency2=-1,  # one unit of dri gas per kt iron
+            efficiency3=-electricity_input / eaf_ng["iron input"],
+            lifetime=eaf_ng["lifetime"],
         )
 
-        electricity_input = costs.at["electric arc furnace", "electricity-input"] *1e3 #MWh/kt steel
+        electricity_input = (
+            costs.at["electric arc furnace", "electricity-input"] * 1e3
+        )  # MWh/kt steel
 
         n.add(
             "Link",
             nodes,
             suffix=" EAF",
             carrier="EAF",
-            capital_cost=costs.at["electric arc furnace", "capital_cost"] *1e3 / electricity_input,
+            capital_cost=costs.at["electric arc furnace", "capital_cost"]
+            * 1e3
+            / electricity_input,
             p_nom_extendable=True,
-            #p_min_pu=min_part_load_steel,
+            # p_min_pu=min_part_load_steel,
             bus0=nodes,
             bus1=spatial.steel.nodes,
             bus2="EU HBI",
             efficiency=1 / electricity_input,
             efficiency2=-costs.at["electric arc furnace", "hbi-input"]
             / electricity_input,
-            lifetime= eaf_ng['lifetime'],
+            lifetime=eaf_ng["lifetime"],
         )
 
     else:
@@ -5482,11 +5517,14 @@ def add_steel_industry(n, investment_year, steel_data, options):
             carrier="DRI-EAF",
             p_nom_extendable=True,
             p_min_pu=min_part_load_steel,
-            capital_cost= eaf_ng['capital cost'],
-            efficiency=1 / eaf_ng['iron input'],
-            efficiency2= -1, # one unit of dri gas per kt iron
-            efficiency3= - eaf_ng['elec input'] / eaf_ng['iron input'], #MWh electricity per kt iron
-            lifetime= eaf_ng['lifetime'],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+            capital_cost=eaf_ng["capital cost"],
+            efficiency=1 / eaf_ng["iron input"],
+            efficiency2=-1,  # one unit of dri gas per kt iron
+            efficiency3=-eaf_ng["elec input"]
+            / eaf_ng["iron input"],  # MWh electricity per kt iron
+            lifetime=eaf_ng[
+                "lifetime"
+            ],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
         )
 
     n.add(
@@ -5497,7 +5535,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus1="co2 atmosphere",
         carrier="steel process emissions",
         p_nom_extendable=True,
-        capital_cost = 0,
+        capital_cost=0,
         efficiency=1,
     )
 
@@ -5509,20 +5547,25 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus1="co2 atmosphere",
         carrier="steel process emissions",
         p_nom_extendable=True,
-        capital_cost = 0,
+        capital_cost=0,
         efficiency=1,
     )
 
     # Top Gas Recycling in BF-BOF
     # Costs for 2030 and 2050
     if investment_year == 2030:
-        capital_cost_tgr = tgr['capital cost 2030']
+        capital_cost_tgr = tgr["capital cost 2030"]
     elif investment_year == 2040:
-        capital_cost_tgr = tgr['capital cost 2030'] + (tgr['capital cost 2050'] - tgr['capital cost 2030']) / 10
+        capital_cost_tgr = (
+            tgr["capital cost 2030"]
+            + (tgr["capital cost 2050"] - tgr["capital cost 2030"]) / 10
+        )
     elif investment_year == 2050:
-        capital_cost_tgr = tgr['capital cost 2050']
+        capital_cost_tgr = tgr["capital cost 2050"]
     else:
-        raise ValueError(f"Invalid investment year: {investment_year}. Supported years are 2030, 2040, and 2050.")
+        raise ValueError(
+            f"Invalid investment year: {investment_year}. Supported years are 2030, 2040, and 2050."
+        )
 
     electricity_input = (
         costs.at["cement capture", "electricity-input"]
@@ -5543,24 +5586,28 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus3=nodes,
         carrier="steel process emissions CC",
         p_nom_extendable=True,
-        capital_cost= costs.at["cement capture", "investment"], #80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker ,
-        efficiency= 1- costs.at["cement capture", "capture_rate"],
+        capital_cost=costs.at[
+            "cement capture", "investment"
+        ],  # 80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker ,
+        efficiency=1 - costs.at["cement capture", "capture_rate"],
         efficiency2=costs.at["cement capture", "capture_rate"],
-        efficiency3= -electricity_input * costs.at["cement capture", "capture_rate"], # MWh el/tCO2 in
-        lifetime=costs.at["cement capture", "lifetime"], 
+        efficiency3=-electricity_input
+        * costs.at["cement capture", "capture_rate"],  # MWh el/tCO2 in
+        lifetime=costs.at["cement capture", "lifetime"],
     )
 
 
 def add_cement_industry(n, investment_year, cement_data, options):
-
     # Cement production demanded in each country in Europe in kton of cement products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
-    capacities = capacities['Cement']
+    capacities = capacities["Cement"]
     keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
 
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_cement_production = (cement_data.loc[investment_year, scenario] *1e3 / nhours)  # get the cement that needs to be produced hourly kt cement/h
-    #hourly_cement_production.index = hourly_cement_production.index + ' cement'
+    hourly_cement_production = (
+        cement_data.loc[investment_year, scenario] * 1e3 / nhours
+    )  # get the cement that needs to be produced hourly kt cement/h
+    # hourly_cement_production.index = hourly_cement_production.index + ' cement'
 
     # Share of cement production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
@@ -5592,11 +5639,13 @@ def add_cement_industry(n, investment_year, cement_data, options):
         bus=spatial.limestone.nodes,
         p_nom_extendable=True,
         carrier="limestone",
-        marginal_cost=40*1e3 * 0.877, #€/kt of limestone https://thundersaidenergy.com/downloads/cement-costs-and-energy-economics/
+        marginal_cost=40
+        * 1e3
+        * 0.877,  # €/kt of limestone https://thundersaidenergy.com/downloads/cement-costs-and-energy-economics/
     )
 
     n.add("Carrier", "cement")
-    
+
     n.add(
         "Bus",
         spatial.cement.nodes,
@@ -5605,7 +5654,6 @@ def add_cement_industry(n, investment_year, cement_data, options):
         unit="kt/yr",
     )
 
-    
     # CEMENT
     n.add(
         "Load",
@@ -5632,18 +5680,20 @@ def add_cement_industry(n, investment_year, cement_data, options):
     # Traditional dry process
 
     # Lifetimes
-    lifetime_cement = 25 # Raillard Cazanove
+    lifetime_cement = 25  # Raillard Cazanove
 
     # Capital costs
     discount_rate = 0.04
-    capex_cement = 263000 * calculate_annuity(lifetime_cement, discount_rate) # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000 
+    capex_cement = (
+        263000 * calculate_annuity(lifetime_cement, discount_rate)
+    )  # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000
     # * 8760 h/a (?)
     min_part_load_cement = options["min_part_load_cement"]
-    
+
     n.add(
         "Link",
         nodes,
-        suffix = " Cement Plant",
+        suffix=" Cement Plant",
         bus0=spatial.limestone.nodes,
         bus1=spatial.cement.nodes,
         bus2=spatial.gas.nodes,
@@ -5651,11 +5701,15 @@ def add_cement_industry(n, investment_year, cement_data, options):
         carrier="cement plant",
         p_nom_extendable=True,
         p_min_pu=min_part_load_cement,
-        capital_cost=capex_cement, 
-        efficiency=1/1.28, # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
-        efficiency2= - 3420.1 / 3.6 * (1/1.28) /0.5 , # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974 divided by 0.5 because I don't have heat
-        efficiency3=500 * (1/1.28) , #tCO2/kt cement
-        lifetime=lifetime_cement, 
+        capital_cost=capex_cement,
+        efficiency=1
+        / 1.28,  # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2=-3420.1
+        / 3.6
+        * (1 / 1.28)
+        / 0.5,  # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974 divided by 0.5 because I don't have heat
+        efficiency3=500 * (1 / 1.28),  # tCO2/kt cement
+        lifetime=lifetime_cement,
     )
 
     n.add(
@@ -5666,7 +5720,7 @@ def add_cement_industry(n, investment_year, cement_data, options):
         bus1="co2 atmosphere",
         carrier="cement process emissions",
         p_nom_extendable=True,
-        capital_cost = 0,
+        capital_cost=0,
         efficiency=1,
     )
 
@@ -5683,48 +5737,55 @@ def add_cement_industry(n, investment_year, cement_data, options):
     n.add(
         "Link",
         nodes,
-        suffix = " cement TGR",
+        suffix=" cement TGR",
         bus0=spatial.co2.cement,
         bus1="co2 atmosphere",
         bus2=spatial.co2.nodes,
-        #bus3=spatial.gas.nodes,
+        # bus3=spatial.gas.nodes,
         bus4=nodes,
         carrier="cement process emissions CC",
         p_nom_extendable=True,
-        capital_cost=costs.at["cement capture", "investment"], #80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
-        efficiency=1- costs.at["cement capture", "capture_rate"], # Natural gas emissions are not included yet
+        capital_cost=costs.at[
+            "cement capture", "investment"
+        ],  # 80, #/ costs.at["cement capture", "capture_rate"], #€/tCO2 stored I hope, otherwise 8280 / 500 /nhours, # CAPEX €/kt clinker / 500 tCO2/kt clinker
+        efficiency=1
+        - costs.at[
+            "cement capture", "capture_rate"
+        ],  # Natural gas emissions are not included yet
         efficiency2=costs.at["cement capture", "capture_rate"],
-        #efficiency3= -heat_input * costs.at["cement capture", "capture_rate"] / 0.5,
-        efficiency4= -electricity_input * costs.at["cement capture", "capture_rate"],
-        lifetime=costs.at["cement capture", "lifetime"], 
+        # efficiency3= -heat_input * costs.at["cement capture", "capture_rate"] / 0.5,
+        efficiency4=-electricity_input * costs.at["cement capture", "capture_rate"],
+        lifetime=costs.at["cement capture", "lifetime"],
     )
 
 
 def add_ammonia_load(n, investment_year, ammonia_data, options):
     """
     Adds ammonia load to the network based on industrial production data.
-    
-    Parameters:
+
+    Parameters
+    ----------
     n (pypsa.Network): The PyPSA network object.
     options (dict): Dictionary containing options for ammonia load configuration.
     """
 
     # Ammonia production demanded in each country in Europe in kton of NH3 products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
-    capacities = capacities['Ammonia']
+    capacities = capacities["Ammonia"]
 
     # Read industrial production data for ammonia in Europe (in MtNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_ammonia_production = (ammonia_data.loc[investment_year, scenario] *1e6 / nhours) # MtNH3/yr to tNH3/h
-    #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
+    hourly_ammonia_production = (
+        ammonia_data.loc[investment_year, scenario] * 1e6 / nhours
+    )  # MtNH3/yr to tNH3/h
+    # industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Ammonia production is in ktNH3/yr
 
     # Share of ammonia production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
-    p_set = cap_share * hourly_ammonia_production * cf_industry['MWh_NH3_per_tNH3']
-    p_set.index = p_set.index + ' NH3' 
+    p_set = cap_share * hourly_ammonia_production * cf_industry["MWh_NH3_per_tNH3"]
+    p_set.index = p_set.index + " NH3"
 
     if not options["ammonia"] == "regional":
-
         p_set = p_set.sum()
 
     # Remove the previous ammonia load, which is based on a different quantification of energy demand
@@ -5740,32 +5801,34 @@ def add_ammonia_load(n, investment_year, ammonia_data, options):
     )
 
 
-def add_methanol_load(n,investment_year, methanol_data, options):
+def add_methanol_load(n, investment_year, methanol_data, options):
     """
     Adds methanol load to the network based on industrial production data.
-    
-    Parameters:
+
+    Parameters
+    ----------
     n (pypsa.Network): The PyPSA network object.
     options (dict): Dictionary containing options for ammonia load configuration.
     """
 
     # Methanol production demanded in each country in Europe in kton of MeOH products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
-    capacities = capacities['Methanol']
+    capacities = capacities["Methanol"]
 
     # Read industrial production data for ammonia in Europe (in ktNH3/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_methanol_production = (methanol_data.loc[investment_year, scenario] *1e6 / nhours) # MtMeOH/h to ktMeOH/h
-    #industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Methnol production is in ktMeOH/yr
+    hourly_methanol_production = (
+        methanol_data.loc[investment_year, scenario] * 1e6 / nhours
+    )  # MtMeOH/h to ktMeOH/h
+    # industrial_production = pd.read_csv(snakemake.input.industrial_production, index_col=0)  # Methnol production is in ktMeOH/yr
 
     # Share of methanol production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
-    p_set = cap_share * hourly_methanol_production * cf_industry['MWh_MeOH_per_tMeOH']
+    p_set = cap_share * hourly_methanol_production * cf_industry["MWh_MeOH_per_tMeOH"]
     # To check with regional methanol
-    p_set.index = p_set.index + ' industry methanol' 
+    p_set.index = p_set.index + " industry methanol"
 
     if not options["methanol"]["regional_methanol_demand"]:
-
         p_set = p_set.sum()
 
     # Remove the previous industry methanol load, which is based on a different quantification of energy demand
@@ -5781,13 +5844,14 @@ def add_methanol_load(n,investment_year, methanol_data, options):
         carrier="industry methanol",
         p_set=p_set,
     )
-    
-    
+
+
 def add_hvc(n, investment_year, hvc_data, options):
     """
     Adds HVC load to the network based on industrial production data.
-    
-    Parameters:
+
+    Parameters
+    ----------
     n (pypsa.Network): The PyPSA network object.
     options (dict): Dictionary containing options for HVC load configuration.
     """
@@ -5796,11 +5860,13 @@ def add_hvc(n, investment_year, hvc_data, options):
 
     # Naphtha production demanded in each country in Europe in kton of HVC products per year
     capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
-    capacities = capacities['Ethylene']
+    capacities = capacities["Ethylene"]
 
     # Read industrial production data for HVC in Europe (in ktHVC/yr)
     scenario = options["endo_industry"]["policy_scenario"]
-    hourly_hvc_production = (hvc_data.loc[investment_year, scenario] *1e3 / nhours) # ktMeOH/h
+    hourly_hvc_production = (
+        hvc_data.loc[investment_year, scenario] * 1e3 / nhours
+    )  # ktMeOH/h
 
     # Share of HVC production capacities -> assumption: keep producing the same share in the country, changing technology
     cap_share = capacities / capacities.sum()
@@ -5818,7 +5884,7 @@ def add_hvc(n, investment_year, hvc_data, options):
 
     # Add the new HVC load to the network
     n.add("Carrier", "HVC")
-    
+
     n.add(
         "Bus",
         spatial.hvc.nodes,
@@ -5834,16 +5900,18 @@ def add_hvc(n, investment_year, hvc_data, options):
         carrier="HVC",
         p_set=p_set,
     )
-  
-    naphtha_to_hvc = (2.31 * 12.47) * 1000 # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+
+    naphtha_to_hvc = (
+        2.31 * 12.47
+    ) * 1000  # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
     # we need to account for CO2 emissions from HVC decay
-    decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil 
+    decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil
     min_part_load_hvc = options["min_part_load_hvc"]
 
     n.add(
         "Link",
         nodes,
-        suffix = " naphtha steam cracker",
+        suffix=" naphtha steam cracker",
         bus0=spatial.oil.nodes,
         bus1=spatial.hvc.nodes,
         bus2=nodes + " H2",
@@ -5852,17 +5920,19 @@ def add_hvc(n, investment_year, hvc_data, options):
         carrier="naphtha steam cracker",
         p_nom_extendable=True,
         p_min_pu=min_part_load_hvc,
-        capital_cost= 2050 * 1e3 * 0.8865 / naphtha_to_hvc, #€/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
+        capital_cost=2050
+        * 1e3
+        * 0.8865
+        / naphtha_to_hvc,  # €/kt HVC https://www.iea.org/data-and-statistics/charts/simplified-levelised-cost-of-petrochemicals-for-selected-feedstocks-and-regions-2017
         # Raillard Cazanove says 725 but prices were too low
-        efficiency=1/ naphtha_to_hvc, # kt HVC / MWh oil
-        efficiency2= 0.021 * 33.3 / naphtha_to_hvc, # MWh H2 / kt HVC
-        efficiency3= decay_emis, # tCO2 / MWh oil # should remove the first process emissions term
+        efficiency=1 / naphtha_to_hvc,  # kt HVC / MWh oil
+        efficiency2=0.021 * 33.3 / naphtha_to_hvc,  # MWh H2 / kt HVC
+        efficiency3=decay_emis,  # tCO2 / MWh oil # should remove the first process emissions term
         # To be sure I include all C embedded in the plastics it's better to directly put the emission factor of oil
-        #efficiency3= (819 / naphtha_to_hvc) + decay_emis, # tCO2 / kt HVC # should remove the first process emissions term
-        efficiency4= - 135 / naphtha_to_hvc, # MWh electricity / kt HVC
-        lifetime=30, 
+        # efficiency3= (819 / naphtha_to_hvc) + decay_emis, # tCO2 / kt HVC # should remove the first process emissions term
+        efficiency4=-135 / naphtha_to_hvc,  # MWh electricity / kt HVC
+        lifetime=30,
     )
-    
 
 
 def add_aviation(
@@ -5974,10 +6044,10 @@ def add_shipping(
     co2_limit = get(snakemake.params.co2_budget, investment_year)
     if co2_limit >= 1:
         shipping_methanol_share = 0
-        shipping_oil_share = 1- shipping_methanol_share
+        shipping_oil_share = 1 - shipping_methanol_share
     else:
         shipping_methanol_share /= 2
-        shipping_oil_share = 1- shipping_methanol_share
+        shipping_oil_share = 1 - shipping_methanol_share
 
     total_share = shipping_hydrogen_share + shipping_methanol_share + shipping_oil_share
     if total_share != 1:
@@ -6871,18 +6941,21 @@ def add_enhanced_geothermal(
             )
 
 
-def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries):
-    """"
+def adjust_renewable_profiles(n, countries, renewable_carriers, zenodo_timeseries):
+    """
+    "
     Adjusts the `p_max_pu` (maximum power availability per unit) of all renewable generators
     to match synthetic weather-based capacity factors for a given planning horizon.
 
-    Parameters:
+    Parameters
+    ----------
     - n: The PyPSA network object containing generator and storage unit data.
     - countries: List of country codes for which profiles should be adjusted.
     - renewable_carriers: List of renewable energy carriers.
     - zenodo_timeseries: Path to the directory where timeseries data is stored.
 
-    Notes:
+    Notes
+    -----
     - The function ensures that all profiles match full-year (8760-hour) time series.
     - Leap years are handled by removing February 29th from the dataset.
     - If no data is found for "offwind", "hydro", "PHS", or "ror", a warning is logged instead of raising an error.
@@ -6891,12 +6964,12 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
     # Get the target year from the Snakemake wildcards
     year = snakemake.wildcards.planning_horizons
 
-    # To ensure robust profiles, take the average of 5 years centered around the target year 
+    # To ensure robust profiles, take the average of 5 years centered around the target year
     start_year = int(year) - 2
     end_year = int(year) + 2
 
     # Include additional renewable carriers relevant for hydropower
-    renewable_carriers = renewable_carriers + ['ror', 'PHS']
+    renewable_carriers = renewable_carriers + ["ror", "PHS"]
 
     for carrier in renewable_carriers:
         for country in countries:
@@ -6923,49 +6996,76 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
 
             elif "hydro" in carrier or "PHS" in carrier:
                 folder = "conventional_and_pumped_storage_hydropower_inflow"
-                carrier_name = "hydropower__inflow_time_series__conventional_and_pumped_storage"
+                carrier_name = (
+                    "hydropower__inflow_time_series__conventional_and_pumped_storage"
+                )
                 variable_name = "Hydropower inflow"
 
             # Construct the path to the directory containing time series data
             dir_path = os.path.join(zenodo_timeseries, folder)
 
             # Find files that match the expected pattern (e.g., "DE_solar__capacity_factor.nc")
-            files = [file for file in os.listdir(dir_path) 
-                     if os.path.isfile(os.path.join(dir_path, file)) 
-                     and f"{country}_" in file 
-                     and carrier_name in file]
+            files = [
+                file
+                for file in os.listdir(dir_path)
+                if os.path.isfile(os.path.join(dir_path, file))
+                and f"{country}_" in file
+                and carrier_name in file
+            ]
 
             # Handle missing or multiple file cases
             if len(files) == 0:
                 # If no file is found, allow skipping for these specific carriers
-                if "offwind" in carrier or "hydro" in carrier or "PHS" in carrier or "ror" in carrier:
-                    #logger.warning(f"No climate data timeseries found for {country} with carrier {carrier}. Skipping.")
+                if (
+                    "offwind" in carrier
+                    or "hydro" in carrier
+                    or "PHS" in carrier
+                    or "ror" in carrier
+                ):
+                    # logger.warning(f"No climate data timeseries found for {country} with carrier {carrier}. Skipping.")
                     continue
                 else:
-                    raise FileNotFoundError(f"No file found matching pattern: {country}_*_{carrier_name}.nc")
+                    raise FileNotFoundError(
+                        f"No file found matching pattern: {country}_*_{carrier_name}.nc"
+                    )
 
             elif len(files) > 1:
-                raise ValueError(f"Multiple files found matching pattern: {country}_*_{carrier_name}.nc -> {files}")
-
+                raise ValueError(
+                    f"Multiple files found matching pattern: {country}_*_{carrier_name}.nc -> {files}"
+                )
 
             # Open the dataset
             ds = xr.open_dataset(os.path.join(dir_path, files[0]))
 
             # Create a proper data range, removing February 29th if it is a leap year
             if pd.to_datetime(f"{year}-01-01").is_leap_year:
-                date_range = pd.date_range(start=f"{year}-01-01 00:00", periods=8784, freq="h")
-                date_range = date_range[~((date_range.month == 2) & (date_range.day == 29))]
-            else: 
-                date_range = pd.date_range(start=f"{year}-01-01 00:00", periods=8760, freq="h")
-            
+                date_range = pd.date_range(
+                    start=f"{year}-01-01 00:00", periods=8784, freq="h"
+                )
+                date_range = date_range[
+                    ~((date_range.month == 2) & (date_range.day == 29))
+                ]
+            else:
+                date_range = pd.date_range(
+                    start=f"{year}-01-01 00:00", periods=8760, freq="h"
+                )
+
             # Initialize a dataframe with the correct rtime index
-            data_list = pd.DataFrame(index = date_range)
+            data_list = pd.DataFrame(index=date_range)
 
             for year_offset in range(start_year, end_year + 1):
                 # Select data for the specific year
-                profile0 = ds[variable_name].sel(time=slice(f"{year_offset}-01-01 00:00", f"{year_offset}-12-31 23:00")).to_series()
+                profile0 = (
+                    ds[variable_name]
+                    .sel(
+                        time=slice(
+                            f"{year_offset}-01-01 00:00", f"{year_offset}-12-31 23:00"
+                        )
+                    )
+                    .to_series()
+                )
                 # Remove February 29th to align with a 365-day year
-                profile0 = profile0.loc[profile0.index.strftime('%m-%d') != '02-29']
+                profile0 = profile0.loc[profile0.index.strftime("%m-%d") != "02-29"]
                 # Ensure the profile has the correct index
                 profile0.index = date_range
                 # Store the yearly profile in the DataFrame
@@ -6982,13 +7082,15 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             if carrier in ["hydro", "PHS"]:
                 # Ensure that the storage unit profiles match a full year (8760 hours)
                 if n.storage_units_t.inflow.shape[0] != 8760:
-                    logger.error("Adjusting renewable profiles currently only works for full years!")
+                    logger.error(
+                        "Adjusting renewable profiles currently only works for full years!"
+                    )
                 assert len(profile) == n.storage_units_t.inflow.shape[0]
 
                 # Select the relevant storage units for the given country and carrier
                 index = n.storage_units[
-                    (n.storage_units.index.str[:2] == country) & 
-                    (n.storage_units.carrier == carrier)
+                    (n.storage_units.index.str[:2] == country)
+                    & (n.storage_units.carrier == carrier)
                 ].index
 
                 # Assign the profile to the selected storage units
@@ -7001,13 +7103,15 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
             else:
                 # Ensure generator profiles match a full year (8760 hours)
                 if n.generators_t.p_max_pu.shape[0] != 8760:
-                    logger.error("Adjusting renewable profiles currently only works for full years!")
+                    logger.error(
+                        "Adjusting renewable profiles currently only works for full years!"
+                    )
                 assert len(profile) == n.generators_t.p_max_pu.shape[0]
 
                 # Select the relevant generators for the given country and carrier
                 index = n.generators[
-                    (n.generators.index.str[:2] == country) & 
-                    (n.generators.carrier == carrier)
+                    (n.generators.index.str[:2] == country)
+                    & (n.generators.carrier == carrier)
                 ].index
 
                 # Assign the profile to the selected generators
@@ -7015,9 +7119,7 @@ def adjust_renewable_profiles(n, countries, renewable_carriers,zenodo_timeseries
                     n.generators_t.p_max_pu.loc[:, index] = profile.values
                 else:
                     for i in index:
-
                         n.generators_t.p_max_pu.loc[:, i] = profile.values
-
 
 
 def add_import_options(
@@ -7129,7 +7231,6 @@ def add_import_options(
 
     # ADB dding extra import from other countries
     if "steel_adb" in import_options:
-        
         n.add(
             "Generator",
             spatial.steel.nodes,
@@ -7141,9 +7242,12 @@ def add_import_options(
         )
 
     if "methanol_adb" in import_options:
-
         co2_intensity = costs.at["methanolisation", "carbondioxide-input"]
-        mc_methanol = import_options["methanol_adb"] / co2_intensity if investment_year >= 2040 else 1e7
+        mc_methanol = (
+            import_options["methanol_adb"] / co2_intensity
+            if investment_year >= 2040
+            else 1e7
+        )
 
         n.add(
             "Link",
@@ -7169,9 +7273,7 @@ def add_import_options(
             p_nom=1e7,
         )
 
-
     if "ammonia_adb" in import_options:
-
         mc_ammonia = import_options["ammonia_adb"] if investment_year >= 2040 else 1e7
 
         n.add(
@@ -7360,7 +7462,6 @@ if __name__ == "__main__":
             nyears=nyears,
         )
 
-    
     if options["methanol"]:
         add_methanol(n, costs, options=options, spatial=spatial, pop_layout=pop_layout)
 
@@ -7399,32 +7500,34 @@ if __name__ == "__main__":
             spatial=spatial,
         )
 
-
     if options["ammonia"]:
-        add_ammonia(n, costs, pop_layout, spatial, cf_industry, snakemake.params.endo_ammonia)
+        add_ammonia(
+            n, costs, pop_layout, spatial, cf_industry, snakemake.params.endo_ammonia
+        )
 
     if endo_industry:
-
-        industry_production_scenarios = pd.read_csv(snakemake.input.industry_production_scenarios, index_col=0)
-        steel_data = clean_industry_df(industry_production_scenarios, 'steel')
-        cement_data = clean_industry_df(industry_production_scenarios, 'cement')
-        #chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
+        industry_production_scenarios = pd.read_csv(
+            snakemake.input.industry_production_scenarios, index_col=0
+        )
+        steel_data = clean_industry_df(industry_production_scenarios, "steel")
+        cement_data = clean_industry_df(industry_production_scenarios, "cement")
+        # chlorine_data = clean_industry_df(industry_production_scenarios, 'chlorine')
 
         add_steel_industry(n, investment_year, steel_data, options)
         add_cement_industry(n, investment_year, cement_data, options)
 
         if options["endo_industry"]["endo_ammonia"]:
-            ammonia_data = clean_industry_df(industry_production_scenarios, 'ammonia')
-            add_ammonia_load(n,investment_year, ammonia_data, options)
-        
+            ammonia_data = clean_industry_df(industry_production_scenarios, "ammonia")
+            add_ammonia_load(n, investment_year, ammonia_data, options)
+
         if options["endo_industry"]["endo_methanol"]:
-            methanol_data = clean_industry_df(industry_production_scenarios, 'methanol')
-            add_methanol_load(n,investment_year, methanol_data, options)
+            methanol_data = clean_industry_df(industry_production_scenarios, "methanol")
+            add_methanol_load(n, investment_year, methanol_data, options)
 
         if options["endo_industry"]["endo_hvc"]:
-            hvc_data = clean_industry_df(industry_production_scenarios, 'hvc')
+            hvc_data = clean_industry_df(industry_production_scenarios, "hvc")
             add_hvc(n, investment_year, hvc_data, options)
-            #add_methanol_to_hvc(n, costs)
+            # add_methanol_to_hvc(n, costs)
 
     if options["heating"]:
         add_waste_heat(n, costs, options, cf_industry)
@@ -7467,7 +7570,7 @@ if __name__ == "__main__":
             snakemake.params.countries,
             snakemake.params.renewable_carriers,
             snakemake.input.zenodo_timeseries,
-            )
+        )
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

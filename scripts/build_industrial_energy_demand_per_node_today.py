@@ -66,7 +66,7 @@ if snakemake.params.endo_industry:
         "Other non-ferrous metals": "Non-ferrous metals",
     }
 
-else: 
+else:
     sector_mapping = {
         "Electric arc": "EAF",
         "Integrated steelworks": "Integrated steelworks",
@@ -90,7 +90,6 @@ else:
         "Aluminium - secondary production": "Non-ferrous metals",
         "Other non-ferrous metals": "Non-ferrous metals",
     }
-
 
 
 def build_nodal_industrial_energy_demand():
@@ -126,10 +125,9 @@ def build_nodal_industrial_energy_demand():
         nodal_demand.loc[buses] += outer
 
     nodal_demand.index.name = "TWh/a"
-    
+
     if snakemake.params.endo_industry:
-        
-        nodal_demand['all sectors electricity'] = nodal_demand['electricity']
+        nodal_demand["all sectors electricity"] = nodal_demand["electricity"]
 
     nodal_demand.to_csv(snakemake.output.industrial_energy_demand_per_node_today)
 

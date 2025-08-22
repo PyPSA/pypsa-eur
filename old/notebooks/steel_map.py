@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Oct  9 11:46:12 2024
 
@@ -24,16 +23,17 @@ def assign_location(n):
 
 
 def plot_steel_map(n, regions, year, ax=None):
-
     assign_location(n)
-    timestep = n.snapshot_weightings.iloc[0,0]
-    
-    steel_prod_index = n.links[n.links['bus1'].str.contains('steel', case=False, na=False) &
-    ~n.links['bus1'].str.contains('heat', case=False, na=False)].index
-    steel_prod = -n.links_t.p1.loc[:,steel_prod_index].sum()#*timestep/1e3 #Mtsteel
-    steel_prod.index = steel_prod.index.str.split(' 0 ').str[0] + ' 0'
-    steel_prod_df = steel_prod.to_frame(name='steel_prod')
-    
+    timestep = n.snapshot_weightings.iloc[0, 0]
+
+    steel_prod_index = n.links[
+        n.links["bus1"].str.contains("steel", case=False, na=False)
+        & ~n.links["bus1"].str.contains("heat", case=False, na=False)
+    ].index
+    steel_prod = -n.links_t.p1.loc[:, steel_prod_index].sum()  # *timestep/1e3 #Mtsteel
+    steel_prod.index = steel_prod.index.str.split(" 0 ").str[0] + " 0"
+    steel_prod_df = steel_prod.to_frame(name="steel_prod")
+
     regions["steel"] = (
         steel_prod_df.steel_prod.groupby(level=0).sum().div(1e3) * timestep
     )  # TWh
@@ -42,10 +42,12 @@ def plot_steel_map(n, regions, year, ax=None):
     regions["steel"] = regions["steel"].fillna(0)
 
     # drop all links which are not H2 pipelines
-    #n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
-    
+    # n.links.drop(n.links.index[~n.links.index.str.contains("EAF|BOF", case=False)], inplace=True)
+
     regions = regions.to_crs(proj.proj4_init)
-    max_value = max(steel_prod_df.steel_prod.groupby(level=0).sum().div(1e3) * timestep)*1.1
+    max_value = (
+        max(steel_prod_df.steel_prod.groupby(level=0).sum().div(1e3) * timestep) * 1.1
+    )
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(12, 6), subplot_kw={"projection": proj})
@@ -72,7 +74,6 @@ def plot_steel_map(n, regions, year, ax=None):
     ax.set_title(year, fontsize=14, loc="center")  # Main title
 
 
-
 # %%
 
 
@@ -90,7 +91,7 @@ import yaml
 
 with open(
     r"C:\Users\Dibella\Desktop\CMCC\pypsa-adb-industry\results_march\base_eu_regain\configs\config.base_s_39___2030.yaml"
-        #root_dir + res_dir + "base_eu_regain/configs/config.base_s_39_lvopt___2030.yaml"
+    # root_dir + res_dir + "base_eu_regain/configs/config.base_s_39_lvopt___2030.yaml"
 ) as config_file:
     config = yaml.safe_load(config_file)
 
@@ -116,21 +117,15 @@ fig, axes = plt.subplots(
 
 for i, year in enumerate(years):
     for j, scenario in enumerate(scenarios):
-        fn = (
-            root_dir
-            + "results_march/"
-            + scenario
-            + f"/networks/base_s_39___{year}.nc"
-        )
+        fn = root_dir + "results_march/" + scenario + f"/networks/base_s_39___{year}.nc"
         ax = axes[j, i]
         n = pypsa.Network(fn)
         plot_steel_map(n, regions, year, ax=ax)
 
 plt.tight_layout()
-fig.suptitle('European demand', fontsize=16, y=1.02)
+fig.suptitle("European demand", fontsize=16, y=1.02)
 plt.savefig("graphs/steel_prod_per_country_eu_dem.png", bbox_inches="tight")
 plt.show()
-
 
 
 years = [2030, 2040, 2050]
@@ -157,6 +152,6 @@ for i, year in enumerate(years):
         plot_steel_map(n, regions, year, ax=ax)
 
 plt.tight_layout()
-fig.suptitle('Regional demand', fontsize=16, y=1.02)
+fig.suptitle("Regional demand", fontsize=16, y=1.02)
 plt.savefig("graphs/steel_prod_per_country_regional_dem.png", bbox_inches="tight")
 plt.show()

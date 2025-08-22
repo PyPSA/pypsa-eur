@@ -343,7 +343,6 @@ def iron_and_steel():
     assert s_out.index[0] == sector
 
     if not endo_industry:
-
         s_emi = idees["emi"][3:51]
         assert s_emi.index[0] == sector
 
@@ -1574,6 +1573,7 @@ def other_industrial_sectors():
     )
 
     return df
+
 
 """
 def steel_capacities():

@@ -38,22 +38,22 @@ if __name__ == "__main__":
 
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     capacity_factor_urls = {
-    "solar_capacity_factor": "https://zenodo.org/records/13938926/files/solar_capacity_factor.zip?download=1",
-    "wind_capacity_factor": "https://zenodo.org/records/13938926/files/wind_capacity_factor.zip?download=1",
-    "run_of_river_hydropower_inflow": "https://zenodo.org/records/13938926/files/run_of_river_hydropower_inflow.zip?download=1",
-    "conventional_and_pumped_storage_hydropower_inflow": "https://zenodo.org/records/13938926/files/conventional_and_pumped_storage_hydropower_inflow.zip?download=1",
+        "solar_capacity_factor": "https://zenodo.org/records/13938926/files/solar_capacity_factor.zip?download=1",
+        "wind_capacity_factor": "https://zenodo.org/records/13938926/files/wind_capacity_factor.zip?download=1",
+        "run_of_river_hydropower_inflow": "https://zenodo.org/records/13938926/files/run_of_river_hydropower_inflow.zip?download=1",
+        "conventional_and_pumped_storage_hydropower_inflow": "https://zenodo.org/records/13938926/files/conventional_and_pumped_storage_hydropower_inflow.zip?download=1",
     }
 
     # Loop through the dictionary and download/extract each file
     for key, url in capacity_factor_urls.items():
         tarball_fn = Path(f"{rootpath}/data/zenodo_timeseries/{key}.zip")
-        
+
         to_fn = Path(rootpath) / Path(snakemake.output[0])
-        #to_fn = Path(f"{rootpath}/data/zenodo_timeseries/{key}/")
+        # to_fn = Path(f"{rootpath}/data/zenodo_timeseries/{key}/")
 
         logger.info(f"Downloading {key} data from '{url}'.")
         tarball_fn.parent.mkdir(parents=True, exist_ok=True)
-        progress_retrieve(url, tarball_fn, disable=disable_progress) 
+        progress_retrieve(url, tarball_fn, disable=disable_progress)
 
         logger.info(f"Extracting {key} capacity factor data.")
         with zipfile.ZipFile(tarball_fn, "r") as zip_ref:
@@ -61,18 +61,19 @@ if __name__ == "__main__":
 
         logger.info(f"{key} data available in '{to_fn}'.")
 
-        
         # Remove files that do not contain both rcp and global_regional_models in their names
         # ADB to do this does not work
         extracted_dir = to_fn / key
         for file in extracted_dir.iterdir():
-            modified_name = file.name.replace('_', '-')
-            if str(rcp) not in modified_name or global_regional_models not in modified_name:
-                #logger.info(f"Removing file: {file}")
+            modified_name = file.name.replace("_", "-")
+            if (
+                str(rcp) not in modified_name
+                or global_regional_models not in modified_name
+            ):
+                # logger.info(f"Removing file: {file}")
                 file.unlink()
-        
+
         # Remove the tarball (zip file)
         if tarball_fn.exists():
             logger.info(f"Removing zip file: {tarball_fn}")
             tarball_fn.unlink()
-

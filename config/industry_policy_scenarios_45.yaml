@@ -40,7 +40,7 @@ policy_eu_deindustrial:
     2050: 0.000 # climate-neutral by 2050
   weather_years:
     enable: true
-    rcp: 4-5 
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: false
@@ -262,7 +262,7 @@ policy_eu_deindustrial_flex:
     2050: 0.000 # climate-neutral by 2050
   weather_years:
     enable: true
-    rcp: 4-5 
+    rcp: 4-5
   sector:
     endo_industry:
       regional_steel_demand: false
@@ -359,7 +359,7 @@ policy_reg_maintain:
     min_part_load_steel: 0.3
     min_part_load_cement: 0.5
     min_part_load_hvc: 0.3
-  
+
 
 # Climate policy: YES, Relocation: NO, Industrial policy: DEINDUSTRIAL
 policy_reg_deindustrial_h2:

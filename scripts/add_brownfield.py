@@ -60,7 +60,6 @@ def add_brownfield(
     n.links.loc[dc_i, "p_nom_min"] = n_p.links.loc[dc_i, "p_nom_opt"]
 
     for c in n_p.iterate_components(["Link", "Generator", "Store"]):
-
         attr = "e" if c.name == "Store" else "p"
 
         # first, remove generators, links and stores that track
@@ -129,11 +128,14 @@ def add_brownfield(
             ],
         )
 
-        if c.name == 'Link':
+        if c.name == "Link":
             n_p.mremove(
                 c.name,
                 c.df.index[
-                    (c.df[f"{attr}_nom_extendable"] & c.df.index.isin(industry_processes))
+                    (
+                        c.df[f"{attr}_nom_extendable"]
+                        & c.df.index.isin(industry_processes)
+                    )
                     & (c.df[f"{attr}_nom_opt"] < threshold_industry)
                 ],
             )
@@ -377,23 +379,32 @@ def reduce_capacities(n, year):
     }
     for carrier in load_dict.keys():
         load = n.loads[n.loads.carrier.isin(load_dict[carrier])].p_set.sum()
-        plants = n.links[(n.links.carrier==carrier) & ~(n.links.p_nom_extendable)].index
+        plants = n.links[
+            (n.links.carrier == carrier) & ~(n.links.p_nom_extendable)
+        ].index
         # multiply with efficiency
-        installed_cap = n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+        installed_cap = (
+            n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+        )
         if installed_cap > load:
-            logger.info(f"Scaling down {carrier} capacity in {year} by factor {installed_cap/load} to avoid numerical issues due to low {carrier} demand.")
-            cap_decrease = installed_cap/load  * 1.1
-            n.links.loc[plants, "p_nom"] /= cap_decrease        
-    
+            logger.info(
+                f"Scaling down {carrier} capacity in {year} by factor {installed_cap / load} to avoid numerical issues due to low {carrier} demand."
+            )
+            cap_decrease = installed_cap / load * 1.1
+            n.links.loc[plants, "p_nom"] /= cap_decrease
+
     # special case steel
-    steel_load = n.loads[n.loads.carrier=="steel"].p_set.sum()
-    plants = n.links[(n.links.carrier.isin(["BF-BOF", "DRI-EAF"])) & ~(n.links.p_nom_extendable)].index
+    steel_load = n.loads[n.loads.carrier == "steel"].p_set.sum()
+    plants = n.links[
+        (n.links.carrier.isin(["BF-BOF", "DRI-EAF"])) & ~(n.links.p_nom_extendable)
+    ].index
     installed_cap = n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
     if installed_cap > steel_load:
-        logger.info(f"Scaling down BOF and EAF capacity by factor {installed_cap/steel_load} to avoid numerical issues due to low steel demand.")
-        cap_decrease = installed_cap/steel_load * 1.1
+        logger.info(
+            f"Scaling down BOF and EAF capacity by factor {installed_cap / steel_load} to avoid numerical issues due to low steel demand."
+        )
+        cap_decrease = installed_cap / steel_load * 1.1
         n.links.loc[plants, "p_nom"] /= cap_decrease
-
 
 
 if __name__ == "__main__":
