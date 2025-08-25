@@ -286,7 +286,7 @@ def remove_stubs_within_admin(
 
 def aggregate_to_substations(
     n: pypsa.Network,
-    buses_i: pd.Index | list,
+    substation_i: pd.Index | list,
     aggregation_strategies: dict | None = None,
 ) -> tuple[pypsa.Network, pd.Series]:
     # can be used to aggregate a selection of buses to electrically closest neighbors
@@ -301,23 +301,23 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight)
+    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight).tocsr()
 
-    bus_indexer = n.buses.index.get_indexer(buses_i)
+    no_substation_i = n.buses.index.difference(substation_i)
+    bus_indexer = n.buses.index.get_indexer(substation_i)
     dist = pd.DataFrame(
-        dijkstra(adj, directed=False, indices=bus_indexer), buses_i, n.buses.index
-    )
+        dijkstra(adj, directed=False, indices=bus_indexer), substation_i, n.buses.index
+    )[no_substation_i]
 
-    dist[buses_i] = (
-        np.inf
-    )  # bus in buses_i should not be assigned to different bus in buses_i
-
-    for c in n.buses.country.unique():
-        incountry_b = n.buses.country == c
-        dist.loc[incountry_b, ~incountry_b] = np.inf
+    country_values = n.buses.country.values
+    country_mask = pd.DataFrame(
+        country_values[:, np.newaxis] == country_values,
+        index=n.buses.index,
+        columns=n.buses.index,
+    )[no_substation_i]
 
     busmap = n.buses.index.to_series()
-    busmap.loc[buses_i] = dist.idxmin(1)
+    busmap.loc[no_substation_i] = dist.where(country_mask, np.inf).idxmin(0)
 
     line_strategies = aggregation_strategies.get("lines", dict())
 
