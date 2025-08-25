@@ -312,6 +312,12 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    63.: 94-AL1/15-ST1A 20.0
+    66.: 94-AL1/15-ST1A 20.0
+    90.: 184-AL1/30-ST1A 110.0
+    110.: 184-AL1/30-ST1A 110.0
+    132.: 243-AL1/39-ST1A 110.0
+    150.: 243-AL1/39-ST1A 110.0
     220.: Al/St 240/40 2-bundle 220.0
     300.: Al/St 240/40 3-bundle 300.0
     330.: Al/St 240/40 3-bundle 300.0
