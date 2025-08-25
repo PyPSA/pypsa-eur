@@ -1041,6 +1041,9 @@ data:
   h2_salt_caverns:
     source: "archive"
     version_or_latest: "latest"
+  lau_regions:
+    source: "primary"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

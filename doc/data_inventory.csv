@@ -24,3 +24,4 @@ attributed_ports,Global - International Ports,"International ports with attribut
 corine,CORINE Land Cover 2012,Pan European Land cover for 44 thematic classes with 2012 as reference year,Copernicus,https://land.copernicus.eu/en/products/corine-land-cover/clc-2012, Open
 emobility,"",Motor and passenger vehicles count,Bundesanstalt für Straßenwesen (BASt),https://www.bast.de/DE/Home/home_node.html,CC BY 4.0
 h2_salt_caverns,Technical potential of salt caverns for Hydrogen Storage in Europe,Salt cavern potentials in GWh/sqkm, Dilara et al, https://www.sciencedirect.com/science/article/abs/pii/S0360319919347299?via%3Dihub,CC BY 4.0
+lau_regions,Local Administrative Units,Used for local administration regions when building geothermal potentials,Eurostat,https://ec.europa.eu/eurostat/web/gisco/geodata/administrative-units,Permission to download only if used for non-commercial purposes

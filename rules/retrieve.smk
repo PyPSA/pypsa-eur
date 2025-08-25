@@ -952,22 +952,22 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
-    rule retrieve_lau_regions:
-        input:
-            lau_regions=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
-                keep_local=True,
-            ),
-        output:
-            lau_regions="data/lau_regions.zip",
-        log:
-            "logs/retrieve_lau_regions.log",
-        log:
-            "logs/retrieve_lau_regions.log",
-        threads: 1
-        retries: 2
-        run:
-            move(input[0], output[0])
+    if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
+        "primary",
+    ]:
+        rule retrieve_lau_regions:
+            input:
+                lau_regions=storage(
+                    LAU_REGIONS_DATASET["url"]
+                ),
+            output:
+                lau_regions=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
+            log:
+                "logs/retrieve_lau_regions.log",
+            threads: 1
+            retries: 2
+            run:
+                move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:

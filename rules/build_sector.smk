@@ -313,7 +313,7 @@ rule build_geothermal_heat_potential:
     input:
         isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        lau_regions="data/lau_regions.zip",
+        lau_regions=rules.retrieve_lau_regions.output[0],
     output:
         heat_source_power=resources(
             "heat_source_power_geothermal_base_s_{clusters}.csv"
