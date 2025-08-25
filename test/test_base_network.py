@@ -18,7 +18,6 @@ sys.path.append("./scripts")
 from scripts.base_network import (
     _get_country,
     _get_linetype_by_voltage,
-    _get_linetypes_config,
     _get_oid,
     _load_buses,
     _load_converters_from_eg,
