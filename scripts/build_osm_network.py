@@ -403,25 +403,19 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
     # Add all edges at once
     G.add_edges_from(edges)
 
-    connected_components = nx.connected_components(G)
+    connected_components = list(nx.connected_components(G))
 
-    # Create empty
-    merged_lines = pd.DataFrame(
-        columns=[
-            "line_id",
-            "circuits",
-            "voltage",
-            "geometry",
-            "underground",
-            "contains_lines",
-            "contains_buses",
-        ]
+    tqdm_args = dict(
+        ascii=False,
+        unit=" components",
+        total=len(connected_components),
+        desc="Merging lines",
     )
 
+    subgraph_data = []
+
     # Iterate over each connected component
-    for component in tqdm(
-        connected_components, desc="Merging lines", unit=" components"
-    ):
+    for component in tqdm(connected_components, **tqdm_args):
         # Create a subgraph for the current component
         subgraph = G.subgraph(component)
 
@@ -454,28 +448,38 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         for edge in subgraph.edges():
             contains_buses.append(G.edges[edge].get("bus_id", None))
 
-        subgraph_data = {
-            "line_id": [
-                "merged_" + str(node_longest) + "+" + str(number_of_lines - 1)
-            ],  # line_id
-            "circuits": [circuits],
-            "voltage": [voltage],
-            "geometry": [geometry],
-            "underground": [underground],
-            "contains_lines": [contains_lines],
-            "contains_buses": [contains_buses],
-        }
+        # Skip closed linestrings (circles)
+        if geometry.is_closed:
+            continue
 
-        # Convert to DataFrame and append to the merged_lines DataFrame
-        merged_lines = pd.concat(
-            [merged_lines, pd.DataFrame(subgraph_data)], ignore_index=True
+        subgraph_data.append(
+            {
+                "line_id": "merged_"
+                + str(node_longest)
+                + "+"
+                + str(number_of_lines - 1),
+                "circuits": circuits,
+                "voltage": voltage,
+                "geometry": geometry,
+                "underground": underground,
+                "contains_lines": contains_lines,
+                "contains_buses": contains_buses,
+            }
         )
-        merged_lines = gpd.GeoDataFrame(merged_lines, geometry="geometry", crs=geo_crs)
 
-        # Drop all closed linestrings (circles)
-        merged_lines = merged_lines[
-            merged_lines["geometry"].apply(lambda x: not x.is_closed)
+    if subgraph_data:
+        merged_lines = gpd.GeoDataFrame(subgraph_data, crs=geo_crs)
+    else:
+        cols = [
+            "line_id",
+            "circuits",
+            "voltage",
+            "geometry",
+            "underground",
+            "contains_lines",
+            "contains_buses",
         ]
+        merged_lines = gpd.GeoDataFrame(columns=cols, crs=geo_crs)
 
     return merged_lines
 
