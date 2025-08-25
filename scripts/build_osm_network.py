@@ -206,37 +206,43 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     Returns
     -------
         - lines (GeoDataFrame): The split lines.
-        - buses (GeoDataFrame): The buses representing nodes.
     """
     lines = lines.copy()
     logger.info(f"Splitting lines over overpassing nodes (Tolerance {tol} m).")
-    lines_to_add = []  # list of lines to be added
-    lines_to_split = []  # list of lines that have been split
+    lines_to_add = []
+    lines_to_split = []
 
-    lines_epsgmod = lines.to_crs(distance_crs)
+    # TODO: In first draft, skip line splitting for lower voltage levels
+    high_voltage_lines = lines.query("voltage >= 220000")
+    if high_voltage_lines.empty:
+        return lines
+
+    lines_epsgmod = high_voltage_lines.to_crs(distance_crs)
     buses_epsgmod = buses.to_crs(distance_crs)
+    buses_sindex = buses_epsgmod.sindex
 
     # set tqdm options for substation ids
     tqdm_kwargs_substation_ids = dict(
         ascii=False,
         unit=" lines",
-        total=lines.shape[0],
+        total=high_voltage_lines.shape[0],
         desc="Splitting lines",
     )
 
-    for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
-        # TODO: In first draft, skip line splitting for lower voltage levels
-        if lines.loc[l, "voltage"] < 220000:
+    for l in tqdm(high_voltage_lines.index, **tqdm_kwargs_substation_ids):
+        line_geom = lines_epsgmod.geometry.loc[l]
+
+        # Use spatial index for initial filtering
+        possible_matches = list(buses_sindex.intersection(line_geom.bounds))
+        if not possible_matches:
             continue
 
-        # bus indices being within tolerance from the line
-        bus_in_tol_epsg = buses_epsgmod[
-            buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
-        ]
+        nearby_buses = buses_epsgmod.iloc[possible_matches]
+        bus_in_tol_epsg = nearby_buses[nearby_buses.geometry.distance(line_geom) <= tol]
 
         # Get boundary points
-        endpoint0 = lines_epsgmod.geometry.loc[l].boundary.geoms[0]
-        endpoint1 = lines_epsgmod.geometry.loc[l].boundary.geoms[1]
+        endpoint0 = line_geom.boundary.geoms[0]
+        endpoint1 = line_geom.boundary.geoms[1]
 
         # Calculate distances
         dist_to_ep0 = bus_in_tol_epsg.geometry.distance(endpoint0)
