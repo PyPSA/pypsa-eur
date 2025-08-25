@@ -44,6 +44,68 @@ toe_to_MWh = 11.630
 
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
 
+eu28 = [
+    "FR",
+    "DE",
+    "GB",
+    "IT",
+    "ES",
+    "PL",
+    "SE",
+    "NL",
+    "BE",
+    "FI",
+    "DK",
+    "PT",
+    "RO",
+    "AT",
+    "BG",
+    "EE",
+    "GR",
+    "LV",
+    "CZ",
+    "HU",
+    "IE",
+    "SK",
+    "LT",
+    "HR",
+    "LU",
+    "SI",
+    "CY",
+    "MT",
+]
+
+eu_idees = [
+    "AT",
+    "BE",
+    "BG",
+    "CY",
+    "CZ",
+    "DE",
+    "DK",
+    "EE",
+    "EL",
+    "ES",
+    "FI",
+    "FR",
+    "HR",
+    "HU",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PL",
+    "PT",
+    "RO",
+    "SE",
+    "SI",
+    "SK",
+    "UK",
+]  # EL is greece GR and UK is GB -> need to change manually
+
 
 sheet_names = {
     "Iron and steel": "ISI",
@@ -277,14 +339,15 @@ def iron_and_steel():
 
     # Process emissions (per physical output)
 
-    s_emi = idees["emi"][3:51]
-    assert s_emi.index[0] == sector
-
     s_out = idees["out"][6:7]
     assert s_out.index[0] == sector
 
-    # tCO2/t material
-    df.loc["process emission", sector] = s_emi["Process emissions"] / s_out[sector]
+    if not endo_industry:
+        s_emi = idees["emi"][3:51]
+        assert s_emi.index[0] == sector
+
+        # tCO2/t material
+        df.loc["process emission", sector] = s_emi["Process emissions"] / s_out[sector]
 
     # final energy consumption MWh/t material
     sel = ["elec", "heat", "methane", "coke", "coal"]
@@ -703,14 +766,15 @@ def nonmetalic_mineral_products():
     # Calcium carbonate -> lime + CO2
     # CaCO3  -> CaO + CO2
 
-    s_emi = idees["emi"][3:45]
-    assert s_emi.index[0] == sector
-
     s_out = idees["out"][7:8]
     assert sector in str(s_out.index)
 
-    # tCO2/t material
-    df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
+    if not endo_industry:
+        s_emi = idees["emi"][3:45]
+        assert s_emi.index[0] == sector
+
+        # tCO2/t material
+        df.loc["process emission", sector] += s_emi["Process emissions"] / s_out.values
 
     # MWh/t material
     sources = ["elec", "biomass", "methane", "hydrogen", "heat", "naphtha"]
@@ -743,7 +807,7 @@ def nonmetalic_mineral_products():
 
     # Efficiency changes due to electrification
     key = "Ceramics: Microwave drying and sintering"
-    # the values are zero in new JRC-data -> assume here value from JRC-2015
+    # the values are zero in new JRC-data -> assume here value from JRC-2021
     # eff_elec = s_ued[key] / s_fec[key]
     eff_elec = 11.6 / 26
 
@@ -1511,6 +1575,50 @@ def other_industrial_sectors():
     return df
 
 
+"""
+def steel_capacities():
+
+    sector = "Iron and steel"
+    columns = ["country", "tech", "value"]
+    techs = ["BOF", "EAF"]
+
+    df = pd.DataFrame(columns=columns)
+
+    for country in eu27:
+
+        # IDEES reports Greece as EL
+        if country == "GR":
+            country = "EL"
+
+        idees = pd.read_excel(
+            f"{snakemake.input.idees}/{country}/JRC-IDEES-2021_Industry_{country}.xlsx",
+            sheet_name=sheet_names[sector],
+            index_col=0,
+            header=0,
+            # usecols=usecols,
+        )
+
+        cap = idees[10:12]
+        cap_values = [
+            cap.loc["Integrated steelworks", 2021],
+            cap.loc["Electric arc", 2021],
+        ]
+        df_cap = pd.DataFrame(index=[0, 1], columns=columns)
+
+        df_cap["tech"] = techs
+        # Manually fix the different naming of Greece and United Kingdom
+        if country == "EL":
+            df_cap["country"] = ["GR"] * len(df_cap)
+        else:
+            df_cap["country"] = [country] * len(df_cap)
+
+        df_cap["value"] = cap_values
+        df = pd.concat([df, df_cap])
+
+    df.reset_index(drop=True, inplace=True)
+    return df
+"""
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -1520,6 +1628,7 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
+    endo_industry = snakemake.params.endo_industry
 
     year = params["reference_year"]
 

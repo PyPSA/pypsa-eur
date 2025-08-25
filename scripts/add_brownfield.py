@@ -64,6 +64,7 @@ def add_brownfield(
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
+
         n_p.remove(c.name, c.df.index[c.df.lifetime == np.inf])
 
         # remove assets whose build_year + lifetime <= year
@@ -76,6 +77,32 @@ def add_brownfield(
             & c.df.index.str.contains("CHP")
             & c.df.index.str.contains("heat")
         ]
+
+        steel_processes = c.df.index[
+            c.df[f"{attr}_nom_extendable"]
+            & (
+                c.df.index.str.contains("BOF")
+                | c.df.index.str.contains("DRI")
+                | c.df.index.str.contains("Blast Furnaces")
+                | c.df.index.str.contains("EAF")
+            )
+        ]
+
+        industry_processes = c.df.index[
+            c.df[f"{attr}_nom_extendable"]
+            & (
+                c.df.index.str.contains("BOF")
+                | c.df.index.str.contains("DRI")
+                | c.df.index.str.contains("Blast Furnaces")
+                | c.df.index.str.contains("EAF")
+                | c.df.index.str.contains("Cement Plant")
+                | c.df.index.str.contains("Cement TGR")
+                | c.df.index.str.contains("naphtha steam cracker")
+            )
+        ]
+
+        threshold = snakemake.params.threshold_capacity
+        threshold_industry = snakemake.params.threshold_capacity_industry
 
         if not chp_heat.empty:
             threshold_chp_heat = (
@@ -92,10 +119,26 @@ def add_brownfield(
         n_p.remove(
             c.name,
             c.df.index[
-                (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
-                & (c.df[f"{attr}_nom_opt"] < capacity_threshold)
+                (
+                    c.df[f"{attr}_nom_extendable"]
+                    & ~c.df.index.isin(chp_heat)
+                    & ~c.df.index.isin(steel_processes)
+                )
+                & (c.df[f"{attr}_nom_opt"] < threshold)
             ],
         )
+
+        if c.name == "Link":
+            n_p.mremove(
+                c.name,
+                c.df.index[
+                    (
+                        c.df[f"{attr}_nom_extendable"]
+                        & c.df.index.isin(industry_processes)
+                    )
+                    & (c.df[f"{attr}_nom_opt"] < threshold_industry)
+                ],
+            )
 
         # copy over assets but fix their capacity
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
@@ -327,16 +370,55 @@ def update_dynamic_ptes_capacity(
     ].values
 
 
+def reduce_capacities(n, year):
+    load_dict = {
+        "Haber-Bosch": ["NH3"],
+        "methanolisation": ["shipping methanol", "industry methanol"],
+        "naphtha steam cracker": ["HVC"],
+        "cement plant": ["cement"],
+    }
+    for carrier in load_dict.keys():
+        load = n.loads[n.loads.carrier.isin(load_dict[carrier])].p_set.sum()
+        plants = n.links[
+            (n.links.carrier == carrier) & ~(n.links.p_nom_extendable)
+        ].index
+        # multiply with efficiency
+        installed_cap = (
+            n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+        )
+        if installed_cap > load:
+            logger.info(
+                f"Scaling down {carrier} capacity in {year} by factor {installed_cap / load} to avoid numerical issues due to low {carrier} demand."
+            )
+            cap_decrease = installed_cap / load * 1.1
+            n.links.loc[plants, "p_nom"] /= cap_decrease
+
+    # special case steel
+    steel_load = n.loads[n.loads.carrier == "steel"].p_set.sum()
+    plants = n.links[
+        (n.links.carrier.isin(["BF-BOF", "DRI-EAF"])) & ~(n.links.p_nom_extendable)
+    ].index
+    installed_cap = n.links.loc[plants].p_nom.mul(n.links.loc[plants].efficiency).sum()
+    if installed_cap > steel_load:
+        logger.info(
+            f"Scaling down BOF and EAF capacity by factor {installed_cap / steel_load} to avoid numerical issues due to low steel demand."
+        )
+        cap_decrease = installed_cap / steel_load * 1.1
+        n.links.loc[plants, "p_nom"] /= cap_decrease
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_brownfield",
+            configfiles="config/industry_config.yaml",
             clusters="39",
             opts="",
             sector_opts="",
-            planning_horizons=2050,
+            planning_horizons=2040,
+            run="base_eu_deindustrial",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -371,6 +453,8 @@ if __name__ == "__main__":
     )
 
     disable_grid_expansion_if_limit_hit(n)
+
+    reduce_capacities(n, year)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

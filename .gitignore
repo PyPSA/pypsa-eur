@@ -17,10 +17,12 @@ gurobi.log
 /resources
 /resources*
 /results
+/results_*
 /networks
 /benchmarks
 /logs
-/notebooks
+/notebooks*
+/plots*
 /data
 /cutouts
 /tmp
@@ -69,6 +71,10 @@ d1gam3xoknrgr2.cloudfront.net/
 *.geojson
 
 *.ipynb
+
+*.png
+
+log.txt
 
 merger-todos.md
 

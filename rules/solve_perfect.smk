@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+
+
 rule add_existing_baseyear:
     params:
         baseyear=config_provider("scenario", "planning_horizons", 0),
@@ -27,18 +29,54 @@ rule add_existing_baseyear:
         existing_heating_distribution=resources(
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
-        existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         heating_efficiencies=resources("heating_efficiencies.csv"),
+        steel_capacities=lambda w: (
+            resources("steel/gem_capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        steel_start_dates=lambda w: (
+            resources("steel/gem_start_dates_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        cement_capacities=lambda w: (
+            resources("cement/sfi_capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        cement_start_dates=lambda w: (
+            resources("cement/sfi_start_dates_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        chemicals_capacities=lambda w: (
+            resources("chemicals/ecm_capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        chemicals_start_dates=lambda w: (
+            resources("chemicals/ecm_start_dates_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        industrial_distribution_key=lambda w: (
+            resources("industrial_distribution_key_base_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
     wildcard_constraints:
+        # TODO: The first planning_horizon needs to be aligned across scenarios
+        # snakemake does not support passing functions to wildcard_constraints
+        # reference: https://github.com/snakemake/snakemake/issues/2703
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
     resources:
-        mem_mb=config_provider("solving", "mem_mb"),
-        runtime=config_provider("solving", "runtime", default="24h"),
+        mem_mb=2000,
     log:
         logs(
             "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
