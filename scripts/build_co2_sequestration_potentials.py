@@ -82,7 +82,7 @@ def create_capacity_map_storage(table_fn: str, map_fn: str) -> gpd.GeoDataFrame:
     df = pd.read_csv(table_fn)
 
     sel = ["COUNTRYCOD", "ID", "geometry"]
-    gdf = gpd.read_file(map_fn)[sel]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
     gdf.geometry = gdf.geometry.buffer(0)
 
     # Combine shapes with the same id into one multi-polygon
