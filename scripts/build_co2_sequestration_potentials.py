@@ -155,7 +155,7 @@ def create_capacity_map_traps(table_fn: list[str], map_fn: str) -> gpd.GeoDataFr
     df = pd.concat([pd.read_csv(path) for path in table_fn], ignore_index=True)
 
     sel = ["COUNTRYCOD", "ID", "geometry"]
-    gdf = gpd.read_file(map_fn)[sel]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
 
     # Combine shapes with the same id into one multi-polygon
     gdf = gdf.groupby(["COUNTRYCOD", "ID"]).agg(unary_union).reset_index()
