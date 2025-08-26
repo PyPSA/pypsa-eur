@@ -64,3 +64,5 @@
 "emobility","archive","28-08-2016","['latest', 'supported']","https://zenodo.org/records/16899168/files/emobility.zip",""
 "h2_salt_caverns","archive","16-10-2019","['latest', 'supported']","https://zenodo.org/records/16899309/files/h2_salt_caverns_GWh_per_sqkm.geojson",""
 "lau_regions","primary","2019","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",""
+"aquifer_data","primary","v1.2","['latest', 'supported']","https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip",""
+"aquifer_data","archive","v1.2","['latest', 'supported']","https://zenodo.org/records/16946750/files/IHME1500_v12.zip",""
