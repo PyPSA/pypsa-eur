@@ -173,19 +173,16 @@ atlite:
       time: ['2013', '2013']
       # features: [] 
       # sarah_dir: ""
-    europe-1940-2024-era5-runoff:
+    europe-1940-2024-era5:
       module: era5
       x: [-12., 42.]
       y: [33., 72.]
+      dx: 0.3
+      dy: 0.3
       time: ['1940', '2024']
-      features: ['height', 'runoff']
-      monthly_requests: true
-    europe-1940-2024-era5-temperature:
-      module: era5
-      x: [-12., 42.]
-      y: [33., 72.]
-      time: ['1940', '2024']
-      features: ['temperature']
+      features: ['temperature', 'height', 'runoff']
+      chunks:
+        time: 500
       monthly_requests: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
