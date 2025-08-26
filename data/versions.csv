@@ -66,3 +66,4 @@
 "lau_regions","primary","2019","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",""
 "aquifer_data","primary","v1.2","['latest', 'supported']","https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip",""
 "aquifer_data","archive","v1.2","['latest', 'supported']","https://zenodo.org/records/16946750/files/IHME1500_v12.zip",""
+"lau_regions","archive","2019","['latest', 'supported']","https://zenodo.org/records/16947002",""
