@@ -394,9 +394,13 @@ rule build_monthly_prices:
 
 if COUNTRY_RUNOFF_DATASET["source"] == "build":
 
+    # This rule uses one or multiple cutouts.
+    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
     rule build_country_runoff:
         input:
-            cutouts="cutouts/europe-1940-2024-era5-runoff.nc",
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
             country_shapes=resources("country_shapes.geojson"),
         output:
             era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",

@@ -2,18 +2,20 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build daily hydro runoff for each country to fill missing EIA statistics for hydro generation.
+Build country-level heating degree days in Europe for each country. Used for rescaling heat demand in weather years not covered by energy balance statistics.
 
 Outputs
 -------
 
-- ``data/country_runoff/build/unknown/era5-runoff-per-country.csv``:
+- ``data/country_runoff/build/unknown/era5-hdd-per-country.csv``:
 
-    ===================  ================  =========================================================
-    Field                Dimensions        Description
-    ===================  ================  =========================================================
-    TODO                 TODO              TODO
-    ===================  ================  =========================================================
+    ===================  ==========  ===========  =========================================================
+    Field                Dimensions  Unit         Description
+    ===================  ==========  ===========  =========================================================
+    index/time           time        day          Datestamp, YYYY-MM-DD
+    -------------------  ----------  -----------  ---------------------------------------------------------
+    <columns>            country     ISO-3166 A2  Aggregated HDDs per country
+    ===================  ==========  ===========  =========================================================
 
 """
 
@@ -36,12 +38,14 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_country_hdd")
     configure_logging(snakemake)
-    
-    cutout = load_cutout(snakemake.input.cutouts)
-    country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index("name")["geometry"]
+
+    cutout: atlite.Cutout = load_cutout(snakemake.input.cutouts)
+    country_shapes = gpd.read_file(snakemake.input.country_shapes).set_index("name")[
+        "geometry"
+    ]
 
     ds = cutout.heat_demand(shapes=country_shapes)
 
-    df = ds.to_pandas().astype(int)
+    df: pd.DataFrame = ds.to_pandas().astype(int)
 
-    df.to_csv(snakemake.output.era5_temperature)
+    df.to_csv(snakemake.output.era5_hdd)
