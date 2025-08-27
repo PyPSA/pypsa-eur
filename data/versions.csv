@@ -32,4 +32,5 @@
 "bfs_gdp_and_population","archive","2019-03-28","['latest','supported']","https://web.archive.org/web/20250818151254/https://dam-api.bfs.admin.ch/hub/api/dam/assets/7786557/master",""
 "bfs_gdp_and_population","primary","2019-03-28","['latest','supported']","https://dam-api.bfs.admin.ch/hub/api/dam/assets/7786557/master",""
 "mobility_profiles","build","unknown","['latest','supported']","https://www.bast.de/videos/{year}_{street_type}_S.zip","Latest dataset built using BASt vehicle monitoring data. The URL is a template that is filled based on the config file, see the documentation for details."
-"mobility_profiles","archive","2025-08-13","['latest','supported']","https://zenodo.org/records/16964996/files","Data from the original PyPSA-Eur data bundle."
+"mobility_profiles","archive","2025-08-27","['latest','supported']","https://zenodo.org/records/16965042/files","New version recreating the dataset from the data bundle."
+"mobility_profiles","archive","2025-08-13","['supported']","https://zenodo.org/records/16964996/files","Data from the original PyPSA-Eur data bundle."
