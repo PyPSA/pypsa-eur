@@ -1031,8 +1031,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   mobility_profiles:
-  cutout:
     source: "archive"
+    version_or_latest: "latest"
+  cutout:
+    source: "build"
     version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
