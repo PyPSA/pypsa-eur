@@ -2887,7 +2887,9 @@ def add_heat(
         overdim_factor = options["overdimension_heat_generators"][
             heat_system.central_or_decentral
         ]
-        if heat_system == HeatSystem.URBAN_CENTRAL:
+        if (heat_system == HeatSystem.URBAN_CENTRAL) and not options[
+            "central_heat_everywhere"
+        ]:
             nodes = dist_fraction.index[dist_fraction > 0]
         else:
             nodes = pop_layout.index
