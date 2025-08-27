@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+        urban_percent=rules.retrieve_worldbank_urban_population.output["csv"],
         cutout=lambda w: input_cutout(w),
     output:
         pop_layout_total=resources("pop_layout_total.nc"),
@@ -534,16 +534,6 @@ rule build_direct_heat_source_utilisation_profiles:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
 
 
-def solar_thermal_cutout(wildcards):
-    c = config_provider("solar_thermal", "cutout")(wildcards)
-    if c == "default":
-        return CDIR.joinpath(
-            config_provider("atlite", "default_cutout")(wildcards) + ".nc"
-        ).as_posix()
-    else:
-        return CDIR.joinpath(c + ".nc").as_posix()
-
-
 rule build_solar_thermal_profiles:
     params:
         snapshots=config_provider("snapshots"),
@@ -576,7 +566,7 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
         swiss="data/switzerland-new_format-all_years.csv",
-        swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
+        swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
         eurostat="data/eurostat/Balances-April2023",
@@ -601,9 +591,31 @@ rule build_energy_totals:
         "../scripts/build_energy_totals.py"
 
 
+if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"]:
+
+    # This rule uses one or multiple cutouts.
+    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
+    rule build_country_hdd:
+        input:
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        log:
+            logs("build_country_hdd.log"),
+        benchmark:
+            benchmarks("build_country_hdd")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_hdd.py"
+
+
 rule build_heat_totals:
     input:
-        hdd="data/bundle/era5-HDD-per-country.csv",
+        era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
@@ -624,13 +636,13 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass="data/ENSPRESO_BIOMASS.xlsx",
+        enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
         eurostat="data/eurostat/Balances-April2023",
         nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),
-        swiss_population=ancient("data/bundle/je-e-21.03.02.xls"),
+        swiss_population=rules.retrieve_bfs_gdp_and_population.output["xlsx"],
         country_shapes=resources("country_shapes.geojson"),
     output:
         biomass_potentials_all=resources(
@@ -872,7 +884,7 @@ rule build_industrial_distribution_key:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
-        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
@@ -1084,6 +1096,37 @@ rule build_shipping_demand:
         "../scripts/build_shipping_demand.py"
 
 
+if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
+
+    rule build_mobility_profiles:
+        params:
+            sector=config_provider("sector"),
+        input:
+            zip_files=storage(
+                expand(
+                    MOBILITY_PROFILES_DATASET["url"],
+                    year=[2010, 2011, 2012, 2013, 2014],
+                    street_type=["A", "B"],
+                ),
+                keep_local=True,
+            ),
+        output:
+            raw_files=directory(MOBILITY_PROFILES_DATASET["folder"] / "raw"),
+            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        threads: 1
+        resources:
+            mem_mb=5000,
+        log:
+            logs("build_mobility_profiles.log"),
+        benchmark:
+            benchmarks("build_mobility_profiles")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_mobility_profiles.py"
+
+
 rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
@@ -1096,8 +1139,8 @@ rule build_transport_demand:
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
-        traffic_data_KFZ="data/bundle/emobility/KFZ__count",
-        traffic_data_Pkw="data/bundle/emobility/Pkw__count",
+        traffic_data_KFZ=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+        traffic_data_Pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s_{clusters}.csv"),
@@ -1345,10 +1388,11 @@ rule prepare_sector_network:
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
-        costs=lambda w: (
-            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
+        costs=lambda w: COSTS_DATASET["folder"]
+        / (
+            "costs_{}.csv".format(config_provider("costs", "year")(w))
             if config_provider("foresight")(w) == "overnight"
-            else resources("costs_{planning_horizons}.csv")
+            else "costs_{planning_horizons}.csv"
         ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
