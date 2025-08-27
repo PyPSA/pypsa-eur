@@ -5,6 +5,7 @@
 logging:
   level: INFO
   format: '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+  warnings_as_errors: true
 
 run:
   prefix: validation
