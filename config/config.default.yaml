@@ -816,11 +816,11 @@ sector:
     limit: .inf
     limit_sense: <=
     price:
-      H2: 74
-      NH3: 97
-      methanol: 121
-      gas: 122
-      oil: 125
+      #H2: 74
+      #NH3: 97
+      #methanol: 121
+      #gas: 122
+      #oil: 125
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -941,7 +941,7 @@ costs:
     battery inverter: 0.
     home battery storage: 0
     water tank charger: 0.03
-    central water pit charger: 0.025
+    #central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.
@@ -1067,6 +1067,7 @@ solving:
       AggFill: 0
       PreDual: 0
       GURO_PAR_BARDENSETHRESH: 200
+      BarHomogeneous: 1
     gurobi-numeric-focus:
       NumericFocus: 3       # Favour numeric stability over speed
       method: 2             # barrier

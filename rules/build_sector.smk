@@ -762,6 +762,7 @@ rule build_industry_sector_ratios:
     params:
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
     input:
         ammonia_production=resources("ammonia_production.csv"),
         idees="data/jrc-idees-2021",
@@ -868,11 +869,14 @@ rule build_industrial_distribution_key:
             "industry", "hotmaps_locate_missing", default=False
         ),
         countries=config_provider("countries"),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         hotmaps="data/Industrial_Database.csv",
-        gem_gspt="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        steel_gem="data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+        cement_sfi="data/sfi/SFI-Global-Cement-Database-July-2021.xlsx",
+        chemicals_ecm="data/1-s2.0-S0196890424010586-mmc2.xlsx", # Reference Neuwirth et al., https://doi.org/10.1016/j.enconman.2024.119117 
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
         refineries_supplement="data/refineries-noneu.csv",
@@ -880,6 +884,8 @@ rule build_industrial_distribution_key:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
         ),
+        capacities=resources("endo_industry/capacities_s_{clusters}.csv"),
+        start_dates=resources("endo_industry/start_dates_s_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=1000,
@@ -894,6 +900,8 @@ rule build_industrial_distribution_key:
 
 
 rule build_industrial_production_per_node:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
@@ -923,6 +931,8 @@ rule build_industrial_production_per_node:
 
 
 rule build_industrial_energy_demand_per_node:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industry_sector_ratios=resources(
             "industry_sector_ratios_{planning_horizons}.csv"
@@ -961,6 +971,7 @@ rule build_industrial_energy_demand_per_country_today:
         countries=config_provider("countries"),
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
+        endo_industry=config_provider("sector", "endo_industry", default=False)
     input:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
@@ -985,6 +996,8 @@ rule build_industrial_energy_demand_per_country_today:
 
 
 rule build_industrial_energy_demand_per_node_today:
+    params:
+        endo_industry=config_provider("sector","endo_industry","enable")
     input:
         industrial_distribution_key=resources(
             "industrial_distribution_key_base_s_{clusters}.csv"
@@ -1008,6 +1021,61 @@ rule build_industrial_energy_demand_per_node_today:
     script:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
 
+
+if config["sector"]["endo_industry"].get("enable", False):
+
+    rule build_industrial_policies_projections:
+        output:
+            industry_prod_scenarios=resources("endo_industry/eu_industry_prod_scenarios.csv"),
+        log:
+            logs("build_industrial_policies_projections.log"),
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industrial_policies_projections.py"
+
+
+if config["sector"]["endo_industry"].get("enable", False)  and config["sector"]["endo_industry"].get("empirical_demand_growth", False):
+
+    rule build_industry_steel_production_projections:
+        input:
+            ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
+        output:
+            steel_demand=resources("endo_industry/eu_steel_production.csv"),
+        log:
+            logs("build_industry_steel_production_projections.log"),
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industry_steel_production_projections.py"
+
+if config["sector"]["endo_industry"].get("enable", False) and config["sector"]["endo_industry"].get("empirical_demnad_growth", False): 
+
+    rule build_industry_cement_production_projections:
+        params:
+            countries=config_provider("countries")
+        input:
+            ssp="data/ssp_snapshot_1706291930_allcountries.xlsx",  #ADB manually uploaded data is freely available here upon registration https://data.ece.iiasa.ac.at/ssp/#/login
+            cement_plants="data/sfi/SFI-Global-Cement-Database-July-2021.xlsx",
+            idees="data/jrc-idees-2021",
+            cement_extra_eu="data/cement_production_extra_eu27.xlsx",
+            industrial_distribution_key=resources("industrial_distribution_key_base_s_{clusters}.csv"),
+        output:
+            cement_prod=resources("endo_industry/cement_production_s_{clusters}.csv"),
+        log:
+            logs("build_industry_cement_production_projections_{clusters}.log"),
+        benchmark:
+            benchmarks("build_industry_cement_production_projections/s_{clusters}")
+        resources:
+            mem_mb=5000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_industry_cement_production_projections.py"
 
 rule build_retro_cost:
     params:
@@ -1298,6 +1366,13 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
+        base=config_provider("electricity", "base_network"),
+        endo_industry=config_provider("sector", "endo_industry", "enable"),
+        endo_ammonia=config_provider("sector", "endo_industry","endo_ammonia"),
+        endo_hvc=config_provider("sector", "endo_industry","endo_hvc"),
+        weather_years=config_provider("weather_years","enable"),
+        renewable_carriers=config_provider("electricity","renewable_carriers"),
+        industrial_policy_scenario=config_provider("sector","endo_industry","policy_scenario")
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
@@ -1357,12 +1432,13 @@ rule prepare_sector_network:
         industrial_demand=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
+        # This previous input takes less sectors if endo_industry is enabled
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_base_s_{clusters}.nc"
         ),
         industrial_production=resources(
             "industrial_production_base_s_{clusters}_{planning_horizons}.csv"
-        ),
+        ), #ADB then use the one not projected for the future
         district_heat_share=resources(
             "district_heat_share_base_s_{clusters}_{planning_horizons}.csv"
         ),
@@ -1419,6 +1495,28 @@ rule prepare_sector_network:
         ates_potentials=lambda w: (
             resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
             if config_provider("sector", "district_heating", "ates", "enable")(w)
+            else []
+        ),
+        # Climate
+        zenodo_timeseries=lambda w: (
+            "data/zenodo_timeseries"
+            if config_provider("weather_years", "enable")(w)
+            else []
+        ),
+        industry_production_scenarios=lambda w: (
+            resources("endo_industry/eu_industry_prod_scenarios.csv")
+            if config_provider("sector", "endo_industry","enable")(w)
+            else []
+        ),
+        endoindustry_capacities=lambda w: (
+            #resources("steel/gem_capacities_s_{clusters}.csv")
+            resources("endo_industry/capacities_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
+            else []
+        ),
+        industrial_distribution_key=lambda w: (
+            resources("industrial_distribution_key_base_s_{clusters}.csv")
+            if config_provider("sector", "endo_industry", "enable")(w)
             else []
         ),
     output:

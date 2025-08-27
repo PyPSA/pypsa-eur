@@ -47,9 +47,35 @@ if __name__ == "__main__":
     fn = snakemake.input.industry_sector_ratios
     sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
 
+    remove_keywords = [
+        "Electric arc",
+        "DRI + Electric arc",
+        "Integrated steelworks",
+        "Cement",
+        "Methanol",
+        "Ammonia",
+        "HVC",
+        "HVC (mechanical recycling)",
+        "HVC (chemical recycling)",
+    ]  # Add any others you want to exclude
+
+    if snakemake.params.endo_industry:
+        # Remove if the sector name (level=1) matches any of the keywords
+        sector_ratios = sector_ratios.loc[
+            :,
+            ~sector_ratios.columns.get_level_values(1).str.contains(
+                "|".join(remove_keywords), case=False
+            ),
+        ]
+
     # material demand per node and industry (Mton/a)
     fn = snakemake.input.industrial_production_per_node
     nodal_production = pd.read_csv(fn, index_col=0) / 1e3
+
+    # For nodal_production, which has simple column index
+    nodal_production = nodal_production.loc[
+        :, ~nodal_production.columns.str.contains("|".join(remove_keywords), case=False)
+    ]
 
     # energy demand today to get current electricity
     fn = snakemake.input.industrial_energy_demand_per_node_today
@@ -76,7 +102,13 @@ if __name__ == "__main__":
     }
     nodal_df.rename(columns=rename_sectors, inplace=True)
 
-    nodal_df["current electricity"] = nodal_today["electricity"]
+    if snakemake.params.endo_industry:
+        nodal_df["current electricity"] = nodal_today["all sectors electricity"]
+    else:
+        nodal_df["current electricity"] = nodal_today["electricity"]
+
+    # Set any negative demand values to zero
+    nodal_df[nodal_df < 0] = 0
 
     nodal_df.index.name = "TWh/a (MtCO2/a)"
 

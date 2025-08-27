@@ -23,10 +23,14 @@ from scripts._helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import load_costs, sanitize_carriers
+from scripts.add_electricity import calculate_annuity, load_costs, sanitize_carriers
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
-from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
+from scripts.prepare_sector_network import (
+    calculate_steel_parameters,
+    cluster_heat_buses,
+    define_spatial,
+)
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -715,6 +719,433 @@ def add_heating_capacities_installed_before_baseyear(
             )
 
 
+def add_steel_industry_existing(n):
+    # Steel capacities in Europe in kton of steel products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities[["EAF", "DRI + EAF", "Integrated steelworks"]]
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
+    start_dates = start_dates[["EAF", "DRI + EAF", "Integrated steelworks"]]
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    capacities_bof = capacities["Integrated steelworks"]
+    capacities_eaf = capacities["EAF"] + capacities["DRI + EAF"]
+    capacities_bof.index = capacities.index
+    capacities_eaf.index = capacities.index
+
+    capacities_bof = capacities_bof * keys["Integrated steelworks"]
+
+    capacities_eaf = capacities_eaf * keys["EAF"]
+    start_dates_eaf = pd.Series(
+        np.maximum(start_dates["EAF"], start_dates["DRI + EAF"])
+    )
+    # start_dates_eaf = round((start_dates["EAF"] * capacities["EAF"] + start_dates["DRI + EAF"] * capacities["DRI + EAF"])/ capacities_eaf)
+    start_dates_bof = round(start_dates["Integrated steelworks"])
+
+    # Average age of assets in Iron and steel in Europe: 21-28 years, so I assume they are starting in 2000 in case https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+    start_dates_eaf = start_dates_eaf.where(
+        (start_dates_eaf >= 1000) & np.isfinite(start_dates_eaf), 2000
+    )
+    start_dates_bof = start_dates_bof.where(
+        (start_dates_bof >= 1000) & np.isfinite(start_dates_bof), 2000
+    )
+
+    nodes = pop_layout.index
+    p_nom_bof = pd.DataFrame(index=nodes, columns=(["value"]))
+    p_nom_eaf = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom_bof = capacities_bof / nhours  # get the hourly production capacity
+    p_nom_eaf = capacities_eaf / nhours  # get the hourly production capacity
+
+    # PARAMETERS
+    nyears = n.snapshot_weightings.generators.sum() / 8760.0
+    bof, eaf_ng, eaf_h2, tgr, min_part_load_steel = calculate_steel_parameters(
+        options, nyears
+    )
+
+    # check if existing capacity is bigger than demand
+    steel_load = n.loads[n.loads.carrier == "steel"].p_set.sum()
+    installed_cap = (
+        p_nom_eaf.sum() / bof["iron input"] + p_nom_bof.sum() / eaf_ng["iron input"]
+    )  # times 1/efficiency
+    if installed_cap > steel_load:
+        logger.info(
+            f"Scaling down BOF and EAF capacity by factor {installed_cap / steel_load} to avoid numerical issues due to low steel demand."
+        )
+        cap_decrease = installed_cap / steel_load * 1.1
+    else:
+        cap_decrease = 1
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" BF-BOF-2020",
+        bus0=spatial.iron.nodes,
+        bus1=spatial.steel.nodes,
+        bus2=spatial.coal.nodes,
+        bus3=nodes,
+        bus4=spatial.co2.bof,
+        carrier="BF-BOF",
+        p_nom=p_nom_bof / cap_decrease * bof["iron input"],
+        p_nom_extendable=False,
+        p_min_pu=min_part_load_steel,
+        # marginal_cost=-0.1,#opex_bof,
+        efficiency=1 / bof["iron input"],
+        efficiency2=-bof["coal input"] / bof["iron input"],  # MWhth coal per kt iron
+        efficiency3=-bof["elec input"]
+        / bof["iron input"],  # MWh electricity per kt iron
+        efficiency4=bof["emission factor"] / bof["iron input"],  # t CO2 per kt iron
+        lifetime=bof[
+            "lifetime"
+        ],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+        build_year=start_dates_bof,
+    )
+
+    if options["endo_industry"]["dri_import"]:
+        electricity_input = (
+            costs.at["direct iron reduction furnace", "electricity-input"] * 1e3
+        )  # MWh/kt
+
+        n.add(
+            "Link",
+            nodes,
+            suffix=" DRI-2020",
+            carrier="DRI",
+            p_nom_extendable=False,
+            p_nom=p_nom_eaf / cap_decrease * eaf_ng["iron input"],
+            p_min_pu=min_part_load_steel,
+            bus0=spatial.iron.nodes,
+            bus1="EU HBI",
+            bus2=spatial.syngas_dri.nodes,
+            bus3=nodes,
+            efficiency=1 / eaf_ng["iron input"],
+            efficiency2=-1,  # one unit of dri gas per kt iron
+            efficiency3=-electricity_input / eaf_ng["iron input"],
+            lifetime=eaf_ng["lifetime"],
+            build_year=start_dates_eaf,
+        )
+
+        electricity_input = costs.at["electric arc furnace", "electricity-input"]
+
+        n.add(
+            "Link",
+            nodes,
+            suffix=" EAF-2020",
+            carrier="EAF",
+            capital_cost=costs.at["electric arc furnace", "capital_cost"]
+            * 1e3
+            / electricity_input,
+            p_nom_extendable=False,
+            # p_min_pu=min_part_load_steel,
+            p_nom=1e7,  # fake capacity, the bottleneck is DRI
+            bus0=nodes,
+            bus1=spatial.steel.nodes,
+            bus2="EU HBI",
+            efficiency=1 / electricity_input,
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input,
+            lifetime=eaf_ng["lifetime"],
+            build_year=start_dates_eaf,
+        )
+
+    else:
+        n.add(
+            "Link",
+            nodes,
+            suffix=" DRI-EAF-2020",
+            bus0=spatial.iron.nodes,
+            bus1=spatial.steel.nodes,
+            bus2=spatial.syngas_dri.nodes,  # in this process is the reducing agent, it is not burnt
+            bus3=nodes,
+            carrier="DRI-EAF",
+            p_nom=p_nom_eaf / cap_decrease * eaf_ng["iron input"],
+            p_nom_extendable=False,
+            p_min_pu=min_part_load_steel,
+            # marginal_cost=-0.1,#opex_eaf,
+            efficiency=1 / eaf_ng["iron input"],
+            efficiency2=-1 / eaf_ng["iron input"],  # one unit of dri gas per kt iron
+            efficiency3=-eaf_ng["elec input"]
+            / eaf_ng["iron input"],  # MWh electricity per kt iron
+            lifetime=eaf_ng[
+                "lifetime"
+            ],  # https://www.energimyndigheten.se/4a9556/globalassets/energieffektivisering_/jag-ar-saljare-eller-tillverkare/dokument/produkter-med-krav/ugnar-industriella-och-laboratorie/annex-b_lifetime_energy.pdf
+            build_year=start_dates_eaf,
+        )
+
+
+def add_cement_industry_existing(n):
+    # Cement capacities in Europe in kton of cement products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    capacities = capacities["Cement"]
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
+    start_dates = round(start_dates["Cement"])
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    capacities = capacities * keys["Cement"]
+
+    start_dates = start_dates.where(
+        (start_dates >= 1000) & np.isfinite(start_dates), 2000
+    )
+
+    nodes = pop_layout.index
+    p_nom = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom = capacities / nhours  # get the hourly production capacity
+
+    # check if existing capacity is bigger than demand
+    cement_load = n.loads[n.loads.carrier == "cement"].p_set.sum()
+    installed_cap = p_nom.sum() / 1.28  # times 1/efficiency
+    if installed_cap > cement_load:
+        logger.info(
+            f"Scaling down cement capacity by factor {installed_cap / cement_load} to avoid numerical issues due to low cement demand."
+        )
+        cap_decrease = installed_cap / cement_load * 1.1
+    else:
+        cap_decrease = 1
+
+    ########### Add existing cement production capacities ############
+
+    # Lifetimes
+    lifetime_cement = 25  # Raillard-Cazanove
+
+    # Capital costs
+    discount_rate = 0.04
+    capex_cement = (
+        263000 / nhours * calculate_annuity(lifetime_cement, discount_rate)
+    )  # https://iea-etsap.org/E-TechDS/HIGHLIGHTS%20PDF/I03_cement_June%202010_GS-gct%201.pdf with CCS 558000
+    min_part_load_cement = options["min_part_load_cement"]
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Cement Plant-2020",
+        bus0=spatial.limestone.nodes,
+        bus1=spatial.cement.nodes,
+        bus2=spatial.gas.nodes,
+        bus3=spatial.co2.cement,
+        carrier="cement plant",
+        p_nom=p_nom / cap_decrease,
+        p_nom_extendable=False,
+        p_min_pu=min_part_load_cement,
+        efficiency=1
+        / 1.28,  # kt limestone/ kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency2=-3420.1
+        / 3.6
+        * (1 / 1.28)
+        / 0.5,  # MWh/kt clinker https://www.sciencedirect.com/science/article/pii/S2214157X22005974
+        efficiency3=500 * (1 / 1.28),  # tCO2/kt cement
+        lifetime=lifetime_cement,
+        build_year=start_dates,
+    )
+
+
+def add_chemicals_industry_existing(n, options):
+    # Chemicals capacities in Europe in kton of cement products per year
+    capacities = pd.read_csv(snakemake.input.endoindustry_capacities, index_col=0)
+    start_dates = pd.read_csv(snakemake.input.endoindustry_start_dates, index_col=0)
+    keys = pd.read_csv(snakemake.input.industrial_distribution_key, index_col=0)
+
+    # Ammonia
+    capacities_nh3 = capacities["Ammonia"]
+    start_dates_nh3 = start_dates["Ammonia"]
+    capacities_nh3 = capacities_nh3 * keys["Ammonia"]
+    capacities_nh3 = (
+        capacities_nh3 * cf_industry["MWh_NH3_per_tNH3"] * 1e3
+    )  # from ktNH3 to MWh NH3
+
+    start_dates_nh3 = round(start_dates_nh3)
+    start_dates_nh3 = start_dates_nh3.where(
+        (start_dates_nh3 >= 1000) & np.isfinite(start_dates_nh3), 2000
+    )
+    # Fix bug with 2050 deindustrialization
+    start_dates_nh3 = start_dates_nh3.where(start_dates_nh3 < 2020, 2019)
+
+    nodes = pop_layout.index
+    p_nom_nh3 = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom_nh3 = capacities_nh3 / nhours  # get the hourly production capacity
+
+    # check if existing capacity is bigger than demand
+    nh3_load = n.loads[n.loads.carrier == "NH3"].p_set.sum()
+    installed_cap = (
+        p_nom_nh3.sum() / costs.at["Haber-Bosch", "electricity-input"]
+    )  # times 1/efficiency
+    if installed_cap > nh3_load:
+        logger.info(
+            f"Scaling down ammonia capacity by factor {installed_cap / nh3_load} to avoid numerical issues due to low ammonia demand."
+        )
+        cap_decrease = installed_cap / nh3_load * 1.1
+    else:
+        cap_decrease = 1
+    ########### Add existing ammonia production capacities ############
+    min_part_load_hb = options["min_part_load_hb"]
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" Haber-Bosch-2020",
+        bus0=nodes,
+        bus1=spatial.ammonia.nodes,
+        bus2=nodes + " H2",
+        p_nom_extendable=False,
+        p_nom=p_nom_nh3 / cap_decrease,
+        p_min_pu=min_part_load_hb,
+        carrier="Haber-Bosch",
+        efficiency=1 / costs.at["Haber-Bosch", "electricity-input"],
+        efficiency2=-costs.at["Haber-Bosch", "hydrogen-input"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        capital_cost=costs.at["Haber-Bosch", "capital_cost"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        marginal_cost=costs.at["Haber-Bosch", "VOM"]
+        / costs.at["Haber-Bosch", "electricity-input"],
+        lifetime=costs.at["Haber-Bosch", "lifetime"],
+        build_year=start_dates_nh3,
+    )
+
+    # Methanol
+
+    capacities_meth = capacities["Methanol"]
+    start_dates_meth = start_dates["Methanol"]
+    capacities_meth = (
+        capacities_meth * keys["Chemical industry"]
+    )  # ADB fix this with real methanol
+    capacities_meth = (
+        capacities_meth * cf_industry["MWh_MeOH_per_tMeOH"] * 1e3
+    )  # from kt MeOH to MWh MeOH
+
+    start_dates_meth = round(start_dates_meth)
+    start_dates_meth = start_dates_meth.where(
+        (start_dates_meth >= 1000) & np.isfinite(start_dates_meth), 2000
+    )
+
+    p_nom_meth = pd.DataFrame(index=nodes, columns=(["value"]))
+
+    p_nom_meth = capacities_meth / nhours  # get the hourly production capacity
+
+    # check if existing capacity is bigger than demand
+    meth_load = n.loads[
+        n.loads.carrier.isin(["shipping methanol", "industry methanol"])
+    ].p_set.sum()
+    installed_cap = (
+        p_nom_meth.sum() * options["MWh_MeOH_per_MWh_H2"]
+    )  # times 1/efficiency
+    if installed_cap > meth_load:
+        logger.info(
+            f"Scaling down methanol capacity by factor {installed_cap / meth_load} to avoid numerical issues due to low methanol demand."
+        )
+        cap_decrease = installed_cap / meth_load * 1.1
+    else:
+        cap_decrease = 1
+
+    ########### Add existing methanol production capacities ############
+
+    n.add(
+        "Link",
+        nodes,
+        suffix=" methanolisation-2020",
+        # spatial.h2.locations + " methanolisation-2020",
+        bus0=spatial.h2.nodes,
+        bus1=spatial.methanol.nodes,
+        bus2=nodes,
+        bus3=spatial.co2.nodes,
+        carrier="methanolisation",
+        p_nom_extendable=False,
+        p_nom=p_nom_meth / cap_decrease,
+        p_min_pu=options["min_part_load_methanolisation"],
+        capital_cost=costs.at["methanolisation", "capital_cost"]
+        * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+        marginal_cost=options["MWh_MeOH_per_MWh_H2"]
+        * costs.at["methanolisation", "VOM"],
+        lifetime=costs.at["methanolisation", "lifetime"],
+        efficiency=options["MWh_MeOH_per_MWh_H2"],
+        efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
+        efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+        build_year=start_dates_meth,
+    )
+
+    # HVC (Ethylene)
+
+    if options["endo_industry"]["endo_hvc"]:
+        capacities_hvc = capacities["Ethylene"]
+        start_dates_hvc = start_dates["Ethylene"]
+        capacities_hvc = (
+            capacities_hvc * keys["Chemical industry"]
+        )  # ADB fix this with real hvc
+
+        start_dates_hvc = round(start_dates_hvc)
+        start_dates_hvc = start_dates_hvc.where(
+            (start_dates_hvc >= 1000) & np.isfinite(start_dates_hvc), 2000
+        )
+
+        # I probably do not need this part
+        p_nom_hvc = pd.DataFrame(index=nodes, columns=(["value"]))
+
+        p_nom_hvc = (
+            capacities_hvc / nhours
+        )  # get the hourly production capacity in ktHVC/h
+        naphtha_to_hvc = (
+            2.31 * 12.47 * 1000
+        )  # kt oil / kt HVC * MWh/t oil * 1000 t / kt =   MWh oil / kt HVC
+
+        # check if existing capacity is bigger than demand
+        hvc_load = n.loads[n.loads.carrier == "HVC"].p_set.sum()
+        installed_cap = p_nom_hvc.sum() / naphtha_to_hvc  # times 1/efficiency
+        if installed_cap > hvc_load:
+            logger.info(
+                f"Scaling down HVC capacity by factor {installed_cap / hvc_load} to avoid numerical issues due to low HVC demand."
+            )
+            cap_decrease = installed_cap / hvc_load * 1.1
+        else:
+            cap_decrease = 1
+
+        ########### Add existing HVC production capacities ############
+
+        # we need to account for CO2 emissions from HVC decay
+        decay_emis = costs.at["oil", "CO2 intensity"]  # tCO2/MWh_th oil
+        min_part_load_hvc = options["min_part_load_hvc"]
+
+        n.add(
+            "Link",
+            nodes,
+            suffix=" naphtha steam cracker-2020",
+            bus0=spatial.oil.nodes,
+            bus1=spatial.hvc.nodes,
+            bus2=nodes + " H2",
+            bus3="co2 atmosphere",
+            bus4=nodes,
+            carrier="naphtha steam cracker",
+            p_nom_extendable=False,
+            p_min_pu=min_part_load_hvc,
+            p_nom=p_nom_hvc / cap_decrease,
+            capital_cost=2050 * 1e3 * 0.8865 / naphtha_to_hvc,  # €/kt HVC
+            efficiency=1 / naphtha_to_hvc,  # MWh oil / kt HVC
+            efficiency2=21 * 33.3 / naphtha_to_hvc,  # MWh H2 / kt HVC
+            efficiency3=819 / naphtha_to_hvc + decay_emis,  # tCO2 / kt HVC
+            efficiency4=-135 / naphtha_to_hvc,  # MWh electricity / kt HVC
+            lifetime=30,
+            build_year=start_dates_hvc,
+        )
+
+
+def set_defaults(n):
+    """
+    Set default values for missing values in the network.
+
+    Parameters
+    ----------
+        n (pypsa.Network): The network object.
+
+    Returns
+    -------
+        None
+    """
+    if "Link" in n.components:
+        if "reversed" in n.links.columns:
+            # Replace NA values with default value False
+            n.links.loc[n.links.reversed.isna(), "reversed"] = False
+            n.links.reversed = n.links.reversed.astype(bool)
+
+
+# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -734,6 +1165,7 @@ if __name__ == "__main__":
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     options = snakemake.params.sector
+    cf_industry = snakemake.params.industry
 
     renewable_carriers = snakemake.params.carriers
 
@@ -800,6 +1232,14 @@ if __name__ == "__main__":
 
     if options.get("cluster_heat_buses", False):
         cluster_heat_buses(n)
+
+    pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
+    nhours = n.snapshot_weightings.generators.sum()
+    if options["endo_industry"].get("enable"):
+        add_steel_industry_existing(n)
+        add_cement_industry_existing(n)
+        if options["endo_industry"].get("endo_chemicals"):
+            add_chemicals_industry_existing(n, options)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 
