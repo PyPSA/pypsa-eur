@@ -184,20 +184,17 @@ rule build_shapes:
         "../scripts/build_shapes.py"
 
 
-if config["enable"].get("build_cutout", False):
+if CUTOUT_DATASET["source"] in ["build"]:
 
     rule build_cutout:
         params:
             cutouts=config_provider("atlite", "cutouts"),
-        input:
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
+            cutout=CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:
-            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
+            "logs/build_cutout/{cutout}.log",
         benchmark:
-            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
+            "benchmarks/build_cutout/{cutout}"
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,

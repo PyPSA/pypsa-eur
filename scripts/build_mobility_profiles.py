@@ -46,9 +46,8 @@ Outputs
 """
 
 import logging
-import re
 from pathlib import Path
-from shutil import move, unpack_archive
+from shutil import unpack_archive
 
 import pandas as pd
 
@@ -71,8 +70,7 @@ if __name__ == "__main__":
 
     output_files = []
     for zip_file in zip_files:
-        unpack_archive(zip_file, output_folder
-                       )
+        unpack_archive(zip_file, output_folder)
         output_file = output_folder / zip_file.name.replace(".zip", ".txt")
         output_files.append(output_file)
         logger.info(f"Unpacked {zip_file} to {output_file}")
@@ -97,25 +95,34 @@ if __name__ == "__main__":
             # 'Stunde' is the hour of the day (1-24)
             # 'KFZ|Pkw_R1' and 'KFZ|Pkw_R2' are the counts in each direction on the road
             #
-            usecols=["Datum", "Wotag", "Stunde", "KFZ_R1", "KFZ_R2", "Pkw_R1", "Pkw_R2"],
+            usecols=[
+                "Datum",
+                "Wotag",
+                "Stunde",
+                "KFZ_R1",
+                "KFZ_R2",
+                "Pkw_R1",
+                "Pkw_R2",
+            ],
         )
 
         dfs.append(df)
     vehicle_counts = pd.concat(dfs, ignore_index=True)
 
     # Turn 'Datum' into a datetime (YYYY-MM-DD) - we don't need it for the aggregation, but helpful for debugging/checks
-    vehicle_counts['date'] = pd.to_datetime("20" + vehicle_counts['Datum'].astype(str))
+    vehicle_counts["date"] = pd.to_datetime("20" + vehicle_counts["Datum"].astype(str))
 
     # Rename columns to English
-    vehicle_counts = vehicle_counts.rename(columns={
-        'Wotag': 'day',
-        'Stunde': 'hour',
-    })
-
+    vehicle_counts = vehicle_counts.rename(
+        columns={
+            "Wotag": "day",
+            "Stunde": "hour",
+        }
+    )
 
     # Aggregate data for both directions on the road
-    vehicle_counts['kfz'] = vehicle_counts['KFZ_R1'] + vehicle_counts['KFZ_R2']
-    vehicle_counts['pkw'] = vehicle_counts['Pkw_R1'] + vehicle_counts['Pkw_R2']
+    vehicle_counts["kfz"] = vehicle_counts["KFZ_R1"] + vehicle_counts["KFZ_R2"]
+    vehicle_counts["pkw"] = vehicle_counts["Pkw_R1"] + vehicle_counts["Pkw_R2"]
 
     # vehicles types to aggregate for and output files to write to
     vehicle_types = {
@@ -125,22 +132,23 @@ if __name__ == "__main__":
     for vehicle_type, output_file in vehicle_types.items():
         logger.info(f"Aggregating and writing {vehicle_type} data to {output_file}")
 
-        aggregated_data = vehicle_counts.groupby(['day', 'hour'], as_index=False).agg(
-            count=(vehicle_type, 'sum'),
-            n_counts=(vehicle_type, 'count')
+        aggregated_data = vehicle_counts.groupby(["day", "hour"], as_index=False).agg(
+            count=(vehicle_type, "sum"), n_counts=(vehicle_type, "count")
         )
 
         # Adjust day and hour to start from 0 (to match the expected data conventions)
-        aggregated_data['day'] -= 1
-        aggregated_data['hour'] -= 1
+        aggregated_data["day"] -= 1
+        aggregated_data["hour"] -= 1
 
         aggregated_data.to_csv(output_file, index=False)
 
         # Add additional information to the beginning of the file
         # this information and format is similar to the original data format used by PyPSA-Eur previously
-        with open(output_file, 'r+') as file:
+        with open(output_file, "r+") as file:
             content = file.read()
             file.seek(0, 0)
-            file.write(f"# File generated for type: {vehicle_type} using data for: {', '.join(file_names)}\n")
+            file.write(
+                f"# File generated for type: {vehicle_type} using data for: {', '.join(file_names)}\n"
+            )
             file.write(f"# Time of generation: {pd.Timestamp.now()}\n")
             file.write(content)
