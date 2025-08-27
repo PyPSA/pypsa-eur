@@ -189,9 +189,6 @@ if CUTOUT_DATASET["source"] in ["build"]:
     rule build_cutout:
         params:
             cutouts=config_provider("atlite", "cutouts"),
-        input:
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
         output:
             cutout=CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:

@@ -22,6 +22,9 @@ Upcoming Release
 
 * Move cutouts into `data/cutouts/` directory for consistency. Note: This will trigger all cutouts to be re-downloaded or rebuild.
 
+* Deprecate the ability to determine ``cutout`` bounds based on ``regions_onshore`` and ``regions_offshore``.
+  Instead ``cutouts`` need to have their bounds explicitly defined in the configuration file.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
