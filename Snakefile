@@ -38,7 +38,6 @@ logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
 benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
 
-cutout_dir = config["atlite"]["cutout_directory"]
 RESULTS = "results/" + RDIR
 
 
