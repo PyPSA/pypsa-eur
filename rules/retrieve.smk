@@ -112,28 +112,49 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
+if config["enable"]["retrieve"]:
+    if (CORINE_DATASET := dataset_version("corine"))["source"] in [
+        "archive"
+    ]:
+        rule retrieve_corine:
+            params:
+                url = f"{CORINE_DATASET["url"]}",
+            output:
+                zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+                directory=directory(f"{CORINE_DATASET["folder"]}"),
+                tif_file_path=f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
+            run:
+                import os
+                import requests
+                from zipfile import ZipFile
+                from pathlib import Path
 
-if config["enable"]["retrieve"] and (CORINE_DATASET := dataset_version("corine"))["source"] in [
-    "archive"
-]:
-    rule retrieve_corine:
-        params:
-            url = f"{CORINE_DATASET["url"]}",
-        output:
-            zip=f"{CORINE_DATASET["folder"]}/corine.zip",
-            directory=directory(f"{CORINE_DATASET["folder"]}"),
-        run:
-            import os
-            import requests
-            from zipfile import ZipFile
-            from pathlib import Path
+                response = requests.get(params["url"])
+                with open(output.zip, "wb") as f:
+                    f.write(response.content)
 
-            response = requests.get(params["url"])
-            with open(output.zip, "wb") as f:
-                f.write(response.content)
+                output_folder = Path(output["zip"]).parent
+                unpack_archive(output.zip, output_folder)
 
-            output_folder = Path(output["zip"]).parent
-            unpack_archive(output.zip, output_folder)
+    elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
+        "primary"
+    ]:
+        rule retrieve_corine:
+            params:
+                apikey_file = "CLMS_apikey.json",
+            output:
+                zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+                tif_file_path=f"{CORINE_DATASET["folder"]}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",
+            log:
+                logs("retrieve_corine_primary.log"),
+            resources:
+                mem_mb=1000,
+            retries: 2
+            conda:
+                "../envs/environment.yaml"
+            script:
+                "../scripts/retrieve_corine_dataset_primary.py"
+
 
 
 if config["enable"]["retrieve"] and (EMOBILITY_DATASET := dataset_version("emobility"))["source"] in [

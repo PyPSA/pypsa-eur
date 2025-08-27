@@ -61,6 +61,7 @@
 "attributed_ports","primary","2020-07-10","['latest', 'supported']","https://datacatalogfiles.worldbank.org/ddh-published/0038118/1/DR0046414/attributed_ports.geojson",""
 "attributed_ports","archive","2020-07-10","['latest', 'supported']","https://zenodo.org/records/16810901/files/attributed_ports.json","Moved from github repo `data/` folder"
 "corine","archive","v18_5","['latest', 'supported']","https://zenodo.org/records/16899113/files/corine.zip",""
+"corine","primary","unknown","['latest', 'supported']","","Need to register with CLMS API and create an access token. The download URL is dynamic"
 "emobility","archive","28-08-2016","['latest', 'supported']","https://zenodo.org/records/16899168/files/emobility.zip",""
 "h2_salt_caverns","archive","16-10-2019","['latest', 'supported']","https://zenodo.org/records/16899309/files/h2_salt_caverns_GWh_per_sqkm.geojson",""
 "lau_regions","primary","2019","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",""
