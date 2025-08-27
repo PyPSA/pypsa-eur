@@ -1106,6 +1106,37 @@ rule build_shipping_demand:
         "../scripts/build_shipping_demand.py"
 
 
+if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
+
+    rule build_mobility_profiles:
+        params:
+            sector=config_provider("sector"),
+        input:
+            zip_files=storage(
+                expand(
+                    MOBILITY_PROFILES_DATASET["url"],
+                    year=[2010, 2011, 2012, 2013, 2014],
+                    street_type=["A", "B"],
+                ),
+                keep_local=True,
+            ),
+        output:
+            raw_files=directory(MOBILITY_PROFILES_DATASET["folder"] / "raw"),
+            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        threads: 1
+        resources:
+            mem_mb=5000,
+        log:
+            logs("build_mobility_profiles.log"),
+        benchmark:
+            benchmarks("build_mobility_profiles")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_mobility_profiles.py"
+
+
 rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
@@ -1118,8 +1149,8 @@ rule build_transport_demand:
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
-        traffic_data_KFZ="data/bundle/emobility/KFZ__count",
-        traffic_data_Pkw="data/bundle/emobility/Pkw__count",
+        traffic_data_KFZ=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+        traffic_data_Pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s_{clusters}.csv"),

@@ -886,3 +886,28 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+
+if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_mobility_profiles:
+        input:
+            kfz=storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
+            pkw=storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
+        output:
+            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        threads: 1
+        resources:
+            mem_mb=1000,
+        log:
+            "logs/retrieve_mobility_profiles.log",
+        benchmark:
+            "benchmarks/retrieve_mobility_profiles"
+        conda:
+            "../envs/environment.yaml"
+        run:
+            move(input["kfz"], output["kfz"])
+            move(input["pkw"], output["pkw"])
