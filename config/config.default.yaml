@@ -170,6 +170,17 @@ atlite:
       time: ['2013', '2013']
       # features: [] 
       # sarah_dir: ""
+    europe-1940-2024-era5:
+      module: era5
+      x: [-12., 42.]
+      y: [33., 72.]
+      dx: 0.3
+      dy: 0.3
+      time: ['1940', '2024']
+      features: ['temperature', 'height', 'runoff']
+      chunks:
+        time: 500
+      monthly_requests: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
@@ -990,7 +1001,10 @@ data:
   worldbank_urban_population:
     source: "archive"
     version_or_latest: "latest"
-  gem_gspt: # 
+  gem_europe_gas_tracker:
+    source: "archive"
+    version_or_latest: "latest"
+  gem_gspt:
     source: "archive"
     version_or_latest: "latest"
   tyndp:
@@ -1002,6 +1016,22 @@ data:
   costs:
     source: "primary"
     version_or_latest: "latest"
+  country_runoff:
+    source: "archive"
+    version_or_latest: "latest"
+  country_hdd:
+    source: "archive"
+    version_or_latest: "latest"
+  natura:
+    source: "archive"
+    version_or_latest: "latest"
+  bfs_road_vehicle_stock:
+    source: "archive"
+    version_or_latest: "latest"
+  bfs_gdp_and_population:
+    source: "archive"
+    version_or_latest: "latest"
+  mobility_profiles:
   cutout:
     source: "archive"
     version_or_latest: "latest"

@@ -285,7 +285,7 @@ rule determine_availability_matrix:
         unpack(input_ua_md_availability_matrix),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
-            "data/bundle/natura/natura.tiff"
+            NATURA_DATASET["folder"] / "natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
@@ -389,6 +389,28 @@ rule build_monthly_prices:
         "../scripts/build_monthly_prices.py"
 
 
+if COUNTRY_RUNOFF_DATASET["source"] == "build":
+
+    # This rule uses one or multiple cutouts.
+    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
+    rule build_country_runoff:
+        input:
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        log:
+            logs("build_country_runoff.log"),
+        benchmark:
+            benchmarks("build_country_runoff")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_runoff.py"
+
+
 rule build_hydro_profile:
     params:
         hydro=config_provider("renewable", "hydro"),
@@ -399,7 +421,7 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff="data/bundle/era5-runoff-per-country.csv",
+        era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", "hydro", "cutout")(w)
         ),
