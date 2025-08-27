@@ -689,8 +689,6 @@ if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
         *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
     ]
 
-    OSM_URL = dataset_version("osm")["url"]
-
     rule retrieve_osm_archive:
         input:
             **{
