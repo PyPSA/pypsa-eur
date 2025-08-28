@@ -15,15 +15,18 @@ from scripts.build_surface_water_heat_potentials.approximators.surface_water_hea
 
 
 class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
+    """
+    Max. relative volume flow, delta_t_max and min_outlet_temperature are based on Triebs 2023: Untersuchung der zukünftigen Fernwärmeversorgung unter Unsicherheit bei Berücksichtigung technischer, ökonomischer und ökologischer Randbedingungen.
+    Min_distance of 25km is roughly scaled based on Jung et al.: Estimation of Temperature Recovery Distance and the Influence of Heat Pump Discharge on Fluvial Ecosystems."""
     def __init__(
         self,
         volume_flow: xr.DataArray,
         ambient_temperature: xr.DataArray,
         region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
-        max_relative_volume_flow: float = 0.1,
-        delta_t_max: float = 4,
-        min_outlet_temperature: float = 1,
-        min_distance_meters: int = 2000,
+        max_relative_volume_flow: float = 1.0,
+        delta_t_max: float = 1,
+        min_outlet_temperature: float = 5,
+        min_distance_meters: int = 25000,
     ) -> None:
         water_temperature = self._approximate_river_temperature(
             ambient_temperature=ambient_temperature
