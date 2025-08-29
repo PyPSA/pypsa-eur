@@ -437,12 +437,15 @@ rule build_ates_potentials:
 
 
 # dynamic inputs/outputs for hera data retrieval
-if config["atlite"]["default_cutout"] == "be-03-2013-era5":
-    hera_data_key = "be_2013-03-01_to_2013-03-08"
-else:
-    start_snapshot = config["snapshots"]["start"]
-    snapshot_year = start_snapshot[:4]
-    hera_data_key = snapshot_year
+def input_hera_data(w):
+    if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
+        hera_data_key = "be_2013-03-01_to_2013-03-08"
+    else:
+        hera_data_key = config_provider("snapshots", "start")(w)[:4]
+    return {
+        "hera_river_discharge": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+        "hera_ambient_temperature": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+    }
 
 
 rule build_river_heat_potential:
@@ -453,16 +456,10 @@ rule build_river_heat_potential:
         generate_temporal_aggregates=config_provider(
             "plotting", "heat_sources", "generate_temporal_aggregates"
         ),
-        # ignore_missing_regions=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "limited_heat_sources",
-        #     "river_heat",
-        #     "ignore_missing_regions",
-        # ),
     input:
-        hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
-        hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+        unpack(input_hera_data),
+        # hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+        # hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
