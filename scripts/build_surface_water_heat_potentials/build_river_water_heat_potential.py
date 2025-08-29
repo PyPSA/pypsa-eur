@@ -285,8 +285,6 @@ def get_regional_result(
     # Explicitly delete approximator and intermediate arrays
     del river_water_heat_approximator
     del river_discharge, ambient_temperature
-    if generate_temporal_aggregates:
-        del temporal_aggregate
     gc.collect()
 
     result = {
@@ -296,6 +294,8 @@ def get_regional_result(
     # Only include temporal aggregate if computed
     if temporal_aggregate is not None:
         result["temporal aggregate"] = temporal_aggregate
+    if generate_temporal_aggregates:
+        del temporal_aggregate
 
     return result
 
