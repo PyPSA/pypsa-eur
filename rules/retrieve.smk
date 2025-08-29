@@ -767,8 +767,7 @@ if config["enable"]["retrieve"]:
                 unpack_archive(input[0], params.folder)
 
     else:
-        start_snapshot = config_provider("snapshots", "start")
-        snapshot_year = start_snapshot[:4]
+        snapshot_year = lambda w: config_provider("snapshots", "start")(w)[:4]
 
         rule retrieve_hera_data:
             output:

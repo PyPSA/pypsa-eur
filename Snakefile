@@ -209,7 +209,7 @@ rule all:
             run=config["run"]["name"],
             **config["scenario"],
         ),
-    default_target: true
+    default_target: True
 
 
 rule create_scenarios:
