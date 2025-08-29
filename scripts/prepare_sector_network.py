@@ -3226,10 +3226,8 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if params.limited_heat_sources[heat_source]["zero_cost"]:
-                    capital_cost = 0.0
-                    lifetime = np.inf
-                else:
+                # TODO: implement better handling of zero-cost heat sources
+                try:
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source),
@@ -3240,6 +3238,10 @@ def add_heat(
                     lifetime = costs.at[
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
+                except KeyError:
+                    logger.warning(f"Heat source {heat_source}")
+                    capital_cost = 0.0
+                    lifetime = np.inf
 
                 n.add(
                     "Generator",

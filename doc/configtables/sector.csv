@@ -53,7 +53,6 @@ district_heating,--,,
 -- -- river_water,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
 -- -- -- ignore_missing_regions,--,Boolean,Ignore missing regions in the data and fill with zeros or raise an error 
--- -- -- zero_cost,--,Boolean,If true assume zero-cost heatsource. Otherwise find heat source in technology-data 
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- temperature_limited_stores,,Dictionary with names for stores used as limited heat sources
 -- -- ptes,-,Name of the heat source. Must be the same as in ``heat_pump_sources``
