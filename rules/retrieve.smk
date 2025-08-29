@@ -952,8 +952,9 @@ if config["enable"]["retrieve"]:
         rule retrieve_osm_boundaries:
             params:
                 data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
+                version=f"{OSM_BOUNDARIES_DATASET["version"]}",
             output:
-                json = f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/json/{country}_adm1.json",
+                json = f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/{country}_adm1.json",
             log:
                 "logs/retrieve_osm_boundaries_{country}_adm1.log",
             threads: 1
@@ -961,6 +962,27 @@ if config["enable"]["retrieve"]:
                 "../envs/environment.yaml"
             script:
                 "../scripts/retrieve_osm_boundaries.py"
+    
+    elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["archive"]:
+        rule retrieve_osm_boundaries:
+            params:
+                data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
+                version=f"{OSM_BOUNDARIES_DATASET["version"]}",
+            input:
+                storage(
+                    f"{OSM_BOUNDARIES_DATASET["url"]}",
+                ),
+            output:
+                json1 = f"{OSM_BOUNDARIES_DATASET["folder"]}/XK_adm1.json",
+                json2 = f"{OSM_BOUNDARIES_DATASET["folder"]}/UA_adm1.json",
+                json3 = f"{OSM_BOUNDARIES_DATASET["folder"]}/MD_adm1.json",
+                json4 = f"{OSM_BOUNDARIES_DATASET["folder"]}/BA_adm1.json",
+                zip = f"{OSM_BOUNDARIES_DATASET["folder"]}" "/osm_boundaries.zip",
+            threads: 1
+            run:
+                move(input[0],output.zip)
+                unpack_archive(output.zip, params.data_folder)
+
 
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
