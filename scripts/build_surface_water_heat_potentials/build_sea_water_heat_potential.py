@@ -223,7 +223,7 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "add_brownfield",
+            "build_sea_heat_potential",
             clusters="39",
             opts="",
             ll="vopt",
