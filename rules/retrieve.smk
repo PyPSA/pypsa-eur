@@ -167,7 +167,7 @@ if config["enable"]["retrieve"] and (EMOBILITY_DATASET := dataset_version("emobi
             zip=f"{EMOBILITY_DATASET["folder"]}/emobility.zip",
             directory=directory(f"{EMOBILITY_DATASET["folder"]}"),
         run:
-            unzip_folder(params,output)
+            handle_data_requests(params,output)
 
 
 if config["enable"]["retrieve"] and (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
@@ -224,21 +224,26 @@ if config["enable"]["retrieve"] and (
                 ds_reqd.rio.to_raster(file_path)
             
 
-
 if config["enable"]["retrieve"] and (
     GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions")
-)["source"] in ["archive"]:
+)["source"] in ["archive", "primary"]:
 
     rule retrieve_ghg_emissions:
+        params:
+            url = f"{GHG_EMISSIONS_DATASET["url"]}",
         input:
             storage(
                 f"{GHG_EMISSIONS_DATASET["url"]}",
             ),
         output:
             f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
+            zip=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv.zip" if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
+            directory=directory(f"{GHG_EMISSIONS_DATASET["folder"]}") if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
         retries: 2
         run:
             move(input[0], output[0])
+            if GHG_EMISSIONS_DATASET["source"] == "primary":
+                handle_data_requests(params, output)
 
 
 if config["enable"]["retrieve"] and (GEBCO_DATASET := dataset_version("gebco"))["source"] in [

@@ -151,7 +151,7 @@ def dataset_version(
     return dataset
     
 
-def unzip_folder(params, output):
+def handle_data_requests(params, output):
     import os
     import requests
     from zipfile import ZipFile
