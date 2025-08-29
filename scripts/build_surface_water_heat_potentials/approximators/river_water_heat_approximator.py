@@ -27,7 +27,7 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
         region: Union[shapely.geometry.polygon.Polygon, gpd.GeoSeries],
         max_relative_volume_flow: float = 1.0,
         delta_t_max: float = 1,
-        min_outlet_temperature: float = 5,
+        min_outlet_temperature: float = 1,
         min_distance_meters: int = 25000,
     ) -> None:
         water_temperature = self._approximate_river_temperature(
