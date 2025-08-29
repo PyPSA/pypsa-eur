@@ -1047,6 +1047,9 @@ data:
   aquifer_data:
     source: "archive"
     version_or_latest: "latest"
+  osm_boundaries:
+    source: "primary"
+    version_or_latest: "latest"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

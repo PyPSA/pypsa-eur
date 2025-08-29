@@ -68,3 +68,4 @@
 "aquifer_data","primary","v1.2","['latest', 'supported']","https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip",""
 "aquifer_data","archive","v1.2","['latest', 'supported']","https://zenodo.org/records/16946750/files/IHME1500_v12.zip",""
 "lau_regions","archive","2019","['latest', 'supported']","https://zenodo.org/records/16947002",""
+"osm_boundaries","primary","unknown","['latest','supported']","","Overpass API is used to fetch the latest available data"

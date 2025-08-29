@@ -947,16 +947,20 @@ elif OSM_DATASET["source"] == "build":
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_osm_boundaries:
-        output:
-            json="data/osm-boundaries/json/{country}_adm1.json",
-        log:
-            "logs/retrieve_osm_boundaries_{country}_adm1.log",
-        threads: 1
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_osm_boundaries.py"
+    if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["primary"]:
+
+        rule retrieve_osm_boundaries:
+            params:
+                data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
+            output:
+                json = f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/json/{country}_adm1.json",
+            log:
+                "logs/retrieve_osm_boundaries_{country}_adm1.log",
+            threads: 1
+            conda:
+                "../envs/environment.yaml"
+            script:
+                "../scripts/retrieve_osm_boundaries.py"
 
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
