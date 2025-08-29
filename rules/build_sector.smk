@@ -292,6 +292,29 @@ rule build_central_heating_temperature_profiles:
         "../scripts/build_central_heating_temperature_profiles/run.py"
 
 
+rule build_dh_areas:
+    params:
+        handle_missing_countries=config_provider(
+            "sector", "district_heating", "dh_areas", "handle_missing_countries"
+        ),
+        countries=config_provider("countries"),
+    input:
+        dh_areas="data/dh_areas.gpkg",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_dh_areas_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_dh_areas_s/s_{clusters}")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_dh_areas.py"
+
+
 rule build_geothermal_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -413,6 +436,124 @@ rule build_ates_potentials:
         "../scripts/build_ates_potentials.py"
 
 
+# dynamic inputs/outputs for hera data retrieval
+def input_hera_data(w):
+    if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
+        hera_data_key = "be_2013-03-01_to_2013-03-08"
+    else:
+        hera_data_key = config_provider("snapshots", "start")(w)[:4]
+    return {
+        "hera_river_discharge": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+        "hera_ambient_temperature": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+    }
+
+
+rule build_river_heat_potential:
+    params:
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        snapshots=config_provider("snapshots"),
+        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+        generate_temporal_aggregates=config_provider(
+            "plotting", "heat_sources", "generate_temporal_aggregates"
+        ),
+    input:
+        unpack(input_hera_data),
+        # hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+        # hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+    output:
+        heat_source_power=resources(
+            "heat_source_power_river_water_base_s_{clusters}.csv"
+        ),
+        heat_source_temperature=resources("temp_river_water_base_s_{clusters}.nc"),
+        heat_source_temperature_temporal_aggregate=resources(
+            "temp_river_water_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+        heat_source_energy_temporal_aggregate=resources(
+            "heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+    resources:
+        mem_mb=20000,
+    log:
+        logs("build_river_water_heat_potential_base_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_river_water_heat_potential_base_s_{clusters}")
+    threads: 2
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_surface_water_heat_potentials/build_river_water_heat_potential.py"
+
+
+def input_heat_source_temperature(
+    w,
+    replace_names={
+        "air": "air_total",
+        "ground": "soil_total",
+        "ptes": "ptes_top_profiles",
+    },
+):
+
+    heat_pump_sources = set(
+        config_provider("sector", "heat_pump_sources", "urban central")(w)
+    ).union(
+        config_provider("sector", "heat_pump_sources", "urban decentral")(w),
+        config_provider("sector", "heat_pump_sources", "rural")(w),
+    )
+
+    # replace names for soil and air temperature files
+    return {
+        f"temp_{heat_source_name}": resources(
+            "temp_"
+            + replace_names.get(heat_source_name, heat_source_name)
+            + "_base_s_{clusters}"
+            + ("_{planning_horizons}" if heat_source_name == "ptes" else "")
+            + ".nc"
+        )
+        for heat_source_name in heat_pump_sources
+        # remove heat sources with constant temperature - i.e. no temperature profile file (currently only geothermal)
+        if not (
+            heat_source_name
+            in config_provider("sector", "district_heating", "limited_heat_sources")(w)
+            and config_provider(
+                "sector",
+                "district_heating",
+                "limited_heat_sources",
+                heat_source_name,
+                "constant_temperature_celsius",
+            )(w)
+        )
+    }
+
+
+rule build_sea_heat_potential:
+    params:
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        snapshots=config_provider("snapshots"),
+        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+    input:
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        seawater_temperature="data/seawater_temperature.nc",
+        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+    output:
+        heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
+        heat_source_temperature_temporal_aggregate=resources(
+            "temp_sea_water_base_s_{clusters}_temporal_aggregate.nc"
+        ),
+    resources:
+        mem_mb=10000,
+    log:
+        logs("build_sea_water_heat_potential_base_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_sea_water_heat_potential_base_s_{clusters}")
+    threads: config["atlite"].get("nprocesses", 4)
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_surface_water_heat_potentials/build_sea_water_heat_potential.py"
+
+
 rule build_cop_profiles:
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
@@ -430,6 +571,7 @@ rule build_cop_profiles:
         ),
         snapshots=config_provider("snapshots"),
     input:
+        unpack(input_heat_source_temperature),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
@@ -438,9 +580,6 @@ rule build_cop_profiles:
         ),
         temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        temp_ptes_total=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
-        ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
@@ -481,10 +620,10 @@ rule build_ptes_operations:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         ptes_direct_utilisation_profiles=resources(
-            "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+            "ptes_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -1381,7 +1520,7 @@ rule prepare_sector_network:
         ),
         ptes_direct_utilisation_profiles=lambda w: (
             resources(
-                "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+                "ptes_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
             )
             if config_provider(
                 "sector", "district_heating", "ptes", "supplemental_heating", "enable"

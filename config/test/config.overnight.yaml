@@ -72,6 +72,8 @@ sector:
       urban central:
       - air
       - geothermal
+      - river_water
+      - sea_water
       urban decentral:
       - air
       rural:
@@ -91,7 +93,6 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
-
 
 industry:
   HVC_environment_sequestration_fraction: 0.5
@@ -119,3 +120,5 @@ plotting:
   energy_max:
   energy_min:
   energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: None

@@ -11,6 +11,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
+
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
   when running with few nodes such that they are all already connected by existing gas
   lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
@@ -71,14 +73,13 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 
 **Breaking Changes**
 
-* Consolidated gap-filling strategies options under a new configuration section
-  `load: fill_gaps`. (https://github.com/PyPSA/pypsa-eur/pull/1677)
+* Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
 
-* Replaced pinned environment files with conda-lock generated lock files for
-  better dependency resolution and cross-platform reproducibility. Deprecated
-  old ``-pinned.yaml`` files with migration instructions. These files will not
-  be updated anymore and will be removed in a future release.
-  (https://github.com/PyPSA/pypsa-eur/pull/1660)
+  - Added platform-specific lock files for all major platforms (Linux, macOS, Windows) and architectures (x86_64, ARM).
+
+  - Updated documentation, Makefile, Dockerfile, and CI workflows to use the new lock files.
+
+  - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
 
 **Changes**
 
