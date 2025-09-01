@@ -550,19 +550,19 @@ sector:
         constant_temperature_celsius: 65
         ignore_missing_regions: false
         requires_generator: true
-      electrolysis_excess_heat:
+      electrolysis excess:
         constant_temperature_celsius: 70
         ignore_missing_regions: false
         requires_generator: false
     direct_utilisation_heat_sources:
     - geothermal
-    - electrolysis_excess_heat
+    - electrolysis excess
     temperature_limited_stores:
     - ptes
   heat_pump_sources:
     urban central:
     - air
-    - electrolysis_excess_heat
+    - electrolysis excess
     urban decentral:
     - air
     rural:
