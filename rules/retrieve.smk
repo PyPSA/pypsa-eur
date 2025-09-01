@@ -87,18 +87,14 @@ if (
 ]:
 
     rule retrieve_eurostat_household_balances:
-        params:
-            url=EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"],
+        input:
+            csv=storage(
+                EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"],
+            ),
         output:
             csv=f"{EUROSTAT_HOUSEHOLD_BALANCES_DATASET['folder']}/nrg_d_hhq.csv",
         run:
-            import requests
-
-            # Retrieve the data into a gzipped file
-            response = requests.get(params["url"])
-            with open(output["csv"], "wb") as f:
-                f.write(response.content)
-
+            copy2(input["csv"], output["csv"])
 
 
 if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
