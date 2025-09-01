@@ -9,6 +9,15 @@ from dateutil.relativedelta import relativedelta
 from shutil import move, unpack_archive, rmtree, copy2
 from zipfile import ZipFile
 
+
+# Configure the default storage provider for accessing remote files using http
+storage:
+    provider="http",
+    keep_local=True,
+    retrieve=True,
+    retries=2,
+
+
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
 
@@ -292,7 +301,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
-                keep_local=True,
             ),
         output:
             "data/shipdensity_global.zip",
@@ -334,7 +342,6 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
         input:
             storage(
                 HOTMAPS_INDUSTRIAL_SITES["url"],
-                keep_local=True,
             ),
         output:
             f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
@@ -646,7 +653,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
-                keep_local=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
@@ -817,7 +823,6 @@ if config["enable"]["retrieve"]:
         input:
             isi_heat_potentials=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
-                keep_local=True,
             ),
         output:
             "data/isi_heat_utilisation_potentials.xlsx",
@@ -832,7 +837,6 @@ if config["enable"]["retrieve"]:
         input:
             lau_regions=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
-                keep_local=True,
             ),
         output:
             lau_regions="data/lau_regions.zip",
@@ -904,7 +908,6 @@ if config["enable"]["retrieve"]:
         input:
             dh_areas=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
-                keep_local=True,
             ),
         output:
             dh_areas="data/dh_areas.gpkg",
