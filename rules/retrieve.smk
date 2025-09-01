@@ -334,24 +334,21 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if (JRC_ENSPRESO_BIOMASS_DATASET := dataset_version("jrc_enspreso_biomass"))[
-    "source"
-] in [
+if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
     "primary",
     "archive",
 ]:
 
-    rule retrieve_jrc_enspreso_biomass:
+    rule retrieve_enspreso_biomass:
         input:
-            storage(
-                f"{JRC_ENSPRESO_BIOMASS_DATASET["url"]}",
-                keep_local=True,
+            xlsx=storage(
+                f"{ENSPRESO_BIOMASS_DATASET["url"]}",
             ),
         output:
-            f"{JRC_ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
+            xlsx=f"{ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
         run:
-            move(input[0], output[0])
+            move(input["xlsx"], output["xlsx"])
 
 
 if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[

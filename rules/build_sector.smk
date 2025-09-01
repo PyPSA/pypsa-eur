@@ -636,7 +636,7 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
+        enspreso_biomass=rules.retrieve_enspreso_biomass.output[0],
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
