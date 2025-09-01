@@ -79,6 +79,31 @@ if config["foresight"] == "perfect":
     include: "rules/solve_perfect.smk"
 
 
+def input_heat_source_maps(w):
+    """Generate heat source map inputs if plotting is enabled."""
+    if not config_provider("plotting", "heat_source_map", "enable")(w):
+        return {}
+
+    base_path = (
+        RESULTS
+        + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_"
+    )
+
+    outputs = {}
+    # Temperature maps for all heat sources
+    for source in ["river_water", "sea_water", "ambient_air"]:
+        outputs[f"heat_source_temperature_map_{source}"] = (
+            base_path + f"temperature_map_{source}.html"
+        )
+
+    # Energy map only for river_water
+    outputs["heat_source_energy_map_river_water"] = (
+        base_path + "energy_map_river_water.html"
+    )
+
+    return outputs
+
+
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
@@ -148,48 +173,6 @@ rule all:
             + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
             run=config["run"]["name"],
             **config["scenario"],
-        ),
-        # Explicitly list heat source types for temperature maps
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-        ),
-        # Only river_water has energy maps
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
-                else []
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
         ),
         expand(
             RESULTS
