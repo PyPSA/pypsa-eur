@@ -39,28 +39,28 @@ def get_access_token(sandbox: bool):
     Prompt user for Zenodo API access token if undefined.
     """
     global ZENODO_API_KEY
+    key_name = None
     if sandbox:
-        ZENODO_API_KEY = os.getenv("ZENODO_SANDBOX_API_KEY")
+        key_name = "ZENODO_SANDBOX_API_KEY"
     else:
-        ZENODO_API_KEY = os.getenv("ZENODO_API_KEY")
+        key_name = "ZENODO_API_KEY"
 
+    # Get the Zenodo API key from environment variables
+    ZENODO_API_KEY = os.getenv(key_name)
+
+    # Let user know that they first need to set the API key
     if not ZENODO_API_KEY:
-        typer.prompt(
-            "\n",
-            "ZENODO_API_KEY not found in environment.\n"
-            "You can set it up using a `.env` file or via "
-            + (
-                "'export ZENODO_API_KEY='<token>'"
-                if not sandbox
-                else "'export ZENODO_SANDBOX_API_KEY='<token>'"
-            )
-            + ".\n"
-            "To generate an API key, go to your Zenodo account settings under 'My profile' -> 'Settings' -> 'Applications' -> 'Personal access tokens'.\n"
-            "(https://zenodo.org/account/settings/applications/tokens/)"
-            if not sandbox
-            else "(https://sandbox.zenodo.org/account/settings/applications/tokens/)\n"
-            "Please enter your Zenodo API key now:",
+        typer.secho(
+            f"No Zenodo API key found in environment variables.\n"
+            f"Please set the environment variable {key_name} before running this script.\n"
+            f" * Option 1: Set the environment variables directly, e.g. 'export {key_name}=<token>'\n"
+            f" * Option 2: Create a `.env` file in the current directory with the following content:\n"
+            f"   {key_name}='<token>'\n"
+            "Make sure to replace '<token>' with your actual Zenodo API token.\n"
+            "Visit (https://zenodo.org/account/settings/applications/tokens/) to generate a new token.",
+            fg=typer.colors.RED,
         )
+        raise typer.Exit()
 
 
 def read_versions_csv() -> list[dict]:

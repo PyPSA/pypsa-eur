@@ -38,6 +38,7 @@ rule build_powerplants:
         countries=config_provider("countries"),
     input:
         network=resources("networks/base_s_{clusters}.nc"),
+        powerplants=rules.retrieve_powerplants.output["powerplants"],
         custom_powerplants="data/custom_powerplants.csv",
     output:
         resources("powerplants_s_{clusters}.csv"),
@@ -58,8 +59,10 @@ def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
     if base_network == "osm":
-        osm_version = get_data_version("osm")
-        inputs = {c: f"data/osm/{osm_version}/{c}.csv" for c in components}
+        OSM_DATASET = dataset_version("osm")
+        inputs = {c: f"{OSM_DATASET['folder']}/{c}.csv" for c in components}
+    elif base_network == "tyndp":
+        inputs = {c: resources(f"tyndp/build/{c}.csv") for c in components}
     elif base_network == "entsoegridkit":
         inputs = {c: f"data/ensoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
@@ -94,7 +97,7 @@ rule base_network:
         benchmarks("base_network")
     threads: 4
     resources:
-        mem_mb=1500,
+        mem_mb=2000,
     conda:
         "../envs/environment.yaml"
     script:
@@ -181,20 +184,17 @@ rule build_shapes:
         "../scripts/build_shapes.py"
 
 
-if config["enable"].get("build_cutout", False):
+if CUTOUT_DATASET["source"] in ["build"]:
 
     rule build_cutout:
         params:
             cutouts=config_provider("atlite", "cutouts"),
-        input:
-            regions_onshore=resources("regions_onshore.geojson"),
-            regions_offshore=resources("regions_offshore.geojson"),
         output:
-            protected(CDIR.joinpath("{cutout}.nc").as_posix()),
+            cutout=CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:
-            logs(CDIR.joinpath("build_cutout", "{cutout}.log").as_posix()),
+            "logs/build_cutout/{cutout}.log",
         benchmark:
-            Path("benchmarks").joinpath(CDIR, "build_cutout_{cutout}").as_posix()
+            "benchmarks/build_cutout/{cutout}"
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
@@ -285,7 +285,7 @@ rule determine_availability_matrix:
         unpack(input_ua_md_availability_matrix),
         corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
         natura=lambda w: (
-            "data/bundle/natura/natura.tiff"
+            NATURA_DATASET["folder"] / "natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
@@ -389,6 +389,28 @@ rule build_monthly_prices:
         "../scripts/build_monthly_prices.py"
 
 
+if COUNTRY_RUNOFF_DATASET["source"] == "build":
+
+    # This rule uses one or multiple cutouts.
+    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
+    rule build_country_runoff:
+        input:
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        log:
+            logs("build_country_runoff.log"),
+        benchmark:
+            benchmarks("build_country_runoff")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_runoff.py"
+
+
 rule build_hydro_profile:
     params:
         hydro=config_provider("renewable", "hydro"),
@@ -399,7 +421,7 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff="data/bundle/era5-runoff-per-country.csv",
+        era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", "hydro", "cutout")(w)
         ),
@@ -729,9 +751,8 @@ rule add_electricity:
         unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
-        ),
+        tech_costs=lambda w: COSTS_DATASET["folder"]
+        / f"costs_{config_provider('costs', 'year')(w)}.csv",
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
@@ -776,9 +797,8 @@ rule prepare_network:
         transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
-        ),
+        tech_costs=lambda w: COSTS_DATASET["folder"]
+        / f"costs_{config_provider('costs', 'year')(w)}.csv",
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/base_s_{clusters}_elec_{opts}.nc"),
@@ -897,3 +917,38 @@ if (
             "../envs/environment.yaml"
         script:
             "../scripts/build_osm_network.py"
+
+
+if config["electricity"]["base_network"] == "tyndp":
+
+    rule build_tyndp_network:
+        params:
+            countries=config_provider("countries"),
+        input:
+            reference_grid=rules.retrieve_tyndp.output.reference_grid,
+            buses=rules.retrieve_tyndp.output.nodes,
+            bidding_shapes=resources("bidding_zones.geojson"),
+        output:
+            lines=resources("tyndp/build/lines.csv"),
+            links=resources("tyndp/build/links.csv"),
+            converters=resources("tyndp/build/converters.csv"),
+            transformers=resources("tyndp/build/transformers.csv"),
+            substations=resources("tyndp/build/buses.csv"),
+            substations_h2=resources("tyndp/build/buses_h2.csv"),
+            lines_geojson=resources("tyndp/build/geojson/lines.geojson"),
+            links_geojson=resources("tyndp/build/geojson/links.geojson"),
+            converters_geojson=resources("tyndp/build/geojson/converters.geojson"),
+            transformers_geojson=resources("tyndp/build/geojson/transformers.geojson"),
+            substations_geojson=resources("tyndp/build/geojson/buses.geojson"),
+            substations_h2_geojson=resources("tyndp/build/geojson/buses_h2.geojson"),
+        log:
+            logs("build_tyndp_network.log"),
+        benchmark:
+            benchmarks("build_tyndp_network")
+        threads: 1
+        resources:
+            mem_mb=4000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_tyndp_network.py"

@@ -99,15 +99,15 @@ master_doc = "index"
 
 # General information about the project.
 project = "PyPSA-Eur"
-copyright = "2017-2025 Tom Brown (KIT, TUB, FIAS), Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (Aarhus University), Lisa Zeyen (KIT, TUB)"
-author = "Tom Brown (KIT, TUB, FIAS), Jonas Hoersch (KIT, FIAS), Fabian Hofmann (TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (Aarhus University), Lisa Zeyen (KIT, TUB)"
+copyright = "2017-2025 Tom Brown (TUB, KIT, FIAS), Jonas Hoersch (OET, KIT, FIAS), Fabian Hofmann (OET, TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (DTU, Aarhus University), Lisa Zeyen (TUB, KIT)"
+author = "Tom Brown (TUB, KIT, FIAS), Jonas Hoersch (OET, KIT, FIAS), Fabian Hofmann (OET, TUB, FIAS), Fabian Neumann (TUB, KIT), Marta Victoria (DTU, Aarhus University), Lisa Zeyen (TUB, KIT)"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = "v2025.04.0"
+version = "v2025.07.0"
 # The full version, including alpha/beta/rc tags.
 release = version + ""
 

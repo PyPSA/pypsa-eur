@@ -18,20 +18,19 @@ sys.path.append("./scripts")
 from scripts.base_network import (
     _get_country,
     _get_linetype_by_voltage,
-    _get_linetypes_config,
     _get_oid,
     _load_buses,
     _load_converters_from_eg,
-    _load_converters_from_osm,
+    _load_converters_from_raw,
     _load_lines,
     _load_links_from_eg,
-    _load_links_from_osm,
+    _load_links_from_raw,
     _load_transformers,
     _reconnect_crimea,
     _set_electrical_parameters_converters,
     _set_electrical_parameters_lines_eg,
-    _set_electrical_parameters_lines_osm,
-    _set_electrical_parameters_links_osm,
+    _set_electrical_parameters_lines_raw,
+    _set_electrical_parameters_links_raw,
 )
 
 path_cwd = pathlib.Path.cwd()
@@ -53,16 +52,6 @@ def test_get_country(column_name, expected):
     output_series = _get_country(df_exercise)
     comparison_series = output_series.compare(expected)
     assert comparison_series.size == 0
-
-
-def test_get_linetypes_config(config):
-    """
-    Verify what returned by _get_linetypes_config.
-    """
-    output_dict = _get_linetypes_config(
-        config["lines"]["types"], config["electricity"]["voltages"]
-    )
-    assert output_dict == config["lines"]["types"]
 
 
 def test_get_linetype_by_voltage(config):
@@ -178,13 +167,13 @@ def test_load_converters_from_eg(
     assert df_converters_comparison.empty
 
 
-def test_load_converters_from_osm(
+def test_load_converters_from_raw(
     buses_dataframe, config, converters_dataframe, italy_shape, tmpdir
 ):
     """
-    Verify what returned by _load_converters_from_osm.
+    Verify what returned by _load_converters_from_raw.
     """
-    df_converters_osm_reference = pd.DataFrame(
+    df_converters_raw_reference = pd.DataFrame(
         {
             "converter_id": "convert_5231_5232",
             "bus0": "5231",
@@ -202,11 +191,11 @@ def test_load_converters_from_osm(
     converters_path = pathlib.Path(tmpdir, "converters_exercise.csv")
     converters_dataframe.to_csv(converters_path, index=False)
     df_converters_output = (
-        _load_converters_from_osm(df_buses, converters_path)
+        _load_converters_from_raw(df_buses, converters_path)
         .reset_index()
         .loc[:, ("converter_id", "bus0", "bus1", "voltage", "geometry", "carrier")]
     )
-    df_converters_comparison = df_converters_output.compare(df_converters_osm_reference)
+    df_converters_comparison = df_converters_output.compare(df_converters_raw_reference)
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(converters_path).unlink(missing_ok=True)
     assert df_converters_comparison.empty
@@ -314,13 +303,13 @@ def test_load_links_from_eg(
     assert df_links_comparison.empty
 
 
-def test_load_links_from_osm(
+def test_load_links_from_raw(
     buses_dataframe, config, italy_shape, links_dataframe, tmpdir
 ):
     """
-    Verify what returned by _load_links_from_osm.
+    Verify what returned by _load_links_from_raw.
     """
-    df_links_osm_reference = pd.DataFrame(
+    df_links_raw_reference = pd.DataFrame(
         {
             "link_id": "link_5231_5232",
             "bus0": "5231",
@@ -342,7 +331,7 @@ def test_load_links_from_osm(
     links_path = pathlib.Path(tmpdir, "links_exercise.csv")
     links_dataframe.to_csv(links_path, index=False)
     df_links_output = (
-        _load_links_from_osm(df_buses, links_path)
+        _load_links_from_raw(df_buses, links_path)
         .reset_index()
         .loc[
             :,
@@ -360,7 +349,7 @@ def test_load_links_from_osm(
             ),
         ]
     )
-    df_links_comparison = df_links_output.compare(df_links_osm_reference)
+    df_links_comparison = df_links_output.compare(df_links_raw_reference)
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(links_path).unlink(missing_ok=True)
     assert df_links_comparison.empty
@@ -516,11 +505,11 @@ def test_set_electrical_parameters_lines_eg(
     assert df_lines_comparison.empty
 
 
-def test_set_electrical_parameters_lines_osm(
+def test_set_electrical_parameters_lines_raw(
     buses_dataframe, config, italy_shape, lines_dataframe, tmpdir
 ):
     """
-    Verify what returned by _set_electrical_parameters_lines_osm.
+    Verify what returned by _set_electrical_parameters_lines_raw.
     """
     df_lines_parameters_reference = pd.DataFrame(
         {
@@ -565,18 +554,18 @@ def test_set_electrical_parameters_lines_osm(
             ),
         ]
     )
-    df_lines_output = _set_electrical_parameters_lines_osm(df_lines, config)
+    df_lines_output = _set_electrical_parameters_lines_raw(df_lines, config)
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(lines_path).unlink(missing_ok=True)
     df_lines_comparison = df_lines_output.compare(df_lines_parameters_reference)
     assert df_lines_comparison.empty
 
 
-def test_set_electrical_parameters_links_osm(
+def test_set_electrical_parameters_links_raw(
     buses_dataframe, config, italy_shape, links_dataframe, tmpdir
 ):
     """
-    Verify what returned by _set_electrical_parameters_links_osm.
+    Verify what returned by _set_electrical_parameters_links_raw.
     """
     df_links_parameters_reference = pd.DataFrame(
         {
@@ -621,7 +610,7 @@ def test_set_electrical_parameters_links_osm(
             ),
         ]
     )
-    df_links_output = _set_electrical_parameters_links_osm(df_links, config)
+    df_links_output = _set_electrical_parameters_links_raw(df_links, config)
     df_links_comparison = df_links_output.compare(df_links_parameters_reference)
     pathlib.Path(buses_path).unlink(missing_ok=True)
     pathlib.Path(links_path).unlink(missing_ok=True)
@@ -647,6 +636,7 @@ def test_set_electrical_parameters_converters(
             "p_nom": 2000,
             "under_construction": False,
             "underground": False,
+            "dc": False,  # ToDo Change once we todo is addressed in base_network.py
         },
         index=[0],
     )

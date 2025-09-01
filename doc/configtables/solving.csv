@@ -28,12 +28,12 @@ options,,,
 -- -- solver_dir, str, '/tmp'', Absolute path to the directory where linopy saves files.
 -- keep_files, bool, False, Whether to keep LPs and MPS files after solving.
 agg_p_nom_limits,,,Configure per carrier generator nominal capacity constraints for individual countries if ``'CCL'`` is in ``{opts}`` wildcard.
--- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint. Default is false.
--- agg_solar,bool,"{'true','false'}",Aggregate together all the types of electric solar when writing the constraint. Default is false.
+-- agg_offwind,bool,"{'true','false'}",Aggregate together all the types of offwind when writing the constraint (``offwind-all`` as a carrier in the ``.csv`` file). Default is false.
+-- agg_solar,bool,"{'true','false'}",Aggregate together all the types of electric solar when writing the constraint (``solar-all`` as a carrier in the ``.csv`` file). Default is false.
 -- include_existing,bool,"{'true','false'}",Take existing capacities into account when writing the constraint. Default is false.
 -- file,file,path,Reference to ``.csv`` file specifying per carrier generator nominal capacity constraints for individual countries and planning horizons. Defaults to ``data/agg_p_nom_minmax.csv``.
 "constraints ",,,
--- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``.
+-- CCL,bool,"{'true','false'}",Add minimum and maximum levels of generator nominal capacity per carrier for individual countries. These can be specified in the file linked at ``electricity: agg_p_nom_limits`` in the configuration. File defaults to ``data/agg_p_nom_minmax.csv``. Does not work with a time resolution resampling.
 -- EQ,bool/string,"{'false',`n(c| )``; i.e. ``0.5``-``0.7c``}",Require each country or node to on average produce a minimal share of its total consumption itself. Example: ``EQ0.5c`` demands each country to produce on average at least 50% of its consumption; ``EQ0.5`` demands each node to produce on average at least 50% of its consumption.
 -- BAU,bool,"{'true','false'}",Add a per-``carrier`` minimal overall capacity; i.e. at least ``40GW`` of ``OCGT`` in Europe; configured in ``electricity: BAU_mincapacities``
 -- SAFE,bool,"{'true','false'}",Add a capacity reserve margin of a certain fraction above the peak demand to which renewable generators and storage do *not* contribute. Ignores network.

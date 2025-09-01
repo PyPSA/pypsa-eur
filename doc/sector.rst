@@ -218,6 +218,11 @@ Rule ``build_temperature_profiles``
 
 .. automodule:: build_temperature_profiles
 
+Rule ``build_mobility_profiles``
+==============================================================================
+
+.. automodule:: build_mobility_profiles
+
 Rule ``build_transport_demand``
 ==============================================================================
 
