@@ -4,9 +4,9 @@
 
 import os
 import requests
-from datetime import datetime, timedelta
-from shutil import move, unpack_archive, rmtree
-from shutil import copy as shcopy
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from shutil import move, unpack_archive, rmtree, copy2
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -591,19 +591,25 @@ def get_wdpa_url(DATASET) -> str:
         # Basic pattern where WDPA files can be found
         url_pattern = DATASET["url"]
 
-        # 3-letter month + 4 digit year for current/previous/next month to test
-        current_monthyear = datetime.now().strftime("%b%Y")
-        prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
-        next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+        # 3-letter month + 4 digit year for current/previous/next/pprevious/nnext months to test
+        # order reflects priority of testing
+        months = [
+            datetime.now(),  # current
+            (datetime.now() + relativedelta(months=-1)),  # previous month
+            (datetime.now() + relativedelta(months=+1)),  # next month
+            (datetime.now() + relativedelta(months=-2)),  # two months ago
+            (datetime.now() + relativedelta(months=+2)),  # two months ahead
+        ]
+        months = [m.strftime("%b%Y") for m in months]
 
         # Test prioritised: current month -> previous -> next
-        for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
+        for bYYYY in months:
             url = url_pattern.format(bYYYY=bYYYY)
             if check_file_exists(url):
                 return url
 
         raise ValueError(
-            f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+            f"No {DATASET.dataset} files found at {url_pattern} for bY={months}."
         )
 
 
@@ -617,23 +623,22 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule retrieve_wdpa:
         input:
-            zip=storage(get_wdpa_url(WDPA_DATASET), keep_local=True),
+            zip_file=storage(get_wdpa_url(WDPA_DATASET)),
         output:
-            zip=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
-            folder=directory({WDPA_DATASET["folder"]}),
+            zip_file=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
             gpkg=f"{WDPA_DATASET['folder']}/WDPA.gpkg",
         run:
-            shcopy2(input.zip, output.zip)
-            unpack_archive(output.zip, output.folder)
+            output_folder = Path(output["zip_file"]).parent
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
-                    f"/vsizip/{output.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                    f"/vsizip/{output_folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
-            os.remove(params.zip_file)
 
 
 
@@ -649,22 +654,20 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
         input:
             zip_file=storage(
                 get_wdpa_url(WDPA_MARINE_DATASET),
-                keep_local=True,
             ),
         output:
             zip_file=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.zip",
-            folder=directory(WDPA_MARINE_DATASET["folder"]),
             gpkg=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.gpkg",
         run:
-            shcopy2(input.zip_file, output.zip_file)
-            unpack_archive(output.zip_file, output.folder)
+            output_folder = Path(output["zip_file"]).parent
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = f"/vsizip/{output.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
+                layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
-            os.remove(params.zip_file)
 
 
 
