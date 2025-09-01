@@ -3195,12 +3195,6 @@ def add_heat(
             )
 
             if heat_source in params.limited_heat_sources:
-                # get potential
-                p_max_source = pd.read_csv(
-                    heat_source_profile_files[heat_source],
-                    index_col=0,
-                ).squeeze()[nodes]
-
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
@@ -3212,31 +3206,42 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
-                    capital_cost = (
-                        costs.at[
-                            heat_system.heat_source_costs_name(heat_source),
-                            "capital_cost",
+                # Check if heat source requires a separate generator
+                heat_source_config = params.limited_heat_sources[heat_source]
+                requires_generator = heat_source_config["requires_generator"]
+
+                if requires_generator:
+                    # Standard heat source with potential file and generator
+                    p_max_source = pd.read_csv(
+                        heat_source_profile_files[heat_source],
+                        index_col=0,
+                    ).squeeze()[nodes]
+
+                    if heat_source in params.direct_utilisation_heat_sources:
+                        capital_cost = (
+                            costs.at[
+                                heat_system.heat_source_costs_name(heat_source),
+                                "capital_cost",
+                            ]
+                            * overdim_factor
+                        )
+                        lifetime = costs.at[
+                            heat_system.heat_source_costs_name(heat_source), "lifetime"
                         ]
-                        * overdim_factor
+                    else:
+                        capital_cost = 0.0
+                        lifetime = np.inf
+                    n.add(
+                        "Generator",
+                        nodes,
+                        suffix=f" {heat_carrier}",
+                        bus=nodes + f" {heat_carrier}",
+                        carrier=heat_carrier,
+                        p_nom_extendable=True,
+                        capital_cost=capital_cost,
+                        lifetime=lifetime,
+                        p_nom_max=p_max_source,
                     )
-                    lifetime = costs.at[
-                        heat_system.heat_source_costs_name(heat_source), "lifetime"
-                    ]
-                else:
-                    capital_cost = 0.0
-                    lifetime = np.inf
-                n.add(
-                    "Generator",
-                    nodes,
-                    suffix=f" {heat_carrier}",
-                    bus=nodes + f" {heat_carrier}",
-                    carrier=heat_carrier,
-                    p_nom_extendable=True,
-                    capital_cost=capital_cost,
-                    lifetime=lifetime,
-                    p_nom_max=p_max_source,
-                )
 
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
@@ -5397,15 +5402,17 @@ def add_waste_heat(
 
         # Electrolysis waste heat
         if (
-            options["use_electrolysis_waste_heat"]
+            "electrolysis_excess_heat"
+            in options["district_heating"]["heat_pump_sources"]["urban central"]
             and "H2 Electrolysis" in link_carriers
         ):
+            # Connect electrolysis waste heat to electrolysis excess heat bus for heat pump boosting
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
-                urban_central + " urban central heat"
+                urban_central + " urban central electrolysis excess heat"
             )
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
                 0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
-            ) * options["use_electrolysis_waste_heat"]
+            )
 
         # Fuel cell waste heat
         if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
