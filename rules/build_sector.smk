@@ -569,8 +569,8 @@ rule build_energy_totals:
         swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees="data/jrc-idees-2021",
         district_heat_share="data/district_heat_share.csv",
-        eurostat="data/eurostat/Balances-April2023",
-        eurostat_households="data/eurostat/eurostat-household_energy_balances-february_2024.csv",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
+        eurostat_households=rules.retrieve_eurostat_household_balances.output["csv"],
     output:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),
@@ -636,9 +636,9 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
-        eurostat="data/eurostat/Balances-April2023",
-        nuts2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+        enspreso_biomass=rules.retrieve_enspreso_biomass.output[0],
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
+        nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient("data/bundle/nama_10r_3popgdp.tsv.gz"),
         swiss_cantons=ancient("data/ch_cantons.csv"),
@@ -685,12 +685,12 @@ rule build_biomass_transport_costs:
 
 rule build_co2_sequestration_potentials:
     input:
-        storage_table="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-        storage_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
-        traps_table1="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
-        traps_table2="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
-        traps_table3="data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
-        traps_map="data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+        storage_table=rules.retrieve_co2stop.output["storage_table"],
+        storage_map=rules.retrieve_co2stop.output["storage_map"],
+        traps_table1=rules.retrieve_co2stop.output["traps_table1"],
+        traps_table2=rules.retrieve_co2stop.output["traps_table2"],
+        traps_table3=rules.retrieve_co2stop.output["traps_table3"],
+        traps_map=rules.retrieve_co2stop.output["traps_map"],
     output:
         resources("co2_sequestration_potentials.geojson"),
     threads: 1
@@ -754,7 +754,7 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs="data/myb1-2022-nitro-ert.xlsx",
+        usgs=rules.retrieve_nitrogen_statistics.output[0],
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
@@ -828,7 +828,7 @@ rule build_industrial_production_per_country:
         ch_industrial_production="data/ch_industrial_production_per_subsector.csv",
         ammonia_production=resources("ammonia_production.csv"),
         jrc="data/jrc-idees-2021",
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
     output:
         industrial_production_per_country=resources(
             "industrial_production_per_country.csv"
@@ -883,7 +883,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
-        hotmaps="data/Industrial_Database.csv",
+        hotmaps=rules.retrieve_hotmaps_industrial_sites.output[0],
         gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
@@ -1373,7 +1373,7 @@ rule prepare_sector_network:
             else []
         ),
         network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
-        eurostat="data/eurostat/Balances-April2023",
+        eurostat=rules.retrieve_eurostat_balances.output["directory"],
         pop_weighted_energy_totals=resources(
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),

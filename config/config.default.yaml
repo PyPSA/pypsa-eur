@@ -996,6 +996,9 @@ adjustments:
 data:
   # TODO implement
   # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
+  hotmaps_industrial_sites:
+    source: "archive"
+    version_or_latest: "latest"
   enspreso_biomass:
     source: "archive"
     version_or_latest: "latest"
@@ -1006,6 +1009,30 @@ data:
     source: "archive"
     version_or_latest: "latest"
   gem_europe_gas_tracker:
+    source: "archive"
+    version_or_latest: "latest"
+  co2stop:
+    source: "archive"
+    version_or_latest: "latest"
+  nitrogen_statistics:
+    source: "archive"
+    version_or_latest: "latest"
+  eu_nuts2013:
+    source: "archive"
+    version_or_latest: "latest"
+  eu_nuts2021:
+    source: "archive"
+    version_or_latest: "latest"
+  eurostat_balances:
+    source: "archive"
+    version_or_latest: "latest"
+  eurostat_household_balances:
+    source: "archive"
+    version_or_latest: "latest"
+  wdpa:
+    source: "archive"
+    version_or_latest: "latest"
+  wdpa_marine:
     source: "archive"
     version_or_latest: "latest"
   gem_gspt:

@@ -48,7 +48,6 @@ dconf
 /data/transport_data.csv
 /data/.nfs*
 /data/retro/*
-/data/bundle/nuts*
 data/gas_network/scigrid-gas/
 
 dask-worker-space/
