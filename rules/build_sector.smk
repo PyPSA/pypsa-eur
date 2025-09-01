@@ -458,8 +458,6 @@ rule build_river_heat_potential:
         ),
     input:
         unpack(input_hera_data),
-        # hera_river_discharge=f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
-        # hera_ambient_temperature=f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
