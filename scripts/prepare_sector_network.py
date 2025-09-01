@@ -5402,8 +5402,7 @@ def add_waste_heat(
 
         # Electrolysis waste heat
         if (
-            "electrolysis_excess_heat"
-            in options["district_heating"]["heat_pump_sources"]["urban central"]
+            "electrolysis_excess_heat" in options["heat_pump_sources"]["urban central"]
             and "H2 Electrolysis" in link_carriers
         ):
             # Connect electrolysis waste heat to electrolysis excess heat bus for heat pump boosting
