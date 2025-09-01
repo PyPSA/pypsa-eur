@@ -53,24 +53,16 @@ if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"]
 ]:
 
     rule retrieve_eurostat_balances:
-        params:
-            url=EUROSTAT_BALANCES_DATASET["url"],
+        input:
+            zip_file=storage(
+                EUROSTAT_BALANCES_DATASET["url"],
+            ),
         output:
-            zip=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
+            zip_file=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
             directory=directory(f"{EUROSTAT_BALANCES_DATASET['folder']}"),
         run:
-            import os
-            import requests
-            from zipfile import ZipFile
-            from pathlib import Path
-
-            response = requests.get(params["url"])
-            with open(output.zip, "wb") as f:
-                f.write(response.content)
-
-            output_folder = Path(output["zip"]).parent
-            unpack_archive(output.zip, output_folder)
-
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output["directory"])
 
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_jrc_idees", True):
@@ -118,23 +110,15 @@ if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
         input:
             shapes=storage(EU_NUTS2013_DATASET["url"]),
         output:
-            shapes_level_3=f"{EU_NUTS2013_DATASET["folder"]}/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
-            shapes_level_2=f"{EU_NUTS2013_DATASET["folder"]}/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
-        params:
             zip_file=f"{EU_NUTS2013_DATASET['folder']}/ref-nuts-2013-03m.geojson.zip",
+            folder=directory(
+                f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson"
+            ),
+            shapes_level_3=f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         run:
-            # Copy file and ensure proper permissions
-            shcopy2(input.shapes, params.zip_file)
-
-            with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2"]:
-                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
-                    extracted_file = Path(output.shapes_level_3).parent / filename
-                    extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[-1]}")
-                    )
-
+            copy2(input["shapes"], output["zip_file"])
+            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
 if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
@@ -148,25 +132,17 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
                 EU_NUTS2021_DATASET["url"],
             ),
         output:
-            shapes_level_3=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0=f"{EU_NUTS2021_DATASET["folder"]}/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
-        params:
             zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
+            folder=directory(
+                f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson"
+            ),
+            shapes_level_3=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         run:
-            # Copy file and ensure proper permissions
-            shcopy2(input.shapes, params.zip_file)
-
-            with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
-                    filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
-                    extracted_file = Path(output.shapes_level_0).parent / filename
-                    extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[-1]}")
-                    )
-
+            copy2(input["shapes"], output["zip_file"])
+            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
 if config["enable"]["retrieve"]:
@@ -493,6 +469,10 @@ if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
 ]:
 
     rule retrieve_co2stop:
+        input:
+            zip_file=storage(
+                CO2STOP_DATASET["url"],
+            ),
         output:
             zip_file=f"{CO2STOP_DATASET['folder']}/co2jrc_openformats.zip",
             storage_table=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
@@ -502,15 +482,8 @@ if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
             traps_table3=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
             traps_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
         run:
-            response = requests.get(
-                CO2STOP_DATASET["url"],
-            )
-            output_folder = Path(CO2STOP_DATASET["folder"]).parent
-
-            with open(output["zip_file"], "wb") as f:
-                f.write(response.content)
-            unpack_archive(output["zip_file"], output_folder)
-
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], CO2STOP_DATASET["folder"])
 
 
 if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))[
