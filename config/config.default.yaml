@@ -312,6 +312,12 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    63.: 94-AL1/15-ST1A 20.0
+    66.: 94-AL1/15-ST1A 20.0
+    90.: 184-AL1/30-ST1A 110.0
+    110.: 184-AL1/30-ST1A 110.0
+    132.: 243-AL1/39-ST1A 110.0
+    150.: 243-AL1/39-ST1A 110.0
     220.: Al/St 240/40 2-bundle 220.0
     300.: Al/St 240/40 3-bundle 300.0
     330.: Al/St 240/40 3-bundle 300.0
@@ -655,9 +661,6 @@ sector:
     tax_weighting: false
     construction_index: true
   tes: true
-  tes_tau:
-    decentral: 3
-    central: 180
   boilers: true
   resistive_heaters: true
   oil_boilers: false
@@ -914,7 +917,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
-  version: v0.13.2
+  version: v0.13.3
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -925,6 +928,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
+    "standing losses": 0
   overwrites: {}
   marginal_cost:
     solar: 0.01

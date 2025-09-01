@@ -18,7 +18,6 @@ sys.path.append("./scripts")
 from scripts.base_network import (
     _get_country,
     _get_linetype_by_voltage,
-    _get_linetypes_config,
     _get_oid,
     _load_buses,
     _load_converters_from_eg,
@@ -53,16 +52,6 @@ def test_get_country(column_name, expected):
     output_series = _get_country(df_exercise)
     comparison_series = output_series.compare(expected)
     assert comparison_series.size == 0
-
-
-def test_get_linetypes_config(config):
-    """
-    Verify what returned by _get_linetypes_config.
-    """
-    output_dict = _get_linetypes_config(
-        config["lines"]["types"], config["electricity"]["voltages"]
-    )
-    assert output_dict == config["lines"]["types"]
 
 
 def test_get_linetype_by_voltage(config):

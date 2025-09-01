@@ -94,11 +94,15 @@ if __name__ == "__main__":
     bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
     bus_sizes = bus_sizes.sort_values(ascending=False)
 
+    # Get colors for carriers
+    n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
+    carrier_colors = n.carriers.color.copy().replace("", "grey")
+
     colors = (
         bus_sizes.index.get_level_values("carrier")
         .unique()
         .to_series()
-        .map(n.carriers.color)
+        .map(carrier_colors)
     )
 
     # line and links widths according to optimal capacity

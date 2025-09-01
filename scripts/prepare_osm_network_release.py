@@ -373,47 +373,81 @@ if __name__ == "__main__":
         name="Buses (DC)",
         zindex=103,
     )
-    map = lines.explore(
-        color="rosybrown",
+
+    map = lines.query("v_nom>=750").explore(
+        color="purple",
         popup=True,
         m=map,
-        name="Lines (AC)",
+        name="Lines (AC, >= 750 kV) - purple",
         zindex=104,
     )
+
+    map = lines.query("v_nom>=380 and v_nom<750").explore(
+        color="darkred",
+        popup=True,
+        m=map,
+        name="Lines (AC), 380 kV >= x > 750 kV - red",
+        zindex=105,
+    )
+
+    map = lines.query("v_nom>=250 and v_nom<380").explore(
+        color="orange",
+        popup=True,
+        m=map,
+        name="Lines (AC), 250 kV >= x > 380 kV - orange",
+        zindex=106,
+    )
+
+    map = lines.query("v_nom>=200 and v_nom<250").explore(
+        color="green",
+        popup=True,
+        m=map,
+        name="Lines (AC), 200 kV >= x > 250 kV - green",
+        zindex=107,
+    )
+
+    map = lines.query("v_nom<200").explore(
+        color="blue",
+        popup=True,
+        m=map,
+        name="Lines (AC), < 200 kV) - blue",
+        zindex=108,
+    )
+
     map = links.explore(
         color="darkseagreen",
         popup=True,
         m=map,
         name="Links (DC)",
-        zindex=105,
+        zindex=115,
     )
     map = transformers.explore(
         color="orange",
         popup=True,
         m=map,
         name="Transformers",
-        zindex=106,
+        zindex=116,
     )
     map = converters.explore(
         color="purple",
         popup=True,
         m=map,
         name="Converters",
-        zindex=107,
+        zindex=117,
     )
     map = buses.loc[buses.dc == "f"].explore(
         color="red",
         popup=True,
         m=map,
         name="Buses (AC, Points)",
-        zindex=108,
+        zindex=11,
     )
     map = buses.loc[buses.dc == "t"].explore(
         color="black",
         popup=True,
         m=map,
         name="Buses (DC, Points)",
-        zindex=109,
+        zindex=119,
     )
     # Add legend
     folium.LayerControl(collapsed=False).add_to(map)

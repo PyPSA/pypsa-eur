@@ -159,13 +159,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains share of urban population by country.
 
-``data/naturalearth``
-
-- **Source:** Natural Earth
-- **Link:** https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
-- **License:** CC0 (`reference <https://www.naturalearthdata.com/about/terms-of-use/>`__)
-- **Description:** Country shapes, using point-of-view (POV) variant of Germany so that Crimea is included.
-
 ``data/gem/Europe-Gas-Tracker-2024-05.xlsx``
 
 - **Source:** Global Energy Monitor
