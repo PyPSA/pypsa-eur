@@ -43,6 +43,17 @@ Upcoming Release
 
 * Updated `build_osm_network` and `clean_osm_data` to handle voltage levels below 220 kV (down to 63 kV). When `base_network` is set to `osm_raw`, an electricity grid from voltage levels AC 63 kV to 750 kV can be created (experimental feature). For an example, see the example configuration in `config/examples/config-distribution-grid-experimental.yaml`.
 
+* Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
+  To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
+
+* Move cutouts into `data/cutouts/` directory for consistency. Note: This will trigger all cutouts to be re-downloaded or rebuild.
+
+* Deprecate the ability to determine ``cutout`` bounds based on ``regions_onshore`` and ``regions_offshore``.
+  Instead ``cutouts`` need to have their bounds explicitly defined in the configuration file.
+
+* Moved configuration for ``cutout`` preparation into a nested dictionary ``prepare_kwargs``.
+  This allows to pass any keyword argument supported by ``atlite.Cutout.prepare()`` like ``tmpdir``.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

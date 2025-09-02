@@ -12,13 +12,6 @@ Data in this section is downloaded and extracted from the Zenodo data bundle
 large to be placed directly in the repository, have been reduced in spatial
 scope to reduce file size, or are not provided through stable URLs elsewhere.
 
-``data/bundle/je-e-21.03.02.xls``
-
-- **Source:** Swiss Federal Statistics Office
-- **Link:** https://www.bfs.admin.ch/bfs/en/home/news/whats-new.assetdetail.7786557.html#context-sidebar
-- **License:**  `custom (OPEN BY ASK) <https://www.bfs.admin.ch/bfs/en/home/fso/swiss-federal-statistical-office/terms-of-use.html>`__
-- **Description:** Population and GDP data for Swiss Cantons.
-
 ``data/bundle/NUTS_2013_60M_SH``
 
 - **Source:** GISCO

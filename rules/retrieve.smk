@@ -4,10 +4,19 @@
 
 import os
 import requests
-from datetime import datetime, timedelta
-from shutil import move, unpack_archive
-from shutil import copy2 as shcopy2
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from shutil import move, unpack_archive, rmtree, copy2
 from zipfile import ZipFile
+
+
+# Configure the default storage provider for accessing remote files using http
+storage:
+    provider="http",
+    keep_local=True,
+    retrieve=True,
+    retries=2,
+
 
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
@@ -18,14 +27,12 @@ if config["enable"]["retrieve"] is False:
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
     datafiles = [
-        "je-e-21.03.02.xls",
         "nama_10r_3popgdp.tsv.gz",
         "corine/g250_clc06_V18_5.tif",
         "eea/UNFCCC_v23.csv",
         "emobility/KFZ__count",
         "emobility/Pkw__count",
         "h2_salt_caverns_GWh_per_sqkm.geojson",
-        "natura/natura.tiff",
         "gebco/GEBCO_2014_2D.nc",
         "GDP_per_capita_PPP_1990_2015_v2.nc",
         "ppp_2019_1km_Aggregated.tif",
@@ -48,16 +55,26 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_databundle.py"
 
-    rule retrieve_eurostat_data:
+
+if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_eurostat_balances:
+        input:
+            zip_file=storage(
+                EUROSTAT_BALANCES_DATASET["url"],
+            ),
         output:
-            directory("data/eurostat/Balances-April2023"),
-        log:
-            "logs/retrieve_eurostat_data.log",
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_eurostat_data.py"
+            zip_file=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
+            directory=directory(f"{EUROSTAT_BALANCES_DATASET['folder']}"),
+        run:
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output["directory"])
+
+
+if config["enable"]["retrieve"] and config["enable"].get("retrieve_jrc_idees", True):
 
     rule retrieve_jrc_idees:
         output:
@@ -68,74 +85,69 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
         script:
             "../scripts/retrieve_jrc_idees.py"
 
-    rule retrieve_eurostat_household_data:
-        output:
-            "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
-        log:
-            "logs/retrieve_eurostat_household_data.log",
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_eurostat_household_data.py"
 
+if (
+    EUROSTAT_HOUSEHOLD_BALANCES_DATASET := dataset_version(
+        "eurostat_household_balances"
+    )
+)["source"] in [
+    "primary",
+    "archive",
+]:
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_nuts_2013_shapes:
+    rule retrieve_eurostat_household_balances:
         input:
-            shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+            csv=storage(
+                EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"],
             ),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
-        params:
-            zip_file="ref-nuts-2013-03m.geojson.zip",
+            csv=f"{EUROSTAT_HOUSEHOLD_BALANCES_DATASET['folder']}/nrg_d_hhq.csv",
         run:
-            # Copy file and ensure proper permissions
-            shcopy2(input.shapes, params.zip_file)
-
-            with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2"]:
-                    filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_3).parent)
-                    extracted_file = Path(output.shapes_level_3).parent / filename
-                    extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[-1]}")
-                    )
-            os.remove(params.zip_file)
+            copy2(input["csv"], output["csv"])
 
 
+if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
+    "primary",
+    "archive",
+]:
 
-if config["enable"]["retrieve"]:
+    rule retrieve_eu_nuts_2013:
+        input:
+            shapes=storage(EU_NUTS2013_DATASET["url"]),
+        output:
+            zip_file=f"{EU_NUTS2013_DATASET['folder']}/ref-nuts-2013-03m.geojson.zip",
+            folder=directory(
+                f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson"
+            ),
+            shapes_level_3=f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2013_DATASET["folder"]}/ref-nuts-2013-03m.geojson/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+        run:
+            copy2(input["shapes"], output["zip_file"])
+            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
-    rule retrieve_nuts_2021_shapes:
+
+if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_eu_nuts_2021:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
+                EU_NUTS2021_DATASET["url"],
             ),
         output:
-            shapes_level_3="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2="data/nuts/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
-        params:
-            zip_file="ref-nuts-2021-01m.geojson.zip",
+            zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
+            folder=directory(
+                f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson"
+            ),
+            shapes_level_3=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0=f"{EU_NUTS2021_DATASET["folder"]}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         run:
-            # Copy file and ensure proper permissions
-            shcopy2(input.shapes, params.zip_file)
-
-            with ZipFile(params.zip_file, "r") as zip_ref:
-                for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
-                    filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
-                    zip_ref.extract(filename, Path(output.shapes_level_0).parent)
-                    extracted_file = Path(output.shapes_level_0).parent / filename
-                    extracted_file.rename(
-                        getattr(output, f"shapes_level_{level[-1]}")
-                    )
-            os.remove(params.zip_file)
-
+            copy2(input["shapes"], output["zip_file"])
+            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
 if config["enable"]["retrieve"]:
@@ -155,17 +167,19 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_bidding_zones.py"
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
+if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
+    "archive",
+]:
 
     rule retrieve_cutout:
         input:
             storage(
-                "https://zenodo.org/records/15349674/files/{cutout}.nc",
+                CUTOUT_DATASET["url"] + "/files/{cutout}.nc",
             ),
         output:
-            CDIR.joinpath("{cutout}.nc").as_posix(),
+            CUTOUT_DATASET["folder"] / "{cutout}.nc",
         log:
-            Path("logs").joinpath(CDIR, "retrieve_cutout_{cutout}.log").as_posix(),
+            "logs/retrieve_cutout/{cutout}.log",
         resources:
             mem_mb=5000,
         retries: 2
@@ -174,35 +188,54 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"]:
+if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
+    "archive"
+]:
 
-    rule retrieve_tyndp_bundle:
+    rule retrieve_country_runoff:
+        input:
+            storage(COUNTRY_RUNOFF_DATASET["url"]),
         output:
-            reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
-            buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
-        log:
-            "logs/retrieve_tyndp_bundle.log",
-        retries: 2
-        script:
-            "../scripts/retrieve_tyndp_bundle.py"
+            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        run:
+            move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
+if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archive"]:
+
+    rule retrieve_country_hdd:
+        input:
+            storage(COUNTRY_HDD_DATASET["url"]),
+        output:
+            era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        run:
+            move(input[0], output[0])
+
+
+if (COSTS_DATASET := dataset_version("costs"))["source"] in [
+    "primary",
+]:
 
     rule retrieve_cost_data:
-        params:
-            version=config_provider("costs", "version"),
+        input:
+            storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
-            resources("costs_{year}.csv"),
-        log:
-            logs("retrieve_cost_data_{year}.log"),
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_cost_data.py"
+            costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
+        run:
+            move(input[0], output[0])
+
+
+if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
+    "primary",
+]:
+
+    rule retrieve_powerplants:
+        input:
+            storage(POWERPLANTS_DATASET["url"]),
+        output:
+            powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
+        run:
+            move(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -268,7 +301,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
-                keep_local=True,
             ),
         output:
             "data/shipdensity_global.zip",
@@ -282,45 +314,56 @@ if config["enable"]["retrieve"]:
             validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"]:
+if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
+    "primary",
+    "archive",
+]:
 
-    rule retrieve_jrc_enspreso_biomass:
+    rule retrieve_enspreso_biomass:
         input:
-            storage(
-                "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
-                keep_local=True,
+            xlsx=storage(
+                f"{ENSPRESO_BIOMASS_DATASET["url"]}",
             ),
         output:
-            "data/ENSPRESO_BIOMASS.xlsx",
+            xlsx=f"{ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
         run:
-            move(input[0], output[0])
+            move(input["xlsx"], output["xlsx"])
 
 
-if config["enable"]["retrieve"]:
+if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_hotmaps_industrial_sites:
         input:
             storage(
-                "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
-                keep_local=True,
+                HOTMAPS_INDUSTRIAL_SITES["url"],
             ),
         output:
-            "data/Industrial_Database.csv",
+            f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
         run:
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
-    rule retrieve_usgs_ammonia_production:
+    rule retrieve_nitrogen_statistics:
         input:
             storage(
-                "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
+                NITROGEN_STATISTICS_DATASET["url"],
             ),
         output:
-            "data/myb1-2022-nitro-ert.xlsx",
+            f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
         run:
             move(input[0], output[0])
@@ -392,131 +435,178 @@ if config["enable"]["retrieve"]:
 
 
 
-if config["enable"]["retrieve"]:
+if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip_file="API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            url=WB_URB_POP_DATASET["url"],
         output:
-            gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
+            zip=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            csv=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
             response = requests.get(
-                "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
+                params["url"],
             )
 
-            with open(params["zip_file"], "wb") as f:
+            with open(output["zip"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(output.gpkg).parent
-            unpack_archive(params["zip_file"], output_folder)
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output["zip"], output_folder)
 
             for f in os.listdir(output_folder):
                 if f.startswith(
                     "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
                 ) and f.endswith(".csv"):
-                    os.rename(os.path.join(output_folder, f), output.gpkg)
+                    os.rename(os.path.join(output_folder, f), output.csv)
                     break
             os.remove(params["zip_file"])
 
 
 
-if config["enable"]["retrieve"]:
+if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_co2stop:
-        params:
-            zip_file="co2jrc_openformats.zip",
+        input:
+            zip_file=storage(
+                CO2STOP_DATASET["url"],
+            ),
         output:
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+            zip_file=f"{CO2STOP_DATASET['folder']}/co2jrc_openformats.zip",
+            storage_table=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
+            storage_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
+            traps_table1=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
+            traps_table2=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
+            traps_table3=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
+            traps_map=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
         run:
-            response = requests.get(
-                "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
-            )
-            with open(params["zip_file"], "wb") as f:
-                f.write(response.content)
-            output_folder = Path(output[0]).parent.parent.parent
-            unpack_archive(params["zip_file"], output_folder)
-            os.remove(params["zip_file"])
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], CO2STOP_DATASET["folder"])
 
 
-
-if config["enable"]["retrieve"]:
+if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_gem_europe_gas_tracker:
+        input:
+            xlsx=storage(GEM_EUROPE_GAS_TRACKER_DATASET["url"]),
         output:
-            "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
+            xlsx="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
-            # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
-            response = requests.get(url)
-            with open(output[0], "wb") as f:
-                f.write(response.content)
+            move(input["xlsx"], output["xlsx"])
 
 
-
-if config["enable"]["retrieve"]:
+if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     rule retrieve_gem_steel_plant_tracker:
+        input:
+            xlsx=storage(GEM_GSPT_DATASET["url"]),
         output:
-            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+            xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
-            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
-            response = requests.get(url)
-            with open(output[0], "wb") as f:
-                f.write(response.content)
+            move(input["xlsx"], output["xlsx"])
 
 
+if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
-if config["enable"]["retrieve"]:
-    # Some logic to find the correct file URL
-    # Sometimes files are released delayed or ahead of schedule, check which file is currently available
+    rule retrieve_bfs_road_vehicle_stock:
+        input:
+            csv=storage(BFS_ROAD_VEHICLE_STOCK_DATASET["url"]),
+        output:
+            csv=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
+        run:
+            move(input["csv"], output["csv"])
 
-    def check_file_exists(url):
-        response = requests.head(url)
-        return response.status_code == 200
 
-    # Basic pattern where WDPA files can be found
-    url_pattern = (
-        "https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_{bYYYY}_Public_shp.zip"
-    )
+if (BFS_GDP_AND_POPULATION_DATASET := dataset_version("bfs_gdp_and_population"))[
+    "source"
+] in [
+    "primary",
+    "archive",
+]:
 
-    # 3-letter month + 4 digit year for current/previous/next month to test
-    current_monthyear = datetime.now().strftime("%b%Y")
-    prev_monthyear = (datetime.now() - timedelta(30)).strftime("%b%Y")
-    next_monthyear = (datetime.now() + timedelta(30)).strftime("%b%Y")
+    rule retrieve_bfs_gdp_and_population:
+        input:
+            xlsx=storage(BFS_GDP_AND_POPULATION_DATASET["url"]),
+        output:
+            xlsx=f"{BFS_GDP_AND_POPULATION_DATASET['folder']}/gdp_and_population.xlsx",
+        run:
+            move(input["xlsx"], output["xlsx"])
 
-    # Test prioritised: current month -> previous -> next
-    for bYYYY in [current_monthyear, prev_monthyear, next_monthyear]:
-        if check_file_exists(url := url_pattern.format(bYYYY=bYYYY)):
-            break
-        else:
-            # If None of the three URLs are working
-            url = False
 
-    assert (
-        url
-    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+def get_wdpa_url(DATASET) -> str:
+    """
+    Find the right URL for the WDPA / WDPA marine dataset based on the source type.
+    """
+    if DATASET["source"] == "archive":
+        return DATASET["url"]
+    elif DATASET["source"] == "primary":
+        # Some logic to find the correct file URL from the WDPA website (primary source)
+        # Sometimes files are released delayed or ahead of schedule, check which file is currently available
+        def check_file_exists(url):
+            response = requests.head(url)
+            return response.status_code == 200
+
+        # Basic pattern where WDPA files can be found
+        url_pattern = DATASET["url"]
+
+        # 3-letter month + 4 digit year for current/previous/next/pprevious/nnext months to test
+        # order reflects priority of testing
+        months = [
+            datetime.now(),  # current
+            (datetime.now() + relativedelta(months=-1)),  # previous month
+            (datetime.now() + relativedelta(months=+1)),  # next month
+            (datetime.now() + relativedelta(months=-2)),  # two months ago
+            (datetime.now() + relativedelta(months=+2)),  # two months ahead
+        ]
+        months = [m.strftime("%b%Y") for m in months]
+
+        # Test prioritised: current month -> previous -> next
+        for bYYYY in months:
+            url = url_pattern.format(bYYYY=bYYYY)
+            if check_file_exists(url):
+                return url
+
+        raise ValueError(
+            f"No {DATASET.dataset} files found at {url_pattern} for bY={months}."
+        )
+
+
+if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
+    "primary",
+    "archive",
+]:
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
-    rule download_wdpa:
+    rule retrieve_wdpa:
         input:
-            zip_file=storage(url, keep_local=True),
-        params:
-            zip_file="WDPA_shp.zip",
-            folder_name="WDPA",
+            zip_file=storage(get_wdpa_url(WDPA_DATASET)),
         output:
-            gpkg="data/WDPA.gpkg",
+            zip_file=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
+            gpkg=f"{WDPA_DATASET['folder']}/WDPA.gpkg",
         run:
-            # Copy file and ensure proper permissions
-            shcopy2(input.zip_file, params.zip_file)
-            output_folder = Path(output.gpkg).parent / params.folder_name
-            unpack_archive(params.zip_file, output_folder)
+            output_folder = Path(output["zip_file"]).parent
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
@@ -525,33 +615,35 @@ if config["enable"]["retrieve"]:
                 )
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
-            os.remove(params.zip_file)
 
-    rule download_wdpa_marine:
+
+
+if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
+    "primary",
+    "archive",
+]:
+
+    rule retrieve_wdpa_marine:
         # Downloading Marine protected area database from WDPA
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
             zip_file=storage(
-                f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
-                keep_local=True,
+                get_wdpa_url(WDPA_MARINE_DATASET),
             ),
-        params:
-            zip_file="WDPA_WDOECM_marine.zip",
-            folder_name="WDPA_WDOECM_marine",
         output:
-            gpkg="data/WDPA_WDOECM_marine.gpkg",
+            zip_file=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.zip",
+            gpkg=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.gpkg",
         run:
-            shcopy2(input.zip_file, params.zip_file)
-            output_folder = Path(output.gpkg).parent / params.folder_name
-            unpack_archive(params.zip_file, output_folder)
+            output_folder = Path(output["zip_file"]).parent
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
-            os.remove(params.zip_file)
 
 
 
@@ -561,7 +653,6 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
-                keep_local=True,
             ),
         output:
             "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
@@ -590,41 +681,55 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_monthly_fuel_prices.py"
 
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-prebuilt"
-):
-    OSM_VERSION = config["electricity"]["osm-prebuilt-version"]
+if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
+
+    rule retrieve_tyndp:
+        input:
+            line_data=storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
+            nodes=storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
+        output:
+            line_data_zip=f"{TYDNP_DATASET['folder']}/Line-data.zip",
+            nodes_zip=f"{TYDNP_DATASET['folder']}/Nodes.zip",
+            reference_grid=f"{TYDNP_DATASET['folder']}/Line data/ReferenceGrid_Electricity.xlsx",
+            nodes=f"{TYDNP_DATASET['folder']}/Nodes/LIST OF NODES.xlsx",
+        log:
+            "logs/retrieve_tyndp.log",
+        run:
+            for key in input.keys():
+                # Keep zip file
+                move(input[key], output[f"{key}_zip"])
+
+                # unzip
+                output_folder = Path(output[f"{key}_zip"]).parent
+                unpack_archive(output[f"{key}_zip"], output_folder)
+
+                # Remove __MACOSX directory if it exists
+                macosx_dir = output_folder / "__MACOSX"
+                rmtree(macosx_dir, ignore_errors=True)
+
+
+
+if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
     OSM_FILES = [
         "buses.csv",
         "converters.csv",
         "lines.csv",
         "links.csv",
         "transformers.csv",
+        # Newer versions include the additional map.html file for visualisation
+        *(["map.html"] if float(OSM_DATASET["version"]) >= 0.6 else []),
     ]
-    if OSM_VERSION >= 0.6:
-        OSM_FILES.append("map.html")
-    OSM_ZENODO_IDS = {
-        0.1: "12799202",
-        0.2: "13342577",
-        0.3: "13358976",
-        0.4: "13759222",
-        0.5: "13981528",
-        0.6: "14144752",
-    }
 
-    # update rule to use the correct version
-    rule retrieve_osm_prebuilt:
+    rule retrieve_osm_archive:
         input:
             **{
-                file: storage(
-                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
-                )
+                file: storage(f"{OSM_DATASET['url']}/files/{file}")
                 for file in OSM_FILES
             },
         output:
-            **{file: f"data/osm-prebuilt/{OSM_VERSION}/{file}" for file in OSM_FILES},
+            **{file: f"{OSM_DATASET['folder']}/{file}" for file in OSM_FILES},
         log:
-            "logs/retrieve_osm_prebuilt.log",
+            "logs/retrieve_osm_archive.log",
         threads: 1
         resources:
             mem_mb=500,
@@ -634,53 +739,71 @@ if config["enable"]["retrieve"] and (
                 validate_checksum(output[key], input[key])
 
 
+elif OSM_DATASET["source"] == "build":
 
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
+    OSM_FILES = [
+        "cables_way.json",
+        "lines_way.json",
+        "routes_relation.json",
+        "substations_way.json",
+        "substations_relation.json",
+    ]
 
-    rule retrieve_osm_data:
+    rule retrieve_osm_raw:
         output:
-            cables_way="data/osm-raw/{country}/cables_way.json",
-            lines_way="data/osm-raw/{country}/lines_way.json",
-            routes_relation="data/osm-raw/{country}/routes_relation.json",
-            substations_way="data/osm-raw/{country}/substations_way.json",
-            substations_relation="data/osm-raw/{country}/substations_relation.json",
+            **{
+                file.replace(
+                    ".json", ""
+                ): f"{OSM_DATASET['folder']}/raw/{{country}}/{file}"
+                for file in files
+            },
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/retrieve_osm_data.py"
+            "../scripts/retrieve_osm_raw.py"
 
-
-if config["enable"]["retrieve"] and (
-    config["electricity"]["base_network"] == "osm-raw"
-):
-
-    rule retrieve_osm_data_all:
+    rule retrieve_osm_raw_all:
         input:
             expand(
-                "data/osm-raw/{country}/cables_way.json",
+                f"{OSM_DATASET['folder']}/raw/{{country}}/{{file}}",
                 country=config_provider("countries"),
+                file=OSM_FILES,
             ),
-            expand(
-                "data/osm-raw/{country}/lines_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/routes_relation.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/substations_way.json",
-                country=config_provider("countries"),
-            ),
-            expand(
-                "data/osm-raw/{country}/substations_relation.json",
-                country=config_provider("countries"),
-            ),
+
+
+if (NATURA_DATASET := dataset_version("natura"))["source"] in ["archive"]:
+
+    rule retrieve_natura:
+        input:
+            storage(NATURA_DATASET["url"]),
+        output:
+            NATURA_DATASET["folder"] / "natura.tiff",
+        log:
+            "logs/retrieve_natura.log",
+        run:
+            move(input[0], output[0])
+
+elif NATURA_DATASET["source"] == "build":
+
+    rule build_natura_raster:
+        input:
+            online=storage(NATURA_DATASET["url"]),
+            cutout=lambda w: input_cutout(w),
+        output:
+            zip=NATURA_DATASET["folder"] / "raw/natura.zip",
+            raw=directory(NATURA_DATASET["folder"] / "raw"),
+            raster=NATURA_DATASET["folder"] / "natura.tiff",
+        resources:
+            mem_mb=5000,
+        log:
+            "logs/build_natura.log",
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_natura.py"
 
 
 if config["enable"]["retrieve"]:
@@ -700,7 +823,6 @@ if config["enable"]["retrieve"]:
         input:
             isi_heat_potentials=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
-                keep_local=True,
             ),
         output:
             "data/isi_heat_utilisation_potentials.xlsx",
@@ -715,7 +837,6 @@ if config["enable"]["retrieve"]:
         input:
             lau_regions=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
-                keep_local=True,
             ),
         output:
             lau_regions="data/lau_regions.zip",
@@ -787,7 +908,6 @@ if config["enable"]["retrieve"]:
         input:
             dh_areas=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
-                keep_local=True,
             ),
         output:
             dh_areas="data/dh_areas.gpkg",
@@ -797,3 +917,28 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+
+if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"] in [
+    "archive"
+]:
+
+    rule retrieve_mobility_profiles:
+        input:
+            kfz=storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
+            pkw=storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
+        output:
+            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        threads: 1
+        resources:
+            mem_mb=1000,
+        log:
+            "logs/retrieve_mobility_profiles.log",
+        benchmark:
+            "benchmarks/retrieve_mobility_profiles"
+        conda:
+            "../envs/environment.yaml"
+        run:
+            move(input["kfz"], output["kfz"])
+            move(input["pkw"], output["pkw"])

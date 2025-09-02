@@ -26,34 +26,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Description:** Utilisation potentials for different heat sources across Europe and future district heating areas, based on Manz et al. 2024<https://doi.org/10.1016/j.renene.2024.120111>.
 
 
-``data/nuts``
-
-- **Source:** GISCO
-- **Link:** https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/
-- **License:** `custom <https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units>`__
-- **Description:** Europe's NUTS administrative regions.
-
-``data/ENSPRESO_BIOMASS.xlsx``
-
-- **Source:** European Commission Joint Research Centre (JRC)
-- **Link:** https://data.jrc.ec.europa.eu/dataset/74ed5a04-7d74-4807-9eab-b94774309d9f
-- **License:** CC-BY 4.0
-- **Description:** Contains biomass potentials for Europe.
-
-``data/CO2JRC_OpenFormats``
-
-- **Source:** SETIS
-- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
-- **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
-- **Description:** European CO2 storage database CO2StoP.
-
-``data/myb1-2022-nitro-ert.xlsx``
-
-- **Source:** United States Geological Survey (USGS)
-- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/nitrogen-statistics-and-information
-- **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
-- **Description:** Statistics and information on the worldwide supply of, demand for, and flow of the mineral commodity nitrogen.
-
 ``data/Industrial_Database.csv``
 
 - **Source:** Simon Pezzutto, Stefano Zambotti, Silvia Croce, Pietro Zambelli,
@@ -195,7 +167,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://www.protectedplanet.net/en/legal>`__
 - **Description:** Contains global protected marine areas.
 
-``data/osm-raw``
+``data/osm/build/raw``
 
 - **Source:** OpenStreetMap via Overpass API
 - **Link:** https://overpass-api.de/api/interpreter
