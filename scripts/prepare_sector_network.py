@@ -3242,19 +3242,6 @@ def add_heat(
                         lifetime=lifetime,
                         p_nom_max=p_max_source,
                     )
-                # else:
-                #     breakpoint()
-                #     # Standard heat source without generator
-                #     heat_carrier = f"{heat_system} {heat_source} heat"
-                #     n.add("Carrier", heat_carrier)
-                #     n.add(
-                #         "Bus",
-                #         nodes,
-                #         location=nodes,
-                #         suffix=f" {heat_carrier}",
-                #         carrier=heat_carrier,
-                #     )
-
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
                     "Link",
