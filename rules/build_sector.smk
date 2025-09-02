@@ -615,7 +615,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
 
 rule build_heat_totals:
     input:
-        era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
