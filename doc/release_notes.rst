@@ -51,6 +51,9 @@ Upcoming Release
 * Deprecate the ability to determine ``cutout`` bounds based on ``regions_onshore`` and ``regions_offshore``.
   Instead ``cutouts`` need to have their bounds explicitly defined in the configuration file.
 
+* Moved configuration for ``cutout`` preparation into a nested dictionary ``prepare_kwargs``.
+  This allows to pass any keyword argument supported by ``atlite.Cutout.prepare()`` like ``tmpdir``.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

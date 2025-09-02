@@ -167,8 +167,9 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
-      # features: [] 
-      # sarah_dir: ""
+      # prepare_kwargs:
+      #   features: []
+      #   sarah_dir: ""
     europe-1940-2024-era5:
       module: era5
       x: [-12., 42.]
@@ -176,10 +177,12 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['1940', '2024']
-      features: ['temperature', 'height', 'runoff']
       chunks:
         time: 500
-      monthly_requests: true
+      prepare_kwargs:
+        features: ['temperature', 'height', 'runoff']
+        monthly_requests: true
+        tmpdir: "./cutouts_tmp/"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
