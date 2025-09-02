@@ -154,7 +154,7 @@ rule all:
             (
                 RESULTS
                 + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_river_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
+                if config_provider("plotting", "enable_heat_source_maps")(w)
                 else []
             ),
             **config["scenario"],
@@ -164,7 +164,7 @@ rule all:
             (
                 RESULTS
                 + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_sea_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
+                if config_provider("plotting", "enable_heat_source_maps")(w)
                 else []
             ),
             **config["scenario"],
@@ -174,7 +174,7 @@ rule all:
             (
                 RESULTS
                 + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
+                if config_provider("plotting", "enable_heat_source_maps")(w)
                 else []
             ),
             **config["scenario"],
@@ -185,7 +185,7 @@ rule all:
             (
                 RESULTS
                 + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_river_water.html"
-                if config_provider("plotting", "heat_source_map", "enable")(w)
+                if config_provider("plotting", "enable_heat_source_maps")(w)
                 else []
             ),
             **config["scenario"],

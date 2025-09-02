@@ -454,7 +454,7 @@ rule build_river_heat_potential:
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
         generate_temporal_aggregates=config_provider(
-            "plotting", "heat_sources", "generate_temporal_aggregates"
+            "plotting", "enable_heat_source_maps"
         ),
     input:
         unpack(input_hera_data),

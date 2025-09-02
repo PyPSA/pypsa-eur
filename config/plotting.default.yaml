@@ -4,8 +4,7 @@
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
-  heat_sources:
-    generate_temporal_aggregates: false
+  enable_heat_source_maps: false
   map:
     boundaries: [-11, 30, 34, 71]
     color_geomap:
