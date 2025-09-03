@@ -413,3 +413,62 @@ policy_reg_regain_h2:
     min_part_load_steel: 0.3
     min_part_load_cement: 0.5
     min_part_load_hvc: 0.3
+
+# Sensitivity on CCS potential
+policy_reg_regain_highccs:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 4-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: regain
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    # Minimum part loads
+    min_part_load_hb: 0.3
+    min_part_load_steel: 0.3
+    min_part_load_cement: 0.5
+    min_part_load_hvc: 0.3
+    co2_sequestration_potential:
+      2020: 0
+      2030: 40
+      2040: 250
+      2050: 400
+
+policy_reg_deindustrial_high_ccs:
+  co2_budget:
+    2020: 1
+    2030: 0.450 # 55% reduction by 2030 (Ff55)
+    2040: 0.100 # 90% by 2040
+    2050: 0.000 # climate-neutral by 2050
+  weather_years:
+    enable: true
+    rcp: 4-5
+  sector:
+    endo_industry:
+      regional_steel_demand: true
+      regional_cement_demand: true
+      regional_hvc: true
+      policy_scenario: deindustrial
+    methanol:
+      regional_methanol_demand: true
+    ammonia: regional
+    # Minimum part loads
+    min_part_load_hb: 0.3
+    min_part_load_steel: 0.3
+    min_part_load_cement: 0.5
+    min_part_load_hvc: 0.3
+    co2_sequestration_potential:
+      2020: 0
+      2030: 40
+      2040: 250
+      2050: 400

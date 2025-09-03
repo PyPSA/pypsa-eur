@@ -6,12 +6,12 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: ""
-  name: #"all"
+  name: "all"
   #- import_policy_reg_deindustrial
   #- import_policy_reg_regain
   #- base_reg_deindustrial
   #- base_reg_regain
-  - policy_reg_regain
+  #- policy_reg_regain
   #- policy_reg_deindustrial
   #- policy_reg_deindustrial_flex
   #- policy_eu_regain_flex
