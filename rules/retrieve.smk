@@ -749,6 +749,7 @@ if config["enable"]["retrieve"]:
                         f.write(response.content)
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_aquifer_data_bgr:
@@ -797,12 +798,15 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
+
 if config["enable"]["retrieve"] and config["weather_years"]["enable"]:
 
     rule retrieve_zenodo_timeseries:
         params:
-            rcp=config_provider("weather_years","rcp"),
-            global_regional_models=config_provider("weather_years","global_regional_models"),
+            rcp=config_provider("weather_years", "rcp"),
+            global_regional_models=config_provider(
+                "weather_years", "global_regional_models"
+            ),
         output:
             directory("data/zenodo_timeseries"),
         log:
@@ -812,4 +816,3 @@ if config["enable"]["retrieve"] and config["weather_years"]["enable"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_zenodo_timeseries.py"
-
