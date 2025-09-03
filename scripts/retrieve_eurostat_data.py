@@ -37,13 +37,16 @@ if __name__ == "__main__":
 
     logger.info(f"Downloading Eurostat data from '{url_eurostat}'.")
 
-    with tempfile.NamedTemporaryFile(suffix=".zip", delete=True) as tarball:
-        logger.info(f"Using temporary file: {tarball.name}")
-        progress_retrieve(url_eurostat, tarball.name, disable=disable_progress)
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tarball:
+        tmp_name = tarball.name
 
-        logger.info("Extracting Eurostat data.")
-        with zipfile.ZipFile(tarball.name, "r") as zip_ref:
-            zip_ref.extractall(to_fn)
+    logger.info(f"Using temporary file: {tmp_name}")
+    progress_retrieve(url_eurostat, tmp_name, disable=disable_progress)
 
-        logger.info(f"Eurostat data available in '{to_fn}'.")
-        # Temporary file automatically deleted when context exits
+    logger.info("Extracting Eurostat data.")
+    with zipfile.ZipFile(tmp_name, "r") as zip_ref:
+        zip_ref.extractall(to_fn)
+
+    logger.info(f"Eurostat data available in '{to_fn}'.")
+
+    Path(tmp_name).unlink(missing_ok=True)
