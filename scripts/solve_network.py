@@ -9,20 +9,7 @@ import numpy as np
 import pypsa
 from helper import override_component_attrs, update_config_with_sector_opts
 from vresutils.benchmark import memory_logger
-import xarray as xr
-import yaml
 from linopy.oetc import OetcCredentials, OetcSettings, OetcHandler
-from pypsa.descriptors import get_activity_mask
-from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-
-from scripts._benchmark import memory_logger
-from scripts._helpers import (
-    PYPSA_V1,
-    configure_logging,
-    get,
-    set_scenario_config,
-    update_config_from_wildcards,
-)
 
 logger = logging.getLogger(__name__)
 pypsa.pf.logger.setLevel(logging.WARNING)
