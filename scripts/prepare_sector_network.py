@@ -5446,7 +5446,6 @@ def add_steel_industry(n, investment_year, steel_data, options):
     )
 
     if options["endo_industry"]["dri_import"]:
-
         mc_dri = 395 * 1e3 if investment_year >= 2040 else 1e7
         # €/ktHBI https://www.sciencedirect.com/science/article/pii/S0360544223006308
 
@@ -5464,23 +5463,23 @@ def add_steel_industry(n, investment_year, steel_data, options):
     )  # MWh/kt
 
     n.add(
-            "Link",
-            nodes,
-            suffix=" DRI",
-            carrier="DRI",
-            capital_cost=costs.at["direct iron reduction furnace", "capital_cost"]
-            * 1e3
-            / eaf_ng["iron input"],
-            p_nom_extendable=True,
-            # p_min_pu=min_part_load_steel,
-            bus0=spatial.iron.nodes,
-            bus1="EU HBI",
-            bus2=spatial.syngas_dri.nodes,
-            bus3=nodes,
-            efficiency=1 / eaf_ng["iron input"],
-            efficiency2=-1,  # one unit of dri gas per kt iron
-            efficiency3=-electricity_input / eaf_ng["iron input"],
-            lifetime=eaf_ng["lifetime"],
+        "Link",
+        nodes,
+        suffix=" DRI",
+        carrier="DRI",
+        capital_cost=costs.at["direct iron reduction furnace", "capital_cost"]
+        * 1e3
+        / eaf_ng["iron input"],
+        p_nom_extendable=True,
+        # p_min_pu=min_part_load_steel,
+        bus0=spatial.iron.nodes,
+        bus1="EU HBI",
+        bus2=spatial.syngas_dri.nodes,
+        bus3=nodes,
+        efficiency=1 / eaf_ng["iron input"],
+        efficiency2=-1,  # one unit of dri gas per kt iron
+        efficiency3=-electricity_input / eaf_ng["iron input"],
+        lifetime=eaf_ng["lifetime"],
     )
 
     # Tentative scrap modelling
@@ -5511,14 +5510,14 @@ def add_steel_industry(n, investment_year, steel_data, options):
     max_scrap_df = pd.read_csv(max_scrap_file, index_col=0)
 
     # Retrieve the value in Mt
-    max_scrap_mt = max_scrap_df.loc[scenario, investment_year] # value in Mt
+    max_scrap_mt = max_scrap_df.loc[scenario, investment_year]  # value in Mt
 
     n.add(
         "GlobalConstraint",
         "steel scrap limit",
         carrier_attribute="steel scrap",
         sense="<=",
-        constant=max_scrap_mt*1e3,
+        constant=max_scrap_mt * 1e3,
         type="operational_limit",
     )
 
@@ -5533,7 +5532,6 @@ def add_steel_industry(n, investment_year, steel_data, options):
         capital_cost=0,
         efficiency=1,
     )
-
 
     electricity_input = (
         costs.at["electric arc furnace", "electricity-input"] * 1e3
@@ -5553,8 +5551,7 @@ def add_steel_industry(n, investment_year, steel_data, options):
         bus1=spatial.steel.nodes,
         bus2="EU HBI",
         efficiency=1 / electricity_input,
-        efficiency2=-costs.at["electric arc furnace", "hbi-input"]
-        / electricity_input,
+        efficiency2=-costs.at["electric arc furnace", "hbi-input"] / electricity_input,
         lifetime=eaf_ng["lifetime"],
     )
 
