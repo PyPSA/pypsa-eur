@@ -43,6 +43,9 @@ Upcoming Release
 
 * Updated `build_osm_network` and `clean_osm_data` to handle voltage levels below 220 kV (down to 63 kV). When `base_network` is set to `osm_raw`, an electricity grid from voltage levels AC 63 kV to 750 kV can be created (experimental feature). For an example, see the example configuration in `config/examples/config-distribution-grid-experimental.yaml`.
 
+* Fix `retrieve_eurostat_data` and `retrieve_eurostat_household_data` on Windows by avoiding a double access to a temporary file.
+  (https://github.com/PyPSA/pypsa-eur/pull/1825)
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

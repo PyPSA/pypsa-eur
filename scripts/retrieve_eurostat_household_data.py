@@ -37,18 +37,18 @@ if __name__ == "__main__":
         f"Downloading Eurostats' disaggregated household energy balances data from '{url_eurostat_household}'."
     )
 
-    with tempfile.NamedTemporaryFile(suffix=".gz", delete=True) as tarball:
-        logger.info(f"Using temporary file: {tarball.name}")
-        progress_retrieve(
-            url_eurostat_household, tarball.name, disable=disable_progress
-        )
+    with tempfile.NamedTemporaryFile(suffix=".gz", delete=False) as tarball:
+        tmp_name = tarball.name
 
-        logger.info(
-            "Extracting Eurostat's disaggregated household energy balance data."
-        )
-        with gzip.open(tarball.name, "rb") as f_in, open(to_fn, "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    logger.info(f"Using temporary file: {tmp_name}")
+    progress_retrieve(url_eurostat_household, tmp_name, disable=disable_progress)
 
-        logger.info(
-            f"Eurostat's disaggregated household energy balance data available in '{to_fn}'."
-        )
+    logger.info("Extracting Eurostat's disaggregated household energy balance data.")
+    with gzip.open(tmp_name, "rb") as f_in, open(to_fn, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    logger.info(
+        f"Eurostat's disaggregated household energy balance data available in '{to_fn}'."
+    )
+
+    Path(tmp_name).unlink(missing_ok=True)
