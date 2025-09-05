@@ -190,14 +190,18 @@ def manual_adjustment(load, fn_load, countries):
 
     copy_timeslice(load, "MK", "2019-04-30 00:00", "2019-05-01 23:00", Delta(weeks=-1))
     for year in [2010, 2011, 2012, 2014, 2015, 2016, 2024]:
-        copy_timeslice(load, "BA", f"{year}-07-05 00:00", f"{year}-07-08 00:00", Delta(weeks=-1))
-        copy_timeslice(load, "BA", f"{year}-11-22 19:00", f"{year}-11-22 21:00", Delta(days=-1))
+        copy_timeslice(
+            load, "BA", f"{year}-07-05 00:00", f"{year}-07-08 00:00", Delta(weeks=-1)
+        )
+        copy_timeslice(
+            load, "BA", f"{year}-11-22 19:00", f"{year}-11-22 21:00", Delta(days=-1)
+        )
 
     return load
 
 
 def repeat_years(s: pd.Series, years: list) -> pd.Series:
-    s = s[~((s.index.month==2) & (s.index.day==29))] # drop leap day
+    s = s[~((s.index.month == 2) & (s.index.day == 29))]  # drop leap day
     return pd.concat(
         [s.set_axis(s.index.map(lambda t: t.replace(year=y))) for y in years]
     )
