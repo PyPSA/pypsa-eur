@@ -378,7 +378,7 @@ transformers:
 load:
   fill_gaps:
     enable: true
-    interpolate_limit: 3
+    interpolate_limit: 6
     time_shift_for_large_gaps: 1w
   manual_adjustments: true
   scaling_factor: 1.0
