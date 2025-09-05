@@ -68,8 +68,6 @@ if __name__ == "__main__":
 
     token = snakemake.params.entsoe_token
 
-    print(token)
-
     if token:
         logger.info(
             "ENTSOE token provided. Retrieving live data from transparency platform."
@@ -95,6 +93,7 @@ if __name__ == "__main__":
         logger.info(
             "No ENTSOE token provided. Retrieving pre-built data from data bundle."
         )
+        # TODO add to zenodo data bundle once vetted
         prebuilt_url = "https://tubcloud.tu-berlin.de/s/JjwJSt8o5HCsjcB/download/electricity_demand_entsoe_raw.csv"
         df = pd.read_csv(prebuilt_url)
 

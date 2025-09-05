@@ -10,6 +10,7 @@ https://www.neso.energy/data-portal/historic-demand-data
 import logging
 
 import pandas as pd
+from tqdm import tqdm
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -55,8 +56,14 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    tqdm_kwargs = dict(
+        ascii=False,
+        unit=" years",
+        total=len(URLS),
+        desc="Retrieving UK electricity demand from NESO",
+    )
     dfs = []
-    for url in URLS:
+    for url in tqdm(URLS, **tqdm_kwargs):
         df = pd.read_csv(url, usecols=["SETTLEMENT_DATE", "SETTLEMENT_PERIOD", "ND"])
         df.index = pd.date_range(
             start=df.SETTLEMENT_DATE.iloc[0],
@@ -71,5 +78,6 @@ if __name__ == "__main__":
         dfs.append(df)
 
     df = pd.concat(dfs)
+    df = df.resample("1h").mean()
 
     df.to_csv(snakemake.output[0])
