@@ -71,7 +71,9 @@ if __name__ == "__main__":
     print(token)
 
     if token:
-        logger.info("ENTSOE token provided. Retrieving live data from transparency platform.")
+        logger.info(
+            "ENTSOE token provided. Retrieving live data from transparency platform."
+        )
         client = EntsoePandasClient(api_key=token)
         start = pd.Timestamp("20150101", tz="UTC")
         end = pd.Timestamp.today(tz="UTC")
@@ -90,7 +92,9 @@ if __name__ == "__main__":
         df = pd.concat(loads, axis=1, join="outer")
 
     else:
-        logger.info("No ENTSOE token provided. Retrieving pre-built data from data bundle.")
+        logger.info(
+            "No ENTSOE token provided. Retrieving pre-built data from data bundle."
+        )
         prebuilt_url = "https://tubcloud.tu-berlin.de/s/JjwJSt8o5HCsjcB/download/electricity_demand_entsoe_raw.csv"
         df = pd.read_csv(prebuilt_url)
 

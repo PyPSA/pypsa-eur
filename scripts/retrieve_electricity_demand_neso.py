@@ -55,7 +55,6 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-
     dfs = []
     for url in URLS:
         df = pd.read_csv(url, usecols=["SETTLEMENT_DATE", "SETTLEMENT_PERIOD", "ND"])
