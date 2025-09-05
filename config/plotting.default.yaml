@@ -498,6 +498,9 @@ plotting:
     H2 turbine: '#991f83'
     H2 Electrolysis: '#ff29d9'
     H2 electrolysis: '#ff29d9'
+    electrolysis excess heat: '#8c1549'
+    electrolysis excess heat pump: '#f593e3'
+    electrolysis excess heat direct utilisation: '#ff29d9'
     # ammonia
     NH3: '#46caf0'
     ammonia: '#46caf0'
