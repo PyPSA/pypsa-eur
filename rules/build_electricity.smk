@@ -10,7 +10,9 @@ rule build_electricity_demand:
         countries=config_provider("countries"),
         load=config_provider("load"),
     input:
-        reported=ancient("data/electricity_demand_raw.csv"),
+        opsd=ancient("data/electricity_demand_opsd_raw.csv"),
+        neso="data/electricity_demand_neso_raw.csv",
+        entsoe="data/electricity_demand_entsoe_raw.csv",
         synthetic=lambda w: (
             ancient("data/load_synthetic_raw.csv")
             if config_provider("load", "supplement_synthetic")(w)

@@ -253,13 +253,13 @@ if __name__ == "__main__":
 
     time_shift = snakemake.params.load["fill_gaps"]["time_shift_for_large_gaps"]
 
-    load = load_timeseries(snakemake.input.reported, years, countries)
+    load = load_timeseries(snakemake.input.opsd, years, countries)
 
     load = load.reindex(index=snapshots)
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
-        load_ua = load_timeseries(snakemake.input.reported, "2018", ["UA"])
+        load_ua = load_timeseries(snakemake.input.opsd, "2018", ["UA"])
         snapshot_year = str(snapshots.year.unique().item())
         time_diff = pd.Timestamp("2018") - pd.Timestamp(snapshot_year)
         # hack indices (currently, UA is manually set to 2018)
