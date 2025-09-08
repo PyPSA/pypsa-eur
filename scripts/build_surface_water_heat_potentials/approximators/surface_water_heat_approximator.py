@@ -243,13 +243,10 @@ class SurfaceWaterHeatApproximator(ABC):
         # Constants for power calculation
         density_water = 1000  # kg/m^3
         heat_capacity_water = 4.18  # kJ/kg/K
-        kJ_per_mwh = 3.6e6  # kJ/MWh
-        seconds_per_hour = 3600  # seconds/hour
+        mw_per_kw = 1 / 1000
 
         # Pre-calculate conversion factor
-        conversion_factor = (
-            density_water * heat_capacity_water * seconds_per_hour
-        ) / kJ_per_mwh
+        conversion_factor = density_water * heat_capacity_water * mw_per_kw
 
         # Mean Volume flow for the area of interest
         usable_volume_flow = self.max_relative_volume_flow * self._volume_flow_in_region
