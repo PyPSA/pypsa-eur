@@ -3239,7 +3239,9 @@ def add_heat(
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
                 except KeyError:
-                    logger.warning(f"Heat source {heat_source}")
+                    logger.warning(
+                        f"Heat source {heat_source} not found in cost data. Assuming zero cost and infinite lifetime."
+                    )
                     capital_cost = 0.0
                     lifetime = np.inf
 
