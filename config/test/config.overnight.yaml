@@ -122,3 +122,4 @@ plotting:
   energy_threshold: 0.000001
   interactive_bus_balance:
     bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true
