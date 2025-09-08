@@ -302,7 +302,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_local_authorities_uk:
         output:
-            "data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson"
+            "data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
         run:
             import requests
 
@@ -315,6 +315,7 @@ if config["enable"]["retrieve"]:
             response = requests.get(url, params=params)
             with open(output[0], "wb") as f:
                 f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
