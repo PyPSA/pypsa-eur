@@ -264,6 +264,61 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
+    rule retrieve_electricity_demand_energy_atlas:
+        input:
+            storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/electricity_tot_demand_2019.tif",
+            ),
+        output:
+            "data/demand-distribution/electricity_tot_demand_2019.tif",
+        log:
+            "logs/retrieve_electricity_demand_energy_atlas.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_electricity_demand_subnational_gb:
+        input:
+            storage(
+                "https://assets.publishing.service.gov.uk/media/6762951abe7b2c675de30705/Subnational_electricity_consumption_statistics_2005-2023.xlsx",
+            ),
+        output:
+            "data/demand-distribution/Subnational_electricity_consumption_statistics_2005-2023.xlsx",
+        log:
+            "logs/retrieve_electricity_demand_subnational_gb.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        run:
+            move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_local_authorities_uk:
+        output:
+            "data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson"
+        run:
+            import requests
+
+            url = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2024_Boundaries__UK_BSC/FeatureServer/0/query"
+            params = {
+                "outFields": "*",
+                "where": "1=1",
+                "f": "geojson",
+            }
+            response = requests.get(url, params=params)
+            with open(output[0], "wb") as f:
+                f.write(response.content)
+
+
+if config["enable"]["retrieve"]:
+
     rule retrieve_ship_raster:
         input:
             storage(

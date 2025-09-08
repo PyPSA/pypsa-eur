@@ -57,6 +57,7 @@ dependencies:
 - cartopy
 - descartes
 - rasterio
+- rasterstats
 
 # Development dependencies
 - jupyter
