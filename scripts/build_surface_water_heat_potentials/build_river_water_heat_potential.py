@@ -65,7 +65,7 @@ MEMORY_SAFETY_FACTOR = 0.7  # Use 70% of available memory for Dask arrays
 
 def _create_empty_datasets(
     snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
-) -> tuple:
+) -> tuple[xr.Dataset, xr.Dataset]:
     """
     Create empty spatial and temporal aggregate datasets for regions without DH areas.
 
@@ -84,7 +84,7 @@ def _create_empty_datasets(
 
     Returns
     -------
-    tuple
+    tuple[xr.Dataset, xr.Dataset]
         Tuple of (spatial_aggregate, temporal_aggregate) datasets with zero values
     """
     # Create spatial aggregate with time-series of zeros
@@ -131,7 +131,7 @@ def get_regional_result(
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
     generate_temporal_aggregates: bool = False,
-) -> dict:
+) -> dict[str, xr.Dataset]:
     """
     Calculate river water heat potential for a given region and district heating areas.
 

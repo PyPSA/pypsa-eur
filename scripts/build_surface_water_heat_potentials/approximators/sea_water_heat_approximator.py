@@ -14,8 +14,19 @@ from scripts.build_surface_water_heat_potentials.approximators.surface_water_hea
 
 logger = logging.getLogger(__name__)
 
+# Constants
+INF = 1e9  # Marker for unusable temperature values
+
 
 class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
+    """
+    Approximator for sea water heat potential calculations.
+
+    This class extends SurfaceWaterHeatApproximator to handle sea water temperature
+    data for heat pump applications. It processes water temperature data to determine
+    usable heat potential from sea water sources.
+    """
+
     def __init__(
         self,
         water_temperature: xr.DataArray,
@@ -40,11 +51,12 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         """
         Validate input data and ensure proper CRS alignment.
 
-        Updates self.volume_flow and self.water_temperature with properly
-        projected data if needed.
+        Updates self.water_temperature with properly projected data if needed.
 
-        Raises:
-            ValueError: If inputs are invalid or incompatible
+        Raises
+        ------
+        ValueError
+            If inputs are invalid or incompatible
         """
         # Check if data has rio attribute and CRS information
         # Ensure data has rioxarray capabilities
@@ -135,5 +147,5 @@ class SeaWaterHeatApproximator(SurfaceWaterHeatApproximator):
         return xr.where(
             water_temperature > self.min_outlet_temperature,
             water_temperature,
-            -1e9,  # absolute zero
+            -INF,
         )

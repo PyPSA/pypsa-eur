@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 def _create_empty_datasets(
     snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
-) -> tuple:
+) -> tuple[xr.Dataset, xr.Dataset]:
     """
     Create empty spatial and temporal aggregate datasets for regions without DH areas.
 
@@ -76,7 +76,7 @@ def _create_empty_datasets(
 
     Returns
     -------
-    tuple
+    tuple[xr.Dataset, xr.Dataset]
         Tuple of (spatial_aggregate, temporal_aggregate) datasets with zero values
     """
     # Create spatial aggregate with time-series of zeros
@@ -111,7 +111,7 @@ def get_regional_result(
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
-) -> dict:
+) -> dict[str, xr.Dataset]:
     """
     Calculate sea water heat potential for a given region and district heating areas.
 
@@ -128,7 +128,7 @@ def get_regional_result(
 
     Returns
     -------
-    dict
+    dict[str, xr.Dataset]
         Dictionary with keys 'spatial aggregate' and 'temporal aggregate'.
         'spatial aggregate' contains average temperature.
         'temporal aggregate' contains temperature for analysis/plotting.
