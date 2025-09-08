@@ -180,7 +180,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Link:** https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/
 - **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/download-data/>`__)
 - **Description:** The Global Cement and Concrete Plant Tracker (GCCPT) provides information on
-  global cement and concrete production plantsl.
+  global cement and concrete production plants.
 
 ``data/WDPA.gpkg``
 
