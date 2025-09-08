@@ -36,12 +36,15 @@ Outputs
 - `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: Processed district heating areas with missing countries handled
 """
 
+import logging
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-# shapely.geometry import removed as Polygon is not used in this script
 from scripts._helpers import set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def handle_missing_countries(dh_areas, regions_onshore, missing_countries, handle_mode):
@@ -174,10 +177,12 @@ if __name__ == "__main__":
 
     # Process missing countries according to configured strategy
     if not missing_countries.empty:
-        print(
+        logger.info(
             f"Found {len(missing_countries)} missing countries: {list(missing_countries)}"
         )
-        print(f"Handling strategy: {snakemake.params['handle_missing_countries']}")
+        logger.info(
+            f"Handling strategy: {snakemake.params['handle_missing_countries']}"
+        )
 
         dh_areas = handle_missing_countries(
             dh_areas,
@@ -186,11 +191,11 @@ if __name__ == "__main__":
             snakemake.params["handle_missing_countries"],
         )
     else:
-        print("All modeled countries have district heating areas data")
+        logger.info("All modeled countries have district heating areas data")
 
     # Save the processed district heating areas for downstream use
     # Output format: GeoJSON for compatibility with other PyPSA-Eur scripts
     dh_areas.to_file(snakemake.output.dh_areas, driver="GeoJSON")
-    print(
+    logger.info(
         f"Saved {len(dh_areas)} district heating areas to {snakemake.output.dh_areas}"
     )
