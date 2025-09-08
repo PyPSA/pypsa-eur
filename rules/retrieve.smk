@@ -778,8 +778,8 @@ if config["enable"]["retrieve"]:
         retries: 2
         shell:
             """
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{params.snapshot_year}.nc -O {output.river_discharge}
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{params.snapshot_year}.nc -O {output.ambient_temperature}
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER2-0/Data/NetCDF/river_discharge/dis.HERA{params.snapshot_year}.nc -O {output.river_discharge}
+            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER2-0/Data/NetCDF/climate_inputs/ta6/ta6_{params.snapshot_year}.nc -O {output.ambient_temperature}
             """
 
     rule retrieve_hera_data_2019:
