@@ -1,6 +1,6 @@
 ,Unit,Values,Description
 heat_sources,,,
--- generate_temporal_aggregates,--,bool,Whether to generate temporal aggregate maps for heat sources
+-- enable_heat_source_maps,--,bool,If true generate temporal aggregate maps for heat sources
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
 -- color_geomap,,,
