@@ -470,6 +470,7 @@ if config["enable"]["retrieve"]:
                 f.write(response.content)
 
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_gem_cement_plant_tracker:
@@ -481,6 +482,7 @@ if config["enable"]["retrieve"]:
             response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
+
 
 
 if config["enable"]["retrieve"]:
