@@ -179,7 +179,7 @@ rule all:
                 RESULTS
                 + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_ambient_air.html"
                 if config_provider("plotting", "enable_heat_source_maps")(w)
-                and "ambient_air"
+                and "air"
                 in config_provider("sector", "heat_pump_sources", "urban central")(w)
                 else []
             ),
