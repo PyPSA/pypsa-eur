@@ -121,4 +121,4 @@ plotting:
   energy_min:
   energy_threshold: 0.000001
   interactive_bus_balance:
-    bus_name_pattern: None
+    bus_name_pattern: "*central heat*"
