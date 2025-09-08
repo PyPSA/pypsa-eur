@@ -105,13 +105,6 @@ Data in this section is included in the PyPSA-Eur repository in the ``data`` fol
 - **License:** CC-BY 4.0 (`reference <https://datacatalog.worldbank.org/search/dataset/0038118/Global---International-Ports>`__)
 - **Description:** International ports with attributes describing name, port functions, total capacity and location.
 
-``data/cement_plants-noneu.csv``
-
-- **Source:** manually collected, mostly from USGS
-- **Link:** https://www.usgs.gov/centers/national-minerals-information-center/international-minerals-statistics-and-information
-- **License:** CC0 (`reference <https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits>`__)
-- **Description:** Contains energy balances for Europe.
-
 ``data/ch_cantons.csv``
 
 - **Source:** Wikipedia

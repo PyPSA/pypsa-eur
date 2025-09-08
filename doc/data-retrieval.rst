@@ -166,15 +166,21 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/europe-gas-tracker/download-data/>`__)
 - **Description:** Covers methane gas pipelines, LNG terminals, oil and gas-fired power plants, and methane gas extraction sites.
 
-``data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx``
+``data/gem/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx``
 
 - **Source:** Global Energy Monitor
 - **Link:** https://globalenergymonitor.org/projects/global-steel-plant-tracker/
 - **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/global-steel-plant-tracker/download-data/>`__)
 - **Description:** The Global Steel Plant Tracker (GSPT) provides information on
-  global crude iron and steel production plants, and includes every plant
-  currently operating with a capacity of five hundred thousand tonnes per year
-  (ttpa) or more of crude iron or steel.
+  global crude iron and steel production plants.
+
+``data/gem/Global-Cement-and-Concrete-Tracker_July-2025.xlsx``
+
+- **Source:** Global Energy Monitor
+- **Link:** https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/
+- **License:** CC-BY 4.0 (`reference <https://globalenergymonitor.org/projects/global-cement-and-concrete-tracker/download-data/>`__)
+- **Description:** The Global Cement and Concrete Plant Tracker (GCCPT) provides information on
+  global cement and concrete production plantsl.
 
 ``data/WDPA.gpkg``
 

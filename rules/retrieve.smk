@@ -461,14 +461,26 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_gem_steel_plant_tracker:
         output:
-            "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
+            "data/gem/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx",
         run:
-            # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
-            url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
+            # mirror or https://globalenergymonitor.org/wp-content/uploads/2025/03/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/nBYc8LW5FqqDjCw/download/Plant-level-data-Global-Iron-and-Steel-Tracker-March-2025-V1.1.xlsx"
             response = requests.get(url)
             with open(output[0], "wb") as f:
                 f.write(response.content)
 
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_gem_cement_plant_tracker:
+        output:
+            "data/gem/Global-Cement-and-Concrete-Tracker_July-2025.xlsx",
+        run:
+            # mirror or https://globalenergymonitor.org/wp-content/uploads/2025/07/Global-Cement-and-Concrete-Tracker_July-2025.xlsx
+            url = "https://tubcloud.tu-berlin.de/s/Y8HNnAfDDx9AjXS/download/Global-Cement-and-Concrete-Tracker_July-2025.xlsx"
+            response = requests.get(url)
+            with open(output[0], "wb") as f:
+                f.write(response.content)
 
 
 if config["enable"]["retrieve"]:
