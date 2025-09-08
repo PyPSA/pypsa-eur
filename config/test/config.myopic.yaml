@@ -40,17 +40,17 @@ sector:
       supplemental_heating:
         enable: true
         booster_heat_pump: true
-    heat_pump_sources:
-      urban central:
-      - air
-      - geothermal
-      - river_water
-      - sea_water
-      urban decentral:
-      - air
-      rural:
-      - air
-      - ground
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
   hydrogen_turbine: false
   regional_oil_demand: false
   regional_co2_sequestration_potential:
@@ -65,13 +65,6 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
-  heat_pump_sources:
-    urban central:
-    - air
-    - ptes
-    - river_water
-    - sea_water
-    - geothermal
 
 electricity:
   extendable_carriers:
