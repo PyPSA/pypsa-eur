@@ -97,6 +97,8 @@ def _clean_voltage(column):
         .str.replace("400/220/110/20_kv", "400000;220000;110000;20000")
         .str.replace("2x25000", "25000;25000")
         .str.replace("é", ";")
+        .str.replace("kvv/", "")
+        .str.replace("11000l400", "11000")
     )
 
     column = (
@@ -1416,6 +1418,15 @@ def _merge_touching_polygons(df):
     """
 
     gdf = gpd.GeoDataFrame(df, geometry="polygon", crs=crs)
+
+    # Identify and drop invalid geometries
+    invalid = gdf[~gdf.is_valid]
+    if not invalid.empty:
+        logger.warning(
+            f"Found {len(invalid)} invalid geometries. These will be dropped."
+        )
+        gdf = gdf[gdf.is_valid]
+
     combined_polygons = unary_union(gdf.geometry)
     if combined_polygons.geom_type == "MultiPolygon":
         gdf_combined = gpd.GeoDataFrame(
@@ -1459,7 +1470,8 @@ def _add_endpoints_to_line(linestring, polygon_dict, tol=BUS_TOL / 2):
     # difference with polygon
     linestring_new = linestring.difference(polygon_unary)
 
-    if linestring_new is MultiLineString:
+    # check if linestring_new is of instance MultiLineString
+    if isinstance(linestring_new, MultiLineString):
         # keep the longest line in the multilinestring
         linestring_new = max(linestring_new.geoms, key=lambda x: x.length)
 
@@ -1580,7 +1592,7 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    min_voltage_ac = 220000  # [unit: V] Minimum voltage value to filter AC lines.
+    min_voltage_ac = 60000  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")
@@ -1818,6 +1830,15 @@ if __name__ == "__main__":
     df_links.loc[:, "rating"] = _clean_rating(df_links["rating"])
 
     df_links.loc[:, "geometry"] = df_links.apply(_create_single_link, axis=1)
+
+    # TEMPORARY:
+    # Drop links with empty geometry
+    # Identify rows where geometry is not of instance geometry
+    b_not_valid = df_links["geometry"].apply(
+        lambda x: not isinstance(x, (LineString, MultiLineString))
+    )
+    df_links = df_links[~b_not_valid]
+
     df_links = _finalise_links(df_links)
     gdf_links = gpd.GeoDataFrame(df_links, geometry="geometry", crs=crs).set_index(
         "link_id"

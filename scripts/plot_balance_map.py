@@ -43,7 +43,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     sanitize_carriers(n, snakemake.config)
-    n.statistics.set_parameters(round=3, drop_zero=True, nice_names=False)
+    pypsa.options.set_option("params.statistics.round", 3)
+    pypsa.options.set_option("params.statistics.drop_zero", True)
+    pypsa.options.set_option("params.statistics.nice_names", False)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     config = snakemake.params.plotting
@@ -92,11 +94,15 @@ if __name__ == "__main__":
     bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
     bus_sizes = bus_sizes.sort_values(ascending=False)
 
+    # Get colors for carriers
+    n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
+    carrier_colors = n.carriers.color.copy().replace("", "grey")
+
     colors = (
         bus_sizes.index.get_level_values("carrier")
         .unique()
         .to_series()
-        .map(n.carriers.color)
+        .map(carrier_colors)
     )
 
     # line and links widths according to optimal capacity
@@ -152,13 +158,21 @@ if __name__ == "__main__":
         layout="constrained",
     )
 
+    line_flow = flow.get("Line")
+    link_flow = flow.get("Link")
+    transformer_flow = flow.get("Transformer")
+
     n.plot(
         bus_sizes=bus_sizes * bus_size_factor,
         bus_colors=colors,
         bus_split_circles=True,
         line_widths=line_widths * branch_width_factor,
         link_widths=link_widths * branch_width_factor,
-        flow=flow * flow_size_factor,
+        line_flow=line_flow * flow_size_factor if line_flow is not None else None,
+        link_flow=link_flow * flow_size_factor if link_flow is not None else None,
+        transformer_flow=transformer_flow * flow_size_factor
+        if transformer_flow is not None
+        else None,
         ax=ax,
         margin=0.2,
         color_geomap={"border": "darkgrey", "coastline": "darkgrey"},

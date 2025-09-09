@@ -470,19 +470,6 @@ rule build_ptes_operations:
             "ptes",
             "min_bottom_temperature",
         ),
-        # enable_supplemental_heating=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "supplemental_heating",
-        #     "enable",
-        # ),
-        # enable_dynamic_capacity=config_provider(
-        #     "sector",
-        #     "district_heating",
-        #     "ptes",
-        #     "dynamic_capacity",
-        # ),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
@@ -547,16 +534,6 @@ rule build_direct_heat_source_utilisation_profiles:
         "../scripts/build_direct_heat_source_utilisation_profiles.py"
 
 
-def solar_thermal_cutout(wildcards):
-    c = config_provider("solar_thermal", "cutout")(wildcards)
-    if c == "default":
-        return CDIR.joinpath(
-            config_provider("atlite", "default_cutout")(wildcards) + ".nc"
-        ).as_posix()
-    else:
-        return CDIR.joinpath(c + ".nc").as_posix()
-
-
 rule build_solar_thermal_profiles:
     params:
         snapshots=config_provider("snapshots"),
@@ -589,7 +566,7 @@ rule build_energy_totals:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2=rules.retrieve_ghg_emissions.output[0],
         swiss="data/switzerland-new_format-all_years.csv",
-        swiss_transport="data/gr-e-11.03.02.01.01-cc.csv",
+        swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
         district_heat_share="data/district_heat_share.csv",
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
@@ -614,9 +591,31 @@ rule build_energy_totals:
         "../scripts/build_energy_totals.py"
 
 
+if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"]:
+
+    # This rule uses one or multiple cutouts.
+    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
+    # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
+    rule build_country_hdd:
+        input:
+            cutouts=["cutouts/europe-1940-2024-era5.nc"],
+            country_shapes=resources("country_shapes.geojson"),
+        output:
+            era5_hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        log:
+            logs("build_country_hdd.log"),
+        benchmark:
+            benchmarks("build_country_hdd")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_country_hdd.py"
+
+
 rule build_heat_totals:
     input:
-        hdd="data/bundle/era5-HDD-per-country.csv",
+        hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
@@ -637,13 +636,13 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=rules.retrieve_jrc_enspreso_biomass.output[0],
+        enspreso_biomass=rules.retrieve_enspreso_biomass.output[0],
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_population=ancient(rules.retrieve_nuts3_population.output[0]),
         swiss_cantons=ancient("data/ch_cantons.csv"),
-        swiss_population=ancient("data/bundle/je-e-21.03.02.xls"),
+        swiss_population=rules.retrieve_bfs_gdp_and_population.output["xlsx"],
         country_shapes=resources("country_shapes.geojson"),
     output:
         biomass_potentials_all=resources(
@@ -836,7 +835,7 @@ rule build_industrial_production_per_country:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_industrial_production_per_country.log"),
     benchmark:
@@ -986,7 +985,7 @@ rule build_industrial_energy_demand_per_country_today:
         ),
     threads: 8
     resources:
-        mem_mb=1000,
+        mem_mb=2000,
     log:
         logs("build_industrial_energy_demand_per_country_today.log"),
     benchmark:
@@ -1097,6 +1096,37 @@ rule build_shipping_demand:
         "../scripts/build_shipping_demand.py"
 
 
+if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
+
+    rule build_mobility_profiles:
+        params:
+            sector=config_provider("sector"),
+        input:
+            zip_files=storage(
+                expand(
+                    MOBILITY_PROFILES_DATASET["url"],
+                    year=[2010, 2011, 2012, 2013, 2014],
+                    street_type=["A", "B"],
+                ),
+                keep_local=True,
+            ),
+        output:
+            raw_files=directory(MOBILITY_PROFILES_DATASET["folder"] / "raw"),
+            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        threads: 1
+        resources:
+            mem_mb=5000,
+        log:
+            logs("build_mobility_profiles.log"),
+        benchmark:
+            benchmarks("build_mobility_profiles")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_mobility_profiles.py"
+
+
 rule build_transport_demand:
     params:
         snapshots=config_provider("snapshots"),
@@ -1109,8 +1139,8 @@ rule build_transport_demand:
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
-        traffic_data_KFZ=f"{rules.retrieve_emobility.output[1]}/KFZ__count",
-        traffic_data_Pkw=f"{rules.retrieve_emobility.output[1]}/Pkw__count",
+        traffic_data_KFZ=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
+        traffic_data_Pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s_{clusters}.csv"),
@@ -1358,10 +1388,11 @@ rule prepare_sector_network:
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
-        costs=lambda w: (
-            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
+        costs=lambda w: COSTS_DATASET["folder"]
+        / (
+            "costs_{}.csv".format(config_provider("costs", "year")(w))
             if config_provider("foresight")(w) == "overnight"
-            else resources("costs_{planning_horizons}.csv")
+            else "costs_{planning_horizons}.csv"
         ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),

@@ -1,6 +1,5 @@
 ,Unit,Values,Description
-year,--,YYYY; e.g. '2030',Year for which to retrieve cost assumptions of ``resources/costs.csv``.
-version,--,vX.X.X or <user>/<repo>/vX.X.X; e.g. 'v0.5.0',Version of ``technology-data`` repository to use. If this string is of the form <user>/<repo>/<version> then costs are instead retrieved from ``github.com/<user>/<repo>`` at the <version> tag.
+year,--,YYYY; e.g. '2030',Year for which to retrieve cost assumptions of ``data/costs/primary/<version>/costs_<year>.csv``.
 social_discountrate,p.u.,float,Social discount rate to compare costs in different investment periods. 0.02 corresponds to a social discount rate of 2%.
 fill_values,--,float,Default values if not specified for a technology in ``resources/costs.csv``.
 overwrites,--,Keys should be in the 'parameter' column of ``resources/costs.csv``. Values are dictionaries with keys from the  'technology' column of ``resources/costs.csv`` and float values.,"For the given parameters and technologies, assumptions about their parameter are overwritten the corresponding value of the technology."
