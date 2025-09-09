@@ -92,9 +92,12 @@ if (
         run:
             copy2(input["csv"], output["csv"])
 
-if config["enable"]["retrieve"] and (
+if (
     NUTS3_POPULATION_DATASET := dataset_version("nuts3_population")
-)["source"] in ["primary", "archive"]:
+)["source"] in [
+    "primary", 
+    "archive"
+]:
 
     rule retrieve_nuts3_population:
         input:
@@ -108,52 +111,52 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
-    if (CORINE_DATASET := dataset_version("corine"))["source"] in [
-        "archive"
-    ]:
-        rule retrieve_corine:
-            params:
-                url = f"{CORINE_DATASET["url"]}",
-            output:
-                zip=f"{CORINE_DATASET["folder"]}/corine.zip",
-                directory=directory(f"{CORINE_DATASET["folder"]}"),
-                tif_file_path=f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
-            run:
-                import os
-                import requests
-                from zipfile import ZipFile
-                from pathlib import Path
 
-                response = requests.get(params["url"])
-                with open(output.zip, "wb") as f:
-                    f.write(response.content)
+if (CORINE_DATASET := dataset_version("corine"))["source"] in [
+    "archive"
+]:
+    rule retrieve_corine:
+        params:
+            url = f"{CORINE_DATASET["url"]}",
+        output:
+            zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+            directory=directory(f"{CORINE_DATASET["folder"]}"),
+            tif_file_path=f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
+        run:
+            import os
+            import requests
+            from zipfile import ZipFile
+            from pathlib import Path
 
-                output_folder = Path(output["zip"]).parent
-                unpack_archive(output.zip, output_folder)
+            response = requests.get(params["url"])
+            with open(output.zip, "wb") as f:
+                f.write(response.content)
 
-    elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
-        "primary"
-    ]:
-        rule retrieve_corine:
-            params:
-                apikey_file = "CLMS_apikey.json",
-            output:
-                zip=f"{CORINE_DATASET["folder"]}/corine.zip",
-                tif_file_path=f"{CORINE_DATASET["folder"]}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",
-            log:
-                logs("retrieve_corine_primary.log"),
-            resources:
-                mem_mb=1000,
-            retries: 2
-            conda:
-                "../envs/environment.yaml"
-            script:
-                "../scripts/retrieve_corine_dataset_primary.py"
+            output_folder = Path(output["zip"]).parent
+            unpack_archive(output.zip, output_folder)
+
+elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
+    "primary"
+]:
+    rule retrieve_corine:
+        params:
+            apikey_file = "CLMS_apikey.json",
+        output:
+            zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+            tif_file_path=f"{CORINE_DATASET["folder"]}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",
+        log:
+            logs("retrieve_corine_primary.log"),
+        resources:
+            mem_mb=1000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_corine_dataset_primary.py"
 
 
 
-if config["enable"]["retrieve"] and (EMOBILITY_DATASET := dataset_version("emobility"))["source"] in [
+if (EMOBILITY_DATASET := dataset_version("emobility"))["source"] in [
     "archive"
 ]:
     rule retrieve_emobility:
@@ -166,7 +169,7 @@ if config["enable"]["retrieve"] and (EMOBILITY_DATASET := dataset_version("emobi
             handle_data_requests(params,output)
 
 
-if config["enable"]["retrieve"] and (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
+if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
     "archive"
 ]:
     rule retrieve_h2_salt_caverns:
@@ -181,7 +184,7 @@ if config["enable"]["retrieve"] and (H2_SALT_CAVERNS_DATASET := dataset_version(
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (
+if (
     GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita")
 )["source"] in ["archive"]:
     rule retrieve_gdp_per_capita:
@@ -196,7 +199,7 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (
+if (
     POPULATION_COUNT_DATASET := dataset_version("population_count")
 )["source"] in ["archive", "primary"]:
 
@@ -220,7 +223,7 @@ if config["enable"]["retrieve"] and (
                 ds_reqd.rio.to_raster(file_path)
             
 
-if config["enable"]["retrieve"] and (
+if (
     GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions")
 )["source"] in ["archive", "primary"]:
 
@@ -242,7 +245,7 @@ if config["enable"]["retrieve"] and (
                 handle_data_requests(params, output)
 
 
-if config["enable"]["retrieve"] and (GEBCO_DATASET := dataset_version("gebco"))["source"] in [
+if (GEBCO_DATASET := dataset_version("gebco"))["source"] in [
     "archive",
     "primary"
 ]:
@@ -282,7 +285,7 @@ if config["enable"]["retrieve"] and (GEBCO_DATASET := dataset_version("gebco"))[
                 validate_checksum(output[0], input[0])
 
 
-if config["enable"]["retrieve"] and (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] in [
+if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] in [
     "archive",
     "primary"
 ]:
@@ -297,7 +300,7 @@ if config["enable"]["retrieve"] and (ATTRIBUTED_PORTS_DATASET := dataset_version
         run:
             move(input[0], output[0])
 
-if config["enable"]["retrieve"] and (JRC_IDEES_DATASET := dataset_version("jrc_idees"))[
+if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))[
     "source"
 ] in [
     "primary",
@@ -502,7 +505,7 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_electricity_demand.py"
 
 
-if config["enable"]["retrieve"] and (
+if (
     SYNTHETIC_ELECTRICITY_DEMAND_DATASET := dataset_version(
         "synthetic_electricity_demand"
     )
@@ -524,7 +527,7 @@ if config["enable"]["retrieve"] and (
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (
+if (
     SHIP_RASTER_DATASET := dataset_version("ship_raster")
 )["source"] in ["archive","primary"]:
 
@@ -600,7 +603,7 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (
+if (
     COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover")
 )["source"] in ["primary", "archive"]:
 
@@ -636,7 +639,7 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
             move(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (EEZ_DATASET := dataset_version("eez"))[
+if (EEZ_DATASET := dataset_version("eez"))[
     "source"
 ] in ["primary", "archive"]:
 
@@ -1049,100 +1052,98 @@ elif NATURA_DATASET["source"] == "build":
             "../scripts/build_natura.py"
 
 
-if config["enable"]["retrieve"]:
 
-    if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["primary"]:
+if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["primary"]:
 
-        rule retrieve_osm_boundaries:
-            params:
-                data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
-                version=f"{OSM_BOUNDARIES_DATASET["version"]}",
-            output:
-                json = f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/{country}_adm1.json",
-            log:
-                "logs/retrieve_osm_boundaries_{country}_adm1.log",
-            threads: 1
-            conda:
-                "../envs/environment.yaml"
-            script:
-                "../scripts/retrieve_osm_boundaries.py"
-    
-    elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["archive"]:
-        rule retrieve_osm_boundaries:
-            params:
-                data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
-                version=f"{OSM_BOUNDARIES_DATASET["version"]}",
-            input:
-                storage(
-                    f"{OSM_BOUNDARIES_DATASET["url"]}",
-                ),
-            output:
-                json1 = f"{OSM_BOUNDARIES_DATASET["folder"]}/XK_adm1.json",
-                json2 = f"{OSM_BOUNDARIES_DATASET["folder"]}/UA_adm1.json",
-                json3 = f"{OSM_BOUNDARIES_DATASET["folder"]}/MD_adm1.json",
-                json4 = f"{OSM_BOUNDARIES_DATASET["folder"]}/BA_adm1.json",
-                zip = f"{OSM_BOUNDARIES_DATASET["folder"]}" "/osm_boundaries.zip",
-            threads: 1
-            run:
-                move(input[0],output.zip)
-                unpack_archive(output.zip, params.data_folder)
+    rule retrieve_osm_boundaries:
+        params:
+            data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
+            version=f"{OSM_BOUNDARIES_DATASET["version"]}",
+        output:
+            json = f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/{country}_adm1.json",
+        log:
+            "logs/retrieve_osm_boundaries_{country}_adm1.log",
+        threads: 1
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_osm_boundaries.py"
 
-
-    rule retrieve_geothermal_heat_utilisation_potentials:
+elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in ["archive"]:
+    rule retrieve_osm_boundaries:
+        params:
+            data_folder=f"{OSM_BOUNDARIES_DATASET["folder"]}",
+            version=f"{OSM_BOUNDARIES_DATASET["version"]}",
         input:
-            isi_heat_potentials=storage(
-                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
+            storage(
+                f"{OSM_BOUNDARIES_DATASET["url"]}",
             ),
         output:
-            "data/isi_heat_utilisation_potentials.xlsx",
+            json1 = f"{OSM_BOUNDARIES_DATASET["folder"]}/XK_adm1.json",
+            json2 = f"{OSM_BOUNDARIES_DATASET["folder"]}/UA_adm1.json",
+            json3 = f"{OSM_BOUNDARIES_DATASET["folder"]}/MD_adm1.json",
+            json4 = f"{OSM_BOUNDARIES_DATASET["folder"]}/BA_adm1.json",
+            zip = f"{OSM_BOUNDARIES_DATASET["folder"]}" "/osm_boundaries.zip",
+        threads: 1
+        run:
+            move(input[0],output.zip)
+            unpack_archive(output.zip, params.data_folder)
+
+
+rule retrieve_geothermal_heat_utilisation_potentials:
+    input:
+        isi_heat_potentials=storage(
+            "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
+        ),
+    output:
+        "data/isi_heat_utilisation_potentials.xlsx",
+    log:
+        "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+    threads: 1
+    retries: 2
+    run:
+        move(input[0], output[0])
+
+if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
+    "primary",
+    "archive"
+]:
+    rule retrieve_lau_regions:
+        input:
+            lau_regions=storage(
+                LAU_REGIONS_DATASET["url"]
+            ),
+        output:
+            lau_regions=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
         log:
-            "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+            "logs/retrieve_lau_regions.log",
         threads: 1
         retries: 2
         run:
             move(input[0], output[0])
 
-    if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
-        "primary",
-        "archive"
-    ]:
-        rule retrieve_lau_regions:
-            input:
-                lau_regions=storage(
-                    LAU_REGIONS_DATASET["url"]
-                ),
-            output:
-                lau_regions=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
-            log:
-                "logs/retrieve_lau_regions.log",
-            threads: 1
-            retries: 2
-            run:
-                move(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
+rule retrieve_jrc_ardeco:
+    output:
+        ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
+        ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+    run:
+        urls = {
+            "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
+            "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
+        }
 
-    rule retrieve_jrc_ardeco:
-        output:
-            ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
-            ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
-        run:
-            urls = {
-                "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
-                "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
-            }
-
-            for key, url in urls.items():
-                response = requests.get(url)
-                output_path = output[key] if key in urls else None
-                if output_path:
-                    with open(output_path, "wb") as f:
-                        f.write(response.content)
+        for key, url in urls.items():
+            response = requests.get(url)
+            output_path = output[key] if key in urls else None
+            if output_path:
+                with open(output_path, "wb") as f:
+                    f.write(response.content)
 
 
 
-if config["enable"]["retrieve"] and (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
+if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
         "primary",
         "archive",
     ]:
