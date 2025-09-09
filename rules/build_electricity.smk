@@ -154,7 +154,6 @@ rule build_shapes:
     input:
         eez=ancient(rules.retrieve_eez.output[0]),
         nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
-        nuts3_2021="data/nuts/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
         ba_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/BA_adm1.geojson",
         md_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/MD_adm1.geojson",
         ua_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/UA_adm1.geojson",
