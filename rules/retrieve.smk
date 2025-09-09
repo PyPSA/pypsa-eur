@@ -140,7 +140,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
 ]:
     rule retrieve_corine:
         params:
-            apikey_file = "CLMS_apikey.json",
+            apikey = config["secrets"]["corine"],
         output:
             zip=f"{CORINE_DATASET["folder"]}/corine.zip",
             tif_file_path=f"{CORINE_DATASET["folder"]}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",

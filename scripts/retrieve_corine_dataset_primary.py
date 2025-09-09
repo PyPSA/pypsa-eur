@@ -3,7 +3,9 @@ To download CORINE dataset from the primary data source - https://land.copernicu
 
 Usage Instructions:
     1. Login using EU login at https://land.copernicus.eu/user/login and create an API key
-    2. Copy API key into the CLMS_apikey.json file in the pypsa-eur repository
+    2. Copy API key into the config.default.yaml -> (save from portal)
+    #   secrets:
+    #       corine: ''
 """
 import logging
 
@@ -26,11 +28,13 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def load_access_token(apikey_file):
+def load_access_token(apikey):
     # Login using EU login at https://land.copernicus.eu/user/login and create an API key
-    # Copy API key into the CLMS_apikey.json (save from portal)
+    # Copy API key into the config.default.yaml -> (save from portal)
+    #   secrets:
+    #       corine: ''
     try:
-        service_key = json.load(open(apikey_file))
+        service_key = json.loads(apikey)
         private_key = service_key['private_key'].encode('utf-8')
         claim_set = {
             "iss": service_key['client_id'],
@@ -56,7 +60,7 @@ def load_access_token(apikey_file):
         data = token_request.json()
         access_token = data.get('access_token')
     except JSONDecodeError:
-        print("API key missing. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding")
+        logger.info("API key missing. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding")
         access_token = None
 
     return access_token
@@ -73,9 +77,9 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    apikey_file = snakemake.params["apikey_file"]
+    apikey = snakemake.params["apikey"]
     output_zip_file = snakemake.output["zip"]
-    access_token = load_access_token(apikey_file)
+    access_token = load_access_token(apikey)
 
     if access_token != None:
         HEADERS = {
@@ -94,7 +98,7 @@ if __name__ == "__main__":
 
         download_link = None
 
-        print("Waiting for the download to be prepared...")
+        logger.info("Waiting for the download to be prepared...")
 
         # Wait up to 20 minutes, checking every 60 seconds
         for attempt in range(20):
@@ -102,7 +106,7 @@ if __name__ == "__main__":
             response = requests.get(status_url, headers=HEADERS)
             
             if response.status_code != 200:
-                print(f"Attempt {attempt + 1}: Status check failed — {response.status_code}")
+                logger.info(f"Attempt {attempt + 1}: Status check failed — {response.status_code}")
                 continue
             
             results = response.json()
@@ -116,7 +120,7 @@ if __name__ == "__main__":
                         if file_response.status_code == 200:
                             with open(output_zip_file, "wb") as f:
                                 f.write(file_response.content)
-                            print(f"File saved as {output_zip_file}")
+                            logger.info(f"File saved as {output_zip_file}")
 
                             output_folder = Path(output_zip_file).parent
                             unpack_archive(output_zip_file, output_folder)
@@ -126,5 +130,5 @@ if __name__ == "__main__":
                             break
 
                         else:
-                            print(f"Access error {file_response.status_code}")
+                            logger.info(f"Access error {file_response.status_code}")
             break

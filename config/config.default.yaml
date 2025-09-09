@@ -1129,6 +1129,9 @@ data:
     source: "build"
     version_or_latest: "latest"
 
+secrets:
+  corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
   options:
