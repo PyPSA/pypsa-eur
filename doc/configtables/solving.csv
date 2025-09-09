@@ -41,5 +41,12 @@ solver,,,
 -- name,--,"One of {'gurobi', 'cplex', 'highs', 'cbc', 'glpk'}; potentially more possible",Solver to use for optimisation problems in the workflow; e.g. clustering and linear optimal power flow.
 -- options,--,Key listed under ``solver_options``.,Link to specific parameter settings.
 solver_options,,dict,Dictionaries with solver-specific parameter settings.
+oetc,,,Configuration options for Open Energy Transition Computing (OETC) cluster support.
+-- name,--,str,Name identifier for the OETC job.
+-- authentication_server_url,--,str,URL of the OETC authentication server for job submission.
+-- orchestrator_server_url,--,str,URL of the OETC orchestrator server for job management.
+-- cpu_cores,--,int,Number of CPU cores to request for the OETC job. (includes RAM amount at the moment with a factor of 8)
+-- disk_space_gb,GB,int,Amount of disk space in gigabytes to request for the OETC job.
+-- delete_worker_on_error,bool,"{'true','false'}",Whether to delete the worker instance when an error occurs during job execution.
 mem,MB,int,Estimated maximum memory requirement for solving networks.
 mem_logging_frequency,s,int,Interval in seconds at which memory usage is logged.
