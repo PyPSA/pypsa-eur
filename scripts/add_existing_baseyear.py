@@ -321,7 +321,7 @@ def add_power_capacities_installed_before_baseyear(
                     new_capacity.index,
                     suffix=name_suffix,
                     bus=new_capacity.index,
-                    carrier=generator,
+                    carrier=generator + suffix,
                     p_nom=new_capacity,
                     marginal_cost=marginal_cost,
                     capital_cost=capital_cost,
