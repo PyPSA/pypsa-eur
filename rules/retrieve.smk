@@ -741,12 +741,6 @@ if config["enable"]["retrieve"]:
             wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
             """
 
-    # dynamic inputs/outputs for hera data retrieval
-    hera_data_key = "be_2013-03-01_to_2013-03-08"
-    hera_data_url = storage(
-        f"https://zenodo.org/records/15828866/files/hera_{hera_data_key}.zip"
-    )
-
     rule retrieve_hera_data_test_cutout:
         input:
             hera_data_url=storage(
