@@ -152,7 +152,7 @@ rule build_shapes:
         config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
-        eez=ancient(rules.retrieve_eez.output[0]),
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
         nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
         ba_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/BA_adm1.geojson",
         md_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/MD_adm1.geojson",
@@ -231,7 +231,7 @@ rule determine_availability_matrix_MD_UA:
         wdpa=rules.retrieve_wdpa.output["gpkg"],
         wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
-            rules.retrieve_gebco.output[0]
+            rules.retrieve_gebco.output["gebco"]
             if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
@@ -284,7 +284,7 @@ rule determine_availability_matrix:
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
-        corine=ancient(f"{rules.retrieve_corine.output['tif_file_path']}"),
+        corine=ancient(f"{rules.retrieve_corine.output['tif_file']}"),
         natura=lambda w: (
             NATURA_DATASET["folder"] / "natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
@@ -293,7 +293,7 @@ rule determine_availability_matrix:
         luisa=rules.retrieve_luisa_land_cover.output[0],
         gebco=ancient(
             lambda w: (
-                rules.retrieve_gebco.output[0]
+                rules.retrieve_gebco.output["gebco"]
                 if (
                     config_provider("renewable", w.technology)(w).get("max_depth")
                     or config_provider("renewable", w.technology)(w).get("min_depth")
