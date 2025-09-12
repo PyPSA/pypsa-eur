@@ -76,13 +76,14 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 
 **Breaking Changes**
 
-* Replaced pinned environment files with conda-lock generated lock files for better dependency resolution and cross-platform reproducibility:
+* Consolidated gap-filling strategies options under a new configuration section
+  `load: fill_gaps`. (https://github.com/PyPSA/pypsa-eur/pull/1677)
 
-  - Added platform-specific lock files for all major platforms (Linux, macOS, Windows) and architectures (x86_64, ARM).
-
-  - Updated documentation, Makefile, Dockerfile, and CI workflows to use the new lock files.
-
-  - Deprecated old `-pinned.yaml` files with migration instructions. These files will not be updated anymore and will be removed in a future release.
+* Replaced pinned environment files with conda-lock generated lock files for
+  better dependency resolution and cross-platform reproducibility. Deprecated
+  old ``-pinned.yaml`` files with migration instructions. These files will not
+  be updated anymore and will be removed in a future release.
+  (https://github.com/PyPSA/pypsa-eur/pull/1660)
 
 **Changes**
 
