@@ -759,39 +759,27 @@ if config["enable"]["retrieve"]:
         run:
             unpack_archive(input[0], params.folder)
 
-    rule retrieve_hera_data_2013:
+    rule retrieve_hera_data:
+        input:
+            river_discharge=storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{year}.nc"
+            ),
+            ambient_temperature=storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{year}.nc"
+            ),
         output:
-            river_discharge="data/hera_2013/river_discharge_2013.nc",
-            ambient_temperature="data/hera_2013/ambient_temp_2013.nc",
+            river_discharge="data/hera_{year}/river_discharge_{year}.nc",
+            ambient_temperature="data/hera_{year}/ambient_temp_{year}.nc",
         params:
-            snapshot_year="2013",
+            snapshot_year="{year}",
         log:
-            "logs/retrieve_hera_data_2013.log",
+            "logs/retrieve_hera_data_{year}.log",
         resources:
             mem_mb=10000,
         retries: 2
-        shell:
-            """
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{params.snapshot_year}.nc -O {output.river_discharge}
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{params.snapshot_year}.nc -O {output.ambient_temperature}
-            """
-
-    rule retrieve_hera_data_2019:
-        output:
-            river_discharge="data/hera_2019/river_discharge_2019.nc",
-            ambient_temperature="data/hera_2019/ambient_temp_2019.nc",
-        params:
-            snapshot_year="2019",
-        log:
-            "logs/retrieve_hera_data_2019.log",
-        resources:
-            mem_mb=10000,
-        retries: 2
-        shell:
-            """
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{params.snapshot_year}.nc -O {output.river_discharge}
-            wget -nv -c https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{params.snapshot_year}.nc -O {output.ambient_temperature}
-            """
+        run:
+            move(input.river_discharge, output.river_discharge)
+            move(input.ambient_temperature, output.ambient_temperature)
 
 
 if config["enable"]["retrieve"]:
