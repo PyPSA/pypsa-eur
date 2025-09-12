@@ -29,7 +29,6 @@ balance_timeseries:
 -- annual_resolution,"e.g. 1h",str,Resolution of the annual balance timeseries. Argument to pandas.DataFrame.resample. Defaults to 'D' which applies daily resampling.
 -- carriers,--,list,Subset of bus carriers to plot in the balance timeseries.
 -- carrier_groups,--,dict,Mapping from carrier group names to list of bus carriers. E.g. a key 'electricity' to include 'AC' and 'low voltage'.
--- interactive_bus_balance,"e.g. DE*",str,If set (default: None) interactive bus balance time series for all buses matching the pattern will be plotted. E.g. 'DE*' for all buses starting with 'DE'.
 heatmap_timeseries,,,Plotting configuration for :mod:`plot_heatmap_timeseries`.
 -- marginal_price,--,list,Subset of bus carriers to plot marginal prices heatmap time series for.
 -- utilisation_rate,--,list,Subset of carriers to plot utilisation rates heatmap time series for.
