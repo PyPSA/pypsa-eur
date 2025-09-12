@@ -728,7 +728,7 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
-    rule seawater_temperature:
+    rule retrieve_seawater_temperature:
         output:
             seawater_temperature="data/seawater_temperature.nc",
         log:
