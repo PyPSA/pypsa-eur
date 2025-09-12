@@ -150,20 +150,6 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
             "../scripts/retrieve_corine_dataset_primary.py"
 
 
-
-if (EMOBILITY_DATASET := dataset_version("emobility"))["source"] in [
-    "archive"
-]:
-    rule retrieve_emobility:
-        params:
-            url = EMOBILITY_DATASET["url"],
-        output:
-            zip=f"{EMOBILITY_DATASET["folder"]}/emobility.zip",
-            directory=directory(f"{EMOBILITY_DATASET["folder"]}"),
-        run:
-            handle_data_requests(params,output)
-
-
 if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in [
     "archive"
 ]:

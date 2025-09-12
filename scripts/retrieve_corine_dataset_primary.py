@@ -69,11 +69,8 @@ def load_access_token(apikey):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
-
         snakemake = mock_snakemake("retrieve_corine_dataset_primary")
-        rootpath = ".."
-    else:
-        rootpath = "."
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -81,7 +78,7 @@ if __name__ == "__main__":
     output_zip_file = snakemake.output["zip"]
     access_token = load_access_token(apikey)
 
-    if access_token != None:
+    if access_token:
         HEADERS = {
             "Accept": "application/json",
             "Content-Type": "application/json",
