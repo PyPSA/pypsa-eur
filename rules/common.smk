@@ -149,7 +149,7 @@ def dataset_version(
     dataset["folder"] = Path("data", name, dataset["source"], dataset["version"])
 
     return dataset
-    
+
 
 def handle_data_requests(params, output):
     import os

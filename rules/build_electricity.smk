@@ -110,7 +110,8 @@ rule build_osm_boundaries:
         eez=ancient(rules.retrieve_eez.output[0]),
     output:
         #boundary="data/osm-boundaries/build/{country}_adm1.geojson",
-        boundary=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/" + "{country}_adm1.geojson",
+        boundary=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/"
+        + "{country}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",
     threads: 1
