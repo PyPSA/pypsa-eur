@@ -475,7 +475,7 @@ rule build_river_heat_potential:
         logs("build_river_water_heat_potential_base_s_{clusters}.log"),
     benchmark:
         benchmarks("build_river_water_heat_potential_base_s_{clusters}")
-    threads: 2
+    threads: config["atlite"].get("nprocesses", 4)
     conda:
         "../envs/environment.yaml"
     script:
