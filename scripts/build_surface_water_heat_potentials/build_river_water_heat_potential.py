@@ -130,7 +130,7 @@ def get_regional_result(
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
-    generate_temporal_aggregates: bool = False,
+    enable_heat_source_maps: bool = False,
 ) -> dict[str, xr.Dataset]:
     """
     Calculate river water heat potential for a given region and district heating areas.
@@ -269,7 +269,7 @@ def get_regional_result(
     spatial_aggregate = river_water_heat_approximator.get_spatial_aggregate()
 
     # Calculate temporal aggregate only if needed (spatial distribution data for plotting, no time dimension)
-    if generate_temporal_aggregates:
+    if enable_heat_source_maps:
         temporal_aggregate = (
             river_water_heat_approximator.get_temporal_aggregate()
             .rio.reproject("EPSG:4326")  # Convert back to WGS84 for output consistency
@@ -294,7 +294,7 @@ def get_regional_result(
     # Only include temporal aggregate if computed
     if temporal_aggregate is not None:
         result["temporal aggregate"] = temporal_aggregate
-    if generate_temporal_aggregates:
+    if enable_heat_source_maps:
         del temporal_aggregate
 
     return result
@@ -372,7 +372,7 @@ if __name__ == "__main__":
             region=region,
             dh_areas=dh_areas,
             snapshots=snapshots,
-            generate_temporal_aggregates=snakemake.params.generate_temporal_aggregates,
+            enable_heat_source_maps=snakemake.params.enable_heat_source_maps,
         )
         results.append(result)
 
@@ -416,7 +416,7 @@ if __name__ == "__main__":
     temperature.to_netcdf(snakemake.output.heat_source_temperature)
 
     # Save temporal aggregate results for analysis and visualization (if enabled)
-    if snakemake.params.generate_temporal_aggregates:
+    if snakemake.params.enable_heat_source_maps:
         # Energy temporal aggregate: spatial distribution of available energy
         # Units: MWh (megawatt-hours) - total energy potential per location
         xr.concat(

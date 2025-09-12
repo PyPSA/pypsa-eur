@@ -453,9 +453,7 @@ rule build_river_heat_potential:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
-        generate_temporal_aggregates=config_provider(
-            "plotting", "enable_heat_source_maps"
-        ),
+        enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     input:
         unpack(input_hera_data),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
