@@ -498,6 +498,27 @@ def input_heat_source_temperature(
         config_provider("sector", "heat_pump_sources", "rural")(w),
     )
 
+    is_limited_heat_source = {
+        heat_source_name: heat_source_name
+        in config_provider("sector", "district_heating", "limited_heat_sources")(w)
+        for heat_source_name in heat_pump_sources
+    }
+
+    has_constant_temperature = {
+        heat_source_name: (
+            False
+            if not is_limited_heat_source[heat_source_name]
+            else config_provider(
+                "sector",
+                "district_heating",
+                "limited_heat_sources",
+                heat_source_name,
+                "constant_temperature_celsius",
+            )(w)
+        )
+        for heat_source_name in heat_pump_sources
+    }
+
     # replace names for soil and air temperature files
     return {
         f"temp_{heat_source_name}": resources(
@@ -508,18 +529,8 @@ def input_heat_source_temperature(
             + ".nc"
         )
         for heat_source_name in heat_pump_sources
-        # remove heat sources with constant temperature - i.e. no temperature profile file (currently only geothermal)
-        if not (
-            heat_source_name
-            in config_provider("sector", "district_heating", "limited_heat_sources")(w)
-            and config_provider(
-                "sector",
-                "district_heating",
-                "limited_heat_sources",
-                heat_source_name,
-                "constant_temperature_celsius",
-            )(w)
-        )
+        # remove heat sources with constant temperature - i.e. no temperature profile file
+        if not has_constant_temperature[heat_source_name]
     }
 
 
