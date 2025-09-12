@@ -382,13 +382,7 @@ rule build_ates_potentials:
         ),
         countries=config_provider("countries"),
     input:
-        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_shp'],
-        aquifer_shapes_shx=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_shx'],
-        aquifer_shapes_dbf=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_dbf'],
-        aquifer_shapes_cpg=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_cpg'],
-        aquifer_shapes_prj=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_prj'],
-        aquifer_shapes_sbn=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_sbn'],
-        aquifer_shapes_sbx=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes_sbx'],
+        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output['aquifer_shapes'][0],
         dh_areas="data/dh_areas.gpkg",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         central_heating_forward_temperature_profiles=resources(

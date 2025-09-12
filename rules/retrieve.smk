@@ -1132,31 +1132,23 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
 
     rule retrieve_aquifer_data_bgr:
         input:
-            zip=storage(
+            zip_file=storage(
                 AQUIFER_DATA_DATASET["url"]
             ),
         output:
-            aquifer_shapes_shp=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.shp",
-            aquifer_shapes_shx=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.shx",
-            aquifer_shapes_dbf=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.dbf",
-            aquifer_shapes_cpg=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.cpg",
-            aquifer_shapes_prj=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.prj",
-            aquifer_shapes_sbn=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.sbn",
-            aquifer_shapes_sbx=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.sbx",
+            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}"+"/ihme1500_aquif_ec4060_v12_poly.{ext}",ext=[
+                "shp","shx","dbf","cpg","prj","sbn","sbx",
+            ]),
         params:
-            filename_shp="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shp",
-            filename_shx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shx",
-            filename_dbf="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.dbf",
-            filename_cpg="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.cpg",
-            filename_prj="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.prj",
-            filename_sbn="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbn",
-            filename_sbx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbx",
+            files=expand("IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{ext}", ext=[
+                "shp","shx","dbf","cpg","prj","sbn","sbx",
+            ])
         run:
             with ZipFile(input.zip_file, "r") as zip_ref:
                 for fn, outpt in zip(
-                    params,
-                    output,
-                ):
+                    params["files"],
+                    output["aquifer_shapes"],
+                ):  
                     zip_ref.extract(fn, Path(outpt).parent)
                     extracted_file = Path(outpt).parent / fn
                     extracted_file.rename(outpt)
