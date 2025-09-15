@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
-PYPSA_V1 = bool(re.match(r"^0\.35\.\d\.post1\.dev\d{3}", pypsa.__version__))
+PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
 
 
 def get_scenarios(run):
@@ -700,13 +700,14 @@ def update_config_from_wildcards(config, w, inplace=True):
             flags = ["+e", "+p", "+m", "+c"]
             if all(flag not in o for flag in flags):
                 continue
-            carrier, attr_factor = o.split("+")
+            carrier, component, attr_factor = o.split("+")
             attr = attr_lookup[attr_factor[0]]
             factor = float(attr_factor[1:])
             if not isinstance(config["adjustments"]["electricity"], dict):
                 config["adjustments"]["electricity"] = dict()
             update_config(
-                config["adjustments"]["electricity"], {attr: {carrier: factor}}
+                config["adjustments"]["electricity"],
+                {"factor": {component: {carrier: {attr: factor}}}},
             )
 
         for o in opts:
@@ -805,12 +806,15 @@ def update_config_from_wildcards(config, w, inplace=True):
             flags = ["+e", "+p", "+m", "+c"]
             if all(flag not in o for flag in flags):
                 continue
-            carrier, attr_factor = o.split("+")
+            carrier, component, attr_factor = o.split("+")
             attr = attr_lookup[attr_factor[0]]
             factor = float(attr_factor[1:])
             if not isinstance(config["adjustments"]["sector"], dict):
                 config["adjustments"]["sector"] = dict()
-            update_config(config["adjustments"]["sector"], {attr: {carrier: factor}})
+            update_config(
+                config["adjustments"]["sector"],
+                {"factor": {component: {carrier: {attr: factor}}}},
+            )
 
         _, sdr_value = find_opt(opts, "sdr")
         if sdr_value is not None:

@@ -70,6 +70,9 @@ from scripts._helpers import (
     update_p_nom_max,
 )
 
+if PYPSA_V1:
+    pypsa.options.params.add.return_names = True
+
 idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
