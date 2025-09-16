@@ -63,6 +63,104 @@ logger = logging.getLogger(__name__)
 MEMORY_SAFETY_FACTOR = 0.7  # Use 70% of available memory for Dask arrays
 
 
+def load_hera_data(
+    hera_inputs: dict,
+    snapshots: pd.DatetimeIndex,
+    minx: float,
+    miny: float,
+    maxx: float,
+    maxy: float,
+) -> dict:
+    """
+    Load and concatenate HERA data files for multiple years with spatial clipping.
+
+    Parameters
+    ----------
+    hera_inputs : dict
+        Dictionary with year-specific HERA file paths from input_hera_data().
+        Expected keys: hera_river_discharge_{year}, hera_ambient_temperature_{year}
+    snapshots : pd.DatetimeIndex
+        Target snapshots to select from the combined data
+    minx, miny, maxx, maxy : float
+        Bounding box coordinates for spatial clipping
+
+    Returns
+    -------
+    dict
+        Dictionary with processed xarray DataArrays for river_discharge and ambient_temperature
+    """
+    # Group files by data type
+    river_files = [
+        v for k, v in hera_inputs.items() if k.startswith("hera_river_discharge_")
+    ]
+    temp_files = [
+        v for k, v in hera_inputs.items() if k.startswith("hera_ambient_temperature_")
+    ]
+
+    # Determine time range from snapshots with buffer to ensure HERA coverage
+    # HERA data is on 6h intervals, so we need to extend the range to capture
+    # HERA timestamps that bracket our actual snapshots
+    buffer = pd.Timedelta(hours=12)  # Buffer to ensure we capture surrounding HERA data
+    start_time = snapshots.min() - buffer
+    end_time = snapshots.max() + buffer
+
+    result = {}
+
+    # Load and concatenate river discharge files
+    river_datasets = []
+    for f in river_files:
+        with xr.open_dataset(
+            f, chunks={"time": -1, "lat": 14, "lon": 4530}
+        ) as river_ds:
+            river_data = river_ds["dis"]
+            # Select time range that covers our snapshots (using native HERA resolution)
+            river_data = river_data.sel(time=slice(start_time, end_time))
+            river_datasets.append(river_data)
+
+    # Concatenate datasets from multiple years
+    if len(river_datasets) > 1:
+        river_discharge = xr.concat(river_datasets, dim="time")
+    else:
+        river_discharge = river_datasets[0]
+
+    # Process river discharge data
+    river_discharge = (
+        river_discharge.rename({"lat": "latitude", "lon": "longitude"})
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
+    )
+    result["river_discharge"] = river_discharge
+
+    # Load and concatenate ambient temperature files
+    temp_datasets = []
+    for f in temp_files:
+        with xr.open_dataset(
+            f, chunks={"time": -1, "lat": 990, "lon": 1510}
+        ) as temp_ds:
+            temp_data = temp_ds["ta6"]
+            # Select time range that covers our snapshots (using native HERA resolution)
+            temp_data = temp_data.sel(time=slice(start_time, end_time))
+            temp_datasets.append(temp_data)
+
+    # Concatenate datasets from multiple years
+    if len(temp_datasets) > 1:
+        ambient_temperature = xr.concat(temp_datasets, dim="time")
+    else:
+        ambient_temperature = temp_datasets[0]
+
+    # Process ambient temperature data
+    ambient_temperature = (
+        ambient_temperature.rename({"lat": "latitude", "lon": "longitude"})
+        .rio.write_crs("EPSG:4326")
+        .rio.clip_box(minx, miny, maxx, maxy)
+        .rio.reproject("EPSG:3035")
+    )
+    result["ambient_temperature"] = ambient_temperature
+
+    return result
+
+
 def _create_empty_datasets(
     snapshots: pd.DatetimeIndex, center_lon: float, center_lat: float
 ) -> tuple[xr.Dataset, xr.Dataset]:
@@ -125,8 +223,7 @@ def _create_empty_datasets(
 
 
 def get_regional_result(
-    river_discharge_fn: xr.DataArray,
-    ambient_temperature_fn: xr.DataArray,
+    hera_inputs: dict,
     region: gpd.GeoSeries,
     dh_areas: gpd.GeoDataFrame,
     snapshots: pd.DatetimeIndex,
@@ -137,16 +234,16 @@ def get_regional_result(
 
     Parameters
     ----------
-    river_discharge_fn : xr.DataArray or str
-        Path to NetCDF file or xarray DataArray containing river discharge data.
-    ambient_temperature_fn : xr.DataArray or str
-        Path to NetCDF file or xarray DataArray containing ambient temperature data.
+    hera_inputs : dict
+        Dictionary containing HERA input file paths with year-specific keys.
     region : geopandas.GeoSeries
         Geographical region for which to compute the heat potential.
     dh_areas : geopandas.GeoDataFrame
         District heating areas to intersect with the region.
     snapshots : pd.DatetimeIndex
-        Time snapshots, used only for regions without dh_areas
+        Time snapshots, used for loading data and for regions without dh_areas
+    enable_heat_source_maps : bool, default False
+        Whether to enable heat source mapping.
 
     Returns
     -------
@@ -200,60 +297,10 @@ def get_regional_result(
     # 3. Reproject to EPSG:3035 for accurate spatial calculations
     # 4. Feed to approximator for heat potential calculation
 
-    # Load and preprocess river discharge data from HERA dataset
-    with xr.open_dataset(
-        river_discharge_fn,
-        chunks={
-            "time": -1,
-            "lat": 14,
-            "lon": 4530,
-        },  # Original chunks in .nc file
-    ) as river_ds:
-        river_discharge = river_ds["dis"].chunk(
-            {
-                "time": -1,
-                "lat": "auto",
-                "lon": "auto",
-            }  # Rechunk
-        )
-
-        river_discharge = (
-            river_discharge
-            # Standardize coordinate names to match expected format
-            .rename({"lat": "latitude", "lon": "longitude"})
-            # Set CRS to WGS84 for geographic operations
-            .rio.write_crs("EPSG:4326")
-            # Clip to region bounds to reduce memory usage and processing time
-            .rio.clip_box(minx, miny, maxx, maxy)
-            # Reproject to European grid (EPSG:3035) for accurate area calculations
-            .rio.reproject("EPSG:3035")
-        )
-
-    # Load and preprocess ambient temperature data from HERA dataset
-    with xr.open_dataset(
-        ambient_temperature_fn,
-        chunks={
-            "time": -1,
-            "lat": 990,
-            "lon": 1510,
-        },  # Original chunks in .nc file
-    ) as temp_ds:
-        ambient_temperature = temp_ds["ta6"].chunk(
-            {
-                "time": -1,
-                "lat": "auto",
-                "lon": "auto",
-            }  # Rechunk
-        )
-
-        ambient_temperature = (
-            temp_ds["ta6"]  # Extract ambient temperature
-            # Apply same preprocessing pipeline as discharge data
-            .rename({"lat": "latitude", "lon": "longitude"})
-            .rio.write_crs("EPSG:4326")
-            .rio.clip_box(minx, miny, maxx, maxy)
-            .rio.reproject("EPSG:3035")
-        )
+    # Load and concatenate HERA data for all required years with preprocessing
+    hera_data = load_hera_data(hera_inputs, snapshots, minx, miny, maxx, maxy)
+    river_discharge = hera_data["river_discharge"]
+    ambient_temperature = hera_data["ambient_temperature"]
 
     # Reproject region to match data CRS for spatial calculations
     region = region.to_crs("EPSG:3035")
@@ -367,8 +414,7 @@ if __name__ == "__main__":
 
         # Process region with multi-threaded Dask operations
         result = get_regional_result(
-            river_discharge_fn=snakemake.input.hera_river_discharge,
-            ambient_temperature_fn=snakemake.input.hera_ambient_temperature,
+            hera_inputs=dict(snakemake.input),
             region=region,
             dh_areas=dh_areas,
             snapshots=snapshots,

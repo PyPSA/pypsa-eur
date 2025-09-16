@@ -440,12 +440,30 @@ rule build_ates_potentials:
 def input_hera_data(w):
     if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
         hera_data_key = "be_2013-03-01_to_2013-03-08"
+        return {
+            "hera_river_discharge_2013": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
+            "hera_ambient_temperature_2013": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
+        }
     else:
-        hera_data_key = config_provider("snapshots", "start")(w)[:4]
-    return {
-        "hera_river_discharge": f"data/hera_{hera_data_key}/river_discharge_{hera_data_key}.nc",
-        "hera_ambient_temperature": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
-    }
+        # Import here to avoid circular imports
+        from scripts._helpers import get_snapshots
+
+        # Get all snapshots and extract unique years
+        snapshots_config = config_provider("snapshots")(w)
+        snapshots = get_snapshots(snapshots_config)
+        unique_years = snapshots.year.unique()
+
+        # Create dictionary with year-specific keys
+        result = {}
+        for year in unique_years:
+            result[f"hera_river_discharge_{year}"] = (
+                f"data/hera_{year}/river_discharge_{year}.nc"
+            )
+            result[f"hera_ambient_temperature_{year}"] = (
+                f"data/hera_{year}/ambient_temp_{year}.nc"
+            )
+
+        return result
 
 
 rule build_river_heat_potential:
