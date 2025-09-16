@@ -441,29 +441,26 @@ if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source
 ]:
 
     rule retrieve_worldbank_urban_population:
-        params:
-            url=WB_URB_POP_DATASET["url"],
+        input:
+            zip=storage(
+                WB_URB_POP_DATASET["url"],
+            ),
         output:
             zip=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
             csv=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
-            response = requests.get(
-                params["url"],
+            copy2(input["zip"], output["zip"])
+            unpack_archive(output["zip"], WB_URB_POP_DATASET["folder"])
+
+            # Filename contains some added numbers when downloaded,
+            # remove them to have a consistent filename across versions
+            target_filename = Path(output["csv"])
+            origin_filename = next(
+                Path(WB_URB_POP_DATASET["folder"]).rglob(
+                    target_filename.stem + "*" + target_filename.suffix
+                )
             )
-
-            with open(output["zip"], "wb") as f:
-                f.write(response.content)
-            output_folder = Path(output["zip"]).parent
-            unpack_archive(output["zip"], output_folder)
-
-            for f in os.listdir(output_folder):
-                if f.startswith(
-                    "API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_"
-                ) and f.endswith(".csv"):
-                    os.rename(os.path.join(output_folder, f), output.csv)
-                    break
-            os.remove(params["zip_file"])
-
+            origin_filename.rename(output.csv)
 
 
 if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
