@@ -46,6 +46,17 @@ Upcoming Release
 * Fix `retrieve_eurostat_data` and `retrieve_eurostat_household_data` on Windows by avoiding a double access to a temporary file.
   (https://github.com/PyPSA/pypsa-eur/pull/1825)
 
+* Distributing country-level electricity demand time series to subnational model
+  regions of EU countries now uses data from the `JRC Energy Atlas
+  <https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas>`__. This
+  dataset provides electricity consumption on a 1km by 1km raster for the year,
+  which is more accurate than the previous NUTS3-based distribution. Another
+  dataset is used for Great Britain from the `Department for Energy Security and
+  Net Zero
+  <https://www.gov.uk/government/statistics/regional-and-local-authority-electricity-consumption-statistics>`__.
+  Other non-EU countries still use NUTS3-based distribution keys from GDP and
+  population. 
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

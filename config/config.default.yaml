@@ -381,6 +381,7 @@ load:
   scaling_factor: 1.0
   fixed_year: false
   supplement_synthetic: true
+  substation_only: true
   distribution_key:
     gdp: 0.6
     population: 0.4

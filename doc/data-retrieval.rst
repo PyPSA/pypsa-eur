@@ -250,3 +250,24 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Link:** https://2024.entsos-tyndp-scenarios.eu/download/
 - **License:** CC-BY 4.0
 - **Description:** Contains the node list and the reference grids from the Ten-Year Network Development Plan (TYNDP) 2024.
+
+``data/demand-distribution/electricity_tot_demand_2019.tif``
+
+- **Source:** JRC Energy Atlas
+- **Link:** https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/ and https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas/
+- **License:** CC-BY 4.0 (https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/EIGL-Data/RASTER/copyright.txt)
+- **Description:** Contains 1km by 1km raster data of annual electricity demand per EU country.
+
+``data/demand-distribution/Subnational_electricity_consumption_statistics_2005-2023.xlsx`
+
+- **Source:**  UK Government, Department for Energy Security and Net Zero
+- **Link:** https://www.gov.uk/government/statistics/regional-and-local-authority-electricity-consumption-statistics
+- **License:** Open Government Licence v3.0 (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+- **Description:** Contains subnational electricity consumption statistics from 2005 to 2023.
+
+``data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson``
+
+- **Source:** UK Office for National Statistics
+- **Link:** https://geoportal.statistics.gov.uk/datasets/ons::local-authority-districts-may-2024-boundaries-uk-bsc-2/about
+- **License:** Open Government Licence v.3.0 (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+- **Description:** Contains shapefiles of local authorities in the United Kingdom.
