@@ -42,7 +42,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col=0)
 

@@ -105,12 +105,11 @@ if __name__ == "__main__":
     # Extract configuration and parameters
     config = snakemake.config
     params = snakemake.params
-    temporal_config = config["temporal"]
-    foresight = temporal_config["foresight"]
+    foresight = config["foresight"]
     current_horizon = int(snakemake.wildcards.horizon)
 
     # Handle both single value and list for planning_horizons
-    planning_horizons = temporal_config["planning_horizons"]
+    planning_horizons = config["planning_horizons"]
     if isinstance(planning_horizons, (int, str)):
         horizons = [int(planning_horizons)]
     else:

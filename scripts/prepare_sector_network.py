@@ -6150,7 +6150,7 @@ if __name__ == "__main__":
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry
 
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
 
     n = pypsa.Network(snakemake.input.network)
 

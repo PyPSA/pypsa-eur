@@ -71,12 +71,12 @@ rule all:
         expand(
             RESULTS + "maps/power_network_{horizon}.pdf",
             run=config["run"]["name"],
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
         ),
         # expand(
         #     RESULTS + "maps/costs-all_{horizon}.pdf",
         #     run=config["run"]["name"],
-        #     horizon=config["temporal"]["planning_horizons"],
+        #     horizon=config["planning_horizons"],
         # ),
         lambda w: expand(
             (
@@ -85,7 +85,7 @@ rule all:
                 else []
             ),
             run=config["run"]["name"],
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
         ),
         lambda w: expand(
             (
@@ -94,7 +94,7 @@ rule all:
                 else []
             ),
             run=config["run"]["name"],
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
         ),
         lambda w: expand(
             (
@@ -106,19 +106,19 @@ rule all:
         ),
         lambda w: expand(
             (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
         expand(
             RESULTS + "graphics/balance_timeseries_{horizon}",
             run=config["run"]["name"],
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
         ),
         expand(
             RESULTS + "graphics/heatmap_timeseries_{horizon}",
             run=config["run"]["name"],
-            horizon=config["temporal"]["planning_horizons"],
+            horizon=config["planning_horizons"],
         ),
     default_target: True
 

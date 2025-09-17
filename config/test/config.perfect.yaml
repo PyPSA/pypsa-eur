@@ -11,9 +11,8 @@ run:
     policy: false
   shared_cutouts: true
 
-temporal:
-  foresight: perfect
-  planning_horizons: [2030, 2040, 2050]
+foresight: perfect
+planning_horizons: [2030, 2040, 2050]
 
 countries: ['BE']
 

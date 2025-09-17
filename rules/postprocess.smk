@@ -124,12 +124,14 @@ if config["foresight"] != "perfect":
             "../scripts/plot_balance_map.py"
 
 
-if config["foresight"] == "perfect":
+if config["foresight"] == "perfect" and config.get("enable", {}).get(
+    "perfect_foresight_postprocess", False
+):
 
     def output_map_year(w):
         return {
             f"map_{year}": RESULTS + "maps/costs-all_" + f"{year}.pdf"
-            for year in config_provider("temporal", "planning_horizons")(w)
+            for year in config_provider("planning_horizons")(w)
         }
 
     rule plot_power_network_perfect:
@@ -308,7 +310,7 @@ rule make_cumulative_costs:
 rule plot_summary:
     params:
         countries=config_provider("countries"),
-        planning_horizons=config_provider("temporal", "planning_horizons"),
+        planning_horizons=config_provider("planning_horizons"),
         emissions_scope=config_provider("energy", "emissions"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),

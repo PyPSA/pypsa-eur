@@ -46,15 +46,16 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
     else:
         resource_potential = df_unsustainable[resource_type]
 
-    return (
-        df.apply(
-            lambda c: c.sum()
+    def _calculate_resource_allocation(c):
+        breakpoint()
+        return (
+            c.sum()
             / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
-            * resource_potential.loc[c.name[:2]],
-            axis=1,
+            * resource_potential.loc[c.name[:2]]
         )
-        .mul(share_unsus)
-        .clip(lower=0)
+
+    return (
+        df.apply(_calculate_resource_allocation, axis=1).mul(share_unsus).clip(lower=0)
     )
 
 
@@ -230,7 +231,6 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
     """
     # calculate area of nuts2 regions
     bio_nuts2["area_nuts2"] = area(bio_nuts2)
-
     overlay = gpd.overlay(regions, bio_nuts2, keep_geom_type=True)
 
     # calculate share of nuts2 area inside region
@@ -238,7 +238,7 @@ def convert_nuts2_to_regions(bio_nuts2, regions):
 
     # multiply all nuts2-level values with share of nuts2 inside region
     adjust_cols = overlay.columns.difference(
-        {"name", "area_nuts2", "geometry", "share"}
+        {"name", "area_nuts2", "geometry", "share", "country", "x", "y"}
     )
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
 
@@ -279,7 +279,7 @@ def add_unsustainable_potentials(df):
             nprocesses=int(snakemake.threads),
         )
         .xs(
-            max(min(latest_year, int(snakemake.wildcards.planning_horizons)), 1990),
+            max(min(latest_year, int(snakemake.wildcards.horizon)), 1990),
             level=1,
         )
         .xs("Primary production", level=2)
@@ -343,8 +343,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_biomass_potentials",
-            clusters="39",
-            planning_horizons=2050,
+            horizon=2050,
+            configfiles="config/test/config.electricity.yaml",
         )
 
     configure_logging(snakemake)
@@ -352,7 +352,7 @@ if __name__ == "__main__":
 
     overnight = snakemake.config["foresight"] == "overnight"
     params = snakemake.params.biomass
-    investment_year = int(snakemake.wildcards.planning_horizons)
+    investment_year = int(snakemake.wildcards.horizon)
     year = params["year"] if overnight else investment_year
     scenario = params["scenario"]
 

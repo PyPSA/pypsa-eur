@@ -135,7 +135,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    year = int(snakemake.wildcards.planning_horizons)
+    year = int(snakemake.wildcards.horizon)
 
     params = snakemake.params.industry
 

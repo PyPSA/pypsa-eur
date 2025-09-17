@@ -1087,7 +1087,7 @@ rule build_district_heat_share:
 
 rule build_existing_heating_distribution:
     params:
-        baseyear=config_provider("temporal", "planning_horizons", 0),
+        baseyear=config_provider("planning_horizons", default=0),
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
     input:
@@ -1212,7 +1212,7 @@ rule prepare_sector_network:
         lines=config_provider("lines"),
         pypsa_eur=config_provider("pypsa_eur"),
         length_factor=config_provider("lines", "length_factor"),
-        planning_horizons=config_provider("temporal", "planning_horizons"),
+        planning_horizons=config_provider("planning_horizons"),
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),

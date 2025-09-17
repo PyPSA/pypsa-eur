@@ -17,21 +17,17 @@ from pathlib import Path
 
 def get_compose_inputs(w):
     """Determine inputs for compose rule based on foresight and horizon."""
-    temporal = config["temporal"]
-    foresight = temporal["foresight"]
+    foresight = config["foresight"]
     horizon = int(w.horizon)
 
     # Handle both single value and list for planning_horizons
-    planning_horizons = temporal["planning_horizons"]
+    planning_horizons = config["planning_horizons"]
     if isinstance(planning_horizons, (int, str)):
         horizons = [int(planning_horizons)]
     else:
         horizons = [int(h) for h in planning_horizons]
 
-    # Get cluster count from config using config_provider
-    clusters = config_provider(
-        "clustering", "cluster_network", "n_clusters", default=50
-    )(w)
+    # Removed unused clusters configuration
 
     # Start with empty dict and build it up properly
     inputs = {
@@ -53,6 +49,7 @@ def get_compose_inputs(w):
             if config_provider("conventional", "dynamic_fuel_price")(w)
             else []
         ),
+        "co2_price": resources("co2_price.csv"),
         "load": resources("electricity_demand_base_s.nc"),
         "snapshot_weightings": resources("snapshot_weightings.csv"),
         "retro_cost": (
@@ -78,6 +75,7 @@ def get_compose_inputs(w):
             )(w)
             else []
         ),
+        "clustered": resources("networks/clustered.nc"),
         "network": resources("networks/clustered.nc"),
         "eurostat": "data/eurostat/Balances-April2023",
         "pop_weighted_energy_totals": resources("pop_weighted_energy_totals.csv"),
@@ -183,7 +181,7 @@ def get_compose_inputs(w):
 
 def get_final_horizon():
     """Get the final planning horizon, handling both single values and lists."""
-    horizons = config["temporal"]["planning_horizons"]
+    horizons = config["planning_horizons"]
     if isinstance(horizons, (int, str)):
         return int(horizons)
     else:
@@ -225,7 +223,7 @@ rule compose_network:
         # Derived parameters
         energy_totals_year=config_provider("energy", "energy_totals_year", default=2019),
         # Parameters from add_existing_baseyear
-        baseyear=config_provider("temporal", "planning_horizons", 0),
+        baseyear=config_provider("planning_horizons", default=0),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         # Brownfield settings (for myopic)

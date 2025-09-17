@@ -11,10 +11,8 @@ run:
     policy: false
   shared_cutouts: true
 
-temporal:
-  foresight: overnight
-  planning_horizons: 2040
-
+foresight: overnight
+planning_horizons: 2040
 
 countries: ['BE']
 

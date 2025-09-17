@@ -157,6 +157,7 @@ if __name__ == "__main__":
     if snakemake.wildcards.technology.startswith("offwind"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
+        breakpoint()
         regions = regions.loc[offshore_regions]
         regions = regions.map(lambda g: _simplify_polys(g, minarea=1)).set_crs(
             regions.crs

@@ -7,7 +7,7 @@ rule solve_network:
     params:
         solving=config_provider("solving"),
         foresight=config_provider("foresight"),
-        planning_horizons=config_provider("temporal", "planning_horizons"),
+        planning_horizons=config_provider("planning_horizons"),
         sector=config_provider("sector"),
         co2_sequestration_potential=config_provider(
             "sector", "co2_sequestration_potential", default=200
