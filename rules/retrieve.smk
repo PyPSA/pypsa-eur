@@ -25,37 +25,6 @@ if config["enable"]["retrieve"] is False:
     print("Datafile downloads disabled in config[retrieve] or no internet access.")
 
 
-if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", True):
-    datafiles = [
-        "nama_10r_3popgdp.tsv.gz",
-        "corine/g250_clc06_V18_5.tif",
-        "eea/UNFCCC_v23.csv",
-        "emobility/KFZ__count",
-        "emobility/Pkw__count",
-        "h2_salt_caverns_GWh_per_sqkm.geojson",
-        "gebco/GEBCO_2014_2D.nc",
-        "GDP_per_capita_PPP_1990_2015_v2.nc",
-        "ppp_2019_1km_Aggregated.tif",
-        "era5-HDD-per-country.csv",
-        "era5-runoff-per-country.csv",
-    ]
-
-    rule retrieve_databundle:
-        output:
-            expand("data/bundle/{file}", file=datafiles),
-        log:
-            "logs/retrieve_databundle.log",
-        benchmark:
-            "benchmarks/retrieve_databundle"
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_databundle.py"
-
-
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
     "primary",
     "archive",

@@ -88,7 +88,6 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
-  retrieve_databundle: true
   retrieve_cost_data: true
   drop_leap_day: true
 
@@ -1006,7 +1005,7 @@ data:
     source: "archive"
     version_or_latest: "latest"
   osm:
-    source: "archive" # "archive" or "build"
+    source: "archive" 
     version_or_latest: "latest"
   worldbank_urban_population:
     source: "archive"
@@ -1039,10 +1038,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   luisa_land_cover:
-    source: "archive" # "primary" or "archive"
-    version_or_latest: "latest" #
+    source: "archive" 
+    version_or_latest: "latest" 
   jrc_idees:
-    source: "archive" # "primary" or "archive"
+    source: "archive" 
     version_or_latest: "latest"
   scigrid_gas:
     source: "primary"
