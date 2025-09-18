@@ -419,7 +419,7 @@ def add_power_capacities_installed_before_baseyear(
                         # Values affecting links of technology k country-specific
                         # First map link buses to countries; then map countries to p_max_pu
                         values = pd.read_csv(
-                            snakemake.input[f"conventional_{carrier_i}_{attr}"],
+                            conventional_inputs[f"conventional_{carrier_i}_{attr}"],
                             index_col=0,
                         ).iloc[:, 0]
                         bus_values = n.buses.country.map(values)
