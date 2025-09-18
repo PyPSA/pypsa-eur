@@ -70,16 +70,23 @@ rule solve_sector_networks_perfect:
         ),
 
 
-rule validate_elec_networks:
+rule plot_balance_maps:
+    input:
+        lambda w: expand(
+            (
+                RESULTS
+                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
+            ),
+            **config["scenario"],
+            run=config["run"]["name"],
+            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+        ),
+
+
+rule plot_power_networks_clustered:
     input:
         expand(
-            RESULTS + "figures/.statistics_plots_base_s_{clusters}_elec_{opts}",
+            resources("maps/power-network-s-{clusters}.pdf"),
             **config["scenario"],
             run=config["run"]["name"],
-        ),
-        expand(
-            RESULTS + "figures/.validation_{kind}_plots_base_s_{clusters}_elec_{opts}",
-            **config["scenario"],
-            run=config["run"]["name"],
-            kind=["production", "prices", "cross_border"],
         ),

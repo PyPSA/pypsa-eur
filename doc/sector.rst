@@ -58,15 +58,40 @@ Rule ``build_clustered_population_layouts``
 
 .. automodule:: build_clustered_population_layouts
 
+Rule ``build_simplified_population_layouts``
+==============================================================================
+
+.. automodule:: build_simplified_population_layouts
+
+Rule ``build_clustered_solar_rooftop_potentials``
+==============================================================================
+
+.. automodule:: build_clustered_solar_rooftop_potentials
+
 Rule ``build_cop_profiles``
 ==============================================================================
 
 .. automodule:: build_cop_profiles
 
+Rule ``build_direct_heat_source_utilisation_profiles``
+==============================================================================
+
+.. automodule:: build_direct_heat_source_utilisation_profiles
+
 Rule ``build_central_heating_temperature_profiles``
 ==============================================================================
 
 .. automodule:: build_central_heating_temperature_profiles
+
+Rule ``build_geothermal_heat_potential``
+==============================================================================
+
+.. automodule:: build_geothermal_heat_potential
+
+Rule ``build_tes_capacity_profiles``
+==============================================================================
+
+.. automodule:: build_tes_capacity_profiles
 
 Rule ``build_energy_totals``
 ==============================================================================
@@ -143,6 +168,11 @@ Rule ``build_industry_sector_ratios``
 
 .. automodule:: build_industry_sector_ratios
 
+Rule ``build_industry_sector_ratios_intermediate``
+==============================================================================
+
+.. automodule:: build_industry_sector_ratios_intermediate
+
 Rule ``build_population_layouts``
 ==============================================================================
 
@@ -163,10 +193,15 @@ Rule ``build_salt_cavern_potentials``
 
 .. automodule:: build_salt_cavern_potentials
 
-Rule ``build_sequestration_potentials``
+Rule ``build_co2_sequestration_potentials``
 ==============================================================================
 
-.. automodule:: build_sequestration_potentials
+.. automodule:: build_co2_sequestration_potentials
+
+Rule ``build_clustered_co2_sequestration_potentials``
+==============================================================================
+
+.. automodule:: build_clustered_co2_sequestration_potentials
 
 Rule ``build_shipping_demand``
 ==============================================================================

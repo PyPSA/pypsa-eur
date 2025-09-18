@@ -35,14 +35,15 @@ The unit of the production is kt/a.
 import logging
 
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from prepare_sector_network import get
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.prepare_sector_network import get
 
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country_tomorrow")
     configure_logging(snakemake)
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 
     al_primary_fraction = get(params["Al_primary_fraction"], investment_year)
     fraction_persistent_primary = (
-        al_primary_fraction * total_aluminium.sum() / production[key_pri].sum()
+        al_primary_fraction * total_aluminium.sum() / (production[key_pri].sum() or 1)
     )
 
     production[key_pri] = fraction_persistent_primary * production[key_pri]

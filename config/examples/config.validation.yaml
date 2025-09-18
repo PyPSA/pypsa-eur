@@ -49,16 +49,7 @@ atlite:
       time: ['2019', '2019']
 
 renewable:
-  onwind:
-    cutout: europe-2019-era5
-  offwind-ac:
-    cutout: europe-2019-era5
-  offwind-dc:
-    cutout: europe-2019-era5
-  solar:
-    cutout: europe-2019-era5
   hydro:
-    cutout: europe-2019-era5
     flatten_dispatch: 0.01
 
 conventional:

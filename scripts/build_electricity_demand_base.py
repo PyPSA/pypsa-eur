@@ -14,8 +14,9 @@ import pandas as pd
 import pypsa
 import scipy.sparse as sparse
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
 from shapely.prepared import prep
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,11 @@ def upsample_load(
     data_arrays = []
 
     for cntry, group in gdf_regions.geometry.groupby(gdf_regions.country):
+        if cntry not in load.columns:
+            # TODO: Implement TYNDP load data integration and remove this
+            logger.warning(f"Cannot upsample load for {cntry}: no load data defined")
+            continue
+
         load_ct = load[cntry]
 
         if len(group) == 1:
@@ -88,7 +94,7 @@ def upsample_load(
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_electricity_demand_base")
     configure_logging(snakemake)

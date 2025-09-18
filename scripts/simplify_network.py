@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Lifts electrical transmission network to a single 380 kV voltage layer, removes
 dead-ends of the network, and reduces multi-hop HVDC connections to a single
@@ -36,7 +36,7 @@ The rule :mod:`simplify_network` does up to three things:
 
 2. DC only sub-networks that are connected at only two buses to the AC network are reduced to a single representative link in the function ``simplify_links(...)``.
 
-3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)``.
+3. Stub lines and links, i.e. dead-ends of the network, are sequentially removed from the network in the function ``remove_stubs(...)`` and ``remove_stubs_within_admin(...)``.
 """
 
 import logging
@@ -47,10 +47,11 @@ import numpy as np
 import pandas as pd
 import pypsa
 import scipy as sp
-from _helpers import configure_logging, set_scenario_config
-from cluster_network import cluster_regions
 from pypsa.clustering.spatial import busmap_by_stubs, get_clustering_from_busmap
 from scipy.sparse.csgraph import connected_components, dijkstra
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.cluster_network import busmap_for_admin_regions, cluster_regions
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,9 @@ def _remove_clustered_buses_and_branches(n: pypsa.Network, busmap: pd.Series) ->
 
 
 def simplify_links(
-    n: pypsa.Network, p_max_pu: int | float
+    n: pypsa.Network,
+    p_max_pu: int | float,
+    p_min_pu: int | float,
 ) -> tuple[pypsa.Network, pd.Series]:
     ## Complex multi-node links are folded into end-points
     logger.info("Simplifying connected link components")
@@ -214,7 +217,7 @@ def simplify_links(
                     * n.links.loc[all_links, "underwater_fraction"]
                 ),
                 p_max_pu=p_max_pu,
-                p_min_pu=-p_max_pu,
+                p_min_pu=p_min_pu,
                 underground=False,
                 under_construction=False,
             )
@@ -258,9 +261,32 @@ def remove_stubs(
     return n, busmap
 
 
+def remove_stubs_within_admin(
+    n: pypsa.Network, simplify_network: dict, admin_shapes: str
+) -> tuple[pypsa.Network, pd.Series]:
+    busmap = busmap_for_admin_regions(
+        n,
+        admin_shapes,
+        params,
+    )
+    n.buses["admin"] = n.buses.index.map(busmap)
+
+    logger.info("Removing stubs within administrative regions.")
+    across_borders = simplify_network["remove_stubs_across_borders"]
+    matching_attrs = [] if across_borders else ["admin"]
+    busmap = busmap_by_stubs(n, matching_attrs)
+
+    _remove_clustered_buses_and_branches(n, busmap)
+
+    # remove admin column again
+    n.buses.drop("admin", axis=1, inplace=True)
+
+    return n, busmap
+
+
 def aggregate_to_substations(
     n: pypsa.Network,
-    buses_i: pd.Index | list,
+    substation_i: pd.Index | list,
     aggregation_strategies: dict | None = None,
 ) -> tuple[pypsa.Network, pd.Series]:
     # can be used to aggregate a selection of buses to electrically closest neighbors
@@ -275,23 +301,23 @@ def aggregate_to_substations(
         }
     )
 
-    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight)
+    adj = n.adjacency_matrix(branch_components=["Line", "Link"], weights=weight).tocsr()
 
-    bus_indexer = n.buses.index.get_indexer(buses_i)
+    no_substation_i = n.buses.index.difference(substation_i)
+    bus_indexer = n.buses.index.get_indexer(substation_i)
     dist = pd.DataFrame(
-        dijkstra(adj, directed=False, indices=bus_indexer), buses_i, n.buses.index
-    )
+        dijkstra(adj, directed=False, indices=bus_indexer), substation_i, n.buses.index
+    )[no_substation_i]
 
-    dist[buses_i] = (
-        np.inf
-    )  # bus in buses_i should not be assigned to different bus in buses_i
-
-    for c in n.buses.country.unique():
-        incountry_b = n.buses.country == c
-        dist.loc[incountry_b, ~incountry_b] = np.inf
+    country_values = n.buses.country.values
+    country_mask = pd.DataFrame(
+        country_values[:, np.newaxis] == country_values,
+        index=n.buses.index,
+        columns=n.buses.index,
+    )[no_substation_i]
 
     busmap = n.buses.index.to_series()
-    busmap.loc[buses_i] = dist.idxmin(1)
+    busmap.loc[no_substation_i] = dist.where(country_mask, np.inf).idxmin(0)
 
     line_strategies = aggregation_strategies.get("lines", dict())
 
@@ -394,7 +420,7 @@ def remove_converters(n: pypsa.Network) -> pypsa.Network:
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("simplify_network")
     configure_logging(snakemake)
@@ -413,12 +439,18 @@ if __name__ == "__main__":
     n, converter_map = remove_converters(n)
     busmaps.append(converter_map)
 
-    n, simplify_links_map = simplify_links(n, params.p_max_pu)
+    n, simplify_links_map = simplify_links(n, params.p_max_pu, params.p_min_pu)
     busmaps.append(simplify_links_map)
 
     if params.simplify_network["remove_stubs"]:
-        n, stub_map = remove_stubs(n, params.simplify_network)
-        busmaps.append(stub_map)
+        if params.mode == "administrative":
+            n, stub_map = remove_stubs_within_admin(
+                n, params.simplify_network, snakemake.input.admin_shapes
+            )
+            busmaps.append(stub_map)
+        else:
+            n, stub_map = remove_stubs(n, params.simplify_network)
+            busmaps.append(stub_map)
 
     substations_i = n.buses.query("substation_lv or substation_off").index
 

@@ -10,7 +10,7 @@ import os, sys, glob
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from _helpers import validate_checksum, update_config_from_wildcards
+from scripts._helpers import validate_checksum, update_config_from_wildcards
 from snakemake.utils import update_config
 
 
@@ -98,7 +98,7 @@ def memory(w):
         if m is not None:
             factor *= int(m.group(1)) / 8760
             break
-    if w.clusters == "all":
+    if w.clusters == "all" or w.clusters == "adm":
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
@@ -113,13 +113,13 @@ def input_custom_extra_functionality(w):
     return []
 
 
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
-    to a reliable server like Google.
+    to a reliable server like Zenodo.
 
     Parameters:
-    - url (str): The URL to check for internet connection. Default is Google.
+    - url (str): The URL to check for internet connection. Default is Zenodo.
     - timeout (int | float): The maximum time (in seconds) the request should wait.
 
     Returns:
@@ -146,6 +146,15 @@ def solved_previous_horizon(w):
         + planning_horizon_p
         + ".nc"
     )
+
+
+def input_cutout(wildcards, cutout_names="default"):
+    if cutout_names == "default":
+        cutout_names = config_provider("atlite", "default_cutout")(wildcards)
+    if isinstance(cutout_names, list):
+        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
+    else:
+        return CDIR.joinpath(cutout_names + ".nc").as_posix()
 
 
 def input_conventional(w):

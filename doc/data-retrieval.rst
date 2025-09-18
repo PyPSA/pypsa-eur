@@ -10,12 +10,20 @@ Specific retrieval rules
 Data in this section is retrieved and extracted in rules specified in ``rules/retrieve.smk``.
 
 
-``data/fraunhofer_heat_source_utilisation_potentials``
+``data/bgr/``
+
+- **Source:** Bundesanstalt für Geowissenschaften und Rohstoffe (BGR)
+- **Link:** https://www.bgr.bund.de/DE/Themen/Wasser/Projekte/laufend/Beratung/Ihme1500/ihme1500_projektbeschr.html?nn=1546102
+- **License:** `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/Produktcenter/faq_inhalt.html?nn=6951010#doc5914388bodyText5>` and `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/produkte_agb.html>`
+- **Description:** Contains data on geothermal energy resources in Europe.
+
+``data/heat_demand``
+``data/fraunhofer_heat_source_utilisation_potentials`` and ``data/dh_areas.gpkg``
 
 - **Source:** Fraunhofer Fordatis
 - **Link:** https://fordatis.fraunhofer.de/handle/fordatis/341.3?mode=simple
 - **License:** `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`__
-- **Description:** Utilisation potentials for different heat sources across Europe, based on Manz et al. 2024<https://doi.org/10.1016/j.renene.2024.120111>.
+- **Description:** Utilisation potentials for different heat sources across Europe and future district heating areas, based on Manz et al. 2024<https://doi.org/10.1016/j.renene.2024.120111>.
 
 
 ``data/nuts``
@@ -32,10 +40,10 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains biomass potentials for Europe.
 
-``data/complete_map_2020_unit_Mt.geojson``
+``data/CO2JRC_OpenFormats``
 
 - **Source:** SETIS
-- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en, processed with https://github.com/ericzhou571/Co2Storage
+- **Link:** https://setis.ec.europa.eu/european-co2-storage-database_en
 - **License:** `various <https://setis.ec.europa.eu/european-co2-storage-database_en>`__
 - **Description:** European CO2 storage database CO2StoP.
 
@@ -151,13 +159,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains share of urban population by country.
 
-``data/naturalearth``
-
-- **Source:** Natural Earth
-- **Link:** https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
-- **License:** CC0 (`reference <https://www.naturalearthdata.com/about/terms-of-use/>`__)
-- **Description:** Country shapes, using point-of-view (POV) variant of Germany so that Crimea is included.
-
 ``data/gem/Europe-Gas-Tracker-2024-05.xlsx``
 
 - **Source:** Global Energy Monitor
@@ -206,7 +207,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Source:** `ERA5
   <https://cds-beta.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>`__
   and `SARAH-3 <https://navigator.eumetsat.int/product/EO:EUM:DAT:0863>`__
-- **Link:** https://zenodo.org/records/12791128
+- **Link:** https://zenodo.org/records/15349674
 - **License:** CC-BY 4.0
 - **Description:** Contains weather data cutouts for Europe to read in with ``atlite``.
 
@@ -228,3 +229,24 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Link:** https://github.com/PyPSA/powerplantmatching
 - **License:** GPL-3.0
 - **Description:** Contains matched dataset of powerplants in Europe.
+
+``data/busshapes/bidding_zones_electricitymaps.geojson``
+
+- **Source:** Electricity Maps, https://github.com/electricitymaps/electricitymaps-contrib
+- **Link:** https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/v1.238.0/web/geo/world.geojson
+- **License:** GNU-AGPLv3
+- **Description:** Contains bidding zones shape files.
+
+``data/busshapes/bidding_zones_entsoepy.geojson``
+
+- **Source:** Pecinovsky, J., & Boerman, F. entsoe-py. https://github.com/EnergieID/entsoe-py
+- **Link:** https://github.com/EnergieID/entsoe-py/tree/c03c604af36ef92e8ef6ee89dc57c56ca5e1dbac/entsoe/geo/geojson
+- **License:** MIT License
+- **Description:** Contains bidding zones shape files used to improve `data/busshapes/bidding_zones_electricitymaps.geojson` data.
+
+``data/tyndp_2024_bundle``
+
+- **Source:** European Network of Transmission System Operators for Electricity (ENTSO-E) and European Network of Transmission System Operators for Gas (ENTSOG)
+- **Link:** https://2024.entsos-tyndp-scenarios.eu/download/
+- **License:** CC-BY 4.0
+- **Description:** Contains the node list and the reference grids from the Ten-Year Network Development Plan (TYNDP) 2024.

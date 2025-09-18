@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such
 as.
@@ -29,14 +29,22 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from _helpers import (
+
+from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     get,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_electricity import load_costs, set_transmission_costs
-from pypsa.descriptors import expand_series
+from scripts.add_electricity import load_costs, set_transmission_costs
+
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
+
 
 idx = pd.IndexSlice
 
@@ -48,7 +56,7 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
         return
     change_dict = adjustments[modification]
     for c in change_dict.keys():
-        if c not in n.components.keys():
+        if c not in n.component_attrs.keys():
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in change_dict[c].keys():
@@ -184,7 +192,7 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
 
 def average_every_nhours(n, offset, drop_leap_day=False):
     logger.info(f"Resampling the network to {offset}")
-    m = n.copy(with_time=False)
+    m = n.copy(snapshots=[])
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     sns = snapshot_weightings.index
@@ -285,18 +293,16 @@ def set_line_nom_max(
     n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
 
 
-# %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "prepare_network",
             clusters="37",
-            ll="v1.0",
             opts="Co2L-4H",
         )
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 

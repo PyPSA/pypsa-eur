@@ -13,8 +13,9 @@ import logging
 
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, get_snapshots, set_scenario_config
 from pandas import Timedelta as Delta
+
+from scripts._helpers import configure_logging, get_snapshots, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +230,7 @@ def manual_adjustment(load, fn_load, countries):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_electricity_demand")
 
@@ -247,10 +248,10 @@ if __name__ == "__main__":
         else slice(snapshots[0], snapshots[-1])
     )
 
-    interpolate_limit = snakemake.params.load["interpolate_limit"]
+    interpolate_limit = snakemake.params.load["fill_gaps"]["interpolate_limit"]
     countries = snakemake.params.countries
 
-    time_shift = snakemake.params.load["time_shift_for_large_gaps"]
+    time_shift = snakemake.params.load["fill_gaps"]["time_shift_for_large_gaps"]
 
     load = load_timeseries(snakemake.input.reported, years, countries)
 
@@ -272,18 +273,21 @@ if __name__ == "__main__":
     if snakemake.params.load["manual_adjustments"]:
         load = manual_adjustment(load, snakemake.input[0], countries)
 
-    logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
-    load = load.interpolate(method="linear", limit=interpolate_limit)
+    if snakemake.params.load["fill_gaps"]["enable"]:
+        logger.info(f"Linearly interpolate gaps of size {interpolate_limit} and less.")
+        load = load.interpolate(method="linear", limit=interpolate_limit)
 
-    logger.info(f"Filling larger gaps by copying time-slices of period '{time_shift}'.")
-    load = load.apply(fill_large_gaps, shift=time_shift)
+        logger.info(
+            f"Filling larger gaps by copying time-slices of period '{time_shift}'."
+        )
+        load = load.apply(fill_large_gaps, shift=time_shift)
 
     if snakemake.params.load["supplement_synthetic"]:
         logger.info("Supplement missing data with synthetic data.")
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
-        # UA, MD, XK do not appear in synthetic load data
-        countries = list(set(countries) - set(["UA", "MD", "XK"]))
+        # UA, MD, XK, CY, MT do not appear in synthetic load data
+        countries = list(set(countries) - set(["UA", "MD", "XK", "CY", "MT"]))
         synthetic_load = synthetic_load.loc[snapshots, countries]
         load = load.combine_first(synthetic_load)
 

@@ -9,14 +9,52 @@
 Configuration
 ##########################################
 
-PyPSA-Eur has several configuration options which are documented in this section and are collected in a ``config/config.yaml`` file. This file defines deviations from the default configuration (``config/config.default.yaml``); confer installation instructions at :ref:`defaultconfig`.
+PyPSA-Eur has several configuration options which are documented in this section.
+
+.. _defaultconfig:
+
+Configuration Files
+===================
+
+Any PyPSA-Eur configuration can be set in a ``.yaml`` file. The default configurations 
+``config/config.default.yaml`` and ``config/plotting.default.yaml`` are maintained in 
+the repository and cover all the options that are used/ can be set.
+
+To pass your own configuration, you can create a new file, e.g. ``my_config.yaml``, 
+and specify the options you want to change. They will override the default settings and 
+options which are not set, will be inherited from the defaults above.
+
+Another way is to use the ``config/config.yaml`` file, which does not exist in the 
+repository and is also not tracked by git. But snakemake will always use this file if 
+it exists. This way you can run snakemake with a custom config without having to 
+specify the config file each time.
+
+Configuration order of precedence is as follows:
+1. Command line options specified with ``--config`` (optional)
+2. Custom configuration file specified with ``--configfile`` (optional)
+3. The ``config/config.yaml`` file (optional)
+4. The default configuration files ``config/config.default.yaml`` and ``config/plotting.default.yaml``
+
+To use your custom configuration file, you need to pass it to the ``snakemake`` command 
+using the ``--configfile`` option:
+
+.. code:: console
+
+    $ snakemake -call --configfile my_config.yaml
+
+.. warning::
+
+    In a previous version of PyPSA-Eur (``<=2025.04.0``), a full copy of the created config
+    was stored in the ``config/config.yaml`` file. This is no longer the case. If the 
+    file exists, snakemake will use it, but no new copy will be created.
+
 
 .. _toplevel_cf:
 
 Top-level configuration
 =======================
 
-"Private" refers to local, machine-specific settings or data meant for personal use, not to be shared. "Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
+"Remote" indicates the address of a server used for data exchange, often for clusters and data pushing/pulling.
 
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
@@ -80,10 +118,10 @@ facilitate running multiple scenarios through a single command
 .. code:: console
 
    # for electricity-only studies
-   $ snakemake solve_elec_networks
+   $ snakemake -call solve_elec_networks
 
    # for sector-coupling studies
-   $ snakemake solve_sector_networks
+   $ snakemake -call solve_sector_networks
 
 For each wildcard, a **list of values** is provided. The rule
 ``solve_all_elec_networks`` will trigger the rules for creating
@@ -576,7 +614,6 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 .. literalinclude:: ../config/config.default.yaml
    :language: yaml
    :start-at: solving:
-   :end-before: # docs
 
 .. csv-table::
    :header-rows: 1
@@ -588,10 +625,7 @@ The list of available biomass is given by the category in `ENSPRESO_BIOMASS <htt
 ``plotting``
 =============
 
-.. warning::
-   More comprehensive documentation for this segment will be released soon.
-
-.. literalinclude:: ../config/config.default.yaml
+.. literalinclude:: ../config/plotting.default.yaml
    :language: yaml
    :start-at: plotting:
 

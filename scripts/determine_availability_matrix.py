@@ -62,14 +62,15 @@ import atlite
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import configure_logging, set_scenario_config
+
+from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_renewable_profiles", clusters=100, technology="onwind"
@@ -83,7 +84,7 @@ if __name__ == "__main__":
     technology = snakemake.wildcards.technology
     params = snakemake.params.renewable[technology]
 
-    cutout = atlite.Cutout(snakemake.input.cutout)
+    cutout = load_cutout(snakemake.input.cutout)
     regions = gpd.read_file(snakemake.input.regions)
     assert not regions.empty, (
         f"List of regions in {snakemake.input.regions} is empty, please "
