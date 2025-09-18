@@ -730,16 +730,19 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_seawater_temperature:
         output:
-            seawater_temperature="data/seawater_temperature.nc",
+            seawater_temperature="data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc",
         log:
-            "logs/retrieve_seawater_data.log",
+            "logs/retrieve_seawater_temperature_{start_snapshot}_{end_snapshot}.log",
         resources:
             mem_mb=10000,
-        retries: 2
-        shell:
-            """
-            wget -nv -c https://zenodo.org/records/15198744/files/seawater_temperature.nc -O {output.seawater_temperature}
-            """
+        benchmark:
+            benchmarks(
+                "logs/retrieve_seawater_temperature_{start_snapshot}_{end_snapshot}.log"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_seawater_temperature.py"
 
     rule retrieve_hera_data_test_cutout:
         input:

@@ -70,7 +70,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    ambient_temperature = xr.open_dataset(snakemake.input.cutout).temperature - 273.15
+    ambient_temperature = xr.open_mfdataset(snakemake.input.cutout).temperature - 273.15
 
     # Load onshore regions
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore)
@@ -84,8 +84,7 @@ if __name__ == "__main__":
 
     # Get data in unary region
     average_temperature_in_all_onshore_regions = get_data_in_geometry(
-        average_temperature_in_cutout,
-        regions_onshore.geometry.unary_union,
+        average_temperature_in_cutout, regions_onshore.geometry.union_all()
     )
 
     # add onshore_region as additional coordinate

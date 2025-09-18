@@ -542,7 +542,7 @@ def input_heat_source_temperature(
         f"temp_{heat_source_name}": resources(
             "temp_"
             + replace_names.get(heat_source_name, heat_source_name)
-            + "_base_s_{clusters}"
+            + "_base_s_{clustersl}"
             + ("_{planning_horizons}" if heat_source_name == "ptes" else "")
             + ".nc"
         )
@@ -552,14 +552,20 @@ def input_heat_source_temperature(
     }
 
 
+def input_seawater_temperature(w):
+    start_snapshot = config_provider("snapshots")(w)["start"]
+    end_snapshot = config_provider("snapshots")(w)["end"]
+    return f"data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc"
+
+
 rule build_sea_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
     input:
+        seawater_temperature=lambda w: input_seawater_temperature(w),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        seawater_temperature="data/seawater_temperature.nc",
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
         heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
@@ -602,11 +608,6 @@ rule build_cop_profiles:
         ),
         central_heating_return_temperature_profiles=resources(
             "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
-        ),
-        temp_soil_total=resources("temp_soil_total_base_s_{clusters}.nc"),
-        temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
-        temp_ptes_total=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
@@ -651,7 +652,7 @@ rule build_ptes_operations:
             "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
-            "ptes_top_temperature_profiles_s_{clusters}_{planning_horizons}.nc"
+            "temp_ptes_top_profiles_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
