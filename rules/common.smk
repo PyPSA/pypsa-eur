@@ -155,3 +155,17 @@ def input_cutout(wildcards, cutout_names="default"):
         return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
     else:
         return CDIR.joinpath(cutout_names + ".nc").as_posix()
+
+
+def input_conventional(w):
+    carriers = [
+        *config_provider("electricity", "conventional_carriers")(w),
+        *config_provider("electricity", "extendable_carriers", "Generator")(w),
+    ]
+    return {
+        f"conventional_{carrier}_{attr}": fn
+        for carrier, d in config_provider("conventional", default={})(w).items()
+        if carrier in carriers
+        for attr, fn in d.items()
+        if str(fn).startswith("data/")
+    }
