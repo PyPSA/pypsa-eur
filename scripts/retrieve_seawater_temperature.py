@@ -38,11 +38,11 @@ if __name__ == "__main__":
 
     _ = copernicusmarine.subset(
         dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",
-        start_datetime=snakemake.wildcards.start_snapshot,
-        end_datetime=snakemake.wildcards.end_snapshot,
+        start_datetime=f"{snakemake.wildcards.year}-01-01",
+        end_datetime=f"{int(snakemake.wildcards.year)}-12-31",
         minimum_longitude=-12,
-        maximum_longitude=41,
-        minimum_latitude=34,
+        maximum_longitude=42,
+        minimum_latitude=33,
         maximum_latitude=72,
         variables=["thetao"],
         minimum_depth=5,

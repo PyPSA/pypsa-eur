@@ -174,7 +174,7 @@ def get_regional_result(
 
     # Load and preprocess sea water temperature data
     water_temperature = (
-        xr.open_dataset(
+        xr.open_mfdataset(
             seawater_temperature_fn,
             chunks={
                 "time": "auto",
@@ -270,7 +270,11 @@ if __name__ == "__main__":
         # 3. Calculate temperature profiles using approximator
         results.append(
             get_regional_result(
-                seawater_temperature_fn=snakemake.input["seawater_temperature"],
+                seawater_temperature_fn=[
+                    val
+                    for key, val in dict(snakemake.input).items()
+                    if key.startswith("seawater_temperature")
+                ],
                 region=region,
                 dh_areas=dh_areas,
                 snapshots=snapshots,

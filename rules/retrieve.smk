@@ -730,15 +730,13 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_seawater_temperature:
         output:
-            seawater_temperature="data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc",
+            seawater_temperature="data/seawater_temperature_{year}.nc",
         log:
-            "logs/retrieve_seawater_temperature_{start_snapshot}_{end_snapshot}.log",
+            "logs/retrieve_seawater_temperature_{year}.log",
         resources:
             mem_mb=10000,
         benchmark:
-            benchmarks(
-                "logs/retrieve_seawater_temperature_{start_snapshot}_{end_snapshot}.log"
-            )
+            benchmarks("logs/retrieve_seawater_temperature_{year}.log")
         conda:
             "../envs/environment.yaml"
         script:

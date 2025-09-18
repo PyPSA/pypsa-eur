@@ -106,22 +106,16 @@ def load_hera_data(
 
     result = {}
 
-    # Load and concatenate river discharge files
-    river_datasets = []
-    for f in river_files:
-        with xr.open_dataset(
-            f, chunks={"time": -1, "lat": 14, "lon": 4530}
-        ) as river_ds:
-            river_data = river_ds["dis"]
-            # Select time range that covers our snapshots (using native HERA resolution)
-            river_data = river_data.sel(time=slice(start_time, end_time))
-            river_datasets.append(river_data)
+    # Load and concatenate river discharge files using open_mfdataset
+    river_discharge = xr.open_mfdataset(
+        river_files,
+        chunks={"time": -1, "lat": 14, "lon": 4530},
+        concat_dim="time",
+        combine="nested",
+    )["dis"]
 
-    # Concatenate datasets from multiple years
-    if len(river_datasets) > 1:
-        river_discharge = xr.concat(river_datasets, dim="time")
-    else:
-        river_discharge = river_datasets[0]
+    # Select time range that covers our snapshots (using native HERA resolution)
+    river_discharge = river_discharge.sel(time=slice(start_time, end_time))
 
     # Process river discharge data
     river_discharge = (
@@ -132,22 +126,16 @@ def load_hera_data(
     )
     result["river_discharge"] = river_discharge
 
-    # Load and concatenate ambient temperature files
-    temp_datasets = []
-    for f in temp_files:
-        with xr.open_dataset(
-            f, chunks={"time": -1, "lat": 990, "lon": 1510}
-        ) as temp_ds:
-            temp_data = temp_ds["ta6"]
-            # Select time range that covers our snapshots (using native HERA resolution)
-            temp_data = temp_data.sel(time=slice(start_time, end_time))
-            temp_datasets.append(temp_data)
+    # Load and concatenate ambient temperature files using open_mfdataset
+    ambient_temperature = xr.open_mfdataset(
+        temp_files,
+        chunks={"time": -1, "lat": 990, "lon": 1510},
+        concat_dim="time",
+        combine="nested",
+    )["ta6"]
 
-    # Concatenate datasets from multiple years
-    if len(temp_datasets) > 1:
-        ambient_temperature = xr.concat(temp_datasets, dim="time")
-    else:
-        ambient_temperature = temp_datasets[0]
+    # Select time range that covers our snapshots (using native HERA resolution)
+    ambient_temperature = ambient_temperature.sel(time=slice(start_time, end_time))
 
     # Process ambient temperature data
     ambient_temperature = (

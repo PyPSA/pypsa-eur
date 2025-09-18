@@ -436,7 +436,6 @@ rule build_ates_potentials:
         "../scripts/build_ates_potentials.py"
 
 
-# dynamic inputs/outputs for hera data retrieval
 def input_hera_data(w):
     if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
         hera_data_key = "be_2013-03-01_to_2013-03-08"
@@ -493,7 +492,7 @@ rule build_river_heat_potential:
         logs("build_river_water_heat_potential_base_s_{clusters}.log"),
     benchmark:
         benchmarks("build_river_water_heat_potential_base_s_{clusters}")
-    threads: config["atlite"].get("nprocesses", 4)
+    threads: 1
     conda:
         "../envs/environment.yaml"
     script:
@@ -542,7 +541,7 @@ def input_heat_source_temperature(
         f"temp_{heat_source_name}": resources(
             "temp_"
             + replace_names.get(heat_source_name, heat_source_name)
-            + "_base_s_{clustersl}"
+            + "_base_s_{clusters}"
             + ("_{planning_horizons}" if heat_source_name == "ptes" else "")
             + ".nc"
         )
@@ -552,10 +551,26 @@ def input_heat_source_temperature(
     }
 
 
+# def input_seawater_temperature(w):
+#     start_snapshot = config_provider("snapshots")(w)["start"]
+#     end_snapshot = config_provider("snapshots")(w)["end"]
+#     return f"data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc"
+
+
 def input_seawater_temperature(w):
-    start_snapshot = config_provider("snapshots")(w)["start"]
-    end_snapshot = config_provider("snapshots")(w)["end"]
-    return f"data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc"
+    # Import here to avoid circular imports
+    from scripts._helpers import get_snapshots
+
+    # Get all snapshots and extract unique years
+    snapshots_config = config_provider("snapshots")(w)
+    snapshots = get_snapshots(snapshots_config)
+    unique_years = snapshots.year.unique()
+
+    # Create dictionary with year-specific keys
+    return {
+        f"seawater_temperature_{year}": f"data/seawater_temperature_{year}.nc"
+        for year in unique_years
+    }
 
 
 rule build_sea_heat_potential:
@@ -564,7 +579,8 @@ rule build_sea_heat_potential:
         snapshots=config_provider("snapshots"),
         dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
     input:
-        seawater_temperature=lambda w: input_seawater_temperature(w),
+        # seawater_temperature=lambda w: input_seawater_temperature(w),
+        unpack(input_seawater_temperature),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
     output:
