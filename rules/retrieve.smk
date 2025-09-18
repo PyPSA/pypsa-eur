@@ -105,7 +105,7 @@ if (
                 NUTS3_POPULATION_DATASET["url"],
             ),
         output:
-            f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
+            gz=f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
         retries: 2
         run:
             move(input[0], output[0])
@@ -159,7 +159,7 @@ if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in 
                 H2_SALT_CAVERNS_DATASET["url"],
             ),
         output:
-            f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
+            geojson=f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
         retries: 2,
         run:
             move(input[0], output[0])
@@ -174,7 +174,7 @@ if (
                 GDP_PER_CAPITA_DATASET["url"],
             ),
         output:
-            f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
+            gdp = f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
         retries: 2
         run:
             move(input[0], output[0])
@@ -190,7 +190,7 @@ if (
                 POPULATION_COUNT_DATASET["url"],
             ),
         output:
-            f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
+            tif = f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2
         run:
             move(input[0], output[0])
@@ -216,7 +216,7 @@ if (
                 GHG_EMISSIONS_DATASET["url"],
             ),
         output:
-            f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
+            csv = f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
             zip=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv.zip" if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
             directory=directory(f"{GHG_EMISSIONS_DATASET["folder"]}") if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
         retries: 2
@@ -272,7 +272,7 @@ if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] i
                 ATTRIBUTED_PORTS_DATASET["url"],
             )
         output:
-            f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
+            json=f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
         retries: 2,
         run:
             move(input[0], output[0])
@@ -489,7 +489,7 @@ if (
                 keep_local=True,
             ),
         output:
-            f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
+            csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
         retries: 2
         run:
             move(input[0], output[0])
@@ -506,7 +506,7 @@ if (
                 keep_local=True,
             ),
         output:
-            f"{SHIP_RASTER_DATASET["folder"]}/shipdensity_global.zip",
+            zip_file=f"{SHIP_RASTER_DATASET["folder"]}/shipdensity_global.zip",
         log:
             "logs/retrieve_ship_raster.log",
         resources:
@@ -546,7 +546,7 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
                 HOTMAPS_INDUSTRIAL_SITES["url"],
             ),
         output:
-            f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
+            csv=f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
         run:
             move(input[0], output[0])
@@ -565,7 +565,7 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
                 NITROGEN_STATISTICS_DATASET["url"],
             ),
         output:
-            f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
+            xlsx=f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
         run:
             move(input[0], output[0])
@@ -583,7 +583,7 @@ if (
                 COPERNICUS_LAND_COVER_DATASET["url"],
             ),
         output:
-            f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            tif = f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
@@ -602,7 +602,7 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
                 LUISA_LAND_COVER_DATASET["url"],
             ),
         output:
-            luisa=f"{LUISA_LAND_COVER_DATASET["folder"]}/LUISA_basemap_020321_50m.tif",
+            tif=f"{LUISA_LAND_COVER_DATASET["folder"]}/LUISA_basemap_020321_50m.tif",
         run:
             move(input[0], output[0])
 
@@ -1082,7 +1082,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
                 LAU_REGIONS_DATASET["url"]
             ),
         output:
-            lau_regions=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
+            zip=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
         log:
             "logs/retrieve_lau_regions.log",
         threads: 1

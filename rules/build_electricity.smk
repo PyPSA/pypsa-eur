@@ -12,7 +12,7 @@ rule build_electricity_demand:
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
         synthetic=lambda w: (
-            ancient(rules.retrieve_synthetic_electricity_demand.output[0])
+            ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
             else []
         ),
@@ -106,11 +106,11 @@ rule base_network:
 
 rule build_osm_boundaries:
     input:
-        json=f"{rules.retrieve_osm_boundaries.params[0]}" + "/{country}_adm1.json",
-        eez=ancient(rules.retrieve_eez.output[0]),
+        json=f"{rules.retrieve_osm_boundaries.params["data_folder"]}/{{country}}_adm1.json",
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
         #boundary="data/osm-boundaries/build/{country}_adm1.geojson",
-        boundary=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/" + "{country}_adm1.geojson",
+        boundary=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/{{country}}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",
     threads: 1
@@ -165,8 +165,8 @@ rule build_shapes:
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        other_gdp=rules.retrieve_gdp_per_capita.output[0],
-        other_pop=rules.retrieve_population_count.output[0],
+        other_gdp=rules.retrieve_gdp_per_capita.output["gdp"],
+        other_pop=rules.retrieve_population_count.output["tif"],
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -207,7 +207,7 @@ if CUTOUT_DATASET["source"] in ["build"]:
 
 rule build_ship_raster:
     input:
-        ship_density=rules.retrieve_ship_raster.output[0],
+        ship_density=rules.retrieve_ship_raster.output["zip_file"],
         cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),
@@ -227,7 +227,7 @@ rule determine_availability_matrix_MD_UA:
     params:
         renewable=config_provider("renewable"),
     input:
-        copernicus=rules.download_copernicus_land_cover.output[0],
+        copernicus=rules.download_copernicus_land_cover.output["tif"],
         wdpa=rules.retrieve_wdpa.output["gpkg"],
         wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
@@ -290,7 +290,7 @@ rule determine_availability_matrix:
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
-        luisa=rules.retrieve_luisa_land_cover.output[0],
+        luisa=rules.retrieve_luisa_land_cover.output["tif"],
         gebco=ancient(
             lambda w: (
                 rules.retrieve_gebco.output["gebco"]

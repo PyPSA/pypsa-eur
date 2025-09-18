@@ -313,7 +313,7 @@ rule build_geothermal_heat_potential:
     input:
         isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        lau_regions=rules.retrieve_lau_regions.output[0],
+        lau_regions=rules.retrieve_lau_regions.output["zip"],
     output:
         heat_source_power=resources(
             "heat_source_power_geothermal_base_s_{clusters}.csv"
@@ -558,7 +558,7 @@ rule build_energy_totals:
         energy=config_provider("energy"),
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        co2=rules.retrieve_ghg_emissions.output[0],
+        co2=rules.retrieve_ghg_emissions.output["csv"],
         swiss="data/switzerland-new_format-all_years.csv",
         swiss_transport=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         idees=rules.retrieve_jrc_idees.output["directory"],
@@ -630,11 +630,11 @@ rule build_biomass_potentials:
     params:
         biomass=config_provider("biomass"),
     input:
-        enspreso_biomass=rules.retrieve_enspreso_biomass.output[0],
+        enspreso_biomass=rules.retrieve_enspreso_biomass.output["xlsx"],
         eurostat=rules.retrieve_eurostat_balances.output["directory"],
         nuts2=rules.retrieve_eu_nuts_2013.output["shapes_level_2"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        nuts3_population=ancient(rules.retrieve_nuts3_population.output[0]),
+        nuts3_population=ancient(rules.retrieve_nuts3_population.output["gz"]),
         swiss_cantons=ancient("data/ch_cantons.csv"),
         swiss_population=rules.retrieve_bfs_gdp_and_population.output["xlsx"],
         country_shapes=resources("country_shapes.geojson"),
@@ -728,7 +728,7 @@ rule build_clustered_co2_sequestration_potentials:
 
 rule build_salt_cavern_potentials:
     input:
-        salt_caverns=rules.retrieve_h2_salt_caverns.output[0],
+        salt_caverns=rules.retrieve_h2_salt_caverns.output["geojson"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
     output:
@@ -748,7 +748,7 @@ rule build_salt_cavern_potentials:
 
 rule build_ammonia_production:
     input:
-        usgs=rules.retrieve_nitrogen_statistics.output[0],
+        usgs=rules.retrieve_nitrogen_statistics.output["xlsx"],
     output:
         ammonia_production=resources("ammonia_production.csv"),
     threads: 1
@@ -877,7 +877,7 @@ rule build_industrial_distribution_key:
     input:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
-        hotmaps=rules.retrieve_hotmaps_industrial_sites.output[0],
+        hotmaps=rules.retrieve_hotmaps_industrial_sites.output["csv"],
         gem_gspt=rules.retrieve_gem_steel_plant_tracker.output["xlsx"],
         ammonia="data/ammonia_plants.csv",
         cement_supplement="data/cement-plants-noneu.csv",
@@ -1069,7 +1069,7 @@ rule build_population_weighted_energy_totals:
 
 rule build_shipping_demand:
     input:
-        ports=rules.retrieve_attributed_ports.output[0],
+        ports=rules.retrieve_attributed_ports.output["json"],
         scope=resources("europe_shape.geojson"),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         demand=resources("energy_totals.csv"),
@@ -1378,7 +1378,7 @@ rule prepare_sector_network:
         avail_profile=resources("avail_profile_s_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s_{clusters}.csv"),
         co2_totals_name=resources("co2_totals.csv"),
-        co2=rules.retrieve_ghg_emissions.output[0],
+        co2=rules.retrieve_ghg_emissions.output["csv"],
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
