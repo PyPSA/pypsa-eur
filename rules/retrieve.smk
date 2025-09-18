@@ -728,6 +728,25 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
+            # needed for test cutout in CI (where specifying copernicusmarine login is not possible)
+
+
+    rule retrieve_seawater_temperature_2013:
+        input:
+            hera_data_url=storage(
+                f"https://zenodo.org/records/15828866/files/seawater_temperature.nc"
+            ),
+        output:
+            seawater_temperature="data/seawater_temperature_2013.nc",
+        log:
+            "logs/retrieve_seawater_temperature_2013.log",
+        resources:
+            mem_mb=10000,
+        benchmark:
+            benchmarks("logs/retrieve_seawater_temperature_2013.log")
+        run:
+            move(input[0], output[0])
+
     rule retrieve_seawater_temperature:
         output:
             seawater_temperature="data/seawater_temperature_{year}.nc",

@@ -8,6 +8,7 @@ Description
 """
 
 import logging
+import os
 
 import copernicusmarine
 
@@ -49,3 +50,8 @@ if __name__ == "__main__":
         maximum_depth=15,
         output_filename=snakemake.output.seawater_temperature,
     )
+
+    if not os.path.exists(snakemake.output.seawater_temperature):
+        raise FileNotFoundError(
+            f"Failed to retrieve seawater temperature data and save to {snakemake.output.seawater_temperature}. One reason might be missing copernicus marine login info. See the copernicusmarine package documentation for details."
+        )
