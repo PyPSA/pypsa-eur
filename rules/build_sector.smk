@@ -551,12 +551,6 @@ def input_heat_source_temperature(
     }
 
 
-# def input_seawater_temperature(w):
-#     start_snapshot = config_provider("snapshots")(w)["start"]
-#     end_snapshot = config_provider("snapshots")(w)["end"]
-#     return f"data/seawater_temperature_{start_snapshot}_{end_snapshot}.nc"
-
-
 def input_seawater_temperature(w):
     # Import here to avoid circular imports
     from scripts._helpers import get_snapshots
@@ -665,10 +659,10 @@ rule build_ptes_operations:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         ptes_direct_utilisation_profiles=resources(
-            "ptes_direct_utilisation_profiles_s_{clusters}_{planning_horizons}.nc"
+            "ptes_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_top_temperature_profiles=resources(
-            "temp_ptes_top_profiles_s_{clusters}_{planning_horizons}.nc"
+            "temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ptes_e_max_pu_profiles=resources(
             "ptes_e_max_pu_profiles_base_s_{clusters}_{planning_horizons}.nc"
