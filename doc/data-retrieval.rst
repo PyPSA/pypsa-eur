@@ -103,7 +103,7 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0 (`reference <https://zenodo.org/record/4767098>`__)
 - **Description:** Contains gas infrastructure data.
 
-``data/electricity_demand_raw.csv``
+``data/electricity_demand_opsd_raw.csv``
 
 - **Source:** Open Power System Data (OPSD) from ENTSO-E Transparency
 - **Link:**
@@ -111,6 +111,20 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
   and https://data.open-power-system-data.org/time_series/2020-10-06/time_series_60min_singleindex.csv
 - **License:** unknown
 - **Description:** Contains country-level electricity demand time series.
+
+``data/electricity_demand_entsoe_raw.csv``
+
+- **Source:** ENTSO-E Transparency Platform
+- **Link:** https://transparency.entsoe.eu/load-domain/r2/totalLoadR2/show
+- **License:** CC-BY 4.0 (cf. https://transparency.entsoe.eu/content/static_content/download?path=/Static%20content/terms%20and%20conditions/220218_List_of_Data_available_for_reuse.pdf)
+- **Description:** Contains country-level electricity demand time series.
+
+``data/electricity_demand_neso_raw.csv``
+
+- **Source:** NESO Data Portal
+- **Link:** https://www.neso.energy/data-portal/historic-demand-data
+- **License:** NESO Open Data License v1.0 (https://www.neso.energy/data-portal/neso-open-licence)
+- **Description:** Contains UK national electricity demand time series.
 
 ``data/load_synthetic_raw.csv``
 
