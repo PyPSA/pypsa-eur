@@ -149,20 +149,6 @@ def dataset_version(
     dataset["folder"] = Path("data", name, dataset["source"], dataset["version"])
 
     return dataset
-    
-
-def handle_data_requests(params, output):
-    import os
-    import requests
-    from zipfile import ZipFile
-    from pathlib import Path
-
-    response = requests.get(params["url"])
-    with open(output.zip, "wb") as f:
-        f.write(response.content)
-
-    output_folder = Path(output["zip"]).parent
-    unpack_archive(output.zip, output_folder)
 
 
 def solver_threads(w):

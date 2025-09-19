@@ -178,22 +178,21 @@ if (
 )["source"] in ["archive", "primary"]:
 
     rule retrieve_ghg_emissions:
-        params:
-            url = GHG_EMISSIONS_DATASET["url"],
         input:
-            storage(
+            ghg=storage(
                 GHG_EMISSIONS_DATASET["url"],
             ),
         output:
-            csv = f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
+            csv=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
             zip=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv.zip" if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
             directory=directory(f"{GHG_EMISSIONS_DATASET["folder"]}") if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
         retries: 2
         run:
-            move(input[0], output[0])
             if GHG_EMISSIONS_DATASET["source"] == "primary":
-                handle_data_requests(params, output)
-
+                copy2(input["ghg"], output["zip"]) 
+                unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"]) 
+            else:
+                move(input["ghg"],output["csv"])
 
 if (GEBCO_DATASET := dataset_version("gebco"))["source"] in [
     "archive",
@@ -1091,22 +1090,17 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
                 AQUIFER_DATA_DATASET["url"]
             ),
         output:
-            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}"+"/ihme1500_aquif_ec4060_v12_poly.{ext}",ext=[
+            zip_file=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.zip",
+            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}"+"/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{ext}",ext=[
                 "shp","shx","dbf","cpg","prj","sbn","sbx",
             ]),
-        params:
-            files=expand("IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{ext}", ext=[
-                "shp","shx","dbf","cpg","prj","sbn","sbx",
-            ])
         run:
-            with ZipFile(input.zip_file, "r") as zip_ref:
-                for fn, outpt in zip(
-                    params["files"],
-                    output["aquifer_shapes"],
-                ):  
-                    zip_ref.extract(fn, Path(outpt).parent)
-                    extracted_file = Path(outpt).parent / fn
-                    extracted_file.rename(outpt)
+            
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(
+                output["zip_file"],
+                AQUIFER_DATA_DATASET["folder"],
+            )
 
 
 if config["enable"]["retrieve"]:

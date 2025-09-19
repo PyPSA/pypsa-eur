@@ -110,7 +110,7 @@ rule build_osm_boundaries:
         eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
         #boundary="data/osm-boundaries/build/{country}_adm1.geojson",
-        boundary=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/{{country}}_adm1.geojson",
+        boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",
     threads: 1
@@ -154,10 +154,10 @@ rule build_shapes:
     input:
         eez=ancient(rules.retrieve_eez.output["gpkg"]),
         nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
-        ba_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/BA_adm1.geojson",
-        md_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/MD_adm1.geojson",
-        ua_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/UA_adm1.geojson",
-        xk_adm1=f"data/osm_boundaries/build/{rules.retrieve_osm_boundaries.params.version}/XK_adm1.geojson",
+        ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
+        md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
+        ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
+        xk_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
         bidding_zones=lambda w: (
