@@ -436,7 +436,21 @@ rule build_ates_potentials:
         "../scripts/build_ates_potentials.py"
 
 
-def input_hera_data(w):
+def input_hera_data(w) -> dict[str, str]:
+    """
+    Generate input file paths for HERA river discharge and ambient temperature data.
+
+    Parameters
+    ----------
+    w : snakemake.io.Wildcards
+        Snakemake wildcards object.
+
+    Returns
+    -------
+    dict[str, str]
+        Dictionary mapping keys like "hera_river_discharge_{year}" and
+        "hera_ambient_temperature_{year}" to NetCDF file paths.
+    """
     if config_provider("atlite", "default_cutout")(w) == "be-03-2013-era5":
         hera_data_key = "be_2013-03-01_to_2013-03-08"
         return {
@@ -501,12 +515,29 @@ rule build_river_heat_potential:
 
 def input_heat_source_temperature(
     w,
-    replace_names={
+    replace_names: dict[str, str] = {
         "air": "air_total",
         "ground": "soil_total",
         "ptes": "ptes_top_profiles",
     },
-):
+) -> dict[str, str]:
+    """
+    Generate input file paths for heat source temperature profiles.
+
+    Parameters
+    ----------
+    w : snakemake.io.Wildcards
+        Snakemake wildcards object.
+    replace_names : dict[str, str], optional
+        Mapping to transform heat source names to file naming conventions.
+
+    Returns
+    -------
+    dict[str, str]
+        Dictionary mapping keys like "temp_{heat_source_name}" to NetCDF file paths
+        for heat sources that require temperature profiles (excludes constant
+        temperature sources).
+    """
 
     heat_pump_sources = set(
         config_provider("sector", "heat_pump_sources", "urban central")(w)
@@ -551,7 +582,20 @@ def input_heat_source_temperature(
     }
 
 
-def input_seawater_temperature(w):
+def input_seawater_temperature(w) -> dict[str, str]:
+    """
+    Generate input file paths for seawater temperature data.
+
+    Parameters
+    ----------
+    w : snakemake.io.Wildcards
+        Snakemake wildcards object.
+
+    Returns
+    -------
+    dict[str, str]
+        Dictionary mapping keys like "seawater_temperature_{year}" to NetCDF file paths.
+    """
     # Import here to avoid circular imports
     from scripts._helpers import get_snapshots
 

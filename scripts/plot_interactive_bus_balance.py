@@ -1,6 +1,43 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Create interactive bus energy balance time series plots.
+
+This script generates interactive HTML plots showing energy balance time series
+for buses in the final network. It calculates and visualizes the contribution of
+different carriers (generation, storage, loads, links) to the energy balance
+at specified buses, creating stacked area charts with positive/negative values.
+
+The plots show generation as positive values and consumption as negative values to provide an energy balance at each bus over time.
+The scripts does not use `n.statistics.energy_balance` but calculates the balance directly from the time series data of generators, storage units, loads, and links connected to each bus.
+
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    plotting:
+        tech_colors: # Color mapping for different technologies/carriers
+        balance_timeseries:
+            bus_name_pattern: # Pattern to filter buses (e.g., 'DE*' for German buses)
+
+Inputs
+------
+- `resources/<run_name>/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc`: Solved PyPSA network
+- `config/plotting/rc.mplstyle`: Matplotlib style configuration
+
+Outputs
+-------
+- `results/<run_name>/plots/balance_timeseries/`: Directory containing HTML files with interactive plots
+  - `ts-balance-{bus_name}-native-{time}.html`: Interactive time series plot for each bus
+
+Notes
+-----
+Uses Plotly for interactive visualization. Supports filtering buses by pattern
+(shell-style wildcards). Processes multiple buses in parallel for efficiency.
+"""
 
 import fnmatch
 import logging
@@ -23,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 
 # Add a function to convert matplotlib color codes to Plotly compatible colors
-def convert_color_for_plotly(color):
+def convert_color_for_plotly(color: str) -> str:
     """Convert matplotlib color codes to Plotly-compatible color formats."""
     # Common matplotlib single letter color codes
     mpl_to_plotly = {
@@ -151,7 +188,9 @@ def get_bus_balance(n: pypsa.Network, bus_name: str) -> pd.DataFrame:
     return result
 
 
-def prepare_all_buses_data(n: pypsa.Network, bus_name_pattern: str = None) -> dict:
+def prepare_all_buses_data(
+    n: pypsa.Network, bus_name_pattern: str | None = None
+) -> dict[str, pd.DataFrame]:
     """
     Prepare data for all buses in the network, optionally filtering by a pattern.
 
@@ -204,9 +243,20 @@ def prepare_all_buses_data(n: pypsa.Network, bus_name_pattern: str = None) -> di
 
 
 def plot_stacked_area_steplike(
-    ax: plt.Axes, df: pd.DataFrame, colors: dict | pd.Series = {}
-):
-    """Plot stacked area chart with step-like transitions."""
+    ax: plt.Axes, df: pd.DataFrame, colors: dict[str, str] | pd.Series = {}
+) -> None:
+    """
+    Plot stacked area chart with step-like transitions.
+
+    Parameters
+    ----------
+    ax : matplotlib.pyplot.Axes
+        Matplotlib axes object to plot on.
+    df : pd.DataFrame
+        DataFrame with time series data to plot.
+    colors : dict[str, str] | pd.Series, optional
+        Color mapping for carriers.
+    """
     if isinstance(colors, pd.Series):
         colors = colors.to_dict()
 
@@ -226,8 +276,17 @@ def plot_stacked_area_steplike(
         previous_series = df_cum[col].values
 
 
-def setup_time_axis(ax: plt.Axes, timespan: pd.Timedelta):
-    """Configure time axis formatting based on timespan."""
+def setup_time_axis(ax: plt.Axes, timespan: pd.Timedelta) -> None:
+    """
+    Configure time axis formatting based on timespan.
+
+    Parameters
+    ----------
+    ax : matplotlib.pyplot.Axes
+        Matplotlib axes object to configure.
+    timespan : pd.Timedelta
+        Time range of the data for appropriate formatting.
+    """
     long_time_frame = timespan > pd.Timedelta(weeks=5)
 
     if not long_time_frame:
@@ -249,12 +308,33 @@ def plot_energy_balance_timeseries(
     time: pd.DatetimeIndex | None = None,
     ylim: float | None = None,
     resample: str | None = None,
-    rename: dict = {},
+    rename: dict[str, str] = {},
     ylabel: str = "",
-    colors: dict | pd.Series = {},
-    directory="",
-):
-    """Create interactive energy balance time series plot with positive/negative stacked areas."""
+    colors: dict[str, str] | pd.Series = {},
+    directory: str = "",
+) -> None:
+    """
+    Create interactive energy balance time series plot with positive/negative stacked areas.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Energy balance data with carriers as columns.
+    time : pd.DatetimeIndex, optional
+        Time period to plot. If None, plots full time series.
+    ylim : float, optional
+        Y-axis limits. If None, calculated automatically.
+    resample : str, optional
+        Resampling frequency (e.g., 'D' for daily).
+    rename : dict[str, str], optional
+        Mapping to rename carriers for display.
+    ylabel : str, optional
+        Label for y-axis and filename.
+    colors : dict[str, str] | pd.Series, optional
+        Color mapping for carriers.
+    directory : str, optional
+        Output directory for HTML file.
+    """
     if time is not None:
         df = df.loc[time]
 
@@ -345,7 +425,7 @@ def plot_energy_balance_timeseries(
         ylim = np.ceil(max(-neg.sum(axis=1).min(), pos.sum(axis=1).max()) / 50) * 50
 
     # Set layout
-    unit = "kt/h" if "co2" in ylabel.lower() else "GW"
+    unit = "kt/h" if "co2" in ylabel.lower() else "MW"
     fig.update_layout(
         title="",
         yaxis_title=f"{ylabel} balance [{unit}]",
@@ -375,8 +455,26 @@ def plot_energy_balance_timeseries(
     fig.write_html(f"{directory}/{fn}")
 
 
-def process_carrier(bus_name, bus_data, colors, output_dir):
-    """Process carrier data and create plots for specific carrier group."""
+def process_carrier(
+    bus_name: str,
+    bus_data: dict[str, pd.DataFrame],
+    colors: dict[str, str] | pd.Series,
+    output_dir: str,
+) -> None:
+    """
+    Process carrier data and create plots for specific bus.
+
+    Parameters
+    ----------
+    bus_name : str
+        Name of the bus to process.
+    bus_data : dict[str, pd.DataFrame]
+        Dictionary mapping bus names to energy balance DataFrames.
+    colors : dict[str, str] | pd.Series
+        Color mapping for carriers.
+    output_dir : str
+        Directory to save output files.
+    """
 
     df = bus_data[bus_name]
 

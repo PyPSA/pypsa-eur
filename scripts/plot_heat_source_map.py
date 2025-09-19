@@ -1,12 +1,52 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
-
 """
-Plot heat source temperature and energy maps as interactive HTML files.
+Create interactive maps for heat source temperature and energy data.
+
+This script generates interactive Folium maps displaying heat source temperature
+and energy potential data across European regions. It visualizes spatial distributions
+of renewable heat sources like river water, sea water, and ambient air temperatures,
+along with their energy potentials for district heating applications.
+
+The script creates two types of maps:
+- Temperature maps showing spatial temperature distributions (°C)
+- Energy maps showing total energy potential (TWh) where available
+
+Maps include regional boundaries with aggregated values and detailed point data
+with interactive tooltips. Temperature data is averaged by region while energy
+data is summed by region to show total potential.
+
+Relevant Settings
+-----------------
+
+.. code:: yaml
+
+    plotting:
+        heat_source_map:
+            temperature_cmap: "Reds"  # Colormap for temperature data
+            energy_cmap: "Oranges"    # Colormap for energy data
+
+Inputs
+------
+- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Regional boundaries
+- `resources/<run_name>/temp_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Temperature data
+- `resources/<run_name>/heat_source_energy_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Energy data (optional)
+
+Outputs
+-------
+- `results/<run_name>/plots/heat_source_map_{carrier}_temperature.html`: Interactive temperature map
+- `results/<run_name>/plots/heat_source_map_{carrier}_energy.html`: Interactive energy potential map
+
+Notes
+-----
+Uses Folium for interactive web-based mapping. Temperature values in °C,
+energy values converted from MWh to TWh for display. Handles missing energy
+data by creating empty placeholder maps.
 """
 
 import logging
+from typing import Optional
 
 import folium
 import geopandas as gpd
@@ -27,38 +67,49 @@ def plot_heat_source_map(
     longitude_name: str = "longitude",
     latitude_name: str = "latitude",
     onshore_region_name: str = "name",
-    title: str = None,
+    title: Optional[str] = None,
     cmap: str = "viridis",
     aggregate_type: str = "mean",  # 'mean' for temperature, 'sum' for energy
-):
+) -> folium.Map:
     """
-    Create an interactive folium map from a DataArray with heat source data.
+    Create an interactive Folium map from heat source data.
+
+    Generates a web-based interactive map displaying heat source temperature or
+    energy data with regional boundaries and point-based data visualization.
+    Regional values are aggregated and displayed in tooltips while individual
+    data points show detailed values.
 
     Parameters
     ----------
     da : xr.DataArray
-        Data array containing the heat source data
+        DataArray containing heat source data with spatial coordinates.
     regions_onshore : gpd.GeoDataFrame
-        GeoDataFrame with onshore region geometries
+        GeoDataFrame with onshore region geometries for boundary overlay.
     var_name : str
-        Name of the variable to plot
+        Name of the variable to plot from the DataArray.
     longitude_name : str, default 'longitude'
-        Name of the longitude coordinate in the DataArray
+        Name of the longitude coordinate in the DataArray.
     latitude_name : str, default 'latitude'
-        Name of the latitude coordinate in the DataArray
+        Name of the latitude coordinate in the DataArray.
     onshore_region_name : str, default 'name'
-        Name of the column in regions_onshore containing region identifiers
+        Column name in regions_onshore containing region identifiers.
     title : str, optional
-        Title for the map
+        Title for the map legend. If None, uses var_name.
     cmap : str, default 'viridis'
-        Colormap to use for the plot
+        Matplotlib colormap name for data visualization.
     aggregate_type : str, default 'mean'
-        Type of aggregation to perform for region totals ('mean' for temperature, 'sum' for energy)
+        Aggregation method for regional values. Use 'mean' for temperature
+        data and 'sum' for energy data.
 
     Returns
     -------
     folium.Map
-        Interactive map with heat source data
+        Interactive map with layered heat source data and regional boundaries.
+
+    Raises
+    ------
+    ValueError
+        If required columns/coordinates are missing or invalid aggregate_type.
     """
     # Reset index if needed and check for required column
     if hasattr(regions_onshore, "index"):
