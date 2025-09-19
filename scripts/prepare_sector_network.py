@@ -1596,7 +1596,7 @@ def insert_electricity_distribution_grid(
 
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
-        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
         n.add(

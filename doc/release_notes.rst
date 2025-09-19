@@ -11,6 +11,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country and cluster. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1835)
+
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
   when running with few nodes such that they are all already connected by existing gas
   lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
