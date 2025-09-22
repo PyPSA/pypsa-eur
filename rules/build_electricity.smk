@@ -91,8 +91,8 @@ rule base_network:
         europe_shape=resources("europe_shape.geojson"),
     output:
         base_network=resources("networks/base.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        regions_onshore=resources("regions_onshore_base.geojson"),
+        regions_offshore=resources("regions_offshore_base.geojson"),
         admin_shapes=resources("admin_shapes.geojson"),
     log:
         logs("base_network.log"),
@@ -585,8 +585,8 @@ rule simplify_network:
         p_min_pu=config_provider("links", "p_min_pu", default=-1.0),
     input:
         network=resources("networks/base_extended.nc"),
-        regions_onshore=resources("regions_onshore.geojson"),
-        regions_offshore=resources("regions_offshore.geojson"),
+        regions_onshore=resources("regions_onshore_base.geojson"),
+        regions_offshore=resources("regions_offshore_base.geojson"),
         admin_shapes=resources("admin_shapes.geojson"),
     output:
         network=resources("networks/base_s.nc"),
@@ -655,8 +655,8 @@ rule cluster_network:
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        regions_onshore=resources("regions_onshore_base_s.geojson"),
-        regions_offshore=resources("regions_offshore_base_s.geojson"),
+        regions_onshore=resources("regions_onshore_base.geojson"),
+        regions_offshore=resources("regions_offshore_base.geojson"),
         hac_features=lambda w: (
             resources("hac_features.nc")
             if config_provider("clustering", "cluster_network", "algorithm")(w)
@@ -666,8 +666,8 @@ rule cluster_network:
         load=resources("electricity_demand_base_s.nc"),
     output:
         network=resources("networks/clustered.nc"),
-        regions_onshore=resources("regions_onshore_clustered.geojson"),
-        regions_offshore=resources("regions_offshore_clustered.geojson"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        regions_offshore=resources("regions_offshore.geojson"),
         busmap=resources("busmap.csv"),
         linemap=resources("linemap.csv"),
     log:
