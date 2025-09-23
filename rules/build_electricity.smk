@@ -12,7 +12,7 @@ rule build_electricity_demand:
     input:
         reported=ancient("data/electricity_demand_raw.csv"),
         synthetic=lambda w: (
-            ancient("data/load_synthetic_raw.csv")
+            ancient(rules.retrieve_synthetic_electricity_demand.output["csv"])
             if config_provider("load", "supplement_synthetic")(w)
             else []
         ),
@@ -106,10 +106,11 @@ rule base_network:
 
 rule build_osm_boundaries:
     input:
-        json="data/osm-boundaries/json/{country}_adm1.json",
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        json=f"{rules.retrieve_osm_boundaries.params["data_folder"]}/{{country}}_adm1.json",
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
-        boundary="data/osm-boundaries/build/{country}_adm1.geojson",
+        #boundary="data/osm-boundaries/build/{country}_adm1.geojson",
+        boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",
     threads: 1
@@ -151,12 +152,12 @@ rule build_shapes:
         config_provider("clustering", "mode"),
         countries=config_provider("countries"),
     input:
-        eez=ancient("data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg"),
+        eez=ancient(rules.retrieve_eez.output["gpkg"]),
         nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
-        ba_adm1="data/osm-boundaries/build/BA_adm1.geojson",
-        md_adm1="data/osm-boundaries/build/MD_adm1.geojson",
-        ua_adm1="data/osm-boundaries/build/UA_adm1.geojson",
-        xk_adm1="data/osm-boundaries/build/XK_adm1.geojson",
+        ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
+        md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
+        ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
+        xk_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/XK_adm1.geojson",
         nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
         nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
         bidding_zones=lambda w: (
@@ -164,8 +165,8 @@ rule build_shapes:
             if config_provider("clustering", "mode")(w) == "administrative"
             else []
         ),
-        other_gdp="data/bundle/GDP_per_capita_PPP_1990_2015_v2.nc",
-        other_pop="data/bundle/ppp_2019_1km_Aggregated.tif",
+        other_gdp=rules.retrieve_gdp_per_capita.output["gdp"],
+        other_pop=rules.retrieve_population_count.output["tif"],
     output:
         country_shapes=resources("country_shapes.geojson"),
         offshore_shapes=resources("offshore_shapes.geojson"),
@@ -206,7 +207,7 @@ if CUTOUT_DATASET["source"] in ["build"]:
 
 rule build_ship_raster:
     input:
-        ship_density="data/shipdensity_global.zip",
+        ship_density=rules.retrieve_ship_raster.output["zip_file"],
         cutout=lambda w: input_cutout(w),
     output:
         resources("shipdensity_raster.tif"),
@@ -226,11 +227,11 @@ rule determine_availability_matrix_MD_UA:
     params:
         renewable=config_provider("renewable"),
     input:
-        copernicus="data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+        copernicus=rules.download_copernicus_land_cover.output["tif"],
         wdpa=rules.retrieve_wdpa.output["gpkg"],
         wdpa_marine=rules.retrieve_wdpa_marine.output["gpkg"],
         gebco=lambda w: (
-            "data/bundle/gebco/GEBCO_2014_2D.nc"
+            rules.retrieve_gebco.output["gebco"]
             if config_provider("renewable", w.technology)(w).get("max_depth")
             else []
         ),
@@ -283,20 +284,16 @@ rule determine_availability_matrix:
         renewable=config_provider("renewable"),
     input:
         unpack(input_ua_md_availability_matrix),
-        corine=ancient("data/bundle/corine/g250_clc06_V18_5.tif"),
+        corine=ancient(f"{rules.retrieve_corine.output['tif_file']}"),
         natura=lambda w: (
             NATURA_DATASET["folder"] / "natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
-        luisa=lambda w: (
-            "data/LUISA_basemap_020321_50m.tif"
-            if config_provider("renewable", w.technology, "luisa")(w)
-            else []
-        ),
+        luisa=rules.retrieve_luisa_land_cover.output["tif"],
         gebco=ancient(
             lambda w: (
-                "data/bundle/gebco/GEBCO_2014_2D.nc"
+                rules.retrieve_gebco.output["gebco"]
                 if (
                     config_provider("renewable", w.technology)(w).get("max_depth")
                     or config_provider("renewable", w.technology)(w).get("min_depth")

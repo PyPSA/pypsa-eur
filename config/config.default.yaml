@@ -88,7 +88,6 @@ snapshots:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
-  retrieve_databundle: true
   retrieve_cost_data: true
   drop_leap_day: true
 
@@ -1006,7 +1005,7 @@ data:
     source: "archive"
     version_or_latest: "latest"
   osm:
-    source: "archive" # "archive" or "build"
+    source: "archive"
     version_or_latest: "latest"
   worldbank_urban_population:
     source: "archive"
@@ -1036,6 +1035,63 @@ data:
     source: "archive"
     version_or_latest: "latest"
   wdpa_marine:
+    source: "archive"
+    version_or_latest: "latest"
+  luisa_land_cover:
+    source: "archive"
+    version_or_latest: "latest"
+  jrc_idees:
+    source: "archive"
+    version_or_latest: "latest"
+  scigrid_gas:
+    source: "primary"
+    version_or_latest: "latest"
+  synthetic_electricity_demand:
+    source: "primary"
+    version_or_latest: "latest"
+  copernicus_land_cover:
+    source: "primary"
+    version_or_latest: "latest"
+  ship_raster:
+    source: "archive"
+    version_or_latest: "latest"
+  eez:
+    source: "archive"
+    version_or_latest: "latest"
+  nuts3_population:
+    source: "archive"
+    version_or_latest: "latest"
+  gdp_per_capita:
+    source: "archive"
+    version_or_latest: "latest"
+  population_count:
+    source: "archive"
+    version_or_latest: "latest"
+  ghg_emissions:
+    source: "archive"
+    version_or_latest: "latest"
+  gebco:
+    source: "archive"
+    version_or_latest: "latest"
+  attributed_ports:
+    source: "archive"
+    version_or_latest: "latest"
+  corine:
+    source: "archive"
+    version_or_latest: "latest"
+  emobility:
+    source: "archive"
+    version_or_latest: "latest"
+  h2_salt_caverns:
+    source: "archive"
+    version_or_latest: "latest"
+  lau_regions:
+    source: "archive"
+    version_or_latest: "latest"
+  aquifer_data:
+    source: "archive"
+    version_or_latest: "latest"
+  osm_boundaries:
     source: "archive"
     version_or_latest: "latest"
   gem_gspt:
@@ -1071,6 +1127,9 @@ data:
   cutout:
     source: "build"
     version_or_latest: "latest"
+
+secrets:
+  corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:
