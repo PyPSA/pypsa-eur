@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
 """
 To download CORINE dataset from the primary data source - https://land.copernicus.eu/en/products/corine-land-cover/clc-2012
 
