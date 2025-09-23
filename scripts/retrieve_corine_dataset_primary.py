@@ -13,9 +13,11 @@ import logging
 import time
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from shutil import unpack_archive, copy2
+from shutil import copy2, unpack_archive
+
 import jwt
 import requests
+
 from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
@@ -51,9 +53,11 @@ def load_access_token(apikey):
         )
         token_request.raise_for_status()
         data = token_request.json()
-        access_token = data.get('access_token')
+        access_token = data.get("access_token")
     except JSONDecodeError as e:
-        raise ValueError("Missing or invalid access_token for corine. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding") from e
+        raise ValueError(
+            "Missing or invalid access_token for corine. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding"
+        ) from e
 
     return access_token
 
@@ -134,10 +138,16 @@ if __name__ == "__main__":
                             output_folder = Path(output_zip_file).parent
                             unpack_archive(output_zip_file, output_folder)
 
-                            #unpack the actual dataset inside the downloaded zip - 
+                            # unpack the actual dataset inside the downloaded zip -
                             # with new versions, the folder structures and naming convention might change requiring a revisit here
-                            unpack_archive(f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m.zip",f"{output_folder}/Results/")
-                            copy2(f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",tif_file)
+                            unpack_archive(
+                                f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m.zip",
+                                f"{output_folder}/Results/",
+                            )
+                            copy2(
+                                f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",
+                                tif_file,
+                            )
                             break
 
                         else:

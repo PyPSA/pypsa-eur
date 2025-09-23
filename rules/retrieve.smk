@@ -87,7 +87,6 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
             zip=f"{CORINE_DATASET["folder"]}/corine.zip",
             directory=directory(f"{CORINE_DATASET["folder"]}"),
             tif_file=f"{CORINE_DATASET["folder"]}/corine.tif",
-
         run:
             response = requests.get(CORINE_DATASET["url"])
             with open(output.zip, "wb") as f:
@@ -95,7 +94,10 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
 
             output_folder = Path(output["zip"]).parent
             unpack_archive(output.zip, output_folder)
-            copy2(f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",output["tif_file"])
+            copy2(
+                f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
+                output["tif_file"],
+            )
 
 
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
@@ -128,7 +130,7 @@ if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in 
             ),
         output:
             geojson=f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
-        retries: 2,
+        retries: 2
         run:
             move(input[0], output[0])
 
@@ -143,7 +145,7 @@ if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
                 GDP_PER_CAPITA_DATASET["url"],
             ),
         output:
-            gdp = f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
+            gdp=f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
         retries: 2
         run:
             move(input[0], output[0])
@@ -160,7 +162,7 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
                 POPULATION_COUNT_DATASET["url"],
             ),
         output:
-            tif = f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
+            tif=f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2
         run:
             move(input[0], output[0])
@@ -188,15 +190,24 @@ if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
             ),
         output:
             csv=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
-            zip=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv.zip" if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
-            directory=directory(f"{GHG_EMISSIONS_DATASET["folder"]}") if GHG_EMISSIONS_DATASET["source"] == "primary" else [],
+            zip=(
+                f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv.zip"
+                if GHG_EMISSIONS_DATASET["source"] == "primary"
+                else []
+            ),
+            directory=(
+                directory(f"{GHG_EMISSIONS_DATASET["folder"]}")
+                if GHG_EMISSIONS_DATASET["source"] == "primary"
+                else []
+            ),
         retries: 2
         run:
             if GHG_EMISSIONS_DATASET["source"] == "primary":
-                copy2(input["ghg"], output["zip"]) 
-                unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"]) 
+                copy2(input["ghg"], output["zip"])
+                unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"])
             else:
-                move(input["ghg"],output["csv"])
+                move(input["ghg"], output["csv"])
+
 
 
 if (GEBCO_DATASET := dataset_version("gebco"))["source"] in ["archive", "primary"]:
@@ -256,7 +267,7 @@ if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] i
             ),
         output:
             json=f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
-        retries: 2,
+        retries: 2
         run:
             move(input[0], output[0])
 
@@ -566,7 +577,7 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
                 COPERNICUS_LAND_COVER_DATASET["url"],
             ),
         output:
-            tif = f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+            tif=f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             move(input[0], output[0])
             validate_checksum(output[0], input[0])
@@ -1104,17 +1115,24 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
             zip_file=storage(AQUIFER_DATA_DATASET["url"]),
         output:
             zip_file=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.zip",
-            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{{ext}}",ext=[
-                "shp","shx","dbf","cpg","prj","sbn","sbx",
-            ]),
+            aquifer_shapes=expand(
+                f"{AQUIFER_DATA_DATASET['folder']}/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{{ext}}",
+                ext=[
+                    "shp",
+                    "shx",
+                    "dbf",
+                    "cpg",
+                    "prj",
+                    "sbn",
+                    "sbx",
+                ],
+            ),
         run:
-            
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(
                 output["zip_file"],
                 AQUIFER_DATA_DATASET["folder"],
             )
-
 
 
 if config["enable"]["retrieve"]:

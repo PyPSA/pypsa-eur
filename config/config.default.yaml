@@ -1005,7 +1005,7 @@ data:
     source: "archive"
     version_or_latest: "latest"
   osm:
-    source: "archive" 
+    source: "archive"
     version_or_latest: "latest"
   worldbank_urban_population:
     source: "archive"
@@ -1038,10 +1038,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   luisa_land_cover:
-    source: "archive" 
-    version_or_latest: "latest" 
+    source: "archive"
+    version_or_latest: "latest"
   jrc_idees:
-    source: "archive" 
+    source: "archive"
     version_or_latest: "latest"
   scigrid_gas:
     source: "primary"
