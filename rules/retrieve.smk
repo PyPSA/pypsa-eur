@@ -85,19 +85,19 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in [
     "archive"
 ]:
     rule retrieve_corine:
-        params:
-            url = CORINE_DATASET["url"],
         output:
             zip=f"{CORINE_DATASET["folder"]}/corine.zip",
             directory=directory(f"{CORINE_DATASET["folder"]}"),
-            tif_file=f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
+            tif_file=f"{CORINE_DATASET["folder"]}/corine.tif",
+
         run:
-            response = requests.get(params["url"])
+            response = requests.get(CORINE_DATASET["url"])
             with open(output.zip, "wb") as f:
                 f.write(response.content)
 
             output_folder = Path(output["zip"]).parent
             unpack_archive(output.zip, output_folder)
+            copy2(f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",output["tif_file"])
 
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
     "primary"
@@ -107,7 +107,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in [
             apikey = config["secrets"]["corine"],
         output:
             zip=f"{CORINE_DATASET["folder"]}/corine.zip",
-            tif_file_path=f"{CORINE_DATASET["folder"]}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",
+            tif_file=f"{CORINE_DATASET["folder"]}/corine.tif",
         log:
             logs("retrieve_corine_primary.log"),
         resources:
@@ -1091,7 +1091,7 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
             ),
         output:
             zip_file=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.zip",
-            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}"+"/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{ext}",ext=[
+            aquifer_shapes = expand(f"{AQUIFER_DATA_DATASET['folder']}/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{{ext}}",ext=[
                 "shp","shx","dbf","cpg","prj","sbn","sbx",
             ]),
         run:

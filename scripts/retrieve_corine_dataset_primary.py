@@ -21,7 +21,7 @@ import jwt
 
 import requests
 
-from shutil import unpack_archive
+from shutil import unpack_archive, copy2
 
 from pathlib import Path
 
@@ -59,9 +59,8 @@ def load_access_token(apikey):
         token_request.raise_for_status()
         data = token_request.json()
         access_token = data.get('access_token')
-    except JSONDecodeError:
-        logger.info("API key missing. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding")
-        access_token = None
+    except JSONDecodeError as e:
+        raise ValueError("Missing or invalid access_token for corine. Check usage instructions in the scripts/retrieve_corine_dataset_primary.py script before proceeding") from e
 
     return access_token
 
@@ -76,6 +75,7 @@ if __name__ == "__main__":
 
     apikey = snakemake.params["apikey"]
     output_zip_file = snakemake.output["zip"]
+    tif_file = snakemake.output["tif_file"]
     access_token = load_access_token(apikey)
 
     if access_token:
@@ -122,8 +122,10 @@ if __name__ == "__main__":
                             output_folder = Path(output_zip_file).parent
                             unpack_archive(output_zip_file, output_folder)
 
-                            #unpack the actual dataset inside the downloaded zip
+                            #unpack the actual dataset inside the downloaded zip - 
+                            # with new versions, the folder structures and naming convention might change requiring a revisit here
                             unpack_archive(f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m.zip",f"{output_folder}/Results/")
+                            copy2(f"{output_folder}/Results/u2018_clc2012_v2020_20u1_raster100m/DATA/U2018_CLC2012_V2020_20u1.tif",tif_file)
                             break
 
                         else:
