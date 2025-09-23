@@ -739,7 +739,7 @@ if config["enable"]["retrieve"]:
                     f"https://zenodo.org/records/15828866/files/seawater_temperature.nc"
                 ),
             output:
-                seawater_temperature="data/seawater_temperature_test_cutout.nc",
+                seawater_temperature="data/seawater_temperature_2013.nc",
             log:
                 "logs/retrieve_seawater_temperature_test_cutout.log",
             resources:
