@@ -7,23 +7,16 @@ Usage Instructions:
     #   secrets:
     #       corine: ''
 """
+
+import json
 import logging
-
-import pandas as pd
-
-from scripts._helpers import configure_logging, set_scenario_config
-
-import json, time
-
+import time
 from json.decoder import JSONDecodeError
-
-import jwt 
-
-import requests
-
-from shutil import unpack_archive, copy2
-
 from pathlib import Path
+from shutil import unpack_archive, copy2
+import jwt
+import requests
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -35,26 +28,26 @@ def load_access_token(apikey):
     #       corine: ''
     try:
         service_key = json.loads(apikey)
-        private_key = service_key['private_key'].encode('utf-8')
+        private_key = service_key["private_key"].encode("utf-8")
         claim_set = {
-            "iss": service_key['client_id'],
-            "sub": service_key['user_id'],
-            "aud": service_key['token_uri'],
+            "iss": service_key["client_id"],
+            "sub": service_key["user_id"],
+            "aud": service_key["token_uri"],
             "iat": int(time.time()),
             "exp": int(time.time() + 3600),  # max 1 hour
         }
-        assertion = jwt.encode(claim_set, private_key, algorithm='RS256')
+        assertion = jwt.encode(claim_set, private_key, algorithm="RS256")
 
         token_request = requests.post(
-            service_key['token_uri'],
+            service_key["token_uri"],
             headers={
                 "Accept": "application/json",
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded",
             },
             data={
-                'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion': assertion
-            }
+                "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                "assertion": assertion,
+            },
         )
         token_request.raise_for_status()
         data = token_request.json()
@@ -68,6 +61,7 @@ def load_access_token(apikey):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
+
         snakemake = mock_snakemake("retrieve_corine_dataset_primary")
 
     configure_logging(snakemake)
@@ -82,16 +76,25 @@ if __name__ == "__main__":
         HEADERS = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": f"Bearer {access_token}",
         }
 
-        requests.post('https://land.copernicus.eu/api/@datarequest_post', 
-                    headers=HEADERS, 
-                    json={'Datasets': [{'DatasetID': 'a5ee71470be04d66bcff498f94ceb5dc', 
-                                        'FileID': '9f992dad-d129-408e-be66-821adbd52a46'}]}
-                    )
+        requests.post(
+            "https://land.copernicus.eu/api/@datarequest_post",
+            headers=HEADERS,
+            json={
+                "Datasets": [
+                    {
+                        "DatasetID": "a5ee71470be04d66bcff498f94ceb5dc",
+                        "FileID": "9f992dad-d129-408e-be66-821adbd52a46",
+                    }
+                ]
+            },
+        )
 
-        status_url = "https://land.copernicus.eu/api/@datarequest_search?status=Finished_ok"
+        status_url = (
+            "https://land.copernicus.eu/api/@datarequest_search?status=Finished_ok"
+        )
 
         download_link = None
 
@@ -101,11 +104,13 @@ if __name__ == "__main__":
         for attempt in range(20):
             time.sleep(60)  # avoid 429 Too Many Requests
             response = requests.get(status_url, headers=HEADERS)
-            
+
             if response.status_code != 200:
-                logger.info(f"Attempt {attempt + 1}: Status check failed — {response.status_code}")
+                logger.info(
+                    f"Attempt {attempt + 1}: Status check failed — {response.status_code}"
+                )
                 continue
-            
+
             results = response.json()
 
             for result in results:
@@ -113,7 +118,14 @@ if __name__ == "__main__":
                     download_link = results[result].get("DownloadURL")
 
                     if download_link:
-                        file_response = requests.get(download_link, headers={"Authorization": f"Bearer {access_token}","User-Agent": "curl/7.81.0"}, allow_redirects=False)
+                        file_response = requests.get(
+                            download_link,
+                            headers={
+                                "Authorization": f"Bearer {access_token}",
+                                "User-Agent": "curl/7.81.0",
+                            },
+                            allow_redirects=False,
+                        )
                         if file_response.status_code == 200:
                             with open(output_zip_file, "wb") as f:
                                 f.write(file_response.content)
