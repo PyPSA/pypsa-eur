@@ -3195,12 +3195,6 @@ def add_heat(
             )
 
             if heat_source in params.limited_heat_sources:
-                # get potential
-                p_max_source = pd.read_csv(
-                    heat_source_profile_files[heat_source],
-                    index_col=0,
-                ).squeeze()[nodes]
-
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
@@ -3212,32 +3206,42 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
-                    capital_cost = (
-                        costs.at[
-                            heat_system.heat_source_costs_name(heat_source),
-                            "capital_cost",
-                        ]
-                        * overdim_factor
-                    )
-                    lifetime = costs.at[
-                        heat_system.heat_source_costs_name(heat_source), "lifetime"
-                    ]
-                else:
-                    capital_cost = 0.0
-                    lifetime = np.inf
-                n.add(
-                    "Generator",
-                    nodes,
-                    suffix=f" {heat_carrier}",
-                    bus=nodes + f" {heat_carrier}",
-                    carrier=heat_carrier,
-                    p_nom_extendable=True,
-                    capital_cost=capital_cost,
-                    lifetime=lifetime,
-                    p_nom_max=p_max_source,
-                )
+                # Check if heat source requires a separate generator
+                heat_source_config = params.limited_heat_sources[heat_source]
+                requires_generator = heat_source_config["requires_generator"]
 
+                if requires_generator:
+                    # Standard heat source with potential file and generator
+                    p_max_source = pd.read_csv(
+                        heat_source_profile_files[heat_source],
+                        index_col=0,
+                    ).squeeze()[nodes]
+
+                    if heat_source in params.direct_utilisation_heat_sources:
+                        capital_cost = (
+                            costs.at[
+                                heat_system.heat_source_costs_name(heat_source),
+                                "capital_cost",
+                            ]
+                            * overdim_factor
+                        )
+                        lifetime = costs.at[
+                            heat_system.heat_source_costs_name(heat_source), "lifetime"
+                        ]
+                    else:
+                        capital_cost = 0.0
+                        lifetime = np.inf
+                    n.add(
+                        "Generator",
+                        nodes,
+                        suffix=f" {heat_carrier}",
+                        bus=nodes + f" {heat_carrier}",
+                        carrier=heat_carrier,
+                        p_nom_extendable=True,
+                        capital_cost=capital_cost,
+                        lifetime=lifetime,
+                        p_nom_max=p_max_source,
+                    )
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
                     "Link",
@@ -5346,75 +5350,83 @@ def add_waste_heat(
 
         # Fischer-Tropsch waste heat
         if (
-            options["use_fischer_tropsch_waste_heat"]
+            "Fischer-Tropsch excess" in options["heat_pump_sources"]["urban central"]
             and "Fischer-Tropsch" in link_carriers
         ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
                 urban_central + " urban central heat"
             )
-            n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = (
-                0.95 - n.links.loc[urban_central + " Fischer-Tropsch", "efficiency"]
-            ) * options["use_fischer_tropsch_waste_heat"]
+            n.links.loc[urban_central + " Fischer-Tropsch", "efficiency3"] = costs.at[
+                "Fischer-Tropsch", "efficiency-heat"
+            ]
 
         # Sabatier process waste heat
-        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
+        if (
+            "Sabatier excess" in options["heat_pump_sources"]["urban central"]
+            and "Sabatier" in link_carriers
+        ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
-                0.95 - n.links.loc[urban_central + " Sabatier", "efficiency"]
-            ) * options["use_methanation_waste_heat"]
+                1
+                - costs.at["methanation", "heat-losses"]
+                - n.links.loc[urban_central + " Sabatier", "efficiency"]
+            )
 
         # Haber-Bosch process waste heat
-        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
+        if (
+            "Haber-Bosch excess" in options["heat_pump_sources"]["urban central"]
+            and "Haber-Bosch" in link_carriers
+        ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
-            total_energy_input = (
-                cf_industry["MWh_H2_per_tNH3_electrolysis"]
-                + cf_industry["MWh_elec_per_tNH3_electrolysis"]
-            ) / cf_industry["MWh_NH3_per_tNH3"]
-            electricity_input = (
-                cf_industry["MWh_elec_per_tNH3_electrolysis"]
-                / cf_industry["MWh_NH3_per_tNH3"]
-            )
-            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = (
-                0.15 * total_energy_input / electricity_input
-            ) * options["use_haber_bosch_waste_heat"]
+            n.links.loc[urban_central + " Haber-Bosch", "efficiency3"] = costs.at[
+                "Haber-Bosch", "efficiency-heat"
+            ]
 
         # Methanolisation waste heat
         if (
-            options["use_methanolisation_waste_heat"]
+            "methanolisation excess" in options["heat_pump_sources"]["urban central"]
             and "methanolisation" in link_carriers
         ):
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
                 urban_central + " urban central heat"
             )
-            n.links.loc[urban_central + " methanolisation", "efficiency4"] = (
-                costs.at["methanolisation", "heat-output"]
-                / costs.at["methanolisation", "hydrogen-input"]
-            ) * options["use_methanolisation_waste_heat"]
+            n.links.loc[urban_central + " methanolisation", "efficiency4"] = costs.at[
+                "methanolisation", "efficiency-heat"
+            ]
 
         # Electrolysis waste heat
         if (
-            options["use_electrolysis_waste_heat"]
+            "electrolysis excess" in options["heat_pump_sources"]["urban central"]
             and "H2 Electrolysis" in link_carriers
         ):
+            # Connect electrolysis waste heat to electrolysis excess heat bus for heat pump boosting
             n.links.loc[urban_central + " H2 Electrolysis", "bus2"] = (
-                urban_central + " urban central heat"
+                urban_central + " urban central electrolysis excess heat"
             )
-            n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = (
-                0.84 - n.links.loc[urban_central + " H2 Electrolysis", "efficiency"]
-            ) * options["use_electrolysis_waste_heat"]
+            n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = costs.at[
+                "H2 Electrolysis", "efficiency-heat"
+            ]
 
         # Fuel cell waste heat
-        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
+        if (
+            "fuel cell excess" in options["heat_pump_sources"]["urban central"]
+            and "H2 Fuel Cell" in link_carriers
+        ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
             ) * options["use_fuel_cell_waste_heat"]
+            n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
+                1
+                - costs.at["fuel cell", "heat-losses"]
+                - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
+            )
 
 
 def add_agriculture(

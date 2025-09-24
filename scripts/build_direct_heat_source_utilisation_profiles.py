@@ -50,7 +50,7 @@ def get_source_temperature(heat_source_key: str):
     else:
         raise ValueError(
             f"Unknown heat source {heat_source_key}. Must be one of "
-            f"{snakemake.params.heat_sources.keys()}."
+            f"{snakemake.params.direct_utilisation_heat_sources.keys()}."
         )
 
 
