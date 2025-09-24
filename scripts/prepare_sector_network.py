@@ -5350,7 +5350,7 @@ def add_waste_heat(
 
         # Fischer-Tropsch waste heat
         if (
-            options["use_fischer_tropsch_waste_heat"]
+            "Fischer-Tropsch excess" in options["heat_pump_sources"]["urban central"]
             and "Fischer-Tropsch" in link_carriers
         ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
@@ -5361,7 +5361,10 @@ def add_waste_heat(
             ]
 
         # Sabatier process waste heat
-        if options["use_methanation_waste_heat"] and "Sabatier" in link_carriers:
+        if (
+            "Sabatier excess" in options["heat_pump_sources"]["urban central"]
+            and "Sabatier" in link_carriers
+        ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -5372,7 +5375,10 @@ def add_waste_heat(
             )
 
         # Haber-Bosch process waste heat
-        if options["use_haber_bosch_waste_heat"] and "Haber-Bosch" in link_carriers:
+        if (
+            "Haber-Bosch excess" in options["heat_pump_sources"]["urban central"]
+            and "Haber-Bosch" in link_carriers
+        ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
                 urban_central + " urban central heat"
             )
@@ -5382,7 +5388,7 @@ def add_waste_heat(
 
         # Methanolisation waste heat
         if (
-            options["use_methanolisation_waste_heat"]
+            "methanolisation excess" in options["heat_pump_sources"]["urban central"]
             and "methanolisation" in link_carriers
         ):
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
@@ -5406,7 +5412,10 @@ def add_waste_heat(
             ]
 
         # Fuel cell waste heat
-        if options["use_fuel_cell_waste_heat"] and "H2 Fuel Cell" in link_carriers:
+        if (
+            "fuel cell excess" in options["heat_pump_sources"]["urban central"]
+            and "H2 Fuel Cell" in link_carriers
+        ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )

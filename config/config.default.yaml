@@ -554,15 +554,43 @@ sector:
         constant_temperature_celsius: 70
         ignore_missing_regions: false
         requires_generator: false
+      fuel cell excess:
+        constant_temperature_celsius: 70 # assume same as electrolysis
+        ignore_missing_regions: false
+        requires_generator: false
+      Fischer-Tropsch excess:
+        constant_temperature_celsius: 200 # assuming steam
+        ignore_missing_regions: false
+        requires_generator: false
+      Haber-Bosch excess:
+        constant_temperature_celsius: 45 # 30-60C acc. to DEA catalogue
+        ignore_missing_regions: false
+        requires_generator: false
+      Sabatier excess:
+        constant_temperature_celsius: 200 # Agora report states process temperature of catalytic methanation of at least 200C
+        ignore_missing_regions: false
+        requires_generator: false
+      methanolisation excess:
+        constant_temperature_celsius: 70 # 50-100
+        ignore_missing_regions: false
+        requires_generator: false
     direct_utilisation_heat_sources:
     - geothermal
     - electrolysis excess
+    - fuel cell excess
+    - Fischer-Tropsch excess
+    - Haber-Bosch excess
+    - Sabatier excess
+    - methanolisation excess
     temperature_limited_stores:
     - ptes
   heat_pump_sources:
     urban central:
     - air
     - electrolysis excess
+    - fuel cell excess
+    - Haber-Bosch excess
+    - methanolisation excess
     urban decentral:
     - air
     rural:
