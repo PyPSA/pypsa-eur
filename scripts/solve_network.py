@@ -31,6 +31,7 @@ import logging
 import os
 import re
 import sys
+import time
 from functools import partial
 from typing import Any
 
@@ -40,7 +41,8 @@ import pandas as pd
 import pypsa
 import xarray as xr
 import yaml
-from pypsa.descriptors import get_activity_mask
+from pypsa.clustering.spatial import align_strategies
+from pypsa.descriptors import get_activity_mask, nominal_attrs
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
 from scripts._benchmark import memory_logger
@@ -200,44 +202,47 @@ def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
     """
     land_use_factors = {
         "solar-hsat": config["renewable"]["solar"]["capacity_per_sqkm"]
-        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"],
+        / config["renewable"]["solar-hsat"]["capacity_per_sqkm"]
     }
     rename = {} if PYPSA_V1 else {"Generator-ext": "Generator"}
 
     solar_carriers = ["solar", "solar-hsat"]
-    solar = n.generators[
-        n.generators.carrier.isin(solar_carriers) & n.generators.p_nom_extendable
-    ].index
+    solar = n.generators.loc[(n.generators.carrier == "solar") & n.generators.active]
+    all_solar = n.generators.loc[
+        n.generators.carrier.isin(solar_carriers) & n.generators.active
+    ]
 
-    solar_today = n.generators[
-        (n.generators.carrier == "solar") & (n.generators.p_nom_extendable)
-    ].index
-    solar_hsat = n.generators[(n.generators.carrier == "solar-hsat")].index
+    # Separate extendable and non-extendable generators
+    solar_ext = solar.loc[solar.p_nom_extendable]
+    solar_non_ext = solar.loc[~solar.p_nom_extendable]
+    all_solar_ext = all_solar.loc[all_solar.p_nom_extendable]
+    all_solar_non_ext = all_solar.loc[~all_solar.p_nom_extendable]
 
-    if solar.empty:
+    if all_solar_ext.empty:
         return
 
-    land_use = pd.DataFrame(1, index=solar, columns=["land_use_factor"])
+    land_use = pd.Series(1.0, index=all_solar.index, name="land_use_factor")
     for carrier, factor in land_use_factors.items():
-        land_use = land_use.apply(
-            lambda x: (x * factor) if carrier in x.name else x, axis=1
-        )
+        land_use.loc[all_solar.carrier == carrier] *= factor
 
-    location = pd.Series(n.buses.index, index=n.buses.index)
-    ggrouper = n.generators.loc[solar].bus
-    rhs = (
-        n.generators.loc[solar_today, "p_nom_max"]
-        .groupby(n.generators.loc[solar_today].bus.map(location))
-        .sum()
-        - n.generators.loc[solar_hsat, "p_nom"]
-        .groupby(n.generators.loc[solar_hsat].bus.map(location))
-        .sum()
-        * land_use_factors["solar-hsat"]
-    ).clip(lower=0)
+    # Compute right hand side based on the sum of currently installed
+    # solar, and p_nom_max of extendable solar. Note that "solar" here
+    # means only the "solar" carrier, not all solar carriers including
+    # "solar-hsat".
+    rhs = pd.concat([solar_non_ext.p_nom, solar_ext.p_nom_max]).groupby(solar.bus).sum()
 
+    # Compute left hand side as the sum of extendable solar and
+    # installed solar, including all solar carriers.
     lhs = (
-        (n.model["Generator-p_nom"].rename(rename).loc[solar] * land_use.squeeze())
-        .groupby(ggrouper)
+        (
+            n.model["Generator-p_nom"].rename(rename).loc[all_solar_ext.index]
+            * land_use.loc[all_solar_ext.index]
+        )
+        .groupby(all_solar_ext.bus)
+        .sum()
+    ) + (
+        (all_solar_non_ext.p_nom * land_use.loc[all_solar_non_ext.index])
+        .groupby(all_solar_non_ext.bus)
         .sum()
     )
 
@@ -867,10 +872,12 @@ def add_TES_energy_to_power_ratio_constraints(n: pypsa.Network) -> None:
     indices_charger_p_nom_extendable = n.links.index[
         n.links.index.str.contains("water tanks charger|water pits charger")
         & n.links.p_nom_extendable
+        & n.links.active
     ]
     indices_stores_e_nom_extendable = n.stores.index[
         n.stores.index.str.contains("water tanks|water pits")
         & n.stores.e_nom_extendable
+        & n.stores.active
     ]
 
     if indices_charger_p_nom_extendable.empty or indices_stores_e_nom_extendable.empty:
@@ -933,12 +940,14 @@ def add_TES_charger_ratio_constraints(n: pypsa.Network) -> None:
             "water tanks charger|water pits charger|aquifer thermal energy storage charger"
         )
         & n.links.p_nom_extendable
+        & n.links.active
     ]
     indices_discharger_p_nom_extendable = n.links.index[
         n.links.index.str.contains(
             "water tanks discharger|water pits discharger|aquifer thermal energy storage discharger"
         )
         & n.links.p_nom_extendable
+        & n.links.active
     ]
 
     if (
@@ -980,8 +989,8 @@ def add_battery_constraints(n):
     if not n.links.p_nom_extendable.any():
         return
 
-    discharger_bool = n.links.index.str.contains("battery discharger")
-    charger_bool = n.links.index.str.contains("battery charger")
+    discharger_bool = n.links.index.str.contains("battery discharger") & n.links.active
+    charger_bool = n.links.index.str.contains("battery charger") & n.links.active
 
     dischargers_ext = n.links[discharger_bool].query("p_nom_extendable").index
     chargers_ext = n.links[charger_bool].query("p_nom_extendable").index
@@ -996,12 +1005,14 @@ def add_battery_constraints(n):
 
 
 def add_lossy_bidirectional_link_constraints(n):
-    if not n.links.p_nom_extendable.any() or not any(n.links.get("reversed", [])):
+    if not (n.links.p_nom_extendable & n.links.active).any() or not any(
+        n.links.get("reversed", [])
+    ):
         return
 
     carriers = n.links.loc[n.links.reversed, "carrier"].unique()  # noqa: F841
     backwards = n.links.query(
-        "carrier in @carriers and p_nom_extendable and reversed"
+        "carrier in @carriers and p_nom_extendable and reversed and active"
     ).index
     forwards = backwards.str.replace("-reversed", "")
     lhs = n.model["Link-p_nom"].loc[backwards]
@@ -1067,13 +1078,12 @@ def add_pipe_retrofit_constraint(n):
     """
     Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.
     """
-    if "reversed" not in n.links.columns:
-        n.links["reversed"] = False
+    reversed = n.links.reversed if "reversed" in n.links.columns else False  # noqa: F841
     gas_pipes_i = n.links.query(
-        "carrier == 'gas pipeline' and p_nom_extendable and ~reversed"
+        "carrier == 'gas pipeline' and p_nom_extendable and ~@reversed"
     ).index
     h2_retrofitted_i = n.links.query(
-        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~reversed"
+        "carrier == 'H2 pipeline retrofitted' and p_nom_extendable and ~@reversed"
     ).index
 
     if h2_retrofitted_i.empty or gas_pipes_i.empty:
@@ -1244,6 +1254,226 @@ def extra_functionality(
         custom_extra_functionality(n, snapshots, snakemake)  # pylint: disable=E0601
 
 
+strategies = {
+    # The following variables are stored in columns and restored
+    # exactly after disaggregation.
+    "p_nom": "sum",
+    "lifetime": "mean",
+    # p_nom_max should be infinite if any of summands are infinite
+    "p_nom_max": "sum",
+    # Capital cost is taken to be that of the most recent year. Note:
+    # components without build year (that are not to be aggregated)
+    # will be "trivially" aggregated as 1-element series; in that case
+    # their name doesn't end in "-YYYY", hence the check.
+    "capital_cost": (
+        lambda s: (
+            s.iloc[pd.Series(s.index.map(lambda x: int(x[-4:]))).idxmax()]
+            if len(s) > 1
+            else s.squeeze()
+        )
+    ),
+    # Take mean efficiency, then disaggregate. NB: should
+    # really be weighted by capacity.
+    "efficiency": "mean",
+    "efficiency2": "mean",
+    # Some urban decentral gas boilers have efficiency3 and
+    # efficiency4 1.0, other NaN. (mean ignores NaN values).
+    "efficiency3": "mean",
+    "efficiency4": "mean",
+    "p_nom_min": "sum",
+    "p_nom_extendable": lambda x: x.any(),
+    "e_nom": "sum",
+    "e_nom_min": "sum",
+    "e_nom_max": "sum",
+    "e_nom_extendable": lambda x: x.any(),
+    # Energy to power ratio should also really be weighted by capacity.
+    "energy to power ratio": "mean",
+    # length_original sometimes contains NaN values
+    "length_original": "mean",
+    # The following two should really be the same, but equality is
+    # difficult with floats. (Saving with compression, etc.)
+    "marginal_cost": "mean",
+    "standing_loss": "mean",
+    "length": "mean",
+    "p_max_pu": "mean",
+    "p_min_pu": "mean",
+    # Build year is set to 0; to be reset when disaggregating
+    "build_year": lambda x: 0 if len(x) > 1 else x.squeeze(),
+    # "weight" isn't meaningful at this stage; set to 1.
+    "weight": lambda x: 1,
+    # Apparently "control" doesn't really matter; follow
+    # pypsa.clustering.spatial by setting to ""
+    "control": lambda x: "",
+    # The "reversed" attribute is sometimes 0, sometimes NaN, which is
+    # the only reason for having an aggregation strategy.
+    "reversed": lambda x: x.any(),
+    # The remaining attributes are outputs, and allow the aggregation of solved networks.
+    "p_nom_opt": "sum",
+    "e_nom_opt": "sum",
+    "p": "sum",
+    "e": "sum",
+    "p0": "sum",
+    "p1": "sum",
+    "p2": "sum",
+    "p3": "sum",
+    "p4": "sum",
+}
+
+
+def aggregate_build_years(n, components, exclude_carriers):
+    """
+    Aggregate components which are identical in all but build year.
+    """
+    t = time.time()
+
+    for c in n.iterate_components(components):
+        if ("build_year" in c.static.columns) and (c.static.build_year > 0).any():
+            attr = nominal_attrs[c.name]
+
+            # Define the aggregation map. First select all components
+            # that are to be aggregated (i.e. every component that is
+            # not excluded by carrier and whose index ends in a
+            # year.). Then create a map that removes the build year
+            # from the index. This map is used to aggregate the
+            # components.
+            idx_to_agg = c.static.loc[
+                ~c.static.carrier.isin(exclude_carriers)
+                & c.static.index.str.match(r".*-[0-9]{4}$")
+            ].index
+            idx_no_year = pd.Series(
+                idx_to_agg.str.replace(r"-[0-9]{4}$", "", regex=True), index=idx_to_agg
+            )
+
+            # For components that are non-extendable, set
+            # attr_{min,max} = attr; this is for the aggregated
+            # extendable component to have the correct minimum and
+            # maximum bounds for nominal capacity.
+            non_extendable = c.static[
+                ~c.static[f"{attr}_extendable"]
+            ].index.intersection(idx_to_agg)
+            c.static.loc[non_extendable, f"{attr}_min"] = c.static.loc[
+                non_extendable, attr
+            ]
+            c.static.loc[non_extendable, f"{attr}_max"] = c.static.loc[
+                non_extendable, attr
+            ]
+
+            # Aggregate
+            static_strategies = align_strategies(strategies, c.static.columns, c.name)
+            df_aggregated = (
+                c.static.loc[idx_to_agg].groupby(idx_no_year).agg(static_strategies)
+            )
+
+            # Add new components to the original components, and set
+            # all aggregated components to inactive. Note: actual
+            # modifications of the network need to happen on n
+            # directly, as c only represents a view of the network but
+            # changes to it don't change n.
+            n.add(
+                c.name,
+                df_aggregated.index,
+                **df_aggregated.to_dict(orient="series"),
+            )
+            n.static(c.name).loc[idx_to_agg, "active"] = False
+
+            # Aggregate time-varying data. The aggregated components
+            # have already been added; we just need to fill in the
+            # dynamic data correctly.
+            dynamic_strategies = align_strategies(strategies, c.dynamic, c.name)
+            for attr in c.dynamic:
+                strategy = dynamic_strategies[attr]
+                has_dynamic_attr = c.dynamic[attr].columns.intersection(idx_to_agg)
+                aggregated = idx_no_year.loc[has_dynamic_attr].unique()
+                if len(aggregated) == 0:
+                    continue
+
+                # Build aggregated DF once
+                agg_dyn = (
+                    c.dynamic[attr][has_dynamic_attr]
+                    .T.groupby(idx_no_year)
+                    .agg(strategy)
+                    .T
+                )
+                agg_dyn = agg_dyn.reindex(columns=aggregated)
+
+                # Fetch destination, add all missing columns at once, then set via .loc
+                dest = n.dynamic(c.name)[attr]
+                missing = agg_dyn.columns.difference(dest.columns)
+                if len(missing):
+                    dest = pd.concat([dest, agg_dyn[missing]], axis=1, copy=False)
+
+                dest.loc[:, agg_dyn.columns] = agg_dyn.values
+                n.dynamic(c.name)[attr] = dest
+
+    logger.info(f"Aggregated build years in {time.time() - t:.1f} seconds")
+
+
+def disaggregate_build_years(n, components, planning_horizon):
+    """
+    Disaggregate components which were aggregated by `aggregate_build_years`.
+    """
+    t = time.time()
+
+    for c in n.iterate_components(components):
+        attr = nominal_attrs[c.name]
+
+        # Find the components that are to be "disaggregated":
+        # those which are set to inactive and whose name ends with
+        # a build year.
+        disagg = c.static.loc[~c.static.active]
+        if disagg.empty:
+            continue
+
+        # We have to set attr_opt to the correct (optimised) value for
+        # all components in disagg whose build year equals the current
+        # planning horizon (and which are extendable). The correct
+        # value is the optimised value of the corresponding aggregated
+        # component, minus the nominal capacity of all components with
+        # a lower build year. We exploit the fact that nominal
+        # capacity of components built in the current planning horizon
+        # is 0 (since they are optimised).
+        idx_current_horizon = disagg.loc[
+            disagg.build_year == int(planning_horizon)
+        ].index
+        idx_agg = idx_current_horizon.str.replace(r"-[0-9]{4}$", "", regex=True)
+        opt_agg = c.static.loc[idx_agg, f"{attr}_opt"]
+        opt_agg.index = idx_current_horizon
+
+        map_to_current_horizon = disagg.index.str[:-4] + planning_horizon
+        attr_all_years = disagg.groupby(map_to_current_horizon).sum()[attr]
+
+        n.static(c.name).loc[idx_current_horizon, f"{attr}_opt"] = (
+            opt_agg - attr_all_years
+        )
+
+        # Also adjust dynamic data. For each component that was
+        # aggregated (and thus deactivated), we set output
+        # variables to those of the aggregated component, scaled
+        # by installed capacities.
+        agg_map = pd.Series(
+            disagg.index.str.replace(r"-[0-9]{4}$", "", regex=True), index=disagg.index
+        )
+        scaling_factors = n.static(c.name).loc[disagg.index, [attr, attr + "_opt"]].max(
+            axis=1
+        ) / agg_map.map(c.static[attr + "_opt"])
+        for v in c.dynamic:
+            if c.dynamic[v].empty or (
+                n.components[c.name]["attrs"].loc[v, "status"] != "Output"
+            ):
+                continue
+
+            df = c.dynamic[v][agg_map]
+            df.columns = agg_map.index
+            n.dynamic(c.name)[v][disagg.index] = df.mul(scaling_factors, axis=1)
+
+        # Now remove the aggregated components, and set the original
+        # components to active again
+        n.remove(c.name, agg_map.unique())
+        n.static(c.name).loc[disagg.index, "active"] = True
+
+    logger.info(f"Disaggregated build years in {time.time() - t:.1f} seconds")
+
+
 def check_objective_value(n: pypsa.Network, solving: dict) -> None:
     """
     Check if objective value matches expected value within tolerance.
@@ -1277,6 +1507,7 @@ def solve_network(
     config: dict,
     params: dict,
     solving: dict,
+    build_year_agg: dict,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     **kwargs,
@@ -1351,6 +1582,16 @@ def solve_network(
     n.config = config
     n.params = params
 
+    build_year_agg_enabled = build_year_agg["enable"] and (
+        config["foresight"] == "myopic"
+    )
+    if build_year_agg_enabled:
+        aggregate_build_years(
+            n,
+            components=build_year_agg["components"],
+            exclude_carriers=build_year_agg["exclude_carriers"],
+        )
+
     if rolling_horizon and rule_name == "solve_operations_network":
         kwargs["horizon"] = cf_solving.get("horizon", 365)
         kwargs["overlap"] = cf_solving.get("overlap", 0)
@@ -1384,6 +1625,13 @@ def solve_network(
         logger.info(f"Labels:\n{labels}")
         n.model.print_infeasibilities()
         raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
+
+    if build_year_agg_enabled:
+        disaggregate_build_years(
+            n,
+            components=build_year_agg["components"],
+            planning_horizon=snakemake.wildcards.planning_horizons,
+        )
 
 
 if __name__ == "__main__":
@@ -1429,6 +1677,7 @@ if __name__ == "__main__":
             config=snakemake.config,
             params=snakemake.params,
             solving=snakemake.params.solving,
+            build_year_agg=snakemake.params.get("build_year_agg", {"enable": False}),
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,

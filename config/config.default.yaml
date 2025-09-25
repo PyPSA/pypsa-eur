@@ -668,6 +668,7 @@ sector:
   overdimension_heat_generators:
     decentral: 1.1  #to cover demand peaks bigger than data
     central: 1.0
+  central_heat_everywhere: false
   chp:
     enable: true
     fuel:
@@ -747,6 +748,7 @@ sector:
   electricity_transmission_grid: true
   electricity_distribution_grid: true
   electricity_grid_connection: true
+  transmission_efficiency_enabled: true
   transmission_efficiency:
     enable:
     - DC
@@ -976,6 +978,10 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: false
+  build_year_aggregation:
+    enable: false
+    components: ["Generator", "Link", "Store", "StorageUnit"]
+    exclude_carriers: []
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
