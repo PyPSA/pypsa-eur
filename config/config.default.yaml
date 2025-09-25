@@ -105,6 +105,8 @@ co2_budget:
   2045: 0.050
   2050: 0.000 # climate-neutral by 2050
 
+local_co2_budget: False
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 330., 380., 400., 500., 750.]

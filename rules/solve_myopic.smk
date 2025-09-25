@@ -121,7 +121,9 @@ rule solve_sector_network_myopic:
             "sector", "co2_sequestration_potential", default=200
         ),
         custom_extra_functionality=input_custom_extra_functionality,
+        local_co2_budget=config_provider("local_co2_budget"),
     input:
+        co2_totals = resources("co2_totals.csv"),
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
