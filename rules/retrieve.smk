@@ -19,13 +19,6 @@ storage:
     retries=2,
 
 
-if config["enable"].get("retrieve", "auto") == "auto":
-    config["enable"]["retrieve"] = has_internet_access()
-
-if config["enable"]["retrieve"] is False:
-    print("Datafile downloads disabled in config[retrieve] or no internet access.")
-
-
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
     "primary",
     "archive",
@@ -409,9 +402,7 @@ if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
             copy2(input[0], output[0])
 
 
-if config["enable"]["retrieve"] and (
-    SCIGRID_GAS_DATASET := dataset_version("scigrid_gas")
-)["source"] in [
+if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
     "primary",
     "archive",
 ]:
@@ -420,7 +411,7 @@ if config["enable"]["retrieve"] and (
         input:
             zip_file=storage(SCIGRID_GAS_DATASET["url"]),
         output:
-            zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/jrc_idees.zip",
+            zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/jIGGIELGN.zip",
             directory=directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
         run:
             copy2(input["zip_file"], output["zip_file"])
@@ -826,38 +817,35 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
 
 
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_monthly_co2_prices:
-        input:
-            storage(
-                "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
-            ),
-        output:
-            "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
-        log:
-            "logs/retrieve_monthly_co2_prices.log",
-        resources:
-            mem_mb=5000,
-        retries: 2
-        run:
-            copy2(input[0], output[0])
+rule retrieve_monthly_co2_prices:
+    input:
+        storage(
+            "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
+        ),
+    output:
+        "data/validation/emission-spot-primary-market-auction-report-2019-data.xls",
+    log:
+        "logs/retrieve_monthly_co2_prices.log",
+    resources:
+        mem_mb=5000,
+    retries: 2
+    run:
+        copy2(input[0], output[0])
 
 
-if config["enable"]["retrieve"]:
 
-    rule retrieve_monthly_fuel_prices:
-        output:
-            "data/validation/energy-price-trends-xlsx-5619002.xlsx",
-        log:
-            "logs/retrieve_monthly_fuel_prices.log",
-        resources:
-            mem_mb=5000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_monthly_fuel_prices.py"
+rule retrieve_monthly_fuel_prices:
+    output:
+        "data/validation/energy-price-trends-xlsx-5619002.xlsx",
+    log:
+        "logs/retrieve_monthly_fuel_prices.log",
+    resources:
+        mem_mb=5000,
+    retries: 2
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/retrieve_monthly_fuel_prices.py"
 
 
 if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive"]:
@@ -1102,21 +1090,20 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
             )
 
 
-if config["enable"]["retrieve"]:
 
-    rule retrieve_dh_areas:
-        input:
-            dh_areas=storage(
-                "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
-            ),
-        output:
-            dh_areas="data/dh_areas.gpkg",
-        log:
-            "logs/retrieve_dh_areas.log",
-        threads: 1
-        retries: 2
-        run:
-            copy2(input["dh_areas"], output["dh_areas"])
+rule retrieve_dh_areas:
+    input:
+        dh_areas=storage(
+            "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
+        ),
+    output:
+        dh_areas="data/dh_areas.gpkg",
+    log:
+        "logs/retrieve_dh_areas.log",
+    threads: 1
+    retries: 2
+    run:
+        copy2(input["dh_areas"], output["dh_areas"])
 
 
 if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"] in [
