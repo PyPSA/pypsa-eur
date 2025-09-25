@@ -1007,9 +1007,6 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
 ]:
 
     rule retrieve_osm_boundaries:
-        params:
-            data_folder=OSM_BOUNDARIES_DATASET["folder"],
-            version=OSM_BOUNDARIES_DATASET["version"],
         input:
             storage(
                 f"{OSM_BOUNDARIES_DATASET["url"]}",
@@ -1019,11 +1016,11 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
             json2=f"{OSM_BOUNDARIES_DATASET["folder"]}/UA_adm1.json",
             json3=f"{OSM_BOUNDARIES_DATASET["folder"]}/MD_adm1.json",
             json4=f"{OSM_BOUNDARIES_DATASET["folder"]}/BA_adm1.json",
-            zip=f"{OSM_BOUNDARIES_DATASET["folder"]}" "/osm_boundaries.zip",
-        threads: 1
+            zip_file=f"{OSM_BOUNDARIES_DATASET["folder"]}/osm_boundaries.zip",
         run:
-            copy2(input[0], output.zip)
-            unpack_archive(output.zip, params.data_folder)
+            output_folder = output["zip_file"].parent
+            copy2(input[0], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
 
 rule retrieve_geothermal_heat_utilisation_potentials:
