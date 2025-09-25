@@ -213,45 +213,32 @@ if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
 if (GEBCO_DATASET := dataset_version("gebco"))["source"] in ["archive", "primary"]:
 
     rule retrieve_gebco:
-        params:
-            url=GEBCO_DATASET["url"],
         input:
             storage(
                 GEBCO_DATASET["url"],
-            )
-            if GEBCO_DATASET["source"] == "archive"
-            else [],
+            ),
         output:
             gebco=f"{GEBCO_DATASET["folder"]}/GEBCO_2014_2D.nc",
-            zip=(
+            zip_file=(
                 f"{GEBCO_DATASET["folder"]}/GEBCO_2014.zip"
                 if GEBCO_DATASET["source"] == "primary"
                 else []
             ),
-            directory=(
-                directory(f"{GEBCO_DATASET["folder"]}")
-                if GEBCO_DATASET["source"] == "primary"
-                else []
-            ),
-        retries: 2
         run:
             if GEBCO_DATASET["source"] == "primary":
                 import xarray as xr
 
-                response = requests.get(params["url"])
-                with open(output.zip, "wb") as f:
-                    f.write(response.content)
+                copy2(input[0], output["zip_file"])
 
-                output_folder = Path(output["zip"]).parent
-                unpack_archive(output.zip, output_folder)
+                output_folder = Path(output["zip_file"]).parent
+                unpack_archive(output["zip_file"], output_folder)
 
-                file_path = output["gebco"]
-                ds = xr.open_dataset(file_path)
-                ds_reqd = ds.sel(lat=slice(32, 73), lon=slice(-21, 45))
-                ds_reqd.to_netcdf(file_path)
+                # Limit extent to Europe to reduce file size
+                ds = xr.open_dataset(output["gebco"])
+                ds = ds.sel(lat=slice(32, 73), lon=slice(-21, 45))
+                ds.to_netcdf(output["gebco"])
             else:
-                move(input[0], output[0])
-                validate_checksum(output[0], input[0])
+                copy2(input[0], output["gebco"])
 
 
 
