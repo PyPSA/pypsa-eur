@@ -1102,7 +1102,6 @@ if MOBILITY_PROFILES_DATASET["source"] in ["build"]:
                     year=[2010, 2011, 2012, 2013, 2014],
                     street_type=["A", "B"],
                 ),
-                keep_local=True,
             ),
         output:
             raw_files=directory(MOBILITY_PROFILES_DATASET["folder"] / "raw"),
