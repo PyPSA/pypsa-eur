@@ -37,7 +37,7 @@ rule build_powerplants:
         everywhere_powerplants=config_provider("electricity", "everywhere_powerplants"),
         countries=config_provider("countries"),
     input:
-        network=resources("networks/base_s.nc"),
+        network=resources("networks/simplified.nc"),
         custom_powerplants="data/custom_powerplants.csv",
     output:
         resources("powerplants_s.csv"),
@@ -530,16 +530,16 @@ rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
     input:
-        base_network=resources("networks/base_s.nc"),
-        regions=resources("regions_onshore_base_s.geojson"),
+        base_network=resources("networks/simplified.nc"),
+        regions=resources("regions_onshore_simplified.geojson"),
         nuts3=resources("nuts3_shapes.geojson"),
         load=resources("electricity_demand.csv"),
     output:
-        resources("electricity_demand_base_s.nc"),
+        resources("electricity_demand_simplified.nc"),
     log:
-        logs("build_electricity_demand_base_s.log"),
+        logs("build_electricity_demand_simplified.log"),
     benchmark:
-        benchmarks("build_electricity_demand_base_s")
+        benchmarks("build_electricity_demand_simplified")
     resources:
         mem_mb=5000,
     conda:
@@ -555,7 +555,7 @@ rule build_hac_features:
         features=config_provider("clustering", "cluster_network", "hac_features"),
     input:
         cutout=lambda w: input_cutout(w),
-        regions=resources("regions_onshore_base_s.geojson"),
+        regions=resources("regions_onshore_simplified.geojson"),
     output:
         resources("hac_features.nc"),
     log:
@@ -589,10 +589,10 @@ rule simplify_network:
         regions_offshore=resources("regions_offshore_base.geojson"),
         admin_shapes=resources("admin_shapes.geojson"),
     output:
-        network=resources("networks/base_s.nc"),
-        regions_onshore=resources("regions_onshore_base_s.geojson"),
-        regions_offshore=resources("regions_offshore_base_s.geojson"),
-        busmap=resources("busmap_base_s.csv"),
+        network=resources("networks/simplified.nc"),
+        regions_onshore=resources("regions_onshore_simplified.geojson"),
+        regions_offshore=resources("regions_offshore_simplified.geojson"),
+        busmap=resources("busmap_simplified.csv"),
     log:
         logs("simplify_network.log"),
     benchmark:
@@ -616,11 +616,13 @@ def input_custom_busmap(w):
 
     if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
-        custom_busmap = f"data/busmaps/base_s_{w.clusters}_{base_network}.csv"
+        custom_busmap = f"data/busmaps/simplified_{w.clusters}_{base_network}.csv"
 
     if mode == "custom_busshapes":
         base_network = config_provider("electricity", "base_network")(w)
-        custom_busshapes = f"data/busshapes/base_s_{w.clusters}_{base_network}.geojson"
+        custom_busshapes = (
+            f"data/busshapes/simplified_{w.clusters}_{base_network}.geojson"
+        )
 
     return {
         "custom_busmap": custom_busmap,
@@ -648,7 +650,7 @@ rule cluster_network:
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
     input:
         unpack(input_custom_busmap),
-        network=resources("networks/base_s.nc"),
+        network=resources("networks/simplified.nc"),
         admin_shapes=resources("admin_shapes.geojson"),
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
@@ -663,7 +665,7 @@ rule cluster_network:
             == "hac"
             else []
         ),
-        load=resources("electricity_demand_base_s.nc"),
+        load=resources("electricity_demand_simplified.nc"),
     output:
         network=resources("networks/clustered.nc"),
         regions_onshore=resources("regions_onshore.geojson"),
@@ -728,7 +730,7 @@ rule add_electricity:
         unpack(input_profile_tech),
         unpack(input_class_regions),
         unpack(input_conventional),
-        base_network=resources("networks/base_s.nc"),
+        base_network=resources("networks/simplified.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
@@ -741,10 +743,10 @@ rule add_electricity:
             if config_provider("conventional", "dynamic_fuel_price")(w)
             else []
         ),
-        load=resources("electricity_demand_base_s.nc"),
+        load=resources("electricity_demand_simplified.nc"),
         busmap=resources("busmap.csv"),
     output:
-        resources("networks/base_s_elec.nc"),
+        resources("networks/simplified_elec.nc"),
     log:
         logs("add_electricity.log"),
     benchmark:
@@ -775,13 +777,13 @@ rule prepare_network:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
-        resources("networks/base_s_elec.nc"),
+        resources("networks/simplified_elec.nc"),
         tech_costs=lambda w: resources(
             f"costs_{config_provider('costs', 'year')(w)}.csv"
         ),
         # co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [], #TODO: move Ept to config
     output:
-        resources("networks/base_s_elec_{opts}.nc"),
+        resources("networks/simplified_elec_{opts}.nc"),
     log:
         logs("prepare_network_elec_{opts}.log"),
     benchmark:
