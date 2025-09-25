@@ -54,6 +54,9 @@ Upcoming Release
 * Moved configuration for ``cutout`` preparation into a nested dictionary ``prepare_kwargs``.
   This allows to pass any keyword argument supported by ``atlite.Cutout.prepare()`` like ``tmpdir``.
 
+* Deprecate the configuration options ``enable: retrieve``, ``enable: retrieve_databundle``, and ``enable: retrieve_cost_data``.
+  Instead, the rules are always included in the workflow. If no internet connection is available, the rules will fail.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

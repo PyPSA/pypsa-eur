@@ -87,8 +87,6 @@ snapshots:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
-  retrieve: auto
-  retrieve_cost_data: true
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
