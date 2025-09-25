@@ -5420,9 +5420,6 @@ def add_waste_heat(
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
-                0.95 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
-            ) * options["use_fuel_cell_waste_heat"]
-            n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
                 1
                 - costs.at["fuel cell", "heat-losses"]
                 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
