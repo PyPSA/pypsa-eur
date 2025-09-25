@@ -264,6 +264,7 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
     "primary",
     "archive",
 ]:
+
     rule retrieve_jrc_idees:
         input:
             zip_file=storage(JRC_IDEES_DATASET["url"]),
@@ -274,7 +275,6 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
             copy2(input["zip_file"], output["zip_file"])
             output_folder = Path(output["zip_file"]).parent
             unpack_archive(output["zip_file"], output_folder)
-
 
 
 if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
@@ -415,6 +415,7 @@ if config["enable"]["retrieve"] and (
     "primary",
     "archive",
 ]:
+
     rule retrieve_gas_infrastructure_data:
         input:
             zip_file=storage(SCIGRID_GAS_DATASET["url"]),
@@ -425,7 +426,6 @@ if config["enable"]["retrieve"] and (
             copy2(input["zip_file"], output["zip_file"])
             output_folder = Path(output["zip_file"]).parent
             unpack_archive(output["zip_file"], output_folder)
-
 
 
 if config["enable"]["retrieve"]:
@@ -614,6 +614,7 @@ if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
                 f.write(response.content)
             output_folder = Path(output["zip_file"]).parent
             unpack_archive(output["zip_file"], output_folder)
+
 
 
 if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
@@ -989,9 +990,6 @@ if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
 ]:
 
     rule retrieve_osm_boundaries:
-        params:
-            data_folder=OSM_BOUNDARIES_DATASET["folder"],
-            version=OSM_BOUNDARIES_DATASET["version"],
         output:
             json=f"{OSM_BOUNDARIES_DATASET["folder"]}" + "/{country}_adm1.json",
         log:
