@@ -264,20 +264,16 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
     "primary",
     "archive",
 ]:
-
     rule retrieve_jrc_idees:
-        params:
-            url=JRC_IDEES_DATASET["url"],
+        input:
+            zip_file=storage(JRC_IDEES_DATASET["url"]),
         output:
-            zip=f"{JRC_IDEES_DATASET["folder"]}/jrc_idees.zip",
+            zip_file=f"{JRC_IDEES_DATASET["folder"]}/jrc_idees.zip",
             directory=directory(f"{JRC_IDEES_DATASET["folder"]}"),
         run:
-            response = requests.get(params["url"])
-            with open(output.zip, "wb") as f:
-                f.write(response.content)
-
-            output_folder = Path(output["zip"]).parent
-            unpack_archive(output.zip, output_folder)
+            copy2(input["zip_file"], output["zip_file"])
+            output_folder = Path(output["zip_file"]).parent
+            unpack_archive(output["zip_file"], output_folder)
 
 
 
