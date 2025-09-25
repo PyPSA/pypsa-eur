@@ -64,7 +64,7 @@ def input_base_network(w):
     elif base_network == "tyndp":
         inputs = {c: resources(f"tyndp/build/{c}.csv") for c in components}
     elif base_network == "entsoegridkit":
-        inputs = {c: f"data/ensoegridkit/{c}.csv" for c in components}
+        inputs = {c: f"data/entsoegridkit/{c}.csv" for c in components}
         inputs["parameter_corrections"] = "data/parameter_corrections.yaml"
         inputs["links_p_nom"] = "data/links_p_nom.csv"
     return inputs
@@ -109,7 +109,6 @@ rule build_osm_boundaries:
         json=f"{rules.retrieve_osm_boundaries.params["data_folder"]}/{{country}}_adm1.json",
         eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
-        #boundary="data/osm-boundaries/build/{country}_adm1.geojson",
         boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
     log:
         "logs/build_osm_boundaries_{country}.log",

@@ -79,7 +79,7 @@ It is also possible to use the helper script in ``scripts/create_zenodo_depositi
      * ``source``: The source of the dataset. For Zenodo uploads the source is by definition ``archive``.
      * ``version``: The version name of the dataset as used in the folder name, e.g. ``2029-01-01``.
      * ``tags``: A list of tags for the dataset. Make sure to include ``latest`` and ``supported`` tags.
-     * ``url``: The link to the Zenodo deposition of the dataset, e.g. ``https://zenodo.org/record/<zenodo_id>``.
+     * ``url``: The link to the Zenodo deposition of the dataset, e.g. ``https://zenodo.org/record/<zenodo_id>``. Check whether the respective ``retrieve_<dataset_name>`` rule in ``rules/retrieve.smk`` requires a direct download link or the link to the Zenodo record.
      * ``note``: An optional note about the dataset.
 7. Implement a ``retrieve`` rule for your dataset in ``rules/retrieve.smk``.
    This rule should download the data from the Zenodo deposition and place it in the ``data/<dataset_name>/archive/<version>/`` folder.
