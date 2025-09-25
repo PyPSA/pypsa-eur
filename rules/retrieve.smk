@@ -833,7 +833,6 @@ rule retrieve_monthly_co2_prices:
         copy2(input[0], output[0])
 
 
-
 rule retrieve_monthly_fuel_prices:
     output:
         "data/validation/energy-price-trends-xlsx-5619002.xlsx",
@@ -1088,7 +1087,6 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
                 output["zip_file"],
                 AQUIFER_DATA_DATASET["folder"],
             )
-
 
 
 rule retrieve_dh_areas:
