@@ -582,9 +582,8 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
 if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
 
     rule retrieve_eez:
-        params:
-            zip=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR.zip",
         output:
+            zip_file=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR.zip",
             gpkg=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR/eez_{EEZ_DATASET["version"].split("_")[0]}_lowres.gpkg",
         run:
             from uuid import uuid4
@@ -611,12 +610,10 @@ if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
             elif EEZ_DATASET["source"] == "archive":
                 response = requests.get(f"{EEZ_DATASET["url"]}")
 
-            with open(params["zip_file"], "wb") as f:
+            with open(output["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(output.gpkg).parent.parent
-            unpack_archive(params["zip_file"], output_folder)
-            os.remove(params["zip_file"])
-
+            output_folder = Path(output["zip_file"]).parent
+            unpack_archive(output["zip_file"], output_folder)
 
 
 if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
