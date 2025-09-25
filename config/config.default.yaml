@@ -994,8 +994,6 @@ adjustments:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
 data:
-  # TODO implement
-  # retrieve: auto # auto, true, false; ignore when 'source: "build"' is used
   hotmaps_industrial_sites:
     source: "archive"
     version_or_latest: "latest"
@@ -1123,7 +1121,7 @@ data:
     source: "archive"
     version_or_latest: "latest"
   cutout:
-    source: "build"
+    source: "archive"
     version_or_latest: "latest"
 
 secrets:
