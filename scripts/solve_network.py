@@ -42,7 +42,7 @@ import xarray as xr
 import yaml
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
-from scripts.prepare_sector_network import determine_emission_sectors
+
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
     PYPSA_V1,
@@ -51,6 +51,7 @@ from scripts._helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
+from scripts.prepare_sector_network import determine_emission_sectors
 
 logger = logging.getLogger(__name__)
 
@@ -1163,38 +1164,59 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
+
 def algebra_process_emissions(n, index):
-    pe = n.model["Link-p"].loc[:, index]*n.links.loc[index].efficiency*n.snapshot_weightings["generators"]
+    pe = (
+        n.model["Link-p"].loc[:, index]
+        * n.links.loc[index].efficiency
+        * n.snapshot_weightings["generators"]
+    )
     pe_sum = pe.sum()
 
     return pe_sum
 
+
 def algebra_generation_emissions(n, index):
-    ge = n.model["Link-p"].loc[:, index]*n.links.loc[index].efficiency2*n.snapshot_weightings["generators"]
+    ge = (
+        n.model["Link-p"].loc[:, index]
+        * n.links.loc[index].efficiency2
+        * n.snapshot_weightings["generators"]
+    )
     ge_sum = ge.sum()
 
     return ge_sum
 
-def algebra_carboncapture(n, index, sign = "negative"):
-    cc = n.model["Link-p"].loc[:, index]*n.links.loc[index].efficiency3*n.snapshot_weightings["generators"]
+
+def algebra_carboncapture(n, index, sign="negative"):
+    cc = (
+        n.model["Link-p"].loc[:, index]
+        * n.links.loc[index].efficiency3
+        * n.snapshot_weightings["generators"]
+    )
     cc_sum = cc.sum() if sign == "positive" else -cc.sum()
 
     return cc_sum
 
+
 def algebra_bio_gas(n, index):
-    bg = n.model["Link-p"].loc[:, index]*n.links.loc[index].efficiency3*n.snapshot_weightings["generators"]
+    bg = (
+        n.model["Link-p"].loc[:, index]
+        * n.links.loc[index].efficiency3
+        * n.snapshot_weightings["generators"]
+    )
     bg_sum = bg.sum()
 
     return bg_sum
 
+
 def add_local_co2_constraint(n: pypsa.Network, local_co2_budget: dict) -> None:
     """
-    This function uses linopy to define local CO2 emissions constraints for countries listed 
-    in the variable "local_co2_budget" in the config file. It needs to be specified as a dictionary, 
+    This function uses linopy to define local CO2 emissions constraints for countries listed
+    in the variable "local_co2_budget" in the config file. It needs to be specified as a dictionary,
     e.g., {DK: {2030: 0.30, 2035: 0.20, 2050: 0}}.
     """
     co2_totals_file = snakemake.input.co2_totals
-    co2_totals = 1e6 * pd.read_csv(co2_totals_file, index_col=0) # convert Mt to tCO2
+    co2_totals = 1e6 * pd.read_csv(co2_totals_file, index_col=0)  # convert Mt to tCO2
 
     options = snakemake.params.sector
     sectors = determine_emission_sectors(options)
@@ -1207,52 +1229,60 @@ def add_local_co2_constraint(n: pypsa.Network, local_co2_budget: dict) -> None:
         # CO2 allowance
         limit = local_co2_budget[country][year]
         logger.info("Individual CO2 emissions limit relative to 1990 :", limit)
-        co2_1990 = co2_totals.loc[country, sectors].sum() # tCO2 emissions per year
+        co2_1990 = co2_totals.loc[country, sectors].sum()  # tCO2 emissions per year
         co2_allowance = co2_1990 * limit * nyears
         logger.info("CO2 emissions allowance for " + country + " :", co2_allowance)
 
-        # 1. Carbon Capture 
+        # 1. Carbon Capture
         dac = n.links.query('carrier == "DAC"')
         CarbCapt = dac[dac.index.str.contains(country)]
-        CarbCapt_algebra = algebra_carboncapture(n, CarbCapt.index, sign = "positive")
-        
-        # 2. Process emissions (A) 
+        CarbCapt_algebra = algebra_carboncapture(n, CarbCapt.index, sign="positive")
+
+        # 2. Process emissions (A)
         pe = n.links.query('bus1 == "co2 atmosphere"')
         ProcEmissions = pe[pe.index.str.contains(country)]
         ProcEmissions_algebra = algebra_process_emissions(n, ProcEmissions.index)
 
         # 3. Process emissions (B)
-        pe_2 = n.loads.index[n.loads.index.str.contains('emissions')]
+        pe_2 = n.loads.index[n.loads.index.str.contains("emissions")]
         ProcEmissions_2 = pe_2[pe_2.str.contains(country)]
-        ProcEmissions_2_sum = -(n.loads.loc[ProcEmissions_2].p_set*nhours).sum()
+        ProcEmissions_2_sum = -(n.loads.loc[ProcEmissions_2].p_set * nhours).sum()
 
         # 4. Generation emissions
-        ge = n.links.query('bus2 == "co2 atmosphere"').copy() # links going from fuel buses (e.g., gas, coal, lignite etc.) to "CO2 atmosphere" bus
-        ge.drop(ge.query("carrier == 'DAC'").index, inplace=True) # excluding DAC
+        ge = n.links.query(
+            'bus2 == "co2 atmosphere"'
+        ).copy()  # links going from fuel buses (e.g., gas, coal, lignite etc.) to "CO2 atmosphere" bus
+        ge.drop(ge.query("carrier == 'DAC'").index, inplace=True)  # excluding DAC
         GenEmissions = ge[ge.index.str.contains(country)]
         GenEmissions_algebra = algebra_generation_emissions(n, GenEmissions.index)
 
         # 5. Biomass and Gas CHP
-        bg = n.links.query('bus3 == "co2 atmosphere"') 
+        bg = n.links.query('bus3 == "co2 atmosphere"')
         bg = bg[bg.index.str.contains(country)]
         BioGas = bg[bg.efficiency3 > 0]
         BioGas_algebra = algebra_bio_gas(n, BioGas.index)
 
-        # 6. Carbon Removal from CHP CC and production of electrobiofuels  
+        # 6. Carbon Removal from CHP CC and production of electrobiofuels
         CarbRem = bg[bg.efficiency3 < 0]
-        CarbRem_algebra = algebra_carboncapture(n, CarbRem.index, sign = "negative")
+        CarbRem_algebra = algebra_carboncapture(n, CarbRem.index, sign="negative")
 
         # Net CO2 Emissions Constraint
-        emissions = ProcEmissions_algebra + GenEmissions_algebra + BioGas_algebra + ProcEmissions_2_sum
+        emissions = (
+            ProcEmissions_algebra
+            + GenEmissions_algebra
+            + BioGas_algebra
+            + ProcEmissions_2_sum
+        )
         removal = CarbCapt_algebra + CarbRem_algebra
 
-        lhs = emissions 
+        lhs = emissions
         rhs = removal + co2_allowance
 
         n.model.add_constraints(
             lhs <= rhs,
-            name="local co2 emissions constraint " + country ,
+            name="local co2 emissions constraint " + country,
         )
+
 
 def extra_functionality(
     n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None

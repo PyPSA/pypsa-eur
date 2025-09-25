@@ -105,7 +105,7 @@ co2_budget:
   2045: 0.050
   2050: 0.000 # climate-neutral by 2050
 
-local_co2_budget: False
+local_co2_budget: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
