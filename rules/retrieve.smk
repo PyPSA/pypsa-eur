@@ -11,6 +11,7 @@ from zipfile import ZipFile
 
 
 # Configure the default storage provider for accessing remote files using http
+# do not expose `retrieve` to the config, as setting it to 'False' will break the workflow ungracefully
 storage:
     provider="http",
     keep_local=True,
@@ -77,7 +78,7 @@ if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] i
             gz=f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
@@ -132,7 +133,7 @@ if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in 
             geojson=f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
@@ -148,7 +149,7 @@ if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
             gdp=f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] in [
@@ -165,7 +166,7 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
             tif=f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
             if POPULATION_COUNT_DATASET["source"] == "primary":
                 import xarray as xr
@@ -206,7 +207,7 @@ if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
                 copy2(input["ghg"], output["zip"])
                 unpack_archive(output["zip"], GHG_EMISSIONS_DATASET["folder"])
             else:
-                move(input["ghg"], output["csv"])
+                copy2(input["ghg"], output["csv"])
 
 
 
@@ -256,7 +257,7 @@ if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] i
             json=f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
@@ -358,7 +359,7 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
             mem_mb=5000,
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
             validate_checksum(output[0], input[0])
 
 
@@ -372,7 +373,7 @@ if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
         output:
             era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archive"]:
@@ -383,7 +384,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archiv
         output:
             era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (COSTS_DATASET := dataset_version("costs"))["source"] in [
@@ -396,7 +397,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
         output:
             costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
@@ -409,7 +410,7 @@ if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
         output:
             powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if config["enable"]["retrieve"] and (
@@ -466,13 +467,12 @@ if (
         input:
             storage(
                 SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"],
-                keep_local=True,
             ),
         output:
             csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
@@ -484,7 +484,6 @@ if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
         input:
             storage(
                 SHIP_RASTER_DATASET["url"],
-                keep_local=True,
             ),
         output:
             zip_file=f"{SHIP_RASTER_DATASET["folder"]}/shipdensity_global.zip",
@@ -494,7 +493,7 @@ if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
             mem_mb=5000,
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
@@ -511,7 +510,7 @@ if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] i
             xlsx=f"{ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
         run:
-            move(input["xlsx"], output["xlsx"])
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
@@ -530,7 +529,7 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
             csv=f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
@@ -549,7 +548,7 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
             xlsx=f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
@@ -566,7 +565,7 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
         output:
             tif=f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
             validate_checksum(output[0], input[0])
 
 
@@ -585,7 +584,7 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
         output:
             tif=f"{LUISA_LAND_COVER_DATASET["folder"]}/LUISA_basemap_020321_50m.tif",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
@@ -692,7 +691,7 @@ if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))
         output:
             xlsx="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
-            move(input["xlsx"], output["xlsx"])
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
@@ -706,7 +705,7 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
         output:
             xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
-            move(input["xlsx"], output["xlsx"])
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))[
@@ -722,7 +721,7 @@ if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))
         output:
             csv=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         run:
-            move(input["csv"], output["csv"])
+            copy2(input["csv"], output["csv"])
 
 
 if (BFS_GDP_AND_POPULATION_DATASET := dataset_version("bfs_gdp_and_population"))[
@@ -738,7 +737,7 @@ if (BFS_GDP_AND_POPULATION_DATASET := dataset_version("bfs_gdp_and_population"))
         output:
             xlsx=f"{BFS_GDP_AND_POPULATION_DATASET['folder']}/gdp_and_population.xlsx",
         run:
-            move(input["xlsx"], output["xlsx"])
+            copy2(input["xlsx"], output["xlsx"])
 
 
 def get_wdpa_url(DATASET) -> str:
@@ -852,7 +851,7 @@ if config["enable"]["retrieve"]:
             mem_mb=5000,
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 if config["enable"]["retrieve"]:
@@ -887,7 +886,7 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
         run:
             for key in input.keys():
                 # Keep zip file
-                move(input[key], output[f"{key}_zip"])
+                copy2(input[key], output[f"{key}_zip"])
 
                 # unzip
                 output_folder = Path(output[f"{key}_zip"]).parent
@@ -925,7 +924,7 @@ if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
             mem_mb=500,
         run:
             for key in input.keys():
-                move(input[key], output[key])
+                copy2(input[key], output[key])
                 validate_checksum(output[key], input[key])
 
 
@@ -974,7 +973,7 @@ if (NATURA_DATASET := dataset_version("natura"))["source"] in ["archive"]:
         log:
             "logs/retrieve_natura.log",
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 elif NATURA_DATASET["source"] == "build":
 
@@ -1034,7 +1033,7 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
             zip=f"{OSM_BOUNDARIES_DATASET["folder"]}" "/osm_boundaries.zip",
         threads: 1
         run:
-            move(input[0], output.zip)
+            copy2(input[0], output.zip)
             unpack_archive(output.zip, params.data_folder)
 
 
@@ -1050,7 +1049,7 @@ rule retrieve_geothermal_heat_utilisation_potentials:
     threads: 1
     retries: 2
     run:
-        move(input[0], output[0])
+        copy2(input[0], output[0])
 
 
 if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
@@ -1068,7 +1067,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
         threads: 1
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input[0], output[0])
 
 
 rule retrieve_jrc_ardeco:
@@ -1133,7 +1132,7 @@ if config["enable"]["retrieve"]:
         threads: 1
         retries: 2
         run:
-            move(input[0], output[0])
+            copy2(input["dh_areas"], output["dh_areas"])
 
 
 if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"] in [
@@ -1157,5 +1156,5 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
         conda:
             "../envs/environment.yaml"
         run:
-            move(input["kfz"], output["kfz"])
-            move(input["pkw"], output["pkw"])
+            copy2(input["kfz"], output["kfz"])
+            copy2(input["pkw"], output["pkw"])
