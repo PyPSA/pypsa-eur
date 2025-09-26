@@ -311,7 +311,9 @@ rule build_geothermal_heat_potential:
             "ignore_missing_regions",
         ),
     input:
-        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output["isi_heat_potentials"],
+        isi_heat_potentials=rules.retrieve_geothermal_heat_utilisation_potentials.output[
+            "isi_heat_potentials"
+        ],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         lau_regions=rules.retrieve_lau_regions.output["zip"],
     output:

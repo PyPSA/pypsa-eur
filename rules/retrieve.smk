@@ -816,7 +816,8 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
-# Versioning not implemented as the dataset is used only for validation 
+
+# Versioning not implemented as the dataset is used only for validation
 # License - (c) EEX AG, all rights reserved. Personal copy for non-commercial use permitted
 rule retrieve_monthly_co2_prices:
     input:
@@ -834,7 +835,7 @@ rule retrieve_monthly_co2_prices:
         copy2(input[0], output[0])
 
 
-# Versioning not implemented as the dataset is used only for validation 
+# Versioning not implemented as the dataset is used only for validation
 # License - custom; no restrictions on use and redistribution, attribution required
 rule retrieve_monthly_fuel_prices:
     output:
@@ -1011,10 +1012,12 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
             unpack_archive(output["zip_file"], output_folder)
 
 
-if (GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET := dataset_version("geothermal_heat_utilisation_potentials"))["source"] in [
-    "primary",
-    "archive"
-]:
+if (
+    GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET := dataset_version(
+        "geothermal_heat_utilisation_potentials"
+    )
+)["source"] in ["primary", "archive"]:
+
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
             isi_heat_potentials=storage(
@@ -1098,15 +1101,16 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
 
 if (DH_AREAS_DATASET := dataset_version("dh_areas"))["source"] in [
     "primary",
-    "archive"
+    "archive",
 ]:
+
     rule retrieve_dh_areas:
-        input: 
+        input:
             dh_areas=storage(DH_AREAS_DATASET["url"]),
         output:
             dh_areas=f"{DH_AREAS_DATASET['folder']}/dh_areas.gpkg",
         log:
-            "logs/retrieve_dh_areas.log"
+            "logs/retrieve_dh_areas.log",
         run:
             copy2(input["dh_areas"], output["dh_areas"])
 
