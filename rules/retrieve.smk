@@ -1011,19 +1011,23 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
             unpack_archive(output["zip_file"], output_folder)
 
 
-rule retrieve_geothermal_heat_utilisation_potentials:
-    input:
-        isi_heat_potentials=storage(
-            "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
-        ),
-    output:
-        "data/isi_heat_utilisation_potentials.xlsx",
-    log:
-        "logs/retrieve_geothermal_heat_utilisation_potentials.log",
-    threads: 1
-    retries: 2
-    run:
-        copy2(input[0], output[0])
+if (GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET := dataset_version("geothermal_heat_utilisation_potentials"))["source"] in [
+    "primary",
+    "archive"
+]:
+    rule retrieve_geothermal_heat_utilisation_potentials:
+        input:
+            isi_heat_potentials=storage(
+                GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["url"]
+            ),
+        output:
+            isi_heat_potentials=f"{GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["folder"]}/isi_heat_utilisation_potentials.xlsx",
+        log:
+            "logs/retrieve_geothermal_heat_utilisation_potentials.log",
+        threads: 1
+        retries: 2
+        run:
+            copy2(input["isi_heat_potentials"], output["isi_heat_potentials"])
 
 
 if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
