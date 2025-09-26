@@ -347,7 +347,6 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
         retries: 2
         run:
             copy2(input[0], output[0])
-            validate_checksum(output[0], input[0])
 
 
 if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
@@ -547,7 +546,6 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
             tif=f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
             copy2(input[0], output[0])
-            validate_checksum(output[0], input[0])
 
 
 if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] in [
@@ -904,7 +902,6 @@ if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
         run:
             for key in input.keys():
                 copy2(input[key], output[key])
-                validate_checksum(output[key], input[key])
 
 
 elif OSM_DATASET["source"] == "build":
