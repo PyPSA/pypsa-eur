@@ -411,7 +411,7 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
         input:
             zip_file=storage(SCIGRID_GAS_DATASET["url"]),
         output:
-            zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/jIGGIELGN.zip",
+            zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/IGGIELGN.zip",
             directory=directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
         run:
             copy2(input["zip_file"], output["zip_file"])
@@ -816,7 +816,8 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
 
 
-
+# Versioning not implemented as the dataset is used only for validation 
+# License - (c) EEX AG, all rights reserved. Personal copy for non-commercial use permitted
 rule retrieve_monthly_co2_prices:
     input:
         storage(
@@ -833,7 +834,8 @@ rule retrieve_monthly_co2_prices:
         copy2(input[0], output[0])
 
 
-
+# Versioning not implemented as the dataset is used only for validation 
+# License - custom; no restrictions on use and redistribution, attribution required
 rule retrieve_monthly_fuel_prices:
     output:
         "data/validation/energy-price-trends-xlsx-5619002.xlsx",
