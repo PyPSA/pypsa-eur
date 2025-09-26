@@ -128,3 +128,9 @@ mobility_profiles,,,
 cutout,,,
 -- source,str,"{archive, build}","Source of the Cutout data."
 -- version_or_latest,str,,"Version of the Cutout data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source."
+dh_areas,,,
+-- source,str,"{archive, primary}","Source of the District Heating Areas data."
+-- version_or_latest,str,,"Version of the District Heating Areas data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.""
+geothermal_heat_utilisation_potentials,,,
+-- source,str,"{archive, primary}","Source of the Geothermal Heat Utilisation Potentials data."
+-- version_or_latest,str,,"Version of the Geothermal Heat Utilisation Potentials
