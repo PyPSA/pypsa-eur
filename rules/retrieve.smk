@@ -314,21 +314,19 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
             unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_bidding_zones:
-        output:
-            file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
-            file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
-        log:
-            "logs/retrieve_bidding_zones.log",
-        resources:
-            mem_mb=1000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_bidding_zones.py"
+rule retrieve_bidding_zones:
+    output:
+        file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
+        file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
+    log:
+        "logs/retrieve_bidding_zones.log",
+    resources:
+        mem_mb=1000,
+    retries: 2
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/retrieve_bidding_zones.py"
 
 
 if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
@@ -419,22 +417,20 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
             unpack_archive(output["zip_file"], output_folder)
 
 
-if config["enable"]["retrieve"]:
-
-    rule retrieve_electricity_demand:
-        params:
-            versions=["2019-06-05", "2020-10-06"],
-        output:
-            "data/electricity_demand_raw.csv",
-        log:
-            "logs/retrieve_electricity_demand.log",
-        resources:
-            mem_mb=5000,
-        retries: 2
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/retrieve_electricity_demand.py"
+rule retrieve_electricity_demand:
+    params:
+        versions=["2019-06-05", "2020-10-06"],
+    output:
+        "data/electricity_demand_raw.csv",
+    log:
+        "logs/retrieve_electricity_demand.log",
+    resources:
+        mem_mb=5000,
+    retries: 2
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/retrieve_electricity_demand.py"
 
 
 if (
