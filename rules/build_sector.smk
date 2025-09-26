@@ -383,7 +383,7 @@ rule build_ates_potentials:
         countries=config_provider("countries"),
     input:
         aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
-        dh_areas="data/dh_areas.gpkg",
+        dh_areas=rules.retrieve_dh_areas.output["dh_areas"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"

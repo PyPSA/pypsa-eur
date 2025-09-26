@@ -1092,20 +1092,19 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
             )
 
 
-
-rule retrieve_dh_areas:
-    input:
-        dh_areas=storage(
-            "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
-        ),
-    output:
-        dh_areas="data/dh_areas.gpkg",
-    log:
-        "logs/retrieve_dh_areas.log",
-    threads: 1
-    retries: 2
-    run:
-        copy2(input["dh_areas"], output["dh_areas"])
+if (DH_AREAS_DATASET := dataset_version("dh_areas"))["source"] in [
+    "primary",
+    "archive"
+]:
+    rule retrieve_dh_areas:
+        input: 
+            dh_areas=storage(DH_AREAS_DATASET["url"]),
+        output:
+            dh_areas=f"{DH_AREAS_DATASET['folder']}/dh_areas.gpkg",
+        log:
+            "logs/retrieve_dh_areas.log"
+        run:
+            copy2(input["dh_areas"], output["dh_areas"])
 
 
 if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"] in [

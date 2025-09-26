@@ -1123,6 +1123,9 @@ data:
   cutout:
     source: "archive"
     version_or_latest: "latest"
+  dh_areas:
+    source: "primary"
+    version_or_latest: "latest"
 
 secrets:
   corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
