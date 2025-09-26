@@ -1124,10 +1124,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   dh_areas:
-    source: "primary"
+    source: "archive"
     version_or_latest: "latest"
   geothermal_heat_utilisation_potentials:
-    source: "primary"
+    source: "archive"
     version_or_latest: "latest"
 
 secrets:
