@@ -88,7 +88,7 @@ rule build_simplified_population_layouts:
 
 rule build_gas_network:
     input:
-        gas_network=f"{rules.retrieve_gas_infrastructure_data.output["directory"]}/data/IGGIELGN_PipeSegments.geojson",
+        gas_network=rules.retrieve_gas_infrastructure_data.output["gas_network"],
     output:
         cleaned_gas_network=resources("gas_network.csv"),
     resources:
@@ -106,8 +106,8 @@ rule build_gas_network:
 rule build_gas_input_locations:
     input:
         gem="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
-        entry=f"{rules.retrieve_gas_infrastructure_data.output["directory"]}/data/IGGIELGN_BorderPoints.geojson",
-        storage=f"{rules.retrieve_gas_infrastructure_data.output["directory"]}/data/IGGIELGN_Storages.geojson",
+        entry=rules.retrieve_gas_infrastructure_data.output["entry"],
+        storage=rules.retrieve_gas_infrastructure_data.output["storage"],
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
     output:

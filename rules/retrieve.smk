@@ -410,7 +410,9 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
             zip_file=storage(SCIGRID_GAS_DATASET["url"]),
         output:
             zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/IGGIELGN.zip",
-            directory=directory(f"{SCIGRID_GAS_DATASET["folder"]}"),
+            entry=f"{SCIGRID_GAS_DATASET["folder"]}/data/IGGIELGN_BorderPoints.geojson",
+            storage=f"{SCIGRID_GAS_DATASET["folder"]}/data/IGGIELGN_Storages.geojson",
+            gas_network=f"{SCIGRID_GAS_DATASET["folder"]}/data/IGGIELGN_PipeSegments.geojson",
         run:
             copy2(input["zip_file"], output["zip_file"])
             output_folder = Path(output["zip_file"]).parent
@@ -1003,7 +1005,7 @@ elif (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in 
             json4=f"{OSM_BOUNDARIES_DATASET["folder"]}/BA_adm1.json",
             zip_file=f"{OSM_BOUNDARIES_DATASET["folder"]}/osm_boundaries.zip",
         run:
-            output_folder = output["zip_file"].parent
+            output_folder = Path(output["zip_file"]).parent
             copy2(input[0], output["zip_file"])
             unpack_archive(output["zip_file"], output_folder)
 
