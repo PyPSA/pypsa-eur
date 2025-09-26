@@ -14,8 +14,6 @@ data sources.
    :maxdepth: 1
 
    ../data-base-network
-   ../data-bundle
-   ../data-retrieval
    ../data-repos
 
 .. _managing_data_versions:
@@ -37,6 +35,7 @@ Creating a new version of the data sources
 
 To create a new version of the data sources, you can use the helper script in ``scripts/create_zenodo_deposition_cli.py``.
 Here are the steps that this script helps you to navigate:
+
 1. Locate the data for the new version and place it under ``data/<dataset_name>/archive/<version>/``.
    E.g. for creating a new version ``2029-01-01`` of the ``worldbank_population`` dataset, place the data into a folder named ``data/worldbank_population/archive/2029-01-01/``.
    We follow the versioning names of the original dataset, so make sure to use the same version name as the original dataset.
