@@ -106,7 +106,7 @@ rule base_network:
 
 rule build_osm_boundaries:
     input:
-        json=f"{rules.retrieve_osm_boundaries.params["data_folder"]}/{{country}}_adm1.json",
+        json=f"{OSM_BOUNDARIES_DATASET["folder"]}/{{country}}_adm1.json",
         eez=ancient(rules.retrieve_eez.output["gpkg"]),
     output:
         boundary=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/{{country}}_adm1.geojson",
