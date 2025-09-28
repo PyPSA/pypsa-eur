@@ -611,6 +611,12 @@ if __name__ == "__main__":
     mode = params.mode
     solver_name = snakemake.config["solving"]["solver"]["name"]
 
+    n_clusters_value = params.n_clusters
+    if isinstance(n_clusters_value, str) and n_clusters_value.lower() == "all":
+        n_clusters_value = "all"
+    else:
+        n_clusters_value = int(n_clusters_value)
+
     n = pypsa.Network(snakemake.input.network)
     buses_prev, lines_prev, links_prev = len(n.buses), len(n.lines), len(n.links)
 
@@ -621,7 +627,7 @@ if __name__ == "__main__":
         .reindex(n.buses.index, fill_value=0.0)
     )
 
-    if snakemake.wildcards.clusters == "all":
+    if n_clusters_value == "all":
         # Fast-path if no clustering is necessary
         busmap = n.buses.index.to_series()
         linemap = n.lines.index.to_series()
@@ -661,7 +667,7 @@ if __name__ == "__main__":
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
             busmap = custom_busmap
         else:
-            n_clusters = int(snakemake.wildcards.clusters)
+            n_clusters = int(n_clusters_value)
             algorithm = params.cluster_network["algorithm"]
             features = None
             if algorithm == "hac":
@@ -707,7 +713,10 @@ if __name__ == "__main__":
         clustered_regions.to_file(snakemake.output[which])
         # append_bus_shapes(nc, clustered_regions, type=which.split("_")[1])
 
-    nc.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    nc.meta = dict(
+        snakemake.config,
+        **dict(parameters=dict(n_clusters=n_clusters_value)),
+    )
     nc.export_to_netcdf(snakemake.output.network)
 
     logger.info(

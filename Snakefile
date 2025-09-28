@@ -182,13 +182,13 @@ rule rulegraph:
         if [ -s {output.dot} ]; then
             echo "[Rule rulegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Successfully generated all formats."
         else
             echo "[Rule rulegraph] Error: Failed to generate valid DOT content." >&2
@@ -220,13 +220,13 @@ rule filegraph:
         if [ -s {output.dot} ]; then
             echo "[Rule filegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Successfully generated all formats."
         else
             echo "[Rule filegraph] Error: Failed to generate valid DOT content." >&2

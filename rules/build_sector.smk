@@ -567,7 +567,7 @@ rule build_energy_totals:
         transformation_output_coke=resources("transformation_output_coke.csv"),
         energy_name=resources("energy_totals.csv"),
         co2_name=resources("co2_totals.csv"),
-        transport_name=resources("transport_data.csv"),
+        transport_name=resources("transport_data_raw.csv"),
         district_heat_share=resources("district_heat_share.csv"),
         heating_efficiencies=resources("heating_efficiencies.csv"),
     threads: 16
@@ -1041,7 +1041,7 @@ rule build_transport_demand:
     input:
         clustered_pop_layout=resources("pop_layout.csv"),
         pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
-        transport_data=resources("transport_data.csv"),
+        transport_data_raw=resources("transport_data_raw.csv"),
         traffic_data_KFZ="data/bundle/emobility/KFZ__count",
         traffic_data_Pkw="data/bundle/emobility/Pkw__count",
         temp_air_total=resources("temp_air_total.nc"),

@@ -613,15 +613,22 @@ def input_custom_busmap(w):
     custom_busshapes = []
 
     mode = config_provider("clustering", "mode", default="busmap")(w)
+    n_clusters = config_provider(
+        "clustering", "cluster_network", "n_clusters", default="all"
+    )(w)
+    if n_clusters is None:
+        n_clusters_label = "all"
+    else:
+        n_clusters_label = str(n_clusters)
 
     if mode == "custom_busmap":
         base_network = config_provider("electricity", "base_network")(w)
-        custom_busmap = f"data/busmaps/simplified_{w.clusters}_{base_network}.csv"
+        custom_busmap = f"data/busmaps/simplified_{n_clusters_label}_{base_network}.csv"
 
     if mode == "custom_busshapes":
         base_network = config_provider("electricity", "base_network")(w)
         custom_busshapes = (
-            f"data/busshapes/simplified_{w.clusters}_{base_network}.geojson"
+            f"data/busshapes/simplified_{n_clusters_label}_{base_network}.geojson"
         )
 
     return {
@@ -636,6 +643,9 @@ rule cluster_network:
         mode=config_provider("clustering", "mode"),
         administrative=config_provider("clustering", "administrative"),
         cluster_network=config_provider("clustering", "cluster_network"),
+        n_clusters=config_provider(
+            "clustering", "cluster_network", "n_clusters", default="all"
+        ),
         aggregation_strategies=config_provider(
             "clustering", "aggregation_strategies", default={}
         ),

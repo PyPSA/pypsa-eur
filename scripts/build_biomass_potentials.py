@@ -47,12 +47,11 @@ def _calc_unsustainable_potential(df, df_unsustainable, share_unsus, resource_ty
         resource_potential = df_unsustainable[resource_type]
 
     def _calculate_resource_allocation(c):
-        breakpoint()
-        return (
-            c.sum()
-            / df.loc[df.index.str[:2] == c.name[:2]].sum().sum()
-            * resource_potential.loc[c.name[:2]]
-        )
+        country = c.name[:2]
+        country_total = df.loc[df.index.str[:2] == country].sum().sum()
+        if country_total == 0:
+            return 0.0
+        return c.sum() / country_total * resource_potential.loc[country]
 
     return (
         df.apply(_calculate_resource_allocation, axis=1).mul(share_unsus).clip(lower=0)

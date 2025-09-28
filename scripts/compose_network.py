@@ -19,6 +19,7 @@ import os
 
 import pandas as pd
 import pypsa
+import xarray as xr
 
 # Import all required functions from existing scripts
 from scripts._helpers import (
@@ -143,25 +144,13 @@ if __name__ == "__main__":
                 capacity_threshold=params["capacity_threshold"],
             )
         elif foresight == "perfect":
-            # For perfect foresight: use simpler approach - delegate to existing perfect foresight logic
-            # This is a simplified implementation that relies on existing prepare_perfect_foresight.py
             logger.info(
-                f"Loading composed network for perfect foresight horizon {current_horizon}"
+                f"Loading clustered network for perfect foresight horizon {current_horizon}"
             )
+            n = pypsa.Network(snakemake.input.clustered)
 
-            # For perfect foresight, we'll use a simplified approach:
-            # Just load the previous network and current clustered network
-            n_previous = pypsa.Network(snakemake.input.network_previous)
-            n_current = pypsa.Network(snakemake.input.clustered)
-
-            # For now, use a simple approach: start with previous network and update with current data
-            # This is a placeholder for proper multi-period concatenation which should be handled
-            # by prepare_perfect_foresight.py in the full workflow
-            n = n_previous
-
-            logger.info(
-                "Perfect foresight concatenation simplified - using previous network as base"
-            )
+            # Retain reference to the previously composed network for future multi-period coupling
+            n.meta["previous_composed_network"] = snakemake.input.network_previous
         else:  # overnight
             # Should not reach here for overnight with multiple horizons
             n = pypsa.Network(snakemake.input.clustered)
@@ -183,8 +172,8 @@ if __name__ == "__main__":
     ppl = load_and_aggregate_powerplants(
         snakemake.input.powerplants,
         costs,
-        consider_efficiency_classes=params.conventional["consider_efficiency_classes"],
-        aggregation_strategies=params.conventional["aggregation_strategies"],
+        consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
+        aggregation_strategies=params.clustering["aggregation_strategies"],
         exclude_carriers=params.electricity["exclude_carriers"],
     )
 
@@ -568,68 +557,114 @@ if __name__ == "__main__":
         logger.info("Adding existing capacities")
 
         baseyear = params.existing_capacities["baseyear"]
+        existing_cfg = params.existing_capacities
 
         # Add build year to new assets
         add_build_year_to_new_assets(n, baseyear)
 
         # Add power capacities installed before baseyear
-        add_power_capacities_installed_before_baseyear(
-            n,
-            baseyear,
-            snakemake.input.powerplants,
-            params.existing_capacities,
-        )
+        grouping_years_power = existing_cfg["grouping_years_power"]
+        if grouping_years_power:
+            add_power_capacities_installed_before_baseyear(
+                n=n,
+                costs=costs,
+                grouping_years=grouping_years_power,
+                baseyear=baseyear,
+                powerplants_file=snakemake.input.powerplants,
+                countries=params.countries,
+                capacity_threshold=existing_cfg["threshold_capacity"],
+                lifetime_values=params.costs["fill_values"],
+                renewable_carriers=list(renewable_carriers),
+            )
 
         # Add heating capacities if sector coupling is enabled
         if params.sector["enabled"] and params.sector["heating"]:
-            add_heating_capacities_installed_before_baseyear(
-                n,
-                baseyear,
-                snakemake.input,
-                params.existing_capacities,
-            )
+            grouping_years_heat = existing_cfg["grouping_years_heat"]
+            if grouping_years_heat:
+                existing_heat = pd.read_csv(
+                    snakemake.input.existing_heating_distribution,
+                    header=[0, 1],
+                    index_col=0,
+                )
+                cop_profiles = xr.open_dataarray(snakemake.input.cop_profiles)
+
+                add_heating_capacities_installed_before_baseyear(
+                    n=n,
+                    costs=costs,
+                    baseyear=baseyear,
+                    grouping_years=grouping_years_heat,
+                    existing_capacities=existing_heat,
+                    heat_pump_cop=cop_profiles,
+                    heat_pump_source_types=params.heat_pump_sources,
+                    efficiency_file=snakemake.input.heating_efficiencies,
+                    use_time_dependent_cop=params.sector["time_dep_hp_cop"],
+                    default_lifetime=existing_cfg["default_heating_lifetime"],
+                    energy_totals_year=int(params.energy_totals_year),
+                    capacity_threshold=existing_cfg["threshold_capacity"],
+                    use_electricity_distribution_grid=params.sector[
+                        "electricity_distribution_grid"
+                    ],
+                )
 
     # ========== NETWORK PREPARATION (from prepare_network.py) ==========
 
     # Apply temporal resolution averaging if specified
-    if params.time_resolution:
-        offset = params["time_resolution_offset"]
-        n = average_every_nhours(n, offset, params["drop_leap_day"])
+    clustering_temporal_cfg = params.clustering_temporal
+    time_resolution_elec = clustering_temporal_cfg["resolution_elec"]
+    if isinstance(time_resolution_elec, str) and time_resolution_elec.lower().endswith(
+        "h"
+    ):
+        n = average_every_nhours(n, time_resolution_elec, params.drop_leap_day)
 
     # Set temporal aggregation for sector components
     if params.sector["enabled"]:
-        time_resolution = params.time_resolution
-        if not time_resolution:
-            time_resolution = params.clustering_temporal["resolution_sector"]
+        time_resolution = clustering_temporal_cfg["resolution_sector"]
 
-        n = set_temporal_aggregation(
-            n,
-            time_resolution,
-            snakemake.input.snapshot_weightings,
-        )
+        if time_resolution:
+            n = set_temporal_aggregation(
+                n,
+                time_resolution,
+                snakemake.input.snapshot_weightings,
+            )
 
     # Add CO2 limit if specified
-    co2limit = params["co2limit"]
-    if co2limit:
+    electricity_cfg = params.electricity
+    if electricity_cfg["co2limit_enable"]:
+        co2limit = electricity_cfg["co2limit"]
         add_co2limit(n, co2limit, Nyears)
 
     # Add gas limit if specified
-    gaslimit = params["gaslimit"]
-    if gaslimit:
+    if electricity_cfg["gaslimit_enable"]:
+        gaslimit = electricity_cfg["gaslimit"]
         add_gaslimit(n, gaslimit, Nyears)
 
     # Set transmission limit if specified
-    transmission_limit = params.electricity["transmission_limit"]
-    if transmission_limit:
-        set_transmission_limit(n, transmission_limit, "volume", costs, Nyears)
+    transmission_limit = electricity_cfg["transmission_limit"]
+    if isinstance(transmission_limit, str):
+        kind = transmission_limit[0]
+        factor = transmission_limit[1:] or "opt"
+    elif isinstance(transmission_limit, (list, tuple)) and len(transmission_limit) == 2:
+        kind, factor = transmission_limit
+    else:
+        raise ValueError(
+            "transmission_limit must be a string like 'c1.25' or a (kind, factor) pair"
+        )
+
+    set_transmission_limit(n, kind, factor, costs, Nyears)
 
     # Add emission prices
     emission_prices = params.costs["emission_prices"]
-    if emission_prices:
-        add_emission_prices(n, emission_prices, exclude_co2=False)
+    if emission_prices["co2_monthly_prices"]:
+        add_dynamic_emission_prices(n, snakemake.input.co2_price)
+    elif emission_prices["enable"]:
+        add_emission_prices(
+            n,
+            {"co2": emission_prices["co2"]},
+            exclude_co2=False,
+        )
 
     # Add dynamic emission prices if available
-    if os.path.exists(snakemake.input.co2_price):
+    elif os.path.exists(snakemake.input.co2_price):
         add_dynamic_emission_prices(n, snakemake.input.co2_price)
 
     # Set line s_max_pu if specified
@@ -638,11 +673,12 @@ if __name__ == "__main__":
         set_line_s_max_pu(n, s_max_pu)
 
     # Apply time segmentation if specified
-    if params.time_segmentation:
+    time_segmentation = clustering_temporal_cfg["time_segmentation"]
+    if time_segmentation["enable"] and time_segmentation["segments"]:
         n = apply_time_segmentation(
             n,
-            params.time_segmentation["resolution"],
-            params.time_segmentation["segments"],
+            time_segmentation["resolution"],
+            time_segmentation["segments"],
         )
 
     # Handle carbon budget for sector coupling
@@ -665,6 +701,11 @@ if __name__ == "__main__":
     # Sanitize locations if present
     if "location" in n.buses:
         sanitize_locations(n)
+
+    if "marginal_cost" in n.generators_t:
+        n.generators_t["marginal_cost"] = n.generators_t["marginal_cost"].fillna(
+            n.generators.marginal_cost
+        )
 
     # Add metadata
     n.meta = dict(config, **dict(wildcards=dict(snakemake.wildcards)))

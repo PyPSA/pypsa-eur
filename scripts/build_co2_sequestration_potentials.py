@@ -290,6 +290,14 @@ def merge_maps(
     gdf = gpd.GeoDataFrame(pd.concat([storage_map, traps_map]), crs=CRS)
 
     gdf.drop_duplicates(inplace=True)
+    gdf.reset_index(drop=True, inplace=True)
+
+    if "name" not in gdf.columns:
+        gdf["name"] = (
+            gdf.get("COUNTRYCOD", "XX").fillna("XX").astype(str)
+            + "_"
+            + gdf.index.astype(str)
+        )
 
     return gdf
 
