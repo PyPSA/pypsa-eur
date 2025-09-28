@@ -29,8 +29,11 @@ from scripts._helpers import (
 )
 from scripts.add_electricity import (
     calculate_annuity,
+    finalize_electricity_network,
     flatten,
     load_costs,
+    remove_non_power_buses,
+    restrict_electricity_components,
     sanitize_carriers,
     sanitize_locations,
 )
@@ -350,15 +353,6 @@ def build_carbon_budget(
     co2_cap.to_csv(fn, float_format="%.3f")
 
 
-def add_lifetime_wind_solar(n, costs):
-    """
-    Add lifetime for solar and wind generators.
-    """
-    for carrier in ["solar", "onwind", "offwind"]:
-        gen_i = n.generators.index.str.contains(carrier)
-        n.generators.loc[gen_i, "lifetime"] = costs.at[carrier, "lifetime"]
-
-
 def haversine(p, n):
     coord0 = n.buses.loc[p.bus0, ["x", "y"]].values
     coord1 = n.buses.loc[p.bus1, ["x", "y"]].values
@@ -418,94 +412,6 @@ def create_network_topology(
         topo = pd.concat([topo, topo_reverse])
 
     return topo
-
-
-def update_wind_solar_costs(
-    n: pypsa.Network,
-    costs: pd.DataFrame,
-    profiles: dict[str, str],
-    landfall_lengths: dict = None,
-    line_length_factor: int | float = 1,
-) -> None:
-    """
-    Update costs for wind and solar generators added with pypsa-eur to those
-    cost in the planning year.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to update generator costs
-    costs : pd.DataFrame
-        Cost assumptions DataFrame
-    line_length_factor : int | float, optional
-        Factor to multiply line lengths by, by default 1
-    landfall_lengths : dict, optional
-        Dictionary of landfall lengths per technology, by default None
-    profiles : dict[str, str]
-        Dictionary mapping technology names to profile file paths
-        e.g. {'offwind-dc': 'path/to/profile.nc'}
-    """
-
-    if landfall_lengths is None:
-        landfall_lengths = {}
-
-    # NB: solar costs are also manipulated for rooftop
-    # when distribution grid is inserted
-    n.generators.loc[n.generators.carrier == "solar", "capital_cost"] = costs.at[
-        "solar-utility", "capital_cost"
-    ]
-
-    n.generators.loc[n.generators.carrier == "onwind", "capital_cost"] = costs.at[
-        "onwind", "capital_cost"
-    ]
-
-    # for offshore wind, need to calculated connection costs
-    for key, fn in profiles.items():
-        tech = key[len("profile_") :]
-        landfall_length = landfall_lengths.get(tech, 0.0)
-
-        if tech not in n.generators.carrier.values:
-            continue
-
-        with xr.open_dataset(fn) as ds:
-            # if-statement for compatibility with old profiles
-            if "year" in ds.indexes:
-                ds = ds.sel(year=ds.year.min(), drop=True)
-
-            ds = ds.stack(bus_bin=["bus", "bin"])
-
-            distance = ds["average_distance"].to_pandas()
-            distance.index = distance.index.map(flatten)
-            submarine_cost = costs.at[tech + "-connection-submarine", "capital_cost"]
-            underground_cost = costs.at[
-                tech + "-connection-underground", "capital_cost"
-            ]
-            connection_cost = line_length_factor * (
-                distance * submarine_cost + landfall_length * underground_cost
-            )
-
-            # Take 'offwind-float' capital cost for 'float', and 'offwind' capital cost for the rest ('ac' and 'dc')
-            midtech = tech.split("-", 2)[1]
-            if midtech == "float":
-                capital_cost = (
-                    costs.at[tech, "capital_cost"]
-                    + costs.at[tech + "-station", "capital_cost"]
-                    + connection_cost
-                )
-            else:
-                capital_cost = (
-                    costs.at["offwind", "capital_cost"]
-                    + costs.at[tech + "-station", "capital_cost"]
-                    + connection_cost
-                )
-
-            logger.info(
-                f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
-            )
-
-            n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
-                capital_cost.rename(index=lambda node: node + " " + tech)
-            )
 
 
 def add_carrier_buses(
@@ -643,56 +549,6 @@ def add_carrier_buses(
             carrier=carrier + suffix,
             marginal_cost=costs.at[carrier, "fuel"],
         )
-
-
-# TODO: PyPSA-Eur merge issue
-def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
-    """
-    Remove conventional generators (e.g. OCGT) and storage units (e.g.
-    batteries and H2) from base electricity-only network, since they're added
-    here differently using links.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Network to remove components from
-    carriers_to_keep : dict
-        Dictionary specifying which carriers to keep for each component type
-        e.g. {'Generator': ['hydro'], 'StorageUnit': ['PHS']}
-    """
-    for c in n.iterate_components(carriers_to_keep):
-        to_keep = carriers_to_keep[c.name]
-        to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
-        if to_remove.empty:
-            continue
-        logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
-        names = c.df.index[c.df.carrier.isin(to_remove)]
-        n.remove(c.name, names)
-        n.carriers.drop(to_remove, inplace=True, errors="ignore")
-
-
-# TODO: PyPSA-Eur merge issue
-def remove_non_electric_buses(n):
-    """
-    Remove buses from pypsa-eur with carriers which are not AC buses.
-    """
-    if to_drop := list(n.buses.query("carrier not in ['AC', 'DC']").carrier.unique()):
-        logger.info(f"Drop buses from PyPSA-Eur with carrier: {to_drop}")
-        n.buses = n.buses[n.buses.carrier.isin(["AC", "DC"])]
-
-
-def patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths):
-    remove_elec_base_techs(n, carriers_to_keep)
-    remove_non_electric_buses(n)
-    update_wind_solar_costs(
-        n, costs, landfall_lengths=landfall_lengths, profiles=profiles
-    )
-    n.loads["carrier"] = "electricity"
-    n.buses["location"] = n.buses.index
-    n.buses["unit"] = "MWh_el"
-    # remove trailing white space of load index until new PyPSA version after v0.18.
-    n.loads.rename(lambda x: x.strip(), inplace=True)
-    n.loads_t.p_set.rename(lambda x: x.strip(), axis=1, inplace=True)
 
 
 def add_eu_bus(n, x=-5.5, y=46):
@@ -6176,17 +6032,9 @@ if __name__ == "__main__":
     gas_input_nodes = pd.read_csv(fn, index_col=0)
 
     carriers_to_keep = snakemake.params.pypsa_eur
-    profiles = {
-        key: snakemake.input[key]
-        for key in snakemake.input.keys()
-        if key.startswith("profile")
-    }
-    landfall_lengths = {
-        tech: settings["landfall_length"]
-        for tech, settings in snakemake.params.renewable.items()
-        if "landfall_length" in settings.keys()
-    }
-    patch_electricity_network(n, costs, carriers_to_keep, profiles, landfall_lengths)
+    restrict_electricity_components(n, carriers_to_keep)
+    remove_non_power_buses(n)
+    finalize_electricity_network(n)
 
     fn = snakemake.input.heating_efficiencies
     year = int(snakemake.params["energy_totals_year"])
@@ -6195,8 +6043,6 @@ if __name__ == "__main__":
     spatial = define_spatial(pop_layout.index, options)
 
     if snakemake.params.foresight in ["myopic", "perfect"]:
-        add_lifetime_wind_solar(n, costs)
-
         conventional = snakemake.params.conventional_carriers
         for carrier in conventional:
             add_carrier_buses(

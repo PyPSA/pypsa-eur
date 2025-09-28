@@ -30,6 +30,7 @@ from scripts._helpers import (
 )
 from scripts.add_brownfield import add_brownfield
 from scripts.add_electricity import (
+    apply_variable_renewable_lifetimes,
     attach_conventional_generators,
     attach_GEM_renewables,
     attach_hydro,
@@ -38,8 +39,11 @@ from scripts.add_electricity import (
     attach_stores,
     attach_wind_and_solar,
     estimate_renewable_capacities,
+    finalize_electricity_network,
     load_and_aggregate_powerplants,
     load_costs,
+    remove_non_power_buses,
+    restrict_electricity_components,
     sanitize_carriers,
     sanitize_locations,
     set_transmission_costs,
@@ -74,7 +78,6 @@ from scripts.prepare_sector_network import (
     add_heat,
     add_industry,
     add_land_transport,
-    add_lifetime_wind_solar,
     add_methanol,
     add_shipping,
     add_storage_and_grids,
@@ -82,7 +85,6 @@ from scripts.prepare_sector_network import (
     cluster_heat_buses,
     decentral,
     define_spatial,
-    patch_electricity_network,
     remove_h2_network,
     set_temporal_aggregation,
 )
@@ -108,6 +110,8 @@ if __name__ == "__main__":
     params = snakemake.params
     foresight = config["foresight"]
     current_horizon = int(snakemake.wildcards.horizon)
+    sector_mode = params.sector["enabled"]
+    carriers_to_keep = params.pypsa_eur if sector_mode else {}
 
     # Handle both single value and list for planning_horizons
     planning_horizons = config["planning_horizons"]
@@ -229,6 +233,7 @@ if __name__ == "__main__":
         conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
+        allowed_carriers=carriers_to_keep.get("Generator") if sector_mode else None,
     )
 
     # Prepare landfall lengths for renewables
@@ -248,6 +253,9 @@ if __name__ == "__main__":
         params.lines["length_factor"],
         landfall_lengths,
     )
+
+    if sector_mode and foresight in ["myopic", "perfect"]:
+        apply_variable_renewable_lifetimes(n, costs)
 
     # Attach hydro if included
     if "hydro" in renewable_carriers:
@@ -288,12 +296,29 @@ if __name__ == "__main__":
 
     # Attach storage units and stores
     max_hours = params.electricity["max_hours"]
-    attach_storageunits(n, costs, extendable_carriers, max_hours)
-    attach_stores(n, costs, extendable_carriers)
+    attach_storageunits(
+        n,
+        costs,
+        extendable_carriers,
+        max_hours,
+        allowed_carriers=carriers_to_keep.get("StorageUnit") if sector_mode else None,
+    )
+    attach_stores(
+        n,
+        costs,
+        extendable_carriers,
+        allowed_carriers=carriers_to_keep.get("Store") if sector_mode else None,
+    )
+
+    if sector_mode:
+        restrict_electricity_components(n, carriers_to_keep)
+        remove_non_power_buses(n)
+
+    finalize_electricity_network(n)
 
     # ========== SECTOR COMPONENTS (from prepare_sector_network.py) ==========
 
-    if params.sector["enabled"]:
+    if sector_mode:
         logger.info("Adding sector components")
 
         # Load additional data for sectors
@@ -314,19 +339,6 @@ if __name__ == "__main__":
             snakemake.input.gas_input_nodes_simplified, index_col=0
         )
 
-        # Profiles for sector components
-        profiles = {
-            key: snakemake.input[key]
-            for key in snakemake.input.keys()
-            if key.startswith("profile")
-        }
-
-        # Patch electricity network for sector coupling
-        carriers_to_keep = params.pypsa_eur
-        patch_electricity_network(
-            n, costs, carriers_to_keep, profiles, landfall_lengths
-        )
-
         # Load heating efficiencies
         year = int(params["energy_totals_year"])
         heating_efficiencies = pd.read_csv(
@@ -335,21 +347,6 @@ if __name__ == "__main__":
 
         # Define spatial scope
         spatial = define_spatial(pop_layout.index, params.sector)
-
-        # Add lifetime for wind and solar in myopic/perfect foresight
-        if foresight in ["myopic", "perfect"]:
-            add_lifetime_wind_solar(n, costs)
-
-            # Add carrier buses for conventional carriers
-            for carrier in conventional_carriers:
-                add_carrier_buses(
-                    n=n,
-                    carrier=carrier,
-                    costs=costs,
-                    spatial=spatial,
-                    options=params.sector,
-                    cf_industry=params.industry,
-                )
 
         # Add EU bus
         add_eu_bus(n)
@@ -361,6 +358,17 @@ if __name__ == "__main__":
             params.sector,
             sequestration_potential_file=snakemake.input["sequestration_potential"],
         )
+
+        if foresight in ["myopic", "perfect"]:
+            for carrier in conventional_carriers:
+                add_carrier_buses(
+                    n=n,
+                    carrier=carrier,
+                    costs=costs,
+                    spatial=spatial,
+                    options=params.sector,
+                    cf_industry=params.industry,
+                )
 
         # Add generation
         add_generation(
