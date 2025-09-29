@@ -98,5 +98,6 @@ Data inventory
 
 .. csv-table::
    :header-rows: 1
-   :widths: 10,15,20,20,15,20
+   :class: longtable
+   :widths: auto
    :file: data_inventory.csv
