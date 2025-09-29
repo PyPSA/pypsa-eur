@@ -159,6 +159,10 @@ if __name__ == "__main__":
             # Should not reach here for overnight with multiple horizons
             n = pypsa.Network(snakemake.input.clustered)
 
+    if sector_mode:
+        restrict_electricity_components(n, carriers_to_keep)
+        remove_non_power_buses(n)
+
     # Calculate year weighting
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
@@ -309,10 +313,6 @@ if __name__ == "__main__":
         extendable_carriers,
         allowed_carriers=carriers_to_keep.get("Store") if sector_mode else None,
     )
-
-    if sector_mode:
-        restrict_electricity_components(n, carriers_to_keep)
-        remove_non_power_buses(n)
 
     finalize_electricity_network(n)
 

@@ -12,7 +12,7 @@ import time
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import atlite
 import fiona
@@ -30,6 +30,21 @@ logger = logging.getLogger(__name__)
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
 PYPSA_V1 = bool(re.match(r"^0\.35\.\d\.post1\.dev\d{3}", pypsa.__version__))
+
+
+def strip_if_str(value: Any) -> Any:
+    """Return stripped strings while leaving other values unchanged."""
+
+    return value.strip() if isinstance(value, str) else value
+
+
+def sanitize_busmap(busmap: pd.Series) -> pd.Series:
+    """Ensure busmap labels are stripped of surrounding whitespace."""
+
+    series = busmap.map(strip_if_str)
+    if series.name is None:
+        series.name = "busmap"
+    return series
 
 
 def get_scenarios(run):

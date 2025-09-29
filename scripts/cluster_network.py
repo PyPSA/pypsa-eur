@@ -85,7 +85,7 @@ from scipy.sparse.csgraph import connected_components
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import MultiPolygon, Polygon
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import configure_logging, sanitize_busmap, set_scenario_config
 
 PD_GE_2_2 = parse(pd.__version__) >= Version("2.2")
 
@@ -187,7 +187,7 @@ def busmap_from_shapes(
                 dists = shapes_converted.distance(row.geometry)
                 busmap.at[i] = dists.idxmin()
 
-    return busmap
+    return sanitize_busmap(busmap)
 
 
 def copperplate_buses(n: pypsa.Network, copperplate_regions: list[list[str]]):
@@ -393,7 +393,7 @@ def busmap_for_n_clusters(
 
     compat_kws = dict(include_groups=False) if PD_GE_2_2 else {}
 
-    return (
+    return sanitize_busmap(
         n.buses.groupby(["country", "sub_network"], group_keys=False)
         .apply(busmap_for_country, **compat_kws)
         .squeeze()
@@ -518,7 +518,7 @@ def busmap_for_admin_regions(
             how="left",
         )["admin"]
 
-    return buses["busmap"]
+    return sanitize_busmap(buses["busmap"])
 
 
 def keep_largest_polygon(geometry: MultiPolygon) -> Polygon:
@@ -629,7 +629,7 @@ if __name__ == "__main__":
 
     if n_clusters_value == "all":
         # Fast-path if no clustering is necessary
-        busmap = n.buses.index.to_series()
+        busmap = sanitize_busmap(n.buses.index.to_series())
         linemap = n.lines.index.to_series()
         clustering = pypsa.clustering.spatial.Clustering(n, busmap, linemap)
     else:
@@ -658,14 +658,14 @@ if __name__ == "__main__":
                 f"Imported custom shapes from {snakemake.input.custom_busshapes}"
             )
 
-            busmap = custom_busmap
+            busmap = sanitize_busmap(custom_busmap)
         elif mode == "custom_busmap":
             custom_busmap = pd.read_csv(
                 snakemake.input.custom_busmap, index_col=0
             ).squeeze()
             custom_busmap.index = custom_busmap.index.astype(str)
             logger.info(f"Imported custom busmap from {snakemake.input.custom_busmap}")
-            busmap = custom_busmap
+            busmap = sanitize_busmap(custom_busmap)
         else:
             n_clusters = int(n_clusters_value)
             algorithm = params.cluster_network["algorithm"]

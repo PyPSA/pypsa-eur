@@ -65,6 +65,7 @@ from scripts._helpers import (
     configure_logging,
     get_snapshots,
     rename_techs,
+    sanitize_busmap,
     set_scenario_config,
     update_p_nom_max,
 )
@@ -442,6 +443,8 @@ def attach_load(
     busmap = pd.read_csv(busmap_fn, dtype=str)
     index_col = "name" if PYPSA_V1 else "Bus"
     busmap = busmap.set_index(index_col).squeeze()
+    busmap = sanitize_busmap(busmap)
+
     load = load.groupby(busmap).sum().T
 
     logger.info(f"Load data scaled by factor {scaling}.")
@@ -453,19 +456,10 @@ def attach_load(
 def finalize_electricity_network(n: pypsa.Network) -> None:
     """Ensure core metadata on buses and loads for downstream processing."""
 
-    def _strip(value):
-        return value.strip() if isinstance(value, str) else value
-
     if "carrier" not in n.loads.columns:
         n.loads["carrier"] = "electricity"
     else:
         n.loads["carrier"] = "electricity"
-
-    if not n.loads.empty:
-        n.loads.rename(index=_strip, inplace=True)
-
-    if hasattr(n, "loads_t") and "p_set" in n.loads_t:
-        n.loads_t.p_set.rename(columns=_strip, inplace=True)
 
     if "location" not in n.buses.columns:
         n.buses["location"] = n.buses.index
