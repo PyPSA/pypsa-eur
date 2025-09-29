@@ -98,5 +98,5 @@ Data inventory
 
 .. csv-table::
    :header-rows: 1
-   :widths: 20,20,20,20,20,20
+   :widths: 10,15,20,20,15,20
    :file: data_inventory.csv
