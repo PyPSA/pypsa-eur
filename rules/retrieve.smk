@@ -16,7 +16,7 @@ storage:
     provider="http",
     keep_local=True,
     retrieve=True,
-    retries=2,
+    retries=3,
 
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
