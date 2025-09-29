@@ -112,6 +112,9 @@ if __name__ == "__main__":
     current_horizon = int(snakemake.wildcards.horizon)
     sector_mode = params.sector["enabled"]
     carriers_to_keep = params.pypsa_eur if sector_mode else {}
+    params.temperature_limited_stores = params.sector["district_heating"][
+        "temperature_limited_stores"
+    ]
 
     # Handle both single value and list for planning_horizons
     planning_horizons = config["planning_horizons"]

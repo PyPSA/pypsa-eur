@@ -202,47 +202,45 @@ rule compose_network:
     params:
         # Pass entire config sections using config_provider
         temporal=config_provider("temporal"),
-        electricity=config_provider("electricity", default={}),
-        sector=config_provider("sector", default={}),
-        clustering=config_provider("clustering", default={}),
-        clustering_temporal=config_provider("clustering", "temporal", default={}),
-        existing_capacities=config_provider("existing_capacities", default={}),
-        pypsa_eur=config_provider("pypsa_eur", default=["AC", "DC"]),
-        renewable=config_provider("renewable", default={}),
-        conventional=config_provider("conventional", default={}),
-        costs=config_provider("costs", default={}),
-        load=config_provider("load", default={}),
-        lines=config_provider("lines", default={}),
-        links=config_provider("links", default={}),
-        industry=config_provider("industry", default={}),
-        limited_heat_sources=config_provider("limited_heat_sources", default=[]),
+        electricity=config_provider("electricity"),
+        sector=config_provider("sector"),
+        clustering=config_provider("clustering"),
+        clustering_temporal=config_provider("clustering", "temporal"),
+        existing_capacities=config_provider("existing_capacities"),
+        pypsa_eur=config_provider("pypsa_eur"),
+        renewable=config_provider("renewable"),
+        conventional=config_provider("conventional"),
+        costs=config_provider("costs"),
+        load=config_provider("load"),
+        lines=config_provider("lines"),
+        links=config_provider("links"),
+        industry=config_provider("industry"),
+        limited_heat_sources=config_provider(
+            "sector", "district_heating", "limited_heat_sources"
+        ),
         # Direct parameters
-        countries=config_provider("countries", default=[]),
-        snapshots=config_provider("snapshots", default={}),
-        drop_leap_day=config_provider("enable", "drop_leap_day", default=False),
+        countries=config_provider("countries"),
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
         # Derived parameters
-        energy_totals_year=config_provider("energy", "energy_totals_year", default=2019),
+        energy_totals_year=config_provider("energy", "energy_totals_year"),
         # Parameters from add_existing_baseyear
-        baseyear=config_provider("planning_horizons", default=0),
+        baseyear=config_provider("planning_horizons"),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         # Brownfield settings (for myopic)
-        h2_retrofit=config_provider("sector", "H2_retrofit", default=False),
+        h2_retrofit=config_provider("sector", "H2_retrofit"),
         h2_retrofit_capacity_per_ch4=config_provider(
-            "sector", "H2_retrofit_capacity_per_CH4", default=0.6
+            "sector", "H2_retrofit_capacity_per_CH4"
         ),
-        capacity_threshold=config_provider(
-            "existing_capacities", "threshold_capacity", default=10
-        ),
+        capacity_threshold=config_provider("existing_capacities", "threshold_capacity"),
         tes=config_provider("sector", "tes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
         # CO2 budget handling
-        co2_budget=config_provider("co2_budget", "budget_national", default=None),
-        emissions_scope=config_provider(
-            "co2_budget", "emissions_scope", default="total"
-        ),
+        co2_budget=config_provider("co2_budget", "budget_national"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
     log:
         logs("compose_network_{horizon}.log"),
     threads: 1

@@ -77,6 +77,8 @@ snapshots:
   end: "2014-01-01"
   inclusive: 'left'
 
+temporal: {}
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
@@ -89,6 +91,8 @@ enable:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
+  budget_national:
+  emissions_scope: total
   2020: 0.720 # average emissions of 2019 to 2021 relative to 1990, CO2 excl LULUCF, EEA data, European Environment Agency. (2023a). Annual European Union greenhouse gas inventory 1990–2021 and inventory report 2023 - CRF Table. https://unfccc.int/documents/627830
   2025: 0.648 # With additional measures (WAM) projection, CO2 excl LULUCF, European Environment Agency. (2023e). Member States’ greenhouse gas (GHG) emission projections 2023. https://www.eea.europa.eu/en/datahub/datahubitem-view/4b8d94a4-aed7-4e67-a54c-0623a50f48e8
   2030: 0.450 # 55% reduction by 2030 (Ff55)
@@ -144,6 +148,8 @@ electricity:
   autarky:
     enable: false
     by_country: false
+
+  exclude_carriers: []
 
   transmission_limit: vopt
 
@@ -456,10 +462,12 @@ solar_thermal:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#existing-capacities
 existing_capacities:
+  enabled: false
   grouping_years_power: [1920, 1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025]
   grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # heat grouping years >= baseyear will be ignored
   threshold_capacity: 10
   default_heating_lifetime: 20
+  baseyear: 2020
   conventional_carriers:
   - lignite
   - coal
@@ -468,6 +476,7 @@ existing_capacities:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
+  enabled: true
   transport: true
   heating: true
   biomass: true
@@ -964,6 +973,10 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: false
+    time_segmentation:
+      enable: false
+      resolution:
+      segments: []
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

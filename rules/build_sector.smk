@@ -131,7 +131,7 @@ rule cluster_gas_network:
         regions_onshore=resources("regions_onshore.geojson"),
         regions_offshore=resources("regions_offshore.geojson"),
     output:
-        clustered_gas_network=resources("gas_network.csv"),
+        clustered_gas_network=resources("gas_network_clustered.csv"),
     resources:
         mem_mb=4000,
     log:

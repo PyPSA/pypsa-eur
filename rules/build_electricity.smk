@@ -661,6 +661,7 @@ rule cluster_network:
     input:
         unpack(input_custom_busmap),
         network=resources("networks/simplified.nc"),
+        simplified_busmap=resources("busmap_simplified.csv"),
         admin_shapes=resources("admin_shapes.geojson"),
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")

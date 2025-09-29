@@ -35,8 +35,23 @@ shadow_config = get_shadow(run)
 shared_resources = run["shared_resources"]["policy"]
 exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
-benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+_benchmark_provider = path_provider(
+    "benchmarks/", RDIR, shared_resources, exclude_from_shared
+)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
+
+
+def benchmarks(fn):
+    """Return a benchmark file path, even if legacy directories already exist."""
+
+    path = Path(_benchmark_provider(fn))
+    if path.is_dir():
+        # Preserve existing benchmark directories by placing the file inside.
+        path = path / "benchmark.tsv"
+    elif not path.suffix:
+        path = path.with_suffix(".tsv")
+    return str(path)
+
 
 cutout_dir = config["atlite"]["cutout_directory"]
 CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
