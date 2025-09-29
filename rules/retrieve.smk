@@ -64,14 +64,14 @@ if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] i
 
     rule retrieve_nuts3_population:
         input:
-            storage(
+            gz=storage(
                 NUTS3_POPULATION_DATASET["url"],
             ),
         output:
             gz=f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["gz"], output["gz"])
 
 
 if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
@@ -119,14 +119,14 @@ if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in 
 
     rule retrieve_h2_salt_caverns:
         input:
-            storage(
+            geojson=storage(
                 H2_SALT_CAVERNS_DATASET["url"],
             ),
         output:
             geojson=f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["geojson"], output["geojson"])
 
 
 if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
@@ -135,14 +135,14 @@ if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
 
     rule retrieve_gdp_per_capita:
         input:
-            storage(
+            gdp=storage(
                 GDP_PER_CAPITA_DATASET["url"],
             ),
         output:
             gdp=f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["gdp"], output["gdp"])
 
 
 if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] in [
@@ -152,20 +152,20 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
 
     rule retrieve_population_count:
         input:
-            storage(
+            tif=storage(
                 POPULATION_COUNT_DATASET["url"],
             ),
         output:
             tif=f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["tif"], output["tif"])
 
             if POPULATION_COUNT_DATASET["source"] == "primary":
                 import xarray as xr
                 import rioxarray as rio
 
-                file_path = output[0]
+                file_path = output["tif"]
                 ds = xr.open_dataarray(file_path)
                 ds_reqd = ds.sel(x=slice(15.55, 40.41), y=slice(52.49, 41.72))
                 ds_reqd.rio.to_raster(file_path)
@@ -243,14 +243,14 @@ if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] i
 
     rule retrieve_attributed_ports:
         input:
-            storage(
+            json=storage(
                 ATTRIBUTED_PORTS_DATASET["url"],
             ),
         output:
             json=f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["json"], output["json"])
 
 
 if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
@@ -379,11 +379,11 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
     rule retrieve_cost_data:
         input:
-            storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
+            costs=storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
             costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
         run:
-            copy2(input[0], output[0])
+            copy2(input["costs"], output["costs"])
 
 
 if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
@@ -392,11 +392,11 @@ if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
 
     rule retrieve_powerplants:
         input:
-            storage(POWERPLANTS_DATASET["url"]),
+            powerplants=storage(POWERPLANTS_DATASET["url"]),
         output:
             powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
         run:
-            copy2(input[0], output[0])
+            copy2(input["powerplants"], output["powerplants"])
 
 
 if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
@@ -445,14 +445,14 @@ if (
 
     rule retrieve_synthetic_electricity_demand:
         input:
-            storage(
+            csv=storage(
                 SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"],
             ),
         output:
             csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["csv"], output["csv"])
 
 
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
@@ -462,7 +462,7 @@ if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
 
     rule retrieve_ship_raster:
         input:
-            storage(
+            zip_file=storage(
                 SHIP_RASTER_DATASET["url"],
             ),
         output:
@@ -473,7 +473,7 @@ if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
             mem_mb=5000,
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["zip_file"], output["zip_file"])
 
 
 if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] in [
@@ -502,14 +502,14 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
 
     rule retrieve_hotmaps_industrial_sites:
         input:
-            storage(
+            csv=storage(
                 HOTMAPS_INDUSTRIAL_SITES["url"],
             ),
         output:
             csv=f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
         run:
-            copy2(input[0], output[0])
+            copy2(input["csv"], output["csv"])
 
 
 if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
@@ -521,14 +521,14 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
 
     rule retrieve_nitrogen_statistics:
         input:
-            storage(
+            xlsx=storage(
                 NITROGEN_STATISTICS_DATASET["url"],
             ),
         output:
             xlsx=f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
         run:
-            copy2(input[0], output[0])
+            copy2(input["xlsx"], output["xlsx"])
 
 
 if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
@@ -539,13 +539,13 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
-            storage(
+            tif=storage(
                 COPERNICUS_LAND_COVER_DATASET["url"],
             ),
         output:
             tif=f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
-            copy2(input[0], output[0])
+            copy2(input["tif"], output["tif"])
 
 
 if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] in [
@@ -557,13 +557,13 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
         input:
-            storage(
+            tif=storage(
                 LUISA_LAND_COVER_DATASET["url"],
             ),
         output:
             tif=f"{LUISA_LAND_COVER_DATASET["folder"]}/LUISA_basemap_020321_50m.tif",
         run:
-            copy2(input[0], output[0])
+            copy2(input["tif"], output["tif"])
 
 
 if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
@@ -1035,7 +1035,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
 
     rule retrieve_lau_regions:
         input:
-            lau_regions=storage(LAU_REGIONS_DATASET["url"]),
+            zip=lau_regions=storage(LAU_REGIONS_DATASET["url"]),
         output:
             zip=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
         log:
@@ -1043,7 +1043,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
         threads: 1
         retries: 2
         run:
-            copy2(input[0], output[0])
+            copy2(input["zip"], output["zip"])
 
 
 rule retrieve_jrc_ardeco:
