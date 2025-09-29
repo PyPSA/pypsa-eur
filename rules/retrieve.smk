@@ -1035,7 +1035,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
 
     rule retrieve_lau_regions:
         input:
-            zip=lau_regions=storage(LAU_REGIONS_DATASET["url"]),
+            lau_regions=storage(LAU_REGIONS_DATASET["url"]),
         output:
             zip=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
         log:
@@ -1043,7 +1043,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
         threads: 1
         retries: 2
         run:
-            copy2(input["zip"], output["zip"])
+            copy2(input["lau_regions"], output["zip"])
 
 
 rule retrieve_jrc_ardeco:
