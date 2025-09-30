@@ -17,6 +17,7 @@ functions and calling them in sequence.
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
@@ -24,11 +25,18 @@ import xarray as xr
 # Import all required functions from existing scripts
 from scripts._helpers import (
     configure_logging,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
     update_p_nom_max,
 )
-from scripts.add_brownfield import add_brownfield
+from scripts.add_brownfield import (
+    add_brownfield,
+    adjust_renewable_profiles,
+    disable_grid_expansion_if_limit_hit,
+    update_dynamic_ptes_capacity,
+    update_heat_pump_efficiency,
+)
 from scripts.add_electricity import (
     apply_variable_renewable_lifetimes,
     attach_conventional_generators,
@@ -92,6 +100,59 @@ from scripts.prepare_sector_network import (
 logger = logging.getLogger(__name__)
 
 
+def adjust_biomass_availability(n: pypsa.Network) -> None:
+    """
+    Adjust biomass generator availability to meet industrial feedstock demand.
+
+    Scales biomass generator e_sum_max capacity proportionally if the required
+    energy for industrial biomass loads exceeds the available biomass energy.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network containing biomass generators and loads
+
+    Notes
+    -----
+    Modifies n.generators["e_sum_max"] in-place if adjustment is needed.
+    Issues a warning log when scaling occurs.
+    """
+    biomass_generators = n.generators[n.generators.carrier == "solid biomass"]
+    if biomass_generators.empty:
+        return
+
+    weight_sum = float(n.snapshot_weightings.generators.sum())
+    industry_loads = n.loads[n.loads.carrier == "solid biomass for industry"]
+
+    if weight_sum > 0 and not industry_loads.empty:
+        required_energy = float((industry_loads.p_set * weight_sum).sum())
+        available_energy = float(
+            biomass_generators["e_sum_max"].replace([np.inf, -np.inf], pd.NA).sum()
+        )
+
+        if pd.isna(available_energy) or available_energy <= 0:
+            available_energy = 0.0
+
+        if required_energy > available_energy:
+            deficit = required_energy - available_energy
+            shares = biomass_generators["e_sum_max"].replace(0.0, pd.NA)
+
+            if shares.notna().any():
+                shares = shares.fillna(0.0) / shares.sum()
+            else:
+                shares = pd.Series(
+                    1.0 / len(biomass_generators), index=biomass_generators.index
+                )
+
+            for gen, share in shares.items():
+                n.generators.at[gen, "e_sum_max"] += deficit * share
+
+            logger.warning(
+                "Scaled solid biomass availability by %+0.1f MWh to match industrial feedstock demand.",
+                deficit,
+            )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -135,8 +196,19 @@ if __name__ == "__main__":
         # Multi-horizon case: handle based on foresight mode
         if foresight == "myopic":
             # For myopic: load previous solved network and apply brownfield constraints
-            n_previous = pypsa.Network(snakemake.input.network_previous)
             n = pypsa.Network(snakemake.input.clustered)
+            add_build_year_to_new_assets(n, current_horizon)
+            adjust_renewable_profiles(
+                n,
+                snakemake.input,
+                params,
+                current_horizon,
+            )
+
+            n_previous = pypsa.Network(snakemake.input.network_previous)
+            update_heat_pump_efficiency(n, n_previous, current_horizon)
+            if params.tes and params.dynamic_ptes_capacity:
+                update_dynamic_ptes_capacity(n, n_previous, current_horizon)
             logger.info(
                 f"Applying brownfield constraints from horizon {horizons[horizons.index(current_horizon) - 1]}"
             )
@@ -150,6 +222,7 @@ if __name__ == "__main__":
                 h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
                 capacity_threshold=params["capacity_threshold"],
             )
+            disable_grid_expansion_if_limit_hit(n)
         elif foresight == "perfect":
             logger.info(
                 f"Loading clustered network for perfect foresight horizon {current_horizon}"
@@ -363,7 +436,15 @@ if __name__ == "__main__":
         )
 
         if foresight in ["myopic", "perfect"]:
+            spatial_attrs = vars(spatial)
             for carrier in conventional_carriers:
+                if carrier not in spatial_attrs:
+                    logger.debug(
+                        "Skipping carrier bus setup for %s; no spatial configuration available",
+                        carrier,
+                    )
+                    continue
+
                 add_carrier_buses(
                     n=n,
                     carrier=carrier,
@@ -469,6 +550,9 @@ if __name__ == "__main__":
                 biomass_transport_costs_file=snakemake.input.biomass_transport_costs,
                 nyears=Nyears,
             )
+
+            # Adjust biomass availability to match industrial demand
+            adjust_biomass_availability(n)
 
         # Add ammonia if enabled
         if params.sector["ammonia"]:
@@ -707,6 +791,7 @@ if __name__ == "__main__":
     # ========== FINAL CLEANUP ==========
 
     # Sanitize carriers
+    sanitize_custom_columns(n)
     sanitize_carriers(n, config)
 
     # Sanitize locations if present

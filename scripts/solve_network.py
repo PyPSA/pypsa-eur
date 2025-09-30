@@ -32,6 +32,7 @@ import os
 import re
 import sys
 from functools import partial
+from pathlib import Path
 from typing import Any
 
 import linopy
@@ -421,6 +422,7 @@ def prepare_network(
     planning_horizons: str | None,
     co2_sequestration_potential: dict[str, float],
     limit_max_growth: dict[str, Any] | None = None,
+    resource_dir: Path | None = None,
 ) -> None:
     """
     Prepare network with various constraints and modifications.
@@ -437,6 +439,8 @@ def prepare_network(
         The current planning horizon year or None for perfect foresight
     co2_sequestration_potential : Dict[str, float]
         CO2 sequestration potential constraints by year
+    resource_dir : Path, optional
+        Directory containing auxiliary resource files for the run (e.g. busmap)
 
     Returns
     -------
@@ -1373,9 +1377,14 @@ def solve_network(
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
 
     if "infeasible" in condition:
-        labels = n.model.compute_infeasibilities()
-        logger.info(f"Labels:\n{labels}")
-        n.model.print_infeasibilities()
+        if kwargs.get("solver_name") == "gurobi":
+            labels = n.model.compute_infeasibilities()
+            logger.info(f"Labels:\n{labels}")
+            n.model.print_infeasibilities()
+        else:
+            logger.warning(
+                "Cannot compute infeasibilities without a Gurobi solver; skipping diagnostics."
+            )
         raise RuntimeError("Solving status 'infeasible'. Infeasibilities computed.")
 
 
@@ -1400,7 +1409,11 @@ if __name__ == "__main__":
     np.random.seed(solve_opts.get("seed", 123))
 
     n = pypsa.Network(snakemake.input.network)
-    planning_horizons = snakemake.wildcards.get("planning_horizons", None)
+    planning_horizons = snakemake.wildcards.get(
+        "planning_horizons"
+    ) or snakemake.wildcards.get("horizon")
+
+    resource_dir = Path(snakemake.input.network).resolve().parents[1]
 
     prepare_network(
         n,
@@ -1409,6 +1422,7 @@ if __name__ == "__main__":
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
         limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
+        resource_dir=resource_dir,
     )
 
     logging_frequency = snakemake.config.get("solving", {}).get(
@@ -1432,11 +1446,13 @@ if __name__ == "__main__":
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output.network)
 
-    with open(snakemake.output.config, "w") as file:
-        yaml.dump(
-            n.meta,
-            file,
-            default_flow_style=False,
-            allow_unicode=True,
-            sort_keys=False,
-        )
+    config_output = getattr(snakemake.output, "config", None)
+    if config_output:
+        with open(config_output, "w") as file:
+            yaml.dump(
+                n.meta,
+                file,
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )

@@ -47,6 +47,75 @@ def sanitize_busmap(busmap: pd.Series) -> pd.Series:
     return series
 
 
+def rename_network_component(
+    network: pypsa.Network, component: str, rename_map: pd.Series
+) -> None:
+    """
+    Rename a PyPSA component across static and dynamic tables in-place.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        Network instance whose component entries should be renamed.
+    component : str
+        Component name as used by PyPSA (e.g. ``"Generator"``, ``"Link"``).
+    rename_map : pandas.Series
+        Series mapping existing component names (index) to their new names (values).
+
+    Raises
+    ------
+    KeyError
+        If the component is not present on the network or any of the keys to
+        rename are missing from the static table.
+    ValueError
+        If duplicate source or target names are detected, or if a target name
+        collides with an unrenamed entry.
+    """
+
+    if component not in network.component_attrs:
+        raise KeyError(f"Component '{component}' not found on network")
+
+    if rename_map.empty:
+        return
+
+    rename_map = rename_map.dropna()
+    if rename_map.empty:
+        return
+
+    if pd.Index(rename_map.index).has_duplicates:
+        raise ValueError("Duplicate component names in rename_map index")
+
+    if pd.Index(rename_map.values).has_duplicates:
+        raise ValueError("Duplicate target names in rename_map values")
+
+    static_table = network.static(component)
+
+    missing = pd.Index(rename_map.index).difference(static_table.index)
+    if not missing.empty:
+        missing_text = ", ".join(str(name) for name in missing)
+        raise KeyError(
+            f"Cannot rename {component} entries; missing keys: {missing_text}"
+        )
+
+    existing = static_table.index.difference(rename_map.index)
+    conflicts = existing.intersection(pd.Index(rename_map.values))
+    if not conflicts.empty:
+        conflict_text = ", ".join(str(name) for name in conflicts)
+        raise ValueError(
+            f"Renaming {component} entries would collide with existing names: {conflict_text}"
+        )
+
+    mapping = rename_map.to_dict()
+
+    static_table.rename(index=mapping, inplace=True)
+
+    for dynamic_table in network.dynamic(component).values():
+        if isinstance(dynamic_table, pd.DataFrame):
+            dynamic_table.rename(columns=mapping, inplace=True)
+        elif isinstance(dynamic_table, pd.Series):
+            dynamic_table.rename(index=mapping, inplace=True)
+
+
 def get_scenarios(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
