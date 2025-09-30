@@ -266,24 +266,40 @@ def enforce_autarky(n, only_crossborder=False):
     n.remove("Link", links_rm)
 
 
-def set_line_nom_max(
+def cap_transmission_capacity(
     n,
-    s_nom_max_set=np.inf,
-    p_nom_max_set=np.inf,
-    s_nom_max_ext=np.inf,
-    p_nom_max_ext=np.inf,
+    line_max=np.inf,
+    link_max=np.inf,
+    line_max_extension=np.inf,
+    link_max_extension=np.inf,
 ):
-    if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
-        logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
-        n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
+    """
+    Cap transmission capacity for AC lines and DC links.
 
-    if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
-        logger.info(f"Limiting link extensions to {p_nom_max_ext} MW")
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    line_max : float
+        Absolute upper limit for AC line capacity [MW]
+    link_max : float
+        Absolute upper limit for DC link capacity [MW]
+    line_max_extension : float
+        Maximum extension per AC line [MW]
+    link_max_extension : float
+        Maximum extension per DC link [MW]
+    """
+    if np.isfinite(line_max_extension) and line_max_extension > 0:
+        logger.info(f"Limiting AC line extensions to {line_max_extension} MW")
+        n.lines["s_nom_max"] = n.lines["s_nom"] + line_max_extension
+
+    if np.isfinite(link_max_extension) and link_max_extension > 0:
+        logger.info(f"Limiting DC link extensions to {link_max_extension} MW")
         hvdc = n.links.index[n.links.carrier == "DC"]
-        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
+        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + link_max_extension
 
-    n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=s_nom_max_set)
-    n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
+    n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=line_max)
+    n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
 
 
 if __name__ == "__main__":
@@ -345,12 +361,12 @@ if __name__ == "__main__":
     factor = snakemake.params.transmission_limit[1:]
     set_transmission_limit(n, kind, factor, costs, Nyears)
 
-    set_line_nom_max(
+    cap_transmission_capacity(
         n,
-        s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
-        p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
-        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
-        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
+        line_max=snakemake.params.lines.get("s_nom_max", np.inf),
+        link_max=snakemake.params.links.get("p_nom_max", np.inf),
+        line_max_extension=snakemake.params.lines.get("max_extension", np.inf),
+        link_max_extension=snakemake.params.links.get("max_extension", np.inf),
     )
 
     if snakemake.params.autarky["enable"]:

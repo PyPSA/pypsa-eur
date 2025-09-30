@@ -153,6 +153,12 @@ electricity:
 
   transmission_limit: vopt
 
+  cap_transmission_capacity:
+    line_max: .inf  # Absolute upper limit for AC line capacity [MW]
+    link_max: .inf  # Absolute upper limit for DC link capacity [MW]
+    line_max_extension: .inf  # Maximum extension per AC line [MW]
+    link_max_extension: .inf  # Maximum extension per DC link [MW]
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   cutout_directory: cutouts

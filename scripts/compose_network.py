@@ -68,6 +68,7 @@ from scripts.prepare_network import (
     add_gaslimit,
     apply_time_segmentation,
     average_every_nhours,
+    cap_transmission_capacity,
     set_line_s_max_pu,
     set_transmission_limit,
 )
@@ -766,6 +767,16 @@ if __name__ == "__main__":
     s_max_pu = params.lines["s_max_pu"]
     if s_max_pu:
         set_line_s_max_pu(n, s_max_pu)
+
+    # Cap transmission capacity for AC lines and DC links
+    cap_config = electricity_cfg["cap_transmission_capacity"]
+    cap_transmission_capacity(
+        n,
+        line_max=cap_config["line_max"],
+        link_max=cap_config["link_max"],
+        line_max_extension=cap_config["line_max_extension"],
+        link_max_extension=cap_config["link_max_extension"],
+    )
 
     # Apply time segmentation if specified
     time_segmentation = clustering_temporal_cfg["time_segmentation"]

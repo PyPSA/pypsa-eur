@@ -415,6 +415,35 @@ def add_retrofit_gas_boiler_constraint(
     n.model.add_constraints(lhs == rhs, name="gas_retrofit")
 
 
+def enforce_autarky(n: pypsa.Network, only_crossborder: bool = False) -> None:
+    """
+    Remove transmission lines to enforce autarky.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    only_crossborder : bool
+        If True, only remove cross-border connections. If False, remove all lines.
+    """
+    if only_crossborder:
+        lines_rm = n.lines.loc[
+            n.lines.bus0.map(n.buses.country) != n.lines.bus1.map(n.buses.country)
+        ].index
+        links_rm = n.links.loc[
+            n.links.bus0.map(n.buses.country) != n.links.bus1.map(n.buses.country)
+        ].index
+    else:
+        lines_rm = n.lines.index
+        links_rm = n.links.loc[n.links.carrier == "DC"].index
+
+    logger.info(
+        f"Enforcing autarky: removing {len(lines_rm)} lines and {len(links_rm)} links"
+    )
+    n.remove("Line", lines_rm)
+    n.remove("Link", links_rm)
+
+
 def prepare_network(
     n: pypsa.Network,
     solve_opts: dict,
@@ -526,6 +555,12 @@ def prepare_network(
         add_co2_sequestration_limit(
             n, limit_dict=limit_dict, planning_horizons=planning_horizons
         )
+
+    # Apply autarky constraint if configured
+    autarky_cfg = n.config["electricity"]["autarky"]
+    if autarky_cfg["enable"]:
+        only_crossborder = autarky_cfg["by_country"]
+        enforce_autarky(n, only_crossborder=only_crossborder)
 
 
 def add_CCL_constraints(
