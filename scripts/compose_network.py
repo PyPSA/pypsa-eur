@@ -1118,7 +1118,9 @@ if __name__ == "__main__":
         },
         # Raw inputs for backward compatibility
         raw_inputs=dict(snakemake.input),
-        conventional_inputs=snakemake.input.get("conventional"),
+        conventional_inputs={
+            k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+        },
     )
 
     # ========== ELECTRICITY COMPONENTS ==========
@@ -1141,6 +1143,28 @@ if __name__ == "__main__":
         "electricity components",
         expected_components={"buses": 1, "generators": 1, "loads": 1},
     )
+
+    # Clean up orphaned components in sector mode (generators referencing non-existent buses)
+    if sector_mode:
+        # Remove generators with undefined buses
+        valid_buses = set(n.buses.index)
+        for c in n.iterate_components(n.one_port_components | n.branch_components):
+            if "bus" in c.df.columns:
+                invalid = ~c.df["bus"].isin(valid_buses)
+                if invalid.any():
+                    logger.warning(
+                        f"Removing {invalid.sum()} {c.name} with undefined buses: {c.df.index[invalid].tolist()}"
+                    )
+                    n.remove(c.name, c.df.index[invalid])
+            if "bus0" in c.df.columns:
+                invalid0 = ~c.df["bus0"].isin(valid_buses)
+                invalid1 = ~c.df["bus1"].isin(valid_buses)
+                invalid = invalid0 | invalid1
+                if invalid.any():
+                    logger.warning(
+                        f"Removing {invalid.sum()} {c.name} with undefined buses: {c.df.index[invalid].tolist()}"
+                    )
+                    n.remove(c.name, c.df.index[invalid])
 
     # ========== SECTOR COMPONENTS ==========
     if sector_mode:

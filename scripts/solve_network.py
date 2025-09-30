@@ -557,7 +557,9 @@ def prepare_network(
         )
 
     # Apply autarky constraint if configured
-    autarky_cfg = n.config["electricity"]["autarky"]
+    # Access config from n.meta (set by compose_network) or n.config (set by solve_network)
+    config = getattr(n, "config", None) or n.meta
+    autarky_cfg = config["electricity"]["autarky"]
     if autarky_cfg["enable"]:
         only_crossborder = autarky_cfg["by_country"]
         enforce_autarky(n, only_crossborder=only_crossborder)
@@ -1113,7 +1115,8 @@ def add_pipe_retrofit_constraint(n):
 
     p_nom = n.model["Link-p_nom"]
 
-    CH4_per_H2 = 1 / n.config["sector"]["H2_retrofit_capacity_per_CH4"]
+    config = getattr(n, "config", None) or n.meta
+    CH4_per_H2 = 1 / config["sector"]["H2_retrofit_capacity_per_CH4"]
     lhs = p_nom.loc[gas_pipes_i] + CH4_per_H2 * p_nom.loc[h2_retrofitted_i]
     rhs = n.links.p_nom[gas_pipes_i]
     if not PYPSA_V1:
@@ -1152,8 +1155,9 @@ def add_import_limit_constraint(n: pypsa.Network, sns: pd.DatetimeIndex):
     import_links = n.links.loc[n.links.carrier.str.contains("import")].index
     import_gens = n.generators.loc[n.generators.carrier.str.contains("import")].index
 
-    limit = n.config["sector"]["imports"]["limit"]
-    limit_sense = n.config["sector"]["imports"]["limit_sense"]
+    config = getattr(n, "config", None) or n.meta
+    limit = config["sector"]["imports"]["limit"]
+    limit_sense = config["sector"]["imports"]["limit_sense"]
 
     if (import_links.empty and import_gens.empty) or not np.isfinite(limit):
         return
