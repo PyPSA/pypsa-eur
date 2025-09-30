@@ -217,6 +217,58 @@ def validate_network_state(
     return counts
 
 
+def adjust_renewable_capacity_limits(
+    n: pypsa.Network, planning_horizons: str, renewable_carriers: list[str]
+) -> None:
+    """
+    Adjust renewable capacity limits by subtracting existing capacities from previous horizons.
+
+    For each renewable carrier, this function sums the capacity of non-extendable
+    generators (representing existing capacities from previous planning horizons)
+    and subtracts that value from the p_nom_max of extendable generators in the
+    current horizon. This ensures that the technical potential is properly adjusted
+    for brownfield scenarios.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network containing renewable generators
+    planning_horizons : str
+        The current planning horizon year as string
+    renewable_carriers : list[str]
+        List of renewable carrier names from config
+
+    Notes
+    -----
+    Modifies n.generators["p_nom_max"] in-place.
+    Issues a warning if existing capacities exceed technical potential.
+    Clips p_nom_max to non-negative values.
+    """
+    for carrier in renewable_carriers:
+        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
+        grouper = n.generators.loc[ext_i].index.str.replace(
+            f" {carrier}.*$", "", regex=True
+        )
+        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
+        existing.index += f" {carrier}-{planning_horizons}"
+        n.generators.loc[existing.index, "p_nom_max"] -= existing
+
+    # Check if existing capacities are larger than technical potential
+    existing_large = n.generators[
+        n.generators["p_nom_min"] > n.generators["p_nom_max"]
+    ].index
+    if len(existing_large):
+        logger.warning(
+            f"Existing capacities larger than technical potential for {existing_large}, "
+            "adjust technical potential to existing capacities"
+        )
+        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
+            existing_large, "p_nom_min"
+        ]
+
+    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
+
+
 def adjust_biomass_availability(n: pypsa.Network) -> None:
     """
     Adjust biomass generator availability to meet industrial feedstock demand.
@@ -1026,6 +1078,11 @@ if __name__ == "__main__":
                 capacity_threshold=params["capacity_threshold"],
             )
             disable_grid_expansion_if_limit_hit(n)
+
+            # Adjust renewable capacity limits based on existing capacities
+            adjust_renewable_capacity_limits(
+                n, str(current_horizon), params.renewable_carriers
+            )
         elif foresight == "perfect":
             logger.info(
                 f"Loading clustered network for perfect foresight horizon {current_horizon}"
@@ -1059,7 +1116,7 @@ if __name__ == "__main__":
     )
 
     # Define carrier sets
-    renewable_carriers = set(params.electricity["renewable_carriers"])
+    renewable_carriers = set(params.renewable_carriers)
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
 
@@ -1236,4 +1293,5 @@ if __name__ == "__main__":
 
     # Export composed network
     logger.info(f"Exporting composed network for horizon {current_horizon}")
+    n.consistency_check(strict="all")
     n.export_to_netcdf(snakemake.output[0])

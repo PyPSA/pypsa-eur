@@ -61,7 +61,7 @@ class ObjectiveValueError(Exception):
     pass
 
 
-def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
+def add_land_use_constraint(n: pypsa.Network) -> None:
     """
     Add global constraints for tech capacity limit.
 
@@ -76,21 +76,6 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
         Network with added land use constraints
     """
     logger.info("Add land-use constraint for perfect foresight")
-
-    def compress_series(s):
-        def process_group(group):
-            if group.nunique() == 1:
-                return pd.Series(group.iloc[0], index=[None])
-            else:
-                return group
-
-        return s.groupby(level=[0, 1]).apply(process_group)
-
-    def new_index_name(t):
-        # Convert all elements to string and filter out None values
-        parts = [str(x) for x in t if x is not None]
-        # Join with space, but use a dash for the last item if not None
-        return " ".join(parts[:2]) + (f"-{parts[-1]}" if len(parts) > 2 else "")
 
     def check_p_min_p_max(p_nom_max):
         p_nom_min = n.generators[ext_i].groupby(grouper).sum().p_nom_min
@@ -110,14 +95,11 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
     p_nom_max = n.generators[ext_i].groupby(grouper).min().p_nom_max
     # drop carriers without tech limit
     p_nom_max = p_nom_max[~p_nom_max.isin([np.inf, np.nan])]
-    # carrier
     carriers = p_nom_max.index.get_level_values(0).unique()
     gen_i = n.generators[(n.generators.carrier.isin(carriers)) & (ext_i)].index
     n.generators.loc[gen_i, "p_nom_min"] = 0
     # check minimum capacities
     check_p_min_p_max(p_nom_max)
-    # drop multi entries in case p_nom_max stays constant in different periods
-    # p_nom_max = compress_series(p_nom_max)
     # adjust name to fit syntax of nominal constraint per bus
     df = p_nom_max.reset_index()
     df["name"] = df.apply(
@@ -130,57 +112,6 @@ def add_land_use_constraint_perfect(n: pypsa.Network) -> None:
         df_carrier = df[df.name == name]
         bus = df_carrier.bus
         n.buses.loc[bus, name] = df_carrier.p_nom_max.values
-
-
-def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
-    """
-    Add land use constraints for renewable energy potential.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        The PyPSA network instance
-    planning_horizons : str
-        The planning horizon year as string
-
-    Returns
-    -------
-    pypsa.Network
-        Modified PyPSA network with constraints added
-    """
-    # warning: this will miss existing offwind which is not classed AC-DC and has carrier 'offwind'
-
-    for carrier in [
-        "solar",
-        "solar rooftop",
-        "solar-hsat",
-        "onwind",
-        "offwind-ac",
-        "offwind-dc",
-        "offwind-float",
-    ]:
-        ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
-        grouper = n.generators.loc[ext_i].index.str.replace(
-            f" {carrier}.*$", "", regex=True
-        )
-        existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
-        existing.index += f" {carrier}-{planning_horizons}"
-        n.generators.loc[existing.index, "p_nom_max"] -= existing
-
-    # check if existing capacities are larger than technical potential
-    existing_large = n.generators[
-        n.generators["p_nom_min"] > n.generators["p_nom_max"]
-    ].index
-    if len(existing_large):
-        logger.warning(
-            f"Existing capacities larger than technical potential for {existing_large},\
-                        adjust technical potential to existing capacities"
-        )
-        n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
-            existing_large, "p_nom_min"
-        ]
-
-    n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
 
 
 def add_solar_potential_constraints(n: pypsa.Network, config: dict) -> None:
@@ -542,11 +473,8 @@ def prepare_network(
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if foresight == "myopic":
-        add_land_use_constraint(n, planning_horizons)
-
     if foresight == "perfect":
-        add_land_use_constraint_perfect(n)
+        add_land_use_constraint(n)
         if limit_max_growth is not None and limit_max_growth["enable"]:
             add_max_growth(n, limit_max_growth)
 

@@ -226,7 +226,7 @@ rule compose_network:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         # Parameters from add_existing_baseyear
         baseyear=config_provider("planning_horizons"),
-        carriers=config_provider("electricity", "renewable_carriers"),
+        renewable_carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         # Brownfield settings (for myopic)
         h2_retrofit=config_provider("sector", "H2_retrofit"),
