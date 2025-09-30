@@ -153,12 +153,6 @@ electricity:
 
   transmission_limit: vopt
 
-  cap_transmission_capacity:
-    line_max: .inf  # Absolute upper limit for AC line capacity [MW]
-    link_max: .inf  # Absolute upper limit for DC link capacity [MW]
-    line_max_extension: .inf  # Maximum extension per AC line [MW]
-    link_max_extension: .inf  # Maximum extension per DC link [MW]
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   cutout_directory: cutouts
@@ -323,9 +317,9 @@ lines:
     400.: Al/St 240/40 4-bundle 380.0
     500.: Al/St 240/40 4-bundle 380.0
     750.: Al/St 560/50 4-bundle 750.0
-  s_max_pu: 0.7
-  s_nom_max: .inf
-  max_extension: 20000 #MW
+  s_max_pu: 0.7  # N-1 security margin (max utilization)
+  s_nom_max: .inf  # Absolute upper limit for line capacity [MW]
+  s_nom_max_extension: .inf  # Maximum capacity extension per line [MW]
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
@@ -338,10 +332,10 @@ lines:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#links
 links:
-  p_max_pu: 1.0
+  p_max_pu: 1.0  # Maximum utilization for DC links
   p_min_pu: -1.0
-  p_nom_max: .inf
-  max_extension: 30000 #MW
+  p_nom_max: .inf  # Absolute upper limit for link capacity [MW]
+  p_nom_max_extension: .inf  # Maximum capacity extension per link [MW]
   length_factor: 1.25
   under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract
 
