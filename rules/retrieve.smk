@@ -17,6 +17,7 @@ storage:
     keep_local=True,
     retrieve=True,
     retries=3,
+    max_requests_per_second=2,
 
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
@@ -1128,6 +1129,8 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
             "logs/retrieve_mobility_profiles.log",
         benchmark:
             "benchmarks/retrieve_mobility_profiles"
+        conda:
+            "../envs/environment.yaml"
         run:
             copy2(input["kfz"], output["kfz"])
             copy2(input["pkw"], output["pkw"])
