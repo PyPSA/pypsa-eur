@@ -1047,22 +1047,33 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
             copy2(input["lau_regions"], output["zip"])
 
 
-rule retrieve_jrc_ardeco:
-    output:
-        ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
-        ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
-    run:
-        urls = {
-            "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
-            "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
-        }
+if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
+    "primary",
+    "archive"
+]:
+    rule retrieve_jrc_ardeco:
+        output:
+            ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
+            ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
+        run:
+            if JRC_ARDECO_DATASET["source"] == 'primary':
+                urls = {
+                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?version=2021&format=csv-table",
+                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/SNPTD?version=2021&format=csv-table",
+                }
+            else:
+                urls = {
+                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv",
+                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv",
+                }
 
-        for key, url in urls.items():
-            response = requests.get(url)
-            output_path = output[key] if key in urls else None
-            if output_path:
-                with open(output_path, "wb") as f:
-                    f.write(response.content)
+            for key, url in urls.items():
+                response = requests.get(url)
+                output_path = output[key] if key in urls else None
+                if output_path:
+                    with open(output_path, "wb") as f:
+                        f.write(response.content)
+
 
 
 if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [

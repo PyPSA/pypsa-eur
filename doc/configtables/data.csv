@@ -133,4 +133,7 @@ dh_areas,,,
 -- version_or_latest,str,,"Version of the District Heating Areas data to use. Uses the specific 'version' for the selected 'source' or the dataset tagged 'latest' for this source.""
 geothermal_heat_utilisation_potentials,,,
 -- source,str,"{archive, primary}","Source of the Geothermal Heat Utilisation Potentials data."
--- version_or_latest,str,,"Version of the Geothermal Heat Utilisation Potentials
+-- version_or_latest,str,,"Version of the Geothermal Heat Utilisation Potentials"
+jrc_ardeco,,,
+-- source,str,"{archive, primary}","Source of annual regional database for EU regions"
+-- version_or_latest,str,,"Version of the JRC ARDECO dataset"

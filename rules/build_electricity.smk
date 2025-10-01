@@ -157,8 +157,8 @@ rule build_shapes:
         md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
         ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
         xk_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/XK_adm1.geojson",
-        nuts3_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
-        nuts3_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
+        nuts3_gdp=rules.retrieve_jrc_ardeco.output["ardeco_gdp"],
+        nuts3_pop=rules.retrieve_jrc_ardeco.output["ardeco_pop"],
         bidding_zones=lambda w: (
             resources("bidding_zones.geojson")
             if config_provider("clustering", "mode")(w) == "administrative"
