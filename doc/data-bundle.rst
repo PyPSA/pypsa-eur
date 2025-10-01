@@ -11,7 +11,14 @@ Data in this section is downloaded and extracted from the Zenodo data bundle
 large to be placed directly in the repository, have been reduced in spatial
 scope to reduce file size, or are not provided through stable URLs elsewhere.
 
-``data/bundle/je-e-21.03.02.xls``
+``data/bundle/seawater_temperature.nc``
+
+- **Source:** Copernicus Marine Environment Monitoring Service; https://doi.org/10.48670/moi-00021
+- **Link:** https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description
+- **License:** `custom <https://marine.copernicus.eu/user-corner/service-commitments-and-licence>`__
+- **Description:** Seawater temperatures resolved in time and space for Europe. Copyright notice: All studies using this data have been conducted using E.U. Copernicus Marine Service Information (DOI: https://doi.org/10.48670/moi-00021) and related derivate work has been generated using E.U. Copernicus Marine Service Information (DOI: https://doi.org/10.48670/moi-00021).
+
+``data/bundle/je-e-21.03.02.nc``
 
 - **Source:** Swiss Federal Statistics Office
 - **Link:** https://www.bfs.admin.ch/bfs/en/home/news/whats-new.assetdetail.7786557.html#context-sidebar

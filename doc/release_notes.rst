@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
+
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
   when running with few nodes such that they are all already connected by existing gas
   lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
