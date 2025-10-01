@@ -596,19 +596,26 @@ def input_seawater_temperature(w) -> dict[str, str]:
     dict[str, str]
         Dictionary mapping keys like "seawater_temperature_{year}" to NetCDF file paths.
     """
-    # Import here to avoid circular imports
-    from scripts._helpers import get_snapshots
 
-    # Get all snapshots and extract unique years
-    snapshots_config = config_provider("snapshots")(w)
-    snapshots = get_snapshots(snapshots_config)
-    unique_years = snapshots.year.unique()
+    if config_provider("atlite", "default_cutout") == "be-03-2013-era5":
+        return {
+            f"seawater_temperature_{year}": f"data/seawater_temperature_test_cutout.nc"
+            for year in unique_years
+        }
+    else:
+        # Import here to avoid circular imports
+        from scripts._helpers import get_snapshots
 
-    # Create dictionary with year-specific keys
-    return {
-        f"seawater_temperature_{year}": f"data/seawater_temperature_{year}.nc"
-        for year in unique_years
-    }
+        # Get all snapshots and extract unique years
+        snapshots_config = config_provider("snapshots")(w)
+        snapshots = get_snapshots(snapshots_config)
+        unique_years = snapshots.year.unique()
+
+        # Create dictionary with year-specific keys
+        return {
+            f"seawater_temperature_{year}": f"data/seawater_temperature_{year}.nc"
+            for year in unique_years
+        }
 
 
 rule build_sea_heat_potential:
