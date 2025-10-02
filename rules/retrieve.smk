@@ -1058,21 +1058,23 @@ if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
         run:
             if JRC_ARDECO_DATASET["source"] == 'primary':
                 urls = {
-                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?version=2021&format=csv-table",
-                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/SNPTD?version=2021&format=csv-table",
+                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?versions=2021&unit=EUR&format=csv-table",
+                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/SNPTD?versions=2021&unit=EUR&format=csv-table",
                 }
             else:
                 urls = {
-                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv",
-                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv",
+                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv",
+                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv",
                 }
 
             for key, url in urls.items():
                 response = requests.get(url)
+
                 output_path = output[key] if key in urls else None
                 if output_path:
-                    with open(output_path, "wb") as f:
-                        f.write(response.content)
+                    if  response.status_code == 200:
+                        with open(output_path, "wb") as f:
+                            f.write(response.content)
 
 
 
