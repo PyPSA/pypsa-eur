@@ -67,9 +67,6 @@ def build_nuts_population_data(year=2013):
         index_col=1,
     )[str(year)]
 
-    # only countries
-    pop.drop("EU28", inplace=True)
-
     # mapping from Cantons to NUTS3
     cantons = pd.read_csv(snakemake.input.swiss_cantons)
     cantons = cantons.set_index(cantons.HASC.str[3:]).NUTS
