@@ -241,7 +241,7 @@ rule build_temperature_profiles:
 
 rule build_central_heating_temperature_profiles:
     message:
-        "Building central heating temperature profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizons"
+        "Building central heating temperature profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         max_forward_temperature_central_heating_baseyear=config_provider(
             "sector",
@@ -356,7 +356,7 @@ rule build_geothermal_heat_potential:
 
 rule build_ates_potentials:
     message:
-        "Building aquifer thermal energy storage (ATES) potentials for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizons"
+        "Building aquifer thermal energy storage (ATES) potentials for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         max_top_temperature=config_provider(
             "sector",
@@ -441,7 +441,7 @@ rule build_ates_potentials:
 
 rule build_cop_profiles:
     message:
-        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizons"
+        "Building coefficient of performance (COP) profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         heat_pump_sink_T_decentral_heating=config_provider(
             "sector", "heat_pump_sink_T_individual_heating"
@@ -486,7 +486,7 @@ rule build_cop_profiles:
 
 rule build_ptes_operations:
     message:
-        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizons"
+        "Building thermal energy storage operations profiles for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         max_ptes_top_temperature=config_provider(
             "sector",
@@ -533,7 +533,7 @@ rule build_ptes_operations:
 
 rule build_direct_heat_source_utilisation_profiles:
     message:
-        "Building direct heat source utilization profiles for industrial applications for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizons"
+        "Building direct heat source utilization profiles for industrial applications for {wildcards.clusters} clusters and {wildcards.planning_horizons} planning horizon"
     params:
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
@@ -1351,7 +1351,7 @@ def input_heat_source_power(w):
 
 rule prepare_sector_network:
     message:
-        "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
+        "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
         co2_budget=config_provider("co2_budget"),

@@ -246,7 +246,7 @@ rule build_ship_raster:
 
 rule determine_availability_matrix_MD_UA:
     message:
-        "Determining availability matrix for {wildcards.clusters} and {wildcards.technology}"
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
     input:
@@ -304,7 +304,7 @@ def input_ua_md_availability_matrix(w):
 
 rule determine_availability_matrix:
     message:
-        "Determining availability matrix for {wildcards.clusters} and {wildcards.technology}"
+        "Determining availability matrix for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         renewable=config_provider("renewable"),
     input:
