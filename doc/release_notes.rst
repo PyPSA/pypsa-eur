@@ -46,6 +46,8 @@ Upcoming Release
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
 
+* Add user-readable messages to each rule (https://github.com/PyPSA/pypsa-eur/pull/1846)
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
