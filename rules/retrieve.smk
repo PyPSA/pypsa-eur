@@ -34,6 +34,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
     ]
 
     rule retrieve_databundle:
+        message:
+            "Retrieving {file} from data bundle"
         output:
             expand("data/bundle/{file}", file=datafiles),
         log:
@@ -49,6 +51,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../scripts/retrieve_databundle.py"
 
     rule retrieve_eurostat_data:
+        message:
+            "Retrieving Eurostat energy balances"
         output:
             directory("data/eurostat/Balances-April2023"),
         log:
@@ -60,6 +64,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../scripts/retrieve_eurostat_data.py"
 
     rule retrieve_jrc_idees:
+        message:
+            "Retrieving JRC IDEES data"
         output:
             directory("data/jrc-idees-2021"),
         log:
@@ -69,6 +75,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
             "../scripts/retrieve_jrc_idees.py"
 
     rule retrieve_eurostat_household_data:
+        message:
+            "Retrieving Eurostat household energy balances"
         output:
             "data/eurostat/eurostat-household_energy_balances-february_2024.csv",
         log:
@@ -83,6 +91,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 if config["enable"]["retrieve"]:
 
     rule retrieve_nuts_2013_shapes:
+        message:
+            "Retrieving NUTS 2013 shapes"
         input:
             shapes=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
@@ -111,6 +121,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_nuts_2021_shapes:
+        message:
+            "Retrieving NUTS 2021 shapes"
         input:
             shapes=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2021-01m.geojson.zip"
@@ -141,6 +153,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_bidding_zones:
+        message:
+            "Retrieving bidding zone shapes"
         output:
             file_entsoepy="data/busshapes/bidding_zones_entsoepy.geojson",
             file_electricitymaps="data/busshapes/bidding_zones_electricitymaps.geojson",
@@ -158,6 +172,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:
+        message:
+            "Retrieving cutout data for {wildcards.cutout}"
         input:
             storage(
                 "https://zenodo.org/records/15349674/files/{cutout}.nc",
@@ -177,6 +193,8 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
 if config["enable"]["retrieve"]:
 
     rule retrieve_tyndp_bundle:
+        message:
+            "Retrieving TYNDP 2024 bundle"
         output:
             reference_grid="data/tyndp_2024_bundle/Line data/ReferenceGrid_Electricity.xlsx",
             buses="data/tyndp_2024_bundle/Nodes/LIST OF NODES.xlsx",
@@ -190,6 +208,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", True):
 
     rule retrieve_cost_data:
+        message:
+            "Retrieving cost data for {wildcards.year}"
         params:
             version=config_provider("costs", "version"),
         output:
@@ -215,6 +235,8 @@ if config["enable"]["retrieve"]:
     ]
 
     rule retrieve_gas_infrastructure_data:
+        message:
+            "Retrieving gas infrastructure data"
         output:
             expand("data/gas_network/scigrid-gas/data/{files}", files=datafiles),
         log:
@@ -229,6 +251,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_electricity_demand:
+        message:
+            "Retrieving electricity demand data"
         params:
             versions=["2019-06-05", "2020-10-06"],
         output:
@@ -247,6 +271,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_synthetic_electricity_demand:
+        message:
+            "Retrieving synthetic electricity demand data"
         input:
             storage(
                 "https://zenodo.org/records/10820928/files/demand_hourly.csv",
@@ -265,6 +291,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_ship_raster:
+        message:
+            "Retrieving shipping raster data"
         input:
             storage(
                 "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
@@ -285,6 +313,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_jrc_enspreso_biomass:
+        message:
+            "Retrieving JRC ENSPRESO biomass potentials"
         input:
             storage(
                 "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
@@ -300,6 +330,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_hotmaps_industrial_sites:
+        message:
+            "Retrieving Hotmaps industrial sites"
         input:
             storage(
                 "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
@@ -315,6 +347,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_usgs_ammonia_production:
+        message:
+            "Retrieving USGS ammonia production data"
         input:
             storage(
                 "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/media/files/myb1-2022-nitro-ert.xlsx"
@@ -331,6 +365,8 @@ if config["enable"]["retrieve"]:
     # Downloading Copernicus Global Land Cover for land cover and land use:
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
+        message:
+            "Retrieving Copernicus land cover data"
         input:
             storage(
                 "https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -347,6 +383,8 @@ if config["enable"]["retrieve"]:
     # Downloading LUISA Base Map for land cover and land use:
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
+        message:
+            "Retrieving LUISA land cover data"
         input:
             storage(
                 "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/LUISA/EUROPE/Basemaps/LandUse/2018/LATEST/LUISA_basemap_020321_50m.tif",
@@ -360,6 +398,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
+        message:
+            "Retrieving Marine Regions data"
         params:
             zip_file="World_EEZ_v12_20231025_LR.zip",
         output:
@@ -395,6 +435,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_worldbank_urban_population:
+        message:
+            "Retrieving World Bank urban population data"
         params:
             zip_file="API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
         output:
@@ -422,6 +464,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_co2stop:
+        message:
+            "Retrieving CO2 Storage Potentials data for Europe"
         params:
             zip_file="co2jrc_openformats.zip",
         output:
@@ -446,6 +490,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_gem_europe_gas_tracker:
+        message:
+            "Retrieving Global Energy Monitor Europe Gas Tracker data"
         output:
             "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
@@ -460,6 +506,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_gem_steel_plant_tracker:
+        message:
+            "Retrieving Global Energy Monitor Steel Plant Tracker data"
         output:
             "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         run:
@@ -505,6 +553,8 @@ if config["enable"]["retrieve"]:
     # extract the main zip and then merge the contained 3 zipped shapefiles
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
+        message:
+            "Retrieving World Database on Protected Areas data"
         input:
             zip_file=storage(url, keep_local=True),
         params:
@@ -531,6 +581,8 @@ if config["enable"]["retrieve"]:
         # Downloading Marine protected area database from WDPA
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
+        message:
+            "Downloading Marine protected area database from WDPA"
         input:
             zip_file=storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
@@ -558,6 +610,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_co2_prices:
+        message:
+            "Retrieving monthly CO2 prices"
         input:
             storage(
                 "https://public.eex-group.com/eex/eua-auction-report/emission-spot-primary-market-auction-report-2019-data.xls",
@@ -577,6 +631,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_monthly_fuel_prices:
+        message:
+            "Retrieving monthly fuel prices"
         output:
             "data/validation/energy-price-trends-xlsx-5619002.xlsx",
         log:
@@ -614,6 +670,8 @@ if config["enable"]["retrieve"] and (
 
     # update rule to use the correct version
     rule retrieve_osm_prebuilt:
+        message:
+            "Retrieving OSM prebuilt network version"
         input:
             **{
                 file: storage(
@@ -640,6 +698,8 @@ if config["enable"]["retrieve"] and (
 ):
 
     rule retrieve_osm_data:
+        message:
+            "Retrieving OSM raw data for {country}"
         output:
             cables_way="data/osm-raw/{country}/cables_way.json",
             lines_way="data/osm-raw/{country}/lines_way.json",
@@ -660,6 +720,8 @@ if config["enable"]["retrieve"] and (
 ):
 
     rule retrieve_osm_data_all:
+        message:
+            "Retrieving OSM raw data for all countries"
         input:
             expand(
                 "data/osm-raw/{country}/cables_way.json",
@@ -686,6 +748,8 @@ if config["enable"]["retrieve"] and (
 if config["enable"]["retrieve"]:
 
     rule retrieve_osm_boundaries:
+        message:
+            "Retrieving OSM admin boundaries for {country}"
         output:
             json="data/osm-boundaries/json/{country}_adm1.json",
         log:
@@ -697,6 +761,8 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_osm_boundaries.py"
 
     rule retrieve_geothermal_heat_utilisation_potentials:
+        message:
+            "Retrieving geothermal heat utilisation potentials"
         input:
             isi_heat_potentials=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/11/Results_DH_Matching_Cluster.xlsx",
@@ -712,6 +778,8 @@ if config["enable"]["retrieve"]:
             move(input[0], output[0])
 
     rule retrieve_lau_regions:
+        message:
+            "Retrieving Local Administrative Units and Administation Unit regions"
         input:
             lau_regions=storage(
                 "https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",
@@ -732,6 +800,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_jrc_ardeco:
+        message:
+            "Retrieving JRC ARDECO data"
         output:
             ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
@@ -753,6 +823,8 @@ if config["enable"]["retrieve"]:
 if config["enable"]["retrieve"]:
 
     rule retrieve_aquifer_data_bgr:
+        message:
+            "Retrieving BGR aquifer data"
         input:
             zip_file=storage(
                 "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
@@ -784,6 +856,8 @@ if config["enable"]["retrieve"]:
                     extracted_file.rename(outpt)
 
     rule retrieve_dh_areas:
+        message:
+            "Retrieving District Heating areas"
         input:
             dh_areas=storage(
                 "https://fordatis.fraunhofer.de/bitstream/fordatis/341.5/2/dh_areas.gpkg",
