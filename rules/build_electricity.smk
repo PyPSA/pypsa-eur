@@ -362,7 +362,7 @@ rule determine_availability_matrix:
 
 rule build_renewable_profiles:
     message:
-        "Building renewable profiles for {wildcards.clusters} and {wildcards.technology}"
+        "Building renewable profiles for {wildcards.clusters} clusters and {wildcards.technology} technology"
     params:
         snapshots=config_provider("snapshots"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
