@@ -65,7 +65,7 @@ def input_network_year(w):
 
 rule prepare_perfect_foresight:
     message:
-        "Preparing data for perfect foresight optimization for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizons, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
+        "Preparing data for perfect foresight optimization for {wildcards.clusters} clusters, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     params:
         costs=config_provider("costs"),
         time_resolution=config_provider("clustering", "temporal", "sector"),
