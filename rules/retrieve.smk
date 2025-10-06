@@ -35,7 +35,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_databundle", 
 
     rule retrieve_databundle:
         message:
-            "Retrieving {file} from data bundle"
+            "Retrieving datafiles from data bundle"
         output:
             expand("data/bundle/{file}", file=datafiles),
         log:
@@ -749,7 +749,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_osm_boundaries:
         message:
-            "Retrieving OSM admin boundaries for {country}"
+            "Retrieving OSM admin boundaries for {wildcards.country}"
         output:
             json="data/osm-boundaries/json/{country}_adm1.json",
         log:
