@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Open Energy Transition gGmbH
+#
+# SPDX-License-Identifier: CC0-1.0
+
+title = "Custom gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlists]
+description = "Custom global allow lists"
+paths = [
+    '''(.*?).lock.yaml'''
+]
