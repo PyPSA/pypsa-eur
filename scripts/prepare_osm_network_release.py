@@ -129,7 +129,7 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         - converters (GeoDataFrame): GeoDataFrame containing converter data with geometries.
         - transformers (GeoDataFrame): GeoDataFrame containing transformer data with geometries.
     """
-    
+
     buses_cols = [
         "Bus",
         "v_nom",
@@ -139,7 +139,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "tags",
         "geometry",
     ]
-    buses = network.buses.reset_index()[[c for c in buses_cols if c in network.buses.columns]]
+    buses = network.buses.reset_index()[
+        [c for c in buses_cols if c in network.buses.columns]
+    ]
     buses["geometry"] = buses.geometry.apply(lambda x: loads(x))
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=crs)
 
@@ -161,7 +163,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "tags",
         "geometry",
     ]
-    lines = network.lines.reset_index()[[c for c in lines_cols if c in network.lines.columns]]
+    lines = network.lines.reset_index()[
+        [c for c in lines_cols if c in network.lines.columns]
+    ]
     # Create shapely linestring from geometry column
     lines["geometry"] = lines.geometry.apply(lambda x: loads(x))
     lines = gpd.GeoDataFrame(lines, geometry="geometry", crs=crs)
@@ -181,7 +185,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
     links = (
         network.links[~is_converter]
         .reset_index()
-        .rename(columns={"voltage": "v_nom"})[[c for c in links_cols if c in network.links.columns]]
+        .rename(columns={"voltage": "v_nom"})[
+            [c for c in links_cols if c in network.links.columns]
+        ]
     )
     links["geometry"] = links.geometry.apply(lambda x: loads(x))
     links = gpd.GeoDataFrame(links, geometry="geometry", crs=crs)
@@ -197,7 +203,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
     converters = (
         network.links[is_converter]
         .reset_index()
-        .rename(columns={"voltage": "v_nom"})[[c for c in converters_cols if c in network.links.columns]]
+        .rename(columns={"voltage": "v_nom"})[
+            [c for c in converters_cols if c in network.links.columns]
+        ]
     )
     converters["geometry"] = converters.geometry.apply(lambda x: loads(x))
     converters = gpd.GeoDataFrame(converters, geometry="geometry", crs=crs)
@@ -211,7 +219,9 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         "s_nom",
         "geometry",
     ]
-    transformers = network.transformers.reset_index()[[c for c in transformers_cols if c in network.transformers.columns]]
+    transformers = network.transformers.reset_index()[
+        [c for c in transformers_cols if c in network.transformers.columns]
+    ]
     transformers["geometry"] = transformers.geometry.apply(lambda x: loads(x))
     transformers = gpd.GeoDataFrame(transformers, geometry="geometry", crs=crs)
 
@@ -421,7 +431,7 @@ if __name__ == "__main__":
             name="Links (DC)",
             zindex=115,
         )
-    
+
     if not transformers.empty:
         map = transformers.explore(
             color="orange",
