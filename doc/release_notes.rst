@@ -46,6 +46,8 @@ Upcoming Release
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
 
+* Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
