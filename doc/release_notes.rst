@@ -46,6 +46,8 @@ Upcoming Release
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
 
+* Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
+
 * Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
   To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
 
