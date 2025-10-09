@@ -1112,10 +1112,10 @@ data:
     source: "archive"
     version_or_latest: "latest"
   bfs_road_vehicle_stock:
-    source: "archive"
+    source: "primary"
     version_or_latest: "latest"
   bfs_gdp_and_population:
-    source: "archive"
+    source: "primary"
     version_or_latest: "latest"
   mobility_profiles:
     source: "archive"
