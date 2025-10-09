@@ -1052,29 +1052,19 @@ if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
     "archive"
 ]:
     rule retrieve_jrc_ardeco:
+        input:
+            if JRC_ARDECO_DATASET["source"] == 'primary':
+                gdp=storage(JRC_ARDECO_DATASET["url"] + "/SUVGDP?versions=2021&unit=EUR&format=csv-table"),
+                pop=storage(JRC_ARDECO_DATASET["url"] + "/SNPTD?versions=2021&unit=EUR&format=csv-table"),
+            else:
+                gdp=storage(JRC_ARDECO_DATASET["url"] + "/ARDECO-SUVGDP.2021.table.csv"),
+                pop=storage(JRC_ARDECO_DATASET["url"] + "/ARDECO-SNPTD.2021.table.csv"),
         output:
             ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
         run:
-            if JRC_ARDECO_DATASET["source"] == 'primary':
-                urls = {
-                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?versions=2021&unit=EUR&format=csv-table",
-                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/SNPTD?versions=2021&unit=EUR&format=csv-table",
-                }
-            else:
-                urls = {
-                    "ardeco_gdp": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv",
-                    "ardeco_pop": f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv",
-                }
-
-            for key, url in urls.items():
-                response = requests.get(url)
-
-                output_path = output[key] if key in urls else None
-                if output_path:
-                    if  response.status_code == 200:
-                        with open(output_path, "wb") as f:
-                            f.write(response.content)
+            copy2(input["gdp"], output["ardeco_gdp"])
+            copy2(input["pop"], output["ardeco_pop"])
 
 
 
