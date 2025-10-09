@@ -1049,22 +1049,39 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
 
 if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
     "primary",
-    "archive"
 ]:
+
     rule retrieve_jrc_ardeco:
         input:
-            if JRC_ARDECO_DATASET["source"] == 'primary':
-                gdp=storage(JRC_ARDECO_DATASET["url"] + "/SUVGDP?versions=2021&unit=EUR&format=csv-table"),
-                pop=storage(JRC_ARDECO_DATASET["url"] + "/SNPTD?versions=2021&unit=EUR&format=csv-table"),
-            else:
-                gdp=storage(JRC_ARDECO_DATASET["url"] + "/ARDECO-SUVGDP.2021.table.csv"),
-                pop=storage(JRC_ARDECO_DATASET["url"] + "/ARDECO-SNPTD.2021.table.csv"),
+            ardeco_gdp=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?versions=2021&unit=EUR&format=csv-table"
+            ),
+            ardeco_pop=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/SNPTD?versions=2021&unit=EUR&format=csv-table"
+            ),
         output:
             ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
         run:
-            copy2(input["gdp"], output["ardeco_gdp"])
-            copy2(input["pop"], output["ardeco_pop"])
+            for key in input.keys():
+                copy2(input[key], output[key])
+
+elif (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in ["archive"]:
+
+    rule retrieve_jrc_ardeco:
+        input:
+            ardeco_gdp=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv"
+            ),
+            ardeco_pop=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv"
+            ),
+        output:
+            ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
+            ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
+        run:
+            for key in input.keys():
+                copy2(input[key], output[key])
 
 
 
