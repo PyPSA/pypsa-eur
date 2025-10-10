@@ -79,12 +79,6 @@ if config["foresight"] == "perfect":
     include: "rules/solve_perfect.smk"
 
 
-# Appends the name of the rule to each rule's message for easier identification in logs
-for name, r in rules._rules.items():
-    if f"{name}" not in r.rule.message:
-        r.rule.message += f" (Rule: {name})"
-
-
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
