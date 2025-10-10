@@ -48,6 +48,8 @@ Upcoming Release
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
+* Running perfect foresight is now marked as unstable and may not work as expected.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
