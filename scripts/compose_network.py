@@ -876,18 +876,16 @@ def add_existing_capacities(
     logger.info("Completed adding existing capacities")
 
 
-def prepare_network_for_solving(
+def apply_temporal_aggregation(
     n: pypsa.Network,
     inputs: InputFiles,
     params,
-    costs,
-    nyears: float,
 ) -> None:
     """
-    Apply final network preparations before solving.
+    Apply temporal aggregation to the network.
 
-    This includes temporal aggregation, emission limits, transmission limits, and
-    time segmentation. Corresponds to the functionality from prepare_network.py.
+    This includes temporal resolution averaging for electricity and sector components.
+    Should be called before adding existing components to ensure proper time resolution.
 
     Parameters
     ----------
@@ -897,16 +895,12 @@ def prepare_network_for_solving(
         Container with all input file paths
     params : object
         Configuration parameters
-    costs : pd.DataFrame
-        Technology costs
-    nyears : float
-        Number of years represented in the snapshot weightings
 
     Notes
     -----
-    Modifies network in-place. Applies temporal resolution, limits, and constraints.
+    Modifies network in-place by updating snapshot data and weightings.
     """
-    logger.info("Preparing network for solving")
+    logger.info("Applying temporal aggregation")
 
     # Apply temporal resolution averaging if specified
     clustering_temporal_cfg = params.clustering_temporal
@@ -930,6 +924,47 @@ def prepare_network_for_solving(
             )
             # Replace network object content
             n.__dict__.update(n_new.__dict__)
+
+    logger.info("Completed temporal aggregation")
+
+
+def prepare_network_for_solving(
+    n: pypsa.Network,
+    inputs: InputFiles,
+    params,
+    costs,
+    nyears: float,
+) -> None:
+    """
+    Apply final network preparations before solving.
+
+    This includes emission limits, transmission limits, and time segmentation.
+    Corresponds to the functionality from prepare_network.py.
+
+    Note: Temporal aggregation is now handled separately by apply_temporal_aggregation()
+    and should be called before adding existing components.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to modify (in-place)
+    inputs : InputFiles
+        Container with all input file paths
+    params : object
+        Configuration parameters
+    costs : pd.DataFrame
+        Technology costs
+    nyears : float
+        Number of years represented in the snapshot weightings
+
+    Notes
+    -----
+    Modifies network in-place. Applies limits, constraints, and time segmentation.
+    """
+    logger.info("Preparing network for solving")
+
+    # Access clustering configuration for time segmentation
+    clustering_temporal_cfg = params.clustering_temporal
 
     # Add CO2 limit if specified
     electricity_cfg = params.electricity
@@ -1053,36 +1088,11 @@ if __name__ == "__main__":
         if foresight == "myopic":
             # For myopic: load previous solved network and apply brownfield constraints
             n = pypsa.Network(snakemake.input.clustered)
-            add_build_year_to_new_assets(n, current_horizon)
             adjust_renewable_profiles(
                 n,
                 snakemake.input,
                 params,
                 current_horizon,
-            )
-
-            n_previous = pypsa.Network(snakemake.input.network_previous)
-            update_heat_pump_efficiency(n, n_previous, current_horizon)
-            if params.tes and params.dynamic_ptes_capacity:
-                update_dynamic_ptes_capacity(n, n_previous, current_horizon)
-            logger.info(
-                f"Applying brownfield constraints from horizon {horizons[horizons.index(current_horizon) - 1]}"
-            )
-
-            # Apply brownfield constraints
-            add_brownfield(
-                n,
-                n_previous,
-                current_horizon,
-                h2_retrofit=params["h2_retrofit"],
-                h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
-                capacity_threshold=params["capacity_threshold"],
-            )
-            disable_grid_expansion_if_limit_hit(n)
-
-            # Adjust renewable capacity limits based on existing capacities
-            adjust_renewable_capacity_limits(
-                n, str(current_horizon), params.renewable_carriers
             )
         elif foresight == "perfect":
             logger.info(
@@ -1247,6 +1257,13 @@ if __name__ == "__main__":
             n, "sector components", expected_components={"buses": 2}
         )
 
+    # ========== TEMPORAL AGGREGATION ==========
+    # Apply temporal aggregation before adding existing components
+    apply_temporal_aggregation(n, inputs, params)
+
+    # Validate after temporal aggregation
+    validate_network_state(n, "temporal aggregation")
+
     # ========== EXISTING CAPACITIES ==========
     if params.existing_capacities["enabled"] and is_first_horizon:
         baseyear = params.existing_capacities["baseyear"]
@@ -1261,6 +1278,42 @@ if __name__ == "__main__":
 
         # Validate after existing capacities
         validate_network_state(n, "existing capacities")
+
+    # ========== BROWNFIELD FOR MYOPIC ==========
+    # Apply brownfield constraints for myopic mode (non-first horizon)
+    if foresight == "myopic" and not is_first_horizon:
+        # Add build year to new assets (those from this planning horizon)
+        add_build_year_to_new_assets(n, current_horizon)
+
+        # Load previous solved network
+        n_previous = pypsa.Network(snakemake.input.network_previous)
+
+        # Update heat pump efficiency from previous iteration
+        update_heat_pump_efficiency(n, n_previous, current_horizon)
+
+        # Update dynamic pit storage capacity if enabled
+        if params.tes and params.dynamic_ptes_capacity:
+            update_dynamic_ptes_capacity(n, n_previous, current_horizon)
+
+        logger.info(
+            f"Applying brownfield constraints from horizon {horizons[horizons.index(current_horizon) - 1]}"
+        )
+
+        # Apply brownfield constraints
+        add_brownfield(
+            n,
+            n_previous,
+            current_horizon,
+            h2_retrofit=params["h2_retrofit"],
+            h2_retrofit_capacity_per_ch4=params["h2_retrofit_capacity_per_ch4"],
+            capacity_threshold=params["capacity_threshold"],
+        )
+        disable_grid_expansion_if_limit_hit(n)
+
+        # Adjust renewable capacity limits based on existing capacities
+        adjust_renewable_capacity_limits(
+            n, str(current_horizon), params.renewable_carriers
+        )
 
     # ========== NETWORK PREPARATION ==========
     prepare_network_for_solving(
