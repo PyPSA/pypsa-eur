@@ -1,20 +1,9 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+# SPDX-FileCopyrightText: Open Energy Transition gGmbH
 #
 # SPDX-License-Identifier: MIT
 """
 Build industrial energy demand per country.
-
-Inputs
--------
-
-- ``data/jrc-idees-2021``
-- ``industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industrial_energy_demand_per_country_today.csv``
 
 Description
 -------
@@ -60,13 +49,17 @@ the output file contains the energy demand in TWh/a for the following carriers
 - waste
 """
 
+import logging
 import multiprocessing as mp
 from functools import partial
 
 import country_converter as coco
 import pandas as pd
-from _helpers import set_scenario_config
 from tqdm import tqdm
+
+from scripts._helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 cc = coco.CountryConverter()
 
@@ -207,12 +200,16 @@ def add_non_eu27_industrial_energy_demand(countries, demand, production):
         return demand
 
     eu27_production = production.loc[countries.intersection(eu27)].sum()
+    if eu27_production.sum() == 0:
+        logger.info(
+            "EU production is zero. Fallback: Filling non EU28 countries with zeros."
+        )
     eu27_energy = demand.groupby(level=1).sum()
     eu27_averages = eu27_energy / eu27_production
 
     demand_non_eu27 = pd.concat(
         {k: v * eu27_averages for k, v in production.loc[non_eu27].iterrows()}
-    )
+    ).fillna(0)
 
     return pd.concat([demand, demand_non_eu27])
 
@@ -253,7 +250,8 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     consumption should be attributed to the iron and steel production.
     The default value of 75% is based on https://doi.org/10.1016/j.erss.2022.102565
 
-    Parameters:
+    Parameters
+    ----------
     demand (pd.DataFrame): A pandas DataFrame containing energy demand data
                            with a multi-level column index where one of the
                            levels corresponds to "Integrated steelworks".
@@ -263,7 +261,8 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
     factor (float, optional): The proportion of coke ovens energy consumption to add to the
                               integrated steelworks demand. Defaults to 0.75.
 
-    Returns:
+    Returns
+    -------
     pd.DataFrame: The updated `demand` DataFrame with the coke ovens energy
     consumption added to the integrated steelworks energy demand.
     """
@@ -283,16 +282,24 @@ def add_coke_ovens(demand, fn, year, factor=0.75):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_energy_demand_per_country_today")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
-    demand = industrial_energy_demand(countries.intersection(eu27), year)
+    if len(countries.intersection(eu27)) > 0:
+        demand = industrial_energy_demand(countries.intersection(eu27), year)
+    else:
+        # e.g. only UA or MD
+        logger.info(
+            f"No industrial energy demand available for {countries}. Filling with average values of EU."
+        )
+        demand = industrial_energy_demand(eu27, year)
 
     # output in MtMaterial/a
     production = (

@@ -1,28 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 This rule builds the historical industrial production per country.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    countries:
-..
-
-Inputs
--------
-- ``resources/ammonia_production.csv``
-- ``data/bundle-sector/jrc-idees-2021``
-- ``data/eurostat``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_country.csv``
 
 Description
 -------
@@ -68,8 +48,9 @@ from functools import partial
 import country_converter as coco
 import numpy as np
 import pandas as pd
-from _helpers import configure_logging, mute_print, set_scenario_config
 from tqdm import tqdm
+
+from scripts._helpers import configure_logging, mute_print, set_scenario_config
 
 logger = logging.getLogger(__name__)
 cc = coco.CountryConverter()
@@ -333,7 +314,7 @@ def separate_basic_chemicals(demand, year):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country")
     configure_logging(snakemake)

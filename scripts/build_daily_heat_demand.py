@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -10,56 +9,37 @@ Snapshots are resampled to daily time resolution and ``Atlite.convert.heat_deman
 
 Heat demand is distributed by population to clustered onshore regions.
 
-The rule is executed in ``build_sector.smk``.
-
 .. seealso::
     `Atlite.Cutout.heat_demand <https://atlite.readthedocs.io/en/master/ref_api.html#module-atlite.convert>`_
 
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    snapshots:
-    drop_leap_day:
-
-Inputs
-------
-
-- ``resources/<run_name>/pop_layout_<scope>.nc``: Population layout (spatial population distribution).
-- ``resources/<run_name>/regions_onshore_base_s<simpl>_<clusters>.geojson``: Onshore region shapes.
-- ``cutout``: Weather data cutout, as specified in config
-
-Outputs
--------
-
-- ``resources/daily_heat_demand_<scope>_base_s<simpl>_<clusters>.nc``:
-
-Relevant settings
------------------
-
-.. code:: yaml
-
-    atlite:
-        default_cutout``:
 """
 
-import atlite
+import logging
+
 import geopandas as gpd
 import numpy as np
 import xarray as xr
-from _helpers import get_snapshots, set_scenario_config
 from dask.distributed import Client, LocalCluster
+
+from scripts._helpers import (
+    configure_logging,
+    get_snapshots,
+    load_cutout,
+    set_scenario_config,
+)
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_daily_heat_demands",
             scope="total",
             clusters=48,
         )
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     nprocesses = int(snakemake.threads)
@@ -75,7 +55,7 @@ if __name__ == "__main__":
         freq="D",
     )
 
-    cutout = atlite.Cutout(cutout_name).sel(time=time)
+    cutout = load_cutout(cutout_name, time=time)
 
     clustered_regions = (
         gpd.read_file(snakemake.input.regions_onshore).set_index("name").buffer(0)

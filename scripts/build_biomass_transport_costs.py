@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -13,10 +12,15 @@ Reads biomass transport costs for different countries of the JRC report.
 converts them from units 'EUR per km/ton' -> 'EUR/ (km MWh)'
 
 assuming as an approximation energy content of wood pellets
-
-@author: bw0928
 """
+
+import logging
+
 import pandas as pd
+
+from scripts._helpers import configure_logging
+
+logger = logging.getLogger(__name__)
 
 ENERGY_CONTENT = 4.8  # unit MWh/t (wood pellets)
 
@@ -40,8 +44,8 @@ def get_cost_per_tkm(pdf, datapage, countrypage):
         import platform
 
         import tabula as tbl
-    except:
-        ImportError("Please install tabula-py and platform")
+    except ImportError as e:
+        raise ImportError("Please install tabula-py and platform") from e
 
     system = platform.system()
     encoding = "cp1252" if system == "Windows" else "utf-8"
@@ -114,8 +118,9 @@ def build_biomass_transport_costs():
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_biomass_transport_costs")
+    configure_logging(snakemake)
 
     build_biomass_transport_costs()
