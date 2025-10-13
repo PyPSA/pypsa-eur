@@ -218,7 +218,7 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
         pd.Series(dr, index=dr).where(lambda x: x.isin(n.snapshots), pd.NA).ffill()
     )
 
-    for carrier in params["carriers"]:
+    for carrier in params["renewable_carriers"]:
         if carrier == "hydro":
             continue
 

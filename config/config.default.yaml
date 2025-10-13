@@ -170,7 +170,7 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
-      # features: [] 
+      # features: []
       # sarah_dir: ""
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
@@ -318,8 +318,8 @@ lines:
     500.: Al/St 240/40 4-bundle 380.0
     750.: Al/St 560/50 4-bundle 750.0
   s_max_pu: 0.7  # N-1 security margin (max utilization)
-  s_nom_max: .inf  # Absolute upper limit for line capacity [MW]
-  s_nom_max_extension: .inf  # Maximum capacity extension per line [MW]
+  s_nom_max: 10_000  # Absolute upper limit for line capacity [MW]
+  s_nom_max_extension: 8_000  # Maximum capacity extension per line [MW]
   length_factor: 1.25
   reconnect_crimea: true
   under_construction: keep # 'zero': set capacity to zero, 'remove': remove, 'keep': with full capacity for lines in grid extract

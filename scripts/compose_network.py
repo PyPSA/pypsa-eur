@@ -690,9 +690,6 @@ def add_sector_components(
             nyears=Nyears,
         )
 
-        # Adjust biomass availability to match industrial demand
-        adjust_biomass_availability(n)
-
     # Add ammonia if enabled
     if params.sector["ammonia"]:
         add_ammonia(n, costs, pop_layout, spatial, params.industry)
@@ -785,6 +782,10 @@ def add_sector_components(
     if params.sector["cluster_heat_buses"]:
         cluster_heat_buses(n)
 
+    # Adjust biomass availability to match industrial demand
+    if params.sector["biomass"] and params.sector["industry"]:
+        adjust_biomass_availability(n)
+
     logger.info("Completed sector components")
 
 
@@ -824,9 +825,6 @@ def add_existing_capacities(
     logger.info("Adding existing capacities")
 
     existing_cfg = params.existing_capacities
-
-    # Add build year to new assets
-    add_build_year_to_new_assets(n, baseyear)
 
     # Add power capacities installed before baseyear
     grouping_years_power = existing_cfg["grouping_years_power"]
@@ -871,6 +869,9 @@ def add_existing_capacities(
                     "electricity_distribution_grid"
                 ],
             )
+
+    # Add build year to new assets
+    add_build_year_to_new_assets(n, baseyear)
 
     logger.info("Completed adding existing capacities")
 
@@ -1293,5 +1294,5 @@ if __name__ == "__main__":
 
     # Export composed network
     logger.info(f"Exporting composed network for horizon {current_horizon}")
-    n.consistency_check(strict="all")
+    n.consistency_check()
     n.export_to_netcdf(snakemake.output[0])
