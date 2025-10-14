@@ -114,7 +114,7 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 * Small plotting improvements.
   (https://github.com/PyPSA/pypsa-eur/pull/1694https://github.com/PyPSA/pypsa-eur/pull/1727)
 
-* The `plotting|map|color_geomap` was renamed to `plotting|map|geomap_color` to align
+* The `plotting|map|color_geomap` was renamed to `plotting|map|geomap_colors` to align
   with the new PyPSA API.
   
 **Bugfixes and Compatibility**

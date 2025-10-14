@@ -175,7 +175,7 @@ if __name__ == "__main__":
         else None,
         ax=ax,
         margin=0.2,
-        geomap_color={"border": "darkgrey", "coastline": "darkgrey"},
+        geomap_colors={"border": "darkgrey", "coastline": "darkgrey"},
         geomap=True,
         boundaries=boundaries,
     )
