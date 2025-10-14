@@ -28,7 +28,7 @@ def http_storage(url, **kwargs):
     # Use the "ancient" wrapper to ignore the last-modified date for Zenodo URLs.
     if "zenodo.org" in urllib.parse.urlparse(url).netloc:
         import requests
-        r = requests.get(url)
+        r = requests.head(url)
         print(f"DEBUG: Remaining Zenodo RateLimit for {url}: {r.headers.get('X-RateLimit-Remaining')}")
         return ancient(storage(url, **kwargs))
     else:
