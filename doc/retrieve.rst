@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 .. _data:
 
@@ -38,6 +37,12 @@ Rule ``retrieve_eurostat_household_data``
 .. automodule:: retrieve_eurostat_household_data
 
 
+Rule ``retrieve_co2stop``
+===============================
+
+.. automodule:: retrieve_co2stop
+
+
 Rule ``retrieve_gas_infrastructure_data``
 =========================================
 
@@ -48,6 +53,11 @@ Rule ``retrieve_osm_data``
 =========================================
 
 .. automodule:: retrieve_osm_data
+
+Rule ``retrieve_bidding_zones``
+=========================================
+
+.. automodule:: retrieve_bidding_zones
 
 Rule ``retrieve_cutout``
 ============================
@@ -97,6 +107,10 @@ None.
 
 - ``data/electricity_demand_raw.csv``
 
+Rule ``retrieve_tyndp_bundle``
+=========================================
+
+.. automodule:: retrieve_tyndp_bundle
 
 Rule ``retrieve_cost_data``
 ================================

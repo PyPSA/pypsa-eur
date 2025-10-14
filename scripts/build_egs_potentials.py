@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2023 @LukasFranken, The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -16,17 +15,18 @@ a heat potential (in GWh) and a cost (in EUR/MW).
 This scripts overlays that map with the network's regions, and builds a csv with CAPEX, OPEX and p_nom_max
 """
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 import json
+import logging
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from shapely.geometry import Polygon
+
+from scripts._helpers import configure_logging, get_snapshots, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def prepare_egs_data(egs_file):
@@ -107,12 +107,10 @@ def prepare_capex(prepared_data):
     capex_df = pd.DataFrame(columns=prepared_data.keys())
 
     for year in capex_df.columns:
-
         year_data = prepared_data[year].groupby("geometry").mean().reset_index()
 
         for g in year_data.geometry:
-
-            if not g in year_data.geometry.tolist():
+            if g not in year_data.geometry.tolist():
                 # weird but apparently necessary
                 continue
 
@@ -124,7 +122,6 @@ def prepare_capex(prepared_data):
 
     # fill up missing values assuming cost reduction factors similar to existing values
     for sooner, later in zip(capex_df.columns[::-1][1:], capex_df.columns[::-1]):
-
         missing_mask = capex_df[sooner].isna()
         cr_factor = (
             capex_df.loc[~missing_mask, later] / capex_df.loc[~missing_mask, sooner]
@@ -148,7 +145,9 @@ def prepare_capex(prepared_data):
     return gpd.GeoDataFrame(data, geometry=data.geometry)
 
 
-def get_capacity_factors(network_regions_file, air_temperatures_file):
+def get_capacity_factors(
+    network_regions_file: str, air_temperatures_file: str, snapshots: pd.DatetimeIndex
+) -> pd.DataFrame:
     """
     Performance of EGS is higher for lower temperatures, due to more efficient
     air cooling Data from Ricks et al.: The Role of Flexible Geothermal Power
@@ -181,7 +180,6 @@ def get_capacity_factors(network_regions_file, air_temperatures_file):
 
     air_temp = xr.open_dataset(air_temperatures_file)
 
-    snapshots = pd.date_range(freq="h", **snakemake.params.snapshots)
     capacity_factors = pd.DataFrame(index=snapshots)
 
     # bespoke computation of capacity factors for each bus.
@@ -197,12 +195,15 @@ def get_capacity_factors(network_regions_file, air_temperatures_file):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_egs_potentials",
             clusters=37,
         )
+
+    configure_logging(snakemake)
+    set_scenario_config(snakemake)
 
     egs_config = snakemake.params["sector"]["enhanced_geothermal"]
     costs_config = snakemake.params["costs"]
@@ -240,9 +241,14 @@ if __name__ == "__main__":
 
     egs_data[["p_nom_max", "CAPEX"]].to_csv(snakemake.output["egs_potentials"])
 
+    snapshots = get_snapshots(
+        snakemake.params.snapshots, snakemake.params.drop_leap_day
+    )
+
     capacity_factors = get_capacity_factors(
         snakemake.input["regions"],
         snakemake.input["air_temperature"],
+        snapshots,
     )
 
     capacity_factors.to_csv(snakemake.output["egs_capacity_factors"])

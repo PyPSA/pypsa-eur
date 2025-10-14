@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -11,6 +11,7 @@ __pycache__
 gurobi.log
 .vscode
 *.orig
+.idea
 
 /bak
 /resources
@@ -31,9 +32,6 @@ doc/_build
 
 config/config.yaml
 config/scenarios.yaml
-
-config.yaml
-config/config.yaml
 
 dconf
 /data/links_p_nom.csv
@@ -75,3 +73,10 @@ d1gam3xoknrgr2.cloudfront.net/
 merger-todos.md
 
 *.html
+# private dev folder
+dev/*
+
+# ai coding tools
+CLAUDE.md
+.claude/
+.github/copilot-instructions.md

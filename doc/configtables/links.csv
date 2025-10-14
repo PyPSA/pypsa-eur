@@ -1,5 +1,6 @@
 ,Unit,Values,Description
 p_max_pu,--,"Value in [0.,1.]","Correction factor for link capacities ``p_nom``."
+p_min_pu,--,"Value in [-1.,0.]","Correction factor for link capacities ``p_nom``."
 p_nom_max,MW,"float","Global upper limit for the maximum capacity of each extendable DC link."
 max_extension,MW,"float","Upper limit for the extended capacity of each extendable DC link."
 length_factor,--,float,"Correction factor to account for the fact that buses are *not* connected by links through air-line distance."
