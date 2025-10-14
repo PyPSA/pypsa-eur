@@ -3000,7 +3000,6 @@ def add_heat(
 
             logger.info(f"adding heat dsm in {heat_system} heating.")
 
-
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 

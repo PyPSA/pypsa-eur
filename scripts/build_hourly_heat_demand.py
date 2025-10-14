@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def heat_dsm_profile(nodes, options):
-
-    weekly_profile = np.ones((24 * 7))
+    weekly_profile = np.ones(24 * 7)
     for i in options["residential_heat_restriction_time"]:
         weekly_profile[(np.arange(0, 7, 1) * 24 + int(i))] = 0
 
