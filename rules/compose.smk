@@ -172,8 +172,8 @@ def get_compose_inputs(w):
             inputs["network_previous"] = RESULTS + f"networks/solved_{prev_horizon}.nc"
         else:  # perfect foresight
             # Perfect foresight uses composed network from previous horizon
-            inputs["network_previous"] = (
-                RESULTS + f"networks/composed_{prev_horizon}.nc"
+            inputs["network_previous"] = resources(
+                f"networks/composed_{prev_horizon}.nc"
             )
 
     return inputs

@@ -102,6 +102,151 @@ from scripts.prepare_sector_network import (
 logger = logging.getLogger(__name__)
 
 
+def extend_snapshot_multiindex(
+    existing_snapshots: pd.MultiIndex,
+    new_timesteps: pd.Index,
+    period: int,
+) -> pd.MultiIndex:
+    """
+    Extend a MultiIndex with period & timestep levels by appending new timesteps for a given period.
+
+    This function takes an existing multiindex with (period, timestep) levels and adds
+    a new set of timesteps for a specified period, returning the combined multiindex.
+
+    Parameters
+    ----------
+    existing_snapshots : pd.MultiIndex
+        Existing multiindex with levels ['period', 'timestep']
+    new_timesteps : pd.Index
+        Single-level index of timesteps to append
+    period : int
+        Investment period label for the new timesteps
+
+    Returns
+    -------
+    pd.MultiIndex
+        Combined multiindex with both existing and new snapshots
+
+    Raises
+    ------
+    TypeError
+        If existing_snapshots is not a MultiIndex or new_timesteps is a MultiIndex
+    ValueError
+        If existing_snapshots doesn't have the required ['period', 'timestep'] levels
+
+    Examples
+    --------
+    >>> existing = pd.MultiIndex.from_product(
+    ...     [[2030], pd.date_range('2030-01-01', periods=2, freq='h')],
+    ...     names=['period', 'timestep']
+    ... )
+    >>> new = pd.date_range('2040-01-01', periods=2, freq='h')
+    >>> extended = extend_snapshot_multiindex(existing, new, 2040)
+    >>> len(extended)
+    4
+    >>> list(extended.get_level_values('period').unique())
+    [2030, 2040]
+    """
+    # Validate existing_snapshots
+    if not isinstance(existing_snapshots, pd.MultiIndex):
+        raise TypeError("existing_snapshots must be a MultiIndex")
+
+    if list(existing_snapshots.names) != ["period", "timestep"]:
+        raise ValueError(
+            f"existing_snapshots must have levels ['period', 'timestep'], "
+            f"but has {existing_snapshots.names}"
+        )
+
+    # Validate new_timesteps
+    if isinstance(new_timesteps, pd.MultiIndex):
+        raise TypeError("new_timesteps must be a single-level Index, not a MultiIndex")
+
+    # Create MultiIndex for new period
+    new_snapshots = pd.MultiIndex.from_product(
+        [[period], new_timesteps], names=["period", "timestep"]
+    )
+
+    # Concatenate by converting to tuples and back
+    combined = pd.MultiIndex.from_tuples(
+        list(existing_snapshots) + list(new_snapshots), names=["period", "timestep"]
+    )
+
+    return combined
+
+
+def concatenate_network_with_previous(
+    n_previous: pypsa.Network,
+    n_current: pypsa.Network,
+    current_horizon: int,
+) -> pypsa.Network:
+    """
+    Concatenate current horizon network with previously composed multi-period network.
+
+    For perfect foresight optimization, this function incrementally builds up a
+    multi-period network by adding each planning horizon to the network from
+    previous horizons.
+
+    Parameters
+    ----------
+    n_previous : pypsa.Network
+        Previously composed network containing one or more investment periods
+    n_current : pypsa.Network
+        Network for current planning horizon (single period)
+    current_horizon : int
+        Current planning horizon year
+
+    Returns
+    -------
+    pypsa.Network
+        Combined multi-period network
+
+    Notes
+    -----
+    - The previous network may already contain multiple investment periods
+    - Static components are merged without duplication
+    - Time-varying data is combined with multi-indexed snapshots
+    - Investment periods and weightings are recalculated
+    """
+    logger.info(
+        f"Concatenating network for horizon {current_horizon} with previous periods"
+    )
+
+    # Create a copy of the previous network to build upon
+    n = n_previous.copy()
+
+    # Get existing investment periods from previous network
+    if n.investment_periods.empty:
+        raise ValueError("Previous network has no investment periods")
+
+    # Add build year to current network's new assets
+    add_build_year_to_new_assets(n_current, current_horizon)
+
+    # Extend snapshots using our helper function
+    extended_snapshots = extend_snapshot_multiindex(
+        n.snapshots, n_current.snapshots, current_horizon
+    )
+    n.set_snapshots(extended_snapshots)
+
+    for c in n_current.components:
+        existing_comps = n.c[c.name].static.index
+        new_comps = n_current.c[c.name].static.index.difference(existing_comps)
+        new_static = n_current.c[c.name].static.loc[new_comps]
+        n.add(c.name, new_static.index, **new_static)
+        for attr, df in c.dynamic.items():
+            if df.empty:
+                continue
+            new_dyn = df.loc[new_comps]
+            n.c[c.name].dynamic[attr].loc[new_dyn.index, new_comps] = new_dyn
+
+    n.meta = {**n_previous.meta, **n_current.meta}
+
+    logger.info(
+        f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
+    )
+
+    return n
+
+
 @dataclass
 class InputFiles:
     """Container for all input file paths needed during network composition."""
@@ -1095,13 +1240,12 @@ if __name__ == "__main__":
                 current_horizon,
             )
         elif foresight == "perfect":
+            # For perfect foresight: compose current horizon first, then concatenate
+            # at the end with previously composed multi-period network
             logger.info(
                 f"Loading clustered network for perfect foresight horizon {current_horizon}"
             )
             n = pypsa.Network(snakemake.input.clustered)
-
-            # Retain reference to the previously composed network for future multi-period coupling
-            n.meta["previous_composed_network"] = snakemake.input.network_previous
         else:  # overnight
             # Should not reach here for overnight with multiple horizons
             n = pypsa.Network(snakemake.input.clustered)
@@ -1327,6 +1471,24 @@ if __name__ == "__main__":
     # Validate before finalization
     validate_network_state(n, "network preparation")
 
+    # ========== PERFECT FORESIGHT CONCATENATION ==========
+    # For perfect foresight, concatenate with previous composed network
+    if foresight == "perfect":
+        if is_first_horizon:
+            n.investment_periods = [current_horizon]
+        else:
+            logger.info(
+                "Concatenating with previous composed network for perfect foresight"
+            )
+            n_previous = pypsa.Network(snakemake.input.network_previous)
+            social_discountrate = params.costs.get("social_discountrate", 0.01)
+            n = concatenate_network_with_previous(
+                n_previous=n_previous,
+                n_current=n,
+                current_horizon=current_horizon,
+                social_discountrate=social_discountrate,
+            )
+
     # ========== FINAL CLEANUP ==========
 
     # Sanitize carriers
@@ -1344,6 +1506,8 @@ if __name__ == "__main__":
 
     # Add metadata
     n.meta = dict(config, **dict(wildcards=dict(snakemake.wildcards)))
+    # Store horizon in metadata for concatenation tracking
+    n.meta["horizon"] = current_horizon
 
     # Export composed network
     logger.info(f"Exporting composed network for horizon {current_horizon}")
