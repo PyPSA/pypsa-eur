@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os
 import requests
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
-from shutil import copy as shcopy
+from shutil import copy2 as shcopy2
 from zipfile import ZipFile
 
 if config["enable"].get("retrieve", "auto") == "auto":
@@ -90,9 +91,11 @@ if config["enable"]["retrieve"]:
             shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
             shapes_level_2="data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2013-03m.geojson.zip",
+            zip_file="ref-nuts-2013-03m.geojson.zip",
         run:
-            os.rename(input.shapes, params.zip_file)
+            # Copy file and ensure proper permissions
+            shcopy2(input.shapes, params.zip_file)
+
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2"]:
                     filename = f"NUTS_RG_03M_2013_4326_{level}.geojson"
@@ -118,9 +121,11 @@ if config["enable"]["retrieve"]:
             shapes_level_1="data/nuts/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
             shapes_level_0="data/nuts/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         params:
-            zip_file="data/nuts/ref-nuts-2021-01m.geojson.zip",
+            zip_file="ref-nuts-2021-01m.geojson.zip",
         run:
-            os.rename(input.shapes, params.zip_file)
+            # Copy file and ensure proper permissions
+            shcopy2(input.shapes, params.zip_file)
+
             with ZipFile(params.zip_file, "r") as zip_ref:
                 for level in ["LEVL_3", "LEVL_2", "LEVL_1", "LEVL_0"]:
                     filename = f"NUTS_RG_01M_2021_4326_{level}.geojson"
@@ -356,12 +361,10 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_eez:
         params:
-            zip="data/eez/World_EEZ_v12_20231025_LR.zip",
+            zip_file="World_EEZ_v12_20231025_LR.zip",
         output:
             gpkg="data/eez/World_EEZ_v12_20231025_LR/eez_v12_lowres.gpkg",
         run:
-            import os
-            import requests
             from uuid import uuid4
 
             name = str(uuid4())[:8]
@@ -381,11 +384,11 @@ if config["enable"]["retrieve"]:
                 },
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
-            os.remove(params["zip"])
+            output_folder = Path(output.gpkg).parent.parent
+            unpack_archive(params["zip_file"], output_folder)
+            os.remove(params["zip_file"])
 
 
 
@@ -393,21 +396,18 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_worldbank_urban_population:
         params:
-            zip="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
+            zip_file="API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
         output:
             gpkg="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
         run:
-            import os
-            import requests
-
             response = requests.get(
                 "https://api.worldbank.org/v2/en/indicator/SP.URB.TOTL.IN.ZS?downloadformat=csv",
             )
 
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output.gpkg).parent
+            unpack_archive(params["zip_file"], output_folder)
 
             for f in os.listdir(output_folder):
                 if f.startswith(
@@ -415,6 +415,7 @@ if config["enable"]["retrieve"]:
                 ) and f.endswith(".csv"):
                     os.rename(os.path.join(output_folder, f), output.gpkg)
                     break
+            os.remove(params["zip_file"])
 
 
 
@@ -422,24 +423,23 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_co2stop:
         params:
-            zip="data/co2jrc_openformats.zip",
+            zip_file="co2jrc_openformats.zip",
         output:
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
-            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps_Temp.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Traps1.csv",
             "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/DaughterUnits_March13.kml",
+            "data/CO2JRC_OpenFormats/CO2Stop_Polygons Data/StorageUnits_March13.kml",
         run:
-            import requests
-
             response = requests.get(
                 "https://setis.ec.europa.eu/document/download/786a884f-0b33-4789-b744-28004b16bd1a_en?filename=co2jrc_openformats.zip",
             )
-            with open(params["zip"], "wb") as f:
+            with open(params["zip_file"], "wb") as f:
                 f.write(response.content)
-            output_folder = Path(params["zip"]).parent
-            unpack_archive(params["zip"], output_folder)
+            output_folder = Path(output[0]).parent.parent.parent
+            unpack_archive(params["zip_file"], output_folder)
+            os.remove(params["zip_file"])
 
 
 
@@ -449,8 +449,6 @@ if config["enable"]["retrieve"]:
         output:
             "data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
-            import requests
-
             # mirror of https://globalenergymonitor.org/wp-content/uploads/2024/05/Europe-Gas-Tracker-2024-05.xlsx
             url = "https://tubcloud.tu-berlin.de/s/LMBJQCsN6Ez5cN2/download/Europe-Gas-Tracker-2024-05.xlsx"
             response = requests.get(url)
@@ -465,8 +463,6 @@ if config["enable"]["retrieve"]:
         output:
             "data/gem/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx",
         run:
-            import requests
-
             # mirror or https://globalenergymonitor.org/wp-content/uploads/2024/04/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx
             url = "https://tubcloud.tu-berlin.de/s/Aqebo3rrQZWKGsG/download/Global-Steel-Plant-Tracker-April-2024-Standard-Copy-V1.xlsx"
             response = requests.get(url)
@@ -510,47 +506,52 @@ if config["enable"]["retrieve"]:
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            zip=storage(url, keep_local=True),
+            zip_file=storage(url, keep_local=True),
         params:
-            zip="data/WDPA_shp.zip",
-            folder=directory("data/WDPA"),
+            zip_file="WDPA_shp.zip",
+            folder_name="WDPA",
         output:
             gpkg="data/WDPA.gpkg",
         run:
-            shcopy(input.zip, params.zip)
-            unpack_archive(params.zip, params.folder)
+            # Copy file and ensure proper permissions
+            shcopy2(input.zip_file, params.zip_file)
+            output_folder = Path(output.gpkg).parent / params.folder_name
+            unpack_archive(params.zip_file, output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
                 layer_path = (
-                    f"/vsizip/{params.folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
+                    f"/vsizip/{output_folder}/WDPA_{bYYYY}_Public_shp_{i}.zip"
                 )
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+            os.remove(params.zip_file)
 
     rule download_wdpa_marine:
         # Downloading Marine protected area database from WDPA
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            zip=storage(
+            zip_file=storage(
                 f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_marine_shp.zip",
                 keep_local=True,
             ),
         params:
-            zip="data/WDPA_WDOECM_marine.zip",
-            folder=directory("data/WDPA_WDOECM_marine"),
+            zip_file="WDPA_WDOECM_marine.zip",
+            folder_name="WDPA_WDOECM_marine",
         output:
             gpkg="data/WDPA_WDOECM_marine.gpkg",
         run:
-            shcopy(input.zip, params.zip)
-            unpack_archive(params.zip, params.folder)
+            shcopy2(input.zip_file, params.zip_file)
+            output_folder = Path(output.gpkg).parent / params.folder_name
+            unpack_archive(params.zip_file, output_folder)
 
             for i in range(3):
                 # vsizip is special driver for directly working with zipped shapefiles in ogr2ogr
-                layer_path = f"/vsizip/{params.folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
+                layer_path = f"/vsizip/{output_folder}/WDPA_WDOECM_{bYYYY}_Public_marine_shp_{i}.zip"
                 print(f"Adding layer {i+1} of 3 to combined output file.")
                 shell("ogr2ogr -f gpkg -update -append {output.gpkg} {layer_path}")
+            os.remove(params.zip_file)
 
 
 
@@ -735,11 +736,9 @@ if config["enable"]["retrieve"]:
             ardeco_gdp="data/jrc-ardeco/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop="data/jrc-ardeco/ARDECO-SNPTD.2021.table.csv",
         run:
-            import requests
-
             urls = {
-                "ardeco_gdp": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?version=2021&format=csv-table",
-                "ardeco_pop": "https://urban.jrc.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?version=2021&format=csv-table",
+                "ardeco_gdp": "https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/SUVGDP?versions=2021&unit=EUR&level_id=0&level_id=1&level_id=2&level_id=3&format=csv-table",
+                "ardeco_pop": "https://territorial.ec.europa.eu/ardeco-api-v2/rest/export/SNPTD?versions=2021&unit=NR&level_id=0&level_id=1&level_id=2&level_id=3&format=csv-table",
             }
 
             for key, url in urls.items():
@@ -755,7 +754,7 @@ if config["enable"]["retrieve"]:
 
     rule retrieve_aquifer_data_bgr:
         input:
-            zip=storage(
+            zip_file=storage(
                 "https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip"
             ),
         output:
@@ -775,7 +774,7 @@ if config["enable"]["retrieve"]:
             filename_sbn="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbn",
             filename_sbx="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.sbx",
         run:
-            with ZipFile(input.zip, "r") as zip_ref:
+            with ZipFile(input.zip_file, "r") as zip_ref:
                 for fn, outpt in zip(
                     params,
                     output,

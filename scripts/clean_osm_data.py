@@ -97,6 +97,8 @@ def _clean_voltage(column):
         .str.replace("400/220/110/20_kv", "400000;220000;110000;20000")
         .str.replace("2x25000", "25000;25000")
         .str.replace("é", ";")
+        .str.replace("kvv/", "")
+        .str.replace("11000l400", "11000")
     )
 
     column = (
@@ -1416,6 +1418,15 @@ def _merge_touching_polygons(df):
     """
 
     gdf = gpd.GeoDataFrame(df, geometry="polygon", crs=crs)
+
+    # Identify and drop invalid geometries
+    invalid = gdf[~gdf.is_valid]
+    if not invalid.empty:
+        logger.warning(
+            f"Found {len(invalid)} invalid geometries. These will be dropped."
+        )
+        gdf = gdf[gdf.is_valid]
+
     combined_polygons = unary_union(gdf.geometry)
     if combined_polygons.geom_type == "MultiPolygon":
         gdf_combined = gpd.GeoDataFrame(
@@ -1581,7 +1592,7 @@ if __name__ == "__main__":
 
     # Parameters
     crs = "EPSG:4326"  # Correct crs for OSM data
-    min_voltage_ac = 220000  # [unit: V] Minimum voltage value to filter AC lines.
+    min_voltage_ac = 60000  # [unit: V] Minimum voltage value to filter AC lines.
     min_voltage_dc = 150000  #  [unit: V] Minimum voltage value to filter DC links.
 
     logger.info("---")

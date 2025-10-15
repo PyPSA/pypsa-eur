@@ -81,12 +81,12 @@ def create_capacity_map_storage(table_fn: str, map_fn: str) -> gpd.GeoDataFrame:
     """
     df = pd.read_csv(table_fn)
 
-    sel = ["COUNTRYCOD", "id", "geometry"]
-    gdf = gpd.read_file(map_fn)[sel]
+    sel = ["COUNTRYCOD", "ID", "geometry"]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
     gdf.geometry = gdf.geometry.buffer(0)
 
     # Combine shapes with the same id into one multi-polygon
-    gdf = gdf.groupby(["COUNTRYCOD", "id"]).agg(unary_union).reset_index()
+    gdf = gdf.groupby(["COUNTRYCOD", "ID"]).agg(unary_union).reset_index()
     gdf.set_geometry("geometry", inplace=True)
     gdf.set_crs(CRS, inplace=True)
 
@@ -129,7 +129,7 @@ def create_capacity_map_storage(table_fn: str, map_fn: str) -> gpd.GeoDataFrame:
     ]
     df = df[sel]
 
-    gdf = gdf.merge(df, left_on="id", right_on="STORAGE_UNIT_ID", how="left").drop(
+    gdf = gdf.merge(df, left_on="ID", right_on="STORAGE_UNIT_ID", how="left").drop(
         "STORAGE_UNIT_ID", axis=1
     )
     return gdf
@@ -154,11 +154,11 @@ def create_capacity_map_traps(table_fn: list[str], map_fn: str) -> gpd.GeoDataFr
     """
     df = pd.concat([pd.read_csv(path) for path in table_fn], ignore_index=True)
 
-    sel = ["COUNTRYCOD", "id", "geometry"]
-    gdf = gpd.read_file(map_fn)[sel]
+    sel = ["COUNTRYCOD", "ID", "geometry"]
+    gdf = gpd.read_file(map_fn).rename(columns={"id": "ID"})[sel]
 
     # Combine shapes with the same id into one multi-polygon
-    gdf = gdf.groupby(["COUNTRYCOD", "id"]).agg(unary_union).reset_index()
+    gdf = gdf.groupby(["COUNTRYCOD", "ID"]).agg(unary_union).reset_index()
     gdf.set_geometry("geometry", inplace=True)
     gdf.set_crs(CRS, inplace=True)
 
@@ -251,7 +251,7 @@ def create_capacity_map_traps(table_fn: list[str], map_fn: str) -> gpd.GeoDataFr
     ]
     df = df[sel]
 
-    gdf = gdf.merge(df, left_on="id", right_on="TRAP_ID", how="left").drop(
+    gdf = gdf.merge(df, left_on="ID", right_on="TRAP_ID", how="left").drop(
         "TRAP_ID", axis=1
     )
 

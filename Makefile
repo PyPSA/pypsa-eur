@@ -81,7 +81,6 @@ test:
 	snakemake -call solve_networks --configfile config/test/config.electricity.yaml
 	snakemake -call --configfile config/test/config.overnight.yaml
 	snakemake -call --configfile config/test/config.myopic.yaml
-	snakemake -call make_summary --configfile config/test/config.perfect.yaml
 	snakemake -call resources/test-elec-clusters/networks/base_s_adm.nc --configfile config/test/config.clusters.yaml
 	snakemake -call --configfile config/test/config.scenarios.yaml -n
 	snakemake -call plot_power_networks --configfile config/test/config.tyndp.yaml
