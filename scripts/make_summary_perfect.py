@@ -13,8 +13,7 @@ import pypsa
 from pypsa.descriptors import get_active_assets
 from six import iteritems
 
-from scripts._helpers import set_scenario_config
-from scripts.add_electricity import load_costs
+from scripts._helpers import load_costs, set_scenario_config
 from scripts.make_summary import (
     assign_carriers,
     assign_locations,
@@ -727,12 +726,7 @@ if __name__ == "__main__":
 
     print(networks_dict)
 
-    nyears = 1
-    costs_db = load_costs(
-        snakemake.input.costs,
-        snakemake.config["costs"],
-        nyears=nyears,
-    )
+    costs_db = load_costs(snakemake.input.costs)
 
     df = make_summaries(networks_dict)
 
