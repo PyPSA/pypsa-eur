@@ -1624,21 +1624,30 @@ def build_network(
     dc_buses = _add_dc_buses(converters_polygon, links, buses, country_shapes)
     links, dc_buses = _map_links_to_dc_buses(links, dc_buses)
 
+    # Drop incomplete links (missing buses), relevant if network is built for single (islanded) regions
+    bool_incomplete_links = links["bus0"].isna() | links["bus1"].isna()
+    if bool_incomplete_links.any():
+        logger.info(
+            f"Dropping {bool_incomplete_links.sum()} incomplete links that could not be mapped to two DC buses."
+        )
+        links = links[~bool_incomplete_links].reset_index(drop=True)
+
     # Concatenate AC and DC buses
     buses["dc"] = False
     dc_buses["dc"] = True
     all_buses = pd.concat([buses, dc_buses], ignore_index=True)
 
-    # Add suffix
-    links["link_id"] = (
-        links["link_id"]
-        + "-"
-        + links["voltage"].div(1e3).astype(int).astype(str)
-        + "-DC"
-    )
+    if not links.empty:
+        # Add suffix
+        links["link_id"] = (
+            links["link_id"]
+            + "-"
+            + links["voltage"].div(1e3).astype(int).astype(str)
+            + "-DC"
+        )
 
-    # Extend DC links to DC buses
-    links = _extend_lines_to_buses(links, dc_buses)
+        # Extend DC links to DC buses
+        links = _extend_lines_to_buses(links, dc_buses)
 
     # Add PyPSA converter links between DC buses and AC buses
     converters = _add_converter_links(dc_buses, buses)
@@ -1680,10 +1689,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_osm_network",
-            configfiles=["config/test/config.distribution-grid.yaml"],
-        )
+        snakemake = mock_snakemake("build_osm_network")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
