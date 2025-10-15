@@ -33,7 +33,7 @@ rule solve_networks:
             RESULTS + "networks/solved_{horizon}.nc",
             **config["scenario"],
             run=config["run"]["name"],
-            horizon=config["planning_horizons"],
+            horizon=config["planning_horizons"][-1],
         ),
 
 

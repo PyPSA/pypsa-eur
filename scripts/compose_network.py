@@ -225,9 +225,12 @@ def concatenate_network_with_previous(
     extended_snapshots = extend_snapshot_multiindex(
         n.snapshots, n_current.snapshots, current_horizon
     )
+
+    # Set snapshots - PyPSA will automatically update investment_periods
+    # from the first level of the MultiIndex
     n.set_snapshots(extended_snapshots)
 
-    for c in n_current.components:
+    for c in n_current.components.values():
         existing_comps = n.c[c.name].static.index
         new_comps = n_current.c[c.name].static.index.difference(existing_comps)
         new_static = n_current.c[c.name].static.loc[new_comps]
@@ -235,10 +238,38 @@ def concatenate_network_with_previous(
         for attr, df in c.dynamic.items():
             if df.empty:
                 continue
-            new_dyn = df.loc[new_comps]
-            n.c[c.name].dynamic[attr].loc[new_dyn.index, new_comps] = new_dyn
+            # Select columns (component names), not rows
+            # Check if any of new_comps exist in df columns
+            cols_to_add = [col for col in new_comps if col in df.columns]
+            if not cols_to_add:
+                continue
+            new_dyn = df[cols_to_add]
+            # Create MultiIndex for the new period
+            new_period_index = pd.MultiIndex.from_product(
+                [[current_horizon], new_dyn.index], names=["period", "timestep"]
+            )
+            n.c[c.name].dynamic[attr].loc[new_period_index, cols_to_add] = (
+                new_dyn.values
+            )
+            sdf = n.c[c.name].static
+            fill_value = sdf[attr][cols_to_add] if attr in sdf.columns else 0
+            n.c[c.name].dynamic[attr].loc[:, cols_to_add] = (
+                n.c[c.name].dynamic[attr].loc[:, cols_to_add].fillna(fill_value)
+            )
 
     n.meta = {**n_previous.meta, **n_current.meta}
+
+    # Verify investment periods match snapshots first level before returning
+    snapshot_periods = list(n.snapshots.get_level_values("period").unique())
+    investment_periods_list = list(n.investment_periods)
+
+    if snapshot_periods != investment_periods_list:
+        logger.warning(
+            f"Investment periods mismatch detected: snapshots have {snapshot_periods}, "
+            f"but investment_periods is {investment_periods_list}. Synchronizing..."
+        )
+        # Force synchronization by setting investment_periods to match snapshots
+        n.investment_periods = snapshot_periods
 
     logger.info(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
@@ -1475,18 +1506,23 @@ if __name__ == "__main__":
     # For perfect foresight, concatenate with previous composed network
     if foresight == "perfect":
         if is_first_horizon:
+            # Set build year for all new assets in the first horizon
+            add_build_year_to_new_assets(n, current_horizon)
+            # Set investment periods for first horizon to create proper multi-period structure
+            # even though it only contains one period initially
             n.investment_periods = [current_horizon]
+            logger.debug(
+                f"First horizon {current_horizon}: set as single-period multi-investment network with build_year={current_horizon}"
+            )
         else:
             logger.info(
                 "Concatenating with previous composed network for perfect foresight"
             )
             n_previous = pypsa.Network(snakemake.input.network_previous)
-            social_discountrate = params.costs.get("social_discountrate", 0.01)
             n = concatenate_network_with_previous(
                 n_previous=n_previous,
                 n_current=n,
                 current_horizon=current_horizon,
-                social_discountrate=social_discountrate,
             )
 
     # ========== FINAL CLEANUP ==========
@@ -1511,5 +1547,11 @@ if __name__ == "__main__":
 
     # Export composed network
     logger.info(f"Exporting composed network for horizon {current_horizon}")
+    logger.info(
+        f"Network investment_periods before export: {list(n.investment_periods)}"
+    )
+    logger.info(
+        f"Network snapshots periods: {list(n.snapshots.get_level_values('period').unique()) if isinstance(n.snapshots, pd.MultiIndex) else 'Not MultiIndex'}"
+    )
     n.consistency_check()
     n.export_to_netcdf(snakemake.output[0])

@@ -70,3 +70,4 @@ dependencies:
   - highspy
   - tsam>=2.3.1
   - entsoe-py
+  - pypsa>=1.0

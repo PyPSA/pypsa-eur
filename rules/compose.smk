@@ -170,27 +170,15 @@ def get_compose_inputs(w):
         if foresight == "myopic":
             # Myopic uses solved network from previous horizon
             inputs["network_previous"] = RESULTS + f"networks/solved_{prev_horizon}.nc"
-        else:  # perfect foresight
+        elif foresight == "perfect":
             # Perfect foresight uses composed network from previous horizon
             inputs["network_previous"] = resources(
                 f"networks/composed_{prev_horizon}.nc"
             )
+        else:
+            raise ValueError(f"Invalid foresight type: {foresight}")
 
     return inputs
-
-
-def get_final_horizon():
-    """Get the final planning horizon, handling both single values and lists."""
-    horizons = config["planning_horizons"]
-    if isinstance(horizons, (int, str)):
-        return int(horizons)
-    else:
-        return int(horizons[-1])
-
-
-def get_solve_inputs(wildcards):
-    """Get inputs for solve rule - just the composed network."""
-    return {"network": RESULTS + f"networks/composed_{wildcards.horizon}.nc"}
 
 
 # Main composition rule - combines all network building steps
@@ -201,7 +189,6 @@ rule compose_network:
         resources("networks/composed_{horizon}.nc"),
     params:
         # Pass entire config sections using config_provider
-        temporal=config_provider("temporal"),
         electricity=config_provider("electricity"),
         sector=config_provider("sector"),
         clustering=config_provider("clustering"),
