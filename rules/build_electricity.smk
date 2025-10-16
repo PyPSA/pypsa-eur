@@ -282,34 +282,35 @@ rule determine_availability_matrix:
         "../scripts/determine_availability_matrix.py"
 
 
-rule build_renewable_profiles:
-    params:
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        renewable=config_provider("renewable"),
-    input:
-        availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
-        offshore_shapes=resources("offshore_shapes.geojson"),
-        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-        cutout=lambda w: "cutouts/"
-        + CDIR
-        + config_provider("renewable", w.technology, "cutout")(w)
-        + ".nc",
-    output:
-        profile=resources("profile_{clusters}_{technology}.nc"),
-    log:
-        logs("build_renewable_profile_{clusters}_{technology}.log"),
-    benchmark:
-        benchmarks("build_renewable_profiles_{clusters}_{technology}")
-    threads: config["atlite"].get("nprocesses", 4)
-    resources:
-        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
-    wildcard_constraints:
-        technology="(?!hydro).*",  # Any technology other than hydro
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/build_renewable_profiles.py"
+if config["enable"].get("build_renewable_profiles", True):
+    rule build_renewable_profiles:
+        params:
+            snapshots=config_provider("snapshots"),
+            drop_leap_day=config_provider("enable", "drop_leap_day"),
+            renewable=config_provider("renewable"),
+        input:
+            availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
+            offshore_shapes=resources("offshore_shapes.geojson"),
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            cutout=lambda w: "cutouts/"
+            + CDIR
+            + config_provider("renewable", w.technology, "cutout")(w)
+            + ".nc",
+        output:
+            profile=resources("profile_{clusters}_{technology}.nc"),
+        log:
+            logs("build_renewable_profile_{clusters}_{technology}.log"),
+        benchmark:
+            benchmarks("build_renewable_profiles_{clusters}_{technology}")
+        threads: config["atlite"].get("nprocesses", 4)
+        resources:
+            mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+        wildcard_constraints:
+            technology="(?!hydro).*",  # Any technology other than hydro
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/build_renewable_profiles.py"
 
 
 rule build_monthly_prices:

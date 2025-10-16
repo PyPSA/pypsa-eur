@@ -149,7 +149,7 @@ if __name__ == "__main__":
     resource = params["resource"]  # pv panel params / wind turbine params
     resource["show_progress"] = not noprogress
 
-    tech = next(t for t in ["panel", "turbine"] if t in resource)
+    tech = next(t for t in ["panel", "turbine", "wec_type"] if t in resource)
     models = resource[tech]
     if not isinstance(models, dict):
         models = {0: models}
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     )
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
-    if snakemake.wildcards.technology.startswith("offwind"):
+    if snakemake.wildcards.technology.startswith("offwind") or snakemake.wildcards.technology.startswith("wave") or snakemake.wildcards.technology.startswith("offsolar"):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
         regions = regions.loc[offshore_regions]

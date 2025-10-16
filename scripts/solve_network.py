@@ -125,15 +125,19 @@ def add_land_use_constraint(n):
         "offwind-ac",
         "offwind-dc",
         "offwind-float",
+        "offsolar",
+        "wave-shallow",
+        "wave-nearshore",
+        "wave-farshore"
     ]:
 
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
-            .groupby(n.generators.bus.map(n.buses.location))
+            .groupby(n.generators.bus.map(n.buses.country))
             .sum()
         )
-        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
+        existing.index += " " + carrier + "-" #+ snakemake.wildcards.planning_horizons
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
     # check if existing capacities are larger than technical potential
@@ -633,9 +637,16 @@ def add_BAU_constraints(n, config):
     p_nom = n.model["Generator-p_nom"]
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
+
+    # Debug output to check carrier names
+    print(f"Carriers in mincaps: {mincaps.index}")
+    print(f"Carriers in network: {ext_i.carrier.unique()}")
+
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
+    logger.info("BAU is done.")
+
 
 
 # TODO: think about removing or make per country
@@ -932,17 +943,15 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(n, snapshots):
-    """
-    Collects supplementary constraints which will be passed to
-    ``pypsa.optimization.optimize``.
-
-    If you want to enforce additional custom constraints, this is a good
-    location to add them. The arguments ``opts`` and
-    ``snakemake.config`` are expected to be attached to the network.
-    """
     config = n.config
+    opts = config.get('scenario', {}).get('opts', [])
+    
+    # Debugging output to verify opts are passed correctly
+    print(f"Scenario opts: {opts}")
+    
     constraints = config["solving"].get("constraints", {})
-    if constraints["BAU"] and n.generators.p_nom_extendable.any():
+    
+    if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
@@ -956,9 +965,9 @@ def extra_functionality(n, snapshots):
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if {"solar-hsat", "solar"}.issubset(
+    if {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["renewable_carriers"]
-    ) and {"solar-hsat", "solar"}.issubset(
+    ) and {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["extendable_carriers"]["Generator"]
     ):
         add_solar_potential_constraints(n, config)
@@ -1059,7 +1068,7 @@ if __name__ == "__main__":
             clusters="5",
             ll="v1.0",
             sector_opts="",
-            # planning_horizons="2030",
+            planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)

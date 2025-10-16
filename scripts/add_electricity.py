@@ -109,6 +109,11 @@ network with **zero** initial capacity:
   discharging. This leads to three investment variables for the energy capacity,
   charging and discharging capacity of the storage unit.
 """
+import warnings
+from pandas.errors import PerformanceWarning
+
+# Suppress PerformanceWarning globally
+warnings.simplefilter("ignore", category=PerformanceWarning)
 
 import logging
 from pathlib import Path
@@ -119,6 +124,7 @@ import pandas as pd
 import powerplantmatching as pm
 import pypsa
 import xarray as xr
+import _helpers
 from _helpers import (
     configure_logging,
     get_snapshots,
@@ -194,6 +200,7 @@ def sanitize_carriers(n, config):
             add_missing_carriers(n, c.df.carrier)
 
     carrier_i = n.carriers.index
+    print(n.carriers.index)
     nice_names = (
         pd.Series(config["plotting"]["nice_names"])
         .reindex(carrier_i)
@@ -202,6 +209,7 @@ def sanitize_carriers(n, config):
     n.carriers["nice_name"] = n.carriers.nice_name.where(
         n.carriers.nice_name != "", nice_names
     )
+    print(n.carriers["nice_name"])
     colors = pd.Series(config["plotting"]["tech_colors"]).reindex(carrier_i)
     if colors.isna().any():
         missing_i = list(colors.index[colors.isna()])
@@ -286,6 +294,7 @@ def load_costs(tech_costs, config, max_hours, Nyears=1.0):
 
     for attr in ("marginal_cost", "capital_cost"):
         overwrites = config.get(attr)
+        print("Overwrites content before filtering:", overwrites)
         if overwrites is not None:
             overwrites = pd.Series(overwrites)
             costs.loc[overwrites.index, attr] = overwrites
@@ -482,8 +491,9 @@ def attach_wind_and_solar(
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
 
-            supcar = car.split("-", 2)[0]
-            if supcar == "offwind":
+            # supcar = car #.split("-", 2)[0]
+
+            if car == "offwind-ac":
                 distance = ds["average_distance"].to_pandas()
                 submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
                 underground_cost = costs.at[
@@ -494,7 +504,7 @@ def attach_wind_and_solar(
                 )
 
                 capital_cost = (
-                    costs.at["offwind", "capital_cost"]
+                    costs.at["offwind-ac", "capital_cost"]
                     + costs.at[car + "-station", "capital_cost"]
                     + connection_cost
                 )
@@ -503,6 +513,108 @@ def attach_wind_and_solar(
                         connection_cost.min(), connection_cost.max(), car
                     )
                 )
+
+            if car == "offwind-float":
+                distance = ds["average_distance"].to_pandas()
+                submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+                underground_cost = costs.at[
+                    car + "-connection-underground", "capital_cost"
+                ]
+                connection_cost = line_length_factor * (
+                    distance * submarine_cost + landfall_length * underground_cost
+                )
+
+                capital_cost = (
+                    costs.at["offwind-float", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
+                    + connection_cost
+                )
+                logger.info(
+                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                        connection_cost.min(), connection_cost.max(), car
+                    )
+                )
+            if car == "offsolar":
+                distance = ds["average_distance"].to_pandas()
+                submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+                underground_cost = costs.at[
+                    car + "-connection-underground", "capital_cost"
+                ]
+                connection_cost = line_length_factor * (
+                    distance * submarine_cost + landfall_length * underground_cost
+                )
+
+                capital_cost = (
+                    costs.at["offsolar", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
+                    + connection_cost
+                )
+                logger.info(
+                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                        connection_cost.min(), connection_cost.max(), car
+                    )
+                )
+            if car == "wave-farshore":
+                distance = ds["average_distance"].to_pandas()
+                submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+                underground_cost = costs.at[
+                    car + "-connection-underground", "capital_cost"
+                ]
+                connection_cost = line_length_factor * (
+                    distance * submarine_cost + landfall_length * underground_cost
+                )
+
+                capital_cost = (
+                    costs.at["wave-farshore", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
+                    + connection_cost
+                )
+                logger.info(
+                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                        connection_cost.min(), connection_cost.max(), car
+                    )
+                )
+            if car == "wave-nearshore":
+                distance = ds["average_distance"].to_pandas()
+                submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+                underground_cost = costs.at[
+                    car + "-connection-underground", "capital_cost"
+                ]
+                connection_cost = line_length_factor * (
+                    distance * submarine_cost + landfall_length * underground_cost
+                )
+
+                capital_cost = (
+                    costs.at["wave-nearshore", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
+                    + connection_cost
+                )
+                logger.info(
+                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                        connection_cost.min(), connection_cost.max(), car
+                    )
+                )
+            if car == "wave-shallow":
+                distance = ds["average_distance"].to_pandas()
+                submarine_cost = costs.at[car + "-connection-submarine", "capital_cost"]
+                underground_cost = costs.at[
+                    car + "-connection-underground", "capital_cost"
+                ]
+                connection_cost = line_length_factor * (
+                    distance * submarine_cost + landfall_length * underground_cost
+                )
+
+                capital_cost = (
+                    costs.at["wave-shallow", "capital_cost"]
+                    + costs.at[car + "-station", "capital_cost"]
+                    + connection_cost
+                )
+                logger.info(
+                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                        connection_cost.min(), connection_cost.max(), car
+                    )
+                )
+
             else:
                 capital_cost = costs.at[car, "capital_cost"]
 
@@ -514,11 +626,11 @@ def attach_wind_and_solar(
                 carrier=car,
                 p_nom_extendable=car in extendable_carriers["Generator"],
                 p_nom_max=ds["p_nom_max"].to_pandas(),
-                marginal_cost=costs.at[supcar, "marginal_cost"],
+                marginal_cost=costs.at[car, "marginal_cost"],
                 capital_cost=capital_cost,
-                efficiency=costs.at[supcar, "efficiency"],
+                efficiency=costs.at[car, "efficiency"],
                 p_max_pu=ds["profile"].transpose("time", "bus").to_pandas(),
-                lifetime=costs.at[supcar, "lifetime"],
+                lifetime=costs.at[car, "lifetime"],
             )
 
 

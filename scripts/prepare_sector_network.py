@@ -341,7 +341,7 @@ def add_lifetime_wind_solar(n, costs):
     """
     Add lifetime for solar and wind generators.
     """
-    for carrier in ["solar", "onwind", "offwind"]:
+    for carrier in ["solar", "onwind", "offwind", "wave", "offsolar"]:
         gen_i = n.generators.index.str.contains(carrier)
         n.generators.loc[gen_i, "lifetime"] = costs.at[carrier, "lifetime"]
 
@@ -432,7 +432,7 @@ def update_wind_solar_costs(
     ]
 
     # for offshore wind, need to calculated connection costs
-    for connection in ["dc", "ac", "float"]:
+    for connection in ["dc", "ac", "float", "fl"]:
         tech = "offwind-" + connection
         landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
@@ -453,6 +453,41 @@ def update_wind_solar_costs(
 
             capital_cost = (
                 costs.at["offwind", "fixed"]
+                + costs.at[tech + "-station", "fixed"]
+                + connection_cost
+            )
+
+            logger.info(
+                "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
+                    connection_cost.min(), connection_cost.max(), tech
+                )
+            )
+
+            n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
+                capital_cost.rename(index=lambda node: node + " " + tech)
+            )
+    
+    for connection in ["farshore", "nearshore", "shallow"]:
+        tech = "wave-" + connection
+        landfall_length = landfall_lengths.get(tech, 0.0)
+        if tech not in n.generators.carrier.values:
+            continue
+        profile = snakemake.input["profile_wave-" + connection]
+        with xr.open_dataset(profile) as ds:
+
+            # if-statement for compatibility with old profiles
+            if "year" in ds.indexes:
+                ds = ds.sel(year=ds.year.min(), drop=True)
+
+            distance = ds["average_distance"].to_pandas()
+            submarine_cost = costs.at[tech + "-connection-submarine", "fixed"]
+            underground_cost = costs.at[tech + "-connection-underground", "fixed"]
+            connection_cost = line_length_factor * (
+                distance * submarine_cost + landfall_length * underground_cost
+            )
+
+            capital_cost = (
+                costs.at["wave", "fixed"]
                 + costs.at[tech + "-station", "fixed"]
                 + connection_cost
             )
