@@ -23,7 +23,7 @@ run:
     file: config/scenarios.flex_test.yaml
   disable_progressbar: false
   shared_resources:
-    policy: 'base'#true
+    policy: 'base'
     exclude: []
   shared_cutouts: true
   use_shadow_directory: false
@@ -153,7 +153,7 @@ electricity:
     enable: false
     by_country: false
 
-  transmission_limit: v1.25
+  transmission_limit: v1.5
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -977,7 +977,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: "1H"
+    resolution_sector: "3H"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
@@ -1039,7 +1039,7 @@ solving:
 
   solver:
     name: gurobi
-    options: gurobi-default
+    options: gurobi-numeric-focus
 
   solver_options:
     highs-default:

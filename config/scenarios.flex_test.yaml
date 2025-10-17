@@ -11,6 +11,8 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 base:
+  sector:
+    transport: true
 
 electrolysis_flex:
   sector:
