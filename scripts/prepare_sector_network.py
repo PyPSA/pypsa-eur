@@ -2954,6 +2954,52 @@ def add_heat(
             p_set=heat_load.loc[n.snapshots],
         )
 
+        if options["residential_heat_dsm"] and heat_system in [
+            HeatSystem.RESIDENTIAL_RURAL,
+            HeatSystem.RESIDENTIAL_URBAN_DECENTRAL,
+            HeatSystem.URBAN_CENTRAL,
+        ]:
+            factor = heat_system.heat_demand_weighting(
+                urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
+            )
+
+            heat_dsm_profile = pd.read_csv(
+                snakemake.input.heat_dsm_profile,
+                header=[1],
+                index_col=[0],
+                parse_dates=True,
+            )[nodes].reindex(n.snapshots)
+
+            e_nom = (
+                heat_demand[["residential space"]]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            )
+
+            heat_dsm_profile = (
+                heat_dsm_profile * options["residential_heat_restriction_value"]
+            )
+            e_nom = e_nom.max()
+
+            # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
+            tes_time_constant_days = options["tes_tau"]["decentral"]
+
+            n.madd(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} heat flexibility",
+                bus=nodes + f" {heat_system} heat",
+                carrier="residential heating flexibility",
+                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                e_cyclic=True,
+                e_nom=e_nom,
+                e_max_pu=heat_dsm_profile,
+            )
+
+            logger.info(f"adding heat dsm in {heat_system} heating.")
+
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
