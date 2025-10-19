@@ -253,6 +253,12 @@ def load_costs(
 
     # min_count=1 is important to generate NaNs which are then filled by fillna
     costs = costs.value.unstack(level=1).groupby("technology").sum(min_count=1)
+
+    # Ensure all fill_values columns exist before filling
+    for col, fill_value in config["fill_values"].items():
+        if col not in costs.columns:
+            costs[col] = fill_value
+
     costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
