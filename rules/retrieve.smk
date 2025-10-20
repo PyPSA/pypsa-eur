@@ -731,39 +731,35 @@ if config["enable"]["retrieve"]:
             # needed for test cutout in CI (where specifying copernicusmarine login is not possible)
 
 
-    if config["atlite"]["default_cutout"] == "be-03-2013-era5":
+    rule retrieve_seawater_temperature_test_cutout:
+        input:
+            hera_data_url=storage(
+                f"https://zenodo.org/records/15828866/files/seawater_temperature.nc"
+            ),
+        output:
+            seawater_temperature="data/seawater_temperature_test_cutout.nc",
+        log:
+            "logs/retrieve_seawater_temperature_test_cutout.log",
+        resources:
+            mem_mb=10000,
+        benchmark:
+            benchmarks("logs/retrieve_seawater_temperature_test_cutout.log")
+        run:
+            move(input[0], output[0])
 
-        rule retrieve_seawater_temperature_test_cutout:
-            input:
-                hera_data_url=storage(
-                    f"https://zenodo.org/records/15828866/files/seawater_temperature.nc"
-                ),
-            output:
-                seawater_temperature="data/seawater_temperature_2013.nc",
-            log:
-                "logs/retrieve_seawater_temperature_test_cutout.log",
-            resources:
-                mem_mb=10000,
-            benchmark:
-                benchmarks("logs/retrieve_seawater_temperature_test_cutout.log")
-            run:
-                move(input[0], output[0])
-
-    else:
-
-        rule retrieve_seawater_temperature:
-            output:
-                seawater_temperature="data/seawater_temperature_{year}.nc",
-            log:
-                "logs/retrieve_seawater_temperature_{year}.log",
-            resources:
-                mem_mb=10000,
-            benchmark:
-                benchmarks("logs/retrieve_seawater_temperature_{year}.log")
-            conda:
-                "../envs/environment.yaml"
-            script:
-                "../scripts/retrieve_seawater_temperature.py"
+    rule retrieve_seawater_temperature:
+        output:
+            seawater_temperature="data/seawater_temperature_{year}.nc",
+        log:
+            "logs/retrieve_seawater_temperature_{year}.log",
+        resources:
+            mem_mb=10000,
+        benchmark:
+            benchmarks("logs/retrieve_seawater_temperature_{year}.log")
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_seawater_temperature.py"
 
     rule retrieve_hera_data_test_cutout:
         input:
