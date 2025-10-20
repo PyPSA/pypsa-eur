@@ -598,9 +598,7 @@ def input_seawater_temperature(w) -> dict[str, str]:
     """
 
     if config_provider("atlite", "default_cutout") == "be-03-2013-era5":
-        return {
-            f"seawater_temperature_2013": f"data/seawater_temperature_test_cutout.nc"
-        }
+        return {f"seawater_temperature_2013": f"data/seawater_temperature_2013.nc"}
     else:
         # Import here to avoid circular imports
         from scripts._helpers import get_snapshots
