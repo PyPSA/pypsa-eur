@@ -58,6 +58,13 @@ if __name__ == "__main__":
 
         summaries = pd.concat(summaries, axis=1, keys=summaries_dict.keys())
 
+        # Drop redundant second level from column MultiIndex (original column names)
+        if (
+            isinstance(summaries.columns, pd.MultiIndex)
+            and summaries.columns.nlevels == 2
+        ):
+            summaries.columns = summaries.columns.droplevel(1)
+
         summaries.sort_index().to_csv(snakemake.output[kind])
 
         del summaries
