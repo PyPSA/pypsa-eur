@@ -728,26 +728,9 @@ if config["enable"]["retrieve"]:
         run:
             move(input[0], output[0])
 
-            # needed for test cutout in CI (where specifying copernicusmarine login is not possible)
-
-
-    rule retrieve_seawater_temperature_test_cutout:
-        input:
-            hera_data_url=storage(
-                f"https://zenodo.org/records/15828866/files/seawater_temperature.nc"
-            ),
-        output:
-            seawater_temperature="data/seawater_temperature_test_cutout.nc",
-        log:
-            "logs/retrieve_seawater_temperature_test_cutout.log",
-        resources:
-            mem_mb=10000,
-        benchmark:
-            benchmarks("logs/retrieve_seawater_temperature_test_cutout.log")
-        run:
-            move(input[0], output[0])
-
     rule retrieve_seawater_temperature:
+        params:
+            default_cutout=config_provider("atlite", "default_cutout"),
         output:
             seawater_temperature="data/seawater_temperature_{year}.nc",
         log:
