@@ -554,7 +554,7 @@ sector:
         constant_temperature_celsius: 70
         ignore_missing_regions: false
         requires_generator: false
-      fuel cell excess:
+      H2 Fuel Cell excess:
         constant_temperature_celsius: 70 # assume same as electrolysis
         ignore_missing_regions: false
         requires_generator: false
@@ -577,7 +577,7 @@ sector:
     direct_utilisation_heat_sources:
     - geothermal
     - electrolysis excess
-    - fuel cell excess
+    - H2 Fuel Cell excess
     - Fischer-Tropsch excess
     - Haber-Bosch excess
     - Sabatier excess
@@ -588,7 +588,7 @@ sector:
     urban central:
     - air
     - electrolysis excess
-    - fuel cell excess
+    - H2 Fuel Cell excess
     - Haber-Bosch excess
     - methanolisation excess
     urban decentral:
@@ -950,7 +950,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
-  version: v0.13.3
+  version: v0.13.4
   social_discountrate: 0.02
   fill_values:
     FOM: 0

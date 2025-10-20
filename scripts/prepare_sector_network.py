@@ -3178,22 +3178,15 @@ def add_heat(
                 lifetime=costs.at["central geothermal heat source", "lifetime"],
             )
 
-        ## Add heat pumps
-        for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
-            costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
+        ## Add heat pumps and direct utilisation heat sources
+        heat_pump_sources = params.heat_pump_sources[heat_system.system_type.value]
+        if heat_system == HeatSystem.URBAN_CENTRAL:
+            direct_utilisation_heat_sources = params.direct_utilisation_heat_sources
+        else:
+            direct_utilisation_heat_sources = []
 
-            cop_heat_pump = (
-                cop.sel(
-                    heat_system=heat_system.system_type.value,
-                    heat_source=heat_source,
-                    name=nodes,
-                )
-                .to_pandas()
-                .reindex(index=n.snapshots)
-                if options["time_dep_hp_cop"]
-                else costs.at[costs_name_heat_pump, "efficiency"]
-            )
-
+        all_heat_sources = set(heat_pump_sources) | set(direct_utilisation_heat_sources)
+        for heat_source in all_heat_sources:
             if heat_source in params.limited_heat_sources:
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
@@ -3240,25 +3233,57 @@ def add_heat(
                         p_nom_extendable=True,
                         capital_cost=capital_cost,
                         lifetime=lifetime,
-                        p_nom_max=p_max_source,
+                        p_max_pu=p_max_source,
                     )
                 # add heat pump converting source heat + electricity to urban central heat
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_carrier}",
-                    bus2=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
-                    efficiency2=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_nom_extendable=True,
-                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
+                if heat_source in heat_pump_sources:
+                    costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
+                    cop_heat_pump = (
+                        cop.sel(
+                            heat_system=heat_system.system_type.value,
+                            heat_source=heat_source,
+                            name=nodes,
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                        if options["time_dep_hp_cop"]
+                        else costs.at[costs_name_heat_pump, "efficiency"]
+                    )
+
+                    if heat_source in params.limited_heat_sources:
+                        n.add(
+                            "Link",
+                            nodes,
+                            suffix=f" {heat_system} {heat_source} heat pump",
+                            bus0=nodes,
+                            bus1=nodes + f" {heat_carrier}",
+                            bus2=nodes + f" {heat_system} heat",
+                            carrier=f"{heat_system} {heat_source} heat pump",
+                            efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
+                            efficiency2=cop_heat_pump,
+                            capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
+                            * costs.at[costs_name_heat_pump, "capital_cost"]
+                            * overdim_factor,
+                            p_nom_extendable=True,
+                            lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                            p_nom_min=1000,
+                        )
+
+                    else:
+                        n.add(
+                            "Link",
+                            nodes,
+                            suffix=f" {heat_system} {heat_source} heat pump",
+                            bus0=nodes,
+                            bus1=nodes + f" {heat_system} heat",
+                            carrier=f"{heat_system} {heat_source} heat pump",
+                            efficiency=cop_heat_pump,
+                            capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
+                            * costs.at[costs_name_heat_pump, "capital_cost"]
+                            * overdim_factor,
+                            p_nom_extendable=True,
+                            lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                        )
 
                 if heat_source in params.direct_utilisation_heat_sources:
                     # 1 if source temperature exceeds forward temperature, 0 otherwise:
@@ -3313,22 +3338,6 @@ def add_heat(
                     carrier=f"{heat_system} {heat_source} heat pump",
                     efficiency=(-(cop_heat_pump - 1)).clip(upper=0),
                     efficiency2=cop_heat_pump,
-                    capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
-                    * costs.at[costs_name_heat_pump, "capital_cost"]
-                    * overdim_factor,
-                    p_nom_extendable=True,
-                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-                )
-
-            else:
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} {heat_source} heat pump",
-                    bus0=nodes,
-                    bus1=nodes + f" {heat_system} heat",
-                    carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=cop_heat_pump,
                     capital_cost=costs.at[costs_name_heat_pump, "efficiency"]
                     * costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
@@ -5350,7 +5359,9 @@ def add_waste_heat(
 
         # Fischer-Tropsch waste heat
         if (
-            "Fischer-Tropsch excess" in options["heat_pump_sources"]["urban central"]
+            "Fischer-Tropsch excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "Fischer-Tropsch" in link_carriers
         ):
             n.links.loc[urban_central + " Fischer-Tropsch", "bus3"] = (
@@ -5362,21 +5373,23 @@ def add_waste_heat(
 
         # Sabatier process waste heat
         if (
-            "Sabatier excess" in options["heat_pump_sources"]["urban central"]
+            "Sabatier excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "Sabatier" in link_carriers
         ):
             n.links.loc[urban_central + " Sabatier", "bus3"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " Sabatier", "efficiency3"] = (
-                1
-                - costs.at["methanation", "heat-losses"]
-                - n.links.loc[urban_central + " Sabatier", "efficiency"]
+                1 - 0.05 - n.links.loc[urban_central + " Sabatier", "efficiency"]
             )
 
         # Haber-Bosch process waste heat
         if (
-            "Haber-Bosch excess" in options["heat_pump_sources"]["urban central"]
+            "Haber-Bosch excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "Haber-Bosch" in link_carriers
         ):
             n.links.loc[urban_central + " Haber-Bosch", "bus3"] = (
@@ -5388,7 +5401,9 @@ def add_waste_heat(
 
         # Methanolisation waste heat
         if (
-            "methanolisation excess" in options["heat_pump_sources"]["urban central"]
+            "methanolisation excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "methanolisation" in link_carriers
         ):
             n.links.loc[urban_central + " methanolisation", "bus4"] = (
@@ -5400,7 +5415,9 @@ def add_waste_heat(
 
         # Electrolysis waste heat
         if (
-            "electrolysis excess" in options["heat_pump_sources"]["urban central"]
+            "electrolysis excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "H2 Electrolysis" in link_carriers
         ):
             # Connect electrolysis waste heat to electrolysis excess heat bus for heat pump boosting
@@ -5408,21 +5425,21 @@ def add_waste_heat(
                 urban_central + " urban central electrolysis excess heat"
             )
             n.links.loc[urban_central + " H2 Electrolysis", "efficiency2"] = costs.at[
-                "H2 Electrolysis", "efficiency-heat"
+                "electrolysis", "efficiency-heat"
             ]
 
         # Fuel cell waste heat
         if (
-            "fuel cell excess" in options["heat_pump_sources"]["urban central"]
+            "H2 Fuel Cell excess"
+            in set(options["heat_pump_sources"]["urban central"])
+            | set(options["district_heating"]["direct_utilisation_heat_sources"])
             and "H2 Fuel Cell" in link_carriers
         ):
             n.links.loc[urban_central + " H2 Fuel Cell", "bus2"] = (
                 urban_central + " urban central heat"
             )
             n.links.loc[urban_central + " H2 Fuel Cell", "efficiency2"] = (
-                1
-                - costs.at["fuel cell", "heat-losses"]
-                - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
+                1 - 0.05 - n.links.loc[urban_central + " H2 Fuel Cell", "efficiency"]
             )
 
 

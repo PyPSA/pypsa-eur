@@ -1257,9 +1257,12 @@ def input_heat_source_power(w):
         heat_source_name: resources(
             "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
         )
-        for heat_source_name in config_provider(
-            "sector", "heat_pump_sources", "urban central"
-        )(w)
+        for heat_source_name in set(
+            config_provider("sector", "heat_pump_sources", "urban central")(w)
+            | config_provider("sector", "district_heating", "limited_heat_sources")(
+                w
+            ).keys()
+        )
         if heat_source_name in limited_heat_sources.keys()
         and limited_heat_sources[heat_source_name]["requires_generator"]
     }
