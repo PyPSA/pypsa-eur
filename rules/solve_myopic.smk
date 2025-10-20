@@ -14,6 +14,7 @@ rule add_existing_baseyear:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         countries=config_provider("countries"),
         MWh_NH3_per_tNH3=config_provider("industry", "MWh_NH3_per_tNH3"),
+        MWh_MeOH_per_tMeOH=config_provider("industry", "MWh_MeOH_per_tMeOH"),
     input:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
@@ -33,6 +34,7 @@ rule add_existing_baseyear:
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         ammonia="data/ammonia_plants.csv",
         isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
+        gem_gspt="data/Global-Cement-and-Concrete-Tracker_July-2025.xlsx",
     output:
         resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"

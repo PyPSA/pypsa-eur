@@ -29,19 +29,24 @@ run:
   use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
-foresight: overnight
+foresight: myopic
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
   clusters:
-  - 50
+  - 39
+  # - 128
+  # - 256
   opts:
   - ''
   sector_opts:
   - ''
   planning_horizons:
-  - 2050
+  # - 2020
+  - 2030
+  - 2040
+  # - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
@@ -728,7 +733,7 @@ sector:
   - nearshore      # within 50 km of sea
     # - offshore
   methanol:
-    regional_methanol_demand: false
+    regional_methanol_demand: true
     methanol_reforming: false
     methanol_reforming_cc: false
     methanol_to_kerosene: false
@@ -739,7 +744,7 @@ sector:
       allam: false
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
-  ammonia: true
+  ammonia: regional
   min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -827,6 +832,12 @@ sector:
       methanol: 121
       gas: 122
       oil: 125
+  endogenous_sectors:
+    - steel
+    - cement
+    - ammonia
+    - methanol
+  industry_relocation: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -969,7 +980,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: 8760H
+    resolution_sector: 365H
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
