@@ -923,6 +923,9 @@ rule build_industrial_production_per_node:
 
 
 rule build_industrial_energy_demand_per_node:
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         industry_sector_ratios=resources(
             "industry_sector_ratios_{planning_horizons}.csv"
@@ -936,6 +939,9 @@ rule build_industrial_energy_demand_per_node:
     output:
         industrial_energy_demand_per_node=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_electricity_demand_per_node_temporal=resources(
+            "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
         ),
     threads: 1
     resources:
@@ -1357,6 +1363,13 @@ rule prepare_sector_network:
         industrial_demand=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
+        # industrial_electricity_demand_temporal=lambda w: (
+        #     resources(
+        #         "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
+        #     )
+        #     if config_provider("industry", "temporal_electricity_industry_load")(w)
+        #     else []
+        # ),
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_base_s_{clusters}.nc"
         ),
