@@ -85,7 +85,7 @@ if config["enable"]["retrieve"]:
     rule retrieve_nuts_2013_shapes:
         input:
             shapes=storage(
-                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip"
+                "https://gisco-services.ec.europa.eu/distribution/v2/nuts/download/ref-nuts-2013-03m.geojson.zip",
             ),
         output:
             shapes_level_3="data/nuts/NUTS_RG_03M_2013_4326_LEVL_3.geojson",
@@ -161,6 +161,7 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True
         input:
             storage(
                 "https://zenodo.org/records/15349674/files/{cutout}.nc",
+                max_requests_per_second=1.5,
             ),
         output:
             CDIR.joinpath("{cutout}.nc").as_posix(),
@@ -250,6 +251,7 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/records/10820928/files/demand_hourly.csv",
+                max_requests_per_second=1.5,
             ),
         output:
             "data/load_synthetic_raw.csv",
@@ -269,6 +271,7 @@ if config["enable"]["retrieve"]:
             storage(
                 "https://zenodo.org/records/13757228/files/shipdensity_global.zip",
                 keep_local=True,
+                max_requests_per_second=1.5,
             ),
         output:
             "data/shipdensity_global.zip",
@@ -289,6 +292,7 @@ if config["enable"]["retrieve"]:
             storage(
                 "https://zenodo.org/records/10356004/files/ENSPRESO_BIOMASS.xlsx",
                 keep_local=True,
+                max_requests_per_second=1.5,
             ),
         output:
             "data/ENSPRESO_BIOMASS.xlsx",
@@ -304,6 +308,7 @@ if config["enable"]["retrieve"]:
             storage(
                 "https://gitlab.com/hotmaps/industrial_sites/industrial_sites_Industrial_Database/-/raw/master/data/Industrial_Database.csv",
                 keep_local=True,
+                max_requests_per_second=1.5,
             ),
         output:
             "data/Industrial_Database.csv",
@@ -334,6 +339,7 @@ if config["enable"]["retrieve"]:
         input:
             storage(
                 "https://zenodo.org/records/3939050/files/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
+                max_requests_per_second=1.5,
             ),
         output:
             "data/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
@@ -617,7 +623,8 @@ if config["enable"]["retrieve"] and (
         input:
             **{
                 file: storage(
-                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}"
+                    f"https://zenodo.org/records/{OSM_ZENODO_IDS[OSM_VERSION]}/files/{file}",
+                    max_requests_per_second=1.5,
                 )
                 for file in OSM_FILES
             },
