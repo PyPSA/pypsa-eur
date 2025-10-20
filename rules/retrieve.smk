@@ -737,8 +737,6 @@ if config["enable"]["retrieve"]:
             "logs/retrieve_seawater_temperature_{year}.log",
         resources:
             mem_mb=10000,
-        benchmark:
-            benchmarks("logs/retrieve_seawater_temperature_{year}.log")
         conda:
             "../envs/environment.yaml"
         script:
