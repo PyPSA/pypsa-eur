@@ -614,7 +614,7 @@ def add_electricity_components(
         landfall_lengths,
     )
 
-    if sector_mode and foresight in ["myopic", "perfect"]:
+    if foresight in ["myopic", "perfect"]:
         apply_variable_renewable_lifetimes(n, costs)
 
     # Attach hydro if included

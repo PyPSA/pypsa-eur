@@ -282,15 +282,17 @@ def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int)
     )
 
     # Change efficiency2 for heat pumps that use an explicitly modelled heat source
-    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
-        n_p.links_t["efficiency2"].columns
-    )
-    current_iteration_columns = corresponding_idx_this_iteration.intersection(
-        n.links_t["efficiency2"].columns
-    )
-    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
-        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
-    )
+    # Only update if efficiency2 exists (sector-coupled networks only)
+    if "efficiency2" in n_p.links_t and "efficiency2" in n.links_t:
+        previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+            n_p.links_t["efficiency2"].columns
+        )
+        current_iteration_columns = corresponding_idx_this_iteration.intersection(
+            n.links_t["efficiency2"].columns
+        )
+        n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+            n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+        )
 
 
 def update_dynamic_ptes_capacity(
