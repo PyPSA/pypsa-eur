@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+from numpy import atleast_1d
+
 
 localrules:
     all,
@@ -12,7 +14,6 @@ rule cluster_networks:
     input:
         expand(
             resources("networks/clustered.nc"),
-            **config["scenario"],
             run=config["run"]["name"],
         ),
 
@@ -21,7 +22,6 @@ rule compose_networks:
     input:
         expand(
             resources("networks/composed_{horizon}.nc"),
-            **config["scenario"],
             run=config["run"]["name"],
             horizon=config["planning_horizons"],
         ),
@@ -31,13 +31,8 @@ rule solve_networks:
     input:
         expand(
             RESULTS + "networks/solved_{horizon}.nc",
-            **config["scenario"],
             run=config["run"]["name"],
-            horizon=(
-                config["planning_horizons"][-1]
-                if isinstance(config["planning_horizons"], list)
-                else config["planning_horizons"]
-            ),
+            horizon=atleast_1d(config["planning_horizons"])[-1],
         ),
 
 
@@ -45,7 +40,6 @@ rule plot_balance_maps:
     input:
         lambda w: expand(
             (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
-            **config["scenario"],
             run=config["run"]["name"],
             horizon=config["planning_horizons"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
@@ -55,7 +49,6 @@ rule plot_balance_maps:
 rule plot_power_networks:
     input:
         expand(
-            resources("maps/power-network.pdf"),
-            **config["scenario"],
+            resources("maps/clustered_network.pdf"),
             run=config["run"]["name"],
         ),

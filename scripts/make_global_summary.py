@@ -9,6 +9,7 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 import logging
 
 import pandas as pd
+from numpy import atleast_1d
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -44,28 +45,18 @@ if __name__ == "__main__":
         logger.info(f"Creating global summary for {kind}")
 
         summaries_dict = {
-            (cluster, opt + sector_opt, planning_horizon): "results/"
+            horizon: "results/"
             + snakemake.params.RDIR
-            + f"csvs/individual/{kind}_s_{cluster}_{opt}_{sector_opt}_{planning_horizon}.csv"
-            for cluster in snakemake.params.scenario["clusters"]
-            for opt in snakemake.params.scenario["opts"]
-            for sector_opt in snakemake.params.scenario["sector_opts"]
-            for planning_horizon in snakemake.params.scenario["planning_horizons"]
+            + f"csvs/individual/{kind}_{horizon}.csv"
+            for horizon in atleast_1d(snakemake.config["planning_horizons"])
         }
-
-        columns = pd.MultiIndex.from_tuples(
-            summaries_dict.keys(),
-            names=["cluster", "opt", "planning_horizon"],
-        )
 
         summaries = []
         for _, filename in summaries_dict.items():
             s = pd.read_csv(filename, index_col=list(range(INDEX_COLS[kind])))
             summaries.append(s)
 
-        summaries = pd.concat(summaries, axis=1)
-
-        summaries.columns = columns
+        summaries = pd.concat(summaries, axis=1, keys=summaries_dict.keys())
 
         summaries.sort_index().to_csv(snakemake.output[kind])
 

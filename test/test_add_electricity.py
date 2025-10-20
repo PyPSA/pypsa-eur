@@ -15,7 +15,7 @@ from scripts.add_electricity import attach_load
 def test_attach_load_uses_sanitized_busmap(tmp_path):
     """Loads are attached using trimmed busmap labels."""
 
-    times = pd.date_range("2000-01-01", periods=2, freq="H")
+    times = pd.date_range("2000-01-01", periods=2, freq="h")
     buses_raw = ["bus1", "bus2"]
 
     data = xr.DataArray(

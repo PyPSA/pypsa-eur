@@ -26,9 +26,10 @@ if config["foresight"] != "perfect":
     rule plot_clustered_network:
         params:
             plotting=config_provider("plotting"),
+            transmission_limit=config_provider("electricity", "transmission_limit"),
         input:
             network=resources("networks/clustered.nc"),
-            regions_onshore=resources("regions_onshore.geojson"),
+            regions=resources("regions_onshore.geojson"),
         output:
             map=resources("maps/clustered_network.pdf"),
         threads: 1
@@ -186,77 +187,76 @@ rule make_summary:
 
 rule make_global_summary:
     params:
-        scenario=config_provider("scenario"),
         RDIR=RDIR,
     input:
         nodal_costs=expand(
             RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         nodal_capacities=expand(
             RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         nodal_capacity_factors=expand(
             RESULTS + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         capacity_factors=expand(
             RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         costs=expand(
             RESULTS + "csvs/individual/costs_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         capacities=expand(
             RESULTS + "csvs/individual/capacities_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         curtailment=expand(
             RESULTS + "csvs/individual/curtailment_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         energy=expand(
             RESULTS + "csvs/individual/energy_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         energy_balance=expand(
             RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         nodal_energy_balance=expand(
             RESULTS + "csvs/individual/nodal_energy_balance_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         prices=expand(
             RESULTS + "csvs/individual/prices_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         weighted_prices=expand(
             RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         market_values=expand(
             RESULTS + "csvs/individual/market_values_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
         metrics=expand(
             RESULTS + "csvs/individual/metrics_{horizon}.csv",
-            **config["scenario"],
+            horizon=config["planning_horizons"],
             allow_missing=True,
         ),
     output:
