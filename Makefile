@@ -78,7 +78,7 @@ install-pinned-macos: _conda_check
 # Run default tests
 test:
 	set -e
-	snakemake -call solve_networks --configfile config/test/config.electricity.yaml
+	snakemake -call --configfile config/test/config.electricity.yaml
 	snakemake -call --configfile config/test/config.overnight.yaml
 	snakemake -call --configfile config/test/config.myopic.yaml
 	snakemake -call resources/test-elec-clusters/networks/clustered.nc --configfile config/test/config.clusters.yaml

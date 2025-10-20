@@ -14,7 +14,12 @@ import pandas as pd
 import pypsa
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
 
-from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    retry,
+    set_scenario_config,
+)
 from scripts.make_summary import assign_locations
 from scripts.plot_power_network import load_projection
 
@@ -46,8 +51,15 @@ def group_pipes(df, drop_direction=False):
 
 @retry
 def plot_h2_map(n, regions):
-    # if "H2 pipeline" not in n.links.carrier.unique():
-    #     return
+    # Check if H2 infrastructure exists in the network
+    if "H2 pipeline" not in n.links.carrier.unique():
+        logger.warning(
+            "No H2 pipeline carriers in network. Skipping hydrogen network plot."
+        )
+        create_placeholder_plot(
+            snakemake.output[0], "No H2 network\nin model", figsize=(1, 1)
+        )
+        return
 
     assign_locations(n)
 

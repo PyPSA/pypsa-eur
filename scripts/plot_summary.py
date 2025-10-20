@@ -11,7 +11,12 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from scripts._helpers import configure_logging, rename_techs, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    rename_techs,
+    set_scenario_config,
+)
 from scripts.prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
@@ -84,6 +89,18 @@ def plot_costs():
 
     logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
 
+    # Check if there's any data left to plot
+    if df.empty:
+        logger.warning(
+            "No cost data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.costs,
+            "No cost data available\n(all costs below threshold)",
+            ylabel="System Cost [EUR billion per year]",
+        )
+        return  # Early return is OK here since other functions will still be called
+
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
     )
@@ -146,9 +163,14 @@ def plot_energy():
     logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
 
     if df.empty:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        fig.savefig(snakemake.output.energy, bbox_inches="tight")
-        plt.close(fig)
+        logger.warning(
+            "No energy data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.energy,
+            "No energy data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
         return
 
     new_index = preferred_order.intersection(df.index).append(
@@ -273,6 +295,17 @@ def plot_balances():
             snakemake.output.balances[:-10] + bus_carrier + ".svg", bbox_inches="tight"
         )
         plt.close(fig)
+
+    # Ensure the main output file exists even if all balances were empty
+    import os
+
+    if not os.path.exists(snakemake.output.balances):
+        logger.warning("No balance data was plotted. Creating placeholder file.")
+        create_placeholder_plot(
+            snakemake.output.balances,
+            "No balance data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
 
 
 def historical_emissions(countries):

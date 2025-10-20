@@ -1197,3 +1197,57 @@ def load_cutout(
         cutout.data = cutout.data.sel(time=time)
 
     return cutout
+
+
+def create_placeholder_plot(
+    output_path: str, message: str, ylabel: str = "", figsize: tuple = (12, 8)
+) -> None:
+    """
+    Create a placeholder plot when data is missing or empty.
+
+    This is useful for plotting scripts that need to create output files
+    even when the underlying data is not available (e.g., carriers missing
+    in electricity-only models).
+
+    Parameters
+    ----------
+    output_path : str
+        Path where the placeholder plot should be saved.
+    message : str
+        Message to display in the center of the plot.
+    ylabel : str, optional
+        Y-axis label to display. Default is empty string.
+    figsize : tuple, optional
+        Figure size as (width, height). Default is (12, 8).
+
+    Returns
+    -------
+    None
+        Saves the plot to output_path and closes the figure.
+
+    Examples
+    --------
+    >>> create_placeholder_plot(
+    ...     "results/plot.svg",
+    ...     "No gas network in model",
+    ...     ylabel="Energy [TWh/a]"
+    ... )
+    """
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.text(
+        0.5,
+        0.5,
+        message,
+        ha="center",
+        va="center",
+        fontsize=14 if figsize[0] >= 10 else 10,
+        transform=ax.transAxes,
+    )
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.grid(axis="x")
+    ax.axis("off") if not ylabel else None
+    fig.savefig(output_path, bbox_inches="tight")
+    plt.close(fig)
