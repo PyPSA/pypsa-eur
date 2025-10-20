@@ -7,7 +7,7 @@ plotting:
   enable_heat_source_maps: false
   map:
     boundaries: [-11, 30, 34, 71]
-    color_geomap:
+    geomap_colors:
       ocean: white
       land: white
   projection:
