@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
+  like rate limiting and server errors.
+
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
   when running with few nodes such that they are all already connected by existing gas
   lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
