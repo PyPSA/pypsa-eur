@@ -6,6 +6,13 @@ import copy
 from functools import partial, lru_cache
 
 import os, sys, glob
+import requests
+from tenacity import (
+    retry as tenacity_retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
@@ -113,6 +120,13 @@ def input_custom_extra_functionality(w):
     return []
 
 
+@tenacity_retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(
+        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
+    ),
+)
 def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
@@ -125,14 +139,14 @@ def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -
     Returns:
     - bool: True if the internet is available, otherwise False.
     """
-    try:
-        # Send a HEAD request to avoid fetching full response
-        response = requests.head(url, timeout=timeout, allow_redirects=True)
-        return response.status_code == 200
-    except requests.ConnectionError:  # (e.g., no internet, DNS issues)
-        return False
-    except requests.Timeout:  # (e.g., slow or no network)
-        return False
+    # Send a HEAD request to avoid fetching full response
+    response = requests.head(url, timeout=timeout, allow_redirects=True)
+    # Raise HTTPError for transient errors
+    # 429: Too Many Requests (rate limiting)
+    # 500, 502, 503, 504: Server errors
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
+    return response.status_code == 200
 
 
 def solved_previous_horizon(w):
