@@ -2,7 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Snakemake descriptive logger plugin."""
+"""
+Snakemake PyPSA logger plugin.
+
+Adds a logger plugin for Snakemake that provides detailed,
+human-readable output tailored for PyPSA-Eur workflows.
+
+"""
 
 import sys
 import textwrap
@@ -22,12 +28,17 @@ class LogHandlerSettings(LogHandlerSettingsBase):
     pass
 
 
-class DescriptiveFormatter(DefaultFormatter):
+class PypsaFormatter(DefaultFormatter):
     BOLD_SEQ = "\033[1m"
     NON_BOLD_SEQ = "\033[21m"
 
     def format_job_info(self, msg):
-        """Format for job_info log."""
+        """
+        Format for job_info log.
+
+        Overrides default implementation for formatting job info messages
+        to provide a more descriptive output tailored for PyPSA-Eur workflows.
+        """
         output = []
 
         output.append(timestamp())
@@ -57,7 +68,7 @@ class LogHandler(LogHandlerBase, ColorizingTextHandler):
             stream=sys.stdout if self.common_settings.stdout else sys.stderr,
         )
         self.setFormatter(
-            DescriptiveFormatter(
+            PypsaFormatter(
                 self.common_settings.quiet, self.common_settings.show_failed_logs
             )
         )

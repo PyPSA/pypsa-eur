@@ -71,4 +71,4 @@ dependencies:
   - highspy
   - tsam>=2.3.1
   - entsoe-py
-  - ../plugins/snakemake-logger-plugin-descriptive
+  - ../plugins/snakemake-logger-plugin-pypsa

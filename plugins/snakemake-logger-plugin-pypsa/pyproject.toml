@@ -7,9 +7,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "snakemake-logger-plugin-descriptive"
+name = "snakemake-logger-plugin-pypsa"
 version = "0.1.0"
-description = "A descriptive logger plugin for Snakemake"
+description = "A PyPSA-Eur logger plugin for Snakemake"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -21,4 +21,4 @@ dependencies = [
 ]
 
 [project.entry-points."snakemake.plugins.logger"]
-descriptive = "snakemake_logger_plugin_descriptive:LogHandler"
+pypsa = "snakemake_logger_plugin_pypsa:LogHandler"

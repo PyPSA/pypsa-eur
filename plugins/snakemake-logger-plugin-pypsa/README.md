@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-# snakemake-logger-descriptive
+# snakemake-logger-pypsa
 
-A descriptive logger plugin for Snakemake that provides detailed, human-readable output.
+A PyPSA logger plugin for Snakemake that provides detailed, human-readable output.
 
 ## Installation
 
@@ -25,12 +25,12 @@ uv pip install -e .
 Use this logger plugin with Snakemake by specifying it via the `--logger` option:
 
 ```bash
-snakemake --logger descriptive
+snakemake --logger pypsa
 ```
 
 ## Features
 
-- Detailed, descriptive logging output
+- Detailed, PyPSA-Eur tailored logging output
 
 ## Development
 
