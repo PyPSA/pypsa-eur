@@ -148,9 +148,8 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_cop_profiles",  # Rule name for testing
+            "build_dh_areas",  # Rule name for testing
             clusters=48,  # Number of network clusters
-            planning_horizons="2050",  # Planning year
         )
 
     # Apply scenario configuration from Snakemake workflow
