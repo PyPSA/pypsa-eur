@@ -2990,7 +2990,9 @@ def add_heat(
                 suffix=f" {heat_system} heat flexibility",
                 bus=nodes + f" {heat_system} heat",
                 carrier="residential heating flexibility",
-                standing_loss=costs.at["decentral water tank storage", "standing_losses"]
+                standing_loss=costs.at[
+                    "decentral water tank storage", "standing_losses"
+                ]
                 / 100,  # convert %/hour into unit/hour
                 e_cyclic=True,
                 e_nom=e_nom,
