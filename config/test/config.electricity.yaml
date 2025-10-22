@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# snakemake -call results/test/networks/base_s__elec_lv1.25_Co2L-1h.nc --configfile config/test/config.electricity.yaml
+# snakemake -call results/test/networks/base_s_38_elec_lv1.25_Co2L-24h.nc --configfile config/test/config.electricity.yaml
 
 tutorial: false
 
@@ -18,15 +18,15 @@ scenario:
   ll:
   - lv1.25
   clusters:
-  - 130
+  - 38
   opts: 
-  - Co2L-1h
+  - Co2L-24h
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 snapshots:
   start: "2020-01-01"
-  end: "2021-01-01"
+  end: "2020-01-08"
 
 enable:
   retrieve: auto
@@ -70,7 +70,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ] # [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ]
+    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow ] # [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ]
     StorageUnit: [battery, H2] # battery, H2
     Store: []
     Link: [H2 pipeline] # H2 pipeline
@@ -80,15 +80,15 @@ electricity:
   everywhere_powerplants: []
 
   conventional_carriers: []
-  renewable_carriers: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow, hydro ]  # [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ]
+  renewable_carriers: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]  # [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ]
 
   estimate_renewable_capacities:
     enable: true
     from_opsd: true
     year: 2022
     expansion_limit: false
-    # technology_mapping:
-    #   Offshore: [offsolar, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow]
+    technology_mapping:
+      Offshore: [offsolar, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]
     #   Onshore: [onwind]
     #   PV: [solar, solar-hsat]
 
