@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+
 # snakemake-logger-descriptive
 
 A descriptive logger plugin for Snakemake that provides detailed, human-readable output.
