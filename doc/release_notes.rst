@@ -50,6 +50,8 @@ Upcoming Release
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
+* Add residential heat demand-side management (DSM) feature that allows electric heating systems to provide flexibility by shifting demand within daily time windows. The implementation models building thermal mass as energy stores with time-varying availability constraints based on SmartEn research. Configuration options include ``residential_heat_dsm`` (default: false), ``residential_heat_restriction_value`` (default: 0.27), and ``residential_heat_restriction_time`` (default: [10, 22] for 9am and 9pm checkpoint hours). Thermal losses in buildings are modeled using the same time constant as decentralized water tanks. (https://github.com/PyPSA/pypsa-eur/pull/1371)
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

@@ -43,9 +43,6 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     sanitize_carriers(n, snakemake.config)
-    pypsa.options.params.statistics.round = 3
-    pypsa.options.params.statistics.drop_zero = True
-    pypsa.options.params.statistics.nice_names = False
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     config = snakemake.params.plotting
@@ -103,6 +100,7 @@ if __name__ == "__main__":
         .unique()
         .to_series()
         .map(carrier_colors)
+        .fillna("lightgrey")  # Fill NaN colors with lightgrey as fallback
     )
 
     # line and links widths according to optimal capacity
@@ -158,27 +156,25 @@ if __name__ == "__main__":
         layout="constrained",
     )
 
-    line_flow = flow.get("Line")
-    link_flow = flow.get("Link")
-    transformer_flow = flow.get("Transformer")
+    # Prepare plot arguments
+    plot_kwargs = {
+        "bus_sizes": bus_sizes * bus_size_factor,
+        "bus_colors": colors,
+        "bus_split_circles": True,
+        "line_widths": line_widths * branch_width_factor,
+        "link_widths": link_widths * branch_width_factor,
+        "ax": ax,
+        "margin": 0.2,
+        "color_geomap": {"border": "darkgrey", "coastline": "darkgrey"},
+        "geomap": True,
+        "boundaries": boundaries,
+    }
 
-    n.plot(
-        bus_sizes=bus_sizes * bus_size_factor,
-        bus_colors=colors,
-        bus_split_circles=True,
-        line_widths=line_widths * branch_width_factor,
-        link_widths=link_widths * branch_width_factor,
-        line_flow=line_flow * flow_size_factor if line_flow is not None else None,
-        link_flow=link_flow * flow_size_factor if link_flow is not None else None,
-        transformer_flow=transformer_flow * flow_size_factor
-        if transformer_flow is not None
-        else None,
-        ax=ax,
-        margin=0.2,
-        geomap_colors={"border": "darkgrey", "coastline": "darkgrey"},
-        geomap=True,
-        boundaries=boundaries,
-    )
+    # Add flow data - PyPSA >= 0.29 uses 'flow' parameter with MultiIndex Series
+    if not flow.empty:
+        plot_kwargs["flow"] = flow * flow_size_factor
+
+    n.plot(**plot_kwargs)
 
     regions.to_crs(crs.proj4_init).plot(
         ax=ax,
@@ -239,9 +235,11 @@ if __name__ == "__main__":
     )
 
     # Add supply carriers
+    # Use carrier_colors mapping to handle both actual and renamed carriers
+    supp_colors = pd.Series(supp_carriers).map(carrier_colors).fillna("lightgrey")
     add_legend_patches(
         ax,
-        n.carriers.color[supp_carriers],
+        supp_colors,
         supp_carriers,
         legend_kw={
             "bbox_to_anchor": (0, -pad),
@@ -252,9 +250,10 @@ if __name__ == "__main__":
     )
 
     # Add consumption carriers
+    cons_colors = pd.Series(cons_carriers).map(carrier_colors).fillna("lightgrey")
     add_legend_patches(
         ax,
-        n.carriers.color[cons_carriers],
+        cons_colors,
         cons_carriers,
         legend_kw={
             "bbox_to_anchor": (0.5, -pad),

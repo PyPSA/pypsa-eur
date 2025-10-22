@@ -4,6 +4,9 @@
 
 tutorial: true
 
+enable:
+  retrieve: true
+
 run:
   name: "test-sector-overnight"
   disable_progressbar: true
@@ -61,6 +64,7 @@ clustering:
 sector:
   gas_network: true
   H2_retrofit: true
+  residential_heat_dsm: true
   district_heating:
     ptes:
       supplemental_heating:

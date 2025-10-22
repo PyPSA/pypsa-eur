@@ -43,8 +43,8 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
 
     def __init__(
         self,
-        sink_outlet_temperature_celsius: xr.DataArray | np.array,
-        source_inlet_temperature_celsius: xr.DataArray | np.array,
+        sink_outlet_temperature_celsius: xr.DataArray | np.ndarray,
+        source_inlet_temperature_celsius: xr.DataArray | np.ndarray,
         source_type: str,
     ):
         """
@@ -68,7 +68,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         else:
             self.source_type = source_type
 
-    def approximate_cop(self) -> xr.DataArray | np.array:
+    def approximate_cop(self) -> xr.DataArray | np.ndarray:
         """
         Compute the COP values using quadratic regression for air-/ground-
         source heat pumps.
@@ -83,7 +83,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         elif self.source_type == "ground":
             return self._approximate_cop_ground_source()
 
-    def _approximate_cop_air_source(self) -> xr.DataArray | np.array:
+    def _approximate_cop_air_source(self) -> xr.DataArray | np.ndarray:
         """
         Evaluate quadratic regression for an air-sourced heat pump.
 
@@ -96,7 +96,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         """
         return 6.81 - 0.121 * self.delta_t + 0.000630 * self.delta_t**2
 
-    def _approximate_cop_ground_source(self) -> xr.DataArray | np.array:
+    def _approximate_cop_ground_source(self) -> xr.DataArray | np.ndarray:
         """
         Evaluate quadratic regression for a ground-sourced heat pump.
 

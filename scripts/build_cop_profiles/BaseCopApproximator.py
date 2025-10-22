@@ -34,8 +34,8 @@ class BaseCopApproximator(ABC):
 
     def __init__(
         self,
-        sink_outlet_temperature_celsius: xr.DataArray | np.array,
-        source_inlet_temperature_celsius: xr.DataArray | np.array,
+        sink_outlet_temperature_celsius: xr.DataArray | np.ndarray,
+        source_inlet_temperature_celsius: xr.DataArray | np.ndarray,
     ):
         """
         Initialize CopApproximator.
@@ -50,7 +50,7 @@ class BaseCopApproximator(ABC):
         pass
 
     @abstractmethod
-    def approximate_cop(self) -> xr.DataArray | np.array:
+    def approximate_cop(self) -> xr.DataArray | np.ndarray:
         """
         Approximate heat pump coefficient of performance (COP).
 
@@ -63,8 +63,8 @@ class BaseCopApproximator(ABC):
 
     @staticmethod
     def celsius_to_kelvin(
-        t_celsius: float | xr.DataArray | np.array,
-    ) -> float | xr.DataArray | np.array:
+        t_celsius: float | xr.DataArray | np.ndarray,
+    ) -> float | xr.DataArray | np.ndarray:
         """
         Convert temperature from Celsius to Kelvin.
 

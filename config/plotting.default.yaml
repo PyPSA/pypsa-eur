@@ -262,28 +262,36 @@ plotting:
   tech_colors:
     # wind
     onwind: "#235ebc"
+    Onshore Wind: "#235ebc"
     onshore wind: "#235ebc"
     offwind: "#6895dd"
     offshore wind: "#6895dd"
     offwind-ac: "#6895dd"
+    Offshore Wind (AC): "#6895dd"
     offshore wind (AC): "#6895dd"
     offshore wind ac: "#6895dd"
     offwind-dc: "#74c6f2"
+    Offshore Wind (DC): "#74c6f2"
     offshore wind (DC): "#74c6f2"
     offshore wind dc: "#74c6f2"
     offwind-float: "#b5e2fa"
+    Offshore Wind (Floating): "#b5e2fa"
     offshore wind (Float): "#b5e2fa"
     offshore wind float: "#b5e2fa"
     # water
     hydro: '#298c81'
+    Reservoir & Dam: '#298c81'
     hydro reservoir: '#298c81'
     ror: '#3dbfb0'
+    Run of River: '#3dbfb0'
     run of river: '#3dbfb0'
     hydroelectricity: '#298c81'
     PHS: '#51dbcc'
+    Pumped Hydro Storage: '#51dbcc'
     hydro+PHS: "#08ad97"
     # solar
     solar: "#f9d002"
+    Solar: "#f9d002"
     solar PV: "#f9d002"
     solar-hsat: "#fdb915"
     solar thermal: '#ffbf2b'
@@ -295,6 +303,7 @@ plotting:
     solar rooftop: '#ffea80'
     # gas
     OCGT: '#e0986c'
+    Open-Cycle Gas: '#e0986c'
     OCGT marginal: '#e0986c'
     OCGT-heat: '#e0986c'
     gas boiler: '#db6a25'
@@ -312,6 +321,7 @@ plotting:
     biogas to gas CC: '#e51245'
     CCGT: '#a85522'
     CCGT marginal: '#a85522'
+    Combined-Cycle Gas: '#a85522'
     allam: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
@@ -375,6 +385,7 @@ plotting:
     solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
+    Transmission Lines: '#6c9459'
     transmission lines: '#6c9459'
     electricity distribution grid: '#97ad8c'
     low voltage: '#97ad8c'
@@ -388,6 +399,7 @@ plotting:
     # battery + EVs
     battery: '#ace37f'
     battery storage: '#ace37f'
+    Battery Storage: '#ace37f'
     battery charger: '#88a75b'
     battery discharger: '#5d4e29'
     home battery: '#80c944'
@@ -488,6 +500,7 @@ plotting:
     SMR CC: '#4f1745'
     H2 liquefaction: '#d647bd'
     hydrogen storage: '#bf13a0'
+    Hydrogen Storage: '#bf13a0'
     H2 Store: '#bf13a0'
     H2 storage: '#bf13a0'
     land transport fuel cell: '#6b3161'
@@ -570,6 +583,7 @@ plotting:
     DC-DC: "#8a1caf"
     DC link: "#8a1caf"
     load: "#dd2e23"
+    Load Shedding: "#dd2e23"
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     non-sequestered HVC: '#8f79b5'

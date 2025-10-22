@@ -2984,15 +2984,14 @@ def add_heat(
             e_nom = e_nom.max()
 
             # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
-            tes_time_constant_days = options["tes_tau"]["decentral"]
-
             n.madd(
                 "Store",
                 nodes,
                 suffix=f" {heat_system} heat flexibility",
                 bus=nodes + f" {heat_system} heat",
                 carrier="residential heating flexibility",
-                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                standing_loss=costs.at["decentral water tank storage", "standing_losses"]
+                / 100,  # convert %/hour into unit/hour
                 e_cyclic=True,
                 e_nom=e_nom,
                 e_max_pu=heat_dsm_profile,
