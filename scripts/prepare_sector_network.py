@@ -3183,18 +3183,13 @@ def add_heat(
             costs_name_heat_pump = heat_system.heat_pump_costs_name(heat_source)
 
             cop_heat_pump = (
-                pd.DataFrame(
-                    {
-                        region: cop.sel(
-                            heat_system=heat_system.system_type.value,
-                            heat_source=heat_source,
-                            name=region,
-                        )
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                        for region in nodes
-                    }
+                cop.sel(
+                    heat_system=heat_system.system_type.value,
+                    heat_source=heat_source,
+                    name=nodes,
                 )
+                .to_pandas()
+                .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )

@@ -394,8 +394,8 @@ rule build_ates_potentials:
         dh_area_buffer=config_provider(
             "sector",
             "district_heating",
-            "ates",
-            "dh_area_buffer",
+            "dh_areas",
+            "buffer",
         ),
         ignore_missing_regions=config_provider(
             "sector",
@@ -483,7 +483,9 @@ rule build_river_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
-        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+        dh_area_buffer=config_provider(
+            "sector", "district_heating", "dh_areas", "buffer"
+        ),
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     input:
         unpack(input_hera_data),
@@ -616,7 +618,9 @@ rule build_sea_heat_potential:
     params:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         snapshots=config_provider("snapshots"),
-        dh_area_buffer=config_provider("sector", "district_heating", "dh_area_buffer"),
+        dh_area_buffer=config_provider(
+            "sector", "district_heating", "dh_areas", "buffer"
+        ),
     input:
         # seawater_temperature=lambda w: input_seawater_temperature(w),
         unpack(input_seawater_temperature),
