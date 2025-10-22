@@ -39,14 +39,14 @@ Outputs
 
 import pandas as pd
 import xarray as xr
-
-from scripts._helpers import set_scenario_config
 from scripts.build_cop_profiles.CentralHeatingCopApproximator import (
     CentralHeatingCopApproximator,
 )
 from scripts.build_cop_profiles.DecentralHeatingCopApproximator import (
     DecentralHeatingCopApproximator,
 )
+
+from scripts._helpers import set_scenario_config
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
