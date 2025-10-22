@@ -6,7 +6,7 @@
 plotting:
   map:
     boundaries: [-11, 30, 34, 71]
-    geomap_colors:
+    color_geomap:
       ocean: white
       land: white
   projection:
