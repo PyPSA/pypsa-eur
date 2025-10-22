@@ -1,7 +1,7 @@
 ,Unit,Values,Description
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
--- color_geomap,,,
+-- geomap_colors,,,
 -- -- ocean,--,str,Color of the ocean in the geomap.
 -- -- land,--,str,Color of the land in the geomap.
 projection,,,

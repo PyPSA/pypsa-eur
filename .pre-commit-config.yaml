@@ -8,7 +8,7 @@ ci:
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-merge-conflict
   - id: check-added-large-files
@@ -17,7 +17,7 @@ repos:
 # Run ruff to lint and format
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
-  rev: v0.12.2
+  rev: v0.13.3
   hooks:
     # Run the linter.
   - id: ruff
@@ -52,15 +52,15 @@ repos:
 
   # Format Snakemake rule / workflow files
 - repo: https://github.com/snakemake/snakefmt
-  rev: v0.11.0
+  rev: v0.11.2
   hooks:
   - id: snakefmt
 
   # Check for FSFE REUSE compliance (licensing)
 - repo: https://github.com/fsfe/reuse-tool
-  rev: v5.0.2
+  rev: v6.0.0
   hooks:
-  - id: reuse
+  - id: reuse-lint-file
 
 # Use gitleaks to prevent committing secrets
 - repo: https://github.com/gitleaks/gitleaks
