@@ -4916,12 +4916,12 @@ def add_industry(
         "temporal_electricity_industry_load", False
     )
 
-    if use_temporal and snakemake.input.industrial_electricity_profiles:
+    if use_temporal and snakemake.input.industrial_electricity_demand_temporal:
         logger.info("Using temporal industrial electricity demand profiles")
 
         # Load hourly profiles (MW)
         industrial_elec_profiles = pd.read_csv(
-            snakemake.input.industrial_electricity_profiles,
+            snakemake.input.industrial_electricity_demand_temporal,
             index_col=0,
             parse_dates=True,
         )

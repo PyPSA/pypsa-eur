@@ -1363,13 +1363,13 @@ rule prepare_sector_network:
         industrial_demand=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
         ),
-        # industrial_electricity_demand_temporal=lambda w: (
-        #     resources(
-        #         "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
-        #     )
-        #     if config_provider("industry", "temporal_electricity_industry_load")(w)
-        #     else []
-        # ),
+        industrial_electricity_demand_temporal=lambda w: (
+            resources(
+                "industrial_electricity_demand_temporal_base_s_{clusters}_{planning_horizons}.csv"
+            )
+            if config_provider("industry", "temporal_electricity_industry_load")(w)
+            else []
+        ),
         hourly_heat_demand_total=resources(
             "hourly_heat_demand_total_base_s_{clusters}.nc"
         ),
