@@ -1221,7 +1221,9 @@ def attach_stores(
     buses_i = n.buses.index
 
     if "H2" in carriers:
-        h2_buses_i = n.add("Bus", buses_i + " H2", carrier="H2", location=buses_i)
+        h2_buses_i = n.add(
+            "Bus", buses_i + " H2", carrier="H2", location=buses_i, return_names=True
+        )
 
         n.add(
             "Store",
@@ -1261,7 +1263,11 @@ def attach_stores(
 
     if "battery" in carriers:
         b_buses_i = n.add(
-            "Bus", buses_i + " battery", carrier="battery", location=buses_i
+            "Bus",
+            buses_i + " battery",
+            carrier="battery",
+            location=buses_i,
+            return_names=True,
         )
 
         n.add(

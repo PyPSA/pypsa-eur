@@ -21,6 +21,7 @@ snapshots:
   end: "2013-03-08"
 
 sector:
+  enabled: true
   central_heat_vent: true
   solid_biomass_import:
     enable: true

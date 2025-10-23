@@ -88,11 +88,6 @@ rule all:
             run=config["run"]["name"],
             horizon=config["planning_horizons"],
         ),
-        # expand(
-        #     RESULTS + "maps/costs-all_{horizon}.pdf",
-        #     run=config["run"]["name"],
-        #     horizon=config["planning_horizons"],
-        # ),
         lambda w: expand(
             (
                 RESULTS + "maps/h2_network_{horizon}.pdf"

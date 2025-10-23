@@ -55,6 +55,7 @@ clustering:
     n_clusters: 5
 
 sector:
+  enabled: true
   gas_network: true
   H2_retrofit: true
   district_heating:

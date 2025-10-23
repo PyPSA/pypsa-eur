@@ -87,7 +87,6 @@ enable:
   build_cutout: false
   retrieve_cutout: true
   drop_leap_day: true
-  streamlined_workflow: false  # Enable new streamlined 4-step workflow
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:

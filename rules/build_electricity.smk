@@ -771,43 +771,6 @@ rule add_electricity:
         "../scripts/add_electricity.py"
 
 
-rule prepare_network:
-    params:
-        time_resolution=config_provider("clustering", "temporal", "resolution_elec"),
-        links=config_provider("links"),
-        lines=config_provider("lines"),
-        co2base=config_provider("electricity", "co2base"),
-        co2limit_enable=config_provider("electricity", "co2limit_enable", default=False),
-        co2limit=config_provider("electricity", "co2limit"),
-        gaslimit_enable=config_provider("electricity", "gaslimit_enable", default=False),
-        gaslimit=config_provider("electricity", "gaslimit"),
-        max_hours=config_provider("electricity", "max_hours"),
-        costs=config_provider("costs"),
-        adjustments=config_provider("adjustments", "electricity"),
-        autarky=config_provider("electricity", "autarky", default={}),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        transmission_limit=config_provider("electricity", "transmission_limit"),
-    input:
-        resources("networks/simplified_elec.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
-        ),
-        # co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [], #TODO: move Ept to config
-    output:
-        resources("networks/simplified_elec_{opts}.nc"),
-    log:
-        logs("prepare_network_elec_{opts}.log"),
-    benchmark:
-        benchmarks("prepare_network_elec_{opts}")
-    threads: 1
-    resources:
-        mem_mb=4000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/prepare_network.py"
-
-
 if config["electricity"]["base_network"] == "osm-raw":
 
     rule clean_osm_data:
