@@ -20,6 +20,8 @@ scenario:
   opts:
   - ''
 
+planning_horizons: [2030]
+
 countries: ['BE']
 
 snapshots:

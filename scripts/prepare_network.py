@@ -273,24 +273,79 @@ def enforce_autarky(n, only_crossborder=False):
     n.remove("Link", links_rm)
 
 
-def set_line_nom_max(
+def cap_transmission_capacity(
     n,
-    s_nom_max_set=np.inf,
-    p_nom_max_set=np.inf,
-    s_nom_max_ext=np.inf,
-    p_nom_max_ext=np.inf,
+    line_max=None,
+    link_max=None,
+    line_max_extension=None,
+    link_max_extension=None,
+    line_max_pu=None,
+    link_max_pu=None,
 ):
-    if np.isfinite(s_nom_max_ext) and s_nom_max_ext > 0:
-        logger.info(f"Limiting line extensions to {s_nom_max_ext} MW")
-        n.lines["s_nom_max"] = n.lines["s_nom"] + s_nom_max_ext
+    """
+    Cap transmission capacity for AC lines and DC links.
 
-    if np.isfinite(p_nom_max_ext) and p_nom_max_ext > 0:
-        logger.info(f"Limiting link extensions to {p_nom_max_ext} MW")
+    Parameters
+    ----------
+    n : pypsa.Network
+        The PyPSA network instance
+    line_max : float, optional
+        Absolute upper limit for AC line capacity [MW]. If None, no limit is applied.
+    link_max : float, optional
+        Absolute upper limit for DC link capacity [MW]. If None, no limit is applied.
+    line_max_extension : float, optional
+        Maximum extension per AC line [MW]. If None, no limit is applied.
+    link_max_extension : float, optional
+        Maximum extension per DC link [MW]. If None, no limit is applied.
+    line_max_pu : float, optional
+        Set N-1 security margin for AC lines (e.g., 0.7 for 70% utilization).
+        If None, s_max_pu is not modified.
+    link_max_pu : float, optional
+        Set maximum utilization for DC links (e.g., 0.7 for 70% utilization).
+        If None, p_max_pu is not modified.
+
+    Notes
+    -----
+    All parameters accept None to skip that particular constraint. This allows
+    selective application of limits without needing to specify all parameters.
+    """
+    # Set N-1 security margin (s_max_pu) for AC lines if specified
+    if line_max_pu is not None:
+        n.lines["s_max_pu"] = line_max_pu
+        logger.info(f"N-1 security margin of lines set to {line_max_pu}")
+
+    # Set maximum utilization (p_max_pu) for DC links if specified
+    if link_max_pu is not None:
         hvdc = n.links.index[n.links.carrier == "DC"]
-        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + p_nom_max_ext
+        n.links.loc[hvdc, "p_max_pu"] = link_max_pu
+        logger.info(f"Maximum utilization of DC links set to {link_max_pu}")
 
-    n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=s_nom_max_set)
-    n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=p_nom_max_set)
+    # Apply line capacity extension limit if specified
+    if (
+        line_max_extension is not None
+        and np.isfinite(line_max_extension)
+        and line_max_extension > 0
+    ):
+        logger.info(f"Limiting AC line extensions to {line_max_extension} MW")
+        n.lines["s_nom_max"] = n.lines["s_nom"] + line_max_extension
+
+    # Apply link capacity extension limit if specified
+    if (
+        link_max_extension is not None
+        and np.isfinite(link_max_extension)
+        and link_max_extension > 0
+    ):
+        logger.info(f"Limiting DC link extensions to {link_max_extension} MW")
+        hvdc = n.links.index[n.links.carrier == "DC"]
+        n.links.loc[hvdc, "p_nom_max"] = n.links.loc[hvdc, "p_nom"] + link_max_extension
+
+    # Apply absolute line capacity limit if specified
+    if line_max is not None and np.isfinite(line_max):
+        n.lines["s_nom_max"] = n.lines.s_nom_max.clip(upper=line_max)
+
+    # Apply absolute link capacity limit if specified
+    if link_max is not None and np.isfinite(link_max):
+        n.links["p_nom_max"] = n.links.p_nom_max.clip(upper=link_max)
 
 
 if __name__ == "__main__":
@@ -352,12 +407,12 @@ if __name__ == "__main__":
     factor = snakemake.params.transmission_limit[1:]
     set_transmission_limit(n, kind, factor, costs, Nyears)
 
-    set_line_nom_max(
+    cap_transmission_capacity(
         n,
-        s_nom_max_set=snakemake.params.lines.get("s_nom_max", np.inf),
-        p_nom_max_set=snakemake.params.links.get("p_nom_max", np.inf),
-        s_nom_max_ext=snakemake.params.lines.get("max_extension", np.inf),
-        p_nom_max_ext=snakemake.params.links.get("max_extension", np.inf),
+        line_max=snakemake.params.lines.get("s_nom_max", np.inf),
+        link_max=snakemake.params.links.get("p_nom_max", np.inf),
+        line_max_extension=snakemake.params.lines.get("max_extension", np.inf),
+        link_max_extension=snakemake.params.links.get("max_extension", np.inf),
     )
 
     if snakemake.params.autarky["enable"]:

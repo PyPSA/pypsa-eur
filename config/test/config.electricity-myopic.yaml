@@ -5,11 +5,14 @@
 tutorial: true
 
 run:
-  name: test-elec
+  name: test-elec-myopic
   disable_progressbar: true
   shared_resources:
     policy: false
   shared_cutouts: true
+
+foresight: myopic
+planning_horizons: [2030, 2040]
 
 countries:
 - BE
@@ -160,7 +163,6 @@ solving:
     options: highs-simplex
   check_objective:
     enable: false
-    expected_value: 38120188.094
   options:
     transmission_losses: 0
 

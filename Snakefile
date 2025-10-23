@@ -35,8 +35,23 @@ shadow_config = get_shadow(run)
 shared_resources = run["shared_resources"]["policy"]
 exclude_from_shared = run["shared_resources"]["exclude"]
 logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
-benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+_benchmark_provider = path_provider(
+    "benchmarks/", RDIR, shared_resources, exclude_from_shared
+)
 resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
+
+
+def benchmarks(fn):
+    """Return a benchmark file path, even if legacy directories already exist."""
+
+    path = Path(_benchmark_provider(fn))
+    if path.is_dir():
+        # Preserve existing benchmark directories by placing the file inside.
+        path = path / "benchmark.tsv"
+    elif not path.suffix:
+        path = path.with_suffix(".tsv")
+    return str(path)
+
 
 cutout_dir = config["atlite"]["cutout_directory"]
 CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
@@ -49,9 +64,7 @@ localrules:
 
 wildcard_constraints:
     clusters="[0-9]+(m|c)?|all|adm",
-    opts=r"[-+a-zA-Z0-9\.]*",
-    sector_opts=r"[-+a-zA-Z0-9\.\s]*",
-    planning_horizons=r"[0-9]{4}",
+    horizon=r"[0-9]{4}",
 
 
 include: "rules/common.smk"
@@ -59,60 +72,44 @@ include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"
 include: "rules/build_sector.smk"
-include: "rules/solve_electricity.smk"
+include: "rules/compose.smk"
+include: "rules/solve.smk"
 include: "rules/postprocess.smk"
 include: "rules/development.smk"
-
-
-if config["foresight"] == "overnight":
-
-    include: "rules/solve_overnight.smk"
-
-
-if config["foresight"] == "myopic":
-
-    include: "rules/solve_myopic.smk"
-
-
-if config["foresight"] == "perfect":
-
-    include: "rules/solve_perfect.smk"
 
 
 rule all:
     input:
         expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
-        expand(resources("maps/power-network.pdf"), run=config["run"]["name"]),
+        expand(resources("maps/base_network.pdf"), run=config["run"]["name"]),
+        expand(resources("maps/clustered_network.pdf"), run=config["run"]["name"]),
         expand(
-            resources("maps/power-network-s-{clusters}.pdf"),
+            RESULTS + "maps/power_network_{horizon}.pdf",
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["planning_horizons"],
         ),
-        expand(
-            RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
-            run=config["run"]["name"],
-            **config["scenario"],
-        ),
+        # expand(
+        #     RESULTS + "maps/costs-all_{horizon}.pdf",
+        #     run=config["run"]["name"],
+        #     horizon=config["planning_horizons"],
+        # ),
         lambda w: expand(
             (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf"
+                RESULTS + "maps/h2_network_{horizon}.pdf"
                 if config_provider("sector", "H2_network")(w)
                 else []
             ),
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["planning_horizons"],
         ),
         lambda w: expand(
             (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf"
+                RESULTS + "maps/ch4_network_{horizon}.pdf"
                 if config_provider("sector", "gas_network")(w)
                 else []
             ),
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["planning_horizons"],
         ),
         lambda w: expand(
             (
@@ -123,25 +120,20 @@ rule all:
             run=config["run"]["name"],
         ),
         lambda w: expand(
-            (
-                RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
-            **config["scenario"],
+            (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
+            horizon=config["planning_horizons"],
             run=config["run"]["name"],
             carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
         ),
         expand(
-            RESULTS
-            + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+            RESULTS + "graphics/balance_timeseries_{horizon}",
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["planning_horizons"],
         ),
         expand(
-            RESULTS
-            + "graphics/heatmap_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
+            RESULTS + "graphics/heatmap_timeseries_{horizon}",
             run=config["run"]["name"],
-            **config["scenario"],
+            horizon=config["planning_horizons"],
         ),
     default_target: True
 
@@ -205,13 +197,13 @@ rule rulegraph:
         if [ -s {output.dot} ]; then
             echo "[Rule rulegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Successfully generated all formats."
         else
             echo "[Rule rulegraph] Error: Failed to generate valid DOT content." >&2
@@ -243,13 +235,13 @@ rule filegraph:
         if [ -s {output.dot} ]; then
             echo "[Rule filegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Successfully generated all formats."
         else
             echo "[Rule filegraph] Error: Failed to generate valid DOT content." >&2

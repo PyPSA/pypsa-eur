@@ -12,7 +12,7 @@ import time
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 import atlite
 import fiona
@@ -38,6 +38,90 @@ logger = logging.getLogger(__name__)
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
 PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
+
+
+def strip_if_str(value: Any) -> Any:
+    """Return stripped strings while leaving other values unchanged."""
+
+    return value.strip() if isinstance(value, str) else value
+
+
+def sanitize_busmap(busmap: pd.Series) -> pd.Series:
+    """Ensure busmap labels are stripped of surrounding whitespace."""
+
+    series = busmap.map(strip_if_str)
+    if series.name is None:
+        series.name = "busmap"
+    return series
+
+
+def rename_network_component(
+    network: pypsa.Network, component: str, rename_map: pd.Series
+) -> None:
+    """
+    Rename a PyPSA component across static and dynamic tables in-place.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        Network instance whose component entries should be renamed.
+    component : str
+        Component name as used by PyPSA (e.g. ``"Generator"``, ``"Link"``).
+    rename_map : pandas.Series
+        Series mapping existing component names (index) to their new names (values).
+
+    Raises
+    ------
+    KeyError
+        If the component is not present on the network or any of the keys to
+        rename are missing from the static table.
+    ValueError
+        If duplicate source or target names are detected, or if a target name
+        collides with an unrenamed entry.
+    """
+
+    if component not in network.component_attrs:
+        raise KeyError(f"Component '{component}' not found on network")
+
+    if rename_map.empty:
+        return
+
+    rename_map = rename_map.dropna()
+    if rename_map.empty:
+        return
+
+    if pd.Index(rename_map.index).has_duplicates:
+        raise ValueError("Duplicate component names in rename_map index")
+
+    if pd.Index(rename_map.values).has_duplicates:
+        raise ValueError("Duplicate target names in rename_map values")
+
+    static_table = network.static(component)
+
+    missing = pd.Index(rename_map.index).difference(static_table.index)
+    if not missing.empty:
+        missing_text = ", ".join(str(name) for name in missing)
+        raise KeyError(
+            f"Cannot rename {component} entries; missing keys: {missing_text}"
+        )
+
+    existing = static_table.index.difference(rename_map.index)
+    conflicts = existing.intersection(pd.Index(rename_map.values))
+    if not conflicts.empty:
+        conflict_text = ", ".join(str(name) for name in conflicts)
+        raise ValueError(
+            f"Renaming {component} entries would collide with existing names: {conflict_text}"
+        )
+
+    mapping = rename_map.to_dict()
+
+    static_table.rename(index=mapping, inplace=True)
+
+    for dynamic_table in network.dynamic(component).values():
+        if isinstance(dynamic_table, pd.DataFrame):
+            dynamic_table.rename(columns=mapping, inplace=True)
+        elif isinstance(dynamic_table, pd.Series):
+            dynamic_table.rename(index=mapping, inplace=True)
 
 
 def get_scenarios(run):
@@ -114,7 +198,7 @@ def get_run_path(fn, dir, rdir, shared_resources, exclude_from_shared):
         )
         is_shared = no_relevant_wildcards and not_shared_rule
         shared_files = (
-            "networks/base_s_{clusters}.nc",
+            "networks/clustered.nc",
             "regions_onshore_base_s_{clusters}.geojson",
             "regions_offshore_base_s_{clusters}.geojson",
             "busmap_base_s_{clusters}.csv",
@@ -1113,3 +1197,57 @@ def load_cutout(
         cutout.data = cutout.data.sel(time=time)
 
     return cutout
+
+
+def create_placeholder_plot(
+    output_path: str, message: str, ylabel: str = "", figsize: tuple = (12, 8)
+) -> None:
+    """
+    Create a placeholder plot when data is missing or empty.
+
+    This is useful for plotting scripts that need to create output files
+    even when the underlying data is not available (e.g., carriers missing
+    in electricity-only models).
+
+    Parameters
+    ----------
+    output_path : str
+        Path where the placeholder plot should be saved.
+    message : str
+        Message to display in the center of the plot.
+    ylabel : str, optional
+        Y-axis label to display. Default is empty string.
+    figsize : tuple, optional
+        Figure size as (width, height). Default is (12, 8).
+
+    Returns
+    -------
+    None
+        Saves the plot to output_path and closes the figure.
+
+    Examples
+    --------
+    >>> create_placeholder_plot(
+    ...     "results/plot.svg",
+    ...     "No gas network in model",
+    ...     ylabel="Energy [TWh/a]"
+    ... )
+    """
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.text(
+        0.5,
+        0.5,
+        message,
+        ha="center",
+        va="center",
+        fontsize=14 if figsize[0] >= 10 else 10,
+        transform=ax.transAxes,
+    )
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.grid(axis="x")
+    ax.axis("off") if not ylabel else None
+    fig.savefig(output_path, bbox_inches="tight")
+    plt.close(fig)
