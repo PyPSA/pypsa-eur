@@ -415,7 +415,7 @@ dependencies:
   - pyopenssl=25.3.0=pyhd8ed1ab_0
   - pyparsing=3.2.5=pyhcf101f3_0
   - pyproj=3.7.2=py312h1c88c49_1
-  - pypsa=0.35.2=pyhd8ed1ab_0
+  - pypsa=1.0.1=pyhd8ed1ab_0
   - pyscipopt=5.6.0=py312h1289d80_1
   - pyshp=3.0.2=pyhd8ed1ab_0
   - pyside6=6.9.2=py312h5654102_1

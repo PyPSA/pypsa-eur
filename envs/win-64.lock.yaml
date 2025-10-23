@@ -350,7 +350,7 @@ dependencies:
   - pyopenssl=25.3.0=pyhd8ed1ab_0
   - pyparsing=3.2.5=pyhcf101f3_0
   - pyproj=3.7.2=py312h235ce7f_1
-  - pypsa=0.35.2=pyhd8ed1ab_0
+  - pypsa=1.0.1=pyhd8ed1ab_0
   - pyreadline3=3.5.4=py312h2e8e312_2
   - pyscipopt=5.6.0=py312hbb81ca0_1
   - pyshp=3.0.2=pyhd8ed1ab_0
