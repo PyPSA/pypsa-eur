@@ -2,9 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 """
+DEPRECATED: This script is not used in the streamlined workflow.
+
 Create summary CSV files for all scenario runs with perfect foresight including
 costs, capacities, capacity factors, curtailment, energy balances, prices and
 other metrics.
+
+This script was part of the old wildcard-based workflow and expects
+config["scenario"]["opts"] and config["scenario"]["sector_opts"] which
+no longer exist. It is not called by any active Snakemake rules.
 """
 
 import numpy as np

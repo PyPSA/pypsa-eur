@@ -2,7 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 """
+DEPRECATED: This script is not used in the streamlined workflow.
+
 Concats pypsa networks of single investment periods to one network.
+
+This script was part of the old wildcard-based workflow and used
+wildcards.sector_opts which no longer exists. It is not called by
+any active Snakemake rules in the streamlined workflow.
 """
 
 import logging
