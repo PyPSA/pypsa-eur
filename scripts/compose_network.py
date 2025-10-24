@@ -102,6 +102,60 @@ from scripts.prepare_sector_network import (
 logger = logging.getLogger(__name__)
 
 
+def get_investment_weighting(time_weighting: pd.Series, r: float = 0.01) -> pd.Series:
+    """
+    Calculate investment period objective weightings based on social discounting.
+
+    This function computes the present value weightings for each investment period
+    using a social discount rate. The weightings ensure that costs in different
+    periods are properly compared in net present value terms.
+
+    Parameters
+    ----------
+    time_weighting : pd.Series
+        Time weightings (duration in years) for each investment period.
+        Index should match investment periods.
+    r : float, default 0.01
+        Social discount rate per unit (e.g., 0.02 for 2% discount rate)
+
+    Returns
+    -------
+    pd.Series
+        Objective weightings for each investment period that account for
+        social discounting over the planning horizon
+
+    Notes
+    -----
+    The weighting formula accounts for:
+    - The time value of money through discounting
+    - The duration of each investment period
+    - The cumulative time from present to each period
+
+    For a period starting at year `start` and ending at year `end`,
+    the weighting is the sum of discount factors for all years in that period.
+
+    Examples
+    --------
+    >>> periods = pd.Series([10, 10, 10], index=[2030, 2040, 2050])
+    >>> weights = get_investment_weighting(periods, r=0.02)
+    >>> # Earlier periods get higher weights due to discounting
+    """
+    end = time_weighting.cumsum()
+    start = time_weighting.cumsum().shift().fillna(0)
+    T = end.max()
+
+    # Calculate social discount factor for each period
+    # This sums the discount factors from start to end of each period,
+    # discounted from the final year T
+    delta = start.map(
+        lambda x: (
+            ((1 + r) ** (T - x) - (1 + r) ** (T - end[end > x].min()))
+            / ((1 + r) ** T * r)
+        )
+    )
+    return delta
+
+
 def extend_snapshot_multiindex(
     existing_snapshots: pd.MultiIndex,
     new_timesteps: pd.Index,
@@ -440,6 +494,130 @@ def adjust_renewable_capacity_limits(
         ]
 
     n.generators["p_nom_max"] = n.generators["p_nom_max"].clip(lower=0)
+
+
+def apply_investment_period_weightings(
+    n: pypsa.Network, social_discountrate: float
+) -> None:
+    """
+    Apply investment period weightings for perfect foresight optimization.
+
+    Sets both time-based weightings (years) and objective weightings (with social
+    discounting) for each investment period in a multi-period network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Multi-period network with investment periods defined
+    social_discountrate : float
+        Social discount rate per unit (e.g., 0.02 for 2%)
+
+    Notes
+    -----
+    Modifies n.investment_period_weightings in-place by setting:
+    - "years": Duration of each investment period in years
+    - "objective": Social-discounted objective weighting for optimization
+
+    The function assumes the last period has the same duration as the
+    period before it (using fillna forward fill).
+
+    Only applies to multi-invest networks with defined investment periods.
+
+    Raises
+    ------
+    ValueError
+        If network has no investment periods defined
+    """
+    if n.investment_periods.empty:
+        raise ValueError(
+            "Cannot apply investment period weightings: network has no investment periods"
+        )
+
+    # Calculate time weightings (duration of each period in years)
+    # Assumes last period has same duration as previous period
+    time_w = n.investment_periods.to_series().diff().shift(-1).fillna(method="ffill")
+    n.investment_period_weightings["years"] = time_w
+
+    # Calculate objective weightings with social discounting
+    objective_w = get_investment_weighting(time_w, social_discountrate)
+    n.investment_period_weightings["objective"] = objective_w
+
+    logger.info(
+        f"Applied investment period weightings with social discount rate {social_discountrate:.1%}"
+    )
+    logger.debug(f"Time weightings (years): {time_w.to_dict()}")
+    logger.debug(f"Objective weightings: {objective_w.to_dict()}")
+
+
+def adjust_stores_for_perfect_foresight(n: pypsa.Network) -> None:
+    """
+    Adjust store cycling behavior for perfect foresight multi-period optimization.
+
+    For perfect foresight, stores need different cycling constraints than single-period
+    optimization:
+    - Most stores should cycle per investment period (not over entire horizon)
+    - Some stores (CO2, biomass, biogas, EV) should not cycle at all
+    - Biomass stores should reset initial energy at each period
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Multi-period network to adjust
+
+    Notes
+    -----
+    Modifies n.stores attributes in-place:
+    - Sets e_cyclic_per_period=True for most cyclic stores
+    - Sets e_cyclic=False for stores that cycle per period
+    - Sets e_cyclic_per_period=False for non-cyclic stores (CO2, biomass, etc.)
+    - Sets e_initial_per_period=True for biomass stores
+
+    This ensures proper storage behavior across investment periods in
+    perfect foresight optimization.
+    """
+    if n.stores.empty:
+        logger.debug("No stores in network, skipping store adjustments")
+        return
+
+    # Stores that should cycle within each period (not over entire horizon)
+    # These are typical energy storage that should start/end each period balanced
+    cyclic_i = n.stores[n.stores.e_cyclic].index
+    if not cyclic_i.empty:
+        n.stores.loc[cyclic_i, "e_cyclic_per_period"] = True
+        n.stores.loc[cyclic_i, "e_cyclic"] = False
+        logger.info(
+            f"Set {len(cyclic_i)} stores to cycle per period instead of over entire horizon"
+        )
+
+    # Stores that should NOT cycle (accumulate over entire horizon)
+    # - CO2: accumulates or depletes over planning horizon
+    # - solid biomass/biogas: limited annual resource availability
+    # - EV battery: daily charging patterns, not cyclic over long periods
+    non_cyclic_carriers = [
+        "co2",
+        "co2 stored",
+        "solid biomass",
+        "biogas",
+        "EV battery",
+    ]
+
+    for carrier in non_cyclic_carriers:
+        store_i = n.stores[n.stores.carrier == carrier].index
+        if not store_i.empty:
+            n.stores.loc[store_i, "e_cyclic"] = False
+            n.stores.loc[store_i, "e_cyclic_per_period"] = False
+            logger.debug(f"Set {len(store_i)} '{carrier}' stores to non-cyclic")
+
+    # Biomass stores should reset to initial energy at start of each period
+    # (annual biomass availability is renewed each year)
+    biomass_i = n.stores[n.stores.carrier.str.contains("solid biomass")].index
+    if not biomass_i.empty:
+        n.stores.loc[biomass_i, "e_initial_per_period"] = True
+        logger.info(
+            f"Set {len(biomass_i)} biomass stores to reset initial energy per period"
+        )
+
+    logger.info("Completed store cycling adjustments for perfect foresight")
 
 
 def adjust_biomass_availability(n: pypsa.Network) -> None:
@@ -1101,6 +1279,111 @@ def apply_temporal_aggregation(
     logger.info("Completed temporal aggregation")
 
 
+def apply_time_segmentation_multiperiod(
+    n: pypsa.Network, segments: int, solver_name: str = "cbc"
+) -> None:
+    """
+    Apply time segmentation to multi-period networks.
+
+    This function segments time series for each investment period separately,
+    preserving the multi-period structure required for perfect foresight optimization.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Multi-period network with MultiIndex snapshots
+    segments : int
+        Number of segments for time series aggregation
+    solver_name : str, default "cbc"
+        Solver name for tsam optimization
+
+    Notes
+    -----
+    Modifies network in-place by:
+    - Segmenting time series separately for each investment period
+    - Updating snapshot_weightings to reflect segment durations
+    - Preserving MultiIndex structure (period, timestep)
+
+    Raises
+    ------
+    ModuleNotFoundError
+        If tsam package is not installed
+    ValueError
+        If network does not have MultiIndex snapshots
+    """
+    try:
+        import tsam.timeseriesaggregation as tsam
+    except ImportError:
+        raise ModuleNotFoundError(
+            "Optional dependency 'tsam' not found. Install via 'pip install tsam'"
+        )
+
+    if not isinstance(n.snapshots, pd.MultiIndex):
+        raise ValueError(
+            "apply_time_segmentation_multiperiod requires MultiIndex snapshots. "
+            "Use apply_time_segmentation for single-period networks."
+        )
+
+    logger.info(f"Segmenting time series to {segments} segments per investment period")
+
+    # Collect all time-dependent data
+    columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
+    raw = pd.DataFrame(index=n.snapshots, columns=columns)
+
+    for c in n.iterate_components():
+        for attr, pnl in c.pnl.items():
+            # Exclude e_min_pu which is used for SOC constraints (e.g., EVs)
+            if not pnl.empty and attr != "e_min_pu":
+                df = pnl.copy()
+                df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
+                raw = pd.concat([raw, df], axis=1)
+
+    raw = raw.dropna(axis=1)
+    sn_weightings = {}
+
+    # Process each investment period separately
+    for period in n.investment_periods:
+        logger.info(f"Segmenting time series for investment period {period}")
+        raw_t = raw.loc[period]
+
+        # Normalize time-dependent data
+        annual_max = raw_t.max().replace(0, 1)
+        raw_t = raw_t.div(annual_max, level=0)
+
+        # Apply tsam segmentation
+        agg = tsam.TimeSeriesAggregation(
+            raw_t,
+            hoursPerPeriod=len(raw_t),
+            noTypicalPeriods=1,
+            noSegments=int(segments),
+            segmentation=True,
+            solver=solver_name,
+        )
+
+        segmented = agg.createTypicalPeriods()
+
+        # Create segmented snapshots for this period
+        weightings = segmented.index.get_level_values("Segment Duration")
+        offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
+        timesteps = [raw_t.index[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
+        snapshots = pd.DatetimeIndex(timesteps)
+
+        # Store weightings with period index
+        sn_weightings[period] = pd.Series(
+            weightings, index=snapshots, name="weightings", dtype="float64"
+        )
+
+    # Combine weightings from all periods into MultiIndex
+    sn_weightings = pd.concat(sn_weightings)
+    n.set_snapshots(sn_weightings.index)
+    n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
+
+    logger.info(
+        f"Time segmentation complete: {len(n.snapshots)} total snapshots across "
+        f"{len(n.investment_periods)} investment periods"
+    )
+
+
 def prepare_network_for_solving(
     n: pypsa.Network,
     inputs: InputFiles,
@@ -1194,13 +1477,30 @@ def prepare_network_for_solving(
     # Apply time segmentation if specified
     time_segmentation = clustering_temporal_cfg["time_segmentation"]
     if time_segmentation["enable"] and time_segmentation["segments"]:
-        n_new = apply_time_segmentation(
-            n,
-            time_segmentation["resolution"],
-            time_segmentation["segments"],
-        )
-        # Replace network object content
-        n.__dict__.update(n_new.__dict__)
+        # Check if network has multi-period structure
+        is_multiperiod = isinstance(n.snapshots, pd.MultiIndex)
+
+        if is_multiperiod:
+            # Use multi-period aware segmentation
+            logger.info(
+                "Applying time segmentation for multi-period network (perfect foresight)"
+            )
+            solver_name = config["solving"]["solver"]["name"]
+            apply_time_segmentation_multiperiod(
+                n,
+                time_segmentation["segments"],
+                solver_name=solver_name,
+            )
+        else:
+            # Use single-period segmentation
+            logger.info("Applying time segmentation for single-period network")
+            n_new = apply_time_segmentation(
+                n,
+                time_segmentation["resolution"],
+                time_segmentation["segments"],
+            )
+            # Replace network object content
+            n.__dict__.update(n_new.__dict__)
 
     # Handle carbon budget for sector coupling
     if params.sector["enabled"]:
@@ -1518,6 +1818,19 @@ if __name__ == "__main__":
                 n_current=n,
                 current_horizon=current_horizon,
             )
+
+        # Apply investment period weightings for multi-period optimization
+        # This must be done after concatenation when all periods are present
+        if hasattr(n, "_multi_invest") and n._multi_invest:
+            social_discountrate = params.costs["social_discountrate"]
+            apply_investment_period_weightings(n, social_discountrate)
+            logger.info(
+                f"Investment period weightings applied for {len(n.investment_periods)} periods"
+            )
+
+            # Adjust store cycling behavior for multi-period optimization
+            adjust_stores_for_perfect_foresight(n)
+            logger.info("Store cycling adjustments applied for perfect foresight")
 
     # ========== FINAL CLEANUP ==========
 
