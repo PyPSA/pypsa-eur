@@ -458,7 +458,6 @@ def input_hera_data(w) -> dict[str, str]:
             "hera_ambient_temperature_2013": f"data/hera_{hera_data_key}/ambient_temp_{hera_data_key}.nc",
         }
     else:
-        # Import here to avoid circular imports
         from scripts._helpers import get_snapshots
 
         # Get all snapshots and extract unique years
