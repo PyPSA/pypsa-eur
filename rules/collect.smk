@@ -12,7 +12,7 @@ localrules:
     solve_sector_networks,
 
 
-rule build_costs:
+rule process_costs:
     input:
         lambda w: (
             [resources(f"costs_{config_provider('costs', 'year')(w)}_processed.csv")]
