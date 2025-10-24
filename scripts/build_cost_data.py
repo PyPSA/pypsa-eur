@@ -183,7 +183,7 @@ if __name__ == "__main__":
         ).query("planning_horizon in [@planning_horizon, 'all']")
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
-        # Overwrite unique pairs of (technology, paramter)
+        # Overwrite unique pairs of (technology, parameter)
         missing_idx = custom_costs.index.difference(costs.index)
         if len(missing_idx) > 0:
             costs = pd.concat([costs, custom_costs.loc[missing_idx]])
