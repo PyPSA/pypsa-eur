@@ -34,6 +34,7 @@ from scripts.add_electricity import calculate_annuity
 
 logger = logging.getLogger(__name__)
 
+
 def prepare_costs(
     costs: pd.DataFrame, config: dict, max_hours: dict = None, nyears: float = 1.0
 ) -> pd.DataFrame:
@@ -173,12 +174,12 @@ if __name__ == "__main__":
     # Retrieve costs assumptions
     # If the index is the unique pair (technology, parameter),
     # it can be easily overwritten.
-    costs = pd.read_csv(snakemake.input.costs, index_col=[0,1])
+    costs = pd.read_csv(snakemake.input.costs, index_col=[0, 1])
     if snakemake.input.costs is not None:
         custom_costs = pd.read_csv(
-                snakemake.params.costs["custom_cost_fn"],
-                dtype={"planning_horizon": "str"},
-                index_col=[1,2] # 0 is planning_horizon
+            snakemake.params.costs["custom_cost_fn"],
+            dtype={"planning_horizon": "str"},
+            index_col=[1, 2],  # 0 is planning_horizon
         ).query("planning_horizon in [@planning_horizon, 'all']")
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
@@ -191,8 +192,6 @@ if __name__ == "__main__":
         costs = costs.reset_index()
 
     # Prepare costs
-    costs_processed = prepare_costs(
-        costs, config, snakemake.params.max_hours, nyears
-    )
+    costs_processed = prepare_costs(costs, config, snakemake.params.max_hours, nyears)
 
     costs_processed.to_csv(snakemake.output[0])
