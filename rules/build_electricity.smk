@@ -758,7 +758,7 @@ rule add_electricity:
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'planning_horizons')(w)}_processed.csv"
+            f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
@@ -804,7 +804,7 @@ rule prepare_network:
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'planning_horizons')(w)}_processed.csv"
+            f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:

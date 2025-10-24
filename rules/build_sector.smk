@@ -1346,7 +1346,7 @@ rule prepare_sector_network:
         ),
         costs=lambda w: (
             resources(
-                "costs_{}_processed.csv".format(config_provider("costs", "year")(w))
+                f"costs_{config_provider("costs", "year")(w)}_processed.csv"
             )
             if config_provider("foresight")(w) == "overnight"
             else resources("costs_{planning_horizons}_processed.csv")
