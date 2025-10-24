@@ -93,17 +93,17 @@ if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] i
 if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
 
     rule retrieve_corine:
+        input:
+            zip_file=http_storage(
+                CORINE_DATASET["url"],
+            ),
         output:
-            zip=f"{CORINE_DATASET["folder"]}/corine.zip",
+            zip_file=f"{CORINE_DATASET["folder"]}/corine.zip",
             directory=directory(f"{CORINE_DATASET["folder"]}"),
             tif_file=f"{CORINE_DATASET["folder"]}/corine.tif",
         run:
-            response = requests.get(CORINE_DATASET["url"])
-            with open(output.zip, "wb") as f:
-                f.write(response.content)
-
-            output_folder = Path(output["zip"]).parent
-            unpack_archive(output.zip, output_folder)
+            output_folder = Path(output["zip_file"]).parent
+            unpack_archive(output["zip_file"], output_folder)
             copy2(
                 f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
                 output["tif_file"],
