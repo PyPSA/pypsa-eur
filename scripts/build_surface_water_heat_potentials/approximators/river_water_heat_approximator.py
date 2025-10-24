@@ -18,9 +18,9 @@ class RiverWaterHeatApproximator(SurfaceWaterHeatApproximator):
     """
     River water heat approximator for district heating systems.
 
-    Max. relative volume flow and delta_t_max are based on Triebs 2023: "Untersuchung der zukünftigen Fernwärmeversorgung unter Unsicherheit bei Berücksichtigung technischer, ökonomischer und ökologischer Randbedingungen". # codespell:ignore unter
+    Parameters are mostly based on expert input and Triebs 2023: "Untersuchung der zukünftigen Fernwärmeversorgung unter Unsicherheit bei Berücksichtigung technischer, ökonomischer und ökologischer Randbedingungen". # codespell:ignore unter
 
-    Min_distance of 25km is roughly scaled based on Jung et al.: "Estimation of
+    Min_distance of 25km is based on Jung et al.: "Estimation of
     Temperature Recovery Distance and the Influence of Heat Pump Discharge on
     Fluvial Ecosystems".
     """
