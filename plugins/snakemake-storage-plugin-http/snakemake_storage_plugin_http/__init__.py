@@ -233,7 +233,7 @@ class StorageObject(StorageObjectRead):
             )
 
             # Handle rate limiting
-            if r.status_code == 429:
+            if r.status_code != 200:
                 retry_after = int(r.headers.get("Retry-After", 60))
                 logger.info(f"Rate limit hit. Waiting {retry_after} seconds...")
                 time.sleep(retry_after)
@@ -246,7 +246,7 @@ class StorageObject(StorageObjectRead):
                 )
 
             logger.info(
-                "X-RateLimit-Remaining: %s", r.headers.get("X-RateLimit-Remaining")
+                f"X-RateLimit-Remaining: {r.headers.get("X-RateLimit-Remaining")}"
             )
             yield r
         finally:
