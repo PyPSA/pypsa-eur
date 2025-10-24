@@ -1,9 +1,14 @@
 ,Unit,Values,Description
+heat_sources,,,
+-- enable_heat_source_maps,--,bool,If true generate temporal aggregate maps for heat sources
 map,,,
 -- boundaries,°,"[x1,x2,y1,y2]",Boundaries of the map plots in degrees latitude (y) and longitude (x)
 -- geomap_colors,,,
 -- -- ocean,--,str,Color of the ocean in the geomap.
 -- -- land,--,str,Color of the land in the geomap.
+interactive_bus_balance,,,
+-- bus_name_pattern,--,str,Regex pattern to match bus names for which interactive balance time series are plotted. E.g. 'DE*' for all buses starting with 'DE'.
+
 projection,,,
 -- name,--,Valid Cartopy projection name,See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for list of available projections.
 -- args,--,--,"Other entries under 'projection' are passed as keyword arguments to the projection constructor, e.g. ``central_longitude: 10.``."
