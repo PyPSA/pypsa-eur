@@ -10,6 +10,7 @@ from functools import partial
 import os
 import re
 import shutil
+import time
 from typing import Any, Iterable, List, Optional
 import requests
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
@@ -231,7 +232,22 @@ class StorageObject(StorageObjectRead):
                 allow_redirects=self.provider.settings.allow_redirects,
             )
 
-            logger.debug("X-RateLimit-Remaining: %s", r.headers.get("X-RateLimit-Remaining"))
+            # Handle rate limiting
+            if r.status_code == 429:
+                retry_after = int(r.headers.get("Retry-After", 60))
+                logger.warning(f"Rate limit hit. Waiting {retry_after} seconds...")
+                time.sleep(retry_after)
+                r.close()
+                r = request(
+                    self.query,
+                    stream=stream,
+                    auth=self.provider.settings.auth,
+                    allow_redirects=self.provider.settings.allow_redirects,
+                )
+
+            logger.debug(
+                "X-RateLimit-Remaining: %s", r.headers.get("X-RateLimit-Remaining")
+            )
             yield r
         finally:
             if r is not None:
