@@ -1253,12 +1253,28 @@ def apply_temporal_aggregation(
     """
     logger.info("Applying temporal aggregation")
 
-    # Apply temporal resolution averaging if specified
     clustering_temporal_cfg = params.clustering_temporal
     time_resolution_elec = clustering_temporal_cfg["resolution_elec"]
-    if isinstance(time_resolution_elec, str) and time_resolution_elec.lower().endswith(
-        "h"
-    ):
+    time_segmentation = clustering_temporal_cfg["time_segmentation"]
+
+    # Check for conflicting configuration
+    has_averaging = isinstance(
+        time_resolution_elec, str
+    ) and time_resolution_elec.lower().endswith("h")
+    has_segmentation = time_segmentation["enable"] and time_segmentation["segments"]
+
+    if has_averaging and has_segmentation:
+        raise ValueError(
+            "Cannot use both temporal averaging (resolution_elec) and time "
+            "segmentation simultaneously. Please configure only one method:\n"
+            f"  - resolution_elec: {time_resolution_elec}\n"
+            f"  - time_segmentation.segments: {time_segmentation['segments']}\n"
+            "Set one to False/empty to use the other."
+        )
+
+    # Apply temporal resolution averaging if specified
+    if has_averaging:
+        logger.info(f"Applying temporal averaging: {time_resolution_elec}")
         n_new = average_every_nhours(n, time_resolution_elec, params.drop_leap_day)
         # Replace network object content
         n.__dict__.update(n_new.__dict__)
@@ -1276,112 +1292,16 @@ def apply_temporal_aggregation(
             # Replace network object content
             n.__dict__.update(n_new.__dict__)
 
+    # Apply time segmentation if specified
+    if has_segmentation:
+        logger.info("Applying time segmentation")
+        apply_time_segmentation(
+            n,
+            time_segmentation["resolution"],
+            time_segmentation["segments"],
+        )
+
     logger.info("Completed temporal aggregation")
-
-
-def apply_time_segmentation_multiperiod(
-    n: pypsa.Network, segments: int, solver_name: str = "cbc"
-) -> None:
-    """
-    Apply time segmentation to multi-period networks.
-
-    This function segments time series for each investment period separately,
-    preserving the multi-period structure required for perfect foresight optimization.
-
-    Parameters
-    ----------
-    n : pypsa.Network
-        Multi-period network with MultiIndex snapshots
-    segments : int
-        Number of segments for time series aggregation
-    solver_name : str, default "cbc"
-        Solver name for tsam optimization
-
-    Notes
-    -----
-    Modifies network in-place by:
-    - Segmenting time series separately for each investment period
-    - Updating snapshot_weightings to reflect segment durations
-    - Preserving MultiIndex structure (period, timestep)
-
-    Raises
-    ------
-    ModuleNotFoundError
-        If tsam package is not installed
-    ValueError
-        If network does not have MultiIndex snapshots
-    """
-    try:
-        import tsam.timeseriesaggregation as tsam
-    except ImportError:
-        raise ModuleNotFoundError(
-            "Optional dependency 'tsam' not found. Install via 'pip install tsam'"
-        )
-
-    if not isinstance(n.snapshots, pd.MultiIndex):
-        raise ValueError(
-            "apply_time_segmentation_multiperiod requires MultiIndex snapshots. "
-            "Use apply_time_segmentation for single-period networks."
-        )
-
-    logger.info(f"Segmenting time series to {segments} segments per investment period")
-
-    # Collect all time-dependent data
-    columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
-    raw = pd.DataFrame(index=n.snapshots, columns=columns)
-
-    for c in n.iterate_components():
-        for attr, pnl in c.pnl.items():
-            # Exclude e_min_pu which is used for SOC constraints (e.g., EVs)
-            if not pnl.empty and attr != "e_min_pu":
-                df = pnl.copy()
-                df.columns = pd.MultiIndex.from_product([[c.name], [attr], df.columns])
-                raw = pd.concat([raw, df], axis=1)
-
-    raw = raw.dropna(axis=1)
-    sn_weightings = {}
-
-    # Process each investment period separately
-    for period in n.investment_periods:
-        logger.info(f"Segmenting time series for investment period {period}")
-        raw_t = raw.loc[period]
-
-        # Normalize time-dependent data
-        annual_max = raw_t.max().replace(0, 1)
-        raw_t = raw_t.div(annual_max, level=0)
-
-        # Apply tsam segmentation
-        agg = tsam.TimeSeriesAggregation(
-            raw_t,
-            hoursPerPeriod=len(raw_t),
-            noTypicalPeriods=1,
-            noSegments=int(segments),
-            segmentation=True,
-            solver=solver_name,
-        )
-
-        segmented = agg.createTypicalPeriods()
-
-        # Create segmented snapshots for this period
-        weightings = segmented.index.get_level_values("Segment Duration")
-        offsets = np.insert(np.cumsum(weightings[:-1]), 0, 0)
-        timesteps = [raw_t.index[0] + pd.Timedelta(f"{offset}h") for offset in offsets]
-        snapshots = pd.DatetimeIndex(timesteps)
-
-        # Store weightings with period index
-        sn_weightings[period] = pd.Series(
-            weightings, index=snapshots, name="weightings", dtype="float64"
-        )
-
-    # Combine weightings from all periods into MultiIndex
-    sn_weightings = pd.concat(sn_weightings)
-    n.set_snapshots(sn_weightings.index)
-    n.snapshot_weightings = n.snapshot_weightings.mul(sn_weightings, axis=0)
-
-    logger.info(
-        f"Time segmentation complete: {len(n.snapshots)} total snapshots across "
-        f"{len(n.investment_periods)} investment periods"
-    )
 
 
 def prepare_network_for_solving(
@@ -1396,9 +1316,6 @@ def prepare_network_for_solving(
 
     This includes emission limits, transmission limits, and time segmentation.
     Corresponds to the functionality from prepare_network.py.
-
-    Note: Temporal aggregation is now handled separately by apply_temporal_aggregation()
-    and should be called before adding existing components.
 
     Parameters
     ----------
@@ -1418,9 +1335,6 @@ def prepare_network_for_solving(
     Modifies network in-place. Applies limits, constraints, and time segmentation.
     """
     logger.info("Preparing network for solving")
-
-    # Access clustering configuration for time segmentation
-    clustering_temporal_cfg = params.clustering_temporal
 
     # Add CO2 limit if specified
     electricity_cfg = params.electricity
@@ -1473,34 +1387,6 @@ def prepare_network_for_solving(
         line_max_pu=params.lines["s_max_pu"],
         link_max_pu=params.links["p_max_pu"],
     )
-
-    # Apply time segmentation if specified
-    time_segmentation = clustering_temporal_cfg["time_segmentation"]
-    if time_segmentation["enable"] and time_segmentation["segments"]:
-        # Check if network has multi-period structure
-        is_multiperiod = isinstance(n.snapshots, pd.MultiIndex)
-
-        if is_multiperiod:
-            # Use multi-period aware segmentation
-            logger.info(
-                "Applying time segmentation for multi-period network (perfect foresight)"
-            )
-            solver_name = config["solving"]["solver"]["name"]
-            apply_time_segmentation_multiperiod(
-                n,
-                time_segmentation["segments"],
-                solver_name=solver_name,
-            )
-        else:
-            # Use single-period segmentation
-            logger.info("Applying time segmentation for single-period network")
-            n_new = apply_time_segmentation(
-                n,
-                time_segmentation["resolution"],
-                time_segmentation["segments"],
-            )
-            # Replace network object content
-            n.__dict__.update(n_new.__dict__)
 
     # Handle carbon budget for sector coupling
     if params.sector["enabled"]:
@@ -1819,18 +1705,17 @@ if __name__ == "__main__":
                 current_horizon=current_horizon,
             )
 
-        # Apply investment period weightings for multi-period optimization
-        # This must be done after concatenation when all periods are present
-        if hasattr(n, "_multi_invest") and n._multi_invest:
+            # Apply investment period weightings after concatenation
+            # Now we have multiple periods and need proper discounting
             social_discountrate = params.costs["social_discountrate"]
             apply_investment_period_weightings(n, social_discountrate)
             logger.info(
                 f"Investment period weightings applied for {len(n.investment_periods)} periods"
             )
 
-            # Adjust store cycling behavior for multi-period optimization
-            adjust_stores_for_perfect_foresight(n)
-            logger.info("Store cycling adjustments applied for perfect foresight")
+        # Adjust store cycling behavior for multi-period optimization
+        adjust_stores_for_perfect_foresight(n)
+        logger.info("Store cycling adjustments applied for perfect foresight")
 
     # ========== FINAL CLEANUP ==========
 
