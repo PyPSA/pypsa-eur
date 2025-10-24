@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_cost_data", planning_horizons=2030)
 
-    config = snakemake.params.costs
+    config = snakemake.config["costs"]
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
