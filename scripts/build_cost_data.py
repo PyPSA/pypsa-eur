@@ -177,7 +177,7 @@ if __name__ == "__main__":
     if snakemake.input.costs is not None:
         custom_costs = pd.read_csv(
                 snakemake.params.costs["custom_cost_fn"],
-                dtype={"planning_horizon": "object"},
+                dtype={"planning_horizon": "str"},
                 index_col=[1,2] # 0 is planning_horizon
         ).query("planning_horizon in [@planning_horizon, 'all']")
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
