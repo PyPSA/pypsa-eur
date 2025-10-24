@@ -73,3 +73,5 @@ dependencies:
   - highspy
   - tsam>=2.3.1
   - entsoe-py
+  # TODO remove if no longer needed for debugging madness
+  - ../plugins/snakemake-storage-plugin-http
