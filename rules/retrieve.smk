@@ -99,7 +99,6 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
             ),
         output:
             zip_file=f"{CORINE_DATASET["folder"]}/corine.zip",
-            directory=directory(f"{CORINE_DATASET["folder"]}"),
             tif_file=f"{CORINE_DATASET["folder"]}/corine.tif",
         run:
             output_folder = Path(output["zip_file"]).parent
