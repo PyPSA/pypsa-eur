@@ -19,6 +19,7 @@ storage:
     retries=5,
     max_requests_per_second=0.5,
 
+
 def http_storage(url, **kwargs):
     import urllib
 
@@ -28,8 +29,11 @@ def http_storage(url, **kwargs):
     # Use the "ancient" wrapper to ignore the last-modified date for Zenodo URLs.
     if "zenodo.org" in urllib.parse.urlparse(url).netloc:
         import requests
+
         r = requests.head(url)
-        print(f"DEBUG: Remaining Zenodo RateLimit for {url}: {r.headers.get('X-RateLimit-Remaining')}")
+        print(
+            f"DEBUG: Remaining Zenodo RateLimit for {url}: {r.headers.get('X-RateLimit-Remaining')}"
+        )
         return ancient(storage(url, **kwargs))
     else:
         return storage(url, **kwargs)
@@ -108,7 +112,6 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
                 f"{CORINE_DATASET["folder"]}/corine/g250_clc06_V18_5.tif",
                 output["tif_file"],
             )
-
 
 elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
 
@@ -582,7 +585,7 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
             copy2(input["tif"], output["tif"])
 
 
-if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
+if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary"]:
 
     rule retrieve_eez:
         output:
@@ -591,33 +594,42 @@ if (EEZ_DATASET := dataset_version("eez"))["source"] in ["primary", "archive"]:
         run:
             from uuid import uuid4
 
-            if EEZ_DATASET["source"] == "primary":
+            name = str(uuid4())[:8]
+            org = str(uuid4())[:8]
 
-                name = str(uuid4())[:8]
-                org = str(uuid4())[:8]
-
-                response = requests.post(
-                    f"{EEZ_DATASET["url"]}",
-                    params={"name": f"World_EEZ_{EEZ_DATASET["version"]}_LR.zip"},
-                    data={
-                        "name": name,
-                        "organisation": org,
-                        "email": f"{name}@{org}.org",
-                        "country": "Germany",
-                        "user_category": "academia",
-                        "purpose_category": "Research",
-                        "agree": "1",
-                    },
-                )
-
-            elif EEZ_DATASET["source"] == "archive":
-                response = requests.get(f"{EEZ_DATASET["url"]}")
+            response = requests.post(
+                f"{EEZ_DATASET["url"]}",
+                params={"name": f"World_EEZ_{EEZ_DATASET["version"]}_LR.zip"},
+                data={
+                    "name": name,
+                    "organisation": org,
+                    "email": f"{name}@{org}.org",
+                    "country": "Germany",
+                    "user_category": "academia",
+                    "purpose_category": "Research",
+                    "agree": "1",
+                },
+            )
 
             with open(output["zip_file"], "wb") as f:
                 f.write(response.content)
             output_folder = Path(output["zip_file"]).parent
             unpack_archive(output["zip_file"], output_folder)
 
+elif (EEZ_DATASET := dataset_version("eez"))["source"] in ["archive"]:
+
+    rule retrieve_eez:
+        input:
+            zip_file=http_storage(
+                EEZ_DATASET["url"],
+            ),
+        output:
+            zip_file=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR.zip",
+            gpkg=f"{EEZ_DATASET["folder"]}/World_EEZ_{EEZ_DATASET["version"]}_LR/eez_{EEZ_DATASET["version"].split("_")[0]}_lowres.gpkg",
+        run:
+            output_folder = Path(output["zip_file"]).parent
+            copy2(input["zip_file"], output["zip_file"])
+            unpack_archive(output["zip_file"], output_folder)
 
 
 if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source"] in [
@@ -1134,6 +1146,7 @@ if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
         run:
             for key in input.keys():
                 copy2(input[key], output[key])
+
 
 elif (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in ["archive"]:
 
