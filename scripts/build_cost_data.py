@@ -34,53 +34,6 @@ from scripts.add_electricity import calculate_annuity
 
 logger = logging.getLogger(__name__)
 
-
-def expand_all_technologies(
-    costs: pd.DataFrame, custom_costs: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Expand 'all' technology entries in custom_costs to all available technologies from costs.
-
-    Parameters
-    ----------
-    costs : pd.DataFrame
-        DataFrame containing default costs with all available technologies
-    custom_costs : pd.DataFrame
-        DataFrame containing custom costs with potential 'all' technology entries
-
-    Returns
-    -------
-    pd.DataFrame
-        Expanded custom_costs DataFrame with 'all' entries replaced by specific technologies
-    """
-    all_entries = (
-        custom_costs[custom_costs["technology"] == "all"]
-        .drop("technology", axis=1)
-        .assign(_merge_key=1)
-    )
-    specific_entries = custom_costs[custom_costs["technology"] != "all"]
-
-    if all_entries.empty:
-        return specific_entries
-
-    # Perform cartesian product merge to expand all technologies
-    available_technologies = (
-        costs[["technology"]].drop_duplicates().assign(_merge_key=1)
-    )
-    expanded_df = pd.merge(
-        all_entries,
-        available_technologies,
-        on="_merge_key",
-    ).drop("_merge_key", axis=1)
-
-    # Remove duplicates based on technology and parameter, keeping the last (specific entries)
-    custom_costs_expanded = pd.concat(
-        [expanded_df, specific_entries], ignore_index=True
-    ).drop_duplicates(subset=["technology", "parameter"], keep="last")
-
-    return custom_costs_expanded
-
-
 def prepare_costs(
     costs: pd.DataFrame, config: dict, max_hours: dict = None, nyears: float = 1.0
 ) -> pd.DataFrame:
@@ -218,30 +171,28 @@ if __name__ == "__main__":
     planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions
-    costs = pd.read_csv(snakemake.input.costs)
-    custom_costs = (
-        pd.read_csv(
-            snakemake.params.costs["custom_costs"]["file"],
-            dtype={"planning_horizon": "object"},
-        )
-        .query("planning_horizon in [@planning_horizon, 'all']")
-        .drop("planning_horizon", axis=1)
-    )
+    # If the index is the unique pair (technology, parameter),
+    # it can be easily overwritten.
+    costs = pd.read_csv(snakemake.input.costs, index_col=[0,1])
+    if snakemake.input.costs is not None:
+        custom_costs = pd.read_csv(
+                snakemake.params.costs["custom_cost_fn"],
+                dtype={"planning_horizon": "object"},
+                index_col=[1,2] # 0 is planning_horizon
+        ).query("planning_horizon in [@planning_horizon, 'all']")
+        custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
-    if config["custom_costs"].get("enable", False) and not custom_costs.empty:
-        # Expand "all" technologies across all available technologies from default costs
-        custom_costs_expanded = expand_all_technologies(costs, custom_costs)
+        # Overwrite unique pairs of (technology, paramter)
+        missing_idx = custom_costs.index.difference(costs.index)
+        if len(missing_idx) > 0:
+            costs = pd.concat([costs, custom_costs.loc[missing_idx]])
 
-        # Combine default costs assumptions with custom costs superseding default values
-        costs_extended = pd.concat(
-            [costs, custom_costs_expanded], ignore_index=True
-        ).drop_duplicates(subset=["technology", "parameter"], keep="last")
-    else:
-        costs_extended = costs
+        costs.loc[custom_costs.index] = custom_costs
+        costs = costs.reset_index()
 
     # Prepare costs
     costs_processed = prepare_costs(
-        costs_extended, config, snakemake.params.max_hours, nyears
+        costs, config, snakemake.params.max_hours, nyears
     )
 
     costs_processed.to_csv(snakemake.output[0])
