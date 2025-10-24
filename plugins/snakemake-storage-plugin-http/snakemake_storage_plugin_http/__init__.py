@@ -231,7 +231,7 @@ class StorageObject(StorageObjectRead):
                 allow_redirects=self.provider.settings.allow_redirects,
             )
 
-            logger.debug("X-RateLimit-Remaining: %s", r.headers.get("X-RateLimit-Remaining"))
+            logger.info(f"X-RateLimit-Remaining: {r.headers.get("X-RateLimit-Remaining")}")
             yield r
         finally:
             if r is not None:

@@ -98,7 +98,7 @@ jobs:
 
     - name: Check Zenodo SSL with curl (TODO remove once issues with Zenodo have been resolved)
       run: |
-        curl -Iv https://zenodo.org/records/17249457/files/ARDECO-SNPTD.2021.table.csv
+        curl --head -Iv https://zenodo.org/records/17249457/files/ARDECO-SNPTD.2021.table.csv
 
     - name: Run snakemake test workflows
       run: |
