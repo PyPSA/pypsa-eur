@@ -1064,7 +1064,7 @@ if __name__ == "__main__":
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     n.set_snapshots(time)
 
-    costs = load_costs(snakemake.input.tech_costs)
+    costs = load_costs(snakemake.input.costs)
 
     ppl = load_and_aggregate_powerplants(
         snakemake.input.powerplants,

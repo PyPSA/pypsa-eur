@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input[0])
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(snakemake.input.tech_costs)
+    costs = load_costs(snakemake.input.costs)
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
