@@ -23,13 +23,21 @@ import requests
 import xarray as xr
 import yaml
 from snakemake.utils import update_config
+from tenacity import (
+    retry as tenacity_retry,
+)
+from tenacity import (
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 REGION_COLS = ["geometry", "name", "x", "y", "country"]
 
-PYPSA_V1 = bool(re.match(r"^0\.35\.\d\.post1\.dev\d{3}", pypsa.__version__))
+PYPSA_V1 = bool(re.match(r"^1\.\d", pypsa.__version__))
 
 
 def get_scenarios(run):
@@ -407,17 +415,31 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 
+@tenacity_retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(
+        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
+    ),
+)
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     # Hotfix - Bug, tqdm not working with disable=False
     disable = True
 
+    # Raise HTTPError for transient errors
+    # 429: Too Many Requests (rate limiting)
+    # 500, 502, 503, 504: Server errors
     if disable:
         response = requests.get(url, headers=headers, stream=True)
+        if response.status_code in (429, 500, 502, 503, 504):
+            response.raise_for_status()
         with open(file, "wb") as f:
             f.write(response.content)
     else:
         response = requests.get(url, headers=headers, stream=True)
+        if response.status_code in (429, 500, 502, 503, 504):
+            response.raise_for_status()
         total_size = int(response.headers.get("content-length", 0))
         chunk_size = 1024
 
@@ -700,13 +722,14 @@ def update_config_from_wildcards(config, w, inplace=True):
             flags = ["+e", "+p", "+m", "+c"]
             if all(flag not in o for flag in flags):
                 continue
-            carrier, attr_factor = o.split("+")
+            carrier, component, attr_factor = o.split("+")
             attr = attr_lookup[attr_factor[0]]
             factor = float(attr_factor[1:])
             if not isinstance(config["adjustments"]["electricity"], dict):
                 config["adjustments"]["electricity"] = dict()
             update_config(
-                config["adjustments"]["electricity"], {attr: {carrier: factor}}
+                config["adjustments"]["electricity"],
+                {"factor": {component: {carrier: {attr: factor}}}},
             )
 
         for o in opts:
@@ -805,12 +828,15 @@ def update_config_from_wildcards(config, w, inplace=True):
             flags = ["+e", "+p", "+m", "+c"]
             if all(flag not in o for flag in flags):
                 continue
-            carrier, attr_factor = o.split("+")
+            carrier, component, attr_factor = o.split("+")
             attr = attr_lookup[attr_factor[0]]
             factor = float(attr_factor[1:])
             if not isinstance(config["adjustments"]["sector"], dict):
                 config["adjustments"]["sector"] = dict()
-            update_config(config["adjustments"]["sector"], {attr: {carrier: factor}})
+            update_config(
+                config["adjustments"]["sector"],
+                {"factor": {component: {carrier: {attr: factor}}}},
+            )
 
         _, sdr_value = find_opt(opts, "sdr")
         if sdr_value is not None:
@@ -830,12 +856,24 @@ def update_config_from_wildcards(config, w, inplace=True):
         return config
 
 
+@tenacity_retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(
+        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
+    ),
+)
 def get_checksum_from_zenodo(file_url):
     parts = file_url.split("/")
     record_id = parts[parts.index("records") + 1]
     filename = parts[-1]
 
     response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
+    # Raise HTTPError for transient errors
+    # 429: Too Many Requests (rate limiting)
+    # 500, 502, 503, 504: Server errors
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
     response.raise_for_status()
     data = response.json()
 

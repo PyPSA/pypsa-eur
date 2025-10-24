@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     al_primary_fraction = get(params["Al_primary_fraction"], investment_year)
     fraction_persistent_primary = (
-        al_primary_fraction * total_aluminium.sum() / production[key_pri].sum()
+        al_primary_fraction * total_aluminium.sum() / (production[key_pri].sum() or 1)
     )
 
     production[key_pri] = fraction_persistent_primary * production[key_pri]

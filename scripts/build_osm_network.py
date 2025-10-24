@@ -206,33 +206,43 @@ def split_overpassing_lines(lines, buses, distance_crs=DISTANCE_CRS, tol=1):
     Returns
     -------
         - lines (GeoDataFrame): The split lines.
-        - buses (GeoDataFrame): The buses representing nodes.
     """
     lines = lines.copy()
     logger.info(f"Splitting lines over overpassing nodes (Tolerance {tol} m).")
-    lines_to_add = []  # list of lines to be added
-    lines_to_split = []  # list of lines that have been split
+    lines_to_add = []
+    lines_to_split = []
 
-    lines_epsgmod = lines.to_crs(distance_crs)
+    # TODO: In first draft, skip line splitting for lower voltage levels
+    high_voltage_lines = lines.query("voltage >= 220000")
+    if high_voltage_lines.empty:
+        return lines
+
+    lines_epsgmod = high_voltage_lines.to_crs(distance_crs)
     buses_epsgmod = buses.to_crs(distance_crs)
+    buses_sindex = buses_epsgmod.sindex
 
     # set tqdm options for substation ids
     tqdm_kwargs_substation_ids = dict(
         ascii=False,
         unit=" lines",
-        total=lines.shape[0],
+        total=high_voltage_lines.shape[0],
         desc="Splitting lines",
     )
 
-    for l in tqdm(lines.index, **tqdm_kwargs_substation_ids):
-        # bus indices being within tolerance from the line
-        bus_in_tol_epsg = buses_epsgmod[
-            buses_epsgmod.geometry.distance(lines_epsgmod.geometry.loc[l]) <= tol
-        ]
+    for l in tqdm(high_voltage_lines.index, **tqdm_kwargs_substation_ids):
+        line_geom = lines_epsgmod.geometry.loc[l]
+
+        # Use spatial index for initial filtering
+        possible_matches = list(buses_sindex.intersection(line_geom.bounds))
+        if not possible_matches:
+            continue
+
+        nearby_buses = buses_epsgmod.iloc[possible_matches]
+        bus_in_tol_epsg = nearby_buses[nearby_buses.geometry.distance(line_geom) <= tol]
 
         # Get boundary points
-        endpoint0 = lines_epsgmod.geometry.loc[l].boundary.geoms[0]
-        endpoint1 = lines_epsgmod.geometry.loc[l].boundary.geoms[1]
+        endpoint0 = line_geom.boundary.geoms[0]
+        endpoint1 = line_geom.boundary.geoms[1]
 
         # Calculate distances
         dist_to_ep0 = bus_in_tol_epsg.geometry.distance(endpoint0)
@@ -393,25 +403,19 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
     # Add all edges at once
     G.add_edges_from(edges)
 
-    connected_components = nx.connected_components(G)
+    connected_components = list(nx.connected_components(G))
 
-    # Create empty
-    merged_lines = pd.DataFrame(
-        columns=[
-            "line_id",
-            "circuits",
-            "voltage",
-            "geometry",
-            "underground",
-            "contains_lines",
-            "contains_buses",
-        ]
+    tqdm_args = dict(
+        ascii=False,
+        unit=" components",
+        total=len(connected_components),
+        desc="Merging lines",
     )
 
+    subgraph_data = []
+
     # Iterate over each connected component
-    for component in tqdm(
-        connected_components, desc="Merging lines", unit=" components"
-    ):
+    for component in tqdm(connected_components, **tqdm_args):
         # Create a subgraph for the current component
         subgraph = G.subgraph(component)
 
@@ -444,28 +448,38 @@ def _create_merge_mapping(lines, buses, buses_polygon, geo_crs=GEO_CRS):
         for edge in subgraph.edges():
             contains_buses.append(G.edges[edge].get("bus_id", None))
 
-        subgraph_data = {
-            "line_id": [
-                "merged_" + str(node_longest) + "+" + str(number_of_lines - 1)
-            ],  # line_id
-            "circuits": [circuits],
-            "voltage": [voltage],
-            "geometry": [geometry],
-            "underground": [underground],
-            "contains_lines": [contains_lines],
-            "contains_buses": [contains_buses],
-        }
+        # Skip closed linestrings (circles)
+        if geometry.is_closed:
+            continue
 
-        # Convert to DataFrame and append to the merged_lines DataFrame
-        merged_lines = pd.concat(
-            [merged_lines, pd.DataFrame(subgraph_data)], ignore_index=True
+        subgraph_data.append(
+            {
+                "line_id": "merged_"
+                + str(node_longest)
+                + "+"
+                + str(number_of_lines - 1),
+                "circuits": circuits,
+                "voltage": voltage,
+                "geometry": geometry,
+                "underground": underground,
+                "contains_lines": contains_lines,
+                "contains_buses": contains_buses,
+            }
         )
-        merged_lines = gpd.GeoDataFrame(merged_lines, geometry="geometry", crs=geo_crs)
 
-        # Drop all closed linestrings (circles)
-        merged_lines = merged_lines[
-            merged_lines["geometry"].apply(lambda x: not x.is_closed)
+    if subgraph_data:
+        merged_lines = gpd.GeoDataFrame(subgraph_data, crs=geo_crs)
+    else:
+        cols = [
+            "line_id",
+            "circuits",
+            "voltage",
+            "geometry",
+            "underground",
+            "contains_lines",
+            "contains_buses",
         ]
+        merged_lines = gpd.GeoDataFrame(columns=cols, crs=geo_crs)
 
     return merged_lines
 
@@ -1059,6 +1073,12 @@ def _extend_lines_to_buses(connection, buses):
     lines_all.drop(columns=["bus_id"], inplace=True)
     lines_all.rename(columns={"geometry_right": "bus1_point"}, inplace=True)
 
+    # TODO: Relevant only for sub 220 kV AC lines: Implement fix for MultiLineStrings
+    # For now, remove MultiLineStrings, only 5 elements in Europe
+    b_multi = lines_all["geometry"].apply(lambda x: isinstance(x, MultiLineString))
+    if b_multi.any():
+        lines_all = lines_all[~b_multi]
+
     lines_all["geometry"] = lines_all.apply(
         lambda row: _add_point_to_line(row["geometry"], row["bus0_point"]), axis=1
     )
@@ -1524,6 +1544,14 @@ def build_network(
     lines = gpd.read_file(inputs["lines"])
     lines = _merge_identical_lines(lines)
 
+    # Floor voltages to 3 decimal places (e.g., 66600 becomes 66000, 220000 stays 220000)
+    buses["voltage"] = (np.floor(buses["voltage"] / 1000) * 1000).astype(
+        buses["voltage"].dtype
+    )
+    lines["voltage"] = (np.floor(lines["voltage"] / 1000) * 1000).astype(
+        lines["voltage"].dtype
+    )
+
     ### DATA PROCESSING (AC)
     buses_line_endings = _add_line_endings(buses, lines)
     buses = pd.concat([buses, buses_line_endings], ignore_index=True)
@@ -1540,7 +1568,7 @@ def build_network(
     # Update length of lines
     lines["length"] = lines.to_crs(DISTANCE_CRS).length
 
-    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)
+    # Merging lines over virtual buses (buses that are not designated as substations, e.g. junctions)<
     merged_lines_map = _create_merge_mapping(lines, buses, buses_polygon)
     lines, buses = _merge_lines_over_virtual_buses(lines, buses, merged_lines_map)
 
@@ -1652,7 +1680,10 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_osm_network")
+        snakemake = mock_snakemake(
+            "build_osm_network",
+            configfiles=["config/test/config.distribution-grid.yaml"],
+        )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

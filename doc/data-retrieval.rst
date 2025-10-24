@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 #########################
 Specific retrieval rules
@@ -17,7 +16,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/Produktcenter/faq_inhalt.html?nn=6951010#doc5914388bodyText5>` and `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/produkte_agb.html>`
 - **Description:** Contains data on geothermal energy resources in Europe.
 
-``data/heat_demand``
 ``data/fraunhofer_heat_source_utilisation_potentials`` and ``data/dh_areas.gpkg``
 
 - **Source:** Fraunhofer Fordatis
@@ -159,13 +157,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** CC-BY 4.0
 - **Description:** Contains share of urban population by country.
 
-``data/naturalearth``
-
-- **Source:** Natural Earth
-- **Link:** https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
-- **License:** CC0 (`reference <https://www.naturalearthdata.com/about/terms-of-use/>`__)
-- **Description:** Country shapes, using point-of-view (POV) variant of Germany so that Crimea is included.
-
 ``data/gem/Europe-Gas-Tracker-2024-05.xlsx``
 
 - **Source:** Global Energy Monitor
@@ -236,6 +227,20 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Link:** https://github.com/PyPSA/powerplantmatching
 - **License:** GPL-3.0
 - **Description:** Contains matched dataset of powerplants in Europe.
+
+``data/busshapes/bidding_zones_electricitymaps.geojson``
+
+- **Source:** Electricity Maps, https://github.com/electricitymaps/electricitymaps-contrib
+- **Link:** https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/v1.238.0/web/geo/world.geojson
+- **License:** GNU-AGPLv3
+- **Description:** Contains bidding zones shape files.
+
+``data/busshapes/bidding_zones_entsoepy.geojson``
+
+- **Source:** Pecinovsky, J., & Boerman, F. entsoe-py. https://github.com/EnergieID/entsoe-py
+- **Link:** https://github.com/EnergieID/entsoe-py/tree/c03c604af36ef92e8ef6ee89dc57c56ca5e1dbac/entsoe/geo/geojson
+- **License:** MIT License
+- **Description:** Contains bidding zones shape files used to improve `data/busshapes/bidding_zones_electricitymaps.geojson` data.
 
 ``data/tyndp_2024_bundle``
 

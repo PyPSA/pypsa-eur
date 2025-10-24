@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+run:
+  name: "distribution-grid-experimental"
+
+electricity:
+  voltages: [63., 66., 90., 110., 132., 150., 220., 300., 330., 380., 400., 500., 750.]
+  base_network: osm-raw
+
+transmission_projects:
+  enable: false
