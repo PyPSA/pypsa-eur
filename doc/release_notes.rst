@@ -101,7 +101,18 @@ Upcoming Release
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
-* Running perfect foresight is now marked as unstable and may not work as expected.
+* **Perfect foresight optimization is currently incomplete** in the streamlined workflow.
+  The following critical functionality from ``prepare_perfect_foresight.py`` is not yet
+  implemented in ``compose_network.py``:
+
+  - Investment period objective weightings with social discount rate
+  - Store cycling behavior adjustments (``e_cyclic_per_period`` flags)
+  - Phase-out constraints for national energy policies
+  - Perfect-foresight-specific time segmentation
+  - Heat pump efficiency updates for all periods
+
+  Perfect foresight runs may produce incorrect results until these gaps are addressed.
+  See the ``prepare_perfect_foresight.py`` deprecation notice for details.
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================

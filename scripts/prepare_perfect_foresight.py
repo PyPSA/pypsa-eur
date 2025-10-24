@@ -9,6 +9,32 @@ Concats pypsa networks of single investment periods to one network.
 This script was part of the old wildcard-based workflow and used
 wildcards.sector_opts which no longer exists. It is not called by
 any active Snakemake rules in the streamlined workflow.
+
+CRITICAL: The following functionality from this script is NOT yet implemented
+in the new streamlined workflow (compose_network.py) and needs to be addressed
+before perfect foresight optimization will work correctly:
+
+1. Investment period objective weightings with social discount rate
+   - get_investment_weighting() applies discount rate for proper cost discounting
+   - IMPACT: Without this, investment decisions won't be properly weighted over time
+
+2. Store cycling behavior adjustments (adjust_stores())
+   - Sets e_cyclic_per_period flags for stores
+   - IMPACT: Storage constraints will be incorrect (cycling over entire horizon vs per-period)
+
+3. Phase-out constraints (set_all_phase_outs())
+   - Enforces national energy policy phase-outs (nuclear, coal, lignite)
+   - IMPACT: Policy constraints won't be enforced
+
+4. Time segmentation for perfect foresight (apply_time_segmentation_perfect())
+   - Uses tsam for each investment period separately
+   - IMPACT: May not work correctly with multi-period networks
+
+5. Heat pump efficiency updates for all periods (update_heat_pump_efficiency())
+   - Updates ALL heat pumps to use efficiency of each year's technology
+   - IMPACT: Current brownfield version may not handle perfect foresight correctly
+
+See PR #1838 review analysis for detailed comparison with compose_network.py.
 """
 
 import logging
