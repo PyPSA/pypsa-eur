@@ -8,7 +8,21 @@
 Wildcards
 #########
 
-It is easy to run PyPSA-Eur for multiple scenarios using the wildcards feature of ``snakemake``.
+.. warning::
+
+   **MAJOR CHANGES:** The wildcard-based scenario system has been significantly
+   simplified. The ``{clusters}``, ``{opts}``, and ``{sector_opts}`` wildcards
+   have been removed in favor of direct configuration.
+
+   The streamlined workflow now uses:
+
+   - ``{horizon}`` for planning horizons (replaces ``{planning_horizons}``)
+   - Direct configuration in ``config.yaml`` instead of wildcard combinations
+   - Simplified file naming (e.g., ``clustered.nc`` instead of ``base_s_{clusters}.nc``)
+
+   See the :ref:`release notes <Upcoming Release>` for migration instructions.
+
+PyPSA-Eur uses the wildcards feature of ``snakemake`` to run multiple scenarios.
 Wildcards allow to generalise a rule to produce all files that follow a regular expression pattern
 which e.g. defines one particular scenario. One can think of a wildcard as a parameter that shows
 up in the input/output file names of the ``Snakefile`` and thereby determines which rules to run,
@@ -39,55 +53,65 @@ It can take the values ``onwind``, ``offwind-ac``, ``offwind-dc``, ``offwind-flo
 
 .. _clusters:
 
-The ``{clusters}`` wildcard
-===========================
+The ``{clusters}`` wildcard (DEPRECATED)
+=========================================
 
-The ``{clusters}`` wildcard specifies the number of buses a detailed
+.. note::
+
+   **DEPRECATED:** This wildcard has been removed. Use
+   ``clustering.cluster_network.n_clusters`` in the config file instead.
+
+**Legacy Information:**
+
+The ``{clusters}`` wildcard specified the number of buses a detailed
 network model should be reduced to in the rule :mod:`cluster_network`.
-The number of clusters must be lower than the total number of nodes
-and higher than the number of countries. However, a country counts twice if
-it has two asynchronous subnetworks (e.g. Denmark or Italy).
 
 .. _opts:
 
-The ``{opts}`` wildcard
-=======================
+The ``{opts}`` wildcard (DEPRECATED)
+=====================================
 
-The ``{opts}`` wildcard is used for electricity-only studies. It triggers
-optional constraints, which are activated in either :mod:`prepare_network` or
-the :mod:`solve_network` step. It may hold multiple triggers separated by ``-``,
-i.e. ``Co2L-3h`` contains the ``Co2L`` trigger and the ``3h`` switch. There are
-currently:
+.. note::
 
+   **DEPRECATED:** This wildcard has been removed. Configure options directly
+   in their respective config sections (e.g., ``electricity``, ``clustering``).
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 10,20,10,10
-   :file: configtables/opts.csv
+**Legacy Information:**
+
+The ``{opts}`` wildcard was used for electricity-only studies. It triggered
+optional constraints, which were activated in either :mod:`prepare_network` or
+the :mod:`solve_network` step.
 
 .. _sector_opts:
 
-The ``{sector_opts}`` wildcard
-==============================
+The ``{sector_opts}`` wildcard (DEPRECATED)
+============================================
 
-.. warning::
-    More comprehensive documentation for this wildcard will be added soon.
-    To really understand the options here, look in scripts/prepare_sector_network.py
+.. note::
 
-The ``{sector_opts}`` wildcard is only used for sector-coupling studies.
+   **DEPRECATED:** This wildcard has been removed. Configure options directly
+   in the ``sector`` config section.
 
-.. csv-table::
-   :header-rows: 1
-   :widths: 10,20,10,10
-   :file: configtables/sector-opts.csv
+**Legacy Information:**
+
+The ``{sector_opts}`` wildcard was only used for sector-coupling studies.
 
 .. _planning_horizons:
 
-The ``{planning_horizons}`` wildcard
-====================================
+The ``{horizon}`` wildcard
+===========================
 
-.. warning::
-    More comprehensive documentation for this wildcard will be added soon.
+The ``{horizon}`` wildcard (previously ``{planning_horizons}``) is used for
+multi-period optimization studies. It takes years as values, e.g. 2030, 2040, 2050.
 
-The ``{planning_horizons}`` wildcard is only used for sector-coupling studies.
-It takes years as values, e.g. 2020, 2030, 2040, 2050.
+The planning horizons are configured in the top-level ``planning_horizons``
+config option:
+
+.. code:: yaml
+
+   planning_horizons: [2030, 2040, 2050]  # or single value: 2050
+
+This wildcard appears in composed and solved network filenames:
+
+- ``resources/{run}/networks/composed_{horizon}.nc``
+- ``results/{run}/networks/solved_{horizon}.nc``

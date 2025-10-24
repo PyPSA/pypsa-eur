@@ -110,41 +110,32 @@ The ``run`` section is used for running and storing scenarios with different con
 ``scenario``
 ============
 
-The ``scenario`` section is an extraordinary section of the config file
-that is strongly connected to the :ref:`wildcards` and is designed to
-facilitate running multiple scenarios through a single command
+.. warning::
 
-.. code:: console
+   **DEPRECATED:** The ``scenario`` wildcard system has been removed in favor of
+   direct configuration. This section is kept for reference only.
 
-   # for electricity-only studies
-   $ snakemake -call solve_elec_networks
+   For the new configuration approach, see :ref:`planning_horizons` and individual
+   configuration sections (e.g., ``clustering.cluster_network.n_clusters`` for
+   cluster count, ``sector.enabled`` for sector coupling).
 
-   # for sector-coupling studies
-   $ snakemake -call solve_sector_networks
+   See the :ref:`release notes <Upcoming Release>` for migration instructions.
 
-For each wildcard, a **list of values** is provided. The rule
-``solve_all_elec_networks`` will trigger the rules for creating
+**Legacy Information (Pre-Streamlined Workflow)**
+
+The ``scenario`` section was an extraordinary section of the config file
+that was strongly connected to the :ref:`wildcards` and was designed to
+facilitate running multiple scenarios through a single command.
+
+For each wildcard, a **list of values** was provided, and rules would create
 ``results/networks/base_s_{clusters}_elec_{opts}.nc`` for **all
 combinations** of the provided wildcard values as defined by Python's
 `itertools.product(...)
-<https://docs.python.org/2/library/itertools.html#itertools.product>`__ function
-that snakemake's `expand(...) function
-<https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#targets>`__
-uses.
+<https://docs.python.org/2/library/itertools.html#itertools.product>`__ function.
 
-An exemplary dependency graph (starting from the simplification rules) then looks like this:
-
-.. image:: img/scenarios.png
-
-.. literalinclude:: ../config/config.default.yaml
-   :language: yaml
-   :start-at: scenario:
-   :end-before: # docs
-
-.. csv-table::
-   :header-rows: 1
-   :widths: 22,7,22,33
-   :file: configtables/scenario.csv
+**This approach has been replaced** by directly configuring options in their
+respective config sections and using separate config files or the
+``--configfile`` option for different scenarios
 
 .. _countries:
 

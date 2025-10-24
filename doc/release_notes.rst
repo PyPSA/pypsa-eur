@@ -9,7 +9,57 @@ Release Notes
 Upcoming Release
 ================
 
-* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
+**Breaking Changes**
+
+* **Streamlined workflow with simplified configuration** (https://github.com/PyPSA/pypsa-eur/pull/1838):
+  The workflow has been restructured to use direct configuration values instead of
+  wildcards, simplifying the configuration system and improving maintainability.
+
+  **Migration Guide:**
+
+  The old wildcard-based configuration structure has been removed. Update your
+  ``config.yaml`` as follows:
+
+  .. code:: yaml
+
+    # OLD (no longer supported)
+    scenario:
+      clusters: [50, 100]
+      opts: ['', '3H']
+      sector_opts: ['', 'Co2L-3H']
+      planning_horizons: [2030, 2050]
+
+    # NEW (required format)
+    planning_horizons: [2030, 2050]  # or single value: 2050
+
+    clustering:
+      cluster_network:
+        n_clusters: 50  # Set your desired number of clusters
+
+    sector:
+      enabled: true  # Explicitly enable sector coupling if needed
+
+  **What changed:**
+
+  - ``scenario.clusters`` → ``clustering.cluster_network.n_clusters``
+  - ``scenario.planning_horizons`` → top-level ``planning_horizons``
+  - ``scenario.opts`` and ``scenario.sector_opts`` → Removed. Options previously
+    encoded in wildcards are now configured directly in their respective config
+    sections (e.g., ``electricity``, ``sector``, ``clustering``)
+  - File naming simplified: Network files now use ``clustered.nc``,
+    ``composed_{horizon}.nc``, ``solved_{horizon}.nc`` instead of complex
+    wildcard-based names
+  - Deprecated scripts: ``prepare_perfect_foresight.py`` and
+    ``make_summary_perfect.py`` are no longer used
+
+  **Important:** Existing workflows using the old ``scenario`` structure will not
+  work and must be migrated to the new format.
+
+* **PyPSA 1.0 compatibility**: Updated minimum PyPSA version to 1.0.1. All
+  ``n.add()`` calls now use ``return_names=True`` for compatibility with PyPSA 1.0
+  where ``.add()`` returns ``None`` by default.
+
+* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors
   like rate limiting and server errors.
 
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
