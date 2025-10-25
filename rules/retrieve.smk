@@ -16,12 +16,13 @@ storage:
     provider="http",
     keep_local=True,
     retrieve=True,
-    retries=5,
+    retries=3,
     max_requests_per_second=0.5,
 
 
 storage zenodo:
     provider="zenodo",
+    retries=3,
 
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
