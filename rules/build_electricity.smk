@@ -595,7 +595,7 @@ rule process_cost_data:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_cost_data.py"
+        "../scripts/process_cost_data.py"
 
 
 rule simplify_network:
