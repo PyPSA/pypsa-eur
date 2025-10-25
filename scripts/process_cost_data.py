@@ -192,6 +192,8 @@ if __name__ == "__main__":
         costs = costs.reset_index()
 
     # Prepare costs
-    costs_processed = prepare_costs(costs, cost_params, snakemake.params.max_hours, nyears)
+    costs_processed = prepare_costs(
+        costs, cost_params, snakemake.params.max_hours, nyears
+    )
 
     costs_processed.to_csv(snakemake.output[0])
