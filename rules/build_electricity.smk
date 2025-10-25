@@ -575,7 +575,7 @@ rule build_hac_features:
         "../scripts/build_hac_features.py"
 
 
-rule build_cost_data:
+rule process_cost_data:
     params:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
