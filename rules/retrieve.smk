@@ -19,21 +19,8 @@ storage:
     retries=5,
     max_requests_per_second=0.5,
 
-def http_storage(url, **kwargs):
-    import urllib
-
-    # Zenondo sometimes returns a "last-modified" date in the header that seems like the underlying
-    # file has been modified recently which would trigger a re-download, even though the file itself
-    # has not changed (Zenodo URLs for files are immutable; a new version gets a new URL).
-    # Use the "ancient" wrapper to ignore the last-modified date for Zenodo URLs.
-    if "zenodo.org" in urllib.parse.urlparse(url).netloc:
-        import requests
-        r = requests.head(url)
-        print(f"DEBUG: Remaining Zenodo RateLimit for {url}: {r.headers.get('X-RateLimit-Remaining')}")
-        return ancient(storage(url, **kwargs))
-    else:
-        return storage(url, **kwargs)
-
+storage zenodo:
+    provider="zenodo"
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
     "primary",
@@ -42,9 +29,7 @@ if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"]
 
     rule retrieve_eurostat_balances:
         input:
-            zip_file=http_storage(
-                EUROSTAT_BALANCES_DATASET["url"],
-            ),
+            zip_file=storage(EUROSTAT_BALANCES_DATASET["url"]),
         output:
             zip_file=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
             directory=directory(f"{EUROSTAT_BALANCES_DATASET['folder']}"),
@@ -64,9 +49,7 @@ if (
 
     rule retrieve_eurostat_household_balances:
         input:
-            csv=http_storage(
-                EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"],
-            ),
+            csv=storage(EUROSTAT_HOUSEHOLD_BALANCES_DATASET["url"]),
         output:
             csv=f"{EUROSTAT_HOUSEHOLD_BALANCES_DATASET['folder']}/nrg_d_hhq.csv",
         run:
@@ -80,9 +63,7 @@ if (NUTS3_POPULATION_DATASET := dataset_version("nuts3_population"))["source"] i
 
     rule retrieve_nuts3_population:
         input:
-            gz=http_storage(
-                NUTS3_POPULATION_DATASET["url"],
-            ),
+            gz=storage(NUTS3_POPULATION_DATASET["url"]),
         output:
             gz=f"{NUTS3_POPULATION_DATASET["folder"]}/nama_10r_3popgdp.tsv.gz",
         retries: 2
@@ -135,9 +116,7 @@ if (H2_SALT_CAVERNS_DATASET := dataset_version("h2_salt_caverns"))["source"] in 
 
     rule retrieve_h2_salt_caverns:
         input:
-            geojson=http_storage(
-                H2_SALT_CAVERNS_DATASET["url"],
-            ),
+            geojson=storage(H2_SALT_CAVERNS_DATASET["url"]),
         output:
             geojson=f"{H2_SALT_CAVERNS_DATASET["folder"]}/h2_salt_caverns_GWh_per_sqkm.geojson",
         retries: 2
@@ -151,9 +130,7 @@ if (GDP_PER_CAPITA_DATASET := dataset_version("gdp_per_capita"))["source"] in [
 
     rule retrieve_gdp_per_capita:
         input:
-            gdp=http_storage(
-                GDP_PER_CAPITA_DATASET["url"],
-            ),
+            gdp=storage(GDP_PER_CAPITA_DATASET["url"]),
         output:
             gdp=f"{GDP_PER_CAPITA_DATASET["folder"]}/GDP_per_capita_PPP_1990_2015_v2.nc",
         retries: 2
@@ -168,9 +145,7 @@ if (POPULATION_COUNT_DATASET := dataset_version("population_count"))["source"] i
 
     rule retrieve_population_count:
         input:
-            tif=http_storage(
-                POPULATION_COUNT_DATASET["url"],
-            ),
+            tif=storage(POPULATION_COUNT_DATASET["url"]),
         output:
             tif=f"{POPULATION_COUNT_DATASET["folder"]}/ppp_2019_1km_Aggregated.tif",
         retries: 2
@@ -195,9 +170,7 @@ if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
 
     rule retrieve_ghg_emissions:
         input:
-            ghg=http_storage(
-                GHG_EMISSIONS_DATASET["url"],
-            ),
+            ghg=storage(GHG_EMISSIONS_DATASET["url"]),
         output:
             csv=f"{GHG_EMISSIONS_DATASET["folder"]}/UNFCCC_v23.csv",
             zip=(
@@ -224,9 +197,7 @@ if (GEBCO_DATASET := dataset_version("gebco"))["source"] in ["archive", "primary
 
     rule retrieve_gebco:
         input:
-            http_storage(
-                GEBCO_DATASET["url"],
-            ),
+            storage(GEBCO_DATASET["url"]),
         output:
             gebco=f"{GEBCO_DATASET["folder"]}/GEBCO_2014_2D.nc",
             zip_file=(
@@ -259,9 +230,7 @@ if (ATTRIBUTED_PORTS_DATASET := dataset_version("attributed_ports"))["source"] i
 
     rule retrieve_attributed_ports:
         input:
-            json=http_storage(
-                ATTRIBUTED_PORTS_DATASET["url"],
-            ),
+            json=storage(ATTRIBUTED_PORTS_DATASET["url"]),
         output:
             json=f"{ATTRIBUTED_PORTS_DATASET["folder"]}/attributed_ports.json",
         retries: 2
@@ -276,7 +245,7 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
 
     rule retrieve_jrc_idees:
         input:
-            zip_file=http_storage(JRC_IDEES_DATASET["url"]),
+            zip_file=storage(JRC_IDEES_DATASET["url"]),
         output:
             zip_file=f"{JRC_IDEES_DATASET["folder"]}/jrc_idees.zip",
             directory=directory(f"{JRC_IDEES_DATASET["folder"]}"),
@@ -293,7 +262,7 @@ if (EU_NUTS2013_DATASET := dataset_version("eu_nuts2013"))["source"] in [
 
     rule retrieve_eu_nuts_2013:
         input:
-            shapes=http_storage(EU_NUTS2013_DATASET["url"]),
+            shapes=storage(EU_NUTS2013_DATASET["url"]),
         output:
             zip_file=f"{EU_NUTS2013_DATASET['folder']}/ref-nuts-2013-03m.geojson.zip",
             folder=directory(
@@ -313,9 +282,7 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
 
     rule retrieve_eu_nuts_2021:
         input:
-            shapes=http_storage(
-                EU_NUTS2021_DATASET["url"],
-            ),
+            shapes=storage(EU_NUTS2021_DATASET["url"]),
         output:
             zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
             folder=directory(
@@ -395,7 +362,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
     rule retrieve_cost_data:
         input:
-            costs=http_storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
+            costs=storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
             costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
         run:
@@ -408,7 +375,7 @@ if (POWERPLANTS_DATASET := dataset_version("powerplants"))["source"] in [
 
     rule retrieve_powerplants:
         input:
-            powerplants=http_storage(POWERPLANTS_DATASET["url"]),
+            powerplants=storage(POWERPLANTS_DATASET["url"]),
         output:
             powerplants=f"{POWERPLANTS_DATASET['folder']}/powerplants.csv",
         run:
@@ -422,7 +389,7 @@ if (SCIGRID_GAS_DATASET := dataset_version("scigrid_gas"))["source"] in [
 
     rule retrieve_gas_infrastructure_data:
         input:
-            zip_file=http_storage(SCIGRID_GAS_DATASET["url"]),
+            zip_file=storage(SCIGRID_GAS_DATASET["url"]),
         output:
             zip_file=f"{SCIGRID_GAS_DATASET["folder"]}/IGGIELGN.zip",
             entry=f"{SCIGRID_GAS_DATASET["folder"]}/data/IGGIELGN_BorderPoints.geojson",
@@ -461,9 +428,7 @@ if (
 
     rule retrieve_synthetic_electricity_demand:
         input:
-            csv=http_storage(
-                SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"],
-            ),
+            csv=storage(SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"]),
         output:
             csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET["folder"]}/load_synthetic_raw.csv",
         retries: 2
@@ -478,9 +443,7 @@ if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
 
     rule retrieve_ship_raster:
         input:
-            zip_file=http_storage(
-                SHIP_RASTER_DATASET["url"],
-            ),
+            zip_file=storage(SHIP_RASTER_DATASET["url"]),
         output:
             zip_file=f"{SHIP_RASTER_DATASET["folder"]}/shipdensity_global.zip",
         log:
@@ -499,9 +462,7 @@ if (ENSPRESO_BIOMASS_DATASET := dataset_version("enspreso_biomass"))["source"] i
 
     rule retrieve_enspreso_biomass:
         input:
-            xlsx=http_storage(
-                ENSPRESO_BIOMASS_DATASET["url"],
-            ),
+            xlsx=storage(ENSPRESO_BIOMASS_DATASET["url"]),
         output:
             xlsx=f"{ENSPRESO_BIOMASS_DATASET["folder"]}/ENSPRESO_BIOMASS.xlsx",
         retries: 1
@@ -518,9 +479,7 @@ if (HOTMAPS_INDUSTRIAL_SITES := dataset_version("hotmaps_industrial_sites"))[
 
     rule retrieve_hotmaps_industrial_sites:
         input:
-            csv=http_storage(
-                HOTMAPS_INDUSTRIAL_SITES["url"],
-            ),
+            csv=storage(HOTMAPS_INDUSTRIAL_SITES["url"]),
         output:
             csv=f"{HOTMAPS_INDUSTRIAL_SITES["folder"]}/Industrial_Database.csv",
         retries: 1
@@ -537,9 +496,7 @@ if (NITROGEN_STATISTICS_DATASET := dataset_version("nitrogen_statistics"))[
 
     rule retrieve_nitrogen_statistics:
         input:
-            xlsx=http_storage(
-                NITROGEN_STATISTICS_DATASET["url"],
-            ),
+            xlsx=storage(NITROGEN_STATISTICS_DATASET["url"]),
         output:
             xlsx=f"{NITROGEN_STATISTICS_DATASET['folder']}/nitro-ert.xlsx",
         retries: 1
@@ -555,9 +512,7 @@ if (COPERNICUS_LAND_COVER_DATASET := dataset_version("copernicus_land_cover"))[
     # Website: https://land.copernicus.eu/global/products/lc
     rule download_copernicus_land_cover:
         input:
-            tif=http_storage(
-                COPERNICUS_LAND_COVER_DATASET["url"],
-            ),
+            tif=storage(COPERNICUS_LAND_COVER_DATASET["url"]),
         output:
             tif=f"{COPERNICUS_LAND_COVER_DATASET["folder"]}/Copernicus_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif",
         run:
@@ -573,9 +528,7 @@ if (LUISA_LAND_COVER_DATASET := dataset_version("luisa_land_cover"))["source"] i
     # Website: https://ec.europa.eu/jrc/en/luisa
     rule retrieve_luisa_land_cover:
         input:
-            tif=http_storage(
-                LUISA_LAND_COVER_DATASET["url"],
-            ),
+            tif=storage(LUISA_LAND_COVER_DATASET["url"]),
         output:
             tif=f"{LUISA_LAND_COVER_DATASET["folder"]}/LUISA_basemap_020321_50m.tif",
         run:
@@ -627,9 +580,7 @@ if (WB_URB_POP_DATASET := dataset_version("worldbank_urban_population"))["source
 
     rule retrieve_worldbank_urban_population:
         input:
-            zip=http_storage(
-                WB_URB_POP_DATASET["url"],
-            ),
+            zip=storage(WB_URB_POP_DATASET["url"]),
         output:
             zip=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.zip",
             csv=f"{WB_URB_POP_DATASET['folder']}/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv",
@@ -655,9 +606,7 @@ if (CO2STOP_DATASET := dataset_version("co2stop"))["source"] in [
 
     rule retrieve_co2stop:
         input:
-            zip_file=http_storage(
-                CO2STOP_DATASET["url"],
-            ),
+            zip_file=storage(CO2STOP_DATASET["url"]),
         output:
             zip_file=f"{CO2STOP_DATASET['folder']}/co2jrc_openformats.zip",
             storage_table=f"{CO2STOP_DATASET['folder']}/CO2JRC_OpenFormats/CO2Stop_DataInterrogationSystem/Hydrocarbon_Storage_Units.csv",
@@ -680,7 +629,7 @@ if (GEM_EUROPE_GAS_TRACKER_DATASET := dataset_version("gem_europe_gas_tracker"))
 
     rule retrieve_gem_europe_gas_tracker:
         input:
-            xlsx=http_storage(GEM_EUROPE_GAS_TRACKER_DATASET["url"]),
+            xlsx=storage(GEM_EUROPE_GAS_TRACKER_DATASET["url"]),
         output:
             xlsx="data/gem/Europe-Gas-Tracker-2024-05.xlsx",
         run:
@@ -694,7 +643,7 @@ if (GEM_GSPT_DATASET := dataset_version("gem_gspt"))["source"] in [
 
     rule retrieve_gem_steel_plant_tracker:
         input:
-            xlsx=http_storage(GEM_GSPT_DATASET["url"]),
+            xlsx=storage(GEM_GSPT_DATASET["url"]),
         output:
             xlsx=f"{GEM_GSPT_DATASET['folder']}/Global-Steel-Plant-Tracker.xlsx",
         run:
@@ -710,7 +659,7 @@ if (BFS_ROAD_VEHICLE_STOCK_DATASET := dataset_version("bfs_road_vehicle_stock"))
 
     rule retrieve_bfs_road_vehicle_stock:
         input:
-            csv=http_storage(BFS_ROAD_VEHICLE_STOCK_DATASET["url"]),
+            csv=storage(BFS_ROAD_VEHICLE_STOCK_DATASET["url"]),
         output:
             csv=f"{BFS_ROAD_VEHICLE_STOCK_DATASET['folder']}/vehicle_stock.csv",
         run:
@@ -726,7 +675,7 @@ if (BFS_GDP_AND_POPULATION_DATASET := dataset_version("bfs_gdp_and_population"))
 
     rule retrieve_bfs_gdp_and_population:
         input:
-            xlsx=http_storage(BFS_GDP_AND_POPULATION_DATASET["url"]),
+            xlsx=storage(BFS_GDP_AND_POPULATION_DATASET["url"]),
         output:
             xlsx=f"{BFS_GDP_AND_POPULATION_DATASET['folder']}/gdp_and_population.xlsx",
         run:
@@ -781,7 +730,7 @@ if (WDPA_DATASET := dataset_version("wdpa"))["source"] in [
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule retrieve_wdpa:
         input:
-            zip_file=http_storage(get_wdpa_url(WDPA_DATASET)),
+            zip_file=storage(get_wdpa_url(WDPA_DATASET)),
         output:
             zip_file=f"{WDPA_DATASET['folder']}/WDPA_shp.zip",
             gpkg=f"{WDPA_DATASET['folder']}/WDPA.gpkg",
@@ -810,9 +759,7 @@ if (WDPA_MARINE_DATASET := dataset_version("wdpa_marine"))["source"] in [
         # extract the main zip and then merge the contained 3 zipped shapefiles
         # Website: https://www.protectedplanet.net/en/thematic-areas/marine-protected-areas
         input:
-            zip_file=http_storage(
-                get_wdpa_url(WDPA_MARINE_DATASET),
-            ),
+            zip_file=storage(get_wdpa_url(WDPA_MARINE_DATASET)),
         output:
             zip_file=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.zip",
             gpkg=f"{WDPA_MARINE_DATASET['folder']}/WDPA_WDOECM_marine.gpkg",
@@ -867,8 +814,8 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
 
     rule retrieve_tyndp:
         input:
-            line_data=http_storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
-            nodes=http_storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
+            line_data=storage(TYDNP_DATASET["url"] + "/Line-data.zip"),
+            nodes=storage(TYDNP_DATASET["url"] + "/Nodes.zip"),
         output:
             line_data_zip=f"{TYDNP_DATASET['folder']}/Line-data.zip",
             nodes_zip=f"{TYDNP_DATASET['folder']}/Nodes.zip",
@@ -971,7 +918,7 @@ elif NATURA_DATASET["source"] == "build":
 
     rule build_natura_raster:
         input:
-            online=http_storage(NATURA_DATASET["url"]),
+            online=storage(NATURA_DATASET["url"]),
             cutout=lambda w: input_cutout(w),
         output:
             zip=NATURA_DATASET["folder"] / "raw/natura.zip",
@@ -1031,9 +978,7 @@ if (
 
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
-            isi_heat_potentials=http_storage(
-                GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["url"]
-            ),
+            isi_heat_potentials=storage(GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["url"]),
         output:
             isi_heat_potentials=f"{GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["folder"]}/isi_heat_utilisation_potentials.xlsx",
         log:
@@ -1051,7 +996,7 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
 
     rule retrieve_lau_regions:
         input:
-            lau_regions=http_storage(LAU_REGIONS_DATASET["url"]),
+            lau_regions=storage(LAU_REGIONS_DATASET["url"]),
         output:
             zip=f"{LAU_REGIONS_DATASET['folder']}/lau_regions.zip",
         log:
@@ -1068,10 +1013,10 @@ if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
 
     rule retrieve_jrc_ardeco:
         input:
-            ardeco_gdp=http_storage(
+            ardeco_gdp=storage(
                 f"{JRC_ARDECO_DATASET["url"]}/SUVGDP?versions=2021&unit=EUR&format=csv-table"
             ),
-            ardeco_pop=http_storage(
+            ardeco_pop=storage(
                 f"{JRC_ARDECO_DATASET["url"]}/SNPTD?versions=2021&unit=EUR&format=csv-table"
             ),
         output:
@@ -1085,12 +1030,8 @@ elif (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in ["archiv
 
     rule retrieve_jrc_ardeco:
         input:
-            ardeco_gdp=http_storage(
-                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv"
-            ),
-            ardeco_pop=http_storage(
-                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv"
-            ),
+            ardeco_gdp=storage(f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv"),
+            ardeco_pop=storage(f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv"),
         output:
             ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
@@ -1107,7 +1048,7 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
 
     rule retrieve_aquifer_data_bgr:
         input:
-            zip_file=http_storage(AQUIFER_DATA_DATASET["url"]),
+            zip_file=storage(AQUIFER_DATA_DATASET["url"]),
         output:
             zip_file=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.zip",
             aquifer_shapes=expand(
@@ -1137,7 +1078,7 @@ if (DH_AREAS_DATASET := dataset_version("dh_areas"))["source"] in [
 
     rule retrieve_dh_areas:
         input:
-            dh_areas=http_storage(DH_AREAS_DATASET["url"]),
+            dh_areas=storage(DH_AREAS_DATASET["url"]),
         output:
             dh_areas=f"{DH_AREAS_DATASET['folder']}/dh_areas.gpkg",
         log:
@@ -1152,8 +1093,8 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
 
     rule retrieve_mobility_profiles:
         input:
-            kfz=http_storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
-            pkw=http_storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
+            kfz=storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
+            pkw=storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
         output:
             kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
             pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
