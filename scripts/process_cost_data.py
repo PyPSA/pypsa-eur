@@ -175,9 +175,9 @@ if __name__ == "__main__":
     # If the index is the unique pair (technology, parameter),
     # it can be easily overwritten.
     costs = pd.read_csv(snakemake.input.costs, index_col=[0, 1])
-    if snakemake.input.costs is not None:
+    if snakemake.input.custom_costs is not None:
         custom_costs = pd.read_csv(
-            snakemake.params.costs["custom_cost_fn"],
+            snakemake.input.custom_costs,
             dtype={"planning_horizon": "str"},
             index_col=[1, 2],  # 0 is planning_horizon
         ).query("planning_horizon in [@planning_horizon, 'all']")

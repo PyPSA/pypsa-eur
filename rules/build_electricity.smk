@@ -583,6 +583,7 @@ rule process_cost_data:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
         costs=resources("costs_{planning_horizons}.csv"),
+        custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
         resources("costs_{planning_horizons}_processed.csv"),
     log:
