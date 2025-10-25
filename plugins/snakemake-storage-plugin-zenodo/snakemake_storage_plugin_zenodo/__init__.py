@@ -30,7 +30,7 @@ from snakemake_interface_storage_plugins.storage_provider import (
     StorageProviderBase,
     StorageQueryValidationResult,
 )
-from tqdm import tqdm
+from tqdm_loggable.auto import tqdm
 
 logger = get_logger()
 
@@ -198,17 +198,24 @@ class StorageObject(StorageObjectRead):
         if exists:
             return ObjectState(exists=True, mtime=0, size=self._stat().st_size)
 
-        # Perform HEAD request with rate limit checking
-        try:
-            response = requests.head(str(self.query), allow_redirects=True, timeout=30)
-        except requests.RequestException as e:
-            raise WorkflowError(f"Failed to query {self.query} from Zenodo", e)
+        # Perform HEAD request with rate limit checking (snakemake does not retry head requests)
+        for i in range(3):
+            try:
+                response = requests.head(
+                    str(self.query), allow_redirects=True, timeout=30
+                )
+            except requests.RequestException as e:
+                raise WorkflowError(f"Failed to query {self.query} from Zenodo", e)
 
-        # Check rate limits
-        wait_time = self._get_rate_limit_wait_time(response.headers)
-        if wait_time is not None:
+            # Check rate limits
+            wait_time = self._get_rate_limit_wait_time(response.headers)
+            if wait_time is None:
+                break
+
+            logger.info(
+                f"Zenodo rate limit exceeded. Waiting {wait_time:.0f}s until reset..."
+            )
             time.sleep(wait_time)
-            raise WorkflowError("Rate limit exceeded, retrying after wait")
 
         exists = response.status_code == 200
         size = int(response.headers.get("content-length", 0)) if exists else 0
@@ -286,7 +293,8 @@ class StorageObject(StorageObjectRead):
             shutil.copy2(self.query_path, local_path)
             return
 
-        # Download from Zenodo using a get request, rate limit errors are handled and trigger a retry
+        # Download from Zenodo using a get request, rate limit errors are detected and
+        # raise WorkflowError to trigger a retry
         try:
             async with (
                 self.provider._download_semaphore,
