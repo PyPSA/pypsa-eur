@@ -37,7 +37,7 @@ logger = get_logger()
 
 def is_zenodo_url(url):
     parsed = urlparse(url)
-    return "zenodo.org" in parsed.netloc and parsed.scheme in ("http", "https")
+    return parsed.netloc.endswith("zenodo.org") and parsed.scheme in ("http", "https")
 
 
 # Patch the original HTTP StorageProvider off zenodo urls, so that there is no conflict
