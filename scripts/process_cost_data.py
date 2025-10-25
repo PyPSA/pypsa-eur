@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake("build_cost_data", planning_horizons=2030)
 
-    config = snakemake.config["costs"]
+    cost_params = snakemake.params["costs"]
 
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
@@ -192,6 +192,6 @@ if __name__ == "__main__":
         costs = costs.reset_index()
 
     # Prepare costs
-    costs_processed = prepare_costs(costs, config, snakemake.params.max_hours, nyears)
+    costs_processed = prepare_costs(costs, cost_params, snakemake.params.max_hours, nyears)
 
     costs_processed.to_csv(snakemake.output[0])
