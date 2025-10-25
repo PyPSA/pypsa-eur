@@ -19,8 +19,10 @@ storage:
     retries=5,
     max_requests_per_second=0.5,
 
+
 storage zenodo:
-    provider="zenodo"
+    provider="zenodo",
+
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
     "primary",
@@ -978,7 +980,9 @@ if (
 
     rule retrieve_geothermal_heat_utilisation_potentials:
         input:
-            isi_heat_potentials=storage(GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["url"]),
+            isi_heat_potentials=storage(
+                GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["url"]
+            ),
         output:
             isi_heat_potentials=f"{GEOTHERMAL_HEAT_UTILISATION_POTENTIALS_DATASET["folder"]}/isi_heat_utilisation_potentials.xlsx",
         log:
@@ -1026,12 +1030,17 @@ if (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in [
             for key in input.keys():
                 copy2(input[key], output[key])
 
+
 elif (JRC_ARDECO_DATASET := dataset_version("jrc_ardeco"))["source"] in ["archive"]:
 
     rule retrieve_jrc_ardeco:
         input:
-            ardeco_gdp=storage(f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv"),
-            ardeco_pop=storage(f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv"),
+            ardeco_gdp=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SUVGDP.2021.table.csv"
+            ),
+            ardeco_pop=storage(
+                f"{JRC_ARDECO_DATASET["url"]}/ARDECO-SNPTD.2021.table.csv"
+            ),
         output:
             ardeco_gdp=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SUVGDP.2021.table.csv",
             ardeco_pop=f"{JRC_ARDECO_DATASET["folder"]}/ARDECO-SNPTD.2021.table.csv",
