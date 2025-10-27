@@ -20,9 +20,9 @@ import snakemake_storage_plugin_http as http_base
 from reretry import retry
 from snakemake_interface_common.exceptions import WorkflowError
 from snakemake_interface_common.logging import get_logger
+from snakemake_interface_common.plugin_registry.plugin import SettingsBase
 from snakemake_interface_storage_plugins.common import Operation
 from snakemake_interface_storage_plugins.io import IOCacheStorageInterface, Mtime
-from snakemake_interface_storage_plugins.settings import StorageProviderSettingsBase
 from snakemake_interface_storage_plugins.storage_object import StorageObjectRead
 from snakemake_interface_storage_plugins.storage_provider import (
     ExampleQuery,
@@ -75,8 +75,10 @@ http_base.StorageProvider.is_valid_query = classmethod(
 
 
 # Define settings for the Zenodo storage plugin
+# NB: We derive from SettingsBase rather than StorageProviderSettingsBase to remove the
+# unsupported max_requests_per_second option
 @dataclass
-class StorageProviderSettings(StorageProviderSettingsBase):
+class StorageProviderSettings(SettingsBase):
     skip_remote_checks: bool = field(
         default=False,
         metadata={
@@ -241,15 +243,12 @@ class StorageProvider(StorageProviderBase):
             return None
 
         wait_seconds = max(0, reset_time - time.time() + 1)
-        logger.info(
-            f"Zenodo rate limit exceeded. Waiting {wait_seconds:.0f}s until reset..."
-        )
         return wait_seconds
 
     @asynccontextmanager
     async def httpr(self, method: str, url: str):
         """
-        HTTP request wrapper with rate limiting and semaphore control.
+        HTTP request wrapper with rate limiting and exception logging.
 
         Args:
             method: HTTP method (e.g., "get", "post")
@@ -262,6 +261,9 @@ class StorageProvider(StorageProviderBase):
             async with self.client() as client, client.stream(method, url) as response:
                 wait_time = self._get_rate_limit_wait_time(response.headers)
                 if wait_time is not None:
+                    logger.info(
+                        f"Zenodo rate limit exceeded. Waiting {wait_time:.0f}s until reset..."
+                    )
                     await asyncio.sleep(wait_time)
                     raise httpx.HTTPError("Rate limit exceeded, retrying after wait")
 
@@ -381,6 +383,8 @@ class StorageObject(StorageObjectRead):
 
         metadata = await self.provider.get_metadata(self.record_id, self.netloc)
         return metadata[self.filename].size if self.filename in metadata else 0
+
+    managed_local_footprint = managed_size
 
     async def inventory(self, cache: IOCacheStorageInterface) -> None:
         """
