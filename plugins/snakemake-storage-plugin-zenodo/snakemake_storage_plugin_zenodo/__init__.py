@@ -292,28 +292,24 @@ class StorageProvider(StorageProviderBase):
             content = await response.aread()
             data = json.loads(content)
 
-            # Parse files array and build metadata dict
-            metadata = {}
-            files = data.get("files", [])
-            for file_info in files:
-                filename = file_info.get("key")
-                checksum_str = file_info.get("checksum", "")
-                size = file_info.get("size", 0)
+        # Parse files array and build metadata dict
+        metadata = {}
+        files = data.get("files", [])
+        for file_info in files:
+            filename = file_info.get("key")
+            checksum = file_info.get("checksum", "")
+            size = file_info.get("size", 0)
 
-                if not filename:
-                    continue
+            if not filename:
+                continue
 
-                md5sum = (
-                    checksum_str[4:].lower()
-                    if checksum_str.startswith("md5:")
-                    else None
-                )
-                metadata[filename] = ZenodoFileMetadata(md5sum=md5sum, size=size)
+            md5sum = checksum[4:].lower() if checksum.startswith("md5:") else None
+            metadata[filename] = ZenodoFileMetadata(md5sum=md5sum, size=size)
 
-            # Store in cache
-            self._record_cache[record_id] = metadata
+        # Store in cache
+        self._record_cache[record_id] = metadata
 
-            return metadata
+        return metadata
 
 
 # Implementation of storage object
