@@ -27,8 +27,8 @@ Outputs
 import logging
 import warnings
 
-import pypsa
 import pandas as pd
+import pypsa
 
 from scripts.add_electricity import calculate_annuity
 
