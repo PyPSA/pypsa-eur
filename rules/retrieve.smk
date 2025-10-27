@@ -22,7 +22,6 @@ storage:
 
 storage zenodo:
     provider="zenodo",
-    retries=3,
 
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [

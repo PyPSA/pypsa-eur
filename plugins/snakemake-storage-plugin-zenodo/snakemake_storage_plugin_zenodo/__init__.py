@@ -3,21 +3,21 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
+import hashlib
 import os
 import shutil
 import time
 from collections.abc import Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from functools import cached_property
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import aiohttp
 import platformdirs
-import requests
 import snakemake_storage_plugin_http as http_base
+from reretry import retry
 from snakemake_interface_common.exceptions import WorkflowError
 from snakemake_interface_common.logging import get_logger
 from snakemake_interface_storage_plugins.common import Operation
@@ -74,6 +74,30 @@ class StorageProviderSettings(StorageProviderSettingsBase):
     )
 
 
+@dataclass
+class ZenodoFileMetadata:
+    """Metadata for a file in a Zenodo record."""
+
+    md5sum: str
+    size: int
+
+
+class WrongChecksum(Exception):
+    def __init__(self, observed: str, expected: str):
+        self.observed = observed
+        self.expected = expected
+        super().__init__(f"Checksum mismatch: expected {expected}, got {observed}")
+
+
+retry_decorator = retry(
+    exceptions=(aiohttp.ClientError, asyncio.TimeoutError, OSError, WrongChecksum),
+    tries=3,
+    delay=3,
+    backoff=2,
+    logger=get_logger(),
+)
+
+
 # Implementation of storage provider
 class StorageProvider(StorageProviderBase):
     def __post_init__(self):
@@ -91,6 +115,9 @@ class StorageProvider(StorageProviderBase):
         # Initialize session tracking
         self._session: aiohttp.ClientSession | None = None
         self._session_refcount: int = 0
+
+        # Cache for Zenodo record metadata to avoid repeated API calls
+        self._record_cache: dict[str, dict[str, ZenodoFileMetadata]] = {}
 
     def use_rate_limiter(self) -> bool:
         """Return False if no rate limiting is needed for this provider."""
@@ -164,75 +191,6 @@ class StorageProvider(StorageProviderBase):
                 await self._session.close()
                 self._session = None
 
-
-@dataclass
-class ObjectState:
-    exists: bool
-    mtime: float
-    size: int
-
-
-# Implementation of storage object
-class StorageObject(StorageObjectRead):
-    def __post_init__(self):
-        super().__post_init__()
-        self.query_path: Path = self.provider.cache_dir / self.local_suffix()
-        self.query_path.parent.mkdir(exist_ok=True, parents=True)
-
-    def local_suffix(self):
-        parsed = urlparse(self.query)
-        return f"{parsed.netloc}{parsed.path}"
-
-    def get_inventory_parent(self) -> str | None:
-        """Return the parent directory of this object."""
-        # this is optional and can be left as is
-        return None
-
-    def _stat(self, follow_symlinks: bool = True):
-        """Get file stats, bypassing Path.stat() cache"""
-        return os.stat(self.query_path, follow_symlinks=follow_symlinks)
-
-    @cached_property
-    def state(self) -> ObjectState:
-        exists = self.query_path.exists()
-        if exists:
-            return ObjectState(exists=True, mtime=0, size=self._stat().st_size)
-
-        # Perform HEAD request with rate limit checking (snakemake does not retry head requests)
-        for i in range(3):
-            try:
-                response = requests.head(
-                    str(self.query), allow_redirects=True, timeout=30
-                )
-            except requests.RequestException as e:
-                raise WorkflowError(f"Failed to query {self.query} from Zenodo", e)
-
-            # Check rate limits
-            wait_time = self._get_rate_limit_wait_time(response.headers)
-            if wait_time is None:
-                break
-
-            logger.info(
-                f"Zenodo rate limit exceeded. Waiting {wait_time:.0f}s until reset..."
-            )
-            time.sleep(wait_time)
-
-        exists = response.status_code == 200
-        size = int(response.headers.get("content-length", 0)) if exists else 0
-        return ObjectState(exists=exists, mtime=0, size=size)
-
-    def exists(self) -> bool:
-        # return True if the object exists
-        return self.state.exists
-
-    def mtime(self) -> float:
-        # return the modification time
-        return self.state.mtime
-
-    def size(self) -> int:
-        # return the size in bytes
-        return self.state.size
-
     def _get_rate_limit_wait_time(self, headers) -> float | None:
         """
         Calculate wait time based on rate limit headers.
@@ -252,62 +210,211 @@ class StorageObject(StorageObjectRead):
         )
         return wait_seconds
 
+    @retry_decorator
+    async def get_metadata(
+        self, record_id: str, netloc: str
+    ) -> dict[str, ZenodoFileMetadata]:
+        """
+        Retrieve and cache file metadata for a Zenodo record.
+
+        Args:
+            record_id: The Zenodo record ID
+            netloc: Network location (e.g., "zenodo.org")
+
+        Returns:
+            Dictionary mapping filename to ZenodoFileMetadata
+        """
+        # Check cache first
+        if record_id in self._record_cache:
+            return self._record_cache[record_id]
+
+        # Fetch from API
+        api_url = f"https://{netloc}/api/records/{record_id}"
+
+        async with self.httpr("get", api_url) as response:
+            if response.status != 200:
+                raise WorkflowError(
+                    f"Failed to fetch Zenodo record metadata: HTTP {response.status}"
+                )
+
+            data = await response.json()
+
+            # Parse files array and build metadata dict
+            files_metadata = {}
+            files = data.get("files", [])
+            for file_info in files:
+                filename = file_info.get("key")
+                checksum_str = file_info.get("checksum", "")
+                size = file_info.get("size", 0)
+
+                if not filename:
+                    continue
+
+                # Parse MD5 checksum
+                if checksum_str.startswith("md5:"):
+                    md5sum = checksum_str[4:].lower()
+                    files_metadata[filename] = ZenodoFileMetadata(
+                        md5sum=md5sum, size=size
+                    )
+
+            # Store in cache
+            self._record_cache[record_id] = files_metadata
+
+            return files_metadata
+
+    @asynccontextmanager
+    async def httpr(self, method, url):
+        async with (
+            self._download_semaphore,
+            self.session() as session,
+            session.request(method, url, allow_redirects=True) as response,
+        ):
+            wait_time = self._get_rate_limit_wait_time(response.headers)
+            if wait_time is not None:
+                await asyncio.sleep(wait_time)
+                raise aiohttp.ClientError("Rate limit exceeded, retrying after wait")
+
+            yield response
+
+
+# Implementation of storage object
+class StorageObject(StorageObjectRead):
+    def __post_init__(self):
+        super().__post_init__()
+        self.query_path: Path = self.provider.cache_dir / self.local_suffix()
+        self.query_path.parent.mkdir(exist_ok=True, parents=True)
+
+        # Parse URL to extract record ID and filename
+        # URL format: https://zenodo.org/records/{record_id}/files/{filename}
+        parsed = urlparse(str(self.query))
+        _records, record_id, _files, filename = parsed.path.strip("/").split(
+            "/", maxsplit=3
+        )
+
+        if _records != "records" or _files != "files":
+            raise WorkflowError(
+                f"Invalid Zenodo URL format: {self.query}. "
+                "Expected format: https://zenodo.org/records/{{record_id}}/files/{{filename}}"
+            )
+
+        self.record_id = record_id
+        self.filename = filename
+        self.netloc = parsed.netloc
+
+    def local_suffix(self):
+        parsed = urlparse(self.query)
+        return f"{parsed.netloc}{parsed.path}"
+
+    def get_inventory_parent(self) -> str | None:
+        """Return the parent directory of this object."""
+        # this is optional and can be left as is
+        return None
+
+    def _stat(self, follow_symlinks: bool = True):
+        """Get file stats, bypassing Path.stat() cache"""
+        return os.stat(self.query_path, follow_symlinks=follow_symlinks)
+
+    async def managed_exists(self) -> bool:
+        exists = self.query_path.exists()
+        if exists:
+            return True
+
+        metadata = await self.provider.get_metadata(self.record_id, self.netloc)
+        return self.filename in metadata
+
+    async def managed_mtime(self) -> float:
+        return 0
+
+    async def managed_size(self) -> int:
+        exists = self.query_path.exists()
+        if exists:
+            return self.query_path.stat().st_size
+
+        metadata = await self.provider.get_metadata(self.record_id, self.netloc)
+        return metadata[self.filename].size if self.filename in metadata else 0
+
     async def inventory(self, cache: IOCacheStorageInterface):
         """
         Gather file metadata (existence, size) from cache or remote.
         Checks local cache first, then queries remote if needed.
         """
         key = self.cache_key()
-
         if key in cache.exists_in_storage:
             # Already inventorized
             return
 
-        state = self.state
-        cache.exists_in_storage[key] = state.exists
-        cache.mtime[key] = Mtime(storage=state.mtime)
-        cache.size[key] = state.size
+        exists = self.query_path.exists()
+        if exists:
+            cache.exists_in_storage[key] = exists
+            cache.mtime[key] = 0
+            cache.size[key] = self.query_path.stat().st_size
+            return
+
+        metadata = await self.provider.get_metadata(self.record_id, self.netloc)
+        exists = self.filename in metadata
+        cache.exists_in_storage[key] = exists
+        cache.mtime[key] = Mtime(storage=0)
+        cache.size[key] = metadata[self.filename].size if exists else 0
 
     def cleanup(self):
         """Nothing to cleanup"""
         pass
 
+    def exists(self):
+        raise NotImplementedError()
+
+    def size(self):
+        raise NotImplementedError()
+
+    def mtime(self):
+        raise NotImplementedError()
+
     def retrieve_object(self):
         return NotImplementedError()
 
+    async def verify_checksum(self, path: Path):
+        """
+        Fetch the MD5 checksum for this file from the Zenodo API.
+
+        Uses the provider's caching mechanism to avoid repeated API calls
+        for files from the same record.
+
+        Raises:
+            WrongChecksum
+        """
+        # Get cached or fetch record metadata
+        metadata = await self.provider.get_metadata(self.record_id, self.netloc)
+        if self.filename not in metadata:
+            raise WorkflowError(
+                f"File {self.filename} not found in Zenodo record {self.record_id}"
+            )
+
+        checksum_expected = metadata[self.filename].md5sum
+        with open(path, "rb") as f:
+            checksum_observed = hashlib.file_digest(f, "md5").hexdigest().lower()
+
+        if checksum_expected != checksum_observed:
+            raise WrongChecksum(observed=checksum_observed, expected=checksum_expected)
+
+    @retry_decorator
     async def managed_retrieve(self):
         """Async download with concurrency control and progress bar"""
         local_path = self.local_path()
-
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # If already in cache, copy from cache
+        # If already in cache, verify checksum and copy
         if self.query_path.exists():
-            # Extract record ID and filename from URL
-            parsed = urlparse(str(self.query))
-            path_parts = parsed.path.strip("/").split("/")
-            record_id = path_parts[1] if len(path_parts) > 1 else "unknown"
-            filename = self.query_path.name
-
-            logger.info(f"Retrieved {filename} of zenodo record {record_id} from cache")
+            # Verify cached file checksum
+            logger.info(
+                f"Retrieved {self.filename} of zenodo record {self.record_id} from cache"
+            )
             shutil.copy2(self.query_path, local_path)
             return
 
-        # Download from Zenodo using a get request, rate limit errors are detected and
-        # raise WorkflowError to trigger a retry
         try:
-            async with (
-                self.provider._download_semaphore,
-                self.provider.session() as session,
-                session.get(str(self.query), allow_redirects=True) as response,
-            ):
-                wait_time = self._get_rate_limit_wait_time(response.headers)
-                if wait_time is not None:
-                    await asyncio.sleep(wait_time)
-                    raise aiohttp.ClientError(
-                        "Rate limit exceeded, retrying after wait"
-                    )
-
+            # Download from Zenodo using a get request, rate limit errors are detected and
+            # raise WorkflowError to trigger a retry
+            async with self.provider.httpr("get", str(self.query)) as response:
                 if response.status != 200:
                     raise WorkflowError(
                         f"Failed to download from Zenodo: HTTP {response.status}"
@@ -329,13 +436,15 @@ class StorageObject(StorageObjectRead):
                             f.write(chunk)
                             pbar.update(len(chunk))
 
-                self.query_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(local_path, self.query_path)
-                logger.info(
-                    f"Cached {self.query_path.name} to {self.provider.cache_dir}"
-                )
-        except (aiohttp.ClientError, asyncio.TimeoutError, OSError) as e:
+            await self.verify_checksum(local_path)
+
+            # Copy to cache after successful verification
+            self.query_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(local_path, self.query_path)
+            logger.info(f"Cached {self.query_path.name} to {self.provider.cache_dir}")
+
+        except (aiohttp.ClientError, asyncio.TimeoutError, OSError, WrongChecksum):
             # Clean up partial downloads on network or file system errors
             if local_path.exists():
                 local_path.unlink()
-            raise WorkflowError(f"Failed to retrieve {self.query} from Zenodo", e)
+            raise
