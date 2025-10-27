@@ -4,6 +4,7 @@
 
 import asyncio
 import hashlib
+import json
 import os
 import shutil
 import time
@@ -14,7 +15,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import aiohttp
+import httpx
 import platformdirs
 import snakemake_storage_plugin_http as http_base
 from reretry import retry
@@ -33,6 +34,27 @@ from snakemake_interface_storage_plugins.storage_provider import (
 from tqdm_loggable.auto import tqdm
 
 logger = get_logger()
+
+
+class ReretryLoggerAdapter:
+    """Adapter to make Snakemake's logger compatible with reretry's logging expectations."""
+
+    def __init__(self, snakemake_logger):
+        self._logger = snakemake_logger
+
+    def warning(self, msg, *args, **kwargs):
+        """
+        Format message manually before passing to Snakemake logger.
+
+        This is necessary because Snakemake's DefaultFormatter has a bug where
+        it returns record["msg"] directly for non-special events, without calling
+        getMessage() to interpolate the args. This causes literal "%s" to appear
+        in log output instead of formatted values.
+        """
+        if args:
+            # Pre-format the message with % operator
+            msg = msg % args
+        self._logger.warning(msg)
 
 
 def is_zenodo_url(url):
@@ -78,7 +100,7 @@ class StorageProviderSettings(StorageProviderSettingsBase):
 class ZenodoFileMetadata:
     """Metadata for a file in a Zenodo record."""
 
-    md5sum: str
+    md5sum: str | None
     size: int
 
 
@@ -90,11 +112,17 @@ class WrongChecksum(Exception):
 
 
 retry_decorator = retry(
-    exceptions=(aiohttp.ClientError, asyncio.TimeoutError, OSError, WrongChecksum),
-    tries=3,
+    exceptions=(
+        httpx.HTTPError,
+        TimeoutError,
+        OSError,
+        WrongChecksum,
+        WorkflowError,
+    ),
+    tries=5,
     delay=3,
     backoff=2,
-    logger=get_logger(),
+    logger=ReretryLoggerAdapter(get_logger()),
 )
 
 
@@ -107,14 +135,9 @@ class StorageProvider(StorageProviderBase):
         self.cache_dir = Path(self.settings.cache)
         self.cache_dir.mkdir(exist_ok=True, parents=True)
 
-        # Create semaphore for limiting concurrent downloads
-        self._download_semaphore: asyncio.Semaphore = asyncio.Semaphore(
-            int(self.settings.max_concurrent_downloads)
-        )
-
         # Initialize session tracking
-        self._session: aiohttp.ClientSession | None = None
-        self._session_refcount: int = 0
+        self._client: httpx.AsyncClient | None = None
+        self._client_refcount: int = 0
 
         # Cache for Zenodo record metadata to avoid repeated API calls
         self._record_cache: dict[str, dict[str, ZenodoFileMetadata]] = {}
@@ -160,36 +183,40 @@ class StorageProvider(StorageProviderBase):
         raise NotImplementedError()
 
     @asynccontextmanager
-    async def session(self):
+    async def client(self):
         """
-        Reentrant async context manager for aiohttp.ClientSession.
+        Reentrant async context manager for httpx.AsyncClient.
 
-        Creates a session on first entry and reuses it for nested calls.
-        The session is closed only when all context managers have exited.
+        Creates a client on first entry and reuses it for nested calls.
+        The client is closed only when all context managers have exited.
 
         Usage:
-            async with (
-                provider.session() as session,
-                session.get(url) as response
-            ):
-                    ...
+            async with provider.client() as client:
+                response = await client.get(url)
+                ...
         """
-        # Increment reference count
-        self._session_refcount += 1
+        self._client_refcount += 1
 
-        # Create session on first entry
-        if self._session is None:
-            self._session = aiohttp.ClientSession()
+        # Create client on first entry
+        if self._client is None:
+            max_concurrent_downloads = self.settings.max_concurrent_downloads
+            limits = httpx.Limits(
+                max_keepalive_connections=max_concurrent_downloads,
+                max_connections=max_concurrent_downloads,
+            )
+            timeout = httpx.Timeout(60, pool=None)
+
+            self._client = httpx.AsyncClient(
+                follow_redirects=True, limits=limits, timeout=timeout
+            )
 
         try:
-            yield self._session
+            yield self._client
         finally:
-            # Decrement reference count
-            self._session_refcount -= 1
-            # Close session when no more references
-            if self._session_refcount == 0:
-                await self._session.close()
-                self._session = None
+            self._client_refcount -= 1
+            if self._client_refcount == 0:
+                await self._client.aclose()
+                self._client = None
 
     def _get_rate_limit_wait_time(self, headers) -> float | None:
         """
@@ -209,6 +236,30 @@ class StorageProvider(StorageProviderBase):
             f"Zenodo rate limit exceeded. Waiting {wait_seconds:.0f}s until reset..."
         )
         return wait_seconds
+
+    @asynccontextmanager
+    async def httpr(self, method: str, url: str):
+        """
+        HTTP request wrapper with rate limiting and semaphore control.
+
+        Args:
+            method: HTTP method (e.g., "get", "post")
+            url: URL to request
+
+        Yields:
+            httpx.Response object
+        """
+        try:
+            async with self.client() as client, client.stream(method, url) as response:
+                wait_time = self._get_rate_limit_wait_time(response.headers)
+                if wait_time is not None:
+                    await asyncio.sleep(wait_time)
+                    raise httpx.HTTPError("Rate limit exceeded, retrying after wait")
+
+                yield response
+        except Exception as e:
+            logger.warning(f"{type(e).__name__} while {method}'ing {url}")
+            raise
 
     @retry_decorator
     async def get_metadata(
@@ -232,15 +283,17 @@ class StorageProvider(StorageProviderBase):
         api_url = f"https://{netloc}/api/records/{record_id}"
 
         async with self.httpr("get", api_url) as response:
-            if response.status != 200:
+            if response.status_code != 200:
                 raise WorkflowError(
-                    f"Failed to fetch Zenodo record metadata: HTTP {response.status}"
+                    f"Failed to fetch Zenodo record metadata: HTTP {response.status_code} ({api_url})"
                 )
 
-            data = await response.json()
+            # Read the full response body
+            content = await response.aread()
+            data = json.loads(content)
 
             # Parse files array and build metadata dict
-            files_metadata = {}
+            metadata = {}
             files = data.get("files", [])
             for file_info in files:
                 filename = file_info.get("key")
@@ -250,31 +303,17 @@ class StorageProvider(StorageProviderBase):
                 if not filename:
                     continue
 
-                # Parse MD5 checksum
-                if checksum_str.startswith("md5:"):
-                    md5sum = checksum_str[4:].lower()
-                    files_metadata[filename] = ZenodoFileMetadata(
-                        md5sum=md5sum, size=size
-                    )
+                md5sum = (
+                    checksum_str[4:].lower()
+                    if checksum_str.startswith("md5:")
+                    else None
+                )
+                metadata[filename] = ZenodoFileMetadata(md5sum=md5sum, size=size)
 
             # Store in cache
-            self._record_cache[record_id] = files_metadata
+            self._record_cache[record_id] = metadata
 
-            return files_metadata
-
-    @asynccontextmanager
-    async def httpr(self, method, url):
-        async with (
-            self._download_semaphore,
-            self.session() as session,
-            session.request(method, url, allow_redirects=True) as response,
-        ):
-            wait_time = self._get_rate_limit_wait_time(response.headers)
-            if wait_time is not None:
-                await asyncio.sleep(wait_time)
-                raise aiohttp.ClientError("Rate limit exceeded, retrying after wait")
-
-            yield response
+            return metadata
 
 
 # Implementation of storage object
@@ -333,7 +372,7 @@ class StorageObject(StorageObjectRead):
         metadata = await self.provider.get_metadata(self.record_id, self.netloc)
         return metadata[self.filename].size if self.filename in metadata else 0
 
-    async def inventory(self, cache: IOCacheStorageInterface):
+    async def inventory(self, cache: IOCacheStorageInterface) -> None:
         """
         Gather file metadata (existence, size) from cache or remote.
         Checks local cache first, then queries remote if needed.
@@ -372,7 +411,7 @@ class StorageObject(StorageObjectRead):
     def retrieve_object(self):
         return NotImplementedError()
 
-    async def verify_checksum(self, path: Path):
+    async def verify_checksum(self, path: Path) -> None:
         """
         Fetch the MD5 checksum for this file from the Zenodo API.
 
@@ -390,8 +429,15 @@ class StorageObject(StorageObjectRead):
             )
 
         checksum_expected = metadata[self.filename].md5sum
-        with open(path, "rb") as f:
-            checksum_observed = hashlib.file_digest(f, "md5").hexdigest().lower()
+        if checksum_expected is None:
+            return
+
+        # Compute checksum asynchronously (hashlib releases GIL)
+        def compute_hash():
+            with open(path, "rb") as f:
+                return hashlib.file_digest(f, "md5").hexdigest().lower()
+
+        checksum_observed = await asyncio.to_thread(compute_hash)
 
         if checksum_expected != checksum_observed:
             raise WrongChecksum(observed=checksum_observed, expected=checksum_expected)
@@ -415,9 +461,9 @@ class StorageObject(StorageObjectRead):
             # Download from Zenodo using a get request, rate limit errors are detected and
             # raise WorkflowError to trigger a retry
             async with self.provider.httpr("get", str(self.query)) as response:
-                if response.status != 200:
+                if response.status_code != 200:
                     raise WorkflowError(
-                        f"Failed to download from Zenodo: HTTP {response.status}"
+                        f"Failed to download from Zenodo: HTTP {response.status_code} ({self.query})"
                     )
 
                 total_size = int(response.headers.get("content-length", 0))
@@ -432,7 +478,7 @@ class StorageObject(StorageObjectRead):
                         position=None,
                         leave=True,
                     ) as pbar:
-                        async for chunk in response.content.iter_chunked(8192):
+                        async for chunk in response.aiter_bytes(chunk_size=8192):
                             f.write(chunk)
                             pbar.update(len(chunk))
 
@@ -443,8 +489,7 @@ class StorageObject(StorageObjectRead):
             shutil.copy2(local_path, self.query_path)
             logger.info(f"Cached {self.query_path.name} to {self.provider.cache_dir}")
 
-        except (aiohttp.ClientError, asyncio.TimeoutError, OSError, WrongChecksum):
-            # Clean up partial downloads on network or file system errors
+        except:
             if local_path.exists():
                 local_path.unlink()
             raise
