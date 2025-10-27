@@ -101,6 +101,9 @@ jobs:
         curl -Iv https://zenodo.org/records/17249457/files/ARDECO-SNPTD.2021.table.csv
 
     - name: Run snakemake test workflows
+      env:
+        SNAKEMAKE_STORAGE_ZENODO_CACHE: ""
+        SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS: "1"
       run: |
         make test
 

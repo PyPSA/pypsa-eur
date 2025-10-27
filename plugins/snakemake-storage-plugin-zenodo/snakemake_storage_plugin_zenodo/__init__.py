@@ -5,7 +5,6 @@
 import asyncio
 import hashlib
 import json
-import os
 import shutil
 import time
 from collections.abc import Iterable
@@ -78,13 +77,20 @@ http_base.StorageProvider.is_valid_query = classmethod(
 # Define settings for the Zenodo storage plugin
 @dataclass
 class StorageProviderSettings(StorageProviderSettingsBase):
-    cache: Path = field(
-        default_factory=lambda: Path(
-            platformdirs.user_cache_dir("snakemake-pypsa-eur", ensure_exists=False)
+    skip_remote_checks: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to skip metadata checking with zenodo (default: False, ie. do check)",
+            "env_var": True,
+        },
+    )
+    cache: str = field(
+        default_factory=lambda: platformdirs.user_cache_dir(
+            "snakemake-pypsa-eur", ensure_exists=False
         ),
         metadata={
             "help": "Cache directory for downloaded Zenodo files (default: platform-dependent user cache dir)",
-            "env_var": False,
+            "env_var": True,
         },
     )
     max_concurrent_downloads: int | None = field(
@@ -132,8 +138,11 @@ class StorageProvider(StorageProviderBase):
         super().__post_init__()
 
         # Set up cache directory
-        self.cache_dir = Path(self.settings.cache)
-        self.cache_dir.mkdir(exist_ok=True, parents=True)
+        if self.settings.cache:
+            self.cache_dir = Path(self.settings.cache)
+            self.cache_dir.mkdir(exist_ok=True, parents=True)
+        else:
+            self.cache_dir = None
 
         # Initialize session tracking
         self._client: httpx.AsyncClient | None = None
@@ -316,8 +325,11 @@ class StorageProvider(StorageProviderBase):
 class StorageObject(StorageObjectRead):
     def __post_init__(self):
         super().__post_init__()
-        self.query_path: Path = self.provider.cache_dir / self.local_suffix()
-        self.query_path.parent.mkdir(exist_ok=True, parents=True)
+        if self.provider.cache_dir is not None:
+            self.query_path: Path = self.provider.cache_dir / self.local_suffix()
+            self.query_path.parent.mkdir(exist_ok=True, parents=True)
+        else:
+            self.query_path = None
 
         # Parse URL to extract record ID and filename
         # URL format: https://zenodo.org/records/{record_id}/files/{filename}
@@ -345,12 +357,11 @@ class StorageObject(StorageObjectRead):
         # this is optional and can be left as is
         return None
 
-    def _stat(self, follow_symlinks: bool = True):
-        """Get file stats, bypassing Path.stat() cache"""
-        return os.stat(self.query_path, follow_symlinks=follow_symlinks)
-
     async def managed_exists(self) -> bool:
-        exists = self.query_path.exists()
+        if self.provider.settings.skip_remote_checks:
+            return True
+
+        exists = self.query_path and self.query_path.exists()
         if exists:
             return True
 
@@ -361,7 +372,10 @@ class StorageObject(StorageObjectRead):
         return 0
 
     async def managed_size(self) -> int:
-        exists = self.query_path.exists()
+        if self.provider.settings.skip_remote_checks:
+            return 0
+
+        exists = self.query_path and self.query_path.exists()
         if exists:
             return self.query_path.stat().st_size
 
@@ -378,7 +392,13 @@ class StorageObject(StorageObjectRead):
             # Already inventorized
             return
 
-        exists = self.query_path.exists()
+        if self.provider.settings.skip_remote_checks:
+            cache.exists_in_storage[key] = True
+            cache.mtime[key] = 0
+            cache.size[key] = 0
+            return
+
+        exists = self.query_path and self.query_path.exists()
         if exists:
             cache.exists_in_storage[key] = exists
             cache.mtime[key] = 0
@@ -444,8 +464,8 @@ class StorageObject(StorageObjectRead):
         local_path = self.local_path()
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # If already in cache, verify checksum and copy
-        if self.query_path.exists():
+        # If already in cache, just copy
+        if self.query_path and self.query_path.exists():
             # Verify cached file checksum
             logger.info(
                 f"Retrieved {self.filename} of zenodo record {self.record_id} from cache"
@@ -470,7 +490,7 @@ class StorageObject(StorageObjectRead):
                         total=total_size,
                         unit="B",
                         unit_scale=True,
-                        desc=self.query_path.name,
+                        desc=self.filename,
                         position=None,
                         leave=True,
                     ) as pbar:
@@ -481,9 +501,10 @@ class StorageObject(StorageObjectRead):
             await self.verify_checksum(local_path)
 
             # Copy to cache after successful verification
-            self.query_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(local_path, self.query_path)
-            logger.info(f"Cached {self.query_path.name} to {self.provider.cache_dir}")
+            if self.query_path:
+                self.query_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(local_path, self.query_path)
+                logger.info(f"Cached {self.filename} to {self.provider.cache_dir}")
 
         except:
             if local_path.exists():
