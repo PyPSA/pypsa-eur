@@ -27,8 +27,8 @@ Outputs
 import logging
 import warnings
 
+import pypsa
 import pandas as pd
-from _helpers import get_snapshots
 
 from scripts.add_electricity import calculate_annuity
 
@@ -165,10 +165,8 @@ if __name__ == "__main__":
 
     cost_params = snakemake.params["costs"]
 
-    snapshots = get_snapshots(
-        snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
-    )
-    nyears = (snapshots[-1] - snapshots[0]) / pd.Timedelta(hours=1) / 8760.0
+    n = pypsa.Network(snakemake.input.network)
+    nyears = n.snapshot_weightings.generators.sum() / 8760.0
     planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions

@@ -579,9 +579,8 @@ rule process_cost_data:
     params:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
-        snapshots=config_provider("snapshots"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
     input:
+        network=resources("networks/base_s.nc"),
         costs=resources("costs_{planning_horizons}.csv"),
         custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
