@@ -52,7 +52,11 @@ dependencies:
 - pyxlsb
 - graphviz
 - geojson
+- copernicusmarine
 - pyscipopt
+- plotly
+- bokeh
+- folium
 
 # GIS dependencies:
 - cartopy
