@@ -168,7 +168,7 @@ if __name__ == "__main__":
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day, tz="UTC"
     )
-    nyears = len(snapshots) / 8760
+    nyears = (snapshots[-1] - snapshots[0]) / pd.Timedelta(hours=1) / 8760.0
     planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions
