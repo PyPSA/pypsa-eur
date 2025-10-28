@@ -110,7 +110,7 @@ class StorageProviderSettings(SettingsBase):
 class ZenodoFileMetadata:
     """Metadata for a file in a Zenodo record."""
 
-    md5sum: str | None
+    checksum: str | None
     size: int
 
 
@@ -310,14 +310,13 @@ class StorageProvider(StorageProviderBase):
         files = data.get("files", [])
         for file_info in files:
             filename = file_info.get("key")
-            checksum = file_info.get("checksum", "")
+            checksum = file_info.get("checksum")
             size = file_info.get("size", 0)
 
             if not filename:
                 continue
 
-            md5sum = checksum[4:].lower() if checksum.startswith("md5:") else None
-            metadata[filename] = ZenodoFileMetadata(md5sum=md5sum, size=size)
+            metadata[filename] = ZenodoFileMetadata(checksum=checksum, size=size)
 
         # Store in cache
         self._record_cache[record_id] = metadata
@@ -435,10 +434,7 @@ class StorageObject(StorageObjectRead):
 
     async def verify_checksum(self, path: Path) -> None:
         """
-        Fetch the MD5 checksum for this file from the Zenodo API.
-
-        Uses the provider's caching mechanism to avoid repeated API calls
-        for files from the same record.
+        Verify `path` against checksum provided by zenodo metadata.
 
         Raises:
             WrongChecksum
@@ -450,14 +446,16 @@ class StorageObject(StorageObjectRead):
                 f"File {self.filename} not found in Zenodo record {self.record_id}"
             )
 
-        checksum_expected = metadata[self.filename].md5sum
-        if checksum_expected is None:
+        checksum = metadata[self.filename].checksum
+        if checksum is None:
             return
 
+        digest, checksum_expected = checksum.split(":", maxsplit=1)
+
         # Compute checksum asynchronously (hashlib releases GIL)
-        def compute_hash():
+        def compute_hash(digest=digest):
             with open(path, "rb") as f:
-                return hashlib.file_digest(f, "md5").hexdigest().lower()
+                return hashlib.file_digest(f, digest).hexdigest().lower()
 
         checksum_observed = await asyncio.to_thread(compute_hash)
 
