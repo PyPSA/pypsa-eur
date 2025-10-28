@@ -11,7 +11,7 @@ dependencies:
 - pip
 
 # Inhouse packages
-- pypsa>=0.32.1
+- pypsa>=0.35.2
 - atlite>=0.3
 - linopy>=0.4.4
 - powerplantmatching>=0.5.15
@@ -46,12 +46,17 @@ dependencies:
 - country_converter
 - geopy
 - tqdm
+- tenacity
 - pytz
 - jpype1
 - pyxlsb
 - graphviz
 - geojson
+- copernicusmarine
 - pyscipopt
+- plotly
+- bokeh
+- folium
 
 # GIS dependencies:
 - cartopy

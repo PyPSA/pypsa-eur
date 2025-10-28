@@ -9,6 +9,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
+
+* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
+  like rate limiting and server errors.
+
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
   when running with few nodes such that they are all already connected by existing gas
   lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
@@ -45,6 +50,10 @@ Upcoming Release
   (https://github.com/PyPSA/pypsa-eur/pull/1825)
 
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
+
+* Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
+
+* Running perfect foresight is now marked as unstable and may not work as expected.
 
 * Remove the hotfix in `progress_retrieve` and check that the directory exists (https://github.com/PyPSA/pypsa-eur/pull/1840).
 
@@ -112,6 +121,9 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 * Small plotting improvements.
   (https://github.com/PyPSA/pypsa-eur/pull/1694https://github.com/PyPSA/pypsa-eur/pull/1727)
 
+* The `plotting|map|color_geomap` was renamed to `plotting|map|geomap_colors` to align
+  with the new PyPSA API.
+  
 **Bugfixes and Compatibility**
 
 * Select correct capital costs for floating offshore wind. Previously, the same
