@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+from numpy import atleast_1d
+
 
 if config["foresight"] != "perfect":
 
@@ -153,147 +155,47 @@ if config["foresight"] == "perfect" and config.get("enable", {}).get(
 
 
 rule make_summary:
+    params:
+        foresight=config_provider("foresight"),
+        planning_horizons=config_provider("planning_horizons"),
     input:
-        network=RESULTS + "networks/solved_{horizon}.nc",
+        networks=lambda w: (
+            [
+                RESULTS
+                + f"networks/solved_{atleast_1d(config['planning_horizons'])[-1]}.nc"
+            ]
+            if config["foresight"] == "perfect"
+            else [
+                RESULTS + f"networks/solved_{h}.nc"
+                for h in atleast_1d(config["planning_horizons"])
+            ]
+        ),
     output:
-        nodal_costs=RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
-        nodal_capacities=RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
-        nodal_capacity_factors=RESULTS
-        + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
-        capacity_factors=RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
-        costs=RESULTS + "csvs/individual/costs_{horizon}.csv",
-        capacities=RESULTS + "csvs/individual/capacities_{horizon}.csv",
-        curtailment=RESULTS + "csvs/individual/curtailment_{horizon}.csv",
-        energy=RESULTS + "csvs/individual/energy_{horizon}.csv",
-        energy_balance=RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
-        nodal_energy_balance=RESULTS
-        + "csvs/individual/nodal_energy_balance_{horizon}.csv",
-        prices=RESULTS + "csvs/individual/prices_{horizon}.csv",
-        weighted_prices=RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
-        market_values=RESULTS + "csvs/individual/market_values_{horizon}.csv",
-        metrics=RESULTS + "csvs/individual/metrics_{horizon}.csv",
+        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
+        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
+        capacity_factors=RESULTS + "csvs/capacity_factors.csv",
+        costs=RESULTS + "csvs/costs.csv",
+        capacities=RESULTS + "csvs/capacities.csv",
+        curtailment=RESULTS + "csvs/curtailment.csv",
+        energy=RESULTS + "csvs/energy.csv",
+        energy_balance=RESULTS + "csvs/energy_balance.csv",
+        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
+        prices=RESULTS + "csvs/prices.csv",
+        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
+        market_values=RESULTS + "csvs/market_values.csv",
+        metrics=RESULTS + "csvs/metrics.csv",
     threads: 1
     resources:
-        mem_mb=8000,
+        mem_mb=16000,
     log:
-        RESULTS + "logs/make_summary_{horizon}.log",
+        RESULTS + "logs/make_summary.log",
     benchmark:
-        (RESULTS + "benchmarks/make_summary_{horizon}")
+        RESULTS + "benchmarks/make_summary"
     conda:
         "../envs/environment.yaml"
     script:
         "../scripts/make_summary.py"
-
-
-# For perfect foresight, only the last horizon is solved (contains all periods)
-# For overnight/myopic, all horizons are solved individually
-SUMMARY_HORIZONS = (
-    [config["planning_horizons"][-1]]
-    if config["foresight"] == "perfect"
-    else config["planning_horizons"]
-)
-
-
-rule make_global_summary:
-    params:
-        RDIR=RDIR,
-    input:
-        nodal_costs=expand(
-            RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        nodal_capacities=expand(
-            RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        nodal_capacity_factors=expand(
-            RESULTS + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        capacity_factors=expand(
-            RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        costs=expand(
-            RESULTS + "csvs/individual/costs_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        capacities=expand(
-            RESULTS + "csvs/individual/capacities_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        curtailment=expand(
-            RESULTS + "csvs/individual/curtailment_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        energy=expand(
-            RESULTS + "csvs/individual/energy_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        energy_balance=expand(
-            RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        nodal_energy_balance=expand(
-            RESULTS + "csvs/individual/nodal_energy_balance_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        prices=expand(
-            RESULTS + "csvs/individual/prices_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        weighted_prices=expand(
-            RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        market_values=expand(
-            RESULTS + "csvs/individual/market_values_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-        metrics=expand(
-            RESULTS + "csvs/individual/metrics_{horizon}.csv",
-            horizon=SUMMARY_HORIZONS,
-            allow_missing=True,
-        ),
-    output:
-        costs=RESULTS + "csvs/costs.csv",
-        capacities=RESULTS + "csvs/capacities.csv",
-        energy=RESULTS + "csvs/energy.csv",
-        energy_balance=RESULTS + "csvs/energy_balance.csv",
-        capacity_factors=RESULTS + "csvs/capacity_factors.csv",
-        metrics=RESULTS + "csvs/metrics.csv",
-        curtailment=RESULTS + "csvs/curtailment.csv",
-        prices=RESULTS + "csvs/prices.csv",
-        weighted_prices=RESULTS + "csvs/weighted_prices.csv",
-        market_values=RESULTS + "csvs/market_values.csv",
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
-        nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_energy_balance=RESULTS + "csvs/nodal_energy_balance.csv",
-        nodal_capacity_factors=RESULTS + "csvs/nodal_capacity_factors.csv",
-    threads: 1
-    resources:
-        mem_mb=8000,
-    log:
-        RESULTS + "logs/make_global_summary.log",
-    benchmark:
-        RESULTS + "benchmarks/make_global_summary"
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/make_global_summary.py"
 
 
 rule make_cumulative_costs:

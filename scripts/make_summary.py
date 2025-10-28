@@ -10,6 +10,8 @@ import logging
 
 import pandas as pd
 import pypsa
+from numpy import atleast_1d
+from pypsa import NetworkCollection
 
 from scripts._helpers import configure_logging, set_scenario_config
 
@@ -170,10 +172,15 @@ def calculate_energy(n: pypsa.Network) -> pd.Series:
 
     Returns
     -------
-    pd.Series
-        MultiIndex Series with levels ["component", "carrier"]
+    pd.Series or pd.DataFrame
+        Single-period: Series with MultiIndex ["component", "carrier"]
+        Multi-period: DataFrame with periods as columns
     """
-    return n.statistics.energy_balance(groupby="carrier").sort_values(ascending=False)
+    result = n.statistics.energy_balance(groupby="carrier")
+    if isinstance(result, pd.DataFrame):
+        # Multi-period network returns DataFrame with periods as columns - keep it!
+        return result
+    return result.sort_values(ascending=False)
 
 
 def calculate_energy_balance(n: pypsa.Network) -> pd.Series:
@@ -182,15 +189,20 @@ def calculate_energy_balance(n: pypsa.Network) -> pd.Series:
 
     Returns
     -------
-    pd.Series
-        MultiIndex Series with levels ["component", "carrier", "bus_carrier"]
+    pd.Series or pd.DataFrame
+        Single-period: Series with MultiIndex ["component", "carrier", "bus_carrier"]
+        Multi-period: DataFrame with periods as columns
 
     Examples
     --------
     >>> eb = calculate_energy_balance(n)
     >>> eb.xs("methanol", level='bus_carrier')
     """
-    return n.statistics.energy_balance().sort_values(ascending=False)
+    result = n.statistics.energy_balance()
+    if isinstance(result, pd.DataFrame):
+        # Multi-period network returns DataFrame with periods as columns - keep it!
+        return result
+    return result.sort_values(ascending=False)
 
 
 def calculate_nodal_energy_balance(n: pypsa.Network) -> pd.Series:
@@ -287,12 +299,278 @@ def calculate_weighted_prices(n: pypsa.Network) -> pd.Series:
 def calculate_market_values(n: pypsa.Network) -> pd.Series:
     """
     Calculate market values for electricity.
+
+    Returns
+    -------
+    pd.Series or pd.DataFrame
+        Single-period: Series
+        Multi-period: DataFrame with periods as columns
     """
-    return (
-        n.statistics.market_value(bus_carrier="AC", aggregate_across_components=True)
-        .sort_values()
-        .dropna()
+    result = n.statistics.market_value(
+        bus_carrier="AC", aggregate_across_components=True
     )
+    if isinstance(result, pd.DataFrame):
+        # Multi-period network returns DataFrame with periods as columns - keep it!
+        return result.dropna()
+    return result.sort_values().dropna()
+
+
+def calculate_nodal_capacity_factors_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the regional dispatched capacity factors for each technology carrier based on location bus attribute using NetworkCollection.
+    """
+    comps = (
+        nc.networks.iloc[0].one_port_components ^ {"Store"}
+        | nc.networks.iloc[0].passive_branch_components
+    )
+    result = nc.statistics.capacity_factor(comps=comps, groupby=["location", "carrier"])
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_capacity_factors_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the average dispatched capacity factors for each technology carrier using NetworkCollection.
+    """
+    comps = (
+        nc.networks.iloc[0].one_port_components ^ {"Store"}
+        | nc.networks.iloc[0].passive_branch_components
+    )
+    result = nc.statistics.capacity_factor(comps=comps).sort_index()
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_nodal_costs_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate optimized regional costs for each technology split by marginal and capital costs using NetworkCollection.
+    """
+    grouper = ["location", "carrier"]
+    costs = pd.concat(
+        {
+            "capital": nc.statistics.capex(groupby=grouper),
+            "marginal": nc.statistics.opex(groupby=grouper),
+        }
+    )
+    costs.index.names = ["cost", "component", "horizon", "location", "carrier"]
+    costs = costs.unstack(level="horizon")
+    costs.columns.name = None
+    return costs
+
+
+def calculate_costs_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate optimized total costs for each technology split by marginal and capital costs using NetworkCollection.
+    """
+    costs = pd.concat(
+        {
+            "capital": nc.statistics.capex(),
+            "marginal": nc.statistics.opex(),
+        }
+    )
+    costs.index.names = ["cost", "component", "horizon", "carrier"]
+    costs = costs.unstack(level="horizon")
+    costs.columns.name = None
+    return costs
+
+
+def calculate_nodal_capacities_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate optimized regional capacities for each technology using NetworkCollection.
+    """
+    result = nc.statistics.optimal_capacity(groupby=["location", "carrier"])
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_capacities_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate optimized total capacities for each technology using NetworkCollection.
+    """
+    result = nc.statistics.optimal_capacity()
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_curtailment_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the curtailment of electricity generation technologies in percent using NetworkCollection.
+    """
+    carriers = ["AC", "low voltage"]
+
+    # Calculate for each network and aggregate
+    curtailment_series = []
+    for horizon, n in zip(nc.index, nc.networks):
+        duration = n.snapshot_weightings.generators.sum()
+
+        curtailed_abs = n.statistics.curtailment(
+            bus_carrier=carriers, aggregate_across_components=True
+        )
+        available = (
+            n.statistics.optimal_capacity("Generator", bus_carrier=carriers) * duration
+        )
+
+        curtailed_rel = curtailed_abs / available * 100
+        curtailed_rel.name = horizon
+        curtailment_series.append(curtailed_rel)
+
+    result = pd.concat(curtailment_series, axis=1).sort_index()
+    return result
+
+
+def calculate_energy_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the net energy supply and consumption by technology carrier using NetworkCollection.
+    """
+    result = nc.statistics.energy_balance(groupby="carrier").sort_values(
+        ascending=False
+    )
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_energy_balance_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the energy supply and consumption by technology carrier for each bus carrier using NetworkCollection.
+    """
+    result = nc.statistics.energy_balance().sort_values(ascending=False)
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_nodal_energy_balance_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate the regional energy balances for each technology carrier and bus carrier using NetworkCollection.
+    """
+    result = nc.statistics.energy_balance(
+        groupby=["carrier", "location", "bus_carrier"]
+    )
+    result = result.unstack(level="horizon")
+    result.columns.name = None
+    return result
+
+
+def calculate_metrics_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate system-level metrics for each horizon using NetworkCollection.
+    """
+    metrics_list = []
+
+    for horizon, n in zip(nc.index, nc.networks):
+        metrics = {}
+
+        dc_links = n.links.query("carrier == 'DC'")
+        metrics["line_volume_DC"] = dc_links.eval("length * p_nom_opt").sum()
+        metrics["line_volume_AC"] = n.lines.eval("length * s_nom_opt").sum()
+        metrics["line_volume"] = metrics["line_volume_AC"] + metrics["line_volume_DC"]
+
+        metrics["total costs"] = n.statistics.capex().sum() + n.statistics.opex().sum()
+
+        buses_i = n.buses.query("carrier == 'AC'").index
+        prices = n.buses_t.marginal_price[buses_i]
+
+        zero_hours = prices.where(prices < 0.1).count().sum()
+        metrics["electricity_price_zero_hours"] = zero_hours / prices.size
+        metrics["electricity_price_mean"] = prices.unstack().mean()
+        metrics["electricity_price_std"] = prices.unstack().std()
+
+        if "lv_limit" in n.global_constraints.index:
+            metrics["line_volume_limit"] = n.global_constraints.at[
+                "lv_limit", "constant"
+            ]
+            metrics["line_volume_shadow"] = n.global_constraints.at["lv_limit", "mu"]
+
+        if "CO2Limit" in n.global_constraints.index:
+            metrics["co2_shadow"] = n.global_constraints.at["CO2Limit", "mu"]
+
+        if "co2_sequestration_limit" in n.global_constraints.index:
+            metrics["co2_storage_shadow"] = n.global_constraints.at[
+                "co2_sequestration_limit", "mu"
+            ]
+
+        metrics_series = pd.Series(metrics).sort_index()
+        metrics_series.name = horizon
+        metrics_list.append(metrics_series)
+
+    result = pd.concat(metrics_list, axis=1)
+    return result
+
+
+def calculate_prices_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate time-averaged prices per carrier using NetworkCollection.
+    """
+    prices_list = []
+
+    for horizon, n in zip(nc.index, nc.networks):
+        prices = (
+            n.buses_t.marginal_price.mean().groupby(n.buses.carrier).mean().sort_index()
+        )
+        prices.name = horizon
+        prices_list.append(prices)
+
+    result = pd.concat(prices_list, axis=1)
+    return result
+
+
+def calculate_weighted_prices_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate load-weighted prices per bus carrier using NetworkCollection.
+    """
+    weighted_prices_list = []
+
+    for horizon, n in zip(nc.index, nc.networks):
+        carriers = n.buses.carrier.unique()
+        weighted_prices = {}
+
+        for carrier in carriers:
+            load = n.statistics.withdrawal(
+                groupby="bus",
+                aggregate_time=False,
+                bus_carrier=carrier,
+                aggregate_across_components=True,
+            ).T
+
+            if not load.empty and load.sum().sum() > 0:
+                price = n.buses_t.marginal_price.loc[:, n.buses.carrier == carrier]
+                price = price.reindex(columns=load.columns, fill_value=1)
+
+                weights = n.snapshot_weightings.generators
+                a = weights @ (load * price).sum(axis=1)
+                b = weights @ load.sum(axis=1)
+                weighted_prices[carrier] = a / b
+
+        wp_series = pd.Series(weighted_prices).sort_index()
+        wp_series.name = horizon
+        weighted_prices_list.append(wp_series)
+
+    result = pd.concat(weighted_prices_list, axis=1)
+    return result
+
+
+def calculate_market_values_collection(nc: NetworkCollection) -> pd.Series:
+    """
+    Calculate market values for electricity using NetworkCollection.
+    """
+    market_values_list = []
+
+    for horizon, n in zip(nc.index, nc.networks):
+        mv = n.statistics.market_value(
+            bus_carrier="AC", aggregate_across_components=True
+        )
+        # Should be Series for single-period networks in myopic mode
+        mv = mv.sort_values().dropna()
+        mv.name = horizon
+        market_values_list.append(mv)
+
+    result = pd.concat(market_values_list, axis=1)
+    return result
 
 
 if __name__ == "__main__":
@@ -311,12 +589,65 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    n = pypsa.Network(snakemake.input.network)
-    assign_carriers(n)
-    assign_locations(n)
-
     pypsa.options.params.statistics.nice_names = False
     pypsa.options.params.statistics.drop_zero = False
 
-    for output in OUTPUTS:
-        globals()["calculate_" + output](n).to_csv(snakemake.output[output])
+    foresight = snakemake.config["foresight"]
+    planning_horizons = pd.Index(atleast_1d(snakemake.config["planning_horizons"]))
+    network_files = snakemake.input.networks
+
+    logger.info(f"Processing {foresight} mode with {len(network_files)} network(s)")
+
+    if foresight == "perfect":
+        # Perfect foresight: Single multi-period network
+        logger.info("Loading multi-period network for perfect foresight")
+        n = pypsa.Network(network_files[0])
+        assign_carriers(n)
+        assign_locations(n)
+
+        for output in OUTPUTS:
+            logger.info(f"Calculating {output}")
+            result = globals()["calculate_" + output](n)
+            result.to_csv(snakemake.output[output])
+
+    elif len(network_files) == 1:
+        # Overnight mode: Single network, single horizon
+        logger.info(
+            f"Loading single network for overnight mode (horizon: {planning_horizons[0]})"
+        )
+        n = pypsa.Network(network_files[0])
+        assign_carriers(n)
+        assign_locations(n)
+
+        for output in OUTPUTS:
+            logger.info(f"Calculating {output}")
+            result = globals()["calculate_" + output](n)
+            # Wrap in DataFrame with horizon column
+            if isinstance(result, pd.Series):
+                result = pd.DataFrame({planning_horizons[0]: result})
+            result.to_csv(snakemake.output[output])
+
+    else:
+        # Myopic mode: Multiple networks via NetworkCollection
+        logger.info(f"Loading {len(network_files)} networks for myopic mode")
+        networks = []
+        for i, network_file in enumerate(network_files):
+            logger.info(f"Loading network {i + 1}/{len(network_files)}: {network_file}")
+            n = pypsa.Network(network_file)
+            assign_carriers(n)
+            assign_locations(n)
+            networks.append(n)
+
+        nc = NetworkCollection(
+            networks, index=pd.Index(planning_horizons, name="horizon")
+        )
+        logger.info(
+            f"Created NetworkCollection with horizons: {list(planning_horizons)}"
+        )
+
+        for output in OUTPUTS:
+            logger.info(f"Calculating {output}")
+            result = globals()["calculate_" + output + "_collection"](nc)
+            result.to_csv(snakemake.output[output])
+
+    logger.info("Summary calculation completed successfully")
