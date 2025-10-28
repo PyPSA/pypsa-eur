@@ -45,10 +45,9 @@ class ReretryLoggerAdapter:
         """
         Format message manually before passing to Snakemake logger.
 
-        This is necessary because Snakemake's DefaultFormatter has a bug where
-        it returns record["msg"] directly for non-special events, without calling
-        getMessage() to interpolate the args. This causes literal "%s" to appear
-        in log output instead of formatted values.
+        This is necessary because Snakemake's DefaultFormatter has a bug where it
+        returns record["msg"] without calling interpolating the args. This causes
+        literal "%s" to appear in log output instead of formatted values.
         """
         if args:
             # Pre-format the message with % operator
@@ -82,26 +81,26 @@ http_base.StorageProvider.is_valid_query = classmethod(
 # unsupported max_requests_per_second option
 @dataclass
 class StorageProviderSettings(SettingsBase):
-    skip_remote_checks: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to skip metadata checking with zenodo (default: False, ie. do check)",
-            "env_var": True,
-        },
-    )
     cache: str = field(
         default_factory=lambda: platformdirs.user_cache_dir(
             "snakemake-pypsa-eur", ensure_exists=False
         ),
         metadata={
-            "help": "Cache directory for downloaded Zenodo files (default: platform-dependent user cache dir)",
+            "help": 'Cache directory for downloaded Zenodo files (default: platform-dependent user cache dir). Set to "" to deactivate caching.',
+            "env_var": True,
+        },
+    )
+    skip_remote_checks: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to skip metadata checking with zenodo (default: False, ie. do check).",
             "env_var": True,
         },
     )
     max_concurrent_downloads: int | None = field(
         default=3,
         metadata={
-            "help": "Maximum number of concurrent Zenodo downloads",
+            "help": "Maximum number of concurrent Zenodo downloads.",
             "env_var": False,
         },
     )
@@ -149,7 +148,7 @@ class StorageProvider(StorageProviderBase):
         else:
             self.cache_dir = None
 
-        # Initialize session tracking
+        # Initialize shared client for bounding connections and pipelining
         self._client: httpx.AsyncClient | None = None
         self._client_refcount: int = 0
 
