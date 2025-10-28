@@ -77,7 +77,7 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
 
     rule retrieve_corine:
         input:
-            zip_file=http_storage(
+            zip_file=storage(
                 CORINE_DATASET["url"],
             ),
         output:
@@ -572,7 +572,7 @@ elif (EEZ_DATASET := dataset_version("eez"))["source"] in ["archive"]:
 
     rule retrieve_eez:
         input:
-            zip_file=http_storage(
+            zip_file=storage(
                 EEZ_DATASET["url"],
             ),
         output:
