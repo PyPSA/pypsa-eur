@@ -441,13 +441,20 @@ def plot_carbon_budget_distribution(input_eurostat, options):
         ]
         co2_cap *= e_1990
     else:
-        supply_energy = pd.read_csv(
-            snakemake.input.balances, index_col=[0, 1, 2], header=[0, 1, 2, 3]
-        )
-        co2_cap = (
-            supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T / 1e9
-        )
-        co2_cap.rename(index=lambda x: int(x), inplace=True)
+        try:
+            supply_energy = pd.read_csv(
+                snakemake.input.balances, index_col=[0, 1, 2], header=[0, 1, 2, 3]
+            )
+            co2_cap = (
+                supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T
+                / 1e9
+            )
+            co2_cap.rename(index=lambda x: int(x), inplace=True)
+        except KeyError as e:
+            logger.warning(
+                f"Missing required key for carbon budget plot: {e}. Skipping plot."
+            )
+            return
 
     plt.figure(figsize=(10, 7))
     gs1 = gridspec.GridSpec(1, 1)
