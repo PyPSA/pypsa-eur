@@ -169,3 +169,7 @@ conventional:
   unit_commitment: false
   nuclear:
     p_max_pu: data/nuclear_p_max_pu.csv
+
+plotting:
+  costs_threshold: 0.001
+  energy_threshold: 0.00001
