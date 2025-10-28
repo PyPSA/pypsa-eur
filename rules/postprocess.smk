@@ -249,7 +249,7 @@ rule plot_balance_timeseries:
     conda:
         "../envs/environment.yaml"
     output:
-        directory(RESULTS + "graphics/balance_timeseries_{horizon}"),
+        directory(RESULTS + "graphs/balance_timeseries_{horizon}"),
     script:
         "../scripts/plot_balance_timeseries.py"
 
@@ -273,7 +273,7 @@ rule plot_heatmap_timeseries:
     conda:
         "../envs/environment.yaml"
     output:
-        directory(RESULTS + "graphics/heatmap_timeseries_{horizon}"),
+        directory(RESULTS + "graphs/heatmap_timeseries_{horizon}"),
         {},
     script:
         "../scripts/plot_heatmap_timeseries.py"

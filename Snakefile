@@ -96,8 +96,8 @@ if config["foresight"] != "perfect":
         RESULTS + "maps/power_network_{horizon}.pdf",
     ]
     TIMESERIES_OUTPUTS = [
-        RESULTS + "graphics/balance_timeseries_{horizon}",
-        RESULTS + "graphics/heatmap_timeseries_{horizon}",
+        RESULTS + "graphs/balance_timeseries_{horizon}",
+        RESULTS + "graphs/heatmap_timeseries_{horizon}",
     ]
 else:
     NETWORK_PLOT_OUTPUTS = []
