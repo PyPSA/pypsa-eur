@@ -38,17 +38,25 @@ rule solve_networks:
 
 rule plot_balance_maps:
     input:
-        lambda w: expand(
-            (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+        lambda w: (
+            expand(
+                (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+                carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+            )
+            if config["foresight"] != "perfect"
+            else []
         ),
 
 
 rule plot_power_networks:
     input:
-        expand(
-            resources("maps/clustered_network.pdf"),
-            run=config["run"]["name"],
+        (
+            expand(
+                resources("maps/clustered_network.pdf"),
+                run=config["run"]["name"],
+            )
+            if config["foresight"] != "perfect"
+            else []
         ),

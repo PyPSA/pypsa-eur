@@ -78,58 +78,100 @@ include: "rules/postprocess.smk"
 include: "rules/development.smk"
 
 
+# Define output categories based on foresight mode
+# This follows the same pattern as postprocess.smk for consistency
+
+# Core outputs that always run
+CORE_OUTPUTS = [RESULTS + "graphs/costs.svg"]
+
+# Network and timeseries plots (excluded for perfect foresight)
+if config["foresight"] != "perfect":
+    NETWORK_PLOT_OUTPUTS = [
+        resources("maps/base_network.pdf"),
+        resources("maps/clustered_network.pdf"),
+        RESULTS + "maps/power_network_{horizon}.pdf",
+    ]
+    TIMESERIES_OUTPUTS = [
+        RESULTS + "graphics/balance_timeseries_{horizon}",
+        RESULTS + "graphics/heatmap_timeseries_{horizon}",
+    ]
+else:
+    NETWORK_PLOT_OUTPUTS = []
+    TIMESERIES_OUTPUTS = []
+
+# Myopic-specific outputs
+if config["foresight"] == "myopic":
+    MYOPIC_OUTPUTS = [RESULTS + "csvs/cumulative_costs.csv"]
+else:
+    MYOPIC_OUTPUTS = []
+
+
+def get_sector_network_plots(w):
+    """Returns sector-specific network plots if enabled and not perfect foresight."""
+    if config["foresight"] == "perfect":
+        return []
+
+    plots = []
+    if config_provider("sector", "H2_network")(w):
+        plots.extend(
+            expand(
+                RESULTS + "maps/h2_network_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+    if config_provider("sector", "gas_network")(w):
+        plots.extend(
+            expand(
+                RESULTS + "maps/ch4_network_{horizon}.pdf",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+    return plots
+
+
+def get_balance_map_plots(w):
+    """Returns balance map plots if bus carriers are configured and not perfect foresight."""
+    if config["foresight"] == "perfect":
+        return []
+
+    bus_carriers = config_provider("plotting", "balance_map", "bus_carriers")(w)
+    if not bus_carriers:
+        return []
+
+    return expand(
+        RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf",
+        horizon=config["planning_horizons"],
+        run=config["run"]["name"],
+        carrier=bus_carriers,
+    )
+
+
 rule all:
     input:
-        expand(RESULTS + "graphs/costs.svg", run=config["run"]["name"]),
-        expand(resources("maps/base_network.pdf"), run=config["run"]["name"]),
-        expand(resources("maps/clustered_network.pdf"), run=config["run"]["name"]),
-        expand(
-            RESULTS + "maps/power_network_{horizon}.pdf",
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
+        expand(CORE_OUTPUTS, run=config["run"]["name"]),
+        (
+            expand(
+                NETWORK_PLOT_OUTPUTS,
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+            )
+            if NETWORK_PLOT_OUTPUTS
+            else []
         ),
-        lambda w: expand(
-            (
-                RESULTS + "maps/h2_network_{horizon}.pdf"
-                if config_provider("sector", "H2_network")(w)
-                else []
-            ),
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
+        (
+            expand(
+                TIMESERIES_OUTPUTS,
+                run=config["run"]["name"],
+                horizon=config["planning_horizons"],
+            )
+            if TIMESERIES_OUTPUTS
+            else []
         ),
-        lambda w: expand(
-            (
-                RESULTS + "maps/ch4_network_{horizon}.pdf"
-                if config_provider("sector", "gas_network")(w)
-                else []
-            ),
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
-        ),
-        lambda w: expand(
-            (
-                RESULTS + "csvs/cumulative_costs.csv"
-                if config_provider("foresight")(w) == "myopic"
-                else []
-            ),
-            run=config["run"]["name"],
-        ),
-        lambda w: expand(
-            (RESULTS + "maps/{carrier}_balance_map_{horizon}.pdf"),
-            horizon=config["planning_horizons"],
-            run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
-        ),
-        expand(
-            RESULTS + "graphics/balance_timeseries_{horizon}",
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
-        ),
-        expand(
-            RESULTS + "graphics/heatmap_timeseries_{horizon}",
-            run=config["run"]["name"],
-            horizon=config["planning_horizons"],
-        ),
+        (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
+        get_sector_network_plots,
+        get_balance_map_plots,
     default_target: True
 
 

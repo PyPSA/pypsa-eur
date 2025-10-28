@@ -185,78 +185,87 @@ rule make_summary:
         "../scripts/make_summary.py"
 
 
+# For perfect foresight, only the last horizon is solved (contains all periods)
+# For overnight/myopic, all horizons are solved individually
+SUMMARY_HORIZONS = (
+    [config["planning_horizons"][-1]]
+    if config["foresight"] == "perfect"
+    else config["planning_horizons"]
+)
+
+
 rule make_global_summary:
     params:
         RDIR=RDIR,
     input:
         nodal_costs=expand(
             RESULTS + "csvs/individual/nodal_costs_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         nodal_capacities=expand(
             RESULTS + "csvs/individual/nodal_capacities_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         nodal_capacity_factors=expand(
             RESULTS + "csvs/individual/nodal_capacity_factors_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         capacity_factors=expand(
             RESULTS + "csvs/individual/capacity_factors_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         costs=expand(
             RESULTS + "csvs/individual/costs_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         capacities=expand(
             RESULTS + "csvs/individual/capacities_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         curtailment=expand(
             RESULTS + "csvs/individual/curtailment_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         energy=expand(
             RESULTS + "csvs/individual/energy_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         energy_balance=expand(
             RESULTS + "csvs/individual/energy_balance_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         nodal_energy_balance=expand(
             RESULTS + "csvs/individual/nodal_energy_balance_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         prices=expand(
             RESULTS + "csvs/individual/prices_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         weighted_prices=expand(
             RESULTS + "csvs/individual/weighted_prices_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         market_values=expand(
             RESULTS + "csvs/individual/market_values_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
         metrics=expand(
             RESULTS + "csvs/individual/metrics_{horizon}.csv",
-            horizon=config["planning_horizons"],
+            horizon=SUMMARY_HORIZONS,
             allow_missing=True,
         ),
     output:
