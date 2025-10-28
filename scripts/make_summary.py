@@ -8,6 +8,7 @@ capacity factors, curtailment, energy balances, prices and other metrics.
 
 import logging
 
+import numpy as np
 import pandas as pd
 import pypsa
 from numpy import atleast_1d
@@ -33,6 +34,7 @@ OUTPUTS = [
     "nodal_capacities",
     "nodal_energy_balance",
     "nodal_capacity_factors",
+    "cumulative_costs",
 ]
 
 
@@ -313,6 +315,67 @@ def calculate_market_values(n: pypsa.Network) -> pd.Series:
         # Multi-period network returns DataFrame with periods as columns - keep it!
         return result.dropna()
     return result.sort_values().dropna()
+
+
+def calculate_cumulative_costs(
+    costs_df: pd.DataFrame, planning_horizons: pd.Index
+) -> pd.DataFrame:
+    """
+    Calculate cumulative costs with social discounting for myopic/perfect foresight.
+
+    Only applicable when multiple horizons exist. Applies social discount rates
+    from 0% to 10% and integrates costs over the transition path.
+
+    Parameters
+    ----------
+    costs_df : pd.DataFrame
+        Costs DataFrame with index (cost, component, carrier) and horizon columns
+    planning_horizons : pd.Index
+        Planning horizons (e.g., [2030, 2040, 2050])
+
+    Returns
+    -------
+    pd.DataFrame
+        Cumulative costs for different social discount rates with horizons as columns
+        and an additional 'cumulative_cost' column with integrated values
+    """
+    if len(planning_horizons) <= 1:
+        # Not applicable for single horizon (overnight)
+        return pd.DataFrame()
+
+    # Sum costs across all components/carriers for each horizon
+    total_costs = costs_df.sum()
+
+    # Create discount rate index (0% to 10% in 1% increments)
+    discount_rates = pd.Index(
+        data=np.arange(0, 0.11, 0.01), name="social_discount_rate"
+    )
+
+    cumulative_cost = pd.DataFrame(
+        index=discount_rates, columns=planning_horizons, dtype=float
+    )
+
+    # Apply social discounting: express costs in money value of first planning horizon
+    for rate in discount_rates:
+        for horizon in planning_horizons:
+            years_diff = horizon - planning_horizons[0]
+            cumulative_cost.loc[rate, horizon] = total_costs[horizon] / (
+                (1 + rate) ** years_diff
+            )
+
+    # Integrate costs over transition path using trapezoidal rule
+    integrated_costs = pd.Series(
+        index=discount_rates, name="cumulative_cost", dtype=float
+    )
+    for rate in discount_rates:
+        integrated_costs[rate] = np.trapz(
+            cumulative_cost.loc[rate, :].values, x=planning_horizons.values
+        )
+
+    # Add cumulative cost as additional column
+    cumulative_cost["cumulative_cost"] = integrated_costs
+
+    return cumulative_cost
 
 
 def calculate_nodal_capacity_factors_collection(nc: NetworkCollection) -> pd.Series:
@@ -605,10 +668,21 @@ if __name__ == "__main__":
         assign_carriers(n)
         assign_locations(n)
 
+        costs_df = None
         for output in OUTPUTS:
+            if output == "cumulative_costs":
+                continue  # Handle separately after costs are calculated
             logger.info(f"Calculating {output}")
             result = globals()["calculate_" + output](n)
+            if output == "costs":
+                costs_df = result  # Save for cumulative costs calculation
             result.to_csv(snakemake.output[output])
+
+        # Calculate cumulative costs from costs DataFrame
+        if costs_df is not None and len(planning_horizons) > 1:
+            logger.info("Calculating cumulative_costs")
+            cumulative_costs = calculate_cumulative_costs(costs_df, planning_horizons)
+            cumulative_costs.to_csv(snakemake.output.cumulative_costs)
 
     elif len(network_files) == 1:
         # Overnight mode: Single network, single horizon
@@ -619,13 +693,21 @@ if __name__ == "__main__":
         assign_carriers(n)
         assign_locations(n)
 
+        costs_df = None
         for output in OUTPUTS:
+            if output == "cumulative_costs":
+                continue  # Not applicable for single horizon
             logger.info(f"Calculating {output}")
             result = globals()["calculate_" + output](n)
+            if output == "costs":
+                costs_df = result  # Save for cumulative costs calculation
             # Wrap in DataFrame with horizon column
             if isinstance(result, pd.Series):
                 result = pd.DataFrame({planning_horizons[0]: result})
             result.to_csv(snakemake.output[output])
+
+        # Cumulative costs not applicable for overnight (single horizon)
+        pd.DataFrame().to_csv(snakemake.output.cumulative_costs)
 
     else:
         # Myopic mode: Multiple networks via NetworkCollection
@@ -645,9 +727,20 @@ if __name__ == "__main__":
             f"Created NetworkCollection with horizons: {list(planning_horizons)}"
         )
 
+        costs_df = None
         for output in OUTPUTS:
+            if output == "cumulative_costs":
+                continue  # Handle separately after costs are calculated
             logger.info(f"Calculating {output}")
             result = globals()["calculate_" + output + "_collection"](nc)
+            if output == "costs":
+                costs_df = result  # Save for cumulative costs calculation
             result.to_csv(snakemake.output[output])
+
+        # Calculate cumulative costs from costs DataFrame
+        if costs_df is not None and len(planning_horizons) > 1:
+            logger.info("Calculating cumulative_costs")
+            cumulative_costs = calculate_cumulative_costs(costs_df, planning_horizons)
+            cumulative_costs.to_csv(snakemake.output.cumulative_costs)
 
     logger.info("Summary calculation completed successfully")

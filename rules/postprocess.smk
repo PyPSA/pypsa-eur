@@ -185,6 +185,7 @@ rule make_summary:
         weighted_prices=RESULTS + "csvs/weighted_prices.csv",
         market_values=RESULTS + "csvs/market_values.csv",
         metrics=RESULTS + "csvs/metrics.csv",
+        cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
     threads: 1
     resources:
         mem_mb=16000,
@@ -196,26 +197,6 @@ rule make_summary:
         "../envs/environment.yaml"
     script:
         "../scripts/make_summary.py"
-
-
-rule make_cumulative_costs:
-    params:
-        scenario=config_provider("scenario"),
-    input:
-        costs=RESULTS + "csvs/costs.csv",
-    output:
-        cumulative_costs=RESULTS + "csvs/cumulative_costs.csv",
-    threads: 1
-    resources:
-        mem_mb=4000,
-    log:
-        RESULTS + "logs/make_cumulative_costs.log",
-    benchmark:
-        RESULTS + "benchmarks/make_cumulative_costs"
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/make_cumulative_costs.py"
 
 
 rule plot_summary:
