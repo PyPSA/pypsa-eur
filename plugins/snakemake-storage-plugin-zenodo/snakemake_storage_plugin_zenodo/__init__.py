@@ -58,7 +58,10 @@ class ReretryLoggerAdapter:
 
 def is_zenodo_url(url):
     parsed = urlparse(url)
-    return parsed.netloc.endswith("zenodo.org") and parsed.scheme in ("http", "https")
+    return parsed.netloc in ("zenodo.org", "sandbox.zenodo.org") and parsed.scheme in (
+        "http",
+        "https",
+    )
 
 
 # Patch the original HTTP StorageProvider off zenodo urls, so that there is no conflict
