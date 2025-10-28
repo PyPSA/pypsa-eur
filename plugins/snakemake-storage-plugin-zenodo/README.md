@@ -5,15 +5,17 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Snakemake Storage Plugin: Zenodo
 
-A Snakemake storage plugin for downloading files from Zenodo with local caching and intelligent rate limiting.
+A Snakemake storage plugin for downloading files from Zenodo with local caching, checksum verification, and adaptive rate limiting.
 
 ## Features
 
-- **Local caching**: Downloads are cached to avoid redundant transfers
-- **Rate limit handling**: Automatically respects Zenodo's rate limits using `X-RateLimit-*` headers
+- **Local caching**: Downloads are cached to avoid redundant transfers (can be disabled)
+- **Checksum verification**: Automatically verifies MD5 checksums from Zenodo API
+- **Rate limit handling**: Automatically respects Zenodo's rate limits using `X-RateLimit-*` headers with exponential backoff retry
 - **Concurrent download control**: Limits simultaneous downloads to prevent overwhelming Zenodo
 - **Progress bars**: Shows download progress with tqdm
 - **Immutable URLs**: Returns mtime=0 since Zenodo URLs are persistent
+- **Environment variable support**: Configure via environment variables for CI/CD workflows
 
 ## Installation
 
@@ -43,12 +45,20 @@ If you don't explicitly configure it, the plugin will use default settings autom
 ### Settings
 
 - **cache** (optional): Cache directory for downloaded files
-  - Default: `~/.cache/snakemake/pypsaeur`
+  - Default: Platform-dependent user cache directory (via `platformdirs.user_cache_dir("snakemake-pypsa-eur")`)
+  - Set to `""` (empty string) to disable caching
   - Files are cached here to avoid re-downloading
+  - Environment variable: `SNAKEMAKE_STORAGE_ZENODO_CACHE`
+
+- **skip_remote_checks** (optional): Skip metadata checking with Zenodo API
+  - Default: `False` (perform checks)
+  - Set to `True` or `"1"` to skip remote existence/size checks (useful for CI/CD)
+  - Environment variable: `SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS`
 
 - **max_concurrent_downloads** (optional): Maximum concurrent downloads
   - Default: `3`
   - Controls how many Zenodo files can be downloaded simultaneously
+  - No environment variable support
 
 ## Usage
 
@@ -79,15 +89,30 @@ rule download_data:
 ```
 
 The plugin will:
-1. Check if the file exists in the cache
+1. Check if the file exists in the cache (if caching is enabled)
 2. If cached, copy from cache (fast)
 3. If not cached, download from Zenodo with:
    - Progress bar showing download status
-   - Automatic rate limit handling
+   - Automatic rate limit handling with exponential backoff retry
    - Concurrent download limiting
-4. Store in cache for future use
+   - MD5 checksum verification against Zenodo API metadata
+4. Store in cache for future use (if caching is enabled)
 
-## Rate Limiting
+### Example: CI/CD Configuration
+
+For continuous integration environments where you want to skip caching and remote checks:
+
+```yaml
+# GitHub Actions example
+- name: Run snakemake workflows
+  env:
+    SNAKEMAKE_STORAGE_ZENODO_CACHE: ""
+    SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS: "1"
+  run: |
+    snakemake --cores all
+```
+
+## Rate Limiting and Retry
 
 Zenodo API limits:
 - **Guest users**: 60 requests/minute
@@ -97,6 +122,8 @@ The plugin automatically:
 - Monitors `X-RateLimit-Remaining` header
 - Waits when rate limit is reached
 - Uses `X-RateLimit-Reset` to calculate wait time
+- Retries failed requests with exponential backoff (up to 5 attempts)
+- Handles transient errors: HTTP errors, timeouts, checksum mismatches, and network issues
 
 ## URL Handling
 
