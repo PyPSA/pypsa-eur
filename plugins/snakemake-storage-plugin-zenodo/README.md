@@ -107,7 +107,7 @@ For continuous integration environments where you want to skip caching and remot
 - name: Run snakemake workflows
   env:
     SNAKEMAKE_STORAGE_ZENODO_CACHE: ""
-    SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS: "1"
+    SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS: "True"
   run: |
     snakemake --cores all
 ```

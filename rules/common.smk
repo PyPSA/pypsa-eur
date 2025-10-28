@@ -238,12 +238,12 @@ def solved_previous_horizon(w):
 
 def input_cutout(wildcards, cutout_names="default"):
 
-    CDIR = dataset_version("cutout")["folder"]
+    cutouts_path = dataset_version("cutout")["folder"]
 
     if cutout_names == "default":
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)
 
     if isinstance(cutout_names, list):
-        return [(CDIR / f"{cn}.nc").as_posix() for cn in cutout_names]
+        return [(cutouts_path / f"{cn}.nc").as_posix() for cn in cutout_names]
     else:
-        return (CDIR / f"{cutout_names}.nc").as_posix()
+        return (cutouts_path / f"{cutout_names}.nc").as_posix()

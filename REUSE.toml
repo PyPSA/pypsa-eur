@@ -23,6 +23,9 @@ path = [
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
 
+
+# Make sure to keep in sync with: https://pypsa-eur.readthedocs.io/en/latest/data-repos.html
+
 [[annotations]]
 path = [
     "data/agg_p_nom_minmax.csv",
