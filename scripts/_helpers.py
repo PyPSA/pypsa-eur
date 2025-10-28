@@ -8,6 +8,7 @@ import hashlib
 import logging
 import os
 import re
+import shutil
 import time
 from functools import partial, wraps
 from pathlib import Path
@@ -415,7 +416,7 @@ def progress_retrieve(url, file, disable=False):
     if disable:
         response = requests.get(url, headers=headers, stream=True)
         with open(file, "wb") as f:
-            f.write(response.content)
+            shutil.copyfileobj(response.raw, f)
     else:
         response = requests.get(url, headers=headers, stream=True)
         total_size = int(response.headers.get("content-length", 0))
