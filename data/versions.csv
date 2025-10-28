@@ -68,7 +68,7 @@
 "lau_regions","primary","2019","['latest', 'supported']","https://gisco-services.ec.europa.eu/distribution/v2/lau/download/ref-lau-2019-01m.geojson.zip",""
 "aquifer_data","primary","v1.2","['latest', 'supported']","https://download.bgr.de/bgr/grundwasser/IHME1500/v12/shp/IHME1500_v12.zip",""
 "aquifer_data","archive","v1.2","['latest', 'supported']","https://zenodo.org/records/16946750/files/IHME1500_v12.zip",""
-"lau_regions","archive","2019","['latest', 'supported']","https://zenodo.org/records/16947002",""
+"lau_regions","archive","2019","['latest', 'supported']","https://zenodo.org/records/16947002/files/ref-lau-2019-01m.geojson.zip",""
 "osm_boundaries","primary","unknown","['latest', 'supported']","","Overpass API is used to fetch the latest available data"
 "osm_boundaries","archive","unknown","['latest', 'supported']","https://zenodo.org/records/16992755/files/osm_boundaries.zip",""
 "tyndp","primary","2024","['latest', 'supported']","https://2024-data.entsos-tyndp-scenarios.eu/files/scenarios-inputs",""
