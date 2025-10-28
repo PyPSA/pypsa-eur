@@ -143,7 +143,7 @@ class StorageProvider(StorageProviderBase):
 
         # Set up cache directory
         if self.settings.cache:
-            self.cache_dir = Path(self.settings.cache)
+            self.cache_dir = Path(self.settings.cache).expanduser()
             self.cache_dir.mkdir(exist_ok=True, parents=True)
         else:
             self.cache_dir = None
