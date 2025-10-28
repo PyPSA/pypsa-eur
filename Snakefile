@@ -82,7 +82,11 @@ include: "rules/development.smk"
 # This follows the same pattern as postprocess.smk for consistency
 
 # Core outputs that always run
-CORE_OUTPUTS = [RESULTS + "graphs/costs.svg"]
+CORE_OUTPUTS = [
+    RESULTS + "graphs/costs.svg",
+    RESULTS + "graphs/energy.svg",
+    RESULTS + "graphs/balances-energy.svg",
+]
 
 # Network and timeseries plots (excluded for perfect foresight)
 if config["foresight"] != "perfect":
