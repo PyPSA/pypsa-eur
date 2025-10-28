@@ -20,8 +20,8 @@ storage:
     max_requests_per_second=0.5,
 
 
-storage zenodo:
-    provider="zenodo",
+storage cached_http:
+    provider="cached-http",
 
 
 if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"] in [
