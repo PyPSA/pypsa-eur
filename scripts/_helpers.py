@@ -1063,6 +1063,11 @@ def rename_techs(label: str) -> str:
         "AC": "transmission lines",
         "DC": "transmission lines",
         "B2B": "transmission lines",
+        "Battery Storage": "battery storage",
+        "Offshore Wind (AC)": "offshore wind (AC)",
+        "Onshore Wind": "onshore wind",
+        "Solar": "solar",
+        "Combined-Cycle Gas": "CCGT",
     }
 
     for ptr in prefix_to_remove:

@@ -53,7 +53,7 @@ Upcoming Release
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
-* Add residential heat demand-side management (DSM) feature that allows electric heating systems to provide flexibility by shifting demand within daily time windows. The implementation models building thermal mass as energy stores with time-varying availability constraints based on SmartEn research. Configuration options include ``residential_heat_dsm`` (default: false), ``residential_heat_restriction_value`` (default: 0.27), and ``residential_heat_restriction_time`` (default: [10, 22] for 9am and 9pm checkpoint hours). Thermal losses in buildings are modeled using the same time constant as decentralized water tanks. (https://github.com/PyPSA/pypsa-eur/pull/1371)
+* Add residential heat demand-side management (DSM) based on `smartEn study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ methodology.
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
@@ -745,9 +745,6 @@ PyPSA-Eur v2025.01.0 (24th January 2025)
   (https://github.com/PyPSA/pypsa-eur/pull/1474)
 
 * Updating all base shapes (country_shapes, europe_shape, nuts3_shapes, ...). The workflow has been modified to use higher resolution and more harmonised shapes (NUTS3 2021 01M data and OSM administration level 1 for non-NUTS3 countries, such as BA, MD, UA, and XK). Data sources for population and GDP p.c. have been updated to JRC ARDECO https://urban.jrc.ec.europa.eu/ardeco/ -- 2019 values are used. `build_gdp_pop_non_nuts3` (originally created to build regional GDP p.c. and population data for MD and UA) is now integrated into `build_shapes` and extended to build regional values for all non-NUTS3 countries using cutouts of the updated datasets `GDP_per_capita_PPP_1990_2015_v2.nc` and `ppp_2019_1km_Aggregated.tif`,
-
-
-* Add demand-side-response (DSR) for the heating sector.
 
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================

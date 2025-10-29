@@ -59,14 +59,15 @@ district_heating,--,,
 -- -- urban central,--,List of heat sources for heat pumps in urban central heating,
 -- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
 -- -- rural,--,List of heat sources for heat pumps in rural heating,
-residential_heat_dsm,--,"{true, false}","Enable residential heat demand-side management (DSM) that allows electric heating systems to provide flexibility by shifting demand within 12-hour periods. Models building thermal mass as energy storage. Based on smartEn/DNV methodology. Default: false.",
-residential_heat_restriction_value,--,float,"Maximum state of charge (as fraction) for heat flexibility storage representing available thermal buffer capacity in buildings. Storage must reach this level at checkpoint hours. Set to 0 for full restriction (no flexibility), 1.0 for maximum flexibility. Default: 0.27 (conservative estimate of thermal buffer capacity).",
-residential_heat_restriction_time,--,list of int,"Checkpoint hours (0-23) at which heat flexibility storage must return to baseline state of charge, enforcing 12-hour consumption periods. Default: [10, 22] corresponding to 9am and 9pm, creating day period (9am-9pm) and night period (9pm-9am).",
+residential_heat,--,,Configuration options for residential heat demand-side management (DSM). See `smartEn DSM study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ (Appendix A) for methodology.
+-- dsm,--,"{true, false}",Enable residential heat demand-side management that allows electric heating systems to provide flexibility by shifting demand within configurable time periods. Models building thermal mass as energy storage.
+-- restriction_value,--,float,"Maximum state of charge (as fraction) for heat flexibility storage representing available thermal buffer capacity in buildings. Set to 0 for no flexibility; 1.0 for maximum flexibility. Default: 0.27 (conservative estimate based on smartEn methodology)."
+-- restriction_time,--,list of int,"Checkpoint hours (0-23 UTC) at which heat flexibility storage must return to baseline state of charge. Default: [10 22] creates 12-hour periods with checkpoints at 9am and 9pm local time (Central European Time)."
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
-bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
-bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
-transport_heating _deadband_upper,C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
-transport_heating _deadband_lower,C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
+bev_dsm_restriction_value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
+bev_dsm_restriction_time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
+transport_heating_deadband_upper,C,float,"The maximum temperature in the vehicle. At higher temperatures, the energy required for cooling in the vehicle increases."
+transport_heating_deadband_lower,C,float,"The minimum temperature in the vehicle. At lower temperatures, the energy required for heating in the vehicle increases."
 ICE_lower_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the cold environment and the minimum temperature.
 ICE_upper_degree_factor,--,float,Share increase in energy demand in internal combustion engine (ICE) for each degree difference between the hot environment and the maximum temperature.
 EV_lower_degree_factor,--,float,Share increase in energy demand in electric vehicles (EV) for each degree difference between the cold environment and the minimum temperature.

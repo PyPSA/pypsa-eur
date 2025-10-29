@@ -41,9 +41,8 @@ def heat_dsm_profile(nodes, options):
         Node identifiers for which to generate profiles.
     options : dict
         Configuration dictionary containing:
-        - 'residential_heat_restriction_time': list of int
+        - options['residential_heat']['restriction_time']: list of int
             Hours at which storage must be empty (checkpoint hours).
-            Default: [10, 22] corresponding to 9am and 9pm.
 
     Returns
     -------
@@ -64,7 +63,7 @@ def heat_dsm_profile(nodes, options):
     prepare_sector_network.add_heat : Uses this profile to constrain heat flexibility stores
     """
     weekly_profile = np.ones(24 * 7)
-    for i in options["residential_heat_restriction_time"]:
+    for i in options["residential_heat"]["restriction_time"]:
         weekly_profile[(np.arange(0, 7, 1) * 24 + int(i))] = 0
 
     dsm_profile = generate_periodic_profiles(
@@ -92,7 +91,7 @@ if __name__ == "__main__":
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
 
-    options = snakemake.params.sector
+    sector_options = snakemake.params.sector
 
     daily_space_heat_demand = (
         xr.open_dataarray(snakemake.input.heat_demand)
@@ -123,7 +122,7 @@ if __name__ == "__main__":
             )
             if sector == "residential":
                 dsm_profile[f"{sector} {use}"] = heat_dsm_profile(
-                    daily_space_heat_demand.columns, options
+                    daily_space_heat_demand.columns, sector_options
                 )
         else:
             heat_demand[f"{sector} {use}"] = intraday_year_profile

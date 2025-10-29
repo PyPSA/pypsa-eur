@@ -2954,7 +2954,7 @@ def add_heat(
             p_set=heat_load.loc[n.snapshots],
         )
 
-        if options["residential_heat_dsm"] and heat_system in [
+        if options["residential_heat"]["dsm"] and heat_system in [
             HeatSystem.RESIDENTIAL_RURAL,
             HeatSystem.RESIDENTIAL_URBAN_DECENTRAL,
             HeatSystem.URBAN_CENTRAL,
@@ -2979,7 +2979,7 @@ def add_heat(
             )
 
             heat_dsm_profile = (
-                heat_dsm_profile * options["residential_heat_restriction_value"]
+                heat_dsm_profile * options["residential_heat"]["restriction_value"]
             )
             e_nom = e_nom.max()
 

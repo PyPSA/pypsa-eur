@@ -100,7 +100,7 @@ if __name__ == "__main__":
         .unique()
         .to_series()
         .map(carrier_colors)
-        .fillna("lightgrey")  # Fill NaN colors with lightgrey as fallback
+        .fillna("lightgrey")
     )
 
     # line and links widths according to optimal capacity
