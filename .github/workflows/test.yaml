@@ -98,8 +98,8 @@ jobs:
 
     - name: Run snakemake test workflows
       env:
-        SNAKEMAKE_STORAGE_ZENODO_CACHE: ""
-        SNAKEMAKE_STORAGE_ZENODO_SKIP_REMOTE_CHECKS: "1"
+        SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
+        SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
         make test
 
