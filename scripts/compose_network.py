@@ -220,43 +220,44 @@ def concatenate_network_with_previous(
 
     if n.investment_periods.empty:
         raise ValueError("Previous network must have investment periods")
+    if n_current.investment_periods.empty:
+        raise ValueError("Current network must have investment periods")
 
     # Extend snapshots using our helper function
-    extended_snapshots = extend_snapshot_multiindex(
-        n.snapshots, n_current.snapshots, current_horizon
-    )
+    combined_snapshots = list(n.snapshots) + list(n_current.snapshots)
+    extended_snapshots = pd.MultiIndex.from_tuples(combined_snapshots)
 
     # Set snapshots - PyPSA will automatically update investment_periods
     # from the first level of the MultiIndex
     n.set_snapshots(extended_snapshots)
+    n.snapshot_weightings.loc[current_horizon] = n_current.snapshot_weightings
     n.set_investment_periods(list(n.investment_periods))
 
-    for c in n_current.components.values():
-        existing_comps = n.c[c.name].static.index
-        new_comps = n_current.c[c.name].static.index.difference(existing_comps)
-        new_static = n_current.c[c.name].static.loc[new_comps]
-        n.add(c.name, new_static.index, **new_static)
-        for attr, df in c.dynamic.items():
+    for c_current in n_current.components.values():
+        c = n.c[c_current.name]
+        existing_comps = c.static.index
+        overlap_comps = c_current.static.index.intersection(existing_comps)
+        new_comps = c_current.static.index.difference(existing_comps)
+        new_static = c_current.static.loc[new_comps]
+        n.add(c_current.name, new_static.index, **new_static)
+
+        for attr, df in c_current.dynamic.items():
             if df.empty:
                 continue
-            # Select columns (component names), not rows
-            # Check if any of new_comps exist in df columns
-            cols_to_add = [col for col in new_comps if col in df.columns]
-            if not cols_to_add:
-                continue
-            new_dyn = df[cols_to_add]
-            # Create MultiIndex for the new period
-            new_period_index = pd.MultiIndex.from_product(
-                [[current_horizon], new_dyn.index], names=["period", "timestep"]
+
+            default = c.attrs.default[attr]
+            c.dynamic[attr].loc[current_horizon, df.columns] = df.values
+            c.dynamic[attr] = c.dynamic[attr].fillna(default)
+
+            # static values from different horizon that are not equal have to be casted to dynamic
+            overlap_non_equal_static_only = c_current.static.loc[
+                overlap_comps, attr
+            ].ne(c.static.loc[overlap_comps, attr]) & ~overlap_comps.isin(
+                c.dynamic[attr].columns
             )
-            n.c[c.name].dynamic[attr].loc[new_period_index, cols_to_add] = (
-                new_dyn.values
-            )
-            sdf = n.c[c.name].static
-            fill_value = sdf[attr][cols_to_add] if attr in sdf.columns else 0
-            n.c[c.name].dynamic[attr].loc[:, cols_to_add] = (
-                n.c[c.name].dynamic[attr].loc[:, cols_to_add].fillna(fill_value)
-            )
+            if overlap_non_equal_static_only.any():
+                casted = c._as_dynamic(attr, overlap_non_equal_static_only)
+                casted.loc[current_horizon] = c_current.static.loc[overlap_comps]
 
     n.meta = {**n_previous.meta, **n_current.meta}
 
@@ -276,7 +277,6 @@ def concatenate_network_with_previous(
     logger.info(
         f"Successfully concatenated network: {len(n.investment_periods)} investment periods"
     )
-
     return n
 
 
@@ -1526,13 +1526,10 @@ if __name__ == "__main__":
         # Adjust store cycling behavior for perfect foresight
         adjust_stores_for_perfect_foresight(n)
 
-        if is_first_horizon:
-            # Convert current horizon to multi-period structure (works for both first and subsequent)
-            logger.info(
-                f"Converting horizon {current_horizon} to multi-period structure"
-            )
-            n.set_investment_periods([current_horizon])
-        else:
+        logger.info(f"Converting horizon {current_horizon} to multi-period structure")
+        n.set_investment_periods([current_horizon])
+
+        if not is_first_horizon:
             logger.info(
                 "Concatenating with previous composed network for perfect foresight"
             )
