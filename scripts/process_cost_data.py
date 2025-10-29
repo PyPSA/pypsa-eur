@@ -181,6 +181,20 @@ if __name__ == "__main__":
         ).query("planning_horizon in [@planning_horizon, 'all']")
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
+        # If technology "all" exists, propagate its parameter values to all other technologies
+        if 'all' in custom_costs.index.get_level_values(0):
+            all_techs = custom_costs.query("technology=='all'")
+            custom_costs = custom_costs.query("technology != 'all'")
+
+            # Overwrite all techs entries
+            if not all_techs.empty:
+                all_techs = all_techs.droplevel(0)
+                costs = costs.sort_index()
+                for param in all_techs.index:
+                    costs.loc[pd.IndexSlice[:, param], all_techs.columns] = all_techs.loc[param].values
+
+            custom_costs = custom_costs.query("technology != 'all'")
+
         # Overwrite unique pairs of (technology, parameter)
         missing_idx = custom_costs.index.difference(costs.index)
         if len(missing_idx) > 0:
