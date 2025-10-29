@@ -89,6 +89,7 @@ jobs:
       if: steps.cache-env.outputs.cache-hit != 'true'
       run: |
         conda env update -n pypsa-eur -f ${{ env.env_file }}
+        conda clean -ay
         echo "Run conda list" && conda list
 
     - name: Run pylint check on scripts
