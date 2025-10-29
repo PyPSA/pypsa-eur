@@ -182,7 +182,7 @@ if __name__ == "__main__":
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
         # If technology "all" exists, propagate its parameter values to all other technologies
-        if 'all' in custom_costs.index.get_level_values(0):
+        if "all" in custom_costs.index.get_level_values(0):
             all_techs = custom_costs.query("technology=='all'")
             custom_costs = custom_costs.query("technology != 'all'")
 
@@ -191,7 +191,9 @@ if __name__ == "__main__":
                 all_techs = all_techs.droplevel(0)
                 costs = costs.sort_index()
                 for param in all_techs.index:
-                    costs.loc[pd.IndexSlice[:, param], all_techs.columns] = all_techs.loc[param].values
+                    costs.loc[pd.IndexSlice[:, param], all_techs.columns] = (
+                        all_techs.loc[param].values
+                    )
 
             custom_costs = custom_costs.query("technology != 'all'")
 
