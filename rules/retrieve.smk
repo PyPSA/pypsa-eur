@@ -1119,28 +1119,14 @@ if (AQUIFER_DATA_DATASET := dataset_version("aquifer_data"))["source"] in [
 ]:
 
     rule retrieve_aquifer_data_bgr:
+        params:
+            shp_path="IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.shp",
         input:
             zip_file=storage(AQUIFER_DATA_DATASET["url"]),
         output:
             zip_file=f"{AQUIFER_DATA_DATASET['folder']}/ihme1500_aquif_ec4060_v12_poly.zip",
-            aquifer_shapes=expand(
-                f"{AQUIFER_DATA_DATASET['folder']}/IHME1500_v12/shp/ihme1500_aquif_ec4060_v12_poly.{{ext}}",
-                ext=[
-                    "shp",
-                    "shx",
-                    "dbf",
-                    "cpg",
-                    "prj",
-                    "sbn",
-                    "sbx",
-                ],
-            ),
         run:
             copy2(input["zip_file"], output["zip_file"])
-            unpack_archive(
-                output["zip_file"],
-                AQUIFER_DATA_DATASET["folder"],
-            )
 
 
 if (DH_AREAS_DATASET := dataset_version("dh_areas"))["source"] in [

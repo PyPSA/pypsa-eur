@@ -406,8 +406,9 @@ rule build_ates_potentials:
             "ignore_missing_regions",
         ),
         countries=config_provider("countries"),
+        aquifer_shp_path=rules.retrieve_aquifer_data_bgr.params.shp_path,
     input:
-        aquifer_shapes_shp=rules.retrieve_aquifer_data_bgr.output["aquifer_shapes"][0],
+        aquifer_shapes_zip=rules.retrieve_aquifer_data_bgr.output.zip_file,
         dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         central_heating_forward_temperature_profiles=resources(
