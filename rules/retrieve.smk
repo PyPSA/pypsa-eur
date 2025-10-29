@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import gzip
 import requests
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from shutil import move, unpack_archive, rmtree, copy2
+from shutil import move, unpack_archive, rmtree, copy2, copyfileobj
 from zipfile import ZipFile
 
 
@@ -428,10 +429,15 @@ if (
         input:
             csv=storage(SYNTHETIC_ELECTRICITY_DEMAND_DATASET["url"]),
         output:
-            csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET['folder']}/load_synthetic_raw.csv",
+            csv=f"{SYNTHETIC_ELECTRICITY_DEMAND_DATASET['folder']}/load_synthetic_raw.csv.gz",
         retries: 2
         run:
-            copy2(input["csv"], output["csv"])
+            with (
+                open(input["csv"], "rb") as f_in,
+                gzip.open(output["csv"], "wb") as f_out,
+            ):
+                copyfileobj(f_in, f_out)
+
 
 
 if (SHIP_RASTER_DATASET := dataset_version("ship_raster"))["source"] in [
