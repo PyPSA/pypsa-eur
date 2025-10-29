@@ -96,7 +96,7 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
 
     rule retrieve_corine:
         params:
-            apikey=config["secrets"]["corine"],
+            apikey=os.environ.get("CORINE_API_TOKEN", config["secrets"]["corine"]),
         output:
             zip=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",
