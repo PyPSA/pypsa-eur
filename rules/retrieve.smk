@@ -282,20 +282,17 @@ if (EU_NUTS2021_DATASET := dataset_version("eu_nuts2021"))["source"] in [
 ]:
 
     rule retrieve_eu_nuts_2021:
+        params:
+            shapes_level_3_path="NUTS_RG_01M_2021_4326_LEVL_3.geojson",
+            shapes_level_2_path="NUTS_RG_01M_2021_4326_LEVL_2.geojson",
+            shapes_level_1_path="NUTS_RG_01M_2021_4326_LEVL_1.geojson",
+            shapes_level_0_path="NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         input:
             shapes=storage(EU_NUTS2021_DATASET["url"]),
         output:
             zip_file=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson.zip",
-            folder=directory(
-                f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson"
-            ),
-            shapes_level_3=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_3.geojson",
-            shapes_level_2=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_2.geojson",
-            shapes_level_1=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_1.geojson",
-            shapes_level_0=f"{EU_NUTS2021_DATASET['folder']}/ref-nuts-2021-01m.geojson/NUTS_RG_01M_2021_4326_LEVL_0.geojson",
         run:
             copy2(input["shapes"], output["zip_file"])
-            unpack_archive(output["zip_file"], Path(output.shapes_level_3).parent)
 
 
 rule retrieve_bidding_zones:
