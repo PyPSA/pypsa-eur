@@ -87,7 +87,8 @@ def plot_costs():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
+    total_cost = df.sum().iloc[0]
+    logger.info(f"Total system cost of {total_cost:.2f} EUR billion per year")
 
     # Check if there's any data left to plot
     if df.empty:
@@ -121,7 +122,13 @@ def plot_costs():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([0, snakemake.params.plotting["costs_max"]])
+    # Handle auto-scaling if configured
+    costs_max = snakemake.params.plotting["costs_max"]
+    if costs_max == "auto":
+        costs_max = None
+        logger.info("Auto-scaling y-axis (costs_max='auto')")
+
+    ax.set_ylim([0, costs_max])
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -160,7 +167,8 @@ def plot_energy():
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
+    total_energy = df.sum().iloc[0]
+    logger.info(f"Total energy of {total_energy:.2f} TWh/a")
 
     if df.empty:
         logger.warning(
@@ -195,12 +203,19 @@ def plot_energy():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim(
-        [
-            snakemake.params.plotting["energy_min"],
-            snakemake.params.plotting["energy_max"],
-        ]
-    )
+    # Handle auto-scaling if configured
+    energy_min = snakemake.params.plotting["energy_min"]
+    energy_max = snakemake.params.plotting["energy_max"]
+
+    if energy_max == "auto":
+        energy_max = None
+        logger.info("Auto-scaling y-axis max (energy_max='auto')")
+
+    if energy_min == "auto":
+        energy_min = None
+        logger.info("Auto-scaling y-axis min (energy_min='auto')")
+
+    ax.set_ylim([energy_min, energy_max])
 
     ax.set_ylabel("Energy [TWh/a]")
 
@@ -361,7 +376,7 @@ def historical_emissions(countries):
         .rename(index=pd.Series(e.index, e.values))
     )
 
-    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0, axis=0).sum()  # Gton CO2
+    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0).sum()  # Gton CO2
 
     co2_totals.loc["industrial non-elec"] = (
         co2_totals.loc["total energy"]

@@ -117,8 +117,8 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  costs_max: 1000
+  costs_max: auto
   costs_threshold: 0.001
-  energy_max:
-  energy_min:
+  energy_max: auto
+  energy_min: auto
   energy_threshold: 0.00001

@@ -175,7 +175,10 @@ conventional:
     p_max_pu: data/nuclear_p_max_pu.csv
 
 plotting:
+  costs_max: auto
   costs_threshold: 0.001
+  energy_max: auto
+  energy_min: auto
   energy_threshold: 0.00001
   balance_map:
     bus_carriers:
