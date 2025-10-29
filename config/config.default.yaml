@@ -1000,142 +1000,142 @@ adjustments:
 data:
   hotmaps_industrial_sites:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   enspreso_biomass:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   osm:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   worldbank_urban_population:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   gem_europe_gas_tracker:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   co2stop:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   nitrogen_statistics:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   eu_nuts2013:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   eu_nuts2021:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   eurostat_balances:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   eurostat_household_balances:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   wdpa:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   wdpa_marine:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   luisa_land_cover:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   jrc_idees:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   scigrid_gas:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   synthetic_electricity_demand:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   copernicus_land_cover:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   ship_raster:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   eez:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   nuts3_population:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   gdp_per_capita:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   population_count:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   ghg_emissions:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   gebco:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   attributed_ports:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   corine:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   emobility:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   h2_salt_caverns:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   lau_regions:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   aquifer_data:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   osm_boundaries:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   gem_gspt:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   tyndp:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   powerplants:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   costs:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   country_runoff:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   country_hdd:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   natura:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   bfs_road_vehicle_stock:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   bfs_gdp_and_population:
     source: "primary"
-    version_or_latest: "latest"
+    version: "latest"
   mobility_profiles:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   cutout:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   dh_areas:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   geothermal_heat_utilisation_potentials:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
   jrc_ardeco:
     source: "archive"
-    version_or_latest: "latest"
+    version: "latest"
 
 secrets:
   corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login

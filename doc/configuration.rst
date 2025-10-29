@@ -616,7 +616,7 @@ Controls which versions of input data are used for building the model.
 Versions that are available for each dataset can be found in `data/versions.csv`.
 By default, we retrieve the `latest` supported version for each dataset from an archive source.
 This means that when upgrading between PyPSA-Eur versions, new versions of input data may also be downloaded and used.
-To freeze a model to a specific version of input data, you can set a specific version in the `version_or_latest` field for each dataset to one specific version as listed in `data/versions.csv`.
+To freeze a model to a specific version of input data, you can set a specific version in the `version` field for each dataset to one specific version as listed in `data/versions.csv`.
 
 Some datasets support `primary` or `build` as a source option, meaning that the data can be retrieved from the original
 data source or build it from the latest available data.

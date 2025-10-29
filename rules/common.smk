@@ -134,20 +134,16 @@ def dataset_version(
         & (data_versions["source"] == dataset_config["source"])
         & (data_versions["supported"])  # Limit to supported versions only
         & (
-            data_versions["version"] == dataset_config["version_or_latest"]
-            if "latest" != dataset_config["version_or_latest"]
+            data_versions["version"] == dataset_config["version"]
+            if "latest" != dataset_config["version"]
             else True
         )
-        & (
-            data_versions["latest"]
-            if "latest" == dataset_config["version_or_latest"]
-            else True
-        )
+        & (data_versions["latest"] if "latest" == dataset_config["version"] else True)
     ]
 
     if dataset.empty:
         raise ValueError(
-            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version_or_latest']}' not found in data/versions.csv."
+            f"Dataset '{name}' with source '{dataset_config['source']}' for '{dataset_config['version']}' not found in data/versions.csv."
         )
 
     # Return single-row DataFrame as a Series
