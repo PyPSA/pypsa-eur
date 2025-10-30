@@ -63,9 +63,6 @@ def prepare_costs(
         if key in config:
             config["overwrites"][key] = config[key]
 
-    # set all asset costs and other parameters
-    costs = costs.set_index(["technology", "parameter"]).sort_index()
-
     # correct units to MW and EUR
     costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
     costs.loc[costs.unit.str.contains("/GW"), "value"] /= 1e3
@@ -172,12 +169,12 @@ if __name__ == "__main__":
     # Retrieve costs assumptions
     # If the index is the unique pair (technology, parameter),
     # it can be easily overwritten.
-    costs = pd.read_csv(snakemake.input.costs, index_col=[0, 1])
+    costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])
     if snakemake.input.custom_costs is not None:
         custom_costs = pd.read_csv(
             snakemake.input.custom_costs,
             dtype={"planning_horizon": "str"},
-            index_col=[1, 2],  # 0 is planning_horizon
+            index_col=["technology", "parameter"],
         ).query("planning_horizon in [@planning_horizon, 'all']")
         custom_costs = custom_costs.drop("planning_horizon", axis=1)
 
@@ -201,9 +198,7 @@ if __name__ == "__main__":
         missing_idx = custom_costs.index.difference(costs.index)
         if len(missing_idx) > 0:
             costs = pd.concat([costs, custom_costs.loc[missing_idx]])
-
         costs.loc[custom_costs.index] = custom_costs
-        costs = costs.reset_index()
 
     # Prepare costs
     costs_processed = prepare_costs(
