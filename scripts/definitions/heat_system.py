@@ -295,6 +295,6 @@ class HeatSystem(Enum):
         Returns
         -------
         str
-            The name for the oil boiler costs.
+            The name for the biomass boiler costs.
         """
         return "biomass boiler"
