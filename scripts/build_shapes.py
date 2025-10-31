@@ -622,12 +622,9 @@ if __name__ == "__main__":
     offshore_shapes.reset_index().to_file(snakemake.output.offshore_shapes)
 
     # Onshore regions
-    vsipath_nuts3_2021 = (
-        f"/vsizip/{snakemake.input.nuts3_2021}/{snakemake.params.nuts3_2021_path}"
-    )
     regions = create_regions(
         snakemake.params.countries,
-        vsipath_nuts3_2021,
+        snakemake.input.nuts3_2021,
         snakemake.input.ba_adm1,
         snakemake.input.md_adm1,
         snakemake.input.ua_adm1,

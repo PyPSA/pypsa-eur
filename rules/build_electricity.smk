@@ -150,10 +150,9 @@ rule build_shapes:
     params:
         config_provider("clustering", "mode"),
         countries=config_provider("countries"),
-        nuts3_2021_path=rules.retrieve_eu_nuts_2021.params.shapes_level_3_path,
     input:
         eez=ancient(rules.retrieve_eez.output["gpkg"]),
-        nuts3_2021=rules.retrieve_eu_nuts_2021.output["zip_file"],
+        nuts3_2021=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
         ba_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/BA_adm1.geojson",
         md_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/MD_adm1.geojson",
         ua_adm1=f"data/osm_boundaries/build/{OSM_BOUNDARIES_DATASET['version']}/UA_adm1.geojson",
