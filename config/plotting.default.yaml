@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -7,7 +7,7 @@ plotting:
   enable_heat_source_maps: false
   map:
     boundaries: [-11, 30, 34, 71]
-    geomap_colors:
+    color_geomap:
       ocean: white
       land: white
   projection:

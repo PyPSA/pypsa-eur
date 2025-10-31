@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 from typing import Union
 
 import numpy as np

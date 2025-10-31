@@ -7,7 +7,7 @@ data from `CO2Stop <https://setis.ec.europa.eu/european-co2-storage-
 database_en>`_.
 """
 
-from typing import Any, Union
+from typing import Any
 
 import geopandas as gpd
 import numpy as np
@@ -19,8 +19,8 @@ CRS = "EPSG:4326"
 
 
 def convert_to_2d(
-    geom: Union[sg.base.BaseGeometry, Any],
-) -> Union[sg.base.BaseGeometry, Any]:
+    geom: sg.base.BaseGeometry | Any,
+) -> sg.base.BaseGeometry | Any:
     """
     Remove the third dimension (z-coordinate) from a shapely geometry object.
 
