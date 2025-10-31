@@ -69,9 +69,12 @@ dependencies:
 - pre-commit
 - ruff
 - pylint
+- typer
+- python-dotenv
 
 - pip:
   - gurobipy
   - highspy
   - tsam>=2.3.1
   - entsoe-py
+  - git+https://github.com/PyPSA/snakemake-storage-plugin-cached-http.git

@@ -89,6 +89,7 @@ jobs:
       if: steps.cache-env.outputs.cache-hit != 'true'
       run: |
         conda env update -n pypsa-eur -f ${{ env.env_file }}
+        conda clean -ay
         echo "Run conda list" && conda list
 
     - name: Run pylint check on scripts
@@ -97,6 +98,9 @@ jobs:
         pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
+      env:
+        SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
+        SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
         make test
 
