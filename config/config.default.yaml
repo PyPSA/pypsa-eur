@@ -533,7 +533,6 @@ sector:
       aquifer_volumetric_heat_capacity: 2600
       fraction_of_aquifer_area_available: 0.2
       effective_screen_length: 20
-      dh_area_buffer: 1000
       capex_as_fraction_of_geothermal_heat_source: 0.75
       recovery_factor: 0.6
       marginal_cost_charger: 0.035
@@ -549,10 +548,15 @@ sector:
       geothermal:
         constant_temperature_celsius: 65
         ignore_missing_regions: false
+      river_water:
+        constant_temperature_celsius: false
     direct_utilisation_heat_sources:
     - geothermal
     temperature_limited_stores:
     - ptes
+    dh_areas:
+      buffer: 1000
+      handle_missing_countries: fill
   heat_pump_sources:
     urban central:
     - air
