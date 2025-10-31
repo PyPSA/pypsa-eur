@@ -388,8 +388,9 @@ if __name__ == "__main__":
 
     countries: list = snakemake.params.countries
 
-    vsipath = f"/vsizip/{snakemake.input.aquifer_shapes_zip}/{snakemake.params.aquifer_shp_path}"
-    aquifer_shapes = gpd.read_file(vsipath).to_crs(regions_onshore.crs)
+    aquifer_shapes = gpd.read_file(snakemake.input.aquifer_shapes_shp).to_crs(
+        regions_onshore.crs
+    )
     # fix any invalid geometries
     aquifer_shapes.geometry = aquifer_shapes.geometry.make_valid()
 
