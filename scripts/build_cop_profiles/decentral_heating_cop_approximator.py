@@ -8,7 +8,7 @@ from typing import Union
 import numpy as np
 import xarray as xr
 
-from scripts.build_cop_profiles.BaseCopApproximator import BaseCopApproximator
+from scripts.build_cop_profiles.base_cop_approximator import BaseCopApproximator
 
 
 class DecentralHeatingCopApproximator(BaseCopApproximator):
@@ -70,7 +70,7 @@ class DecentralHeatingCopApproximator(BaseCopApproximator):
         else:
             self.source_type = source_type
 
-    def approximate_cop(self) -> Union[xr.DataArray, np.array]:
+    def _approximate_cop(self) -> Union[xr.DataArray, np.array]:
         """
         Compute the COP values using quadratic regression for air-/ground-
         source heat pumps.
