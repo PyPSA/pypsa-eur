@@ -60,7 +60,7 @@ jobs:
 
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: lockfiles
         path: envs/*.lock.yaml
@@ -71,7 +71,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: Download all artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: lockfiles
         path: envs/
