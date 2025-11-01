@@ -4,9 +4,10 @@
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
+  enable_heat_source_maps: false
   map:
     boundaries: [-11, 30, 34, 71]
-    color_geomap:
+    geomap_colors:
       ocean: white
       land: white
   projection:
@@ -53,6 +54,8 @@ plotting:
       - residential rural heat
       - services urban decentral heat
       - services rural heat
+  interactive_bus_balance:
+    bus_name_pattern: None
   heatmap_timeseries:
     marginal_price:
     - AC
@@ -458,6 +461,10 @@ plotting:
     urban central geothermal heat pump: '#4f2144'
     geothermal heat pump: '#4f2144'
     geothermal heat direct utilisation: '#ba91b1'
+    river_water heat: '#4bb9f2'
+    river_water heat pump: '#4bb9f2'
+    sea_water heat: '#0b222e'
+    sea_water heat pump: '#0b222e'
     ground heat pump: '#2fb537'
     residential rural ground heat pump: '#4f2144'
     residential rural air heat pump: '#48f74f'
