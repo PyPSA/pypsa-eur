@@ -228,20 +228,54 @@ if config["enable"]["retrieve"]:
 
 if config["enable"]["retrieve"]:
 
-    rule retrieve_electricity_demand:
+    rule retrieve_electricity_demand_opsd:
         params:
             versions=["2019-06-05", "2020-10-06"],
         output:
-            "data/electricity_demand_raw.csv",
+            "data/electricity_demand_opsd_raw.csv",
         log:
-            "logs/retrieve_electricity_demand.log",
+            "logs/retrieve_electricity_demand_opsd.log",
         resources:
             mem_mb=5000,
         retries: 2
         conda:
             "../envs/environment.yaml"
         script:
-            "../scripts/retrieve_electricity_demand.py"
+            "../scripts/retrieve_electricity_demand_opsd.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_electricity_demand_entsoe:
+        params:
+            entsoe_token=config["secrets"]["entsoe_token"],
+        output:
+            "data/electricity_demand_entsoe_raw.csv",
+        log:
+            "logs/retrieve_electricity_demand_entsoe.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_electricity_demand_entsoe.py"
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_electricity_demand_neso:
+        output:
+            "data/electricity_demand_neso_raw.csv",
+        log:
+            "logs/retrieve_electricity_demand_neso.log",
+        resources:
+            mem_mb=5000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_electricity_demand_neso.py"
 
 
 if config["enable"]["retrieve"]:
