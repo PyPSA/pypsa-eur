@@ -357,6 +357,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[6] == "Natural gas"
     ct_totals["gas residential space efficiency"] = df.iloc[6]
 
+    assert df.index[7] == "Biomass"
+    ct_totals["biomass residential space efficiency"] = df.iloc[7]
+
     ct_totals["total residential water efficiency"] = df.loc["Water heating"]
 
     assert df.index[18] == "Diesel oil"
@@ -364,6 +367,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[19] == "Natural gas"
     ct_totals["gas residential water efficiency"] = df.iloc[19]
+
+    assert df.index[20] == "Biomass"
+    ct_totals["biomass residential water efficiency"] = df.iloc[20]
 
     # services
 
@@ -408,6 +414,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
     assert df.index[7] == "Conventional gas heaters"
     ct_totals["gas services space efficiency"] = df.iloc[7]
 
+    assert df.index[8] == "Biomass"
+    ct_totals["biomass services space efficiency"] = df.iloc[8]
+
     ct_totals["total services water efficiency"] = df.loc["Hot water"]
 
     assert df.index[20] == "Diesel oil"
@@ -415,6 +424,9 @@ def idees_per_country(ct: str, base_dir: str) -> pd.DataFrame:
 
     assert df.index[21] == "Natural gas"
     ct_totals["gas services water efficiency"] = df.iloc[21]
+
+    assert df.index[22] == "Biomass"
+    ct_totals["biomass services water efficiency"] = df.iloc[22]
 
     # agriculture, forestry and fishing
 
