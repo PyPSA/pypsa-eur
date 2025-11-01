@@ -68,15 +68,17 @@ sector:
         booster_heat_pump: true
     ates:
       enable: true
-    heat_pump_sources:
-      urban central:
-      - air
-      - geothermal
-      urban decentral:
-      - air
-      rural:
-      - air
-      - ground
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
   hydrogen_turbine: false
   regional_oil_demand: false
   regional_co2_sequestration_potential:
@@ -91,7 +93,6 @@ sector:
   biomass_spatial: false
   biomass_to_liquid: false
   electrobiofuels: false
-
 
 industry:
   HVC_environment_sequestration_fraction: 0.5
@@ -119,3 +120,6 @@ plotting:
   energy_max:
   energy_min:
   energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true

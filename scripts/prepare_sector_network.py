@@ -813,7 +813,13 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
             options["regional_co2_sequestration_potential"]["max_size"] * 1e3
         )  # Mt
         annualiser = options["regional_co2_sequestration_potential"]["years_of_storage"]
-        e_nom_max = pd.read_csv(sequestration_potential_file, index_col=0).squeeze()
+        df = pd.read_csv(sequestration_potential_file, index_col=0)
+        if df.shape == (1, 1):
+            # if only one value, manually convert to a Series
+            e_nom_max = pd.Series(df.iloc[0, 0], index=df.index)
+        else:
+            e_nom_max = df.squeeze()
+
         e_nom_max = (
             e_nom_max.reindex(spatial.co2.locations)
             .fillna(0.0)
@@ -1808,6 +1814,7 @@ def add_storage_and_grids(
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "capital_cost"],
+        p_min_pu=options["min_part_load_electrolysis"],
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
@@ -1978,35 +1985,40 @@ def add_storage_and_grids(
 
         # find all complement edges
         complement_edges = pd.DataFrame(complement(G).edges, columns=["bus0", "bus1"])
-        complement_edges["length"] = complement_edges.apply(
-            haversine, axis=1, args=(n,)
-        )
 
-        # apply k_edge_augmentation weighted by length of complement edges
-        k_edge = options["gas_network_connectivity_upgrade"]
-        if augmentation := list(
-            k_edge_augmentation(G, k_edge, avail=complement_edges.values)
-        ):
-            new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
-            new_gas_pipes["length"] = new_gas_pipes.apply(haversine, axis=1, args=(n,))
-
-            new_gas_pipes.index = new_gas_pipes.apply(
-                lambda x: f"gas pipeline new {x.bus0} <-> {x.bus1}", axis=1
+        # check if network is already fully connected and only add new pipelines if not
+        if len(complement_edges) > 0:
+            complement_edges["length"] = complement_edges.apply(
+                haversine, axis=1, args=(n,)
             )
 
-            n.add(
-                "Link",
-                new_gas_pipes.index,
-                bus0=new_gas_pipes.bus0 + " gas",
-                bus1=new_gas_pipes.bus1 + " gas",
-                p_min_pu=-1,  # new gas pipes are bidirectional
-                p_nom_extendable=True,
-                length=new_gas_pipes.length,
-                capital_cost=new_gas_pipes.length
-                * costs.at["CH4 (g) pipeline", "capital_cost"],
-                carrier="gas pipeline new",
-                lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
-            )
+            # apply k_edge_augmentation weighted by length of complement edges
+            k_edge = options["gas_network_connectivity_upgrade"]
+            if augmentation := list(
+                k_edge_augmentation(G, k_edge, avail=complement_edges.values)
+            ):
+                new_gas_pipes = pd.DataFrame(augmentation, columns=["bus0", "bus1"])
+                new_gas_pipes["length"] = new_gas_pipes.apply(
+                    haversine, axis=1, args=(n,)
+                )
+
+                new_gas_pipes.index = new_gas_pipes.apply(
+                    lambda x: f"gas pipeline new {x.bus0} <-> {x.bus1}", axis=1
+                )
+
+                n.add(
+                    "Link",
+                    new_gas_pipes.index,
+                    bus0=new_gas_pipes.bus0 + " gas",
+                    bus1=new_gas_pipes.bus1 + " gas",
+                    p_min_pu=-1,  # new gas pipes are bidirectional
+                    p_nom_extendable=True,
+                    length=new_gas_pipes.length,
+                    capital_cost=new_gas_pipes.length
+                    * costs.at["CH4 (g) pipeline", "capital_cost"],
+                    carrier="gas pipeline new",
+                    lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
+                )
 
     if options["H2_retrofit"]:
         logger.info("Add retrofitting options of existing CH4 pipes to H2 pipes.")
@@ -2998,10 +3010,6 @@ def add_heat(
                 nodes + f" {heat_system} water tanks charger", "energy to power ratio"
             ] = energy_to_power_ratio_water_tanks
 
-            tes_time_constant_days = options["tes_tau"][
-                heat_system.central_or_decentral
-            ]
-
             n.add(
                 "Store",
                 nodes,
@@ -3010,7 +3018,11 @@ def add_heat(
                 e_cyclic=True,
                 e_nom_extendable=True,
                 carrier=f"{heat_system} water tanks",
-                standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                standing_loss=costs.at[
+                    heat_system.central_or_decentral + " water tank storage",
+                    "standing_losses",
+                ]
+                / 100,  # convert %/hour into unit/hour
                 capital_cost=costs.at[
                     heat_system.central_or_decentral + " water tank storage",
                     "capital_cost",
@@ -3105,7 +3117,10 @@ def add_heat(
                     e_nom_extendable=True,
                     e_max_pu=e_max_pu,
                     carrier=f"{heat_system} water pits",
-                    standing_loss=1 - np.exp(-1 / 24 / tes_time_constant_days),
+                    standing_loss=costs.at[
+                        "central water pit storage", "standing_losses"
+                    ]
+                    / 100,  # convert %/hour into unit/hour
                     capital_cost=costs.at["central water pit storage", "capital_cost"],
                     lifetime=costs.at["central water pit storage", "lifetime"],
                 )
@@ -3185,7 +3200,16 @@ def add_heat(
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
                     index_col=0,
+                    parse_dates=True,
                 ).squeeze()[nodes]
+
+                # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
+                if p_max_source.ndim == 1:
+                    p_max_source = pd.DataFrame(
+                        [p_max_source] * len(n.snapshots),
+                        index=n.snapshots,
+                        columns=nodes,
+                    )
 
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
@@ -3198,7 +3222,8 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
+                # TODO: implement better handling of zero-cost heat sources
+                try:
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source),
@@ -3209,9 +3234,13 @@ def add_heat(
                     lifetime = costs.at[
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
-                else:
+                except KeyError:
+                    logger.warning(
+                        f"Heat source {heat_source} not found in cost data. Assuming zero cost and infinite lifetime."
+                    )
                     capital_cost = 0.0
                     lifetime = np.inf
+
                 n.add(
                     "Generator",
                     nodes,
@@ -3221,9 +3250,9 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=capital_cost,
                     lifetime=lifetime,
-                    p_nom_max=p_max_source,
+                    p_nom_max=p_max_source.max(),
+                    p_max_pu=p_max_source / p_max_source.max(),
                 )
-
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
                     "Link",

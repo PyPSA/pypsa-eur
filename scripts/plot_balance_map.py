@@ -43,9 +43,9 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     sanitize_carriers(n, snakemake.config)
-    pypsa.options.set_option("params.statistics.round", 3)
-    pypsa.options.set_option("params.statistics.drop_zero", True)
-    pypsa.options.set_option("params.statistics.nice_names", False)
+    pypsa.options.params.statistics.round = 3
+    pypsa.options.params.statistics.drop_zero = True
+    pypsa.options.params.statistics.nice_names = False
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     config = snakemake.params.plotting
@@ -94,11 +94,15 @@ if __name__ == "__main__":
     bus_sizes = eb.groupby(level=["bus", "carrier"]).sum().div(conversion)
     bus_sizes = bus_sizes.sort_values(ascending=False)
 
+    # Get colors for carriers
+    n.carriers.update({"color": snakemake.params.plotting["tech_colors"]})
+    carrier_colors = n.carriers.color.copy().replace("", "grey")
+
     colors = (
         bus_sizes.index.get_level_values("carrier")
         .unique()
         .to_series()
-        .map(n.carriers.color)
+        .map(carrier_colors)
     )
 
     # line and links widths according to optimal capacity
@@ -171,7 +175,7 @@ if __name__ == "__main__":
         else None,
         ax=ax,
         margin=0.2,
-        color_geomap={"border": "darkgrey", "coastline": "darkgrey"},
+        geomap_colors={"border": "darkgrey", "coastline": "darkgrey"},
         geomap=True,
         boundaries=boundaries,
     )

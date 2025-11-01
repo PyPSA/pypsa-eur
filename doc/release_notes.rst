@@ -1,8 +1,6 @@
-
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
 Release Notes
@@ -11,11 +9,53 @@ Release Notes
 Upcoming Release
 ================
 
+* Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
+
+* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
+  like rate limiting and server errors.
+
+* Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
+  when running with few nodes such that they are all already connected by existing gas
+  lines. (https://github.com/PyPSA/pypsa-eur/pull/1780)
+
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country. (https://github.com/PyPSA/pypsa-eur/pull/1778)
+
+* Fixed `FileNotFoundError` bugs preventing pypsa from being run as a Snakemake
+  module. The cause of this bug was that intermediate zip files in rules were being
+  saved in directories that didn't exist yet (without creating the parent directories).
+  This didn't fail when using PyPSA-Eur as a standalone module, because the directory
+  was the same as the rule's output file. However, when using PyPSA-Eur as a Snakemake
+  module, this was not the case as Snakemake prepends a prefix to all the input and
+  output files, but not to any file locations listed as parameters. The fix was to save 
+  intermediate zip files at the top directory level. This was fixed for many rules in 
+  `retrieve.smk`, i.e., `retrieve_eez`, `retrieve_nuts_2021_shapes`, 
+  `retrieve_nuts_2013_shapes`, `retrieve_worldbank_urban_population`, 
+  `retrieve_co2stop`, `download_wdpa`, `download_wdpa_marine`, `retrieve_eurostat_data`.
+  (https://github.com/PyPSA/pypsa-eur/pull/1768)
+
+* Updated standing losses for PTES, central TTES, and decentral TTES, previously calculated using the ``tes_tau`` parameter, to the latest DEA technology data, and updated costs version to v0.13.3.
+
 * Introduce a new base network using TYNDP 2024 data (https://github.com/PyPSA/pypsa-eur/pull/1646). This base network can be used with `tyndp` as `base_network`. It models NTC transmission capacities between TYNDP bidding zones using unidirectional `links`. This implementation neglects KVL and is referred to as a transport model. This is consistent with the TYNDP 2024 methodology.
 
 * Fixed missing costs name for geothermal-sourced heat pump and allowed geothermal heat pumps in test configs.
 
 * Changed error handling for non-extendable heat storage in energy-to-power ratio constraints to warning.
+
+* Allow expandable CCGTs by default
+
+* Updated `build_osm_network` and `clean_osm_data` to handle voltage levels below 220 kV (down to 63 kV). When `base_network` is set to `osm_raw`, an electricity grid from voltage levels AC 63 kV to 750 kV can be created (experimental feature). For an example, see the example configuration in `config/examples/config-distribution-grid-experimental.yaml`.
+
+* Fix `retrieve_eurostat_data` and `retrieve_eurostat_household_data` on Windows by avoiding a double access to a temporary file.
+  (https://github.com/PyPSA/pypsa-eur/pull/1825)
+
+* Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
+
+* Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
+
+* Running perfect foresight is now marked as unstable and may not work as expected.
+
+* Added minimum unit dispatch setting option for electrolysis
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
@@ -81,6 +121,9 @@ PyPSA-Eur v2025.07.0 (11th July 2025)
 * Small plotting improvements.
   (https://github.com/PyPSA/pypsa-eur/pull/1694https://github.com/PyPSA/pypsa-eur/pull/1727)
 
+* The `plotting|map|color_geomap` was renamed to `plotting|map|geomap_colors` to align
+  with the new PyPSA API.
+  
 **Bugfixes and Compatibility**
 
 * Select correct capital costs for floating offshore wind. Previously, the same
