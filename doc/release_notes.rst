@@ -376,6 +376,8 @@ Upcoming Release
   Perfect foresight runs may produce incorrect results until these gaps are addressed.
   See the ``prepare_perfect_foresight.py`` deprecation notice for details.
 
+* Added minimum unit dispatch setting option for electrolysis
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

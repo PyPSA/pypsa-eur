@@ -1670,6 +1670,7 @@ def add_storage_and_grids(
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "capital_cost"],
+        p_min_pu=options["min_part_load_electrolysis"],
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
