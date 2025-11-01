@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Retrieve electricity prices from ENTSOE.
+Retrieve electricity demand data from ENTSOE.
 """
 
 import logging
