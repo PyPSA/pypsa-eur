@@ -19,11 +19,12 @@ import xarray as xr
 
 from scripts._helpers import (
     configure_logging,
+    load_costs,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import load_costs, sanitize_carriers
+from scripts.add_electricity import sanitize_carriers
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
 from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
@@ -745,12 +746,7 @@ if __name__ == "__main__":
     spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
 
-    Nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    costs = load_costs(
-        snakemake.input.costs,
-        snakemake.params.costs,
-        nyears=Nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
     grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]

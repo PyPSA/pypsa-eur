@@ -193,9 +193,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
         params:
             version=config_provider("costs", "version"),
         output:
-            resources("costs_{year}.csv"),
+            resources("costs_{planning_horizons}.csv"),
         log:
-            logs("retrieve_cost_data_{year}.log"),
+            logs("retrieve_cost_data_{planning_horizons}.log"),
         resources:
             mem_mb=1000,
         retries: 2
@@ -732,9 +732,9 @@ if config["enable"]["retrieve"]:
         params:
             default_cutout=config_provider("atlite", "default_cutout"),
         output:
-            seawater_temperature="data/seawater_temperature_{year}.nc",
+            seawater_temperature="data/seawater_temperature_{planning_horizons}.nc",
         log:
-            "logs/retrieve_seawater_temperature_{year}.log",
+            "logs/retrieve_seawater_temperature_{planning_horizons}.log",
         resources:
             mem_mb=10000,
         conda:

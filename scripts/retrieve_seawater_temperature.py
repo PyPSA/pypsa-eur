@@ -87,13 +87,13 @@ if __name__ == "__main__":
         # Spatial coverage: European waters (-12°W to 42°E, 33°N to 72°N)
         # Depth range: 5-15m (suitable for heat pump intake depths)
         logger.info(
-            f"Downloading seawater temperature data for year {snakemake.wildcards.year}"
+            f"Downloading seawater temperature data for year {snakemake.wildcards.planning_horizons}"
         )
 
         _ = copernicusmarine.subset(
             dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",  # Global ocean physics reanalysis
-            start_datetime=f"{snakemake.wildcards.year}-01-01",
-            end_datetime=f"{int(snakemake.wildcards.year)}-12-31",
+            start_datetime=f"{snakemake.wildcards.planning_horizons}-01-01",
+            end_datetime=f"{int(snakemake.wildcards.planning_horizons)}-12-31",
             minimum_longitude=-12,  # Western European boundary
             maximum_longitude=42,  # Eastern European boundary
             minimum_latitude=33,  # Southern European boundary

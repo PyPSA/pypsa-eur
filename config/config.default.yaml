@@ -933,20 +933,8 @@ costs:
     "CO2 intensity": 0
     "discount rate": 0.07
     "standing losses": 0
+  custom_cost_fn: data/custom_costs.csv
   overwrites: {}
-  marginal_cost:
-    solar: 0.01
-    onwind: 0.015
-    offwind: 0.015
-    hydro: 0.
-    H2: 0.
-    electrolysis: 0.
-    fuel cell: 0.
-    battery: 0.
-    battery inverter: 0.
-    home battery storage: 0
-    water tank charger: 0.03
-    central water pit charger: 0.025
   emission_prices:
     enable: false
     co2: 0.
