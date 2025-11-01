@@ -55,7 +55,10 @@ Upcoming Release
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
+* Remove the hotfix in `progress_retrieve` and check that the directory exists (https://github.com/PyPSA/pypsa-eur/pull/1840).
+
 * Added minimum unit dispatch setting option for electrolysis
+
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
