@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country and cluster. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1835)
+
 * Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
 
 * Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
