@@ -55,6 +55,8 @@ Upcoming Release
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
+* Added minimum unit dispatch setting option for electrolysis
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 
