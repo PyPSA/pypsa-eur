@@ -46,7 +46,6 @@ dependencies:
 - country_converter
 - geopy
 - tqdm
-- tenacity
 - pytz
 - jpype1
 - pyxlsb

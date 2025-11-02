@@ -7,12 +7,7 @@ from functools import partial, lru_cache
 
 import os, sys, glob
 import requests
-from tenacity import (
-    retry as tenacity_retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+
 
 import pandas as pd
 import json
@@ -188,35 +183,6 @@ def input_custom_extra_functionality(w):
     if path:
         return os.path.join(os.path.dirname(workflow.snakefile), path)
     return []
-
-
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
-    """
-    Checks if internet connection is available by sending a HEAD request
-    to a reliable server like Zenodo.
-
-    Parameters:
-    - url (str): The URL to check for internet connection. Default is Zenodo.
-    - timeout (int | float): The maximum time (in seconds) the request should wait.
-
-    Returns:
-    - bool: True if the internet is available, otherwise False.
-    """
-    # Send a HEAD request to avoid fetching full response
-    response = requests.head(url, timeout=timeout, allow_redirects=True)
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    return response.status_code == 200
 
 
 def solved_previous_horizon(w):
