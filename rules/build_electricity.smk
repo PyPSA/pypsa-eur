@@ -533,9 +533,13 @@ def input_class_regions(w):
 rule build_electricity_demand_base:
     params:
         distribution_key=config_provider("load", "distribution_key"),
+        substation_only=config_provider("load", "substation_only"),
     input:
         base_network=resources("networks/base_s.nc"),
         regions=resources("regions_onshore_base_s.geojson"),
+        raster="data/demand-distribution/electricity_tot_demand_2019.tif",
+        gb_excel="data/demand-distribution/Subnational_electricity_consumption_statistics_2005-2023.xlsx",
+        gb_geojson="data/Local_Authority_Districts_May_2024_Boundaries__UK_BSC.geojson",
         nuts3=resources("nuts3_shapes.geojson"),
         load=resources("electricity_demand.csv"),
     output:
