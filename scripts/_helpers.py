@@ -1130,4 +1130,4 @@ def load_costs(cost_file: str) -> pd.DataFrame:
         DataFrame containing the prepared cost data
     """
 
-    return pd.read_csv(cost_file, index_col=0).sort_index()
+    return pd.read_csv(cost_file, index_col=0)

@@ -732,9 +732,9 @@ if config["enable"]["retrieve"]:
         params:
             default_cutout=config_provider("atlite", "default_cutout"),
         output:
-            seawater_temperature="data/seawater_temperature_{planning_horizons}.nc",
+            seawater_temperature="data/seawater_temperature_{year}.nc",
         log:
-            "logs/retrieve_seawater_temperature_{planning_horizons}.log",
+            "logs/retrieve_seawater_temperature_{year}.log",
         resources:
             mem_mb=10000,
         conda:
