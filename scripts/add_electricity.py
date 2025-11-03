@@ -1290,5 +1290,7 @@ if __name__ == "__main__":
     if "location" in n.buses:
         sanitize_locations(n)
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
     n.export_to_netcdf(snakemake.output[0])

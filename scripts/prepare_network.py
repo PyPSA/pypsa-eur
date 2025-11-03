@@ -364,5 +364,7 @@ if __name__ == "__main__":
         only_crossborder = snakemake.params.autarky["by_country"]
         enforce_autarky(n, only_crossborder=only_crossborder)
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
     n.export_to_netcdf(snakemake.output[0])

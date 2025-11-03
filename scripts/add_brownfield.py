@@ -372,7 +372,9 @@ if __name__ == "__main__":
 
     disable_grid_expansion_if_limit_hit(n)
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
 
     sanitize_custom_columns(n)
     sanitize_carriers(n, snakemake.config)
