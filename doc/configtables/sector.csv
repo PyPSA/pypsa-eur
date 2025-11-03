@@ -170,6 +170,7 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- -- biomass_to_methanol,--,"{true, false}"," Add biomass to methanol"
 -- -- biomass_to_methanol_cc,--,"{true, false}"," Add biomass to methanol with carbon capture"
 ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
+min_part_load_electrolysis,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for electrolysis
 min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
 min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
 use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
