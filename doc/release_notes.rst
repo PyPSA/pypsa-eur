@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country and cluster. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1835)
+
 * Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
 
 * Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
@@ -54,6 +58,8 @@ Upcoming Release
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
+
+* Added minimum unit dispatch setting option for electrolysis
 
 * Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
   To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
