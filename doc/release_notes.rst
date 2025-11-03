@@ -50,6 +50,8 @@ Upcoming Release
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
+* Added support for temporally resolved electricity industry load profiles from `FfE (Forschungsstelle für Energiewirtschaft) 2021 <https://github.com/PyPSA/pypsa-eur/pull/1875>`_. Default is false.
+
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
 

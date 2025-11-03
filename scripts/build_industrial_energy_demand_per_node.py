@@ -92,9 +92,7 @@ def download_ffe_load_profiles():
     return profiles_df
 
 
-def create_nodal_electricity_profiles(
-    nodal_df, nodal_production, sector_ratios, snapshots
-):
+def create_nodal_electricity_profiles(nodal_df, nodal_sector_df, snapshots):
     """Create hourly electricity demand profiles for each node."""
 
     # Industry category to FfE profile mapping (updated to match correct profile names)
@@ -136,17 +134,14 @@ def create_nodal_electricity_profiles(
     nodal_profiles = pd.DataFrame(index=snapshots, columns=nodal_df.index, dtype=float)
 
     # For each node, create weighted profile
-    for node in nodal_production.index:
-        country = node[:2]
+    for node in nodal_df.index:
+        # Get electricity demand by sector for this node (TWh/a)
+        sector_demands = nodal_sector_df.loc["elec", node]
 
-        # Get electricity demand by sector for this node (MWh/tMaterial)
-        elec_ratios = sector_ratios[country].loc["elec"]
-
-        # Get production by sector for this node (Mton/a)
-        production = nodal_production.loc[node]
-
-        # Calculate electricity demand by sector (TWh/a)
-        sector_demands = elec_ratios * production / 1e6  # Convert MWh to TWh
+        # check if sum of sector demands matches total demand
+        assert np.isclose(
+            sector_demands.sum(), nodal_df.loc[node, "electricity"], rtol=1e-5
+        ), f"Sum of sector demands does not match total demand for node {node}.\n"
 
         # Create weighted profile (8760 hours from reference year)
         node_profile = pd.Series(0.0, index=ffe_profiles.index)
@@ -160,25 +155,26 @@ def create_nodal_electricity_profiles(
                     total_weight += demand
                 else:
                     logger.warning(
-                        f"Profile '{profile_name}' not found in FfE data for sector '{sector}'"
+                        f"Profile '{profile_name}' not found in FfE data for sector '{sector}'. Using flat demand"
                     )
-
-        if total_weight == 0:
-            logger.warning(f"No valid profile for node {node}, using flat profile")
-            node_profile[:] = 1.0 / len(node_profile)
-        else:
-            # Normalize profile so it sums to 1
-            node_profile = node_profile / node_profile.sum()
+                    flat_profile = pd.Series(
+                        1.0 / len(ffe_profiles), index=ffe_profiles.index
+                    )
+                    node_profile += flat_profile * demand
+                    total_weight += demand
 
         # Map profile to snapshots with correct day-of-week alignment
         hourly_profile = map_profile_to_snapshots(node_profile, snapshots)
+        # Save in MW
+        nodal_profiles[node] = hourly_profile * 1e6  # TWh/a to MW
 
-        # Scale to annual demand (convert TWh/a to MW hourly values)
-        annual_demand_twh = nodal_df.loc[node, "electricity"]
-        annual_demand_mwh = annual_demand_twh * 1e6  # TWh to MWh
-
-        # Scale normalized profile to match annual demand
-        nodal_profiles[node] = hourly_profile * annual_demand_mwh
+    # Check that hourly profiles match annual demand
+    assert np.allclose(
+        nodal_profiles.sum() / 1e6, nodal_df["electricity"], rtol=1e-5
+    ), (
+        f"Hourly profiles do not match annual demand.\nMax difference: {(nodal_profiles.sum() / 1e6 - nodal_df['electricity']).abs().max():.6f} TWh"
+    )
+    logger.info("✓ Hourly profiles verified to match annual demand")
 
     return nodal_profiles
 
@@ -186,31 +182,41 @@ def create_nodal_electricity_profiles(
 def map_profile_to_snapshots(reference_profile, snapshots):
     """Map a 2017 reference profile to the snapshot period, matching day-of-week and hour."""
 
-    mapped_profile = pd.Series(index=snapshots, dtype=float)
+    # Pre-compute lookup tables
+    dayofweek_hour_lookup = reference_profile.groupby(
+        [reference_profile.index.dayofweek, reference_profile.index.hour]
+    ).mean()
 
-    for timestamp in snapshots:
-        # Find hours in reference profile with same day-of-week and hour
-        ref_candidates = reference_profile[
-            (reference_profile.index.dayofweek == timestamp.dayofweek)
-            & (reference_profile.index.hour == timestamp.hour)
-        ]
+    hour_lookup = reference_profile.groupby(reference_profile.index.hour).mean()
+    overall_mean = reference_profile.mean()
 
-        if len(ref_candidates) > 0:
-            # Use mean of matching hours (typically ~52 weeks in a year)
-            mapped_profile[timestamp] = ref_candidates.mean()
-        else:
-            # Fallback: use hour-of-day average
-            ref_candidates = reference_profile[
-                reference_profile.index.hour == timestamp.hour
-            ]
-            mapped_profile[timestamp] = (
-                ref_candidates.mean()
-                if len(ref_candidates) > 0
-                else reference_profile.mean()
-            )
+    # Create keys for vectorized lookup
+    keys = pd.MultiIndex.from_arrays([snapshots.dayofweek, snapshots.hour])
 
-    # CRITICAL: Renormalize to ensure it sums to 1
-    mapped_profile = mapped_profile / mapped_profile.sum()
+    # Primary lookup: match (dayofweek, hour)
+    mapped_profile = dayofweek_hour_lookup.reindex(keys)
+    mapped_profile.index = snapshots  # Restore original index
+
+    # Fallback 1: For NaN values, try matching hour only
+    mask = mapped_profile.isna()
+    if mask.any():
+        hour_values = hour_lookup.reindex(snapshots[mask].hour)
+        mapped_profile[mask] = hour_values.values
+
+        # Fallback 2: For remaining NaN, use overall mean
+        mask = mapped_profile.isna()
+        if mask.any():
+            mapped_profile[mask] = overall_mean
+
+    # Rescale to preserve total energy
+    scaling_factor = reference_profile.sum() / mapped_profile.sum()
+
+    # Check scaling is within expected range (day-of-week + leap year effects)
+    assert abs(scaling_factor - 1.0) < 0.01, (
+        f"Profile mapping scaling factor {scaling_factor:.4f} deviates by >1%"
+    )
+
+    mapped_profile = mapped_profile * scaling_factor
 
     return mapped_profile
 
@@ -221,8 +227,9 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_industrial_energy_demand_per_node",
-            clusters=48,
+            clusters=50,
             planning_horizons=2030,
+            run="temporal_industry_load",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -266,26 +273,23 @@ if __name__ == "__main__":
 
     # Export annual demand
     fn = snakemake.output.industrial_energy_demand_per_node
-    nodal_df.to_csv(fn, float_format="%.2f")
+    nodal_df.to_csv(fn)
 
     # Generate hourly electricity profiles
+
+    # final energy consumption per node and industry and industry sector (profiles) (TWh/a)
+    nodal_sector_df = nodal_sector_ratios.multiply(nodal_production_stacked)
+
     logger.info("Creating hourly industry electricity demand profiles...")
     snapshots = get_snapshots(
         snakemake.params.snapshots, snakemake.params.drop_leap_day
     )
 
     nodal_electricity_profiles = create_nodal_electricity_profiles(
-        nodal_df, nodal_production, sector_ratios, snapshots
+        nodal_df, nodal_sector_df, snapshots
     )
-
-    # Check that hourly profiles match annual demand
-    hourly_sum_twh = nodal_electricity_profiles.sum() / 1e6
-    assert np.allclose(hourly_sum_twh, nodal_df["electricity"], rtol=1e-5), (
-        f"Hourly profiles do not match annual demand.\nMax difference: {(hourly_sum_twh - nodal_df['electricity']).abs().max():.6f} TWh"
-    )
-    logger.info("✓ Hourly profiles verified to match annual demand")
 
     # Export hourly profiles
     fn_profiles = snakemake.output.industrial_electricity_demand_per_node_temporal
-    nodal_electricity_profiles.to_csv(fn_profiles, float_format="%.2f")
+    nodal_electricity_profiles.to_csv(fn_profiles)
     logger.info(f"Hourly electricity profiles saved to {fn_profiles}")
