@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
+  PyPSA-Eur with only one country and cluster. 
+  (https://github.com/PyPSA/pypsa-eur/pull/1835)
+
 * Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
 
 * Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
@@ -56,6 +60,8 @@ Upcoming Release
 * Running perfect foresight is now marked as unstable and may not work as expected.
 
 * Add residential heat demand-side management (DSM) based on `smartEn study <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`_ methodology.
+
+* Added minimum unit dispatch setting option for electrolysis
 
 PyPSA-Eur v2025.07.0 (11th July 2025)
 =====================================
