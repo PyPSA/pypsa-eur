@@ -29,15 +29,22 @@ import logging
 import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import expand_series
 
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     get,
     set_scenario_config,
     update_config_from_wildcards,
 )
 from scripts.add_electricity import load_costs, set_transmission_costs
+
+# Allow for PyPSA versions <0.35
+if PYPSA_V1:
+    from pypsa.common import expand_series
+else:
+    from pypsa.descriptors import expand_series
+
 
 idx = pd.IndexSlice
 
@@ -185,7 +192,7 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
 
 def average_every_nhours(n, offset, drop_leap_day=False):
     logger.info(f"Resampling the network to {offset}")
-    m = n.copy(with_time=False)
+    m = n.copy(snapshots=[])
 
     snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
     sns = snapshot_weightings.index

@@ -6,6 +6,7 @@ Retrieve and extract eurostat energy balances data.
 """
 
 import logging
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -20,7 +21,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("retrieve_eurostat_data")
         rootpath = ".."
     else:
-        rootpath = "."
+        # set to root path of repo or snakemake module
+        rootpath = Path(snakemake.output[0]).parent.parent.parent
+
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -29,14 +32,21 @@ if __name__ == "__main__":
         # "https://ec.europa.eu/eurostat/documents/38154/4956218/Balances-April2023.zip" # link down
         "https://tubcloud.tu-berlin.de/s/prkJpL7B9M3cDPb/download/Balances-April2023.zip"
     )
-    tarball_fn = Path(f"{rootpath}/data/eurostat/eurostat_2023.zip")
+
     to_fn = Path(f"{rootpath}/data/eurostat/Balances-April2023/")
 
     logger.info(f"Downloading Eurostat data from '{url_eurostat}'.")
-    progress_retrieve(url_eurostat, tarball_fn, disable=disable_progress)
+
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tarball:
+        tmp_name = tarball.name
+
+    logger.info(f"Using temporary file: {tmp_name}")
+    progress_retrieve(url_eurostat, tmp_name, disable=disable_progress)
 
     logger.info("Extracting Eurostat data.")
-    with zipfile.ZipFile(tarball_fn, "r") as zip_ref:
+    with zipfile.ZipFile(tmp_name, "r") as zip_ref:
         zip_ref.extractall(to_fn)
 
     logger.info(f"Eurostat data available in '{to_fn}'.")
+
+    Path(tmp_name).unlink(missing_ok=True)

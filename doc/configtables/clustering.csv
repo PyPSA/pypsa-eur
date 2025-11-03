@@ -1,8 +1,8 @@
 ,Unit,Values,Description
-mode,str,"One of {‘busmap’, ‘custom_busmap’, ‘administrative’, ‘custom_busshapes’}","‘busmap’: Default. ‘custom_busmap’: Enable the use of custom busmaps in rule mod:`cluster_network`. If activated the rule looks for provided busmaps at ``data/busmaps/base_s_{clusters}_{base_network}.csv`` which should have the same format as ``resources/busmap_base_s_{clusters}.csv``, i.e. the index should contain the buses of ``networks/base_s.nc``. {base_network} is the name of the selected base_network in electricity, e.g. ``gridkit``, ``osm-prebuilt``, or ``osm-raw``. ‘administrative’: Clusters and indexes the network based on the administrative regions of the countries based on ``nuts3_shapes.geojson`` (level: 1, 2, 3, bz). To activate this, additionally set the ``clusters`` wildcard in ``scenario`` to ‘adm’. ‘custom_busshapes’: Enable the use of custom shapes in rule mod:`cluster_network`. If activated the rule looks for provided busshapes at ``data/busshapes/base_s_{clusters}_{base_network}.geojson``".
+mode,str,"One of {'busmap', 'custom_busmap', 'administrative', 'custom_busshapes'}","'busmap': Default. 'custom_busmap': Enable the use of custom busmaps in rule mod:`cluster_network`. If activated the rule looks for provided busmaps at ``data/busmaps/base_s_{clusters}_{base_network}.csv`` which should have the same format as ``resources/busmap_base_s_{clusters}.csv``, i.e. the index should contain the buses of ``networks/base_s.nc``. {base_network} is the name of the selected base_network in electricity, e.g. ``gridkit``, ``osm-prebuilt``, or ``osm-raw``. 'administrative': Clusters and indexes the network based on the administrative regions of the countries based on ``nuts3_shapes.geojson`` (level: 1, 2, 3, bz). To activate this, additionally set the ``clusters`` wildcard in ``scenario`` to 'adm'. 'custom_busshapes': Enable the use of custom shapes in rule mod:`cluster_network`. If activated the rule looks for provided busshapes at ``data/busshapes/base_s_{clusters}_{base_network}.geojson``."
 administrative,,,
 -- level,int,"{0, 1, 2, 3}","Level of administrative regions to cluster the network. 0: Country level, 1: NUTS1 level, 2: NUTS2 level, 3: NUTS3 level. Only applies when mode is set to `administrative`. Note that non-NUTS countries 'BA', 'MD', 'UA', and 'XK' can only be clustered to level 0 and 1."
--- countries (optional),dict,"Subset of country codes in ‘busmap’`","Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`."
+-- countries (optional),dict,"Subset of country codes in 'busmap'","Optionally include dictionary of individual country codes and their individual NUTS levels. Overwrites country-specific `level`. For example: `{'DE': 1, 'FR': 2}`. Only applies when mode is set to `administrative`."
 focus_weights,,,"Optionally specify the focus weights for the clustering of countries. For instance: `DE: 0.8` will distribute 80% of all nodes to Germany and 20% to the rest of the countries. Only applies when mode is set to `busmap`."
 copperplate_regions,,,"Optionally specify the regions to copperplate as a list of regions (using the region indexes defined by the clustering mode)."
 build_bidding_zones,,,
@@ -11,18 +11,18 @@ build_bidding_zones,,,
 simplify_network,,,
 -- to_substations,bool,"{'true','false'}","Aggregates all nodes without power injection (positive or negative, i.e. demand or generation) to electrically closest ones"
 -- exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
--- remove stubs,bool,"{'true','false'}",Controls whether radial parts of the network should be recursively aggregated. Defaults to true.
+-- remove_stubs,bool,"{'true','false'}",Controls whether radial parts of the network should be recursively aggregated. Defaults to true.
 -- remove_stubs_across_borders,bool,"{'true','false'}",Controls whether radial parts of the network should be recursively aggregated across borders. Defaults to true.
 cluster_network,,,
--- algorithm,str,"One of {‘kmeans’, ‘hac’}",
+-- algorithm,str,"One of {'kmeans', 'hac'}",
 -- hac_features,list,"List of meteorological variables contained in the weather data cutout that should be considered for hierarchical clustering.",
 exclude_carriers,list,"List of Str like [ 'solar', 'onwind'] or empy list []","List of carriers which will not be aggregated. If empty, all carriers will be aggregated."
 consider_efficiency_classes,bool,"{'true','false'}","Aggregated each carriers into the top 10-quantile (high), the bottom 90-quantile (low), and everything in between (medium)."
 aggregation_strategies,,,
 -- generators,,,
--- -- {key},str,"{key} can be any of the component of the generator (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."
+-- -- {key},str,"{key} can be any of the component of the generator (str). It's value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new generator."
 -- buses,,,
--- -- {key},str,"{key} can be any of the component of the bus (str). It’s value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new bus."
+-- -- {key},str,"{key} can be any of the component of the bus (str). It's value can be any that can be converted to pandas.Series using getattr(). For example one of {min, max, sum}.","Aggregates the component according to the given strategy. For example, if sum, then all values within each cluster are summed to represent the new bus."
 temporal,,,Options for temporal resolution
 -- resolution_elec,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
 -- resolution_sector,--,"{false,``nH``; i.e. ``2H``-``6H``}","Resample the time-resolution by averaging over every ``n`` snapshots in :mod:`prepare_sector_network`."

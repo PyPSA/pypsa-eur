@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 ##########################################
 Plotting and Summaries
@@ -70,6 +69,11 @@ Rule ``plot_balance_map``
 
 .. automodule:: plot_balance_map
 
+Rule ``plot_heat_source_map``
+=================================
+
+.. automodule:: plot_heat_source_map
+
 Rule ``plot_balance_timeseries``
 =================================
 
@@ -84,3 +88,18 @@ Rule ``plot_base_statistics``
 =================================
 
 .. automodule:: plot_base_statistics
+
+Rule ``build_ambient_air_temperature_yearly_average``
+======================================================
+
+.. automodule:: build_ambient_air_temperature_yearly_average
+
+Rule ``plot_cop_profiles``
+===========================
+
+.. automodule:: plot_cop_profiles
+
+Rule ``plot_interactive_bus_balance``
+======================================
+
+.. automodule:: plot_interactive_bus_balance

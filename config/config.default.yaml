@@ -312,6 +312,12 @@ conventional:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#lines
 lines:
   types:
+    63.: 94-AL1/15-ST1A 20.0
+    66.: 94-AL1/15-ST1A 20.0
+    90.: 184-AL1/30-ST1A 110.0
+    110.: 184-AL1/30-ST1A 110.0
+    132.: 243-AL1/39-ST1A 110.0
+    150.: 243-AL1/39-ST1A 110.0
     220.: Al/St 240/40 2-bundle 220.0
     300.: Al/St 240/40 3-bundle 300.0
     330.: Al/St 240/40 3-bundle 300.0
@@ -527,7 +533,6 @@ sector:
       aquifer_volumetric_heat_capacity: 2600
       fraction_of_aquifer_area_available: 0.2
       effective_screen_length: 20
-      dh_area_buffer: 1000
       capex_as_fraction_of_geothermal_heat_source: 0.75
       recovery_factor: 0.6
       marginal_cost_charger: 0.035
@@ -543,10 +548,15 @@ sector:
       geothermal:
         constant_temperature_celsius: 65
         ignore_missing_regions: false
+      river_water:
+        constant_temperature_celsius: false
     direct_utilisation_heat_sources:
     - geothermal
     temperature_limited_stores:
     - ptes
+    dh_areas:
+      buffer: 1000
+      handle_missing_countries: fill
   heat_pump_sources:
     urban central:
     - air
@@ -655,9 +665,6 @@ sector:
     tax_weighting: false
     construction_index: true
   tes: true
-  tes_tau:
-    decentral: 3
-    central: 180
   boilers: true
   resistive_heaters: true
   oil_boilers: false
@@ -732,6 +739,7 @@ sector:
     biomass_to_methanol: true
     biomass_to_methanol_cc: false
   ammonia: true
+  min_part_load_electrolysis: 0
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -774,6 +782,7 @@ sector:
   biogas_upgrading_cc: false
   conventional_generation:
     OCGT: gas
+    CCGT: gas
   biomass_to_liquid: true
   biomass_to_liquid_cc: false
   electrobiofuels: true
@@ -912,7 +921,7 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
-  version: v0.13.2
+  version: v0.13.3
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -923,6 +932,7 @@ costs:
     lifetime: 25
     "CO2 intensity": 0
     "discount rate": 0.07
+    "standing losses": 0
   overwrites: {}
   marginal_cost:
     solar: 0.01
