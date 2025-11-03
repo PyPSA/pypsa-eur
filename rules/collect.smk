@@ -15,7 +15,12 @@ localrules:
 rule process_costs:
     input:
         lambda w: (
-            [resources(f"costs_{config_provider('costs', 'year')(w)}_processed.csv")]
+            expand(
+                resources(
+                    f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
+                ),
+                run=config["run"]["name"],
+            )
             if config_provider("foresight")(w) == "overnight"
             else expand(
                 resources("costs_{planning_horizons}_processed.csv"),
