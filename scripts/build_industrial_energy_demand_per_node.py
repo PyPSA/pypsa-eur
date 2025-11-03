@@ -23,16 +23,11 @@ For each bus, the following carriers are considered:
 which can later be used as values for the industry load.
 """
 
-
-import requests
-import numpy as np
-from datetime import datetime
-import json
-
 import logging
 
+import numpy as np
 import pandas as pd
-
+import requests
 
 from scripts._helpers import (
     configure_logging,
@@ -219,6 +214,7 @@ def map_profile_to_snapshots(reference_profile, snapshots):
 
     return mapped_profile
 
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -271,7 +267,6 @@ if __name__ == "__main__":
     # Export annual demand
     fn = snakemake.output.industrial_energy_demand_per_node
     nodal_df.to_csv(fn, float_format="%.2f")
-
 
     # Generate hourly electricity profiles
     logger.info("Creating hourly industry electricity demand profiles...")
