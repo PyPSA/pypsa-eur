@@ -55,5 +55,7 @@ if __name__ == "__main__":
         rule_name=snakemake.rule,
     )
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
     n.export_to_netcdf(snakemake.output[0])

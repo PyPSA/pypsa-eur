@@ -673,7 +673,9 @@ if __name__ == "__main__":
     )
 
     # update meta
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
 
     # update heat pump efficiency
     update_heat_pump_efficiency(n=n, years=years)

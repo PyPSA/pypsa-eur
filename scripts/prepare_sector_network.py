@@ -6498,7 +6498,9 @@ if __name__ == "__main__":
         n, snakemake.params["adjustments"], investment_year
     )
 
-    n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+    n.meta["snakemake_config"] = dict(
+        snakemake.config, **dict(wildcards=dict(snakemake.wildcards))
+    )
 
     sanitize_carriers(n, snakemake.config)
     sanitize_locations(n)

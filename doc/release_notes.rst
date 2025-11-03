@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* The Snakemake config is now stored in `n.meta["snakemake_config"]` instead of
+  overwriting the entire `n.meta` to allow for additional metadata fields to be set.
+
 * Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
   PyPSA-Eur with only one country and cluster. 
   (https://github.com/PyPSA/pypsa-eur/pull/1835)
