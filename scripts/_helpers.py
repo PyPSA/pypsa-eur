@@ -9,10 +9,10 @@ import logging
 import os
 import re
 import time
-from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Callable, Union
 
 import atlite
 import fiona
@@ -1063,11 +1063,6 @@ def rename_techs(label: str) -> str:
         "AC": "transmission lines",
         "DC": "transmission lines",
         "B2B": "transmission lines",
-        "Battery Storage": "battery storage",
-        "Offshore Wind (AC)": "offshore wind (AC)",
-        "Onshore Wind": "onshore wind",
-        "Solar": "solar",
-        "Combined-Cycle Gas": "CCGT",
     }
 
     for ptr in prefix_to_remove:
@@ -1089,7 +1084,7 @@ def rename_techs(label: str) -> str:
 
 
 def load_cutout(
-    cutout_files: str | list[str], time: None | pd.DatetimeIndex = None
+    cutout_files: Union[str, list[str]], time: Union[None, pd.DatetimeIndex] = None
 ) -> atlite.Cutout:
     """
     Load and optionally combine multiple cutout files.

@@ -315,5 +315,8 @@ if __name__ == "__main__":
     assign_carriers(n)
     assign_locations(n)
 
+    pypsa.set_option("params.statistics.nice_names", False)
+    pypsa.set_option("params.statistics.drop_zero", False)
+
     for output in OUTPUTS:
         globals()["calculate_" + output](n).to_csv(snakemake.output[output])

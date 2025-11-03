@@ -190,7 +190,9 @@ At the boundaries between these periods (configured via `residential_heat_restri
 
 *Storage capacity and flexibility magnitude*
 
-The flexibility storage capacity is sized based on the maximum residential space heating demand at each node. The actual available flexibility is constrained by the `residential_heat_restriction_value <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ parameter (default: 0.27), which sets the maximum state of charge as a fraction of the storage capacity. A value of 0.27 represents a conservative estimate of the thermal buffer capacity available in residential buildings.
+The flexibility storage capacity is sized based on the maximum residential space heating demand at each node. The actual available flexibility is constrained by the `residential_heat_restriction_value <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ parameter (default: 0.27), which sets the maximum state of charge as a fraction of the storage capacity.
+
+The default value of 0.27 represents a conservative assumption for the thermal buffer capacity available in residential buildings, balancing flexibility potential against thermal comfort constraints. This parameter is user-configurable and can be adjusted based on specific assumptions about building thermal mass, insulation quality, and acceptable temperature variations. Setting it to 0 disables heat flexibility, while values closer to 1.0 allow greater load shifting (though this may require stronger assumptions about building characteristics and occupant comfort tolerance).
 
 *Thermal characteristics*
 
