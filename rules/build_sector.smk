@@ -1121,7 +1121,7 @@ rule time_aggregation:
         network=resources("networks/clustered.nc"),
         hourly_heat_demand_total=lambda w: (
             resources("hourly_heat_demand_total.nc")
-            if config_provider("sector", "heating")(w)
+            if config_provider("sector", "heating", "enable")(w)
             else []
         ),
         solar_thermal_total=lambda w: (

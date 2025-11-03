@@ -825,19 +825,19 @@ def update_config_from_wildcards(config, w, inplace=True):
         opts = w.sector_opts.split("-")
 
         if "T" in opts:
-            config["sector"]["transport"] = True
+            config["sector"]["transport"] = {"enable": True}
 
         if "H" in opts:
-            config["sector"]["heating"] = True
+            config["sector"]["heating"] = {"enable": True}
 
         if "B" in opts:
-            config["sector"]["biomass"] = True
+            config["sector"]["biomass"] = {"enable": True}
 
         if "I" in opts:
-            config["sector"]["industry"] = True
+            config["sector"]["industry"] = {"enable": True}
 
         if "A" in opts:
-            config["sector"]["agriculture"] = True
+            config["sector"]["agriculture"] = {"enable": True}
 
         if "CCL" in opts:
             config["solving"]["constraints"]["CCL"] = True

@@ -124,15 +124,22 @@ lines:
 
 sector:
   enabled: false
-  transport: false
-  heating: false
-  biomass: false
+  transport:
+    enable: false
+  heating:
+    enable: false
+  biomass:
+    enable: false
   ammonia: false
   methanol: false
-  industry: false
-  shipping: false
-  aviation: false
-  agriculture: false
+  industry:
+    enable: false
+  shipping:
+    enable: false
+  aviation:
+    enable: false
+  agriculture:
+    enable: false
   dac: false
   H2_network: false
   electricity_transmission_grid: true

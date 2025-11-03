@@ -77,8 +77,6 @@ snapshots:
   end: "2014-01-01"
   inclusive: 'left'
 
-temporal: {}
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
   retrieve: auto
@@ -482,14 +480,22 @@ existing_capacities:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
   enabled: true
-  transport: true
-  heating: true
-  biomass: true
-  industry: true
-  shipping: true
-  aviation: true
-  agriculture: true
-  fossil_fuels: true
+  transport:
+    enable: true
+  heating:
+    enable: true
+  biomass:
+    enable: true
+  industry:
+    enable: true
+  shipping:
+    enable: true
+  aviation:
+    enable: true
+  agriculture:
+    enable: true
+  fossil_fuels:
+    enable: true
   district_heating:
     potential: 0.6
     progress:

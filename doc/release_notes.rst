@@ -38,6 +38,11 @@ Upcoming Release
 
     sector:
       enabled: true  # Explicitly enable sector coupling if needed
+      transport:
+        enable: true
+      heating:
+        enable: true
+      # ... (set enable: true for each sector you need)
 
   **What changed:**
 
@@ -54,6 +59,172 @@ Upcoming Release
 
   **Important:** Existing workflows using the old ``scenario`` structure will not
   work and must be migrated to the new format.
+
+  **Detailed opts Migration:**
+
+  The following table shows how to migrate ``opts`` settings to the new configuration:
+
+  ==================== ======================================================
+  Old ``opts`` Trigger  New Configuration Location
+  ==================== ======================================================
+  ``nH`` (e.g. ``3H``)  ``clustering.temporal.resolution_sector: 3h``
+  ``nSEG`` (segmentation) ``clustering.temporal.time_segmentation.feature: 'components'``
+  ``Co2L`` + value      ``electricity.co2limit_enable: true`` + ``electricity.co2limit: <value>``
+  ``Ep``               ``costs.emission_prices.co2: <price>``
+  ``Ept``              ``costs.emission_prices.co2_monthly_prices: true``
+  ``CCL``              ``electricity.agg_p_nom_limits: <file>`` (default: ``data/agg_p_nom_minmax.csv``)
+  ``EQ`` + value       ``electricity.autarky.enable: true`` (node-level autarky)
+  ``ATK``              ``electricity.autarky.enable: true`` (removes all transmission)
+  ``ATKc``             ``electricity.autarky.enable: true`` + ``electricity.autarky.by_country: true``
+  ``BAU``              ``electricity.BAU_mincapacities: <config>``
+  ``CH4L`` + value     ``electricity.gaslimit_enable: true`` + ``electricity.gaslimit: <value>``
+  ``lv<factor>``       ``electricity.transmission_limit: v<factor>`` (e.g. ``v1.25``)
+  ``lc<factor>``       ``electricity.transmission_limit: c<factor>`` (e.g. ``c1.25``)
+  ``carrier+component+cfactor`` Carrier-specific config sections (e.g. ``solar.potential`` for potential, costs in ``costs`` section)
+  ==================== ======================================================
+
+  **Detailed sector_opts Migration:**
+
+  The following table shows how to migrate ``sector_opts`` settings to the new configuration:
+
+  ========================= ======================================================
+  Old ``sector_opts`` Trigger New Configuration Location
+  ========================= ======================================================
+  ``T``                     ``sector.transport.enable: true``
+  ``H``                     ``sector.heating.enable: true``
+  ``B``                     ``sector.biomass.enable: true``
+  ``I``                     ``sector.industry.enable: true``
+  ``A``                     ``sector.agriculture.enable: true``
+  ``Co2L`` + value          ``co2_budget.emissions_scope: <scope>`` + budget config
+  ``dist`` + value          ``sector.district_heating: <config>``
+  ``seq`` + value           ``sector.co2_sequestration_potential: <value>``
+  ========================= =======================================================
+
+  **Migration Examples:**
+
+  **Example 1: Simple electricity-only with time resolution**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [50]
+      opts: ['3H']
+      planning_horizons: [2050]
+
+    # NEW
+    planning_horizons: 2050
+    clustering:
+      cluster_network:
+        n_clusters: 50
+      temporal:
+        resolution_sector: 3h
+
+  **Example 2: Electricity with carbon budget and emission prices**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [100]
+      opts: ['Co2L0.05', 'Ep']
+      planning_horizons: [2030, 2050]
+
+    # NEW
+    planning_horizons: [2030, 2050]
+    clustering:
+      cluster_network:
+        n_clusters: 100
+    electricity:
+      co2limit_enable: true
+      co2limit: 5.0e+7  # Adjust based on your co2base value
+    costs:
+      emission_prices:
+        co2: 50  # Set your desired CO2 price
+
+  **Example 3: Full sector-coupled with transmission limits**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [50]
+      opts: ['lv1.25']
+      sector_opts: ['T-H-B-I']
+      planning_horizons: [2030, 2050]
+
+    # NEW
+    planning_horizons: [2030, 2050]
+    clustering:
+      cluster_network:
+        n_clusters: 50
+    electricity:
+      transmission_limit: v1.25
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+      biomass:
+        enable: true
+      industry:
+        enable: true
+
+  **Example 4: Perfect foresight with multiple horizons**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [37]
+      opts: ['']
+      sector_opts: ['Co2L-T-H']
+      planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+
+    # NEW
+    planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+    clustering:
+      cluster_network:
+        n_clusters: 37
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+    co2_budget:
+      emissions_scope: total
+      # Configure your carbon budget constraints
+
+  **Troubleshooting:**
+
+  * **Issue:** File not found errors for network files
+
+    **Solution:** Network files now use simplified naming: ``clustered.nc``,
+    ``composed_{horizon}.nc``, ``solved_{horizon}.nc`` instead of the old
+    ``elec_s_{clusters}_{opts}.nc`` format. Update any scripts or tools that
+    reference these files directly.
+
+  * **Issue:** "Config key not found" errors
+
+    **Solution:** Use the mapping tables above to find the new location for your
+    old ``opts`` or ``sector_opts`` settings. The configuration is now organized
+    by category (``electricity``, ``sector``, ``clustering``) rather than encoded
+    in wildcards.
+
+  * **Issue:** Wildcards not matching in custom Snakemake rules
+
+    **Solution:** The ``{opts}`` and ``{sector_opts}`` wildcards have been removed.
+    Update your custom rules to use the new file naming scheme or configuration
+    values directly from ``config_provider()``.
+
+  * **Issue:** Custom scripts expecting wildcard values
+
+    **Solution:** Replace wildcard parsing with passing config values as params
+    and using ``snakemake.params`` in the scripts.
 
 * **PyPSA 1.0 compatibility**: Updated minimum PyPSA version to 1.0.1. All
   ``n.add()`` calls now use ``return_names=True`` for compatibility with PyPSA 1.0
