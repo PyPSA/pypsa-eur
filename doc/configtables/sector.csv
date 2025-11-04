@@ -48,17 +48,21 @@ district_heating,--,,
 -- -- isentropic_compressor_efficiency,--,float,Isentropic efficiency of heat pump compressor assumed for approximation. Must be between 0 and 1.
 -- -- heat_loss,--,float,Heat pump heat loss assumed for approximation. Must be between 0 and 1.
 -- -- min_delta_t_lift,--,float,"Minimum feasible temperature lift for heat pumps, used to approximate technical limits in heat pump operation. This value accounts for practical constraints in heat pump design."
--- limited_heat_sources,--,Dictionary with names of limited heat sources (not air) for which data by Fraunhofer ISI (`Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>) is used,
--- -- geothermal,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
+-- -- min_delta_t_lift,--,float,"Minimum feasible temperature lift for heat pumps, used to approximate technical limits in heat pump operation. This value accounts for practical constraints in heat pump design."
+-- limited_heat_sources,--,,Dictionary with names of limited heat sources (not air). Must be `river_water` / `geothermal` or another heat source in `Manz et al. 2024 <https://www.sciencedirect.com/science/article/pii/S0960148124001769>`__)
+
+-- -- river_water,-,Name of the heat source. Must be the same as in ``heat_pump_sources``,
 -- -- -- constant_temperature_celsius,°C,heat source temperature,
 -- -- -- ignore_missing_regions,--,Boolean,Ignore missing regions in the data and fill with zeros or raise an error 
 -- direct_utilisation_heat_sources,--,List of heat sources for direct heat utilisation in district heating. Must be in the keys of `heat_utilisation_potentials` (e.g. ``geothermal``),
 -- temperature_limited_stores,,Dictionary with names for stores used as limited heat sources
 -- -- ptes,-,Name of the heat source. Must be the same as in ``heat_pump_sources``
+-- dh_area_buffer,m,float,The buffer by which dh_area shapes from Manz et al. are increased
 -- heat_pump_sources,--,,
--- -- urban central,--,List of heat sources for heat pumps in urban central heating,
--- -- urban decentral,--,List of heat sources for heat pumps in urban decentral heating,
--- -- rural,--,List of heat sources for heat pumps in rural heating,
+-- -- urban central,--,"List of heat sources for heat pumps in urban central heating. Must be one of [air, river_water, sea_water, geothermal]",
+-- -- urban decentral,--,"List of heat sources for heat pumps in urban decentral heating. Must be one of [air]",
+-- -- rural,--,"List of heat sources for heat pumps in rural heating. Must be one of [air, ground]",
+
 cluster_heat_buses,--,"{true, false}",Cluster residential and service heat buses in `prepare_sector_network.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/prepare_sector_network.py>`_  to one to save memory.
 bev_dsm_restriction _value,--,float,Adds a lower state of charge (SOC) limit for battery electric vehicles (BEV) to manage its own energy demand (DSM). Located in `build_transport_demand.py <https://github.com/PyPSA/pypsa-eur-sec/blob/master/scripts/build_transport_demand.py>`_. Set to 0 for no restriction on BEV DSM
 bev_dsm_restriction _time,--,float,Time at which SOC of BEV has to be dsm_restriction_value
@@ -166,6 +170,7 @@ methanol,--,--,Add methanol as carrrier and add enabled methnol technologies
 -- -- biomass_to_methanol,--,"{true, false}"," Add biomass to methanol"
 -- -- biomass_to_methanol_cc,--,"{true, false}"," Add biomass to methanol with carbon capture"
 ammonia,--,"{true, false, regional}","Add ammonia as a carrrier. It can be either true (copperplated NH3), false (no NH3 carrier) or ""regional"" (regionalised NH3 without network)"
+min_part_load_electrolysis,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for electrolysis
 min_part_load_fischer _tropsch,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the Fischer-Tropsch process
 min_part_load _methanolisation,per unit of p_nom ,float,The minimum unit dispatch (``p_min_pu``) for the methanolisation process
 use_fischer_tropsch _waste_heat,--,"{true, false}",Add option for using waste heat of Fischer Tropsch in district heating networks
