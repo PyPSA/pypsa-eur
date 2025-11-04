@@ -24,13 +24,13 @@ from scipy.stats import beta
 from scripts._helpers import (
     configure_logging,
     get,
+    load_costs,
     set_scenario_config,
     update_config_from_wildcards,
 )
 from scripts.add_electricity import (
     calculate_annuity,
     flatten,
-    load_costs,
     sanitize_carriers,
     sanitize_locations,
 )
@@ -1596,7 +1596,7 @@ def insert_electricity_distribution_grid(
 
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
-        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
         n.add(
@@ -1814,6 +1814,7 @@ def add_storage_and_grids(
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "capital_cost"],
+        p_min_pu=options["min_part_load_electrolysis"],
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
@@ -3199,7 +3200,16 @@ def add_heat(
                 p_max_source = pd.read_csv(
                     heat_source_profile_files[heat_source],
                     index_col=0,
+                    parse_dates=True,
                 ).squeeze()[nodes]
+
+                # if only dimension is nodes, convert series to dataframe with columns as nodes and index as snapshots
+                if p_max_source.ndim == 1:
+                    p_max_source = pd.DataFrame(
+                        [p_max_source] * len(n.snapshots),
+                        index=n.snapshots,
+                        columns=nodes,
+                    )
 
                 # add resource
                 heat_carrier = f"{heat_system} {heat_source} heat"
@@ -3212,7 +3222,8 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                if heat_source in params.direct_utilisation_heat_sources:
+                # TODO: implement better handling of zero-cost heat sources
+                try:
                     capital_cost = (
                         costs.at[
                             heat_system.heat_source_costs_name(heat_source),
@@ -3223,9 +3234,13 @@ def add_heat(
                     lifetime = costs.at[
                         heat_system.heat_source_costs_name(heat_source), "lifetime"
                     ]
-                else:
+                except KeyError:
+                    logger.warning(
+                        f"Heat source {heat_source} not found in cost data. Assuming zero cost and infinite lifetime."
+                    )
                     capital_cost = 0.0
                     lifetime = np.inf
+
                 n.add(
                     "Generator",
                     nodes,
@@ -3235,9 +3250,9 @@ def add_heat(
                     p_nom_extendable=True,
                     capital_cost=capital_cost,
                     lifetime=lifetime,
-                    p_nom_max=p_max_source,
+                    p_nom_max=p_max_source.max(),
+                    p_max_pu=p_max_source / p_max_source.max(),
                 )
-
                 # add heat pump converting source heat + electricity to urban central heat
                 n.add(
                     "Link",
@@ -6200,11 +6215,7 @@ if __name__ == "__main__":
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
-    costs = load_costs(
-        snakemake.input.costs,
-        snakemake.params.costs,
-        nyears=nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears

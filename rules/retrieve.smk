@@ -193,9 +193,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
         params:
             version=config_provider("costs", "version"),
         output:
-            resources("costs_{year}.csv"),
+            resources("costs_{planning_horizons}.csv"),
         log:
-            logs("retrieve_cost_data_{year}.log"),
+            logs("retrieve_cost_data_{planning_horizons}.log"),
         resources:
             mem_mb=1000,
         retries: 2
@@ -727,6 +727,60 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+    rule retrieve_seawater_temperature:
+        params:
+            default_cutout=config_provider("atlite", "default_cutout"),
+        output:
+            seawater_temperature="data/seawater_temperature_{year}.nc",
+        log:
+            "logs/retrieve_seawater_temperature_{year}.log",
+        resources:
+            mem_mb=10000,
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_seawater_temperature.py"
+
+    rule retrieve_hera_data_test_cutout:
+        input:
+            hera_data_url=storage(
+                f"https://zenodo.org/records/15828866/files/hera_be_2013-03-01_to_2013-03-08.zip"
+            ),
+        output:
+            river_discharge=f"data/hera_be_2013-03-01_to_2013-03-08/river_discharge_be_2013-03-01_to_2013-03-08.nc",
+            ambient_temperature=f"data/hera_be_2013-03-01_to_2013-03-08/ambient_temp_be_2013-03-01_to_2013-03-08.nc",
+        params:
+            folder="data",
+        log:
+            "logs/retrieve_hera_data_test_cutout.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        run:
+            unpack_archive(input[0], params.folder)
+
+    rule retrieve_hera_data:
+        input:
+            river_discharge=storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/river_discharge/dis.HERA{year}.nc"
+            ),
+            ambient_temperature=storage(
+                "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/CEMS-EFAS/HERA/VER1-0/Data/NetCDF/climate_inputs/ta6/ta6_{year}.nc"
+            ),
+        output:
+            river_discharge="data/hera_{year}/river_discharge_{year}.nc",
+            ambient_temperature="data/hera_{year}/ambient_temp_{year}.nc",
+        params:
+            snapshot_year="{year}",
+        log:
+            "logs/retrieve_hera_data_{year}.log",
+        resources:
+            mem_mb=10000,
+        retries: 2
+        run:
+            move(input.river_discharge, output.river_discharge)
+            move(input.ambient_temperature, output.ambient_temperature)
 
 
 if config["enable"]["retrieve"]:
