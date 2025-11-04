@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+
+run:
+  name: "test-elec_abi" # use this to keep track of runs with different settings
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+scenario:
+  clusters:
+  - 5
+  opts:
+  - ''
+
+countries: ['BE']
+
+snapshots:
+  start: "2023-01-01"
+  end: "2023-12-31"
+
+electricity:
+  co2limit_enable: true
+  co2limit: 100.e+6
+
+  extendable_carriers:
+    Generator: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT, nuclear]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+  estimate_renewable_capacities:
+    enable: true
+    from_gem: true
+    year: 2023
+    expansion_limit: false
+    technology_mapping:
+      Offshore: offwind-ac
+      Onshore: onwind
+      PV: solar
+
+atlite:
+  default_cutout: europe-2023-sarah3-era5
+  cutouts:
+    europe-2023-sarah3-era5:
+      module: era5
+      x: [4., 15.]
+      y: [46., 56.]
+      time: ["2023-01-01", "2023-12-31"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+
+clustering:
+  exclude_carriers: ["OCGT", "offwind-ac", "coal"]
+  temporal:
+    resolution_elec: 24h
+
+lines:
+  dynamic_line_rating:
+    activate: false
+    max_line_rating: 1.3
+
+
+solving:
+  solver:
+    name: gurobi
+    options: gurobi-default
+
+
