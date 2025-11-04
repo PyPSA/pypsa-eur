@@ -11,6 +11,10 @@ The OETC platform allows PyPSA-Eur to leverage cloud-based resources for
 solving energy system models. This integration enables solving of optimization problems
 using remote compute resources when local computational capacity is insufficient.
 
+.. note::
+
+   Using OETC is **optional** and not required to run PyPSA-Eur.
+
 .. _oetc_overview:
 
 Overview
