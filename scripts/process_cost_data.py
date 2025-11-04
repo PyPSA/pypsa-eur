@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons and / or technologies using the 'all' identifier.
+Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons
+and / or technologies using the 'all' identifier.
 
 Preparing the cost data includes:
 - aligning all units to conventional units (i.e. MW / MWh),
