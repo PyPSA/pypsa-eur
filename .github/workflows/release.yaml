@@ -63,7 +63,7 @@ jobs:
         fetch-depth: 0
         ref: ${{ env.BRANCH_NAME }}
         token: ${{ steps.generate-token.outputs.token }}
-    
+
     - name: Setup conda environment
       uses: conda-incubator/setup-miniconda@v3
       with:
