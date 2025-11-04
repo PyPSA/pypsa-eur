@@ -114,3 +114,7 @@ jobs:
           .snakemake/log
           results
         retention-days: 3
+
+    - name: Update DAG for documentation
+      run: |
+        make update-dags
