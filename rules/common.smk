@@ -21,7 +21,7 @@ from scripts._helpers import validate_checksum, update_config_from_wildcards
 from snakemake.utils import update_config
 
 
-def get_config(config, keys, default=None):
+def navigate_config(config, keys, default=None):
     """Retrieve a nested value from a dictionary using a tuple of keys."""
     value = config
     for key in keys:
@@ -47,18 +47,86 @@ def scenario_config(scenario_name):
     return merge_configs(config, scenarios[scenario_name])
 
 
+@lru_cache(maxsize=128)
+def get_full_config(wildcards_tuple):
+    """
+    Get full scenario-aware config for given wildcards (internal cached version).
+
+    Parameters
+    ----------
+    wildcards_tuple : tuple
+        Wildcards as frozen tuple for caching
+
+    Returns
+    -------
+    dict
+        Fully resolved config with scenario and wildcard overrides applied
+    """
+    # Convert back to wildcards dict
+    wildcards = dict(wildcards_tuple)
+
+    # Start with base or scenario config
+    if config["run"].get("scenarios", {}).get("enable", False) and "run" in wildcards:
+        scenario_name = wildcards["run"]
+        if scenario_name not in scenarios:
+            raise ValueError(
+                f"Scenario {scenario_name} not found in {config['run']['scenarios']['file']}"
+            )
+        base = scenario_config(scenario_name)  # Already cached
+    else:
+        base = copy.deepcopy(config)
+
+    # Apply wildcard overrides
+    result = update_config_from_wildcards(base, wildcards, inplace=False)
+
+    return result
+
+
+def get_config(w):
+    """
+    Get full scenario-aware config for given wildcards.
+
+    This function returns the complete config dictionary with scenario overrides
+    (if enabled) and wildcard-based overrides applied.
+
+    Parameters
+    ----------
+    w : wildcards or dict
+        Snakemake wildcards object or dict containing wildcard values
+
+    Returns
+    -------
+    dict
+        Fully resolved config dictionary
+
+    Examples
+    --------
+    In a Snakemake rule:
+        params:
+            cfg=lambda w: get_config(w)
+
+    In a helper function:
+        def my_function(w):
+            cfg = get_config(w)
+            return cfg["electricity"]["renewable_carriers"]
+    """
+    # Convert wildcards to hashable tuple for caching
+    wildcards_tuple = tuple(sorted(w.items()))
+    return get_full_config(wildcards_tuple)
+
+
 def static_getter(wildcards, keys, default):
     """Getter function for static config values."""
     config_with_wildcards = update_config_from_wildcards(
         config, wildcards, inplace=False
     )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_wildcards, keys, default)
 
 
 def dynamic_getter(wildcards, keys, default):
     """Getter function for dynamic config values based on scenario."""
     if "run" not in wildcards.keys():
-        return get_config(config, keys, default)
+        return navigate_config(config, keys, default)
     scenario_name = wildcards.run
     if scenario_name not in scenarios:
         raise ValueError(
@@ -68,7 +136,7 @@ def dynamic_getter(wildcards, keys, default):
     config_with_wildcards = update_config_from_wildcards(
         config_with_scenario, wildcards, inplace=False
     )
-    return get_config(config_with_wildcards, keys, default)
+    return navigate_config(config_with_wildcards, keys, default)
 
 
 def config_provider(*keys, default=None):
