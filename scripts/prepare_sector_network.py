@@ -4922,7 +4922,7 @@ def add_industry(
         factor = (
             1
             - industrial_demand.loc[loads_i, "current electricity"].sum()
-            / n.loads_t.p_set[loads_i].multiply(n.snapshot_weightings.generators, axis=0).sum().sum()
+            / n.loads_t.p_set[loads_i].sum().sum()
         )
         n.loads_t.p_set[loads_i] *= factor
 
