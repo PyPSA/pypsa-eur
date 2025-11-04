@@ -120,7 +120,7 @@ def prepare_costs(
         prepared_attrs = ["marginal_cost", "capital_cost"]
         raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
         custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
-        custom_prepared = custom_costs[prepared_attrs].dropna(axis=0, how="all")
+        custom_prepared = custom_costs.filter(prepared_attrs).dropna(axis=0, how="all")
 
     # Copy marginal_cost and capital_cost for backward compatibility
     for key in ("marginal_cost", "capital_cost"):
