@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
     load = load_timeseries(snakemake.input.reported, years, countries)
 
-    load = load.reindex(index=snapshots)
+    load.index = snapshots
 
     if "UA" in countries:
         # attach load of UA (best data only for entsoe transparency)
@@ -287,8 +287,14 @@ if __name__ == "__main__":
         fn = snakemake.input.synthetic
         synthetic_load = pd.read_csv(fn, index_col=0, parse_dates=True)
         # UA, MD, XK, CY, MT do not appear in synthetic load data
-        countries = list(set(countries) - set(["UA", "MD", "XK", "CY", "MT"]))
-        synthetic_load = synthetic_load.loc[snapshots, countries]
+        synthetic_load = synthetic_load.loc[years, countries]
+        if len(synthetic_load) != len(snapshots):
+            raise ValueError(
+                f"Synthetic load length ({len(synthetic_load)}) does not match "
+                f"snapshots length ({len(snapshots)}). Check fixed_year or synthetic data source."
+            )
+        synthetic_load.index = snapshots
+
         load = load.combine_first(synthetic_load)
 
     assert not load.isna().any().any(), (
