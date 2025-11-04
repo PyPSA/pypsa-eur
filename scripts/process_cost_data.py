@@ -43,9 +43,9 @@ def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataF
     Parameters
     ----------
     costs : pd.DataFrame
-        Base cost assumptions with MultiIndex (technology, parameter).
+        Base cost assumptions.
     custom_costs : pd.DataFrame
-        Custom cost modifications with MultiIndex (technology, parameter).
+        Custom cost modifications.
 
     Returns
     -------
@@ -55,43 +55,22 @@ def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataF
     if custom_costs.empty:
         return costs
 
-    all_techs = custom_costs.query("technology=='all'").droplevel(0)
-    custom_costs = custom_costs.query("technology != 'all'")
+    all_techs = custom_costs.query("technology=='all'").dropna(axis=1, how="all")
+    custom_costs = custom_costs.query("technology != 'all'").dropna(axis=1, how="all")
 
-    # Overwrite long format costs
-    if costs.index.nlevels == 2:
-        # Overwrite unique pairs of (technology, parameter)
-        missing_idx = custom_costs.index.difference(costs.index)
-        if len(missing_idx) > 0:
-            costs = pd.concat([costs, custom_costs.loc[missing_idx]])
+    # Overwrite unique pairs of (technology, parameter)
+    missing_idx = custom_costs.index.difference(costs.index)
+    if len(missing_idx) > 0:
+        costs = pd.concat([costs, custom_costs.loc[missing_idx]])
 
-        costs.loc[custom_costs.index] = custom_costs
+    for param in custom_costs.columns:
+        custom_col = custom_costs[param].dropna()
+        costs.loc[custom_col.index, param] = custom_col
 
-        # If technology "all" exists, propagate its parameter values to all other technologies
-        if not all_techs.empty:
-            costs = costs.sort_index()
-            for param in all_techs.index:
-                costs.loc[pd.IndexSlice[:, param], all_techs.columns] = all_techs.loc[
-                    param
-                ].values
-
-    # Overwrite wide format costs
-    else:
-        custom_costs = custom_costs.value.unstack(level=1)
-
-        # Overwrite unique pairs of (technology, parameter)
-        missing_idx = custom_costs.index.difference(costs.index)
-        if len(missing_idx) > 0:
-            costs = pd.concat([costs, custom_costs.loc[missing_idx]])
-
-        for col in custom_costs.columns:
-            custom_col = custom_costs[col].dropna()
-            costs.loc[custom_col.index, col] = custom_col
-
-        # If technology "all" exists, propagate its parameter values to all other technologies
-        if not all_techs.empty:
-            for param in all_techs.index:
-                costs.loc[:, param] = all_techs.loc[param, "value"]
+    # If technology "all" exists, propagate its parameter values to all other technologies
+    if not all_techs.empty:
+        for param in all_techs.columns:
+            costs.loc[:, param] = all_techs.loc["all", param]
 
     return costs
 
@@ -125,20 +104,23 @@ def prepare_costs(
         DataFrame containing the prepared cost data
 
     """
-    # Load custom costs
+    # Load custom costs and categorize into two sets:
+    # - Raw attributes: overwritten before cost preparation
+    # - Prepared attributes: overwritten after cost preparation
     if custom_costs_fn is not None:
         custom_costs = pd.read_csv(
             snakemake.input.custom_costs,
             dtype={"planning_horizon": "str"},
             index_col=["technology", "parameter"],
         ).query("planning_horizon in [@planning_horizon, 'all']")
-        custom_costs = custom_costs.drop("planning_horizon", axis=1)
-        custom_costs_1 = custom_costs.query(
-            "parameter not in ['marginal_cost', 'capital_cost']"
+
+        custom_costs = custom_costs.drop("planning_horizon", axis=1).value.unstack(
+            level=1
         )
-        custom_costs_2 = custom_costs.query(
-            "parameter in ['marginal_cost', 'capital_cost']"
-        )
+        prepared_attrs = ["marginal_cost", "capital_cost"]
+        raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
+        custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
+        custom_prepared = custom_costs[prepared_attrs].dropna(axis=0, how="all")
 
     # Copy marginal_cost and capital_cost for backward compatibility
     for key in ("marginal_cost", "capital_cost"):
@@ -157,7 +139,7 @@ def prepare_costs(
     costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
-    costs = overwrite_costs(costs, custom_costs_1)
+    costs = overwrite_costs(costs, custom_raw)
     for attr in (
         "investment",
         "lifetime",
@@ -223,7 +205,7 @@ def prepare_costs(
         )
 
     # Overwrite marginal and capital costs
-    costs = overwrite_costs(costs, custom_costs_2)
+    costs = overwrite_costs(costs, custom_prepared)
     for attr in ("marginal_cost", "capital_cost"):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
