@@ -116,5 +116,5 @@ jobs:
         retention-days: 3
 
     - name: Update DAG for documentation
-      run: |
+      run: |-
         make update-dags
