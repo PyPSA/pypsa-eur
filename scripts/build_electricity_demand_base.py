@@ -124,7 +124,7 @@ def gb_distribution_keys(
     gdf = gdf.rename(columns={"LAD24CD": "Code"}).merge(df, on="Code")
 
     attr = "Total consumption\n(GWh):\nAll meters"
-    redistributed = redistribute_attribute(gdf, regions.reset_index(), attr)
+    redistributed = redistribute_attribute(gdf, regions.reset_index(drop=True), attr)
     distribution_keys = normed(redistributed)
     return distribution_keys
 
@@ -157,8 +157,8 @@ def nuts3_distribution_keys(
     nuts3 = gpd.read_file(nuts3_fn).to_crs(epsg=3035)
     nuts3.rename(columns={"name": "nuts3_name"}, inplace=True)
 
-    regions["pop"] = redistribute_attribute(nuts3, regions.reset_index(), "pop")
-    regions["gdp"] = redistribute_attribute(nuts3, regions.reset_index(), "gdp")
+    regions["pop"] = redistribute_attribute(nuts3, regions.reset_index(drop=True), "pop")
+    regions["gdp"] = redistribute_attribute(nuts3, regions.reset_index(drop=True), "gdp")
 
     nuts3_keys = []
     for country, group in regions.groupby("country"):
