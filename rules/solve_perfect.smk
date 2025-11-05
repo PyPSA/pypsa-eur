@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 rule add_existing_baseyear:
@@ -6,30 +6,31 @@ rule add_existing_baseyear:
         baseyear=config_provider("scenario", "planning_horizons", 0),
         sector=config_provider("sector"),
         existing_capacities=config_provider("existing_capacities"),
+        carriers=config_provider("electricity", "renewable_carriers"),
         costs=config_provider("costs"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
-        network=RESULTS
-        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: resources(
-            "costs_{}.csv".format(
-                config_provider("scenario", "planning_horizons", 0)(w)
-            )
+            f"costs_{config_provider("scenario", "planning_horizons",0)(w)}_processed.csv"
         ),
-        cop_profiles=resources("cop_profiles_base_s_{clusters}.nc"),
+        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
         ),
         existing_heating="data/existing_infrastructure/existing_heating_raw.csv",
         heating_efficiencies=resources("heating_efficiencies.csv"),
     output:
-        RESULTS
-        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
+        ),
     wildcard_constraints:
         planning_horizons=config["scenario"]["planning_horizons"][0],  #only applies to baseyear
     threads: 1
@@ -38,11 +39,11 @@ rule add_existing_baseyear:
         runtime=config_provider("solving", "runtime", default="24h"),
     log:
         logs(
-            "add_existing_baseyear_base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.log"
+            "add_existing_baseyear_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
         ),
     benchmark:
         benchmarks(
-            "add_existing_baseyear/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}"
+            "add_existing_baseyear/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
@@ -52,8 +53,7 @@ rule add_existing_baseyear:
 
 def input_network_year(w):
     return {
-        f"network_{year}": RESULTS
-        + "prenetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}"
+        f"network_{year}": resources("networks/base_s_{clusters}_{opts}_{sector_opts}")
         + f"_{year}.nc"
         for year in config_provider("scenario", "planning_horizons")(w)[1:]
     }
@@ -66,23 +66,22 @@ rule prepare_perfect_foresight:
     input:
         unpack(input_network_year),
         brownfield_network=lambda w: (
-            RESULTS
-            + "prenetworks-brownfield/"
-            + "base_s_{clusters}_l{ll}_{opts}_{sector_opts}_"
-            + "{}.nc".format(
+            resources("networks/base_s_{clusters}_{opts}_{sector_opts}_")
+            + "{}_brownfield.nc".format(
                 str(config_provider("scenario", "planning_horizons", 0)(w))
             )
         ),
     output:
-        RESULTS
-        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        ),
     threads: 2
     resources:
         mem_mb=10000,
     log:
-        logs("prepare_perfect_foresight_{clusters}_l{ll}_{opts}_{sector_opts}.log"),
+        logs("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}.log"),
     benchmark:
-        benchmarks("prepare_perfect_foresight_{clusters}_l{ll}_{opts}_{sector_opts}")
+        benchmarks("prepare_perfect_foresight_{clusters}_{opts}_{sector_opts}")
     conda:
         "../envs/environment.yaml"
     script:
@@ -100,30 +99,31 @@ rule solve_sector_network_perfect:
         ),
         custom_extra_functionality=input_custom_extra_functionality,
     input:
-        network=RESULTS
-        + "prenetworks-brownfield/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
-        costs=resources("costs_2030.csv"),
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        ),
+        costs=resources("costs_2030_processed.csv"),
     output:
         network=RESULTS
-        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc",
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
         config=RESULTS
-        + "configs/config.base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.yaml",
+        + "configs/config.base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.yaml",
     threads: solver_threads
     resources:
         mem_mb=config_provider("solving", "mem"),
     shadow:
-        "shallow"
+        shadow_config
     log:
         solver=RESULTS
-        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_solver.log",
+        + "logs/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_solver.log",
         python=RESULTS
-        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_python.log",
+        + "logs/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_python.log",
         memory=RESULTS
-        + "logs/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years_memory.log",
+        + "logs/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years_memory.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/solve_sector_network/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years}"
+            + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years}"
         )
     conda:
         "../envs/environment.yaml"
@@ -133,24 +133,20 @@ rule solve_sector_network_perfect:
 
 def input_networks_make_summary_perfect(w):
     return {
-        f"networks_s_{clusters}_l{ll}_{opts}_{sector_opts}": RESULTS
-        + f"postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_brownfield_all_years.nc"
+        f"networks_s_{clusters}_{opts}_{sector_opts}": RESULTS
+        + f"networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         for clusters in config_provider("scenario", "clusters")(w)
         for opts in config_provider("scenario", "opts")(w)
         for sector_opts in config_provider("scenario", "sector_opts")(w)
-        for ll in config_provider("scenario", "ll")(w)
     }
 
 
 rule make_summary_perfect:
     input:
         unpack(input_networks_make_summary_perfect),
-        costs=resources("costs_2020.csv"),
+        costs=resources("costs_2020_processed.csv"),
     output:
-        nodal_costs=RESULTS + "csvs/nodal_costs.csv",
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
-        nodal_cfs=RESULTS + "csvs/nodal_cfs.csv",
-        cfs=RESULTS + "csvs/cfs.csv",
         costs=RESULTS + "csvs/costs.csv",
         capacities=RESULTS + "csvs/capacities.csv",
         curtailment=RESULTS + "csvs/curtailment.csv",

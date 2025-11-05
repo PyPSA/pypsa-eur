@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2023-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
@@ -6,11 +6,18 @@ import copy
 from functools import partial, lru_cache
 
 import os, sys, glob
+import requests
+from tenacity import (
+    retry as tenacity_retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 path = workflow.source_path("../scripts/_helpers.py")
 sys.path.insert(0, os.path.dirname(path))
 
-from _helpers import validate_checksum, update_config_from_wildcards
+from scripts._helpers import validate_checksum, update_config_from_wildcards
 from snakemake.utils import update_config
 
 
@@ -98,7 +105,7 @@ def memory(w):
         if m is not None:
             factor *= int(m.group(1)) / 8760
             break
-    if w.clusters == "all":
+    if w.clusters == "all" or w.clusters == "adm":
         return int(factor * (18000 + 180 * 4000))
     else:
         return int(factor * (10000 + 195 * int(w.clusters)))
@@ -113,26 +120,33 @@ def input_custom_extra_functionality(w):
     return []
 
 
-def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 3) -> bool:
+@tenacity_retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(
+        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
+    ),
+)
+def has_internet_access(url: str = "https://www.zenodo.org", timeout: int = 5) -> bool:
     """
     Checks if internet connection is available by sending a HEAD request
-    to a reliable server like Google.
+    to a reliable server like Zenodo.
 
     Parameters:
-    - url (str): The URL to check for internet connection. Default is Google.
+    - url (str): The URL to check for internet connection. Default is Zenodo.
     - timeout (int | float): The maximum time (in seconds) the request should wait.
 
     Returns:
     - bool: True if the internet is available, otherwise False.
     """
-    try:
-        # Send a HEAD request to avoid fetching full response
-        response = requests.head(url, timeout=timeout, allow_redirects=True)
-        return response.status_code == 200
-    except requests.ConnectionError:  # (e.g., no internet, DNS issues)
-        return False
-    except requests.Timeout:  # (e.g., slow or no network)
-        return False
+    # Send a HEAD request to avoid fetching full response
+    response = requests.head(url, timeout=timeout, allow_redirects=True)
+    # Raise HTTPError for transient errors
+    # 429: Too Many Requests (rate limiting)
+    # 500, 502, 503, 504: Server errors
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
+    return response.status_code == 200
 
 
 def solved_previous_horizon(w):
@@ -142,7 +156,16 @@ def solved_previous_horizon(w):
 
     return (
         RESULTS
-        + "postnetworks/base_s_{clusters}_l{ll}_{opts}_{sector_opts}_"
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_"
         + planning_horizon_p
         + ".nc"
     )
+
+
+def input_cutout(wildcards, cutout_names="default"):
+    if cutout_names == "default":
+        cutout_names = config_provider("atlite", "default_cutout")(wildcards)
+    if isinstance(cutout_names, list):
+        return [CDIR.joinpath(cn + ".nc").as_posix() for cn in cutout_names]
+    else:
+        return CDIR.joinpath(cutout_names + ".nc").as_posix()

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -14,16 +13,8 @@ Outputs:
 --------
 - `resources/<run_name>/district_heat_share.csv`: District heat share at each node, potential for each investment year.
 
-Relevant settings:
-------------------
-.. code:: yaml
-    sector:
-        district_heating:
-    energy:
-        energy_totals_year:
-
-Notes:
-------
+Notes
+-----
 - The district heat share is calculated as the share of urban population at each node, multiplied by the share of district heating in the respective country.
 - The `sector.district_heating.potential` setting defines the max. district heating share.
 - The max. share of district heating is increased by a progress factor, depending on the investment year (See `sector.district_heating.progress` setting).
@@ -32,15 +23,16 @@ Notes:
 import logging
 
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from prepare_sector_network import get
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.prepare_sector_network import get
 
 logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_district_heat_share",
@@ -74,6 +66,29 @@ if __name__ == "__main__":
 
     # maximum potential of urban demand covered by district heating
     central_fraction = snakemake.config["sector"]["district_heating"]["potential"]
+    if isinstance(central_fraction, dict):
+        # Check if individual district heating shares are given for all countries of the network
+        other_countries = set(pop_layout.ct.unique()).difference(
+            central_fraction.keys()
+        )
+        if other_countries:
+            default_value = central_fraction.get("default")
+            # Default value is required if not all countries are covered
+            if default_value is None:
+                raise ValueError(
+                    "No default district heating potential was provided in the config."
+                )
+            logger.warning(
+                "Some countries do not have a district heating potential defined. "
+                f"Using default value {default_value:.2%} for these countries."
+            )
+            # Fill missing countries with default value from config
+            central_fraction = {
+                **central_fraction,
+                **{ct: default_value for ct in other_countries},
+            }
+        # Map district heating potentials to bus regions
+        central_fraction = pop_layout.ct.map(central_fraction)
 
     # district heating share at each node
     dist_fraction_node = (

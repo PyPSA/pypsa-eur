@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 .. _installation:
 
@@ -17,11 +16,9 @@ Clone the Repository
 
 First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eur>`__ using the version control system ``git`` in the command line.
 
-.. code:: bash
+.. code:: console
 
-    /some/other/path % cd /some/path
-
-    /some/path % git clone https://github.com/PyPSA/pypsa-eur.git
+    $ git clone https://github.com/PyPSA/pypsa-eur.git
 
 
 .. _deps:
@@ -29,29 +26,38 @@ First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eu
 Install Python Dependencies
 ===============================
 
-PyPSA-Eur relies on a set of other Python packages to function.
-We recommend using the package manager `mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage your environments.
-For instructions for your operating system follow the ``mamba`` `installation guide <https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html>`__.
-You can also use ``conda`` equivalently.
+PyPSA-Eur relies on a set of other Python packages to function. We recommend
+using the package manager `conda <https://docs.anaconda.com/miniconda/>` or
+`mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage
+your environments.
 
-The package requirements are curated in the `envs/environment.yaml <https://github.com/PyPSA/pypsa-eur/blob/master/envs/environment.yaml>`__ file.
-The environment can be installed and activated using
+The package requirements are curated in the ``envs/environment.yaml`` file.
+There are also regularly updated locked environment files for each platform generated with conda-lock to
+ensure reproducibility. Choose the correct file for your platform:
 
-.. code:: bash
+* For Intel/AMD processors:
 
-    .../pypsa-eur % mamba env create -f envs/environment.yaml
+  - Linux: ``envs/linux-64.lock.yaml``
 
-    .../pypsa-eur % mamba activate pypsa-eur
+  - macOS: ``envs/osx-64.lock.yaml``
 
-.. note::
-    The equivalent commands for ``conda`` would be
+  - Windows: ``envs/win-64.lock.yaml``
 
-    .. code:: bash
+* For ARM processors:
 
-        .../pypsa-eur % conda env create -f envs/environment.yaml
+  - macOS (Apple Silicon): ``envs/osx-arm64.lock.yaml``
 
-        .../pypsa-eur % conda activate pypsa-eur
+  - Linux (ARM): Currently not supported via lock files; requires building certain packages, such as ``PySCIPOpt``, from source
 
+We recommend using these locked files for a stable environment.
+
+.. code:: console
+
+    $ conda update conda
+
+    $ conda env create -f envs/linux-64.lock.yaml # select the appropriate file for your platform
+
+    $ conda activate pypsa-eur
 
 Install a Solver
 ================
@@ -79,32 +85,14 @@ Nevertheless, you can still use open-source solvers for smaller problems.
     `Instructions how to install a solver in the documentation of PyPSA <https://pypsa.readthedocs.io/en/latest/installation.html#getting-a-solver-for-linear-optimisation>`__
 
 .. note::
-    The rules :mod:`cluster_network` and :mod:`simplify_network` solve a mixed-integer quadratic optimisation problem for clustering.
+    The rules :mod:`cluster_network` solves a mixed-integer quadratic optimisation problem for clustering.
     The open-source solvers HiGHS, Cbc and GlPK cannot handle this. A fallback to SCIP is implemented in this case, which is included in the standard environment specifications.
     For an open-source solver setup install for example HiGHS **and** SCIP in your ``conda`` environment on OSX/Linux.
     To install the default solver Gurobi, run
 
-    .. code:: bash
+    .. code:: console
 
-        mamba activate pypsa-eur
-        mamba install -c gurobi gurobi
+        $ conda activate pypsa-eur
+        $ conda install -c gurobi gurobi"=12.0.1"
 
     Additionally, you need to setup your `Gurobi license <https://www.gurobi.com/solutions/licensing/>`__.
-
-
-.. _defaultconfig:
-
-Handling Configuration Files
-============================
-
-PyPSA-Eur has several configuration options that users can specify in a
-``config/config.yaml`` file. The default configuration
-``config/config.default.yaml`` is maintained in the repository. More details on
-the configuration options are in :ref:`config`.
-
-You can also use ``snakemake`` to specify another file, e.g.
-``config/config.mymodifications.yaml``, to update the settings of the ``config/config.yaml``.
-
-.. code:: bash
-
-    .../pypsa-eur % snakemake -call --configfile config/config.mymodifications.yaml

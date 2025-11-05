@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,20 +11,47 @@ import numpy as np
 import pandas as pd
 import pypsa
 import xarray as xr
-from _helpers import (
+
+from scripts._helpers import (
     configure_logging,
     get_snapshots,
+    sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from add_existing_baseyear import add_build_year_to_new_assets
-from pypsa.clustering.spatial import normed_or_uniform
+from scripts.add_electricity import flatten, sanitize_carriers
+from scripts.add_existing_baseyear import add_build_year_to_new_assets
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice
 
 
-def add_brownfield(n, n_p, year):
+def add_brownfield(
+    n,
+    n_p,
+    year,
+    h2_retrofit=False,
+    h2_retrofit_capacity_per_ch4=None,
+    capacity_threshold=None,
+):
+    """
+    Add brownfield capacity from previous network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to add brownfield to
+    n_p : pypsa.Network
+        Previous network to get brownfield from
+    year : int
+        Planning year
+    h2_retrofit : bool
+        Whether to allow hydrogen pipeline retrofitting
+    h2_retrofit_capacity_per_ch4 : float
+        Ratio of hydrogen to methane capacity for pipeline retrofitting
+    capacity_threshold : float
+        Threshold for removing assets with low capacity
+    """
     logger.info(f"Preparing brownfield for the year {year}")
 
     # electric transmission grid set optimised capacities of previous as minimum
@@ -38,10 +64,10 @@ def add_brownfield(n, n_p, year):
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
-        n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
+        n_p.remove(c.name, c.df.index[c.df.lifetime == np.inf])
 
         # remove assets whose build_year + lifetime <= year
-        n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
+        n_p.remove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
 
         # remove assets if their optimized nominal capacity is lower than a threshold
         # since CHP heat Link is proportional to CHP electric Link, make sure threshold is compatible
@@ -51,25 +77,23 @@ def add_brownfield(n, n_p, year):
             & c.df.index.str.contains("heat")
         ]
 
-        threshold = snakemake.params.threshold_capacity
-
         if not chp_heat.empty:
             threshold_chp_heat = (
-                threshold
+                capacity_threshold
                 * c.df.efficiency[chp_heat.str.replace("heat", "electric")].values
                 * c.df.p_nom_ratio[chp_heat.str.replace("heat", "electric")].values
                 / c.df.efficiency[chp_heat].values
             )
-            n_p.mremove(
+            n_p.remove(
                 c.name,
                 chp_heat[c.df.loc[chp_heat, f"{attr}_nom_opt"] < threshold_chp_heat],
             )
 
-        n_p.mremove(
+        n_p.remove(
             c.name,
             c.df.index[
                 (c.df[f"{attr}_nom_extendable"] & ~c.df.index.isin(chp_heat))
-                & (c.df[f"{attr}_nom_opt"] < threshold)
+                & (c.df[f"{attr}_nom_opt"] < capacity_threshold)
             ],
         )
 
@@ -77,17 +101,18 @@ def add_brownfield(n, n_p, year):
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
         c.df[f"{attr}_nom_extendable"] = False
 
-        n.import_components_from_dataframe(c.df, c.name)
+        n.add(c.name, c.df.index, **c.df)
 
         # copy time-dependent
         selection = n.component_attrs[c.name].type.str.contains(
             "series"
         ) & n.component_attrs[c.name].status.str.contains("Input")
         for tattr in n.component_attrs[c.name].index[selection]:
-            n.import_series_from_dataframe(c.pnl[tattr], c.name, tattr)
+            # TODO: Needs to be rewritten to
+            n._import_series_from_df(c.pnl[tattr], c.name, tattr)
 
     # deal with gas network
-    if snakemake.params.H2_retrofit:
+    if h2_retrofit:
         # subtract the already retrofitted from the maximum capacity
         h2_retrofitted_fixed_i = n.links[
             (n.links.carrier == "H2 pipeline retrofitted")
@@ -120,7 +145,7 @@ def add_brownfield(n, n_p, year):
             pipe_capacity = n.links.loc[gas_pipes_i, "p_nom"]
             fr = "H2 pipeline retrofitted"
             to = "gas pipeline"
-            CH4_per_H2 = 1 / snakemake.params.H2_retrofit_capacity_per_CH4
+            CH4_per_H2 = 1 / h2_retrofit_capacity_per_ch4
             already_retrofitted.index = already_retrofitted.index.str.replace(fr, to)
             remaining_capacity = (
                 pipe_capacity
@@ -202,17 +227,14 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             if ds.indexes["bus"].empty or "year" not in ds.indexes:
                 continue
 
+            ds = ds.stack(bus_bin=["bus", "bin"])
+
             closest_year = max(
                 (y for y in ds.year.values if y <= year), default=min(ds.year.values)
             )
 
-            p_max_pu = (
-                ds["profile"]
-                .sel(year=closest_year)
-                .transpose("time", "bus")
-                .to_pandas()
-            )
-            p_max_pu.columns = p_max_pu.columns + f" {carrier}"
+            p_max_pu = ds["profile"].sel(year=closest_year).to_pandas()
+            p_max_pu.columns = p_max_pu.columns.map(flatten) + f" {carrier}"
 
             # temporal_clustering
             p_max_pu = p_max_pu.groupby(snapshotmaps).mean()
@@ -221,20 +243,103 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def update_heat_pump_efficiency(n: pypsa.Network, n_p: pypsa.Network, year: int):
+    """
+    Update the efficiency of heat pumps from previous years to current year
+    (e.g. 2030 heat pumps receive 2040 heat pump COPs in 2030).
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The original network.
+    n_p : pypsa.Network
+        The network with the updated parameters.
+    year : int
+        The year for which the efficiency is being updated.
+
+    Returns
+    -------
+    None
+        This function updates the efficiency in place and does not return a value.
+    """
+
+    # get names of heat pumps in previous iteration that cannot be replaced by direct utilisation in this iteration
+    heat_pump_idx_previous_iteration = n_p.links.index[
+        n_p.links.index.str.contains("heat pump")
+        & n_p.links.index.str[:-4].isin(
+            n.links_t.efficiency.columns.str.rstrip(  # sources that can be directly used are no longer represented by heat pumps in the dynamic efficiency dataframe
+                str(year)
+            )
+        )
+    ]
+    # construct names of same-technology heat pumps in the current iteration
+    corresponding_idx_this_iteration = heat_pump_idx_previous_iteration.str[:-4] + str(
+        year
+    )
+    # update efficiency of heat pumps in previous iteration in-place to efficiency in this iteration
+    n_p.links_t["efficiency"].loc[:, heat_pump_idx_previous_iteration] = (
+        n.links_t["efficiency"].loc[:, corresponding_idx_this_iteration].values
+    )
+
+    # Change efficiency2 for heat pumps that use an explicitly modelled heat source
+    previous_iteration_columns = heat_pump_idx_previous_iteration.intersection(
+        n_p.links_t["efficiency2"].columns
+    )
+    current_iteration_columns = corresponding_idx_this_iteration.intersection(
+        n.links_t["efficiency2"].columns
+    )
+    n_p.links_t["efficiency2"].loc[:, previous_iteration_columns] = (
+        n.links_t["efficiency2"].loc[:, current_iteration_columns].values
+    )
+
+
+def update_dynamic_ptes_capacity(
+    n: pypsa.Network, n_p: pypsa.Network, year: int
+) -> None:
+    """
+    Updates dynamic pit storage capacity based on district heating temperature changes.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Original network.
+    n_p : pypsa.Network
+        Network with updated parameters.
+    year : int
+        Target year for capacity update.
+
+    Returns
+    -------
+    None
+        Updates capacity in-place.
+    """
+    # pit storages in previous iteration
+    dynamic_ptes_idx_previous_iteration = n_p.stores.index[
+        n_p.stores.index.str.contains("water pits")
+    ]
+    # construct names of same-technology dynamic pit storage in the current iteration
+    corresponding_idx_this_iteration = dynamic_ptes_idx_previous_iteration.str[
+        :-4
+    ] + str(year)
+    # update pit storage capacity in previous iteration in-place to capacity in this iteration
+    n_p.stores_t.e_max_pu[dynamic_ptes_idx_previous_iteration] = n.stores_t.e_max_pu[
+        corresponding_idx_this_iteration
+    ].values
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="37",
+            clusters="39",
             opts="",
-            ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
-            planning_horizons=2030,
+            sector_opts="",
+            planning_horizons=2050,
         )
 
-    configure_logging(snakemake)
+    configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -251,9 +356,24 @@ if __name__ == "__main__":
 
     n_p = pypsa.Network(snakemake.input.network_p)
 
-    add_brownfield(n, n_p, year)
+    update_heat_pump_efficiency(n, n_p, year)
+
+    if snakemake.params.tes and snakemake.params.dynamic_ptes_capacity:
+        update_dynamic_ptes_capacity(n, n_p, year)
+
+    add_brownfield(
+        n,
+        n_p,
+        year,
+        h2_retrofit=snakemake.params.H2_retrofit,
+        h2_retrofit_capacity_per_ch4=snakemake.params.H2_retrofit_capacity_per_CH4,
+        capacity_threshold=snakemake.params.threshold_capacity,
+    )
 
     disable_grid_expansion_if_limit_hit(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
+
+    sanitize_custom_columns(n)
+    sanitize_carriers(n, snakemake.config)
     n.export_to_netcdf(snakemake.output[0])

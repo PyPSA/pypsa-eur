@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -14,9 +13,11 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from _helpers import configure_logging, set_scenario_config
-from plot_summary import preferred_order, rename_techs
 from pypsa.plot import add_legend_circles, add_legend_lines, add_legend_patches
+
+from scripts._helpers import configure_logging, rename_techs, retry, set_scenario_config
+from scripts.make_summary import assign_locations
+from scripts.plot_summary import preferred_order
 
 logger = logging.getLogger(__name__)
 
@@ -45,23 +46,13 @@ def rename_techs_tyndp(tech):
         return tech
 
 
-def assign_location(n):
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
-        ifind = pd.Series(c.df.index.str.find(" ", start=4), c.df.index)
-        for i in ifind.value_counts().index:
-            # these have already been assigned defaults
-            if i == -1:
-                continue
-            names = ifind.index[ifind == i]
-            c.df.loc[names, "location"] = names.str[:i]
-
-
 def load_projection(plotting_params):
     proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
 
+@retry
 def plot_map(
     n,
     components=["links", "stores", "storage_units", "generators"],
@@ -71,7 +62,7 @@ def plot_map(
 ):
     tech_colors = snakemake.params.plotting["tech_colors"]
 
-    assign_location(n)
+    assign_locations(n)
     # Drop non-electric buses so they don't clutter the plot
     n.buses.drop(n.buses.index[n.buses.carrier != "AC"], inplace=True)
 
@@ -146,7 +137,7 @@ def plot_map(
 
     title = "added grid"
 
-    if snakemake.wildcards["ll"] == "v1.0":
+    if snakemake.params.transmission_limit == "lv1.0":
         # should be zero
         line_widths = n.lines.s_nom_opt - n.lines.s_nom
         link_widths = n.links.p_nom_opt - n.links.p_nom
@@ -241,17 +232,17 @@ def plot_map(
         )
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "plot_power_network",
             opts="",
             clusters="37",
-            ll="v1.0",
             sector_opts="4380H-T-H-B-I-A-dist1",
         )
 

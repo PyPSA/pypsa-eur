@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "test-elec-clusters"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+scenario:
+  clusters:
+  - "adm"
+  opts:
+  - ''
+  planning_horizons:
+  - 2050
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'XK']
+
+clustering:
+  mode: administrative
+  administrative:
+    level: bz
+  copperplate_regions:
+  - [DE00, LUG1]
+  - [GBNI, IE00]
+  temporal:
+    resolution_elec: 24h
+  simplify_network:
+    remove_stubs: true
+    remove_stubs_across_borders: false
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex

@@ -1,4 +1,4 @@
-REM SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
+REM SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 REM SPDX-License-Identifier: MIT
 
 @ECHO OFF

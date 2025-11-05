@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -12,8 +11,9 @@ import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import configure_logging, set_scenario_config
-from cluster_gas_network import load_bus_regions
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.cluster_gas_network import load_bus_regions
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ def read_scigrid_gas(fn):
     expanded_param = df.param.apply(json.loads).apply(pd.Series)
     df = pd.concat([df, expanded_param], axis=1)
     df.drop(["param", "uncertainty", "method"], axis=1, inplace=True)
+    df = df.loc[:, ~df.columns.duplicated()]  # duplicated country_code column
     return df
 
 
@@ -71,7 +72,7 @@ def build_gem_prod_data(fn):
 
     p = pd.read_excel(fn, sheet_name="Gas extraction - production")
     p = p.set_index("GEM Unit ID")
-    p = p[p["Fuel description"].str.contains("gas")]
+    p = p[p["Fuel description"].str.contains("gas", case=False)]
 
     capacities = pd.DataFrame(index=df.index)
     for key in ["production", "production design capacity", "reserves"]:
@@ -104,9 +105,15 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
     entry = read_scigrid_gas(entry_fn)
     entry["from_country"] = entry.from_country.str.rstrip()
     entry = entry.loc[
-        ~(entry.from_country.isin(countries) & entry.to_country.isin(countries))
-        & ~entry.name.str.contains("Tegelen")  # only take non-EU entries
-        | (entry.from_country == "NO")  # malformed datapoint  # entries from NO to GB
+        (
+            ~(entry.from_country.isin(countries) & entry.to_country.isin(countries))
+            & (entry.from_country.isin(countries) | entry.to_country.isin(countries))
+            & ~entry.name.str.contains("Tegelen")  # only take non-EU entries
+            & ~entry.from_country.isin(
+                ["RU", "BY"]
+            )  # exclude entries from Russia and Belarus
+            | (entry.from_country == "NO")
+        )  # malformed datapoint
     ].copy()
 
     sto = read_scigrid_gas(sto_fn)
@@ -137,11 +144,11 @@ def build_gas_input_locations(gem_fn, entry_fn, sto_fn, countries):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "build_gas_input_locations",
-            clusters="128",
+            clusters="10",
         )
 
     configure_logging(snakemake)

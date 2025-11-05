@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -7,25 +6,27 @@ Approximate heat demand for all weather years.
 
 :func:`approximate_heat_demand` approximates annual heat demand based on energy totals and heating degree days (HDD) using a regression of heat demand on HDDs.
 
-Inputs
-------
-- `resources/<run_name>/energy_totals.csv`: Energy consumption by sector (columns), country and year. Output of :func:`scripts.build_energy_totals.py`.
-- `data/era5-annual-HDD-per-country.csv`: Number of heating degree days by year (columns) and country (index).
-
 Outputs
 -------
 - `resources/<run_name>/heat_totals.csv`: Approximated annual heat demand for each country.
 """
 
+import logging
 from itertools import product
 
 import pandas as pd
 from numpy.polynomial import Polynomial
 
+from scripts._helpers import configure_logging
+
+logger = logging.getLogger(__name__)
+
 idx = pd.IndexSlice
 
 
-def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
+def approximate_heat_demand(
+    energy_totals: pd.DataFrame, hdd: pd.DataFrame
+) -> pd.DataFrame:
     """
     Approximate heat demand for a set of countries based on energy totals and
     heating degree days (HDD). A polynomial regression of heat demand on HDDs
@@ -101,12 +102,14 @@ def approximate_heat_demand(energy_totals: pd.DataFrame, hdd: pd.DataFrame):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_heat_totals")
 
-    hdd = pd.read_csv(snakemake.input.hdd, index_col=0).T
-    hdd.index = hdd.index.astype(int)
+    configure_logging(snakemake)
+
+    hdd = pd.read_csv(snakemake.input.hdd, index_col=0, parse_dates=True)
+    hdd = hdd.groupby(hdd.index.year).sum().div(1e3)
 
     energy_totals = pd.read_csv(snakemake.input.energy_totals, index_col=[0, 1])
 

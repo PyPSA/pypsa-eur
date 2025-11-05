@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 
@@ -8,13 +8,11 @@ run:
   name: "test-sector-overnight"
   disable_progressbar: true
   shared_resources:
-    policy: "test"
+    policy: false
   shared_cutouts: true
 
 
 scenario:
-  ll:
-  - v1.5
   clusters:
   - 5
   sector_opts:
@@ -48,22 +46,13 @@ atlite:
       time: ["2013-03-01", "2013-03-08"]
 
 renewable:
-  onwind:
-    cutout: be-03-2013-era5
   offwind-ac:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-dc:
-    cutout: be-03-2013-era5
     max_depth: false
   offwind-float:
-    cutout: be-03-2013-era5
     max_depth: false
     min_depth: false
-  solar:
-    cutout: be-03-2013-era5
-  solar-hsat:
-    cutout: be-03-2013-era5
 
 clustering:
   temporal:
@@ -72,6 +61,38 @@ clustering:
 sector:
   gas_network: true
   H2_retrofit: true
+  district_heating:
+    ptes:
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
+    ates:
+      enable: true
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
 
 industry:
   HVC_environment_sequestration_fraction: 0.5
@@ -81,8 +102,12 @@ industry:
 solving:
   solver:
     name: highs
-    options: highs-default
+    options: highs-simplex
   mem: 4000
+
+  check_objective:
+    enable: false
+    expected_value: 6.96e+08
 
 plotting:
   map:
@@ -95,3 +120,6 @@ plotting:
   energy_max:
   energy_min:
   energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true
