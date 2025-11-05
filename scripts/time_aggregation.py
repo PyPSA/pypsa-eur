@@ -48,7 +48,7 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     resolution = snakemake.params.time_resolution
 
-    if resolution["resolution_elec"] not in (False, 1):
+    if resolution["resolution_elec"] not in (False, 1, "1h", "1H"):
         raise ValueError(
             f"Invalid configuration: expected 'resolution_elec' = False for the "
             f"sector-coupled model, received {resolution['resolution_elec']!r}. "
