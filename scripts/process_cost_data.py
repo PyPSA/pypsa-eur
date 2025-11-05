@@ -49,8 +49,8 @@ def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataF
 
     Returns
     -------
-    costs : pd.DataFrame
-        Updated cost data with custom modifications applied.
+    pd.DataFrame
+        Updated cost data with custom modifications applied (if applicable).
     """
     if custom_costs.empty:
         return costs
@@ -58,11 +58,12 @@ def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataF
     all_techs = custom_costs.query("technology=='all'").dropna(axis=1, how="all")
     custom_costs = custom_costs.query("technology != 'all'").dropna(axis=1, how="all")
 
-    # Overwrite unique pairs of (technology, parameter)
+    # Add technologies that don't already exist
     missing_idx = custom_costs.index.difference(costs.index)
     if len(missing_idx) > 0:
         costs = pd.concat([costs, custom_costs.loc[missing_idx]])
 
+    # Overwrite unique pairs of (technology, parameter)
     for param in custom_costs.columns:
         custom_col = custom_costs[param].dropna()
         costs.loc[custom_col.index, param] = custom_col
