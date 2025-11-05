@@ -165,31 +165,39 @@ def manual_adjustment(load, fn_load, countries):
     copy_timeslice(load, "NL", "2014-12-01 00:00", "2014-12-19 23:00", Delta(weeks=-3))
     load.loc["2025-08":"2025-09", "NL"] = np.nan
 
+    def _safe_where(df, col, pred):
+        if col in df.columns:
+            df[col] = df[col].where(pred(df[col]), np.nan)
+
+    def _safe_setna(df, idx, col):
+        if col in df.columns:
+            df.loc[idx, col] = np.nan
+
     # remove erroneous peaks
-    load["BA"] = load["BA"].where(load["BA"] < 2650, np.nan)
-    load["DK"] = load["DK"].where(load["DK"] < 6400, np.nan)
-    load["MK"] = load["MK"].where(load["MK"] < 2000, np.nan)
+    _safe_where(load, "BA", lambda s: s < 2650)
+    _safe_where(load, "DK", lambda s: s < 6400)
+    _safe_where(load, "MK", lambda s: s < 2000)
 
     # remove erroneous drops
-    load["EE"] = load["EE"].where(load["EE"] > 300, np.nan)
-    load["GB"] = load["GB"].where(load["GB"] > 10000, np.nan)
-    load["GR"] = load["GR"].where(load["GR"] > 2300, np.nan)
-    load["LT"] = load["LT"].where(load["LT"] > 600, np.nan)
-    load["LV"] = load["LV"].where(load["LV"] > 300, np.nan)
-    load["ME"] = load["ME"].where(load["ME"] > 90, np.nan)
-    load["NO"] = load["NO"].where(load["NO"] > 6000, np.nan)
-    load["SE"] = load["SE"].where(load["SE"] > 6000, np.nan)
-    load["SI"] = load["SI"].where(load["SI"] > 400, np.nan)
-    load["XK"] = load["XK"].where(load["XK"] > 200, np.nan)
+    _safe_where(load, "EE", lambda s: s > 300)
+    _safe_where(load, "GB", lambda s: s > 10000)
+    _safe_where(load, "GR", lambda s: s > 2300)
+    _safe_where(load, "LT", lambda s: s > 600)
+    _safe_where(load, "LV", lambda s: s > 300)
+    _safe_where(load, "ME", lambda s: s > 90)
+    _safe_where(load, "NO", lambda s: s > 6000)
+    _safe_where(load, "SE", lambda s: s > 6000)
+    _safe_where(load, "SI", lambda s: s > 400)
+    _safe_where(load, "XK", lambda s: s > 200)
 
-    load.loc["2019-04-03 01:00", "BG"] = np.nan
-    load.loc["2019-10-29 01:00", "BG"] = np.nan
-    load.loc["2019-10-29 03:00", "BG"] = np.nan
-    load.loc["2018-09-12 16:00", "GB"] = np.nan
-    load.loc["2019-10-28 11:00", "SK"] = np.nan
+    _safe_setna(load, "2019-04-03 01:00", "BG")
+    _safe_setna(load, "2019-10-29 01:00", "BG")
+    _safe_setna(load, "2019-10-29 03:00", "BG")
+    _safe_setna(load, "2018-09-12 16:00", "GB")
+    _safe_setna(load, "2019-10-28 11:00", "SK")
 
     copy_timeslice(load, "MK", "2019-04-30 00:00", "2019-05-01 23:00", Delta(weeks=-1))
-    for year in [2010, 2011, 2012, 2014, 2015, 2016, 2024]:
+    for year in [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2024]:
         copy_timeslice(
             load, "BA", f"{year}-07-05 00:00", f"{year}-07-08 00:00", Delta(weeks=-1)
         )
