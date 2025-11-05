@@ -27,7 +27,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import requests
 
 from scripts._helpers import (
     configure_logging,
@@ -38,23 +37,15 @@ from scripts._helpers import (
 logger = logging.getLogger(__name__)
 
 
-def download_ffe_load_profiles():
-    """Download normalized industry load profiles from FfE."""
-    url = "https://api.opendata.ffe.de"
-    params = {"id_opendata": 59}
+def load_ffe_load_profiles(json_file):
+    """Load normalized industry load profiles from FfE JSON file."""
+    import json
 
-    # Check API health
-    response = requests.get(url + "/health")
-    if response.status_code != 200:
-        raise ConnectionError(f"API not available. Status: {response.status_code}")
+    # Load pre-downloaded JSON data
+    with open(json_file) as f:
+        data = json.load(f)
 
-    # Fetch data
-    response = requests.get(url + "/opendata", params=params)
-    if response.status_code != 200:
-        raise ConnectionError(f"Request failed. Status: {response.status_code}")
-
-    data = response.json()
-    logger.info(f"Downloaded FfE data: {data['title']}")
+    logger.info(f"Loaded FfE data: {data['title']}")
 
     # Map internal_id to profile names
     id_to_profile = {
@@ -78,21 +69,21 @@ def download_ffe_load_profiles():
     # Parse the data into a DataFrame
     profiles_dict = {}
     for row in data["data"]:
-        # Data is already parsed as lists, not JSON strings
-        internal_id = row["internal_id"][0]  # Extract first element from list [5]
-        values = row["values"]  # Already a list
-
+        internal_id = row["internal_id"][0]
+        values = row["values"]
         if internal_id in id_to_profile:
             profile_name = id_to_profile[internal_id]
             profiles_dict[profile_name] = values
 
     profiles_df = pd.DataFrame(profiles_dict, index=timestamps)
-
     logger.info(f"Loaded profiles: {list(profiles_df.columns)}")
+
     return profiles_df
 
 
-def create_nodal_electricity_profiles(nodal_df, nodal_sector_df, snapshots):
+def create_nodal_electricity_profiles(
+    nodal_df, nodal_sector_df, snapshots, path_to_ffe_json
+):
     """Create hourly electricity demand profiles for each node."""
 
     # Industry category to FfE profile mapping (updated to match correct profile names)
@@ -128,7 +119,7 @@ def create_nodal_electricity_profiles(nodal_df, nodal_sector_df, snapshots):
 
     # Download FfE profiles
     logger.info("Downloading FfE industry load profiles...")
-    ffe_profiles = download_ffe_load_profiles()
+    ffe_profiles = load_ffe_load_profiles(path_to_ffe_json)
 
     # Initialize result DataFrame
     nodal_profiles = pd.DataFrame(index=snapshots, columns=nodal_df.index, dtype=float)
@@ -286,7 +277,7 @@ if __name__ == "__main__":
     )
 
     nodal_electricity_profiles = create_nodal_electricity_profiles(
-        nodal_df, nodal_sector_df, snapshots
+        nodal_df, nodal_sector_df, snapshots, snakemake.input.ffe_profiles
     )
 
     # Export hourly profiles

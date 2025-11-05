@@ -1162,6 +1162,7 @@ rule build_industrial_energy_demand_per_node:
         industrial_energy_demand_per_node_today=resources(
             "industrial_energy_demand_today_base_s_{clusters}.csv"
         ),
+        ffe_profiles="data/ffe_industry_load_profiles.json",
     output:
         industrial_energy_demand_per_node=resources(
             "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
