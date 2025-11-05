@@ -2,10 +2,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# snakemake -call results/test/networks/base_s_38_elec_lv1.25_Co2L-24h.nc --configfile config/test/config.electricity.yaml
-
 tutorial: false
-
 
 run:
   name: "test" # use this to keep track of runs with different settings
@@ -38,8 +35,6 @@ enable:
   # retrieve_cutout: true
   # custom_busmap: false
   drop_leap_day: true
-
-
 
 electricity:
   # BAU_mincapacities:
