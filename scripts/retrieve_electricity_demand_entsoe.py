@@ -94,7 +94,7 @@ if __name__ == "__main__":
             "No ENTSOE token provided. Retrieving pre-built data from data bundle."
         )
         # TODO add to zenodo data bundle once vetted
-        prebuilt_url = "https://tubcloud.tu-berlin.de/s/JjwJSt8o5HCsjcB/download/electricity_demand_entsoe_raw.csv"
+        prebuilt_url = "https://tubcloud.tu-berlin.de/s/qKKdAiNeDxFscDH/download/electricity_demand_entsoe_raw.csv"
         df = pd.read_csv(prebuilt_url)
 
     df.to_csv(snakemake.output[0])
