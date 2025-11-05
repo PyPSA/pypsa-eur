@@ -134,10 +134,10 @@ def add_land_use_constraint(n):
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         existing = (
             n.generators.loc[ext_i, "p_nom"]
-            .groupby(n.generators.bus.map(n.buses.country))
+            .groupby(n.generators.bus.map(n.buses.country)) #changed for the Greek run problem with csv files
             .sum()
         )
-        existing.index += " " + carrier + "-" #+ snakemake.wildcards.planning_horizons
+        existing.index += " " + carrier + "-" + snakemake.wildcards.planning_horizons
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
     # check if existing capacities are larger than technical potential
@@ -638,10 +638,6 @@ def add_BAU_constraints(n, config):
     ext_i = n.generators.query("p_nom_extendable")
     ext_carrier_i = xr.DataArray(ext_i.carrier.rename_axis("Generator-ext"))
 
-    # Debug output to check carrier names
-    print(f"Carriers in mincaps: {mincaps.index}")
-    print(f"Carriers in network: {ext_i.carrier.unique()}")
-
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
@@ -944,11 +940,7 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 def extra_functionality(n, snapshots):
     config = n.config
-    opts = config.get('scenario', {}).get('opts', [])
-    
-    # Debugging output to verify opts are passed correctly
-    print(f"Scenario opts: {opts}")
-    
+    opts = config.get('scenario', {}).get('opts', [])  
     constraints = config["solving"].get("constraints", {})
     
     if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():
@@ -1068,7 +1060,7 @@ if __name__ == "__main__":
             clusters="5",
             ll="v1.0",
             sector_opts="",
-            planning_horizons="2030",
+            # planning_horizons="2030",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
