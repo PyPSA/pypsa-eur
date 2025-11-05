@@ -55,6 +55,8 @@ Upcoming Release
 * Fix `retrieve_eurostat_data` and `retrieve_eurostat_household_data` on Windows by avoiding a double access to a temporary file.
   (https://github.com/PyPSA/pypsa-eur/pull/1825)
 
+* Added integration with the OETC platform
+
 * Remove pinned environment files mention in the pre-commit-config-yaml (https://github.com/PyPSA/pypsa-eur/pull/1837)
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
