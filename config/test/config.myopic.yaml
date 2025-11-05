@@ -1,14 +1,12 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
-# base_s_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}
-# snakemake -call results/greece_test_myopic/prenetworks-brownfield/base_s_44_lv1.5__Co2L0-1h-GtCO2_2050.nc --configfile config/test/config.myopic.yaml
 
-
-tutorial: false
+tutorial: true
 
 run:
-  name: "greece_test_myopic"
+  name: "test-sector-myopic"
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -17,123 +15,91 @@ run:
 foresight: myopic
 
 scenario:
-  ll:
-  - v1.5
   clusters:
-  - 45
-  opts: # only relevant for PyPSA-Eur
+  - 5
+  sector_opts:
   - ''
-  sector_opts: # this is where the main scenario settings are
-  - Co2L0-1h #-GtCO2
   planning_horizons:
+  - 2030
+  - 2040
   - 2050
 
-countries: ['GR']
+countries: ['BE']
 
 snapshots:
-  start: "2020-03-01"
-  end: "2020-03-08"
-
-# enable:
-#   prepare_links_p_nom: false
-#   retrieve_databundle: false
-#   retrieve_sector_databundle: true
-#   retrieve_cost_data: false
-#   build_cutout: false
-#   retrieve_cutout: false
-#   build_natura_raster: false
-#   retrieve_natura_raster: false
-#   custom_busmap: false
+  start: "2013-03-01"
+  end: "2013-03-08"
 
 sector:
-  central_heat_vent: false
+  central_heat_vent: true
+  solid_biomass_import:
+    enable: true
+  district_heating:
+    ates:
+      enable: true
+    ptes:
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
 
 electricity:
-  # BAU_mincapacities:
-  #   solar: 0
-  #   solar-hsat: 0
-  #   onwind: 100000
-  #   offwind-ac: 0
-  #   offwind-dc: 100000
-  #   offwind-float: 100000
-
-  voltages: [200., 220., 300., 380., 400., 500., 750.]
-  base_network: osm-prebuilt
-  osm-prebuilt-version: 0.4
-  gaslimit_enable: false
-  gaslimit: false
-  co2limit_enable: false
-  co2limit: 7.75e+7
-  co2base: 1.487e+9
-
-  operational_reserve:
-    activate: false
-    epsilon_load: 0.02
-    epsilon_vres: 0.02
-    contingency: 4000
-
-  max_hours:
-    battery: 6
-    H2: 168
   extendable_carriers:
     Generator: [OCGT]
     StorageUnit: [battery]
     Store: [H2]
     Link: [H2 pipeline]
 
-  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-float]
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
 
   estimate_renewable_capacities:
     enable: false
 
 atlite:
-  default_cutout: greece_era5_2020_cutout
+  default_cutout: be-03-2013-era5
   cutouts:
-    greece_era5_2020_cutout:
+    be-03-2013-era5:
       module: era5
       x: [4., 15.]
       y: [46., 56.]
       time: ["2013-03-01", "2013-03-08"]
 
 renewable:
-  onwind:
-    cutout: greece_era5_2020_cutout
   offwind-ac:
-    cutout: greece_era5_2020_cutout
     max_depth: false
   offwind-dc:
-    cutout: greece_era5_2020_cutout
     max_depth: false
   offwind-float:
-    cutout: greece_era5_2020_cutout
     max_depth: false
     min_depth: false
-  solar:
-    cutout: greece_era5_2020_cutout
-  solar-hsat:
-    cutout: greece_era5_2020_cutout
 
 clustering:
-  focus_weights: false
-  simplify_network:
-    to_substations: false
-    remove_stubs: false
-    remove_stubs_across_borders: false
-  cluster_network:
-    algorithm: kmeans
-    # hac_features:
-    # - wnd100m
-    # - influx_direct
-  exclude_carriers: []
-  consider_efficiency_classes: false
-  aggregation_strategies:
-    generators:
-      committable: any
-      ramp_limit_up: max
-      ramp_limit_down: max
   temporal:
-    resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 24h
 
 industry:
   St_primary_fraction:
@@ -141,35 +107,11 @@ industry:
     2040: 0.5
     2050: 0.4
 
-transmission_projects:
-  enable: false
-  include:
-    tyndp2020: false
-    nep: false
-    manual: false
-  skip:
-  - upgraded_lines
-  - upgraded_links
-  status:
-  - under_construction
-  - in_permitting
-  - confirmed
-    #- planned_not_yet_permitted
-    #- under_consideration
-  new_link_capacity: zero #keep or zero
-
-existing_capacities:
-  grouping_years_power: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2025, 2030]
-  grouping_years_heat: [1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019] # these should not extend 2020
-  threshold_capacity: 10
-
-costs:
-  year: 2050
-
 solving:
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: highs
+    options: highs-simplex
+  mem: 4000
 
 plotting:
   map:
@@ -182,3 +124,6 @@ plotting:
   energy_max:
   energy_min:
   energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true

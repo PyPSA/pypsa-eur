@@ -432,7 +432,7 @@ def update_wind_solar_costs(
     ]
 
     # for offshore wind, need to calculated connection costs
-    for connection in ["dc", "ac", "float", "fl"]:
+    for connection in ["dc", "ac", "float"]:
         tech = "offwind-" + connection
         landfall_length = landfall_lengths.get(tech, 0.0)
         if tech not in n.generators.carrier.values:
