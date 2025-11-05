@@ -117,8 +117,7 @@ preferred_order = pd.Index(
         "solar thermal",
         "solar rooftop",
         "solar",
-        "floating solar"
-        "building retrofitting",
+        "floating solarbuilding retrofitting",
         "ground heat pump",
         "air heat pump",
         "heat pump",

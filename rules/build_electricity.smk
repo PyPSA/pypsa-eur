@@ -341,13 +341,16 @@ rule determine_availability_matrix:
 
 
 if config["enable"].get("build_renewable_profiles", True):
+
     rule build_renewable_profiles:
         params:
             snapshots=config_provider("snapshots"),
             drop_leap_day=config_provider("enable", "drop_leap_day"),
             renewable=config_provider("renewable"),
         input:
-            availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
+            availability_matrix=resources(
+                "availability_matrix_{clusters}_{technology}.nc"
+            ),
             offshore_shapes=resources("offshore_shapes.geojson"),
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
             cutout=lambda w: "cutouts/"

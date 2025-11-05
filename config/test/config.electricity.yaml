@@ -16,7 +16,7 @@ scenario:
   - lv1.25
   clusters:
   - 38
-  opts: 
+  opts:
   - Co2L-24h
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
@@ -65,7 +65,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow ] 
+    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]
     StorageUnit: [battery, H2]
     Store: []
     Link: [H2 pipeline]
