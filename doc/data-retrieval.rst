@@ -248,3 +248,10 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **Link:** https://2024.entsos-tyndp-scenarios.eu/download/
 - **License:** CC-BY 4.0
 - **Description:** Contains the node list and the reference grids from the Ten-Year Network Development Plan (TYNDP) 2024.
+
+``data/ffe_industry_load_profiles.json``
+
+- **Source:** Forschungsstelle für Energiewirtschaft e.V. (FfE)
+- **Link:** https://opendata.ffe.de/dataset/normalized-industrial-electrical-load-profiles-germany/
+- **License:** CC-BY 4.0
+- **Description:** Contains synthetic industrial electricity load profiles for different industry sectors in Germany.

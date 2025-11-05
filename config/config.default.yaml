@@ -916,6 +916,7 @@ industry:
   hotmaps_locate_missing: false
   reference_year: 2019
   oil_refining_emissions: 0.013
+  temporal_electricity_industry_load: false
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
