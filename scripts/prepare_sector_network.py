@@ -24,13 +24,13 @@ from scipy.stats import beta
 from scripts._helpers import (
     configure_logging,
     get,
+    load_costs,
     set_scenario_config,
     update_config_from_wildcards,
 )
 from scripts.add_electricity import (
     calculate_annuity,
     flatten,
-    load_costs,
     sanitize_carriers,
     sanitize_locations,
 )
@@ -1596,7 +1596,7 @@ def insert_electricity_distribution_grid(
 
     fn = solar_rooftop_potentials_fn
     if len(fn) > 0:
-        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze()
+        potential = pd.read_csv(fn, index_col=["bus", "bin"]).squeeze(axis=1)
         potential.index = potential.index.map(flatten) + " solar"
 
         n.add(
@@ -1814,6 +1814,7 @@ def add_storage_and_grids(
         carrier="H2 Electrolysis",
         efficiency=costs.at["electrolysis", "efficiency"],
         capital_cost=costs.at["electrolysis", "capital_cost"],
+        p_min_pu=options["min_part_load_electrolysis"],
         lifetime=costs.at["electrolysis", "lifetime"],
     )
 
@@ -6190,11 +6191,7 @@ if __name__ == "__main__":
     nhours = n.snapshot_weightings.generators.sum()
     nyears = nhours / 8760
 
-    costs = load_costs(
-        snakemake.input.costs,
-        snakemake.params.costs,
-        nyears=nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     pop_weighted_energy_totals = (
         pd.read_csv(snakemake.input.pop_weighted_energy_totals, index_col=0) * nyears
