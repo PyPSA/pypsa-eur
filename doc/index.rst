@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 ##################################################################################
 PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
@@ -247,6 +246,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
    preparation
    sector
    solving
+   oetc
    plotting
 
 .. toctree::

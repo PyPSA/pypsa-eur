@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 #########################
 Specific retrieval rules
@@ -17,7 +16,6 @@ Data in this section is retrieved and extracted in rules specified in ``rules/re
 - **License:** `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/Produktcenter/faq_inhalt.html?nn=6951010#doc5914388bodyText5>` and `custom <https://www.bgr.bund.de/DE/Gemeinsames/Produkte/produkte_agb.html>`
 - **Description:** Contains data on geothermal energy resources in Europe.
 
-``data/heat_demand``
 ``data/fraunhofer_heat_source_utilisation_potentials`` and ``data/dh_areas.gpkg``
 
 - **Source:** Fraunhofer Fordatis

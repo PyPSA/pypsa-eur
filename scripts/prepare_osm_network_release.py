@@ -90,6 +90,7 @@ def export_clean_csv(df, columns, output_file):
     Returns:
         None
     """
+    columns = [col for col in columns if col in df.columns]
     rename_dict = {
         "Bus": "bus_id",
         "Line": "line_id",
@@ -128,92 +129,98 @@ def create_geometries(network, is_converter, crs=GEO_CRS):
         - converters (GeoDataFrame): GeoDataFrame containing converter data with geometries.
         - transformers (GeoDataFrame): GeoDataFrame containing transformer data with geometries.
     """
+
+    buses_cols = [
+        "Bus",
+        "v_nom",
+        "dc",
+        "symbol",
+        "under_construction",
+        "tags",
+        "geometry",
+    ]
     buses = network.buses.reset_index()[
-        [
-            "Bus",
-            "v_nom",
-            "dc",
-            "symbol",
-            "under_construction",
-            "tags",
-            "geometry",
-        ]
+        [c for c in buses_cols if c in network.buses.columns]
     ]
     buses["geometry"] = buses.geometry.apply(lambda x: loads(x))
     buses = gpd.GeoDataFrame(buses, geometry="geometry", crs=crs)
 
+    lines_cols = [
+        "Line",
+        "bus0",
+        "bus1",
+        "v_nom",
+        "i_nom",
+        "num_parallel",
+        "s_nom",
+        "r",
+        "x",
+        "b",
+        "length",
+        "underground",
+        "under_construction",
+        "type",
+        "tags",
+        "geometry",
+    ]
     lines = network.lines.reset_index()[
-        [
-            "Line",
-            "bus0",
-            "bus1",
-            "v_nom",
-            "i_nom",
-            "num_parallel",
-            "s_nom",
-            "r",
-            "x",
-            "b",
-            "length",
-            "underground",
-            "under_construction",
-            "type",
-            "tags",
-            "geometry",
-        ]
+        [c for c in lines_cols if c in network.lines.columns]
     ]
     # Create shapely linestring from geometry column
     lines["geometry"] = lines.geometry.apply(lambda x: loads(x))
     lines = gpd.GeoDataFrame(lines, geometry="geometry", crs=crs)
 
+    links_cols = [
+        "Link",
+        "bus0",
+        "bus1",
+        "v_nom",
+        "p_nom",
+        "length",
+        "underground",
+        "under_construction",
+        "tags",
+        "geometry",
+    ]
     links = (
         network.links[~is_converter]
         .reset_index()
         .rename(columns={"voltage": "v_nom"})[
-            [
-                "Link",
-                "bus0",
-                "bus1",
-                "v_nom",
-                "p_nom",
-                "length",
-                "underground",
-                "under_construction",
-                "tags",
-                "geometry",
-            ]
+            [c for c in links_cols if c in network.links.columns]
         ]
     )
     links["geometry"] = links.geometry.apply(lambda x: loads(x))
     links = gpd.GeoDataFrame(links, geometry="geometry", crs=crs)
 
+    converters_cols = [
+        "Link",
+        "bus0",
+        "bus1",
+        "v_nom",
+        "p_nom",
+        "geometry",
+    ]
     converters = (
         network.links[is_converter]
         .reset_index()
         .rename(columns={"voltage": "v_nom"})[
-            [
-                "Link",
-                "bus0",
-                "bus1",
-                "v_nom",
-                "p_nom",
-                "geometry",
-            ]
+            [c for c in converters_cols if c in network.links.columns]
         ]
     )
     converters["geometry"] = converters.geometry.apply(lambda x: loads(x))
     converters = gpd.GeoDataFrame(converters, geometry="geometry", crs=crs)
 
+    transformers_cols = [
+        "Transformer",
+        "bus0",
+        "bus1",
+        "voltage_bus0",
+        "voltage_bus1",
+        "s_nom",
+        "geometry",
+    ]
     transformers = network.transformers.reset_index()[
-        [
-            "Transformer",
-            "bus0",
-            "bus1",
-            "voltage_bus0",
-            "voltage_bus1",
-            "s_nom",
-            "geometry",
-        ]
+        [c for c in transformers_cols if c in network.transformers.columns]
     ]
     transformers["geometry"] = transformers.geometry.apply(lambda x: loads(x))
     transformers = gpd.GeoDataFrame(transformers, geometry="geometry", crs=crs)
@@ -312,7 +319,7 @@ if __name__ == "__main__":
         network.links[is_converter], CONVERTERS_COLUMNS, snakemake.output.converters
     )
 
-    ### Create interactive map
+    ## Create interactive map
     buses, lines, links, converters, transformers = create_geometries(
         network, is_converter=is_converter, crs=GEO_CRS
     )
@@ -347,108 +354,117 @@ if __name__ == "__main__":
         name="Clustered substations",
         zindex=100,
     )
-    map = stations_polygon.loc[
-        ~(
-            stations_polygon.station_id.str.startswith("way")
-            | stations_polygon.station_id.str.startswith("relation")
+    if not stations_polygon.empty:
+        map = stations_polygon.loc[
+            ~(
+                stations_polygon.station_id.str.startswith("way")
+                | stations_polygon.station_id.str.startswith("relation")
+            )
+        ].explore(
+            color="grey",
+            popup=True,
+            m=map,
+            name="Clustered substations (virtual)",
+            zindex=101,
         )
-    ].explore(
-        color="grey",
-        popup=True,
-        m=map,
-        name="Clustered substations (virtual)",
-        zindex=101,
-    )
-    map = buses_polygon.loc[buses_polygon.dc == False].explore(
-        color="yellow",
-        popup=True,
-        m=map,
-        name="Buses (AC)",
-        zindex=102,
-    )
-    map = buses_polygon.loc[buses_polygon.dc == True].explore(
-        color="grey",
-        popup=True,
-        m=map,
-        name="Buses (DC)",
-        zindex=103,
-    )
+    if not buses_polygon.empty:
+        map = buses_polygon.loc[buses_polygon.dc == False].explore(
+            color="yellow",
+            popup=True,
+            m=map,
+            name="Buses (AC)",
+            zindex=102,
+        )
+        map = buses_polygon.loc[buses_polygon.dc == True].explore(
+            color="grey",
+            popup=True,
+            m=map,
+            name="Buses (DC)",
+            zindex=103,
+        )
 
-    map = lines.query("v_nom>=750").explore(
-        color="purple",
-        popup=True,
-        m=map,
-        name="Lines (AC, >= 750 kV) - purple",
-        zindex=104,
-    )
+    if not lines.empty:
+        map = lines.query("v_nom>=750").explore(
+            color="purple",
+            popup=True,
+            m=map,
+            name="Lines (AC, >= 750 kV) - purple",
+            zindex=104,
+        )
 
-    map = lines.query("v_nom>=380 and v_nom<750").explore(
-        color="darkred",
-        popup=True,
-        m=map,
-        name="Lines (AC), 380 kV >= x > 750 kV - red",
-        zindex=105,
-    )
+        map = lines.query("v_nom>=380 and v_nom<750").explore(
+            color="darkred",
+            popup=True,
+            m=map,
+            name="Lines (AC), 380 kV >= x > 750 kV - red",
+            zindex=105,
+        )
 
-    map = lines.query("v_nom>=250 and v_nom<380").explore(
-        color="orange",
-        popup=True,
-        m=map,
-        name="Lines (AC), 250 kV >= x > 380 kV - orange",
-        zindex=106,
-    )
+        map = lines.query("v_nom>=250 and v_nom<380").explore(
+            color="orange",
+            popup=True,
+            m=map,
+            name="Lines (AC), 250 kV >= x > 380 kV - orange",
+            zindex=106,
+        )
 
-    map = lines.query("v_nom>=200 and v_nom<250").explore(
-        color="green",
-        popup=True,
-        m=map,
-        name="Lines (AC), 200 kV >= x > 250 kV - green",
-        zindex=107,
-    )
+        map = lines.query("v_nom>=200 and v_nom<250").explore(
+            color="green",
+            popup=True,
+            m=map,
+            name="Lines (AC), 200 kV >= x > 250 kV - green",
+            zindex=107,
+        )
 
-    map = lines.query("v_nom<200").explore(
-        color="blue",
-        popup=True,
-        m=map,
-        name="Lines (AC), < 200 kV) - blue",
-        zindex=108,
-    )
+        map = lines.query("v_nom<200").explore(
+            color="blue",
+            popup=True,
+            m=map,
+            name="Lines (AC), < 200 kV) - blue",
+            zindex=108,
+        )
+    if not links.empty:
+        map = links.explore(
+            color="darkseagreen",
+            popup=True,
+            m=map,
+            name="Links (DC)",
+            zindex=115,
+        )
 
-    map = links.explore(
-        color="darkseagreen",
-        popup=True,
-        m=map,
-        name="Links (DC)",
-        zindex=115,
-    )
-    map = transformers.explore(
-        color="orange",
-        popup=True,
-        m=map,
-        name="Transformers",
-        zindex=116,
-    )
-    map = converters.explore(
-        color="purple",
-        popup=True,
-        m=map,
-        name="Converters",
-        zindex=117,
-    )
-    map = buses.loc[buses.dc == "f"].explore(
-        color="red",
-        popup=True,
-        m=map,
-        name="Buses (AC, Points)",
-        zindex=11,
-    )
-    map = buses.loc[buses.dc == "t"].explore(
-        color="black",
-        popup=True,
-        m=map,
-        name="Buses (DC, Points)",
-        zindex=119,
-    )
+    if not transformers.empty:
+        map = transformers.explore(
+            color="orange",
+            popup=True,
+            m=map,
+            name="Transformers",
+            zindex=116,
+        )
+
+    if not converters.empty:
+        map = converters.explore(
+            color="purple",
+            popup=True,
+            m=map,
+            name="Converters",
+            zindex=117,
+        )
+
+    if not buses.empty:
+        map = buses.loc[buses.dc == "f"].explore(
+            color="red",
+            popup=True,
+            m=map,
+            name="Buses (AC, Points)",
+            zindex=11,
+        )
+        map = buses.loc[buses.dc == "t"].explore(
+            color="black",
+            popup=True,
+            m=map,
+            name="Buses (DC, Points)",
+            zindex=119,
+        )
     # Add legend
     folium.LayerControl(collapsed=False).add_to(map)
 
