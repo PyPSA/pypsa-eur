@@ -17,12 +17,24 @@ jobs:
     outputs:
       validation_failed: ${{ steps.check_validation.outputs.failed }}
     steps:
+    - uses: actions/checkout@v5
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.1
+      with:
+        pixi-version: v0.44.0
+        frozen: true # use the lockfile as-is
+        cache: false
+
+    - name: Create environment file
+      run: |
+        pixi workspace export conda-environment environment.yaml
     - uses: lkstrp/pypsa-validator@v0.2.5
       id: validation
       continue-on-error: true
       with:
         step: run-self-hosted-validation
-        env_file: envs/environment.yaml
+        env_file: environment.yaml
         snakemake_config: config/test/config.validator.yaml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +51,7 @@ jobs:
     name: Create report
     needs: run-validation
     if: |
-      github.event.pull_request.head.repo.full_name == github.repository && 
+      github.event.pull_request.head.repo.full_name == github.repository &&
       needs.run-validation.outputs.validation_failed != 'true'
     runs-on: ubuntu-latest
     steps:

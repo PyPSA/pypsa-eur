@@ -1,0 +1,58 @@
+name: Update locked envs
+on:
+  push:
+    paths:
+    - pixi.toml
+  schedule:
+  - cron: "0 8 1,16 * *" # Bi-weekly
+  workflow_dispatch:
+
+jobs:
+  update-locked-environment:
+    if: ${{ github.ref == 'refs/heads/master' }}
+    name: Update lockfiles
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.1
+      with:
+        pixi-version: v0.44.0
+
+    - name: Update lockfile
+      run: |
+        rm pixi.lock
+        pixi install --all
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: lockfiles
+        path: pixi.lock
+
+  create-pull-request:
+    needs: update-locked-environment
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: Download all artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: lockfiles
+        path: pixi.lock
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: update-locked-environment
+        title: "[github-actions.ci] Update locked envs"
+        body: |
+          Automatically generated PR to update the pixi lockfile.
+
+          **Note: Do not merge without manual test execution. Either update the branch to trigger tests, or use `workflow_dispatch` to run tests manually. Unlike standard PRs, tests will not run automatically.**
+        commit-message: "Update locked environment files for all platforms"
