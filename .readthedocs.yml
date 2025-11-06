@@ -14,11 +14,11 @@ build:
     python: "3.10"
   jobs:
     create_environment:
-      - asdf plugin add pixi
-      - asdf install pixi latest
-      - asdf global pixi latest
+    - asdf plugin add pixi
+    - asdf install pixi latest
+    - asdf global pixi latest
     install:
-      - pixi install -e doc --frozen
+    - pixi install -e doc --frozen
     build:
       html:
-        - pixi run build-docs $READTHEDOCS_OUTPUT html
+      - pixi run build-docs $READTHEDOCS_OUTPUT html
