@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons and / or technologies using the 'all' identifier.
+Prepare and extend default cost data with custom cost modifications. Custom costs can target all planning horizons
+and / or technologies using the 'all' identifier.
 
 Preparing the cost data includes:
 - aligning all units to conventional units (i.e. MW / MWh),
@@ -35,8 +36,52 @@ from scripts.add_electricity import calculate_annuity
 logger = logging.getLogger(__name__)
 
 
+def overwrite_costs(costs: pd.DataFrame, custom_costs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply custom cost modifications to costs data.
+
+    Parameters
+    ----------
+    costs : pd.DataFrame
+        Base cost assumptions.
+    custom_costs : pd.DataFrame
+        Custom cost modifications.
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated cost data with custom modifications applied (if applicable).
+    """
+    if custom_costs.empty:
+        return costs
+
+    all_techs = custom_costs.query("technology=='all'").dropna(axis=1, how="all")
+    custom_costs = custom_costs.query("technology != 'all'").dropna(axis=1, how="all")
+
+    # Add technologies that don't already exist
+    missing_idx = custom_costs.index.difference(costs.index)
+    if len(missing_idx) > 0:
+        costs = pd.concat([costs, custom_costs.loc[missing_idx]])
+
+    # Overwrite unique pairs of (technology, parameter)
+    for param in custom_costs.columns:
+        custom_col = custom_costs[param].dropna()
+        costs.loc[custom_col.index, param] = custom_col
+
+    # If technology "all" exists, propagate its parameter values to all other technologies
+    if not all_techs.empty:
+        for param in all_techs.columns:
+            costs.loc[:, param] = all_techs.loc["all", param]
+
+    return costs
+
+
 def prepare_costs(
-    costs: pd.DataFrame, config: dict, max_hours: dict = None, nyears: float = 1.0
+    costs: pd.DataFrame,
+    config: dict,
+    max_hours: dict = None,
+    nyears: float = 1.0,
+    custom_costs_fn: str = None,
 ) -> pd.DataFrame:
     """
     Standardize and prepare extended costs data.
@@ -51,6 +96,8 @@ def prepare_costs(
         Dictionary specifying maximum hours for storage technologies
     nyears : float, optional
         Number of years for investment, by default 1.0
+    custom_costs_fn : str, optional
+        Custom cost modifications file path (default None).
 
     Returns
     -------
@@ -58,6 +105,24 @@ def prepare_costs(
         DataFrame containing the prepared cost data
 
     """
+    # Load custom costs and categorize into two sets:
+    # - Raw attributes: overwritten before cost preparation
+    # - Prepared attributes: overwritten after cost preparation
+    if custom_costs_fn is not None:
+        custom_costs = pd.read_csv(
+            snakemake.input.custom_costs,
+            dtype={"planning_horizon": "str"},
+            index_col=["technology", "parameter"],
+        ).query("planning_horizon in [@planning_horizon, 'all']")
+
+        custom_costs = custom_costs.drop("planning_horizon", axis=1).value.unstack(
+            level=1
+        )
+        prepared_attrs = ["marginal_cost", "capital_cost"]
+        raw_attrs = list(set(custom_costs.columns) - set(prepared_attrs))
+        custom_raw = custom_costs[raw_attrs].dropna(axis=0, how="all")
+        custom_prepared = custom_costs.filter(prepared_attrs).dropna(axis=0, how="all")
+
     # Copy marginal_cost and capital_cost for backward compatibility
     for key in ("marginal_cost", "capital_cost"):
         if key in config:
@@ -75,6 +140,7 @@ def prepare_costs(
     costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
+    costs = overwrite_costs(costs, custom_raw)
     for attr in (
         "investment",
         "lifetime",
@@ -139,6 +205,8 @@ def prepare_costs(
             max_hours=max_hours["H2"],
         )
 
+    # Overwrite marginal and capital costs
+    costs = overwrite_costs(costs, custom_prepared)
     for attr in ("marginal_cost", "capital_cost"):
         overwrites = config["overwrites"].get(attr)
         if overwrites is not None:
@@ -158,7 +226,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("build_cost_data", planning_horizons=2030)
+        snakemake = mock_snakemake("process_cost_data", planning_horizons=2030)
 
     cost_params = snakemake.params["costs"]
 
@@ -167,42 +235,15 @@ if __name__ == "__main__":
     planning_horizon = str(snakemake.wildcards.planning_horizons)
 
     # Retrieve costs assumptions
-    # If the index is the unique pair (technology, parameter),
-    # it can be easily overwritten.
     costs = pd.read_csv(snakemake.input.costs, index_col=["technology", "parameter"])
-    if snakemake.input.custom_costs is not None:
-        custom_costs = pd.read_csv(
-            snakemake.input.custom_costs,
-            dtype={"planning_horizon": "str"},
-            index_col=["technology", "parameter"],
-        ).query("planning_horizon in [@planning_horizon, 'all']")
-        custom_costs = custom_costs.drop("planning_horizon", axis=1)
-
-        # If technology "all" exists, propagate its parameter values to all other technologies
-        if "all" in custom_costs.index.get_level_values(0):
-            all_techs = custom_costs.query("technology=='all'")
-            custom_costs = custom_costs.query("technology != 'all'")
-
-            # Overwrite all techs entries
-            if not all_techs.empty:
-                all_techs = all_techs.droplevel(0)
-                costs = costs.sort_index()
-                for param in all_techs.index:
-                    costs.loc[pd.IndexSlice[:, param], all_techs.columns] = (
-                        all_techs.loc[param].values
-                    )
-
-            custom_costs = custom_costs.query("technology != 'all'")
-
-        # Overwrite unique pairs of (technology, parameter)
-        missing_idx = custom_costs.index.difference(costs.index)
-        if len(missing_idx) > 0:
-            costs = pd.concat([costs, custom_costs.loc[missing_idx]])
-        costs.loc[custom_costs.index] = custom_costs
 
     # Prepare costs
     costs_processed = prepare_costs(
-        costs, cost_params, snakemake.params.max_hours, nyears
+        costs,
+        cost_params,
+        snakemake.params.max_hours,
+        nyears,
+        snakemake.input.custom_costs,
     )
 
     costs_processed.to_csv(snakemake.output[0])

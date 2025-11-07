@@ -1405,7 +1405,7 @@ rule build_existing_heating_distribution:
 
 rule time_aggregation:
     params:
-        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
+        time_resolution=config_provider("clustering", "temporal"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         solver_name=config_provider("solving", "solver", "name"),
     input:
