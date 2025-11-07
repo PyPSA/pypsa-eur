@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    branches:
-    - master # For testing
     tags:
     - v*.*.*
 
@@ -73,9 +71,12 @@ jobs:
         channel-priority: strict
 
     # Start of preparation script
+
     - name: Update DAGs in documentation
       run: |
-        make update-dags
+        conda run -n pypsa-eur make update-dags
+
+    # End of preparation script
 
     - name: Remove previous tag
       run: |
