@@ -1,0 +1,131 @@
+# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+
+  
+
+run:
+  name: "Test_2030" # Run identification for 2024
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+
+scenario:
+  clusters:
+  - 10
+  opts:
+  - ''
+  planning_horizons:
+  - 2030
+
+
+countries: ['BE']
+
+snapshots:
+  start: "2030-01-01"
+  end: "2030-12-31"
+ 
+
+
+electricity:
+  co2limit_enable: true
+  co2limit: 100.e+6
+  battery_cost_reduction: true
+  #base_network: osm-raw
+  
+  
+  powerplants_filter: DateOut >= 2023
+atlite:
+  default_cutout: europe-2030-sarah3-era5
+  cutouts:
+    europe-2030-sarah3-era5:
+      module: [sarah3, era5] # in priority order
+      x: [-12., 42.] 
+      y: [33., 72.] 
+      time: ['2030-01-01', '2030-12-31']
+
+conventional:
+  unit_commitment: false
+  dynamic_fuel_price: false
+
+renewable:
+  onwind:
+    cutout: europe-2030-sarah3-era5
+  offwind-ac:
+    cutout: europe-2030-sarah3-era5
+    max_depth: false
+  offwind-dc:
+    cutout: europe-2030-sarah3-era5
+    max_depth: false
+  offwind-float:
+    cutout: europe-2030-sarah3-era5
+    max_depth: false
+    min_depth: false
+  solar:
+    cutout: europe-2030-sarah3-era5
+  solar-hsat:
+    cutout: europe-2030-sarah3-era5
+  hydro:
+    cutout: europe-2030-sarah3-era5
+    carriers: [ror, PHS, hydro]
+    PHS_max_hours: 6
+    hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
+    flatten_dispatch: false
+    flatten_dispatch_buffer: 0.2
+    clip_min_inflow: 1.0
+    eia_norm_year: false
+    eia_correct_by_capacity: true
+    eia_approximate_missing: true
+
+load:
+  scaling_factor: 1.2
+  fixed_year: 2023
+  
+
+
+
+lines:
+  dynamic_line_rating:
+    activate: false
+    cutout: europe-2030-sarah3-era5
+    max_line_rating: 1.3
+
+
+
+
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+
+  solver_options:
+     highs-default:
+      solver: ipm
+      run_crossover: off          # skip crossover; faster & fine for LP
+      threads: 8                  # try 6–10; don’t overcommit
+      parallel: on
+      small_matrix_value: 1e-6
+      large_matrix_value: 1e9
+      primal_feasibility_tolerance: 1e-5
+      dual_feasibility_tolerance: 1e-5
+      ipm_optimality_tolerance: 1e-4
+      random_seed: 123
+  
+
+
