@@ -27,7 +27,6 @@ countries: ['BE']
 snapshots:
   start: "2019-01-01"  # Use 2019 weather data
   end: "2019-12-31"     # for 2030 planning horizon
- 
 
 
 electricity:
@@ -35,8 +34,6 @@ electricity:
   co2limit: 100.e+6
   battery_cost_reduction: true
   #base_network: osm-raw
-  
-  
   powerplants_filter: DateOut >= 2019
 atlite:
   default_cutout: europe-2019-sarah3-era5
@@ -89,7 +86,7 @@ lines:
   dynamic_line_rating:
     activate: false
     cutout: europe-2019-sarah3-era5
-    max_line_rating: 1.3  
+    max_line_rating: 1.3
 
 solving:
   solver:
