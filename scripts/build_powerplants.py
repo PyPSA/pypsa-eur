@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 
-# coding: utf-8
+
 """
 Retrieves conventional powerplant capacities and locations from
 `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`_, assigns
@@ -11,26 +10,6 @@ these to buses and creates a ``.csv`` file. It is possible to amend the
 powerplant database with custom entries provided in
 ``data/custom_powerplants.csv``.
 Lastly, for every substation, powerplants with zero-initial capacity can be added for certain fuel types automatically.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    electricity:
-      powerplants_filter:
-      custom_powerplants:
-      everywhere_powerplants:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`electricity`
-
-Inputs
-------
-
-- ``networks/base.nc``: confer :ref:`base`.
-- ``data/custom_powerplants.csv``: custom powerplants in the same format as `powerplantmatching <https://github.com/PyPSA/powerplantmatching>`_ provides
 
 Outputs
 -------
@@ -45,7 +24,7 @@ Outputs
 Description
 -----------
 
-The configuration options ``electricity: powerplants_filter`` and ``electricity: custom_powerplants`` can be used to control whether data should be retrieved from the original powerplants database or from custom amendmends. These specify `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ commands.
+The configuration options ``electricity: powerplants_filter`` and ``electricity: custom_powerplants`` can be used to control whether data should be retrieved from the original powerplants database or from custom amendments. These specify `pandas.query <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html>`_ commands.
 In addition the configuration option ``electricity: everywhere_powerplants`` can be used to place powerplants with zero-initial capacity of certain fuel types at all substations.
 
 1. Adding all powerplants from custom:
@@ -91,8 +70,9 @@ import numpy as np
 import pandas as pd
 import powerplantmatching as pm
 import pypsa
-from _helpers import configure_logging, set_scenario_config
 from powerplantmatching.export import map_country_bus
+
+from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +145,7 @@ def replace_natural_gas_fueltype(df):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_powerplants")
     configure_logging(snakemake)
@@ -181,11 +161,14 @@ if __name__ == "__main__":
         .query('Fueltype not in ["Solar", "Wind"] and Country in @countries')
         .assign(Technology=replace_natural_gas_technology)
         .assign(Fueltype=replace_natural_gas_fueltype)
+        .replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"})
     )
 
     # Correct bioenergy for countries where possible
     opsd = pm.data.OPSD_VRE().powerplant.convert_country_to_alpha2()
-    opsd = opsd.query('Country in @countries and Fueltype == "Bioenergy"')
+    opsd = opsd.replace({"Solid Biomass": "Bioenergy", "Biogas": "Bioenergy"}).query(
+        'Country in @countries and Fueltype == "Bioenergy"'
+    )
     opsd["Name"] = "Biomass"
     available_countries = opsd.Country.unique()
     ppl = ppl.query('not (Country in @available_countries and Fueltype == "Bioenergy")')
@@ -202,7 +185,7 @@ if __name__ == "__main__":
     )
 
     if countries_wo_ppl := set(countries) - set(ppl.Country.unique()):
-        logging.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
+        logger.warning(f"No powerplants known in: {', '.join(countries_wo_ppl)}")
 
     # Add "everywhere powerplants" to all bus locations
     ppl = add_everywhere_powerplants(
@@ -214,7 +197,7 @@ if __name__ == "__main__":
 
     bus_null_b = ppl["bus"].isnull()
     if bus_null_b.any():
-        logging.warning(
+        logger.warning(
             f"Couldn't find close bus for {bus_null_b.sum()} powerplants. "
             "Removing them from the powerplants list."
         )

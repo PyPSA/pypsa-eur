@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2021-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -11,7 +10,7 @@ import logging
 import zipfile
 from pathlib import Path
 
-from _helpers import (
+from scripts._helpers import (
     configure_logging,
     progress_retrieve,
     set_scenario_config,
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("retrieve_gas_network_data")
         rootpath = ".."

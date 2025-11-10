@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: CC0-1.0
 run:
@@ -49,16 +49,7 @@ atlite:
       time: ['2019', '2019']
 
 renewable:
-  onwind:
-    cutout: europe-2019-era5
-  offwind-ac:
-    cutout: europe-2019-era5
-  offwind-dc:
-    cutout: europe-2019-era5
-  solar:
-    cutout: europe-2019-era5
   hydro:
-    cutout: europe-2019-era5
     flatten_dispatch: 0.01
 
 conventional:

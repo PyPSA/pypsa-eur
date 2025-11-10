@@ -1,36 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2017-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Defines the time aggregation to be used for sector-coupled network.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    clustering:
-        temporal:
-            resolution_sector:
-
-    enable:
-        drop_leap_day:
-
-Inputs
-------
-
-- ``networks/base_s_{clusters}_elec_l{ll}_{opts}.nc``: the network whose
-  snapshots are to be aggregated
-- ``resources/hourly_heat_demand_total_base_s_{clusters}.nc``: the total
-  hourly heat demand
-- ``resources/solar_thermal_total_base_s_{clusters}.nc``: the total
-  hourly solar thermal generation
-
-Outputs
--------
-
-- ``snapshot_weightings_base_s_{clusters}_elec_l{ll}_{opts}.csv``
 
 Description
 -----------
@@ -40,7 +12,6 @@ rule only computes said aggregation scheme; aggregation of time-varying network
 data is done in ``prepare_sector_network.py``.
 """
 
-
 import logging
 
 import numpy as np
@@ -48,7 +19,8 @@ import pandas as pd
 import pypsa
 import tsam.timeseriesaggregation as tsam
 import xarray as xr
-from _helpers import (
+
+from scripts._helpers import (
     configure_logging,
     set_scenario_config,
     update_config_from_wildcards,
@@ -58,14 +30,13 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "time_aggregation",
             configfiles="test/config.overnight.yaml",
             opts="",
             clusters="37",
-            ll="v1.0",
             sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
@@ -77,6 +48,14 @@ if __name__ == "__main__":
     n = pypsa.Network(snakemake.input.network)
     resolution = snakemake.params.time_resolution
 
+    if resolution["resolution_elec"] not in (False, 1, "1h", "1H"):
+        raise ValueError(
+            f"Invalid configuration: expected 'resolution_elec' = False for the "
+            f"sector-coupled model, received {resolution['resolution_elec']!r}. "
+            "Use 'resolution_sector' to define temporal resolution instead."
+        )
+    resolution = resolution["resolution_sector"]
+
     # Representative snapshots
     if not resolution or isinstance(resolution, str) and "sn" in resolution.lower():
         logger.info("Use representative snapshot or no aggregation at all")
@@ -87,10 +66,33 @@ if __name__ == "__main__":
     elif isinstance(resolution, str) and "h" in resolution.lower():
         offset = resolution.lower()
         logger.info(f"Averaging every {offset} hours")
-        snapshot_weightings = n.snapshot_weightings.resample(offset).sum()
+
+        # Resample years separately to handle non-contiguous years
+        years = pd.DatetimeIndex(n.snapshots).year.unique()
+        snapshot_weightings = []
+        for year in years:
+            sws_year = n.snapshot_weightings[n.snapshots.year == year]
+            sws_year = sws_year.resample(offset).sum()
+            snapshot_weightings.append(sws_year)
+        snapshot_weightings = pd.concat(snapshot_weightings)
+
+        # The resampling produces a contiguous date range. In case the original
+        # index was not contiguous, all rows with zero weight must be dropped
+        # (corresponding to time steps not included in the original snapshots).
+        zeros_i = snapshot_weightings.query("objective == 0").index
+        snapshot_weightings.drop(zeros_i, inplace=True)
+
+        swi = snapshot_weightings.index
+        leap_days = swi[(swi.month == 2) & (swi.day == 29)]
+        if snakemake.params.drop_leap_day and not leap_days.empty:
+            for year in leap_days.year.unique():
+                year_leap_days = leap_days[leap_days.year == year]
+                leap_weights = snapshot_weightings.loc[year_leap_days].sum()
+                march_first = pd.Timestamp(year, 3, 1, 0, 0, 0)
+                snapshot_weightings.loc[march_first] = leap_weights
+            snapshot_weightings = snapshot_weightings.drop(leap_days).sort_index()
+
         sns = snapshot_weightings.index
-        if snakemake.params.drop_leap_day:
-            sns = sns[~((sns.month == 2) & (sns.day == 29))]
         snapshot_weightings = snapshot_weightings.loc[sns]
         snapshot_weightings.to_csv(snakemake.output.snapshot_weightings)
 

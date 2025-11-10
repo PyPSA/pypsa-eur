@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2022 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -8,26 +7,6 @@ Transforms the global ship density data from the `World Bank Data Catalogue.
 <https://datacatalog.worldbank.org/search/dataset/0037580/Global-Shipping-Traffic-Density>`_
 to the size of the considered cutout. The global ship density raster is later
 used for the exclusion when calculating the offshore potentials.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    renewable:
-        {technology}:
-            cutout:
-
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`renewable_cf`
-
-Inputs
-------
-
-- ``data/bundle/shipdensity/shipdensity_global.zip``: Global shipping traffic
-  density from `World Bank Data Catalogue
-  <https://datacatalog.worldbank.org/search/dataset/0037580/>`_.
 
 Outputs
 -------
@@ -45,9 +24,9 @@ import logging
 import zipfile
 from pathlib import Path
 
-import atlite
 import rioxarray
-from _helpers import configure_logging, set_scenario_config
+
+from scripts._helpers import configure_logging, load_cutout, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +49,7 @@ def determine_cutout_xXyY(cutout_name):
     -------
     A list of extent coordinates in the order [x, X, y, Y].
     """
-    cutout = atlite.Cutout(cutout_name)
+    cutout = load_cutout(cutout_name)
     assert cutout.crs.to_epsg() == 4326
     x, X, y, Y = cutout.extent
     dx, dy = cutout.dx, cutout.dy
@@ -79,7 +58,7 @@ def determine_cutout_xXyY(cutout_name):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_ship_raster")
     configure_logging(snakemake)

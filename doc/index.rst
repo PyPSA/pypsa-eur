@@ -1,7 +1,6 @@
+.. SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 ..
-  SPDX-FileCopyrightText: 2019-2024 The PyPSA-Eur Authors
-
-  SPDX-License-Identifier: CC-BY-4.0
+.. SPDX-License-Identifier: CC-BY-4.0
 
 ##################################################################################
 PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
@@ -27,13 +26,14 @@ PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy Syste
     :target: https://snakemake.readthedocs.io
     :alt: Snakemake
 
+.. image:: https://img.shields.io/discord/911692131440148490?logo=discord
+    :target: https://discord.gg/AnuJBk23FU
+    :alt: Discord
+    
 .. image:: https://api.reuse.software/badge/github.com/pypsa/pypsa-eur
     :target: https://api.reuse.software/info/github.com/pypsa/pypsa-eur
     :alt: REUSE
 
-.. image:: https://img.shields.io/stackexchange/stackoverflow/t/pypsa
-   :target: https://stackoverflow.com/questions/tagged/pypsa
-   :alt: Stackoverflow
 
 |
 
@@ -182,9 +182,9 @@ For sector-coupling studies: ::
     @misc{PyPSAEurSec,
         author = "Fabian Neumann and Elisabeth Zeyen and Marta Victoria and Tom Brown",
         title = "The potential role of a hydrogen network in Europe",
-        journal "Joule",
+        journal = "Joule",
         volume = "7",
-        pages = "1--25"
+        pages = "1--25",
         year = "2023",
         eprint = "2207.05816",
         doi = "10.1016/j.joule.2023.06.016",
@@ -219,7 +219,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Getting Started
 
    introduction
@@ -229,7 +229,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Configuration
 
    wildcards
@@ -239,19 +239,19 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Rules Overview
 
    retrieve
    preparation
-   simplification
    sector
    solving
+   oetc
    plotting
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Implementation details for sector-coupled systems
 
    spatial_resolution
@@ -259,7 +259,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
 
 .. toctree::
    :hidden:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: References
 
    release_notes

@@ -1,35 +1,8 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
 Build future industrial production per country.
-
-Relevant Settings
------------------
-
-.. code:: yaml
-
-    industry:
-        St_primary_fraction:
-        DRI_fraction:
-        Al_primary_fraction:
-        HVC_primary_fraction:
-        HVC_mechanical_recycling_fraction:
-        HVC_chemical_recycling_fraction:
-.. seealso::
-    Documentation of the configuration file ``config/config.yaml`` at
-    :ref:`industry`
-
-Inputs
--------
-
-- ``resources/industrial_production_per_country.csv``
-
-Outputs
--------
-
-- ``resources/industrial_production_per_country_tomorrow_{planning_horizons}.csv``
 
 Description
 -------
@@ -59,15 +32,21 @@ If not already present, the information is added as new column in the output fil
 The unit of the production is kt/a.
 """
 
+import logging
+
 import pandas as pd
-from _helpers import set_scenario_config
-from prepare_sector_network import get
+
+from scripts._helpers import configure_logging, set_scenario_config
+from scripts.prepare_sector_network import get
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_industrial_production_per_country_tomorrow")
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     params = snakemake.params.industry
@@ -108,7 +87,7 @@ if __name__ == "__main__":
 
     al_primary_fraction = get(params["Al_primary_fraction"], investment_year)
     fraction_persistent_primary = (
-        al_primary_fraction * total_aluminium.sum() / production[key_pri].sum()
+        al_primary_fraction * total_aluminium.sum() / (production[key_pri].sum() or 1)
     )
 
     production[key_pri] = fraction_persistent_primary * production[key_pri]

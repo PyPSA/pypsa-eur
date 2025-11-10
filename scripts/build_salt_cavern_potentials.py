@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# SPDX-FileCopyrightText: : 2020-2024 The PyPSA-Eur Authors
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
 """
@@ -21,10 +20,14 @@ capacities from the bar chart split by nearshore (<50km from sea),
 onshore (>50km from sea), offshore (Figure 7).
 """
 
+import logging
 
 import geopandas as gpd
 import pandas as pd
-from _helpers import set_scenario_config
+
+from scripts._helpers import configure_logging, set_scenario_config
+
+logger = logging.getLogger(__name__)
 
 
 def concat_gdf(gdf_list, crs="EPSG:4326"):
@@ -72,10 +75,11 @@ def salt_cavern_potential_by_region(caverns, regions):
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
-        from _helpers import mock_snakemake
+        from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake("build_salt_cavern_potentials", clusters="37")
 
+    configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     fn_onshore = snakemake.input.regions_onshore

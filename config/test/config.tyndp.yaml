@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "test-elec-tyndp"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+scenario:
+  clusters:
+  - all
+  planning_horizons:
+  - 2030
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'CY', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+electricity:
+  base_network: tyndp
+  transmission_limit: v1.0
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+atlite:
+  default_cutout: europe-2013-03-sarah3-era5
+  cutouts:
+    europe-2013-03-sarah3-era5:
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+links:
+  p_min_pu: 0
+
+transmission_projects:
+  include:
+    tyndp2020: false
+    nep: false
+    manual: false
+
+sector:
+  transmission_efficiency:
+    enable:
+    - H2 pipeline
+    - gas pipeline
+    - electricity distribution grid
+
+clustering:
+  mode: administrative
+  administrative:
+    level: bz
+  build_bidding_zones:
+    remove_islands: true
+    aggregate_to_tyndp: true
+  temporal:
+    resolution_sector: 24h
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex
