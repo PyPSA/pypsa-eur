@@ -16,7 +16,7 @@ scenario:
   - lv1.25
   clusters:
   - 38
-  opts: 
+  opts:
   - Co2L-24h
 
 countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
@@ -60,7 +60,7 @@ electricity:
     Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow ]
     StorageUnit: [battery, H2] # battery, H2
     Store: []
-    Link: [H2 pipeline] # H2 pipeline
+    Link: [H2 pipeline]
 
   powerplants_filter: (DateOut >= 2023 or DateOut != DateOut) and not (Country == 'Germany' and Fueltype == 'Nuclear')
   custom_powerplants: false
@@ -322,17 +322,6 @@ lines:
     activate: true
     max_line_rating: 1.3
 
-load:
-  interpolate_limit: 3
-  time_shift_for_large_gaps: 1w
-  manual_adjustments: true # false
-  scaling_factor: 1.5
-  fixed_year: false # false or year (e.g. 2013)
-  supplement_synthetic: true
-  distribution_key:
-    gdp: 0.6
-    population: 0.4
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission_projects
 transmission_projects:
   enable: false
@@ -393,148 +382,9 @@ solving:
     BAU: false
     EQ: false
   solver:
-    name: gurobi
-    options: gurobi-default
+    name: highs
+    options: highs-simplex
 
-plotting:
-  map:
-    boundaries: [-11, 30, 34, 71]
-    color_geomap:
-      ocean: lightblue
-      land: white
-  projection:
-    name: "EqualEarth"
-    # See https://scitools.org.uk/cartopy/docs/latest/reference/projections.html for alternatives, for example:
-    # name: "LambertConformal"
-    # central_longitude: 10.
-    # central_latitude: 50.
-    # standard_parallels: [35, 65]
-  eu_node_location:
-    x: -5.5
-    y: 46.
-  costs_max: 1000
-  costs_threshold: 1
-  energy_max: 20000
-  energy_min: -20000
-  energy_threshold: 50.
-
-  nice_names:
-
-    onwind: "Onshore Wind"
-    offwind-ac: "BF Offshore Wind"
-    offwind-dc: "Offshore Wind (DC)"
-    offwind-float: "FL Offshore Wind"
-    wave-farshore: "WEC Farshore"
-    wave-nearshore: "WEC Nearshore"
-    wave-shallow: "WEC Shallow"
-    solar: "Solar"
-    solar-hsat: "Solar-HSAT"
-    offsolar: "FL Solar"
-    PHS: "Pumped Hydro Storage"
-    hydro: "Reservoir & Dam"
-    battery: "Battery Storage"
-    H2: "Hydrogen Storage"
-    lines: "Transmission Lines"
-    ror: "Run of River"
-    load: "Load Shedding"
-    ac: "AC"
-    dc: "DC"
-
-  tech_colors:
-    # wind
-    onwind: "#2D61A6"
-    onshore wind: "#2D61A6"
-    offwind: "#6895dd"
-    offshore wind: "#29A2CC"
-    offwind-ac: "#29A2CC"
-    offshore wind (AC): "#29A2CC"
-    offshore wind ac: "#29A2CC"
-    offwind-dc: "#29A2CC"
-    offshore wind (DC): "#29A2CC"
-    offshore wind dc: "#29A2CC"
-    offwind-float: "#52DAE5"
-    offshore wind (Float): "#52DAE5"
-    offshore wind float: "#52DAE5"
-    # water
-    hydro: '#FC6D8E'
-    hydro reservoir: '#FC6D8E'
-    ror: '#F2BDE4'
-    run of river: '#F2BDE4'
-    hydroelectricity: '#298c81'
-    PHS: '#CF1F33'
-    hydro+PHS: "#08ad97"
-    # solar
-    solar: "#F2CE1B"
-    solar PV: "#f9d002"
-    solar-hsat: "#F2A30F"
-    solar thermal: '#ffbf2b'
-    offsolar: '#F2620F'
-    residential rural solar thermal: '#f1c069'
-    services rural solar thermal: '#eabf61'
-    residential urban decentral solar thermal: '#e5bc5a'
-    services urban decentral solar thermal: '#dfb953'
-    urban central solar thermal: '#d7b24c'
-    solar rooftop: '#ffea80'
-    # wave
-    wave-farshore: '#4CE766'
-    wave-nearshore: '#24961A'             
-    wave-shallow: '#216406'
-    # power transmission
-    lines: '#6c9459'
-    transmission lines: '#6c9459'
-    electricity distribution grid: '#97ad8c'
-    low voltage: '#97ad8c'
-    # electricity demand
-    Electric load: '#B4A7B2'
-    electric demand: '#B4A7B2'
-    electricity: '#B4A7B2'
-    industry electricity: '#2d2a66'
-    industry new electricity: '#2d2a66'
-    agriculture electricity: '#494778'
-    # battery + EVs
-    battery: '#ace37f'
-    battery storage: '#ace37f'
-    battery charger: '#F2762E'
-    battery discharger: '#5B224E'
-    home battery: '#80c944'
-    home battery storage: '#80c944'
-    home battery charger: '#F2762E'
-    home battery discharger: '#5B224E'
-    BEV charger: '#baf238'
-    V2G: '#e5ffa8'
-    land transport EV: '#baf238'
-    land transport demand: '#38baf2'
-    EV battery: '#baf238'
-    # hydrogen
-    H2 for industry: "#f073da"
-    H2 for shipping: "#ebaee0"
-    H2: '#bf13a0'
-    hydrogen: '#bf13a0'
-    retrofitted H2 boiler: '#e5a0d9'
-    SMR: '#870c71'
-    SMR CC: '#4f1745'
-    H2 liquefaction: '#d647bd'
-    hydrogen storage: '#bf13a0'
-    H2 Store: '#bf13a0'
-    H2 storage: '#bf13a0'
-    land transport fuel cell: '#6b3161'
-    H2 pipeline: '#f081dc'
-    H2 pipeline retrofitted: '#ba99b5'
-    H2 Fuel Cell: '#D0D98B'
-    H2 fuel cell: '#D0D98B'
-    H2 turbine: '#991f83'
-    H2 Electrolysis: '#36373A'
-    H2 electrolysis: '#36373A'
-    AC: "#70af1d"
-    AC-AC: "#70af1d"
-    AC line: "#70af1d"
-    links: "#8a1caf"
-    HVDC links: "#8a1caf"
-    DC: "#8a1caf"
-    DC-DC: "#8a1caf"
-    DC link: "#8a1caf"
-    load: "#B4A7B2"
-    waste CHP: '#e3d37d'
-    waste CHP CC: '#e3d3ff'
-    HVC to air: 'k'
-
+  check_objective:
+    enable: false
+    expected_value: 3.8120188094e+07
