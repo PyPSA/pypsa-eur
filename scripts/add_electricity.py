@@ -47,7 +47,9 @@ network with **zero** initial capacity:
   discharging. This leads to three investment variables for the energy capacity,
   charging and discharging capacity of the storage unit.
 """
+
 import warnings
+
 from pandas.errors import PerformanceWarning
 
 # Suppress PerformanceWarning globally
@@ -493,9 +495,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
             if car == "wave-farshore":
                 distance = ds["average_distance"].to_pandas()
@@ -514,9 +514,8 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    ))
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
+                )
 
             if car == "wave-nearshore":
                 distance = ds["average_distance"].to_pandas()
@@ -534,9 +533,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
             if car == "wave-shallow":
                 distance = ds["average_distance"].to_pandas()
@@ -554,9 +551,7 @@ def attach_wind_and_solar(
                     + connection_cost
                 )
                 logger.info(
-                    "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                        connection_cost.min(), connection_cost.max(), car
-                    )
+                    f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {car}"
                 )
 
             else:

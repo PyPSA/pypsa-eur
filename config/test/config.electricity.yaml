@@ -57,7 +57,7 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow ]
+    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]
     StorageUnit: [battery, H2] # battery, H2
     Store: []
     Link: [H2 pipeline]
