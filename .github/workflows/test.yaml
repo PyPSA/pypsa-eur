@@ -38,7 +38,6 @@ jobs:
       uses: prefix-dev/setup-pixi@v0.9.1
       with:
         pixi-version: v0.44.0
-        frozen: true # use the lockfile as-is
         cache: true
         # Do not cache in branches
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
