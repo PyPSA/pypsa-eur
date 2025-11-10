@@ -734,7 +734,7 @@ def update_config_from_wildcards(config, w, inplace=True):
 
         for o in opts:
             if o.startswith("lv") or o.startswith("lc"):
-                config["electricity"]["transmission_expansion"] = o[1:]
+                config["electricity"]["transmission_limit"] = o[1:]
                 break
 
     if w.get("sector_opts"):
