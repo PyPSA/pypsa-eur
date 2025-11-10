@@ -60,7 +60,7 @@ def input_base_network(w):
     components = {"buses", "lines", "links", "converters", "transformers"}
     if base_network == "osm":
         OSM_DATASET = dataset_version("osm")
-        inputs = {c: Path(f"{OSM_DATASET['folder']}/{c}.csv").as_posix() for c in components}
+        inputs = {c: f"{OSM_DATASET['folder']}/{c}.csv" for c in components}
     elif base_network == "tyndp":
         inputs = {c: resources(f"tyndp/build/{c}.csv") for c in components}
     elif base_network == "entsoegridkit":
@@ -285,7 +285,7 @@ rule determine_availability_matrix:
         unpack(input_ua_md_availability_matrix),
         corine=ancient(f"{rules.retrieve_corine.output['tif_file']}"),
         natura=lambda w: (
-            Path(NATURA_DATASET["folder"] / "natura.tiff").as_posix()
+            f"{NATURA_DATASET["folder"]}/natura.tiff"
             if config_provider("renewable", w.technology, "natura")(w)
             else []
         ),
@@ -417,7 +417,7 @@ rule build_hydro_profile:
         country_shapes=resources("country_shapes.geojson"),
         eia_hydro_generation="data/eia_hydro_annual_generation.csv",
         eia_hydro_capacity="data/eia_hydro_annual_capacity.csv",
-        era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+        era5_runoff=f"{COUNTRY_RUNOFF_DATASET["folder"]}/era5-runoff-per-country.csv",
         cutout=lambda w: input_cutout(
             w, config_provider("renewable", "hydro", "cutout")(w)
         ),
@@ -747,8 +747,9 @@ rule add_electricity:
         unpack(input_class_regions),
         unpack(input_conventional),
         base_network=resources("networks/base_s_{clusters}.nc"),
-        tech_costs=lambda w: Path(COSTS_DATASET["folder"]
-        / f"costs_{config_provider('costs', 'year')(w)}.csv").as_posix(),
+        tech_costs=lambda w: (
+            f"{COSTS_DATASET["folder"]}/costs_{config_provider('costs', 'year')(w)}.csv"
+        ),
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         powerplants=resources("powerplants_s_{clusters}.csv"),
         hydro_capacities=ancient("data/hydro_capacities.csv"),
@@ -793,8 +794,9 @@ rule prepare_network:
         transmission_limit=config_provider("electricity", "transmission_limit"),
     input:
         resources("networks/base_s_{clusters}_elec.nc"),
-        tech_costs=lambda w: Path(COSTS_DATASET["folder"]
-        / f"costs_{config_provider('costs', 'year')(w)}.csv").as_posix(),
+        tech_costs=lambda w: (
+            f"{COSTS_DATASET["folder"]}/costs_{config_provider('costs', 'year')(w)}.csv"
+        ),
         co2_price=lambda w: resources("co2_price.csv") if "Ept" in w.opts else [],
     output:
         resources("networks/base_s_{clusters}_elec_{opts}.nc"),

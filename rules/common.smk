@@ -145,7 +145,9 @@ def dataset_version(
     dataset = dataset.squeeze()
 
     # Generate output folder path in the `data` directory
-    dataset["folder"] = Path("data", name, dataset["source"], dataset["version"])
+    dataset["folder"] = Path(
+        "data", name, dataset["source"], dataset["version"]
+    ).as_posix()
 
     return dataset
 
@@ -206,6 +208,6 @@ def input_cutout(wildcards, cutout_names="default"):
         cutout_names = config_provider("atlite", "default_cutout")(wildcards)
 
     if isinstance(cutout_names, list):
-        return [(cutouts_path / f"{cn}.nc").as_posix() for cn in cutout_names]
+        return [f"{cutouts_path}/{cn}.nc" for cn in cutout_names]
     else:
-        return (cutouts_path / f"{cutout_names}.nc").as_posix()
+        return f"{cutouts_path}/{cutout_names}.nc"

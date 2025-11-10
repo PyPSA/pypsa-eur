@@ -824,7 +824,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
             cutouts=["cutouts/europe-1940-2024-era5.nc"],
             country_shapes=resources("country_shapes.geojson"),
         output:
-            era5_hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+            era5_hdd=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
         log:
             logs("build_country_hdd.log"),
         benchmark:
@@ -837,7 +837,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"
 
 rule build_heat_totals:
     input:
-        hdd=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+        hdd=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
         energy_totals=resources("energy_totals.csv"),
     output:
         heat_totals=resources("heat_totals.csv"),
@@ -1361,8 +1361,8 @@ rule build_transport_demand:
             "pop_weighted_energy_totals_s_{clusters}.csv"
         ),
         transport_data=resources("transport_data.csv"),
-        traffic_data_KFZ=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
-        traffic_data_Pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+        traffic_data_KFZ=f"{MOBILITY_PROFILES_DATASET["folder"]}/kfz.csv",
+        traffic_data_Pkw=f"{MOBILITY_PROFILES_DATASET["folder"]}/pkw.csv",
         temp_air_total=resources("temp_air_total_base_s_{clusters}.nc"),
     output:
         transport_demand=resources("transport_demand_s_{clusters}.csv"),
@@ -1610,12 +1610,12 @@ rule prepare_sector_network:
         biomass_potentials=resources(
             "biomass_potentials_s_{clusters}_{planning_horizons}.csv"
         ),
-        costs=lambda w: Path(COSTS_DATASET["folder"]
-        / (
-            "costs_{}.csv".format(config_provider("costs", "year")(w))
+        costs=lambda w: COSTS_DATASET["folder"]
+        + (
+            "/costs_{}.csv".format(config_provider("costs", "year")(w))
             if config_provider("foresight")(w) == "overnight"
-            else "costs_{planning_horizons}.csv"
-        )).as_posix(),
+            else "/costs_{planning_horizons}.csv"
+        ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
         busmap=resources("busmap_base_s_{clusters}.csv"),

@@ -19,7 +19,9 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: COSTS_DATASET["folder"]
-        / "costs_{}.csv".format(config_provider("scenario", "planning_horizons", 0)(w)),
+        + "/costs_{}.csv".format(
+            config_provider("scenario", "planning_horizons", 0)(w)
+        ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
@@ -101,7 +103,7 @@ rule solve_sector_network_perfect:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc"
         ),
-        costs=COSTS_DATASET["folder"] / "costs_2030.csv",
+        costs=f"{COSTS_DATASET["folder"]}/costs_2030.csv",
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_brownfield_all_years.nc",
@@ -143,7 +145,7 @@ def input_networks_make_summary_perfect(w):
 rule make_summary_perfect:
     input:
         unpack(input_networks_make_summary_perfect),
-        costs=COSTS_DATASET["folder"] / "costs_2020.csv",
+        costs=f"{COSTS_DATASET["folder"]}/costs_2020.csv",
     output:
         nodal_capacities=RESULTS + "csvs/nodal_capacities.csv",
         costs=RESULTS + "csvs/costs.csv",

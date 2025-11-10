@@ -34,7 +34,7 @@ if (EUROSTAT_BALANCES_DATASET := dataset_version("eurostat_balances"))["source"]
             zip_file=storage(EUROSTAT_BALANCES_DATASET["url"]),
         output:
             zip_file=f"{EUROSTAT_BALANCES_DATASET['folder']}/balances.zip",
-            directory=directory(f"{EUROSTAT_BALANCES_DATASET['folder']}"),
+            directory=directory(EUROSTAT_BALANCES_DATASET["folder"]),
         run:
             copy2(input["zip_file"], output["zip_file"])
             unpack_archive(output["zip_file"], output["directory"])
@@ -77,9 +77,7 @@ if (CORINE_DATASET := dataset_version("corine"))["source"] in ["archive"]:
 
     rule retrieve_corine:
         input:
-            zip_file=storage(
-                CORINE_DATASET["url"],
-            ),
+            zip_file=storage(CORINE_DATASET["url"]),
         output:
             zip_file=f"{CORINE_DATASET['folder']}/corine.zip",
             tif_file=f"{CORINE_DATASET['folder']}/corine.tif",
@@ -180,7 +178,7 @@ if (GHG_EMISSIONS_DATASET := dataset_version("ghg_emissions"))["source"] in [
                 else []
             ),
             directory=(
-                directory(f"{GHG_EMISSIONS_DATASET['folder']}")
+                directory(GHG_EMISSIONS_DATASET["folder"])
                 if GHG_EMISSIONS_DATASET["source"] == "primary"
                 else []
             ),
@@ -249,7 +247,7 @@ if (JRC_IDEES_DATASET := dataset_version("jrc_idees"))["source"] in [
             zip_file=storage(JRC_IDEES_DATASET["url"]),
         output:
             zip_file=f"{JRC_IDEES_DATASET['folder']}/jrc_idees.zip",
-            directory=directory(f"{JRC_IDEES_DATASET['folder']}"),
+            directory=directory(JRC_IDEES_DATASET["folder"]),
         run:
             copy2(input["zip_file"], output["zip_file"])
             output_folder = Path(output["zip_file"]).parent
@@ -319,11 +317,9 @@ if (CUTOUT_DATASET := dataset_version("cutout"))["source"] in [
 
     rule retrieve_cutout:
         input:
-            storage(
-                CUTOUT_DATASET["url"] + "/files/{cutout}.nc",
-            ),
+            storage(CUTOUT_DATASET["url"] + "/files/{cutout}.nc"),
         output:
-            CUTOUT_DATASET["folder"] / "{cutout}.nc",
+            CUTOUT_DATASET["folder"] + "/{cutout}.nc",
         log:
             "logs/retrieve_cutout/{cutout}.log",
         resources:
@@ -341,7 +337,7 @@ if (COUNTRY_RUNOFF_DATASET := dataset_version("country_runoff"))["source"] in [
         input:
             storage(COUNTRY_RUNOFF_DATASET["url"]),
         output:
-            era5_runoff=COUNTRY_RUNOFF_DATASET["folder"] / "era5-runoff-per-country.csv",
+            era5_runoff=f"{COUNTRY_RUNOFF_DATASET["folder"]}/era5-runoff-per-country.csv",
         run:
             copy2(input[0], output[0])
 
@@ -352,7 +348,7 @@ if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["archiv
         input:
             storage(COUNTRY_HDD_DATASET["url"]),
         output:
-            era5_runoff=COUNTRY_HDD_DATASET["folder"] / "era5-HDD-per-country.csv",
+            era5_runoff=f"{COUNTRY_HDD_DATASET["folder"]}/era5-HDD-per-country.csv",
         run:
             copy2(input[0], output[0])
 
@@ -365,7 +361,7 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
         input:
             costs=storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
         output:
-            costs=COSTS_DATASET["folder"] / "costs_{year}.csv",
+            costs=COSTS_DATASET["folder"] + "/costs_{year}.csv",
         run:
             copy2(input["costs"], output["costs"])
 
@@ -919,7 +915,7 @@ if (NATURA_DATASET := dataset_version("natura"))["source"] in ["archive"]:
         input:
             storage(NATURA_DATASET["url"]),
         output:
-            NATURA_DATASET["folder"] / "natura.tiff",
+            f"{NATURA_DATASET["folder"]}/natura.tiff",
         log:
             "logs/retrieve_natura.log",
         run:
@@ -932,9 +928,9 @@ elif NATURA_DATASET["source"] == "build":
             online=storage(NATURA_DATASET["url"]),
             cutout=lambda w: input_cutout(w),
         output:
-            zip=NATURA_DATASET["folder"] / "raw/natura.zip",
-            raw=directory(NATURA_DATASET["folder"] / "raw"),
-            raster=NATURA_DATASET["folder"] / "natura.tiff",
+            zip=f"{NATURA_DATASET["folder"]}/raw/natura.zip",
+            raw=directory(f"{NATURA_DATASET["folder"]}/raw"),
+            raster=f"{NATURA_DATASET["folder"]}/natura.tiff",
         resources:
             mem_mb=5000,
         log:
@@ -951,7 +947,7 @@ if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
 
     rule retrieve_osm_boundaries:
         output:
-            json=f"{OSM_BOUNDARIES_DATASET['folder']}/{country}_adm1.json",
+            json=f"{OSM_BOUNDARIES_DATASET["folder"]}/{country}_adm1.json",
         log:
             "logs/retrieve_osm_boundaries_{country}_adm1.log",
         threads: 1
@@ -1168,8 +1164,8 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
             kfz=storage(MOBILITY_PROFILES_DATASET["url"] + "/kfz.csv"),
             pkw=storage(MOBILITY_PROFILES_DATASET["url"] + "/pkw.csv"),
         output:
-            kfz=MOBILITY_PROFILES_DATASET["folder"] / "kfz.csv",
-            pkw=MOBILITY_PROFILES_DATASET["folder"] / "pkw.csv",
+            kfz=f"{MOBILITY_PROFILES_DATASET["folder"]}/kfz.csv",
+            pkw=f"{MOBILITY_PROFILES_DATASET["folder"]}/pkw.csv",
         threads: 1
         resources:
             mem_mb=1000,
@@ -1177,8 +1173,6 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
             "logs/retrieve_mobility_profiles.log",
         benchmark:
             "benchmarks/retrieve_mobility_profiles"
-        conda:
-            "../envs/environment.yaml"
         run:
             copy2(input["kfz"], output["kfz"])
             copy2(input["pkw"], output["pkw"])

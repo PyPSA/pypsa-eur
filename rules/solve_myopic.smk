@@ -21,7 +21,9 @@ rule add_existing_baseyear:
         busmap=resources("busmap_base_s_{clusters}.csv"),
         clustered_pop_layout=resources("pop_layout_base_s_{clusters}.csv"),
         costs=lambda w: COSTS_DATASET["folder"]
-        / "costs_{}.csv".format(config_provider("scenario", "planning_horizons", 0)(w)),
+        + "/costs_{}.csv".format(
+            config_provider("scenario", "planning_horizons", 0)(w)
+        ),
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
         existing_heating_distribution=resources(
             "existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv"
@@ -84,7 +86,7 @@ rule add_brownfield:
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
         ),
         network_p=solved_previous_horizon,  #solved network at previous time step
-        costs=COSTS_DATASET["folder"] / "costs_{planning_horizons}.csv",
+        costs=COSTS_DATASET["folder"] + "/costs_{planning_horizons}.csv",
         cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
     output:
         resources(
@@ -122,7 +124,7 @@ rule solve_sector_network_myopic:
         network=resources(
             "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_brownfield.nc"
         ),
-        costs=COSTS_DATASET["folder"] / "costs_{planning_horizons}.csv",
+        costs=COSTS_DATASET["folder"] + "/costs_{planning_horizons}.csv",
     output:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
