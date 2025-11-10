@@ -9,7 +9,6 @@ import logging
 import os
 import re
 import time
-import warnings
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -33,10 +32,6 @@ from tenacity import (
     wait_exponential,
 )
 from tqdm import tqdm
-
-# Suppress the 'highly fragmented' warning
-warnings.simplefilter("ignore", category=UserWarning)
-
 
 logger = logging.getLogger(__name__)
 

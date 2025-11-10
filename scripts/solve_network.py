@@ -1193,7 +1193,6 @@ def extra_functionality(
     ``snakemake.config`` are expected to be attached to the network.
     """
     config = n.config
-    opts = config.get("scenario", {}).get("opts", [])
     constraints = config["solving"].get("constraints", {})
 
     if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():

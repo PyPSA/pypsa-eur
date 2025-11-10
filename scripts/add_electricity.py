@@ -48,13 +48,6 @@ network with **zero** initial capacity:
   charging and discharging capacity of the storage unit.
 """
 
-import warnings
-
-from pandas.errors import PerformanceWarning
-
-# Suppress PerformanceWarning globally
-warnings.simplefilter("ignore", category=PerformanceWarning)
-
 import logging
 from collections.abc import Iterable
 from typing import Any
