@@ -37,9 +37,8 @@ Alternatively, you can call `pixi shell` in your terminal to activate your worki
 Legacy method: conda
 ----------------------
 
-
 If you cannot access `pixi` on your machine, you can also install using `conda`/`mamba`/`micromamba`.
-To do so, you will install from one of our platform-specific environment files:
+To do so, we highly recommend you install from one of our platform-specific environment files:
 
 * For Intel/AMD processors:
 
@@ -57,6 +56,18 @@ To do so, you will install from one of our platform-specific environment files:
     $ conda update conda
 
     $ conda create -n pypsa-eur -f envs/default_linux-64.pin.txt # select the appropriate file for your platform
+
+    $ conda activate pypsa-eur
+
+
+These platform-specific files have locked dependencies, to ensure reproducibility.
+You can also install directly from the un-locked environment YAML file (not recommended):
+
+.. code:: console
+
+    $ conda update conda
+
+    $ conda env create -f envs/environment.yaml
 
     $ conda activate pypsa-eur
 

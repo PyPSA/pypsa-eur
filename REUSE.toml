@@ -20,7 +20,8 @@ path = [
     "borg-it",
     "pixi.lock",
     "matplotlibrc",
-    "envs/*.pin.txt"
+    "envs/*.pin.txt",
+    "envs/environment.yaml"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
