@@ -166,7 +166,7 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
         "offsolar",
         "wave-shallow",
         "wave-nearshore",
-        "wave-farshore"
+        "wave-farshore",
     ]:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.replace(
@@ -735,7 +735,6 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
     logger.info("BAU is done.")
 
 
-
 # TODO: think about removing or make per country
 def add_SAFE_constraints(n, config):
     """
@@ -1194,9 +1193,9 @@ def extra_functionality(
     ``snakemake.config`` are expected to be attached to the network.
     """
     config = n.config
-    opts = config.get('scenario', {}).get('opts', [])  
+    opts = config.get("scenario", {}).get("opts", [])
     constraints = config["solving"].get("constraints", {})
-    
+
     if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():

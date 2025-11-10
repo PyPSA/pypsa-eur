@@ -154,7 +154,11 @@ if __name__ == "__main__":
     regions = gpd.read_file(snakemake.input.distance_regions)
     # do not pull up, set_index does not work if geo dataframe is empty
     regions = regions.set_index("name").rename_axis("bus")
-    if snakemake.wildcards.technology.startswith("offwind") or snakemake.wildcards.technology.startswith("wave") or snakemake.wildcards.technology.startswith("offsolar"):
+    if (
+        snakemake.wildcards.technology.startswith("offwind")
+        or snakemake.wildcards.technology.startswith("wave")
+        or snakemake.wildcards.technology.startswith("offsolar")
+    ):
         # for offshore regions, the shortest distance to the shoreline is used
         offshore_regions = availability.coords["bus"].values
         regions = regions.loc[offshore_regions]

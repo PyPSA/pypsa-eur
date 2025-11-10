@@ -506,7 +506,7 @@ def update_wind_solar_costs(
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (
                 capital_cost.rename(index=lambda node: node + " " + tech)
             )
-    
+
     for connection in ["farshore", "nearshore", "shallow"]:
         tech = "wave-" + connection
         landfall_length = landfall_lengths.get(tech, 0.0)
@@ -514,7 +514,6 @@ def update_wind_solar_costs(
             continue
         profile = snakemake.input["profile_wave-" + connection]
         with xr.open_dataset(profile) as ds:
-
             # if-statement for compatibility with old profiles
             if "year" in ds.indexes:
                 ds = ds.sel(year=ds.year.min(), drop=True)
@@ -533,9 +532,7 @@ def update_wind_solar_costs(
             )
 
             logger.info(
-                "Added connection cost of {:0.0f}-{:0.0f} Eur/MW/a to {}".format(
-                    connection_cost.min(), connection_cost.max(), tech
-                )
+                f"Added connection cost of {connection_cost.min():0.0f}-{connection_cost.max():0.0f} Eur/MW/a to {tech}"
             )
 
             n.generators.loc[n.generators.carrier == tech, "capital_cost"] = (

@@ -19,6 +19,82 @@ plt.style.use("bmh")
 
 
 # consolidate and rename
+def rename_techs(label):
+    prefix_to_remove = [
+        "residential ",
+        "services ",
+        "urban ",
+        "rural ",
+        "central ",
+        "decentral ",
+    ]
+
+    rename_if_contains = [
+        "CHP",
+        "gas boiler",
+        "biogas",
+        "solar thermal",
+        "air heat pump",
+        "ground heat pump",
+        "resistive heater",
+        "Fischer-Tropsch",
+    ]
+
+    rename_if_contains_dict = {
+        "water tanks": "hot water storage",
+        "retrofitting": "building retrofitting",
+        # "H2 Electrolysis": "hydrogen storage",
+        # "H2 Fuel Cell": "hydrogen storage",
+        # "H2 pipeline": "hydrogen storage",
+        "battery": "battery storage",
+        "H2 for industry": "H2 for industry",
+        "land transport fuel cell": "land transport fuel cell",
+        "land transport oil": "land transport oil",
+        "oil shipping": "shipping oil",
+        # "CC": "CC"
+    }
+
+    rename = {
+        "solar": "solar PV",
+        "Sabatier": "methanation",
+        "offwind": "offshore wind",
+        "offwind-ac": "offshore wind ",
+        "offwind-dc": "offshore wind (DC)",
+        "offwind-fl": "offshore floating wind",
+        "offwind-float": "offshore wind (Float)",
+        "offsolar": "floating solar",
+        "wave-farshore": "wave farshore",
+        "wave-nearshore": "wave nearshore",
+        "wave-shallow": "wave shallow",
+        "onwind": "onshore wind",
+        "ror": "hydroelectricity",
+        "hydro": "hydroelectricity",
+        "PHS": "hydroelectricity",
+        "NH3": "ammonia",
+        "co2 Store": "DAC",
+        "co2 stored": "CO2 sequestration",
+        "AC": "transmission lines",
+        "DC": "transmission lines",
+        "B2B": "transmission lines",
+    }
+
+    for ptr in prefix_to_remove:
+        if label[: len(ptr)] == ptr:
+            label = label[len(ptr) :]
+
+    for rif in rename_if_contains:
+        if rif in label:
+            label = rif
+
+    for old, new in rename_if_contains_dict.items():
+        if old in label:
+            label = new
+
+    for old, new in rename.items():
+        if old == label:
+            label = new
+    return label
+
 
 preferred_order = pd.Index(
     [
@@ -41,8 +117,7 @@ preferred_order = pd.Index(
         "solar thermal",
         "solar rooftop",
         "solar",
-        "floating solar"
-        "building retrofitting",
+        "floating solarbuilding retrofitting",
         "ground heat pump",
         "air heat pump",
         "heat pump",
