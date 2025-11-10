@@ -28,11 +28,18 @@ jobs:
         rm pixi.lock
         pixi install --all
 
+    - name: Create new conda lock files
+      run: |
+        pixi workspace export conda-explicit-spec -e default envs
+        for f in envs/*_conda_spec*; do mv "$f" "${f/_conda_spec/.pin}"; done
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v5
       with:
         name: lockfiles
-        path: pixi.lock
+        path: |
+          pixi.lock
+          envs/
 
   create-pull-request:
     needs: update-locked-environment
@@ -43,7 +50,6 @@ jobs:
       uses: actions/download-artifact@v6
       with:
         name: lockfiles
-        path: pixi.lock
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v7

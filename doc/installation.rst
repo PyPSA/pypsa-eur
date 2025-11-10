@@ -26,19 +26,40 @@ First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eu
 Install Python Dependencies
 ===============================
 
+Preferred method: Pixi
+----------------------
+
 PyPSA-Eur relies on a set of other Python packages to function.
 We manage these using [pixi](https://pixi.sh/latest/).
-Once you have installed `pixi`, run:
+Once pixi is installed, you will have access to the PyPSA-Eur dependencies by prepending all your calls with `pixi run` (e.g. `pixi run snakemake -call -n`).
+Alternatively, you can call `pixi shell` in your terminal to activate your working environment, then continue without needing to prepend calls with `pixi run` (e.g. `snakemake -call -n`).
+
+Legacy method: conda
+----------------------
+
+
+If you cannot access `pixi` on your machine, you can also install using `conda`/`mamba`/`micromamba`.
+To do so, you will install from one of our platform-specific environment files:
+
+* For Intel/AMD processors:
+
+  - Linux: ``envs/default_linux-64.pin.txt``
+  - macOS: ``envs/default_osx-64.pin.txt``
+  - Windows: ``envs/default_win-64.pin.txt``
+
+* For ARM processors:
+
+  - macOS (Apple Silicon): ``envs/default_osx-arm64.pin.txt``
+  - Linux (ARM): Currently not supported via lock files; requires building certain packages, such as ``PySCIPOpt``, from source
 
 .. code:: console
 
-    $ pixi install --frozen
+    $ conda update conda
 
-This will install the dependencies for you to begin working on your project.
-`--frozen` is important to ensure you are getting the exact versions of every dependency, required for reproducibility.
+    $ conda create -n pypsa-eur -f envs/default_linux-64.pin.txt # select the appropriate file for your platform
 
-Then, prepend all your calls with `pixi run` (e.g. `pixi run snakemake -call -n`).
-Alternatively, you can call `pixi shell` in your terminal to activate your working environment, then continue as normal.
+    $ conda activate pypsa-eur
+
 
 Install a Solver
 ================
