@@ -457,6 +457,7 @@ plotting:
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     ptes heat pump: '#5dade2'
+    ptes preheater: '#5dade2'
     urban central ptes heat pump: '#3498db'
     urban central geothermal heat pump: '#4f2144'
     geothermal heat pump: '#4f2144'
@@ -566,6 +567,7 @@ plotting:
     other: '#000000'
     geothermal: '#ba91b1'
     geothermal heat: '#ba91b1'
+    geothermal heat preheater: '#ba91b1'
     geothermal district heat: '#d19D00'
     geothermal organic rankine cycle: '#ffbf00'
     AC: "#70af1d"

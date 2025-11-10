@@ -520,10 +520,9 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: true
-      supplemental_heating:
-        enable: false
-        booster_heat_pump: false
+      dynamic_capacity: false
+      charge_boosting_required: false
+      discharge_boosting_required: false
       max_top_temperature: 90
       min_bottom_temperature: 35
     ates:
@@ -557,7 +556,7 @@ sector:
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
-  heat_pump_sources:
+  heat_sources:
     urban central:
     - air
     urban decentral:

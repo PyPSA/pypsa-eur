@@ -2765,7 +2765,7 @@ def add_heat(
     n: pypsa.Network,
     costs: pd.DataFrame,
     cop_profiles_file: str,
-    direct_heat_source_utilisation_profile_file: str,
+    heat_source_direct_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
     ptes_direct_utilisation_profile: str,
@@ -2860,7 +2860,12 @@ def add_heat(
     )
 
     cop = xr.open_dataarray(cop_profiles_file)
-    direct_heat_profile = xr.open_dataarray(direct_heat_source_utilisation_profile_file)
+    heat_source_direct_utilisation_profile = xr.open_dataarray(
+        heat_source_direct_utilisation_profile_file
+    )
+    heat_source_preheater_utilisation_profile = xr.open_dataarray(
+        heat_source_direct_utilisation_profile_file
+    )
     district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
     urban_fraction = district_heat_info["urban fraction"]
@@ -3176,7 +3181,7 @@ def add_heat(
             )
 
         ## Add heat pumps
-        for heat_source in params.heat_pump_sources[heat_system.system_type.value]:
+        for heat_source in params.heat_sources[heat_system.system_type.value]:
             # Convert string to HeatSource enum
             heat_source = HeatSource(heat_source)
 
@@ -3185,7 +3190,7 @@ def add_heat(
             cop_heat_pump = (
                 cop.sel(
                     heat_system=heat_system.system_type.value,
-                    heat_source=heat_source,
+                    heat_source=heat_source.value,
                     name=nodes,
                 )
                 .to_pandas()
@@ -3194,9 +3199,9 @@ def add_heat(
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )
 
+            heat_carrier = f"{heat_system} {heat_source} heat"
             if heat_source.is_limited:
                 # add resource
-                heat_carrier = f"{heat_system} {heat_source} heat"
                 n.add("Carrier", heat_carrier)
                 n.add(
                     "Bus",
@@ -3206,15 +3211,12 @@ def add_heat(
                     carrier=heat_carrier,
                 )
 
-                # Check if heat source requires a separate generator
                 if heat_source.requires_generator:
-                    # Standard heat source with potential file and generator
                     p_max_source = pd.read_csv(
-                        heat_source_profile_files[heat_source],
+                        heat_source_profile_files[heat_source.value],
                         index_col=0,
                     ).squeeze()[nodes]
 
-                    # Get capital cost and lifetime from enum
                     capital_cost = heat_source.get_capital_cost(
                         costs, overdim_factor, heat_system
                     )
@@ -3232,26 +3234,27 @@ def add_heat(
                         p_max_pu=p_max_source,
                     )
 
-                # Get direct utilisation efficiency if applicable
-                if heat_source.supports_direct_utilisation:
-                    efficiency_direct_utilisation = (
-                        heat_source.get_efficiency_direct_utilisation(
-                            direct_heat_profile, nodes, n
-                        )
+                direct_utilisation_profile = (
+                    heat_source.get_preheater_utilisation_profile(
+                        heat_source_direct_utilisation_profile, nodes, n
                     )
+                )
+                preheater_utilisation_profile = (
+                    heat_source.get_preheater_utilisation_profile(
+                        heat_source_preheater_utilisation_profile, nodes, n
+                    )
+                )
+                requires_preheater = (preheater_utilisation_profile > 0.001).any()
+                requires_direct_utilisation = (direct_utilisation_profile > 0.001).any()
 
-                # add heat pump converting source heat + electricity to urban central heat
-                if heat_source.requires_preheater:
+                # if any preheater value is non-zero
+                if requires_preheater:
                     n.add(
                         "Bus",
                         nodes,
                         location=nodes,
-                        suffix=f" {heat_carrier}",
+                        suffix=f" {heat_carrier} pre-chilled",
                         carrier=f"{heat_carrier} pre-chilled",
-                    )
-
-                    efficiency_preheater = heat_source.get_efficiency_pre_heater(
-                        efficiency_direct_utilisation
                     )
 
                     n.add(
@@ -3260,41 +3263,30 @@ def add_heat(
                         suffix=f" {heat_system} {heat_source} heat preheater",
                         bus0=nodes + f" {heat_carrier}",
                         bus1=nodes + f" {heat_system} heat",
-                        bus2=nodes + f" {heat_system} {heat_carrier} pre-chilled",
-                        efficiency=efficiency_preheater,
+                        bus2=nodes + f" {heat_carrier} pre-chilled",
+                        efficiency=preheater_utilisation_profile,
+                        efficiency2=1 - preheater_utilisation_profile,
                         carrier=f"{heat_system} {heat_source} heat preheater",
                         p_nom_extendable=True,
                     )
 
-                # Determine bus2 and efficiency2 for heat pump
-                bus2_heat_pump = heat_source.get_heat_pump_bus2(
-                    nodes, heat_system, heat_carrier
-                )
-                efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(
-                    cop_heat_pump
-                )
-
-                if heat_source.supports_direct_utilisation:
-                    # add link for direct usage of heat source when source temperature exceeds forward temperature
+                # add link for direct usage of heat source when source temperature exceeds forward temperature
+                if requires_direct_utilisation:
                     n.add(
                         "Link",
                         nodes,
                         suffix=f" {heat_system} {heat_source} heat direct utilisation",
                         bus0=nodes + f" {heat_carrier}",
                         bus1=nodes + f" {heat_system} heat",
-                        efficiency=efficiency_direct_utilisation,
+                        efficiency=direct_utilisation_profile,
                         carrier=f"{heat_system} {heat_source} heat direct utilisation",
                         p_nom_extendable=True,
                     )
 
-            else:
-                # heat source is inexhaustible (air or ground)
-                bus2_heat_pump = heat_source.get_heat_pump_bus2(
-                    nodes, heat_system, heat_carrier
-                )
-                efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(
-                    cop_heat_pump
-                )
+            bus2_heat_pump = heat_source.get_heat_pump_bus2(
+                nodes, requires_preheater, heat_carrier
+            )
+            efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
 
             n.add(
                 "Link",
@@ -6252,7 +6244,8 @@ if __name__ == "__main__":
             n=n,
             costs=costs,
             cop_profiles_file=snakemake.input.cop_profiles,
-            direct_heat_source_utilisation_profile_file=snakemake.input.direct_heat_source_utilisation_profiles,
+            heat_source_direct_utilisation_profile_file=snakemake.input.heat_source_direct_utilisation_profiles,
+            heat_source_preheater_utilisation_profile_file=snakemake.input.heat_source_preheater_utilisation_profiles,
             hourly_heat_demand_total_file=snakemake.input.hourly_heat_demand_total,
             ptes_e_max_pu_file=snakemake.input.ptes_e_max_pu_profiles,
             ates_e_nom_max=snakemake.input.ates_potentials,

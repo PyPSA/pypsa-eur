@@ -54,7 +54,7 @@ def get_source_temperature(heat_source_key: str):
         )
 
 
-def get_profile(
+def get_direct_utilisation_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
 ) -> xr.DataArray | float:
     """
@@ -76,6 +76,39 @@ def get_profile(
     return xr.where(source_temperature >= forward_temperature, 1.0, 0.0)
 
 
+def get_preheater_utilisation_profile(
+    source_temperature: float | xr.DataArray,
+    forward_temperature: xr.DataArray,
+    return_temperature: xr.DataArray,
+    heat_source_cooling: int = 20,
+) -> xr.DataArray | float:
+    """
+    Get the direct heat source utilisation profile.
+
+    Args:
+    ----
+    source_temperature: float | xr.DataArray
+        The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `forward_temperature`.
+    forward_temperature: xr.DataArray
+        The central heating forward temperature profiles. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
+    return_temperature: xr.DataArray
+        The central heating return temperature profiles. If `xarray`, indexed by `time` and `region`.
+
+    Returns:
+    -------
+    xr.DataArray | float
+        The direct heat source utilisation profile.
+
+    """
+    return xr.where(
+        (source_temperature < forward_temperature)
+        * (source_temperature > return_temperature),
+        (source_temperature - return_temperature)
+        / (source_temperature - heat_source_cooling),
+        0.0,
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -87,21 +120,35 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    direct_utilisation_heat_sources: list[str] = (
-        snakemake.params.direct_utilisation_heat_sources
-    )
+    heat_sources: list[str] = snakemake.params.heat_sources
 
     central_heating_forward_temperature: xr.DataArray = xr.open_dataarray(
         snakemake.input.central_heating_forward_temperature_profiles
     )
+    central_heating_return_temperature: xr.DataArray = xr.open_dataarray(
+        snakemake.input.central_heating_return_temperature_profiles
+    )
 
     xr.concat(
         [
-            get_profile(
+            get_direct_utilisation_profile(
                 source_temperature=get_source_temperature(heat_source_key),
                 forward_temperature=central_heating_forward_temperature,
             ).assign_coords(heat_source=heat_source_key)
-            for heat_source_key in direct_utilisation_heat_sources
+            for heat_source_key in heat_sources
+        ],
+        dim="heat_source",
+    ).to_netcdf(snakemake.output.direct_heat_source_utilisation_profiles)
+
+    xr.concat(
+        [
+            get_preheater_utilisation_profile(
+                source_temperature=get_source_temperature(heat_source_key),
+                forward_temperature=central_heating_forward_temperature,
+                return_temperature=central_heating_return_temperature,
+                heat_source_cooling=20,  # TODO: improve heat source cooling
+            ).assign_coords(heat_source=heat_source_key)
+            for heat_source_key in heat_sources
         ],
         dim="heat_source",
     ).to_netcdf(snakemake.output.direct_heat_source_utilisation_profiles)

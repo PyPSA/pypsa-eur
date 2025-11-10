@@ -53,8 +53,8 @@ class HeatSource(Enum):
     """
 
     GEOTHERMAL = "geothermal"
-    RIVER_WATER = "river water"
-    SEA_WATER = "sea water"
+    RIVER_WATER = "river_water"
+    SEA_WATER = "sea_water"
     AIR = "air"
     GROUND = "ground"
     PTES = "ptes"
@@ -104,7 +104,6 @@ class HeatSource(Enum):
         if self in [
             HeatSource.GEOTHERMAL,
             HeatSource.RIVER_WATER,
-            HeatSource.SEA_WATER,
             HeatSource.PTES,
         ]:
             return True
@@ -122,21 +121,6 @@ class HeatSource(Enum):
             True if the heat source requires a generator, False otherwise.
         """
         if self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
-            return True
-        else:
-            return False
-
-    @property
-    def requires_preheater(self) -> bool:
-        """
-        Returns whether the heat source requires a preheater.
-
-        Returns
-        -------
-        bool
-            True if the heat source requires a preheater, False otherwise.
-        """
-        if self in [HeatSource.GEOTHERMAL, HeatSource.PTES]:
             return True
         else:
             return False
@@ -165,7 +149,7 @@ class HeatSource(Enum):
         if self.supports_direct_utilisation:
             return (
                 costs.at[
-                    heat_system.heat_source_costs_name(str(self)),
+                    heat_system.heat_source_costs_name(self),
                     "capital_cost",
                 ]
                 * overdim_factor
@@ -193,11 +177,13 @@ class HeatSource(Enum):
         # For other limited sources (like river_water without direct utilisation), return np.inf
         # For inexhaustible sources, this method shouldn't be called
         if self.supports_direct_utilisation:
-            return costs.at[heat_system.heat_source_costs_name(str(self)), "lifetime"]
+            return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
         else:
             return float("inf")
 
-    def get_heat_pump_bus2(self, nodes, heat_system, heat_carrier: str) -> str:
+    def get_heat_pump_bus2(
+        self, nodes, requires_preheater: bool, heat_carrier: str
+    ) -> str:
         """
         Returns the bus2 configuration for the heat pump link.
 
@@ -205,8 +191,8 @@ class HeatSource(Enum):
         ----------
         nodes : pd.Index or list
             The nodes for which to generate the bus name.
-        heat_system : HeatSystem
-            The heat system.
+        requires_preheater : bool
+            Whether the heat source requires a preheater.
         heat_carrier : str
             The heat carrier name.
 
@@ -218,7 +204,7 @@ class HeatSource(Enum):
         if not self.is_limited:
             # Inexhaustible sources (air, ground) don't have a bus2
             return ""
-        elif self.requires_preheater:
+        elif requires_preheater:
             # Sources with preheater use pre-chilled bus
             return str(nodes) + f" {heat_carrier} pre-chilled"
         else:
@@ -249,31 +235,9 @@ class HeatSource(Enum):
             # This is 1 - (1/COP), representing (COP-1)/COP
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
-    def get_efficiency_pre_heater(self, efficiency_direct_utilisation) -> float:
-        """
-        Returns the efficiency for the preheater link.
-
-        Parameters
-        ----------
-        efficiency_direct_utilisation : float or pd.Series
-            The efficiency of direct heat utilisation.
-
-        Returns
-        -------
-        float or pd.Series
-            The efficiency for the preheater (1 - efficiency_direct_utilisation).
-        """
-        if not self.requires_preheater:
-            raise ValueError(
-                f"Heat source {self} does not require a preheater. "
-                "This method should only be called for sources that support direct utilisation."
-            )
-        # The preheater efficiency is the complement of direct utilisation efficiency
-        # When direct utilisation is high (source temp > forward temp), preheater efficiency is low
-        # This represents the fraction of heat that goes through the heat pump vs. direct use
-        return 1 - efficiency_direct_utilisation
-
-    def get_efficiency_direct_utilisation(self, direct_heat_profile, nodes, n) -> float:
+    def get_direct_utilisation_profile(
+        self, direct_utilisation_profile, nodes, n
+    ) -> float:
         """
         Returns the efficiency for direct heat utilisation.
 
@@ -291,16 +255,43 @@ class HeatSource(Enum):
         float or pd.Series
             The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
         """
-        if not self.supports_direct_utilisation:
-            raise ValueError(
-                f"Heat source {self} does not support direct utilisation. "
-                "This method should only be called for sources in direct_utilisation_heat_sources."
-            )
         # Extract the efficiency profile from the data
         # This is a binary or continuous value indicating when/how much heat
         # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
         return (
-            direct_heat_profile.sel(
+            direct_utilisation_profile.sel(
+                heat_source=str(self),
+                name=nodes,
+            )
+            .to_pandas()
+            .reindex(index=n.snapshots)
+        )
+
+    def get_preheater_utilisation_profile(
+        self, preheater_utilisation_profile, nodes, n
+    ) -> float:
+        """
+        Returns the efficiency for direct heat utilisation.
+
+        Parameters
+        ----------
+        preheater_utilisation_profile : xr.DataArray
+            DataArray containing direct heat utilisation profiles.
+        nodes : pd.Index or list
+            The nodes for which to get the efficiency.
+        n : pypsa.Network
+            The PyPSA network object (for accessing snapshots).
+
+        Returns
+        -------
+        float or pd.Series
+            The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
+        """
+        # Extract the efficiency profile from the data
+        # This is a binary or continuous value indicating when/how much heat
+        # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
+        return (
+            preheater_utilisation_profile.sel(
                 heat_source=str(self),
                 name=nodes,
             )

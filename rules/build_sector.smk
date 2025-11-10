@@ -697,6 +697,12 @@ rule build_ptes_operations:
             "min_bottom_temperature",
         ),
         snapshots=config_provider("snapshots"),
+        charge_boosting_required=config_provider(
+            "sector", "district_heating", "ptes", "charge_boosting_required"
+        ),
+        discharge_boosting_required=config_provider(
+            "sector", "district_heating", "ptes", "discharge_boosting_required"
+        ),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
@@ -727,37 +733,38 @@ rule build_ptes_operations:
         "../scripts/build_ptes_operations/run.py"
 
 
-rule build_direct_heat_source_utilisation_profiles:
+rule build_heat_source_utilisation_profiles:
     params:
-        direct_utilisation_heat_sources=config_provider(
-            "sector", "district_heating", "direct_utilisation_heat_sources"
-        ),
-        limited_heat_sources=config_provider(
-            "sector", "district_heating", "limited_heat_sources"
-        ),
+        heat_sources=config_provider("sector", "heat_sources", "district_heating"),
         snapshots=config_provider("snapshots"),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
     output:
-        direct_heat_source_utilisation_profiles=resources(
-            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        heat_source_direct_utilisation_profiles=resources(
+            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_preheater_utilisation_profiles=resources(
+            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
     resources:
         mem_mb=20000,
     log:
         logs(
-            "build_direct_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
+            "build_heat_source_utilisation_profiles_s_{clusters}_{planning_horizons}.log"
         ),
     benchmark:
         benchmarks(
-            "build_direct_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
+            "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
         )
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_direct_heat_source_utilisation_profiles.py"
+        "../scripts/build_heat_source_utilisation_profiles.py"
 
 
 def solar_thermal_cutout(wildcards):
@@ -1483,7 +1490,7 @@ def input_heat_source_power(w):
             "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
         )
         for heat_source_name in config_provider(
-            "sector", "heat_pump_sources", "urban central"
+            "sector", "heat_sources", "urban central"
         )(w)
         if heat_source_name
         in config_provider("sector", "district_heating", "limited_heat_sources")(
@@ -1512,8 +1519,7 @@ rule prepare_sector_network:
         emissions_scope=config_provider("energy", "emissions"),
         biomass=config_provider("biomass"),
         RDIR=RDIR,
-        heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        heat_systems=config_provider("sector", "heat_systems"),
+        heat_sources=config_provider("sector", "heat_sources"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
         direct_utilisation_heat_sources=config_provider(
             "sector", "district_heating", "direct_utilisation_heat_sources"
@@ -1639,8 +1645,11 @@ rule prepare_sector_network:
             if config_provider("sector", "enhanced_geothermal", "enable")(w)
             else []
         ),
-        direct_heat_source_utilisation_profiles=resources(
-            "direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        heat_source_direct_utilisation_profiles=resources(
+            "heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        heat_source_preheater_utilisation_profiles=resources(
+            "heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc"
         ),
         ates_potentials=lambda w: (
             resources("ates_potentials_base_s_{clusters}_{planning_horizons}.csv")
