@@ -163,6 +163,10 @@ def add_land_use_constraint(n: pypsa.Network, planning_horizons: str) -> None:
         "offwind-ac",
         "offwind-dc",
         "offwind-float",
+        "offsolar",
+        "wave-shallow",
+        "wave-nearshore",
+        "wave-farshore",
     ]:
         ext_i = (n.generators.carrier == carrier) & ~n.generators.p_nom_extendable
         grouper = n.generators.loc[ext_i].index.str.replace(
@@ -728,6 +732,7 @@ def add_BAU_constraints(n: pypsa.Network, config: dict) -> None:
     lhs = p_nom.groupby(ext_carrier_i).sum()
     rhs = mincaps[lhs.indexes["carrier"]].rename_axis("carrier")
     n.model.add_constraints(lhs >= rhs, name="bau_mincaps")
+    logger.info("BAU is done.")
 
 
 # TODO: think about removing or make per country
@@ -1189,7 +1194,8 @@ def extra_functionality(
     """
     config = n.config
     constraints = config["solving"].get("constraints", {})
-    if constraints["BAU"] and n.generators.p_nom_extendable.any():
+
+    if constraints.get("BAU", False) and n.generators.p_nom_extendable.any():
         add_BAU_constraints(n, config)
     if constraints["SAFE"] and n.generators.p_nom_extendable.any():
         add_SAFE_constraints(n, config)
@@ -1203,9 +1209,9 @@ def extra_functionality(
     if EQ_o := constraints["EQ"]:
         add_EQ_constraints(n, EQ_o.replace("EQ", ""))
 
-    if {"solar-hsat", "solar"}.issubset(
+    if {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["renewable_carriers"]
-    ) and {"solar-hsat", "solar"}.issubset(
+    ) and {"solar-hsat", "solar", "offsolar"}.issubset(
         config["electricity"]["extendable_carriers"]["Generator"]
     ):
         add_solar_potential_constraints(n, config)
