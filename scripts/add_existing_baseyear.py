@@ -599,17 +599,17 @@ def add_heating_capacities_installed_before_baseyear(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
-                    bus0=nodes_elec,
-                    bus1=nodes + " " + heat_system.value + " heat",
+                    bus0=nodes + " " + heat_system.value + " heat",
+                    bus1=nodes_elec,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=efficiency,
-                    capital_cost=costs.at[costs_name, "efficiency"]
-                    * costs.at[costs_name, "capital_cost"],
+                    efficiency=1 / efficiency.clip(lower=0.001),
+                    capital_cost=costs.at[costs_name, "capital_cost"],
                     p_nom=existing_capacities.loc[
                         nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
-                    * ratio
-                    / costs.at[costs_name, "efficiency"],
+                    * ratio,
+                    p_max_pu=0,
+                    p_min_pu=-1 * efficiency / efficiency.clip(lower=0.001),
                     build_year=int(grouping_year),
                     lifetime=costs.at[costs_name, "lifetime"],
                 )
