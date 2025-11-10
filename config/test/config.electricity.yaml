@@ -37,14 +37,6 @@ enable:
   drop_leap_day: true
 
 electricity:
-  # BAU_mincapacities:
-  #   solar: 0
-  #   solar-hsat: 0
-  #   onwind: 100000
-  #   offwind-ac: 0
-  #   offwind-dc: 100000
-  #   offwind-float: 100000
-
   voltages: [200., 220., 300., 380., 400., 500., 750.]
   base_network: osm-prebuilt
   osm-prebuilt-version: 0.4
@@ -65,8 +57,8 @@ electricity:
     H2: 168
 
   extendable_carriers:
-    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]
-    StorageUnit: [battery, H2]
+    Generator: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow ]
+    StorageUnit: [battery, H2] # battery, H2
     Store: []
     Link: [H2 pipeline]
 
@@ -75,7 +67,7 @@ electricity:
   everywhere_powerplants: []
 
   conventional_carriers: []
-  renewable_carriers: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]  # [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-fl, wave-farshore, wave-nearshore, wave-shallow ]
+  renewable_carriers: [solar, solar-hsat, offsolar, onwind, offwind-ac, offwind-float, wave-farshore, wave-nearshore, wave-shallow]
 
   estimate_renewable_capacities:
     enable: true
