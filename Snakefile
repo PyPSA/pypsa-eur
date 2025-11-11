@@ -93,6 +93,7 @@ if config["foresight"] != "perfect":
         resources("maps/base_network.pdf"),
         resources("maps/clustered_network.pdf"),
         RESULTS + "maps/power_network_{horizon}.pdf",
+        RESULTS + "graphs/cop_profiles_{horizon}.html",
     ]
     TIMESERIES_OUTPUTS = [
         RESULTS + "graphs/balance_timeseries_{horizon}",
@@ -151,6 +152,51 @@ def get_balance_map_plots(w):
     )
 
 
+def get_heat_source_maps(w):
+    """Returns heat source maps if enabled and not perfect foresight."""
+    if config["foresight"] == "perfect":
+        return []
+
+    if not config_provider("plotting", "enable_heat_source_maps")(w):
+        return []
+
+    heat_sources = config_provider("sector", "heat_pump_sources", "urban central")(w)
+    maps = []
+
+    # Temperature maps for river_water, sea_water, and air
+    for source in ["river_water", "sea_water"]:
+        if source in heat_sources:
+            maps.extend(
+                expand(
+                    RESULTS + "maps/heat_source_temperature_map_{source}_{horizon}.html",
+                    source=source,
+                    horizon=config["planning_horizons"],
+                    run=config["run"]["name"],
+                )
+            )
+
+    if "air" in heat_sources:
+        maps.extend(
+            expand(
+                RESULTS + "maps/heat_source_temperature_map_ambient_air_{horizon}.html",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+
+    # Energy map only for river_water
+    if "river_water" in heat_sources:
+        maps.extend(
+            expand(
+                RESULTS + "maps/heat_source_energy_map_river_water_{horizon}.html",
+                horizon=config["planning_horizons"],
+                run=config["run"]["name"],
+            )
+        )
+
+    return maps
+
+
 rule all:
     input:
         expand(CORE_OUTPUTS, run=config["run"]["name"]),
@@ -175,6 +221,7 @@ rule all:
         (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
         get_sector_network_plots,
         get_balance_map_plots,
+        get_heat_source_maps,
     default_target: True
 
 
@@ -192,13 +239,25 @@ rule purge:
         import builtins
 
         do_purge = builtins.input(
-            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+            "Do you really want to delete all generated files?\n"
+            "\t* resources\n"
+            "\t* results\n"
+            "\t* docs\n"
+            "Downloaded files are kept.\n"
+            "Delete all files in the folders above? [y/N] "
         )
         if do_purge == "y":
-            rmtree("resources/", ignore_errors=True)
-            rmtree("results/", ignore_errors=True)
+
+            # Remove the directories and recreate them with .gitkeep
+            for dir_path in ["resources/", "results/"]:
+                rmtree(dir_path, ignore_errors=True)
+                Path(dir_path).mkdir(parents=True, exist_ok=True)
+                (Path(dir_path) / ".gitkeep").touch()
+
             rmtree("doc/_build", ignore_errors=True)
-            print("Purging generated resources, results and docs. Downloads are kept.")
+            print(
+                "Purging all generated resources, results and docs. Downloads are kept."
+            )
         else:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 

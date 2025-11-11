@@ -571,6 +571,29 @@ rule build_hac_features:
         "../scripts/build_hac_features.py"
 
 
+rule process_cost_data:
+    params:
+        costs=config_provider("costs"),
+        max_hours=config_provider("electricity", "max_hours"),
+    input:
+        network=resources("networks/base_s.nc"),
+        costs=resources("costs_{planning_horizons}.csv"),
+        custom_costs=config_provider("costs", "custom_cost_fn"),
+    output:
+        resources("costs_{planning_horizons}_processed.csv"),
+    log:
+        logs("build_cost_data_{planning_horizons}.log"),
+    benchmark:
+        benchmarks("build_cost_data_{planning_horizons}")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/process_cost_data.py"
+
+
 rule simplify_network:
     params:
         countries=config_provider("countries"),
@@ -729,7 +752,6 @@ rule add_electricity:
         renewable=config_provider("renewable"),
         electricity=config_provider("electricity"),
         conventional=config_provider("conventional"),
-        costs=config_provider("costs"),
         foresight=config_provider("foresight"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         consider_efficiency_classes=config_provider(
@@ -743,7 +765,7 @@ rule add_electricity:
         unpack(input_conventional),
         base_network=resources("networks/simplified.nc"),
         tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}.csv"
+            f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
         ),
         regions=resources("regions_onshore.geojson"),
         powerplants=resources("powerplants_s.csv"),

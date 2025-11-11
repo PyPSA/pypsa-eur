@@ -112,3 +112,9 @@ reset:
 		rm -r ./.snakemake || true; \
 		echo "Reset completed." \
 	) || echo "Reset cancelled."
+
+# Update the DAGs in the documentation
+# use sed to remove everything up to 'Building DAG' outputs, e.g. from pulp/Gurobi before passing to dot
+update-dags:
+	snakemake results/networks/base_s_128_elec_.nc -F --dag | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/intro-workflow.png
+	snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o doc/img/workflow.png

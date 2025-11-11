@@ -1251,3 +1251,21 @@ def create_placeholder_plot(
     ax.axis("off") if not ylabel else None
     fig.savefig(output_path, bbox_inches="tight")
     plt.close(fig)
+
+
+def load_costs(cost_file: str) -> pd.DataFrame:
+    """
+    Load prepared cost data from CSV.
+
+    Parameters
+    ----------
+    cost_file : str
+        Path to the CSV file containing cost data
+
+    Returns
+    -------
+    costs : pd.DataFrame
+        DataFrame containing the prepared cost data
+    """
+
+    return pd.read_csv(cost_file, index_col=0)
