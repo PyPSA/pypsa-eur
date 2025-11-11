@@ -16,8 +16,6 @@ functions and calling them in sequence.
 
 import logging
 import os
-from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -288,64 +286,6 @@ def concatenate_network_with_previous(
     return n
 
 
-@dataclass
-class InputFiles:
-    """Container for all input file paths needed during network composition."""
-
-    # Electricity inputs (required)
-    powerplants: str
-    load: str
-    busmap: str
-
-    # Electricity inputs (optional)
-    unit_commitment: str | None = None
-    fuel_price: str | None = None
-    profile_hydro: str | None = None
-    hydro_capacities: str | None = None
-
-    # Sector inputs
-    clustered_pop_layout: str | None = None
-    pop_weighted_energy_totals: str | None = None
-    pop_weighted_heat_totals: str | None = None
-    gas_input_nodes_simplified: str | None = None
-    heating_efficiencies: str | None = None
-    sequestration_potential: str | None = None
-    h2_cavern: str | None = None
-    clustered_gas_network: str | None = None
-    transport_demand: str | None = None
-    transport_data: str | None = None
-    avail_profile: str | None = None
-    dsm_profile: str | None = None
-    temp_air_total: str | None = None
-    cop_profiles: str | None = None
-    direct_heat_source_utilisation_profiles: str | None = None
-    hourly_heat_demand_total: str | None = None
-    ptes_e_max_pu_profiles: str | None = None
-    ates_potentials: str | None = None
-    ptes_direct_utilisation_profiles: str | None = None
-    district_heat_share: str | None = None
-    solar_thermal_total: str | None = None
-    retro_cost: str | None = None
-    floor_area: str | None = None
-    biomass_potentials: str | None = None
-    biomass_transport_costs: str | None = None
-    industrial_demand: str | None = None
-    shipping_demand: str | None = None
-
-    # Existing capacities inputs
-    existing_heating_distribution: str | None = None
-
-    # Network preparation inputs
-    snapshot_weightings: str | None = None
-    co2_price: str | None = None
-    co2_budget_distribution: str | None = None
-
-    # Raw input dict for functions that need it (e.g., renewable profiles)
-    raw_inputs: dict[str, Any] | None = None
-    conventional_inputs: dict[str, str] | None = None
-    heat_source_profiles: dict[str, str] | None = None
-
-
 def validate_network_state(
     n: pypsa.Network, stage_name: str, expected_components: dict[str, int] | None = None
 ) -> dict[str, int]:
@@ -511,7 +451,7 @@ def adjust_biomass_availability(n: pypsa.Network) -> None:
 
 def add_electricity_components(
     n: pypsa.Network,
-    inputs: InputFiles,
+    inputs,
     params,
     costs,
     renewable_carriers: set,
@@ -531,8 +471,8 @@ def add_electricity_components(
     ----------
     n : pypsa.Network
         Network to modify (in-place)
-    inputs : InputFiles
-        Container with all input file paths
+    inputs : Snakemake input object
+        Input file paths from snakemake
     params : object
         Configuration parameters
     costs : pd.DataFrame
@@ -558,7 +498,7 @@ def add_electricity_components(
 
     # Load and aggregate powerplants
     ppl = load_and_aggregate_powerplants(
-        inputs.powerplants,
+        inputs["powerplants"],
         costs,
         consider_efficiency_classes=params.clustering["consider_efficiency_classes"],
         aggregation_strategies=params.clustering["aggregation_strategies"],
@@ -568,8 +508,8 @@ def add_electricity_components(
     # Attach load
     attach_load(
         n,
-        inputs.load,
-        inputs.busmap,
+        inputs["load"],
+        inputs["busmap"],
         params.load["scaling_factor"],
     )
 
@@ -582,19 +522,26 @@ def add_electricity_components(
     )
 
     # Load unit commitment if enabled
-    if inputs.unit_commitment and params.conventional["unit_commitment"]:
-        unit_commitment = pd.read_csv(inputs.unit_commitment, index_col=0)
+    unit_commitment_file = inputs.get("unit_commitment")
+    if unit_commitment_file and params.conventional["unit_commitment"]:
+        unit_commitment = pd.read_csv(unit_commitment_file, index_col=0)
     else:
         unit_commitment = None
 
     # Load dynamic fuel prices if enabled
-    if inputs.fuel_price and params.conventional["dynamic_fuel_price"]:
+    fuel_price_file = inputs.get("fuel_price")
+    if fuel_price_file and params.conventional["dynamic_fuel_price"]:
         fuel_price = pd.read_csv(
-            inputs.fuel_price, index_col=0, header=0, parse_dates=True
+            fuel_price_file, index_col=0, header=0, parse_dates=True
         )
         fuel_price = fuel_price.reindex(n.snapshots).ffill()
     else:
         fuel_price = None
+
+    # Gather conventional inputs
+    conventional_inputs = {
+        k: v for k, v in inputs.items() if k.startswith("conventional_")
+    }
 
     # Attach conventional generators
     attach_conventional_generators(
@@ -604,7 +551,7 @@ def add_electricity_components(
         conventional_carriers,
         extendable_carriers,
         params.conventional,
-        inputs.conventional_inputs,
+        conventional_inputs,
         unit_commitment=unit_commitment,
         fuel_price=fuel_price,
         allowed_carriers=carriers_to_keep.get("Generator") if sector_mode else None,
@@ -621,7 +568,7 @@ def add_electricity_components(
     attach_wind_and_solar(
         n,
         costs,
-        inputs.raw_inputs,
+        dict(inputs),
         renewable_carriers,
         extendable_carriers,
         params.lines["length_factor"],
@@ -632,19 +579,17 @@ def add_electricity_components(
         apply_variable_renewable_lifetimes(n, costs)
 
     # Attach hydro if included
-    if (
-        "hydro" in renewable_carriers
-        and inputs.profile_hydro
-        and inputs.hydro_capacities
-    ):
+    profile_hydro = inputs.get("profile_hydro")
+    hydro_capacities = inputs.get("hydro_capacities")
+    if "hydro" in renewable_carriers and profile_hydro and hydro_capacities:
         hydro_params = params.renewable["hydro"].copy()
         carriers = hydro_params.pop("carriers", [])
         attach_hydro(
             n,
             costs,
             ppl,
-            inputs.profile_hydro,
-            inputs.hydro_capacities,
+            profile_hydro,
+            hydro_capacities,
             carriers,
             **hydro_params,
         )
@@ -663,7 +608,7 @@ def add_electricity_components(
             year = estimate_renewable_caps["year"]
 
             if estimate_renewable_caps["from_gem"]:
-                attach_GEM_renewables(n, tech_map, inputs.raw_inputs)
+                attach_GEM_renewables(n, tech_map, dict(inputs))
 
             estimate_renewable_capacities(
                 n, year, tech_map, expansion_limit, params.countries
@@ -695,7 +640,7 @@ def add_electricity_components(
 
 def add_sector_components(
     n: pypsa.Network,
-    inputs: InputFiles,
+    inputs,
     params,
     costs,
     Nyears: float,
@@ -714,8 +659,8 @@ def add_sector_components(
     ----------
     n : pypsa.Network
         Network to modify (in-place)
-    inputs : InputFiles
-        Container with all input file paths
+    inputs : Snakemake input object
+        Input file paths from snakemake
     params : object
         Configuration parameters
     costs : pd.DataFrame
@@ -739,24 +684,24 @@ def add_sector_components(
     logger.info("Adding sector components")
 
     # Load additional data for sectors
-    pop_layout = pd.read_csv(inputs.clustered_pop_layout, index_col=0)
+    pop_layout = pd.read_csv(inputs["clustered_pop_layout"], index_col=0)
     pop_weighted_energy_totals = (
-        pd.read_csv(inputs.pop_weighted_energy_totals, index_col=0) * Nyears
+        pd.read_csv(inputs["pop_weighted_energy_totals"], index_col=0) * Nyears
     )
 
     # Load heat totals
     pop_weighted_heat_totals = (
-        pd.read_csv(inputs.pop_weighted_heat_totals, index_col=0) * Nyears
+        pd.read_csv(inputs["pop_weighted_heat_totals"], index_col=0) * Nyears
     )
     pop_weighted_energy_totals.update(pop_weighted_heat_totals)
 
     # Gas input nodes
-    gas_input_nodes = pd.read_csv(inputs.gas_input_nodes_simplified, index_col=0)
+    gas_input_nodes = pd.read_csv(inputs["gas_input_nodes_simplified"], index_col=0)
 
     # Load heating efficiencies
     year = int(params["energy_totals_year"])
     heating_efficiencies = pd.read_csv(
-        inputs.heating_efficiencies, index_col=[1, 0]
+        inputs["heating_efficiencies"], index_col=[1, 0]
     ).loc[year]
 
     # Add EU bus
@@ -767,7 +712,7 @@ def add_sector_components(
         n,
         costs,
         params.sector,
-        sequestration_potential_file=inputs.sequestration_potential,
+        sequestration_potential_file=inputs.get("sequestration_potential"),
     )
     if foresight in ["myopic", "perfect"]:
         spatial_attrs = vars(spatial)
@@ -804,9 +749,9 @@ def add_sector_components(
         n=n,
         costs=costs,
         pop_layout=pop_layout,
-        h2_cavern_file=inputs.h2_cavern,
+        h2_cavern_file=inputs.get("h2_cavern"),
         cavern_types=params.sector["hydrogen_underground_storage_locations"],
-        clustered_gas_network_file=inputs.clustered_gas_network,
+        clustered_gas_network_file=inputs.get("clustered_gas_network"),
         gas_input_nodes=gas_input_nodes,
         spatial=spatial,
         options=params.sector,
@@ -817,11 +762,11 @@ def add_sector_components(
         add_land_transport(
             n=n,
             costs=costs,
-            transport_demand_file=inputs.transport_demand,
-            transport_data_file=inputs.transport_data,
-            avail_profile_file=inputs.avail_profile,
-            dsm_profile_file=inputs.dsm_profile,
-            temp_air_total_file=inputs.temp_air_total,
+            transport_demand_file=inputs.get("transport_demand"),
+            transport_data_file=inputs.get("transport_data"),
+            avail_profile_file=inputs.get("avail_profile"),
+            dsm_profile_file=inputs.get("dsm_profile"),
+            temp_air_total_file=inputs.get("temp_air_total"),
             cf_industry=params.industry,
             options=params.sector,
             investment_year=current_horizon,
@@ -830,14 +775,23 @@ def add_sector_components(
 
     # Add heating if enabled
     if params.sector["heating"]["enable"]:
+        # Gather heat source profiles
+        heat_source_profiles = {
+            source: inputs[source]
+            for source in params.get("limited_heat_sources", [])
+            if source in inputs.keys()
+        }
+
         add_heat(
             n=n,
             costs=costs,
-            cop_profiles_file=inputs.cop_profiles,
-            direct_heat_source_utilisation_profile_file=inputs.direct_heat_source_utilisation_profiles,
-            hourly_heat_demand_total_file=inputs.hourly_heat_demand_total,
-            ptes_e_max_pu_file=inputs.ptes_e_max_pu_profiles,
-            ates_e_nom_max=inputs.ates_potentials,
+            cop_profiles_file=inputs.get("cop_profiles"),
+            direct_heat_source_utilisation_profile_file=inputs.get(
+                "direct_heat_source_utilisation_profiles"
+            ),
+            hourly_heat_demand_total_file=inputs.get("hourly_heat_demand_total"),
+            ptes_e_max_pu_file=inputs.get("ptes_e_max_pu_profiles"),
+            ates_e_nom_max=inputs.get("ates_potentials"),
             ates_capex_as_fraction_of_geothermal_heat_source=params.sector[
                 "district_heating"
             ]["ates"]["capex_as_fraction_of_geothermal_heat_source"],
@@ -848,12 +802,14 @@ def add_sector_components(
                 "recovery_factor"
             ],
             enable_ates=params.sector["district_heating"]["ates"]["enable"],
-            ptes_direct_utilisation_profile=inputs.ptes_direct_utilisation_profiles,
-            district_heat_share_file=inputs.district_heat_share,
-            solar_thermal_total_file=inputs.solar_thermal_total,
-            retro_cost_file=inputs.retro_cost,
-            floor_area_file=inputs.floor_area,
-            heat_source_profile_files=inputs.heat_source_profiles,
+            ptes_direct_utilisation_profile=inputs.get(
+                "ptes_direct_utilisation_profiles"
+            ),
+            district_heat_share_file=inputs.get("district_heat_share"),
+            solar_thermal_total_file=inputs.get("solar_thermal_total"),
+            retro_cost_file=inputs.get("retro_cost"),
+            floor_area_file=inputs.get("floor_area"),
+            heat_source_profile_files=heat_source_profiles,
             params=params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             heating_efficiencies=heating_efficiencies,
@@ -872,8 +828,8 @@ def add_sector_components(
             spatial=spatial,
             cf_industry=params.industry,
             pop_layout=pop_layout,
-            biomass_potentials_file=inputs.biomass_potentials,
-            biomass_transport_costs_file=inputs.biomass_transport_costs,
+            biomass_potentials_file=inputs.get("biomass_potentials"),
+            biomass_transport_costs_file=inputs.get("biomass_transport_costs"),
             nyears=Nyears,
         )
 
@@ -892,7 +848,7 @@ def add_sector_components(
         add_industry(
             n=n,
             costs=costs,
-            industrial_demand_file=inputs.industrial_demand,
+            industrial_demand_file=inputs.get("industrial_demand"),
             pop_layout=pop_layout,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=params.sector,
@@ -906,7 +862,7 @@ def add_sector_components(
         add_shipping(
             n=n,
             costs=costs,
-            shipping_demand_file=inputs.shipping_demand,
+            shipping_demand_file=inputs.get("shipping_demand"),
             pop_layout=pop_layout,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             options=params.sector,
@@ -978,7 +934,7 @@ def add_sector_components(
 
 def add_existing_capacities(
     n: pypsa.Network,
-    inputs: InputFiles,
+    inputs,
     params,
     costs,
     renewable_carriers: set,
@@ -993,8 +949,8 @@ def add_existing_capacities(
     ----------
     n : pypsa.Network
         Network to modify (in-place)
-    inputs : InputFiles
-        Container with all input file paths
+    inputs : Snakemake input object
+        Input file paths from snakemake
     params : object
         Configuration parameters
     costs : pd.DataFrame
@@ -1032,12 +988,16 @@ def add_existing_capacities(
     if params.sector["enabled"] and params.sector["heating"]["enable"]:
         grouping_years_heat = existing_cfg["grouping_years_heat"]
         if grouping_years_heat:
+            existing_heating_file = inputs.get("existing_heating_distribution")
+            cop_profiles_file = inputs.get("cop_profiles")
+            heating_efficiencies_file = inputs.get("heating_efficiencies")
+
             existing_heat = pd.read_csv(
-                inputs.existing_heating_distribution,
+                existing_heating_file,
                 header=[0, 1],
                 index_col=0,
             )
-            cop_profiles = xr.open_dataarray(inputs.cop_profiles)
+            cop_profiles = xr.open_dataarray(cop_profiles_file)
 
             add_heating_capacities_installed_before_baseyear(
                 n=n,
@@ -1047,7 +1007,7 @@ def add_existing_capacities(
                 existing_capacities=existing_heat,
                 heat_pump_cop=cop_profiles,
                 heat_pump_source_types=params.heat_pump_sources,
-                efficiency_file=inputs.heating_efficiencies,
+                efficiency_file=heating_efficiencies_file,
                 use_time_dependent_cop=params.sector["time_dep_hp_cop"],
                 default_lifetime=existing_cfg["default_heating_lifetime"],
                 energy_totals_year=int(params.energy_totals_year),
@@ -1065,7 +1025,7 @@ def add_existing_capacities(
 
 def apply_temporal_aggregation(
     n: pypsa.Network,
-    inputs: InputFiles,
+    inputs,
     params,
 ) -> None:
     """
@@ -1078,8 +1038,8 @@ def apply_temporal_aggregation(
     ----------
     n : pypsa.Network
         Network to modify (in-place)
-    inputs : InputFiles
-        Container with all input file paths
+    inputs : Snakemake input object
+        Input file paths from snakemake
     params : object
         Configuration parameters
 
@@ -1120,10 +1080,11 @@ def apply_temporal_aggregation(
         time_resolution = clustering_temporal_cfg["resolution_sector"]
 
         if time_resolution:
+            snapshot_weightings_file = inputs.get("snapshot_weightings")
             n_new = set_temporal_aggregation(
                 n,
                 time_resolution,
-                inputs.snapshot_weightings,
+                snapshot_weightings_file,
             )
             # Replace network object content
             n.__dict__.update(n_new.__dict__)
@@ -1142,7 +1103,7 @@ def apply_temporal_aggregation(
 
 def prepare_network_for_solving(
     n: pypsa.Network,
-    inputs: InputFiles,
+    inputs,
     params,
     costs,
     nyears: float,
@@ -1158,8 +1119,8 @@ def prepare_network_for_solving(
     ----------
     n : pypsa.Network
         Network to modify (in-place)
-    inputs : InputFiles
-        Container with all input file paths
+    inputs : Snakemake input object
+        Input file paths from snakemake
     params : object
         Configuration parameters
     costs : pd.DataFrame
@@ -1200,8 +1161,10 @@ def prepare_network_for_solving(
 
     # Add emission prices
     emission_prices = params.costs["emission_prices"]
+    co2_price_file = inputs.get("co2_price")
+
     if emission_prices["co2_monthly_prices"]:
-        add_dynamic_emission_prices(n, inputs.co2_price)
+        add_dynamic_emission_prices(n, co2_price_file)
     elif emission_prices["enable"]:
         add_emission_prices(
             n,
@@ -1210,8 +1173,8 @@ def prepare_network_for_solving(
         )
 
     # Add dynamic emission prices if available
-    elif inputs.co2_price and os.path.exists(inputs.co2_price):
-        add_dynamic_emission_prices(n, inputs.co2_price)
+    elif co2_price_file and os.path.exists(co2_price_file):
+        add_dynamic_emission_prices(n, co2_price_file)
 
     # Set global transmission limits
     set_transmission_limit(n, kind, factor, costs, nyears)
@@ -1233,7 +1196,8 @@ def prepare_network_for_solving(
             "current_horizon is required for CO2 budget constraint application"
         )
 
-    co2_budget = pd.read_csv(inputs.co2_budget_distribution, index_col=0).loc[
+    co2_budget_distribution_file = inputs["co2_budget_distribution"]
+    co2_budget = pd.read_csv(co2_budget_distribution_file, index_col=0).loc[
         current_horizon
     ]
     upper_enabled = params["co2_budget"]["upper"]["enable"]
@@ -1353,66 +1317,8 @@ if __name__ == "__main__":
     extendable_carriers = params.electricity["extendable_carriers"]
     conventional_carriers = params.electricity["conventional_carriers"]
 
-    # Construct InputFiles object from snakemake inputs
-    inputs = InputFiles(
-        # Electricity inputs
-        powerplants=snakemake.input.powerplants,
-        load=snakemake.input.load,
-        busmap=snakemake.input.busmap,
-        unit_commitment=snakemake.input.get("unit_commitment"),
-        fuel_price=snakemake.input.get("fuel_price"),
-        profile_hydro=snakemake.input.get("profile_hydro"),
-        hydro_capacities=snakemake.input.get("hydro_capacities"),
-        # Sector inputs (all optional)
-        clustered_pop_layout=snakemake.input.get("clustered_pop_layout"),
-        pop_weighted_energy_totals=snakemake.input.get("pop_weighted_energy_totals"),
-        pop_weighted_heat_totals=snakemake.input.get("pop_weighted_heat_totals"),
-        gas_input_nodes_simplified=snakemake.input.get("gas_input_nodes_simplified"),
-        heating_efficiencies=snakemake.input.get("heating_efficiencies"),
-        sequestration_potential=snakemake.input.get("sequestration_potential"),
-        h2_cavern=snakemake.input.get("h2_cavern"),
-        clustered_gas_network=snakemake.input.get("clustered_gas_network"),
-        transport_demand=snakemake.input.get("transport_demand"),
-        transport_data=snakemake.input.get("transport_data"),
-        avail_profile=snakemake.input.get("avail_profile"),
-        dsm_profile=snakemake.input.get("dsm_profile"),
-        temp_air_total=snakemake.input.get("temp_air_total"),
-        cop_profiles=snakemake.input.get("cop_profiles"),
-        direct_heat_source_utilisation_profiles=snakemake.input.get(
-            "direct_heat_source_utilisation_profiles"
-        ),
-        hourly_heat_demand_total=snakemake.input.get("hourly_heat_demand_total"),
-        ptes_e_max_pu_profiles=snakemake.input.get("ptes_e_max_pu_profiles"),
-        ates_potentials=snakemake.input.get("ates_potentials"),
-        ptes_direct_utilisation_profiles=snakemake.input.get(
-            "ptes_direct_utilisation_profiles"
-        ),
-        district_heat_share=snakemake.input.get("district_heat_share"),
-        solar_thermal_total=snakemake.input.get("solar_thermal_total"),
-        retro_cost=snakemake.input.get("retro_cost"),
-        floor_area=snakemake.input.get("floor_area"),
-        biomass_potentials=snakemake.input.get("biomass_potentials"),
-        biomass_transport_costs=snakemake.input.get("biomass_transport_costs"),
-        industrial_demand=snakemake.input.get("industrial_demand"),
-        shipping_demand=snakemake.input.get("shipping_demand"),
-        existing_heating_distribution=snakemake.input.get(
-            "existing_heating_distribution"
-        ),
-        snapshot_weightings=snakemake.input.get("snapshot_weightings"),
-        co2_price=snakemake.input.get("co2_price"),
-        co2_budget_distribution=snakemake.input["co2_budget_distribution"],
-        # Heat source profiles (dictionary)
-        heat_source_profiles={
-            source: snakemake.input[source]
-            for source in params.get("limited_heat_sources", [])
-            if source in snakemake.input.keys()
-        },
-        # Raw inputs for backward compatibility
-        raw_inputs=dict(snakemake.input),
-        conventional_inputs={
-            k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
-        },
-    )
+    # Use snakemake inputs directly
+    inputs = snakemake.input
 
     # ========== ELECTRICITY COMPONENTS ==========
     add_electricity_components(
@@ -1460,7 +1366,7 @@ if __name__ == "__main__":
     # ========== SECTOR COMPONENTS ==========
     if sector_mode:
         # Define spatial scope for sector components
-        pop_layout = pd.read_csv(inputs.clustered_pop_layout, index_col=0)
+        pop_layout = pd.read_csv(inputs["clustered_pop_layout"], index_col=0)
         spatial = define_spatial(pop_layout.index, params.sector)
 
         add_sector_components(
@@ -1592,7 +1498,7 @@ if __name__ == "__main__":
             current_horizon == planning_horizons[-1]
             and params["co2_budget"]["upper"]["enable"]
         ):
-            co2_budget = pd.read_csv(inputs.co2_budget_distribution, index_col=0)
+            co2_budget = pd.read_csv(inputs["co2_budget_distribution"], index_col=0)
             total_cumulative = co2_budget.at[current_horizon, "total_cumulative"]
 
             if pd.notna(total_cumulative):
