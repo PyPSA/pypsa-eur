@@ -554,6 +554,7 @@ rule build_energy_totals:
     params:
         countries=config_provider("countries"),
         energy=config_provider("energy"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
         co2="data/bundle/eea/UNFCCC_v23.csv",
@@ -600,6 +601,30 @@ rule build_heat_totals:
         "../envs/environment.yaml"
     script:
         "../scripts/build_heat_totals.py"
+
+
+rule build_co2_budget_distribution:
+    params:
+        co2_budget=config_provider("co2_budget"),
+        countries=config_provider("countries"),
+        planning_horizons=config_provider("planning_horizons"),
+        sector=config_provider("sector"),
+    input:
+        co2="data/bundle/eea/UNFCCC_v23.csv",
+        eurostat="data/eurostat/Balances-April2023",
+    output:
+        co2_budget_distribution=resources("co2_budget_distribution.csv"),
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        logs("build_co2_budget_distribution.log"),
+    benchmark:
+        benchmarks("build_co2_budget_distribution")
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_co2_budget_distribution.py"
 
 
 rule build_biomass_potentials:
@@ -1215,7 +1240,7 @@ rule prepare_sector_network:
         planning_horizons=config_provider("planning_horizons"),
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
-        emissions_scope=config_provider("energy", "emissions"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
         biomass=config_provider("biomass"),
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),

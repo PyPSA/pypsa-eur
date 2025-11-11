@@ -203,7 +203,7 @@ rule plot_summary:
     params:
         countries=config_provider("countries"),
         planning_horizons=config_provider("planning_horizons"),
-        emissions_scope=config_provider("energy", "emissions"),
+        emissions_scope=config_provider("co2_budget", "emissions_scope"),
         plotting=config_provider("plotting"),
         foresight=config_provider("foresight"),
         co2_budget=config_provider("co2_budget"),

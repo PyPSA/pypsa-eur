@@ -50,6 +50,9 @@ idx = pd.IndexSlice
 
 logger = logging.getLogger(__name__)
 
+# Conversion constant for CO2 emissions
+GT_TO_TONNES = 1e9  # Gigatonnes to tonnes conversion
+
 
 def modify_attribute(n, adjustments, investment_year, modification="factor"):
     if not adjustments[modification]:
@@ -90,14 +93,65 @@ def maybe_adjust_costs_and_potentials(n, adjustments, investment_year=None):
         modify_attribute(n, adjustments, investment_year, modification)
 
 
-def add_co2limit(n, co2limit, Nyears=1.0):
+def add_co2limit(
+    n: pypsa.Network,
+    co2_max: float,
+    co2_min: float | None = None,
+    nyears: float = 1.0,
+    suffix: str = "",
+) -> None:
+    """
+    Add global CO2 emissions constraint(s) to the network.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        Network to add constraints to
+    co2_max : float
+        Maximum CO2 emissions in Gt CO2. For perfect foresight with investment_period:
+        yearly limit for that period. For perfect foresight without investment_period:
+        total budget over entire planning horizon. For overnight/myopic: annual limit per year.
+    co2_min : float or None, default None
+        Minimum CO2 emissions in Gt CO2. For perfect foresight with investment_period:
+        yearly limit for that period. For perfect foresight without investment_period:
+        total budget over entire planning horizon. For overnight/myopic: annual limit per year.
+    nyears : float, default 1.0
+        Number of years for overnight/myopic optimization (ignored for perfect foresight)
+    suffix : str, default ""
+        Suffix to add to constraint names
+
+    """
+    # FAIL FAST: Validate inputs
+    if pd.isna(co2_max):
+        raise ValueError(
+            f"co2_max cannot be NaN. Received: {co2_max}. "
+            "Ensure CO2 upper constraint is properly configured."
+        )
+
+    if co2_min is not None and pd.isna(co2_min):
+        raise ValueError(
+            f"co2_min cannot be NaN. Received: {co2_min}. "
+            "Ensure CO2 lower constraint is properly configured."
+        )
+
     n.add(
         "GlobalConstraint",
-        "CO2Limit",
+        "CO2Limit" + suffix,
+        type="co2_limit",
         carrier_attribute="co2_emissions",
         sense="<=",
-        constant=co2limit * Nyears,
+        constant=co2_max * GT_TO_TONNES * nyears,
     )
+
+    if co2_min is not None:
+        n.add(
+            "GlobalConstraint",
+            "CO2Min" + suffix,
+            type="co2_limit",
+            carrier_attribute="co2_emissions",
+            sense=">=",
+            constant=co2_min * GT_TO_TONNES * nyears,
+        )
 
 
 def add_gaslimit(n, gaslimit, Nyears=1.0):
@@ -385,7 +439,7 @@ if __name__ == "__main__":
         n = apply_time_segmentation(n, segments, solver_name)
 
     if snakemake.params.co2limit_enable:
-        add_co2limit(n, snakemake.params.co2limit, Nyears)
+        add_co2limit(n, snakemake.params.co2limit, None, Nyears)
 
     if snakemake.params.gaslimit_enable:
         add_gaslimit(n, snakemake.params.gaslimit, Nyears)

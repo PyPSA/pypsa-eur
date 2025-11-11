@@ -26,6 +26,7 @@ import xarray as xr
 
 # Import all required functions from existing scripts
 from scripts._helpers import (
+    PYPSA_V1,
     configure_logging,
     sanitize_custom_columns,
     set_scenario_config,
@@ -256,7 +257,14 @@ def concatenate_network_with_previous(
                 c.dynamic[attr].columns
             )
             if overlap_non_equal_static_only.any():
-                casted = c._as_dynamic(attr, overlap_non_equal_static_only)
+                if PYPSA_V1:
+                    casted = c._as_dynamic(
+                        attr, n.snapshots, overlap_non_equal_static_only
+                    )
+                else:
+                    casted = n.get_switchable_as_dense(
+                        c.name, attr, inds=overlap_non_equal_static_only
+                    )
                 casted.loc[current_horizon] = c_current.static.loc[overlap_comps]
 
     n.meta = {**n_previous.meta, **n_current.meta}
@@ -330,6 +338,7 @@ class InputFiles:
     # Network preparation inputs
     snapshot_weightings: str | None = None
     co2_price: str | None = None
+    co2_budget_distribution: str | None = None
 
     # Raw input dict for functions that need it (e.g., renewable profiles)
     raw_inputs: dict[str, Any] | None = None
@@ -1137,6 +1146,7 @@ def prepare_network_for_solving(
     params,
     costs,
     nyears: float,
+    current_horizon: int | None = None,
 ) -> None:
     """
     Apply final network preparations before solving.
@@ -1156,6 +1166,8 @@ def prepare_network_for_solving(
         Technology costs
     nyears : float
         Number of years represented in the snapshot weightings
+    current_horizon : int | None
+        Current planning horizon being prepared (for CO2 budget constraint application)
 
     Notes
     -----
@@ -1215,17 +1227,42 @@ def prepare_network_for_solving(
         link_max_pu=params.links["p_max_pu"],
     )
 
-    # Handle carbon budget for sector coupling
-    if params.sector["enabled"]:
-        co2_budget = params["co2_budget"]
-        if co2_budget and isinstance(co2_budget, str) and co2_budget.startswith("cb"):
-            # Skip complex carbon budget building for now in simplified workflow
-            logger.info(
-                f"Skipping carbon budget calculation for {co2_budget} - not yet implemented in streamlined workflow"
-            )
-        elif co2_budget and isinstance(co2_budget, (int, float)):
-            # Direct CO2 limit
-            add_co2limit(n, co2_budget, nyears)
+    # Handle carbon budget constraints (unified system for all modes)
+    if current_horizon is None:
+        raise ValueError(
+            "current_horizon is required for CO2 budget constraint application"
+        )
+
+    co2_budget = pd.read_csv(inputs.co2_budget_distribution, index_col=0).loc[
+        current_horizon
+    ]
+    upper_enabled = params["co2_budget"]["upper"]["enable"]
+    lower_enabled = params["co2_budget"]["lower"]["enable"]
+    upper = co2_budget["upper_annual"]
+    lower = co2_budget["lower_annual"]
+
+    if upper_enabled and pd.isna(upper):
+        logger.info(
+            f"CO2 budget upper constraint enabled but not specified for horizon {current_horizon}. "
+            f"Skipping upper constraint for this horizon."
+        )
+    if lower_enabled and pd.isna(lower):
+        logger.info(
+            f"CO2 budget lower constraint enabled but not specified for horizon {current_horizon}. "
+            f"Skipping lower constraint for this horizon."
+        )
+
+    # Apply constraints if valid values exist
+    if pd.notna(upper):
+        # Upper constraint is valid - add it (with optional lower constraint)
+        lower_value = lower if pd.notna(lower) else None
+        add_co2limit(n, upper, lower_value, nyears)
+    elif pd.notna(lower):
+        raise ValueError(
+            f"Cannot apply only lower CO2 constraint for horizon {current_horizon}. "
+            f"The add_co2limit function requires an upper constraint. "
+            f"Please enable co2_budget.upper or disable co2_budget.lower."
+        )
 
     logger.info("Completed network preparation")
 
@@ -1363,6 +1400,7 @@ if __name__ == "__main__":
         ),
         snapshot_weightings=snakemake.input.get("snapshot_weightings"),
         co2_price=snakemake.input.get("co2_price"),
+        co2_budget_distribution=snakemake.input["co2_budget_distribution"],
         # Heat source profiles (dictionary)
         heat_source_profiles={
             source: snakemake.input[source]
@@ -1501,12 +1539,14 @@ if __name__ == "__main__":
         )
 
     # ========== NETWORK PREPARATION ==========
+
     prepare_network_for_solving(
         n,
         inputs,
         params,
         costs,
         nyears,
+        current_horizon=current_horizon,
     )
 
     # Validate before finalization
@@ -1547,6 +1587,23 @@ if __name__ == "__main__":
                 f"Investment period weightings applied for {len(n.investment_periods)} periods"
             )
 
+        # Apply cumulative CO2 budget constraint for perfect foresight
+        if (
+            current_horizon == planning_horizons[-1]
+            and params["co2_budget"]["upper"]["enable"]
+        ):
+            co2_budget = pd.read_csv(inputs.co2_budget_distribution, index_col=0)
+            total_cumulative = co2_budget.at[current_horizon, "total_cumulative"]
+
+            if pd.notna(total_cumulative):
+                add_co2limit(n, total_cumulative, co2_min=None, suffix="-total")
+                logger.info(
+                    f"Applied cumulative CO2 budget: {total_cumulative:.3f} Gt CO2 total"
+                )
+
+            # Sanitize energy storages
+            n.stores.e_initial_per_period = ~n.stores.e_cyclic
+            n.stores.e_cyclic_per_period = n.stores.e_cyclic
     # ========== FINAL CLEANUP ==========
 
     # Sanitize carriers

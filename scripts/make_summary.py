@@ -659,11 +659,11 @@ if __name__ == "__main__":
     planning_horizons = pd.Index(atleast_1d(snakemake.config["planning_horizons"]))
     network_files = snakemake.input.networks
 
-    logger.info(f"Processing {foresight} mode with {len(network_files)} network(s)")
+    logger.debug(f"Processing {foresight} mode with {len(network_files)} network(s)")
 
     if foresight == "perfect":
         # Perfect foresight: Single multi-period network
-        logger.info("Loading multi-period network for perfect foresight")
+        logger.debug("Loading multi-period network for perfect foresight")
         n = pypsa.Network(network_files[0])
         assign_carriers(n)
         assign_locations(n)
@@ -672,7 +672,7 @@ if __name__ == "__main__":
         for output in OUTPUTS:
             if output == "cumulative_costs":
                 continue  # Handle separately after costs are calculated
-            logger.info(f"Calculating {output}")
+            logger.debug(f"Calculating {output}")
             result = globals()["calculate_" + output](n)
             if output == "costs":
                 costs_df = result  # Save for cumulative costs calculation
@@ -680,13 +680,13 @@ if __name__ == "__main__":
 
         # Calculate cumulative costs from costs DataFrame
         if costs_df is not None and len(planning_horizons) > 1:
-            logger.info("Calculating cumulative_costs")
+            logger.debug("Calculating cumulative_costs")
             cumulative_costs = calculate_cumulative_costs(costs_df, planning_horizons)
             cumulative_costs.to_csv(snakemake.output.cumulative_costs)
 
     elif len(network_files) == 1:
         # Overnight mode: Single network, single horizon
-        logger.info(
+        logger.debug(
             f"Loading single network for overnight mode (horizon: {planning_horizons[0]})"
         )
         n = pypsa.Network(network_files[0])
@@ -697,7 +697,7 @@ if __name__ == "__main__":
         for output in OUTPUTS:
             if output == "cumulative_costs":
                 continue  # Not applicable for single horizon
-            logger.info(f"Calculating {output}")
+            logger.debug(f"Calculating {output}")
             result = globals()["calculate_" + output](n)
             if output == "costs":
                 costs_df = result  # Save for cumulative costs calculation
@@ -711,10 +711,12 @@ if __name__ == "__main__":
 
     else:
         # Myopic mode: Multiple networks via NetworkCollection
-        logger.info(f"Loading {len(network_files)} networks for myopic mode")
+        logger.debug(f"Loading {len(network_files)} networks for myopic mode")
         networks = []
         for i, network_file in enumerate(network_files):
-            logger.info(f"Loading network {i + 1}/{len(network_files)}: {network_file}")
+            logger.debug(
+                f"Loading network {i + 1}/{len(network_files)}: {network_file}"
+            )
             n = pypsa.Network(network_file)
             assign_carriers(n)
             assign_locations(n)
@@ -723,7 +725,7 @@ if __name__ == "__main__":
         nc = NetworkCollection(
             networks, index=pd.Index(planning_horizons, name="horizon")
         )
-        logger.info(
+        logger.debug(
             f"Created NetworkCollection with horizons: {list(planning_horizons)}"
         )
 
@@ -731,7 +733,7 @@ if __name__ == "__main__":
         for output in OUTPUTS:
             if output == "cumulative_costs":
                 continue  # Handle separately after costs are calculated
-            logger.info(f"Calculating {output}")
+            logger.debug(f"Calculating {output}")
             result = globals()["calculate_" + output + "_collection"](nc)
             if output == "costs":
                 costs_df = result  # Save for cumulative costs calculation
@@ -739,8 +741,8 @@ if __name__ == "__main__":
 
         # Calculate cumulative costs from costs DataFrame
         if costs_df is not None and len(planning_horizons) > 1:
-            logger.info("Calculating cumulative_costs")
+            logger.debug("Calculating cumulative_costs")
             cumulative_costs = calculate_cumulative_costs(costs_df, planning_horizons)
             cumulative_costs.to_csv(snakemake.output.cumulative_costs)
 
-    logger.info("Summary calculation completed successfully")
+    logger.debug("Summary calculation completed successfully")

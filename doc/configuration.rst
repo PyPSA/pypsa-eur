@@ -201,10 +201,6 @@ Switches for some rules and optional features.
    :widths: 22,7,22,33
    :file: configtables/co2_budget.csv
 
-.. note::
-    this parameter is over-ridden if ``Co2Lx`` or ``cb`` is set in
-    sector_opts.
-
 .. _electricity_cf:
 
 ``electricity``

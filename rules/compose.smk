@@ -17,11 +17,12 @@ from pathlib import Path
 
 def get_compose_inputs(w):
     """Determine inputs for compose rule based on foresight and horizon."""
-    foresight = config["foresight"]
+    cfg = get_config(w)
+    foresight = cfg["foresight"]
     horizon = int(w.horizon)
 
     # Handle both single value and list for planning_horizons
-    planning_horizons = config["planning_horizons"]
+    planning_horizons = cfg["planning_horizons"]
     if isinstance(planning_horizons, (int, str)):
         horizons = [int(planning_horizons)]
     else:
@@ -87,6 +88,7 @@ def get_compose_inputs(w):
         "dsm_profile": resources("dsm_profile.csv"),
         "co2_totals_name": resources("co2_totals.csv"),
         "co2": "data/bundle/eea/UNFCCC_v23.csv",
+        "co2_budget_distribution": resources("co2_budget_distribution.csv"),
         "biomass_potentials": resources("biomass_potentials_{horizon}.csv"),
         "costs": (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
@@ -189,6 +191,7 @@ rule compose_network:
         resources("networks/composed_{horizon}.nc"),
     params:
         # Pass entire config sections using config_provider
+        foresight=config_provider("foresight"),
         electricity=config_provider("electricity"),
         sector=config_provider("sector"),
         clustering=config_provider("clustering"),
@@ -225,9 +228,8 @@ rule compose_network:
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
-        # CO2 budget handling
-        co2_budget=config_provider("co2_budget", "budget_national"),
-        emissions_scope=config_provider("co2_budget", "emissions_scope"),
+        # CO2 budget handling (pass entire co2_budget config section)
+        co2_budget=config_provider("co2_budget"),
     log:
         logs("compose_network_{horizon}.log"),
     threads: 1

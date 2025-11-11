@@ -80,7 +80,7 @@ def plot_costs():
 
     to_drop = df.index[df.max(axis=1) < snakemake.params.plotting["costs_threshold"]]
 
-    logger.info(
+    logger.debug(
         f"Dropping technology with costs below {snakemake.params['plotting']['costs_threshold']} EUR billion per year"
     )
     logger.debug(df.loc[to_drop])
@@ -88,7 +88,7 @@ def plot_costs():
     df = df.drop(to_drop)
 
     total_cost = df.sum().iloc[0]
-    logger.info(f"Total system cost of {total_cost:.2f} EUR billion per year")
+    logger.debug(f"Total system cost of {total_cost:.2f} EUR billion per year")
 
     # Check if there's any data left to plot
     if df.empty:
@@ -126,7 +126,7 @@ def plot_costs():
     costs_max = snakemake.params.plotting["costs_max"]
     if costs_max == "auto":
         costs_max = None
-        logger.info("Auto-scaling y-axis (costs_max='auto')")
+        logger.debug("Auto-scaling y-axis (costs_max='auto')")
 
     ax.set_ylim([0, costs_max])
 
@@ -160,7 +160,7 @@ def plot_energy():
         df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"]
     ]
 
-    logger.info(
+    logger.debug(
         f"Dropping all technology with energy consumption or production below {snakemake.params['plotting']['energy_threshold']} TWh/a"
     )
     logger.debug(df.loc[to_drop])
@@ -168,7 +168,7 @@ def plot_energy():
     df = df.drop(to_drop)
 
     total_energy = df.sum().iloc[0]
-    logger.info(f"Total energy of {total_energy:.2f} TWh/a")
+    logger.debug(f"Total energy of {total_energy:.2f} TWh/a")
 
     if df.empty:
         logger.warning(
@@ -209,11 +209,11 @@ def plot_energy():
 
     if energy_max == "auto":
         energy_max = None
-        logger.info("Auto-scaling y-axis max (energy_max='auto')")
+        logger.debug("Auto-scaling y-axis max (energy_max='auto')")
 
     if energy_min == "auto":
         energy_min = None
-        logger.info("Auto-scaling y-axis min (energy_min='auto')")
+        logger.debug("Auto-scaling y-axis min (energy_min='auto')")
 
     ax.set_ylim([energy_min, energy_max])
 

@@ -58,6 +58,23 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
 
+co2_budget:
+  emissions_scope: All greenhouse gases - (CO2 equivalent)
+  values: absolute  # Values are Gt CO2/year (testing absolute mode)
+
+  # Upper emissions constraints (testing selective year constraints)
+  upper:
+    enable: true
+    2030: 2.0  # Gt CO2 for 2030
+    # 2040 not specified - no upper constraint for 2040 (tests optional bounds)
+    2050: 0.0  # Gt CO2 for 2050 (climate neutral)
+
+  # Lower emissions constraints (floor) - also testing selective years
+  lower:
+    enable: true
+    2030: 0.5  # Gt CO2 minimum for 2030
+    # 2040 and 2050 not specified - no lower constraints (tests optional bounds)
+
 electricity:
   extendable_carriers:
     Generator: [OCGT]

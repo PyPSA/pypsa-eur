@@ -63,7 +63,6 @@ localrules:
 
 
 wildcard_constraints:
-    clusters="[0-9]+(m|c)?|all|adm",
     horizon=r"[0-9]{4}",
 
 

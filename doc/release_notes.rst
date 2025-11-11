@@ -95,7 +95,7 @@ Upcoming Release
   ``B``                     ``sector.biomass.enable: true``
   ``I``                     ``sector.industry.enable: true``
   ``A``                     ``sector.agriculture.enable: true``
-  ``Co2L`` + value          ``co2_budget.emissions_scope: <scope>`` + budget config
+  ``Co2L`` + value          ``co2_budget`` unified co2 limit configuration (see below)
   ``dist`` + value          ``sector.district_heating: <config>``
   ``seq`` + value           ``sector.co2_sequestration_potential: <value>``
   ========================= =======================================================
@@ -135,12 +135,15 @@ Upcoming Release
     clustering:
       cluster_network:
         n_clusters: 100
-    electricity:
-      co2limit_enable: true
-      co2limit: 5.0e+7  # Adjust based on your co2base value
+    co2_budget:
+      values: absolute
+      upper:
+        enable: true
+        2030: 0.05  # Gt CO2 for 2030
+        2050: 0.03  # Gt CO2 for 2050
     costs:
       emission_prices:
-        co2: 50  # Set your desired CO2 price
+        co2: 50  # Set your desired CO2 price (EUR/t CO2)
 
   **Example 3: Full sector-coupled with transmission limits**
 
@@ -171,19 +174,23 @@ Upcoming Release
       industry:
         enable: true
 
-  **Example 4: Perfect foresight with multiple horizons**
+  **Example 4: Perfect foresight with CO2 budget (fraction-based, like master)**
 
   .. code:: yaml
 
-    # OLD
+    # OLD (master branch style)
     scenario:
       clusters: [37]
       opts: ['']
       sector_opts: ['Co2L-T-H']
       planning_horizons: [2030, 2040, 2050]
     foresight: perfect
+    co2_budget:
+      2030: 0.450  # 45% of 1990 emissions
+      2040: 0.100  # 10% of 1990 emissions
+      2050: 0.000  # Climate neutral
 
-    # NEW
+    # NEW (streamline-workflow)
     planning_horizons: [2030, 2040, 2050]
     foresight: perfect
     clustering:
@@ -196,10 +203,59 @@ Upcoming Release
       heating:
         enable: true
     co2_budget:
-      emissions_scope: total
-      # Configure your carbon budget constraints
+      emissions_scope: All greenhouse gases - (CO2 equivalent)
+      values: fraction  # Interpret as fractions of 1990 baseline
+      upper:
+        enable: true
+        2030: 0.450  # 45% of 1990 emissions (55% reduction)
+        2040: 0.100  # 10% of 1990 emissions (90% reduction)
+        2050: 0.000  # Climate neutral
+      lower:
+        enable: false
+
+  **Example 5: Perfect foresight with absolute CO2 budget**
+
+  .. code:: yaml
+
+    # NEW - Using absolute values instead of fractions
+    planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+    clustering:
+      cluster_network:
+        n_clusters: 37
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+    co2_budget:
+      emissions_scope: All greenhouse gases - (CO2 equivalent)
+      values: absolute  # Interpret as Gt CO2/year (default)
+      upper:
+        enable: true
+        2030: 2.04  # Gt CO2/year
+        2040: 0.45  # Gt CO2/year
+        2050: 0.00  # Climate neutral
+      lower:
+        enable: false
 
   **Troubleshooting:**
+
+  * **Issue:** ``energy.emissions`` configuration no longer recognized
+
+    **Solution:** Move ``energy.emissions`` → ``co2_budget.emissions_scope``. The
+    ``energy.emissions`` field is deprecated. Update your config:
+
+    .. code:: yaml
+
+      # OLD
+      energy:
+        emissions: CO2
+
+      # NEW
+      co2_budget:
+        emissions_scope: CO2
 
   * **Issue:** File not found errors for network files
 
@@ -229,6 +285,41 @@ Upcoming Release
 * **PyPSA 1.0 compatibility**: Updated minimum PyPSA version to 1.0.1. All
   ``n.add()`` calls now use ``return_names=True`` for compatibility with PyPSA 1.0
   where ``.add()`` returns ``None`` by default.
+
+* **Breaking change: Unified CO2 budget configuration**: The CO2 budget configuration
+  has been restructured to use a consistent format across all optimization modes
+  (overnight, myopic, perfect foresight). Key changes:
+
+  - **New nested structure**: Uses ``upper`` and ``lower`` sections with explicit
+    ``enable`` flags for clearer configuration
+  - **Emissions scope moved**: ``energy.emissions`` → ``co2_budget.emissions_scope``
+    to consolidate all CO2 budget settings in one place. This parameter is always used
+    when any CO2 budget constraint is enabled, as it determines baseline emissions for
+    fraction-based budgets and distribution calculations.
+  - **Emissions scope affects baseline calculations**: The ``emissions_scope`` parameter
+    determines baseline emissions in ``resources/<run>/co2_totals.csv`` (used for
+    fraction-based budgets and budget distribution), aligning with master branch behavior.
+  - **Explicit value interpretation**: New top-level ``values`` field (``fraction`` or
+    ``absolute``) explicitly controls how budget values are interpreted for both upper
+    and lower bounds:
+
+    - ``values: fraction`` - Values are percentages of 1990 baseline (e.g., ``2030: 0.450``
+      = 45% of 1990 emissions, scope-dependent)
+    - ``values: absolute`` - Values are Gt CO₂/year directly (default)
+
+  - **Optional yearly bounds**: When ``upper.enable: true`` or ``lower.enable: true``,
+    constraints are now applied only for planning horizons explicitly specified in the
+    configuration. Previously, all planning horizons required values when enabled. This
+    allows more flexible constraint definition (e.g., constraining only 2030 and 2050
+    while leaving 2040 unconstrained).
+
+  - **New preprocessing rule**: Carbon budget distribution is now calculated by a new
+    ``build_co2_budget_distribution`` rule that outputs ``co2_budget_distribution.csv``,
+    consumed by ``compose_network``
+
+  See ``config/config.default.yaml`` for the new structure and ``doc/foresight.rst``
+  for detailed migration examples. The streamlined workflow now fully supports carbon
+  budget constraints across all foresight modes with consistent behavior.
 
 * Added automatic retry for some (Zenodo) HTTP requests to handle transient errors
   like rate limiting and server errors.

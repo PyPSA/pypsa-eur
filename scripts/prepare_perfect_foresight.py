@@ -52,10 +52,6 @@ logger.warning(
     "Use at your own risk!"
 )
 
-if PYPSA_V1:
-    msg = "PyPSA versions >=1.0 are not supported for perfect foresight."
-    raise UserWarning(msg)
-
 
 # helper functions ---------------------------------------------------
 def get_missing(df: pd.DataFrame, n: pypsa.Network, c: str) -> pd.DataFrame:
