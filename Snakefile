@@ -234,13 +234,25 @@ rule purge:
         import builtins
 
         do_purge = builtins.input(
-            "Do you really want to delete all generated resources, \nresults and docs (downloads are kept)? [y/N] "
+            "Do you really want to delete all generated files?\n"
+            "\t* resources\n"
+            "\t* results\n"
+            "\t* docs\n"
+            "Downloaded files are kept.\n"
+            "Delete all files in the folders above? [y/N] "
         )
         if do_purge == "y":
-            rmtree("resources/", ignore_errors=True)
-            rmtree("results/", ignore_errors=True)
+
+            # Remove the directories and recreate them with .gitkeep
+            for dir_path in ["resources/", "results/"]:
+                rmtree(dir_path, ignore_errors=True)
+                Path(dir_path).mkdir(parents=True, exist_ok=True)
+                (Path(dir_path) / ".gitkeep").touch()
+
             rmtree("doc/_build", ignore_errors=True)
-            print("Purging generated resources, results and docs. Downloads are kept.")
+            print(
+                "Purging all generated resources, results and docs. Downloads are kept."
+            )
         else:
             raise Exception(f"Input {do_purge}. Aborting purge.")
 
