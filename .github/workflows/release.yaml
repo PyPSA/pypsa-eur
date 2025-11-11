@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - v*.*.*
+
+env:
+  PREPARATION_COMMIT: '[github-actions.ci] prepare release ${{ github.ref_name }}'
+  BASE_ENV: envs/environment.yaml
+
+jobs:
+  check-preparation:
+    name: Check if release is prepared
+    runs-on: ubuntu-latest
+    outputs:
+      prepared: ${{ steps.validate.outputs.prepared }}
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Validate commit message
+      id: validate
+      run: |
+        # Check if last commit is the expected commit message
+        COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+        echo "Expected: '${{ env.PREPARATION_COMMIT }}'"
+        echo "Received: '$COMMIT_MESSAGE'"
+
+        prepared="false"
+        if [[ "$COMMIT_MESSAGE" == "${{ env.PREPARATION_COMMIT }}" ]]; then
+          prepared="true"
+        fi
+
+        echo "prepared=$prepared" >> $GITHUB_OUTPUT
+
+  prepare-release:
+    name: Prepare release
+    needs: [check-preparation]
+    if: ${{ needs.check-preparation.outputs.prepared == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Generate token for PyPSA Bot
+      id: generate-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ vars.PYPSA_BOT_ID }}
+        private-key: ${{ secrets.PYPSA_BOT_PRIVATE_KEY }}
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Find the branch for commit/ tag
+      run: |
+        branch=$(git branch -r --contains ${{ github.sha }} | grep -v 'HEAD' | head -n 1 | sed 's|origin/||' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        echo "Branch found: $branch"
+        echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        ref: ${{ env.BRANCH_NAME }}
+        token: ${{ steps.generate-token.outputs.token }}
+
+    - name: Setup conda environment
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        miniforge-version: latest
+        environment-file: ${{ env.BASE_ENV }}
+        activate-environment: pypsa-eur
+        channel-priority: strict
+
+    # Start of preparation script
+
+    - name: Update DAGs in documentation
+      run: |
+        conda run -n pypsa-eur make update-dags
+
+    # End of preparation script
+
+    - name: Remove previous tag
+      run: |
+        git tag -d ${{ github.ref_name }}
+        git push origin --delete ${{ github.ref_name }}
+
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v7
+      with:
+        branch: ${{ env.BRANCH_NAME }}
+        commit_message: '${{ env.PREPARATION_COMMIT }}'
+        tagging_message: '${{ github.ref_name }}' # add tag again
+        push_options: '${{ github.ref_name }}'
+        add_options: '-u' # Never add untracked files

@@ -23,7 +23,7 @@ gurobi.log
 /benchmarks
 /logs
 /notebooks
-/data
+/data/*
 /cutouts
 /tmp
 doc/_build
@@ -52,6 +52,7 @@ dconf
 /data/bundle/nuts*
 data/gas_network/scigrid-gas/
 data/costs_*.csv
+!/data/custom_costs.csv
 
 dask-worker-space/
 publications.jrc.ec.europa.eu/
