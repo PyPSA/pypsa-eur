@@ -47,7 +47,7 @@ def get_compose_inputs(w):
         "unit_commitment": "data/unit_commitment.csv",
         "fuel_price": (
             resources("monthly_fuel_price.csv")
-            if config_provider("conventional", "dynamic_fuel_price")(w)
+            if cfg["conventional"]["dynamic_fuel_price"]
             else []
         ),
         "co2_price": resources("co2_price.csv"),
@@ -55,25 +55,22 @@ def get_compose_inputs(w):
         "snapshot_weightings": resources("snapshot_weightings.csv"),
         "retro_cost": (
             resources("retro_cost.csv")
-            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            if cfg["sector"]["retrofitting"]["retro_endogen"]
             else []
         ),
         "floor_area": (
             resources("floor_area.csv")
-            if config_provider("sector", "retrofitting", "retro_endogen")(w)
+            if cfg["sector"]["retrofitting"]["retro_endogen"]
             else []
         ),
         "biomass_transport_costs": (
             resources("biomass_transport_costs.csv")
-            if config_provider("sector", "biomass_transport")(w)
-            or config_provider("sector", "biomass_spatial")(w)
+            if cfg["sector"]["biomass_transport"] or cfg["sector"]["biomass_spatial"]
             else []
         ),
         "sequestration_potential": (
             resources("co2_sequestration_potential.csv")
-            if config_provider(
-                "sector", "regional_co2_sequestration_potential", "enable"
-            )(w)
+            if cfg["sector"]["regional_co2_sequestration_potential"]["enable"]
             else []
         ),
         "clustered": resources("networks/clustered.nc"),
@@ -91,8 +88,8 @@ def get_compose_inputs(w):
         "co2_budget_distribution": resources("co2_budget_distribution.csv"),
         "biomass_potentials": resources("biomass_potentials_{horizon}.csv"),
         "costs": (
-            resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
-            if config_provider("foresight")(w) == "overnight"
+            resources("costs_{}.csv".format(cfg["costs"]["year"]))
+            if foresight == "overnight"
             else resources("costs_{horizon}.csv")
         ),
         "h2_cavern": resources("salt_cavern_potentials.csv"),
@@ -112,41 +109,39 @@ def get_compose_inputs(w):
         "cop_profiles": resources("cop_profiles_{horizon}.nc"),
         "ptes_e_max_pu_profiles": (
             resources("ptes_e_max_pu_profiles_{horizon}.nc")
-            if config_provider(
-                "sector", "district_heating", "ptes", "dynamic_capacity"
-            )(w)
+            if cfg["sector"]["district_heating"]["ptes"]["dynamic_capacity"]
             else []
         ),
         "ptes_direct_utilisation_profiles": (
             resources("ptes_direct_utilisation_profiles_{horizon}.nc")
-            if config_provider(
-                "sector", "district_heating", "ptes", "supplemental_heating", "enable"
-            )(w)
+            if cfg["sector"]["district_heating"]["ptes"]["supplemental_heating"][
+                "enable"
+            ]
             else []
         ),
         "solar_thermal_total": (
             resources("solar_thermal_total.nc")
-            if config_provider("sector", "solar_thermal")(w)
+            if cfg["sector"]["solar_thermal"]
             else []
         ),
         "solar_rooftop_potentials": (
             resources("solar_rooftop_potentials.csv")
-            if "solar" in config_provider("electricity", "renewable_carriers")(w)
+            if "solar" in cfg["electricity"]["renewable_carriers"]
             else []
         ),
         "egs_potentials": (
             resources("egs_potentials.csv")
-            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            if cfg["sector"]["enhanced_geothermal"]["enable"]
             else []
         ),
         "egs_overlap": (
             resources("egs_overlap.csv")
-            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            if cfg["sector"]["enhanced_geothermal"]["enable"]
             else []
         ),
         "egs_capacity_factors": (
             resources("egs_capacity_factors.csv")
-            if config_provider("sector", "enhanced_geothermal", "enable")(w)
+            if cfg["sector"]["enhanced_geothermal"]["enable"]
             else []
         ),
         "direct_heat_source_utilisation_profiles": resources(
@@ -154,7 +149,7 @@ def get_compose_inputs(w):
         ),
         "ates_potentials": (
             resources("ates_potentials_{horizon}.csv")
-            if config_provider("sector", "district_heating", "ates", "enable")(w)
+            if cfg["sector"]["district_heating"]["ates"]["enable"]
             else []
         ),
     }
