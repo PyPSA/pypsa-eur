@@ -34,10 +34,11 @@ from scripts._helpers import (
     PYPSA_V1,
     configure_logging,
     get,
+    load_costs,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import load_costs, set_transmission_costs
+from scripts.add_electricity import set_transmission_costs
 
 # Allow for PyPSA versions <0.35
 if PYPSA_V1:
@@ -308,12 +309,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input[0])
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0
-    costs = load_costs(
-        snakemake.input.tech_costs,
-        snakemake.params.costs,
-        snakemake.params.max_hours,
-        Nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     set_line_s_max_pu(n, snakemake.params.lines["s_max_pu"])
 
@@ -337,16 +333,14 @@ if __name__ == "__main__":
 
     maybe_adjust_costs_and_potentials(n, snakemake.params["adjustments"])
 
-    emission_prices = snakemake.params.costs["emission_prices"]
+    emission_prices = snakemake.params.emission_prices
     if emission_prices["co2_monthly_prices"]:
         logger.info(
             "Setting time dependent emission prices according spot market price"
         )
         add_dynamic_emission_prices(n, snakemake.input.co2_price)
     elif emission_prices["enable"]:
-        add_emission_prices(
-            n, dict(co2=snakemake.params.costs["emission_prices"]["co2"])
-        )
+        add_emission_prices(n, dict(co2=snakemake.params.emission_prices["co2"]))
 
     kind = snakemake.params.transmission_limit[0]
     factor = snakemake.params.transmission_limit[1:]

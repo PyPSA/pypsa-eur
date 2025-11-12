@@ -175,7 +175,7 @@ def busmap_from_shapes(
     else:
         shapes = shapes.set_index(cluster_names)
         points = gpd.points_from_xy(**buses[["x", "y"]], crs=GEO_CRS)
-        coords = gpd.GeoDataFrame(geometry=points, index=buses.index)
+        coords = gpd.GeoDataFrame(geometry=points, index=buses.index.rename("Index"))
         busmap = gpd.sjoin(coords, shapes, how="left")[cluster_names].rename("busmap")
 
         if busmap.isnull().any():
