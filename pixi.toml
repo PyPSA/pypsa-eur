@@ -94,8 +94,8 @@ xlrd = ">=2.0.2"
 yaml = ">=0.2.5"
 
 [feature.doc.tasks.build-docs]
-cmd = "dot -c && sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
 args = ["dir", {"arg" = "output", "default" = "html"}]
+cmd = "dot -c && sphinx-build -T -b {{ output }} doc {{ dir }}/{{ output }} "
 depends-on = ["update-dags"]
 
 [feature.doc.dependencies]
