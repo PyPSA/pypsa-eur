@@ -22,8 +22,8 @@ use `pre-commit <https://pre-commit.com/index.html>`_:
 
 1. Install [pixi](https://pixi.sh/latest/).
 1. Usage:
-    * To automatically activate ``pre-commit`` on every ``git commit``: Run ``pixi run pre-commit install``
-    * To manually run it: ``pixi run pre-commit run --all``
+    * To automatically activate ``pre-commit`` on every ``git commit``: Run ``pre-commit install``
+    * To manually run it: ``pre-commit run --all``
 
 .. note::
   Note that installing ``pre-commit`` locally is not strictly necessary. If you create a Pull Request the ``pre-commit CI`` will be triggered automatically and take care of the checks.

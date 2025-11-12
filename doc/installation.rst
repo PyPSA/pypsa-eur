@@ -26,18 +26,28 @@ First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eu
 Install Python Dependencies
 ===============================
 
-Preferred method: Pixi
-----------------------
+Preferred method: ``pixi``
+--------------------------
 
 PyPSA-Eur relies on a set of other Python packages to function.
-We manage these using [pixi](https://pixi.sh/latest/).
-Once pixi is installed, you will have access to the PyPSA-Eur dependencies by prepending all your calls with `pixi run` (e.g. `pixi run snakemake -call -n`).
-Alternatively, you can call `pixi shell` in your terminal to activate your working environment, then continue without needing to prepend calls with `pixi run` (e.g. `snakemake -call -n`).
+We manage these using `pixi <https://pixi.sh/latest/>`_.
+Once pixi is installed, you can activate the project environment for your operating system and have access to all the PyPSA-Eur dependencies from the command line:
 
-Legacy method: conda
-----------------------
+.. code:: console
 
-If you cannot access `pixi` on your machine, you can also install using `conda`/`mamba`/`micromamba`.
+    $ pixi shell
+
+.. tip::
+    You can also set up automatic shell activation in several popular editors (e.g. in `VSCode <https://pixi.sh/dev/integration/editor/vscode/>`_ or `Zed <https://pixi.sh/dev/integration/editor/zed/>`_).
+    Refer to the ``pixi`` documentation for the most up-to-date options.
+
+.. note::
+    We don't currently support linux operating systems using ARM processors since certain packages, such as ``PySCIPOpt``, require being built from source.
+
+Legacy method: ``conda``
+------------------------
+
+If you cannot access ``pixi`` on your machine, you can also install using `conda <https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html>`_ (or ``mamba``/``micromamba``).
 To do so, we highly recommend you install from one of our platform-specific environment files:
 
 * For Intel/AMD processors:
@@ -61,7 +71,7 @@ To do so, we highly recommend you install from one of our platform-specific envi
 
 
 These platform-specific files have locked dependencies, to ensure reproducibility.
-You can also install directly from the un-locked environment YAML file (not recommended):
+If you are having difficulties with the above files, you can also install directly from the un-locked environment YAML file (not recommended):
 
 .. code:: console
 

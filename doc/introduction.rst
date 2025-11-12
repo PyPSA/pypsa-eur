@@ -82,7 +82,7 @@ Folder Structure
 
 - ``scripts``: Includes all the Python scripts executed by the ``snakemake`` rules.
 - ``rules``: Includes all the ``snakemake`` rules loaded in the ``Snakefile``.
-- ``envs``: Includes all the ``conda`` environment specifications to run the workflow.
+- ``envs``: Includes option ``conda`` environment specifications to run the workflow (using ``pixi`` instead is our recommended approach).
 - ``data``: Includes input data that is not produced by any ``snakemake`` rule.
 - ``cutouts``: Stores raw weather data cutouts from ``atlite``.
 - ``resources``: Stores intermediate results of the workflow which can be picked up again by subsequent rules.
