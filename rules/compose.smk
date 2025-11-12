@@ -40,7 +40,7 @@ def get_compose_inputs(w):
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         "base_network": resources("networks/simplified.nc"),
-        "tech_costs": resources(f"costs_{horizon}.csv"),
+        "tech_costs": resources(f"costs_{horizon}_processed.csv"),
         "regions": resources("regions_onshore.geojson"),
         "powerplants": resources("powerplants_s.csv"),
         "hydro_capacities": ancient("data/hydro_capacities.csv"),
@@ -93,7 +93,7 @@ def get_compose_inputs(w):
             else resources("costs_{horizon}.csv")
         ),
         "h2_cavern": resources("salt_cavern_potentials.csv"),
-        "busmap_s": resources("busmap_simplified.csv"),
+        "busmap_simplified": resources("busmap_simplified.csv"),
         "busmap": resources("busmap.csv"),
         "clustered_pop_layout": resources("pop_layout.csv"),
         "industrial_demand": resources("industrial_energy_demand_{horizon}.csv"),

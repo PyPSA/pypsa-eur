@@ -152,51 +152,6 @@ def get_balance_map_plots(w):
     )
 
 
-def get_heat_source_maps(w):
-    """Returns heat source maps if enabled and not perfect foresight."""
-    if config["foresight"] == "perfect":
-        return []
-
-    if not config_provider("plotting", "enable_heat_source_maps")(w):
-        return []
-
-    heat_sources = config_provider("sector", "heat_pump_sources", "urban central")(w)
-    maps = []
-
-    # Temperature maps for river_water, sea_water, and air
-    for source in ["river_water", "sea_water"]:
-        if source in heat_sources:
-            maps.extend(
-                expand(
-                    RESULTS + "maps/heat_source_temperature_map_{source}_{horizon}.html",
-                    source=source,
-                    horizon=config["planning_horizons"],
-                    run=config["run"]["name"],
-                )
-            )
-
-    if "air" in heat_sources:
-        maps.extend(
-            expand(
-                RESULTS + "maps/heat_source_temperature_map_ambient_air_{horizon}.html",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-            )
-        )
-
-    # Energy map only for river_water
-    if "river_water" in heat_sources:
-        maps.extend(
-            expand(
-                RESULTS + "maps/heat_source_energy_map_river_water_{horizon}.html",
-                horizon=config["planning_horizons"],
-                run=config["run"]["name"],
-            )
-        )
-
-    return maps
-
-
 rule all:
     input:
         expand(CORE_OUTPUTS, run=config["run"]["name"]),
@@ -221,7 +176,6 @@ rule all:
         (expand(MYOPIC_OUTPUTS, run=config["run"]["name"]) if MYOPIC_OUTPUTS else []),
         get_sector_network_plots,
         get_balance_map_plots,
-        get_heat_source_maps,
     default_target: True
 
 

@@ -21,7 +21,7 @@ rule process_costs:
             )
             if config_provider("foresight")(w) == "overnight"
             else expand(
-                resources("costs_{planning_horizons}_processed.csv"),
+                resources("costs_{horizon}_processed.csv"),
                 **config["scenario"],
                 run=config["run"]["name"],
             )

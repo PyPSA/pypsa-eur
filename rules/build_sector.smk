@@ -70,16 +70,16 @@ rule build_simplified_population_layouts:
         pop_layout_total=resources("pop_layout_total.nc"),
         pop_layout_urban=resources("pop_layout_urban.nc"),
         pop_layout_rural=resources("pop_layout_rural.nc"),
-        regions_onshore=resources("regions_onshore_base_s.geojson"),
+        regions_onshore=resources("regions_onshore_simplified.geojson"),
         cutout=lambda w: input_cutout(w),
     output:
-        clustered_pop_layout=resources("pop_layout_base_s.csv"),
+        clustered_pop_layout=resources("pop_layout_simplified.csv"),
     resources:
         mem_mb=10000,
     log:
-        logs("build_simplified_population_layouts_s"),
+        logs("build_simplified_population_layouts"),
     benchmark:
-        benchmarks("build_simplified_population_layouts/s")
+        benchmarks("build_simplified_population_layouts")
     conda:
         "../envs/environment.yaml"
     script:
@@ -294,15 +294,15 @@ rule build_dh_areas:
         countries=config_provider("countries"),
     input:
         dh_areas="data/dh_areas.gpkg",
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_onshore=resources("regions_onshore.geojson"),
     output:
-        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+        dh_areas=resources("dh_areas.geojson"),
     resources:
         mem_mb=2000,
     log:
-        logs("build_dh_areas_s_{clusters}.log"),
+        logs("build_dh_areas.log"),
     benchmark:
-        benchmarks("build_dh_areas_s/s_{clusters}")
+        benchmarks("build_dh_areas")
     conda:
         "../envs/environment.yaml"
     script:
@@ -478,25 +478,23 @@ rule build_river_heat_potential:
         enable_heat_source_maps=config_provider("plotting", "enable_heat_source_maps"),
     input:
         unpack(input_hera_data),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        dh_areas=resources("dh_areas.geojson"),
     output:
-        heat_source_power=resources(
-            "heat_source_power_river_water_base_s_{clusters}.csv"
-        ),
-        heat_source_temperature=resources("temp_river_water_base_s_{clusters}.nc"),
+        heat_source_power=resources("heat_source_power_river_water.csv"),
+        heat_source_temperature=resources("temp_river_water.nc"),
         heat_source_temperature_temporal_aggregate=resources(
-            "temp_river_water_base_s_{clusters}_temporal_aggregate.nc"
+            "temp_river_water_temporal_aggregate.nc"
         ),
         heat_source_energy_temporal_aggregate=resources(
-            "heat_source_energy_river_water_base_s_{clusters}_temporal_aggregate.nc"
+            "heat_source_energy_river_water_temporal_aggregate.nc"
         ),
     resources:
         mem_mb=20000,
     log:
-        logs("build_river_water_heat_potential_base_s_{clusters}.log"),
+        logs("build_river_water_heat_potential.log"),
     benchmark:
-        benchmarks("build_river_water_heat_potential_base_s_{clusters}")
+        benchmarks("build_river_water_heat_potential")
     threads: 1
     conda:
         "../envs/environment.yaml"
@@ -563,8 +561,7 @@ def input_heat_source_temperature(
         f"temp_{heat_source_name}": resources(
             "temp_"
             + replace_names.get(heat_source_name, heat_source_name)
-            + "_base_s_{clusters}"
-            + ("_{planning_horizons}" if heat_source_name == "ptes" else "")
+            + ("_{horizon}" if heat_source_name == "ptes" else "")
             + ".nc"
         )
         for heat_source_name in heat_pump_sources
@@ -613,19 +610,19 @@ rule build_sea_heat_potential:
     input:
         # seawater_temperature=lambda w: input_seawater_temperature(w),
         unpack(input_seawater_temperature),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
-        dh_areas=resources("dh_areas_base_s_{clusters}.geojson"),
+        regions_onshore=resources("regions_onshore.geojson"),
+        dh_areas=resources("dh_areas.geojson"),
     output:
-        heat_source_temperature=resources("temp_sea_water_base_s_{clusters}.nc"),
+        heat_source_temperature=resources("temp_sea_water.nc"),
         heat_source_temperature_temporal_aggregate=resources(
-            "temp_sea_water_base_s_{clusters}_temporal_aggregate.nc"
+            "temp_sea_water_temporal_aggregate.nc"
         ),
     resources:
         mem_mb=10000,
     log:
-        logs("build_sea_water_heat_potential_base_s_{clusters}.log"),
+        logs("build_sea_water_heat_potential.log"),
     benchmark:
-        benchmarks("build_sea_water_heat_potential_base_s_{clusters}")
+        benchmarks("build_sea_water_heat_potential")
     threads: config["atlite"].get("nprocesses", 4)
     conda:
         "../envs/environment.yaml"
@@ -1295,7 +1292,7 @@ rule build_transport_demand:
         sector=config_provider("sector"),
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     input:
-        network=resources("networks/base_s.nc"),
+        network=resources("networks/clustered.nc"),
         clustered_pop_layout=resources("pop_layout.csv"),
         pop_weighted_energy_totals=resources("pop_weighted_energy_totals.csv"),
         transport_data_raw=resources("transport_data_raw.csv"),
@@ -1313,7 +1310,7 @@ rule build_transport_demand:
     log:
         logs("build_transport_demand.log"),
     benchmark:
-        benchmarks("build_transport_demand/s")
+        benchmarks("build_transport_demand")
     conda:
         "../envs/environment.yaml"
     script:
@@ -1533,7 +1530,7 @@ rule prepare_sector_network:
             else resources("costs_{horizon}_processed.csv")
         ),
         h2_cavern=resources("salt_cavern_potentials.csv"),
-        busmap_s=resources("busmap_base_s.csv"),
+        busmap_simplified=resources("busmap_simplified.csv"),
         busmap=resources("busmap.csv"),
         clustered_pop_layout=resources("pop_layout.csv"),
         industrial_demand=resources("industrial_energy_demand_{horizon}.csv"),

@@ -131,39 +131,28 @@ if config["foresight"] != "perfect":
             plotting=config_provider("plotting"),
             heat_sources=config_provider("sector", "heat_pump_sources"),
         input:
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+            regions=resources("regions_onshore.geojson"),
             heat_source_temperature=lambda w: (
-                resources(
-                    "temp_" + w.carrier + "_base_s_{clusters}_temporal_aggregate.nc"
-                )
+                resources("temp_" + w.carrier + "_temporal_aggregate.nc")
                 if w.carrier in ["river_water", "sea_water", "ambient_air"]
                 else []
             ),
             heat_source_energy=lambda w: (
-                resources(
-                    "heat_source_energy_"
-                    + w.carrier
-                    + "_base_s_{clusters}_temporal_aggregate.nc"
-                )
+                resources("heat_source_energy_" + w.carrier + "_temporal_aggregate.nc")
                 if w.carrier in ["river_water"]
                 else []
             ),
         output:
             temp_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
-            energy_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+            + "maps/{horizon}-heat_source_temperature_map_{carrier}.html",
+            energy_map=RESULTS + "maps/{horizon}-heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
             mem_mb=150000,
         log:
-            RESULTS
-            + "logs/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+            RESULTS + "logs/plot_heat_source_map/{horizon}_{carrier}.log",
         benchmark:
-            (
-                RESULTS
-                + "benchmarks/plot_heat_source_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
-            )
+            (RESULTS + "benchmarks/plot_heat_source_map/{horizon}_{carrier}")
         conda:
             "../envs/environment.yaml"
         script:
@@ -354,21 +343,18 @@ rule plot_base_statistics:
 rule build_ambient_air_temperature_yearly_average:
     input:
         cutout=lambda w: input_cutout(w),
-        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_onshore=resources("regions_onshore.geojson"),
     output:
         average_ambient_air_temperature=resources(
-            "temp_ambient_air_base_s_{clusters}_temporal_aggregate.nc"
+            "temp_ambient_air_temporal_aggregate.nc"
         ),
     threads: 1
     resources:
         mem_mb=5000,
     log:
-        RESULTS + "logs/build_ambient_air_temperature_yearly_average/base_s_{clusters}",
+        RESULTS + "logs/build_ambient_air_temperature_yearly_average.log",
     benchmark:
-        (
-            RESULTS
-            + "benchmarks/build_ambient_air_temperature_yearly_average/base_s_{clusters}"
-        )
+        (RESULTS + "benchmarks/build_ambient_air_temperature_yearly_average")
     conda:
         "../envs/environment.yaml"
     script:
@@ -377,13 +363,13 @@ rule build_ambient_air_temperature_yearly_average:
 
 rule plot_cop_profiles:
     input:
-        cop_profiles=resources("cop_profiles_base_s_{clusters}_{planning_horizons}.nc"),
+        cop_profiles=resources("cop_profiles_{horizon}.nc"),
     output:
-        html=RESULTS + "graphs/cop_profiles_s_{clusters}_{planning_horizons}.html",
+        html=RESULTS + "graphs/cop_profiles_{horizon}.html",
     log:
-        RESULTS + "logs/plot_cop_profiles_s_{clusters}_{planning_horizons}.log",
+        RESULTS + "logs/plot_cop_profiles_{horizon}.log",
     benchmark:
-        RESULTS + "benchmarks/plot_cop_profiles/s_{clusters}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_cop_profiles/{horizon}"
     resources:
         mem_mb=10000,
     script:
@@ -399,20 +385,14 @@ rule plot_interactive_bus_balance:
             "plotting", "interactive_bus_balance", "bus_name_pattern"
         ),
     input:
-        network=RESULTS
-        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        network=RESULTS + "networks/solved_{horizon}.nc",
         rc="matplotlibrc",
     output:
-        directory=directory(
-            RESULTS
-            + "graphics/interactive_bus_balance/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
-        ),
+        directory=directory(RESULTS + "graphics/interactive_bus_balance/{horizon}"),
     log:
-        RESULTS
-        + "logs/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        RESULTS + "logs/plot_interactive_bus_balance/{horizon}.log",
     benchmark:
-        RESULTS
-        +"benchmarks/plot_interactive_bus_balance/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        RESULTS + "benchmarks/plot_interactive_bus_balance/{horizon}"
     resources:
         mem_mb=20000,
     script:

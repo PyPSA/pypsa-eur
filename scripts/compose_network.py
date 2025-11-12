@@ -1305,13 +1305,7 @@ if __name__ == "__main__":
     nyears = n.snapshot_weightings.objective.sum() / 8760.0
 
     # Load costs with proper horizon
-    costs = load_costs(
-        snakemake.input.tech_costs,
-        params.costs,
-        params.electricity["max_hours"],
-        nyears,
-    )
-
+    costs = load_costs(snakemake.input.tech_costs)
     # Define carrier sets
     renewable_carriers = set(params.renewable_carriers)
     extendable_carriers = params.electricity["extendable_carriers"]

@@ -576,15 +576,15 @@ rule process_cost_data:
         costs=config_provider("costs"),
         max_hours=config_provider("electricity", "max_hours"),
     input:
-        network=resources("networks/base_s.nc"),
-        costs=resources("costs_{planning_horizons}.csv"),
+        network=resources("networks/simplified.nc"),
+        costs=resources("costs_{horizon}.csv"),
         custom_costs=config_provider("costs", "custom_cost_fn"),
     output:
-        resources("costs_{planning_horizons}_processed.csv"),
+        resources("costs_{horizon}_processed.csv"),
     log:
-        logs("build_cost_data_{planning_horizons}.log"),
+        logs("build_cost_data_{horizon}.log"),
     benchmark:
-        benchmarks("build_cost_data_{planning_horizons}")
+        benchmarks("build_cost_data_{horizon}")
     threads: 1
     resources:
         mem_mb=4000,
