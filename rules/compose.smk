@@ -223,6 +223,9 @@ rule compose_network:
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),
+        direct_utilisation_heat_sources=config_provider(
+            "sector", "district_heating", "direct_utilisation_heat_sources"
+        ),
         # CO2 budget handling (pass entire co2_budget config section)
         co2_budget=config_provider("co2_budget"),
     log:
