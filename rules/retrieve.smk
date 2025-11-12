@@ -154,6 +154,7 @@ if config["enable"]["retrieve"]:
         script:
             "../scripts/retrieve_bidding_zones.py"
 
+
 if config["enable"]["retrieve"]:
 
     rule retrieve_entsoe_outages:
@@ -172,6 +173,7 @@ if config["enable"]["retrieve"]:
             "../envs/environment.yaml"
         script:
             "../scripts/retrieve_entsoe_outages.py"
+
 
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
