@@ -2766,9 +2766,10 @@ def add_heat(
     costs: pd.DataFrame,
     cop_profiles_file: str,
     heat_source_direct_utilisation_profile_file: str,
+    heat_source_preheater_utilisation_profile_file: str,
     hourly_heat_demand_total_file: str,
     ptes_e_max_pu_file: str,
-    ptes_direct_utilisation_profile: str,
+    ptes_boost_per_discharge_profiles: str,
     ates_e_nom_max: str,
     ates_capex_as_fraction_of_geothermal_heat_source: float,
     ates_recovery_factor: float,
@@ -2816,7 +2817,7 @@ def add_heat(
         Dictionary mapping heat source names to their data file paths
     params : dict
         Dictionary containing parameters including:
-        - heat_pump_sources
+        - heat_sources
         - heat_utilisation_potentials
         - direct_utilisation_heat_sources
     pop_weighted_energy_totals : pd.DataFrame
@@ -2864,7 +2865,7 @@ def add_heat(
         heat_source_direct_utilisation_profile_file
     )
     heat_source_preheater_utilisation_profile = xr.open_dataarray(
-        heat_source_direct_utilisation_profile_file
+        heat_source_preheater_utilisation_profile_file
     )
     district_heat_info = pd.read_csv(district_heat_share_file, index_col=0)
     dist_fraction = district_heat_info["district fraction of node"]
@@ -2961,7 +2962,7 @@ def add_heat(
             p_set=heat_load.loc[n.snapshots],
         )
 
-        if options["tes"]:
+        if options["ttes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
             n.add(
@@ -3038,93 +3039,90 @@ def add_heat(
                 ],
             )
 
-            if heat_system == HeatSystem.URBAN_CENTRAL:
-                n.add("Carrier", f"{heat_system} water pits")
+        if (
+            heat_system == HeatSystem.URBAN_CENTRAL
+            and options["district_heating"]["ptes"]["enable"]
+        ):
+            n.add("Carrier", f"{heat_system} water pits")
 
-                n.add(
-                    "Bus",
-                    nodes + f" {heat_system} water pits",
-                    location=nodes,
-                    carrier=f"{heat_system} water pits",
-                    unit="MWh_th",
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} water pits",
+                location=nodes,
+                carrier=f"{heat_system} water pits",
+                unit="MWh_th",
+            )
+
+            energy_to_power_ratio_water_pit = costs.at[
+                "central water pit storage", "energy to power ratio"
+            ]
+
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water pits charger",
+                bus0=nodes + f" {heat_system} heat",
+                bus1=nodes + f" {heat_system} water pits",
+                efficiency=costs.at[
+                    "central water pit charger",
+                    "efficiency",
+                ],
+                carrier=f"{heat_system} water pits charger",
+                p_nom_extendable=True,
+                lifetime=costs.at["central water pit storage", "lifetime"],
+                marginal_cost=costs.at["central water pit charger", "marginal_cost"],
+            )
+
+            n.add(
+                "Bus",
+                nodes + f" {heat_system} water pits discharged",
+                location=nodes,
+                carrier=f"{heat_system} water pits discharged",
+                unit="MWh_th",
+            )
+
+            n.add(
+                "Link",
+                nodes,
+                suffix=f" {heat_system} water pits discharger",
+                bus0=nodes + f" {heat_system} water pits",
+                bus1=nodes + f" {heat_system} water pits discharged",
+                carrier=f"{heat_system} water pits discharger",
+                efficiency=costs.at[
+                    "central water pit discharger",
+                    "efficiency",
+                ],
+                p_nom_extendable=True,
+                lifetime=costs.at["central water pit storage", "lifetime"],
+            )
+            n.links.loc[
+                nodes + f" {heat_system} water pits charger",
+                "energy to power ratio",
+            ] = energy_to_power_ratio_water_pit
+
+            if options["district_heating"]["ptes"]["temperature_dependent_capacity"]:
+                # Load pre-calculated e_max_pu profiles
+                e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
+                e_max_pu = (
+                    e_max_pu_data.sel(name=nodes).to_pandas().reindex(index=n.snapshots)
                 )
+            else:
+                e_max_pu = 1
 
-                energy_to_power_ratio_water_pit = costs.at[
-                    "central water pit storage", "energy to power ratio"
-                ]
-
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} water pits charger",
-                    bus0=nodes + f" {heat_system} heat",
-                    bus1=nodes + f" {heat_system} water pits",
-                    efficiency=costs.at[
-                        "central water pit charger",
-                        "efficiency",
-                    ],
-                    carrier=f"{heat_system} water pits charger",
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                    marginal_cost=costs.at[
-                        "central water pit charger", "marginal_cost"
-                    ],
-                )
-
-                n.add(
-                    "Bus",
-                    nodes + f" {heat_system} water pits discharged",
-                    location=nodes,
-                    carrier=f"{heat_system} water pits discharged",
-                    unit="MWh_th",
-                )
-
-                n.add(
-                    "Link",
-                    nodes,
-                    suffix=f" {heat_system} water pits discharger",
-                    bus0=nodes + f" {heat_system} water pits",
-                    bus1=nodes + f" {heat_system} water pits discharged",
-                    carrier=f"{heat_system} water pits discharger",
-                    efficiency=costs.at[
-                        "central water pit discharger",
-                        "efficiency",
-                    ],
-                    p_nom_extendable=True,
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                )
-                n.links.loc[
-                    nodes + f" {heat_system} water pits charger",
-                    "energy to power ratio",
-                ] = energy_to_power_ratio_water_pit
-
-                if options["district_heating"]["ptes"]["dynamic_capacity"]:
-                    # Load pre-calculated e_max_pu profiles
-                    e_max_pu_data = xr.open_dataarray(ptes_e_max_pu_file)
-                    e_max_pu = (
-                        e_max_pu_data.sel(name=nodes)
-                        .to_pandas()
-                        .reindex(index=n.snapshots)
-                    )
-                else:
-                    e_max_pu = 1
-
-                n.add(
-                    "Store",
-                    nodes,
-                    suffix=f" {heat_system} water pits",
-                    bus=nodes + f" {heat_system} water pits",
-                    e_cyclic=True,
-                    e_nom_extendable=True,
-                    e_max_pu=e_max_pu,
-                    carrier=f"{heat_system} water pits",
-                    standing_loss=costs.at[
-                        "central water pit storage", "standing_losses"
-                    ]
-                    / 100,  # convert %/hour into unit/hour
-                    capital_cost=costs.at["central water pit storage", "capital_cost"],
-                    lifetime=costs.at["central water pit storage", "lifetime"],
-                )
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} water pits",
+                bus=nodes + f" {heat_system} water pits",
+                e_cyclic=True,
+                e_nom_extendable=True,
+                e_max_pu=e_max_pu,
+                carrier=f"{heat_system} water pits",
+                standing_loss=costs.at["central water pit storage", "standing_losses"]
+                / 100,  # convert %/hour into unit/hour
+                capital_cost=costs.at["central water pit storage", "capital_cost"],
+                lifetime=costs.at["central water pit storage", "lifetime"],
+            )
 
         if enable_ates and heat_system == HeatSystem.URBAN_CENTRAL:
             n.add("Carrier", f"{heat_system} aquifer thermal energy storage")
@@ -3234,21 +3232,15 @@ def add_heat(
                         p_max_pu=p_max_source,
                     )
 
-                direct_utilisation_profile = (
-                    heat_source.get_preheater_utilisation_profile(
-                        heat_source_direct_utilisation_profile, nodes, n
-                    )
-                )
-                preheater_utilisation_profile = (
-                    heat_source.get_preheater_utilisation_profile(
-                        heat_source_preheater_utilisation_profile, nodes, n
-                    )
-                )
-                requires_preheater = (preheater_utilisation_profile > 0.001).any()
-                requires_direct_utilisation = (direct_utilisation_profile > 0.001).any()
-
                 # if any preheater value is non-zero
-                if requires_preheater:
+                if heat_source.requires_preheater:
+                    preheater_utilisation_profile = (
+                        heat_source_preheater_utilisation_profile.sel(
+                            heat_source=heat_source.value, name=nodes
+                        )
+                        .to_pandas()
+                        .reindex(index=n.snapshots)
+                    )
                     n.add(
                         "Bus",
                         nodes,
@@ -3271,6 +3263,18 @@ def add_heat(
                     )
 
                 # add link for direct usage of heat source when source temperature exceeds forward temperature
+                direct_utilisation_profile = (
+                    heat_source_direct_utilisation_profile.sel(
+                        heat_source=heat_source.value, name=nodes
+                    )
+                    .to_pandas()
+                    .reindex(index=n.snapshots)
+                )
+
+                requires_direct_utilisation = (
+                    (direct_utilisation_profile > 0.001).any().any()
+                )
+
                 if requires_direct_utilisation:
                     n.add(
                         "Link",
@@ -3283,9 +3287,7 @@ def add_heat(
                         p_nom_extendable=True,
                     )
 
-            bus2_heat_pump = heat_source.get_heat_pump_bus2(
-                nodes, requires_preheater, heat_carrier
-            )
+            bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_carrier)
             efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
 
             n.add(
@@ -3309,11 +3311,55 @@ def add_heat(
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
 
+            if (
+                heat_system == HeatSystem.URBAN_CENTRAL
+                and params.sector["district_heating"]["ptes"][
+                    "discharge_resistive_boosting"
+                ]
+            ):
+                n.add(
+                    "Bus",
+                    nodes,
+                    location=nodes,
+                    suffix=" resistive heater",
+                    carrier=f"{heat_system} resistive heater",
+                )
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} water pits resistive booster",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes + f" {heat_system} resistive heater",
+                    bus2=nodes + f" {heat_system} water pits discharged",
+                    carrier=f"{heat_system} water pits resistive booster",
+                    efficiency=1 / ptes_boost_per_discharge_profiles,
+                    efficiency2=1 - 1 / ptes_boost_per_discharge_profiles,
+                    p_nom_extendable=True,
+                    p_min_pu=-1,
+                    p_max_pu=0,
+                )
+
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} resistive heater stand-alone",
+                    bus0=nodes + f" {heat_system} resistive heater",
+                    bus1=nodes + f" {heat_system} heat",
+                    carrier=f"{heat_system} resistive heater stand-alone",
+                    efficiency=1.0,
+                    p_nom_extendable=True,
+                )
+
+                resistive_heater_bus1 = nodes + f" {heat_system} resistive heater"
+            else:
+                resistive_heater_bus1 = nodes + f" {heat_system} heat"
+
             n.add(
                 "Link",
                 nodes + f" {heat_system} resistive heater",
                 bus0=nodes,
-                bus1=nodes + f" {heat_system} heat",
+                bus1=resistive_heater_bus1,
                 carrier=f"{heat_system} resistive heater",
                 efficiency=costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "efficiency"]
@@ -6259,15 +6305,15 @@ if __name__ == "__main__":
                 "recovery_factor"
             ],
             enable_ates=snakemake.params.sector["district_heating"]["ates"]["enable"],
-            ptes_direct_utilisation_profile=snakemake.input.ptes_direct_utilisation_profiles,
+            ptes_boost_per_discharge_profiles=snakemake.input.ptes_boost_per_discharge_profiles,
             district_heat_share_file=snakemake.input.district_heat_share,
             solar_thermal_total_file=snakemake.input.solar_thermal_total,
             retro_cost_file=snakemake.input.retro_cost,
             floor_area_file=snakemake.input.floor_area,
             heat_source_profile_files={
                 source: snakemake.input[source]
-                for source in snakemake.params.limited_heat_sources
-                if source in snakemake.input.keys()
+                for source in snakemake.params.heat_sources["urban central"]
+                if HeatSource(source).requires_generator
             },
             params=snakemake.params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,

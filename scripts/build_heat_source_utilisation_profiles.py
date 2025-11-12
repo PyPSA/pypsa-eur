@@ -19,39 +19,29 @@ import logging
 import xarray as xr
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts.definitions.heat_source import HeatSource
 
 logger = logging.getLogger(__name__)
 
 
-def get_source_temperature(heat_source_key: str):
-    """
-    Get the constant temperature of a heat source.
+def get_source_temperature(
+    snakemake_params: dict, snakemake_input: dict, heat_source_name: str
+) -> float | xr.DataArray:
+    heat_source = HeatSource(heat_source_name)
+    if heat_source.has_constant_temperature:
+        try:
+            return snakemake_params[f"constant_temperature_{heat_source_name}"]
+        except KeyError:
+            raise ValueError(
+                f"Constant temperature for heat source {heat_source_name} not specified in parameters."
+            )
 
-    Args:
-    ----
-    heat_source_key: str
-        The key (name) of the heat source.
-
-    Returns:
-    -------
-    float
-        The constant temperature of the heat source in degrees Celsius.
-
-    Raises:
-    ------
-    ValueError
-        If the heat source is unknown (not in `config`).
-    """
-
-    if heat_source_key in snakemake.params.limited_heat_sources.keys():
-        return snakemake.params.limited_heat_sources[heat_source_key][
-            "constant_temperature_celsius"
-        ]
     else:
-        raise ValueError(
-            f"Unknown heat source {heat_source_key}. Must be one of "
-            f"{snakemake.params.heat_sources.keys()}."
-        )
+        if f"temp_{heat_source_name}" not in snakemake_input.keys():
+            raise ValueError(
+                f"Missing input temperature for heat source {heat_source_name}."
+            )
+        return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
 
 
 def get_direct_utilisation_profile(
@@ -80,7 +70,7 @@ def get_preheater_utilisation_profile(
     source_temperature: float | xr.DataArray,
     forward_temperature: xr.DataArray,
     return_temperature: xr.DataArray,
-    heat_source_cooling: int = 20,
+    heat_source_cooling: float,
 ) -> xr.DataArray | float:
     """
     Get the direct heat source utilisation profile.
@@ -103,8 +93,8 @@ def get_preheater_utilisation_profile(
     return xr.where(
         (source_temperature < forward_temperature)
         * (source_temperature > return_temperature),
-        (source_temperature - return_temperature)
-        / (source_temperature - heat_source_cooling),
+        heat_source_cooling
+        / (source_temperature - return_temperature + heat_source_cooling),
         0.0,
     )
 
@@ -132,23 +122,31 @@ if __name__ == "__main__":
     xr.concat(
         [
             get_direct_utilisation_profile(
-                source_temperature=get_source_temperature(heat_source_key),
+                source_temperature=get_source_temperature(
+                    snakemake_params=snakemake.params,
+                    snakemake_input=snakemake.input,
+                    heat_source_name=heat_source_key,
+                ),
                 forward_temperature=central_heating_forward_temperature,
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in heat_sources
         ],
         dim="heat_source",
-    ).to_netcdf(snakemake.output.direct_heat_source_utilisation_profiles)
+    ).to_netcdf(snakemake.output.heat_source_direct_utilisation_profiles)
 
     xr.concat(
         [
             get_preheater_utilisation_profile(
-                source_temperature=get_source_temperature(heat_source_key),
+                source_temperature=get_source_temperature(
+                    heat_source_name=heat_source_key,
+                    snakemake_params=snakemake.params,
+                    snakemake_input=snakemake.input,
+                ),
                 forward_temperature=central_heating_forward_temperature,
                 return_temperature=central_heating_return_temperature,
-                heat_source_cooling=20,  # TODO: improve heat source cooling
+                heat_source_cooling=snakemake.params.heat_source_cooling,
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in heat_sources
         ],
         dim="heat_source",
-    ).to_netcdf(snakemake.output.direct_heat_source_utilisation_profiles)
+    ).to_netcdf(snakemake.output.heat_source_preheater_utilisation_profiles)

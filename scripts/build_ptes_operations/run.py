@@ -19,32 +19,27 @@ Relevant Settings
     sector
         district_heating:
             ptes:
-                dynamic_capacity:
-                discharge_boosting_required:
+                temperature_dependent_capacity:
                 charge_boosting_required:
-                temperature_profile
+                discharge_resistive_boosting:
                 max_top_temperature:
                 min_bottom_temperature:
 
 Inputs
 ------
-- `resources/<run_name>/forward_temperature.nc`
+- `resources/<run_name>/central_heating_forward_temperature_profiles.nc`
     Forward temperature profiles for the district heating networks.
 - `resources/<run_name>/central_heating_return_temperature_profiles.nc`:
     Return temperature profiles for the district heating networks.
-- `resources/<run_name>/ptes_temperature_boost_ratio_profiles.nc`
-    Ratio of PTES charge that requires additional heating due to temperature differences.
 
 Outputs
 -------
-- `resources/<run_name>/ptes_top_temperature_profiles.nc`
+- `resources/<run_name>/ptes_top_temperature_profile.nc`
     Clipped PTES top temperature profile (in °C).
-- `resources/<run_name>/ptes_e_max_pu_profiles.nc`
+- `resources/<run_name>/ptes_e_max_pu_profile.nc`
     Normalized PTES capacity profiles.
-- `ptes_temperature_boost_ratio_profiles` (netCDF):
-    Charging temperature boost ratio time series.
-- `ptes_forward_temperature_boost_ratio_profiles` (netCDF):
-    Forward flow temperature boost ratio time series.
+- `resources/<run_name>/boost_per_discharge_profile.nc` (conditional):
+    Discharge temperature boost ratio time series (only if discharge_resistive_boosting is enabled).
 
 Source
 ------
@@ -59,7 +54,6 @@ import xarray as xr
 from scripts._helpers import set_scenario_config
 from scripts.build_ptes_operations.ptes_temperature_approximator import (
     PtesTemperatureApproximator,
-    TesTemperatureMode,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,25 +70,15 @@ if __name__ == "__main__":
 
     set_scenario_config(snakemake)
 
-    if (
-        snakemake.params.charge_boosting_required
-        and TesTemperatureMode(snakemake.params.ptes_temperature_profile)
-        is TesTemperatureMode.DYNAMIC
-    ):
-        raise ValueError(
-            "Charger boosting cannot be used with 'dynamic' temperature profile"
-        )
-
     # Load temperature profiles
     logger.info(
         "Loading district heating temperature profiles and approximating PTES temperatures"
     )
-    logger.info(
-        f"PTES configuration: temperature_profile={snakemake.params.ptes_temperature_profile}, "
-        f"charge_boosting_required={snakemake.params.charge_boosting_required}, "
-        f"discharge_boosting_required={snakemake.params.discharge_boosting_required}, "
-        f"dynamic_capacity={snakemake.params.dynamic_capacity}"
-    )
+    logger.info(f"PTES configuration: {snakemake.params}")
+
+    # Discharge boosting is "required" only if boosting via resistive heaters is enabled
+    # if you'd like to model boosting via heat pumps, add "ptes" to central heating heat sources and set temperatures accordingly
+    discharge_boosting_required: bool = snakemake.params.discharge_resistive_boosting
 
     # Initialize unified PTES temperature class
     ptes_temperature_approximator = PtesTemperatureApproximator(
@@ -104,28 +88,21 @@ if __name__ == "__main__":
         return_temperature=xr.open_dataarray(
             snakemake.input.central_heating_return_temperature_profiles
         ),
-        max_top_temperature=snakemake.params.max_ptes_top_temperature,
-        min_bottom_temperature=snakemake.params.min_ptes_bottom_temperature,
-        temperature_profile=TesTemperatureMode(
-            snakemake.params.ptes_temperature_profile
-        ),
+        top_temperature=snakemake.params.top_temperature,
+        bottom_temperature=snakemake.params.bottom_temperature,
         charge_boosting_required=snakemake.params.charge_boosting_required,
-        discharge_boosting_required=snakemake.params.discharge_boosting_required,
-        dynamic_capacity=snakemake.params.dynamic_capacity,
+        discharge_boosting_required=discharge_boosting_required,
+        temperature_dependent_capacity=snakemake.params.temperature_dependent_capacity,
     )
 
-    ptes_temperature_approximator.top_temperature.to_netcdf(
-        snakemake.output.ptes_top_temperature_profile
+    ptes_temperature_approximator.top_temperature_profile.to_netcdf(
+        snakemake.output.ptes_top_temperature_profiles
     )
 
     ptes_temperature_approximator.e_max_pu.to_netcdf(
-        snakemake.output.ptes_e_max_pu_profile
+        snakemake.output.ptes_e_max_pu_profiles
     )
 
     ptes_temperature_approximator.boost_per_discharge.to_netcdf(
-        snakemake.output.boost_per_discharge_profile
-    )
-
-    ptes_temperature_approximator.boost_per_charge.to_netcdf(
-        snakemake.output.boost_per_charge_profile
+        snakemake.output.ptes_boost_per_discharge_profiles
     )

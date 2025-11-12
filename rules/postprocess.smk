@@ -150,7 +150,7 @@ if config["foresight"] != "perfect":
     rule plot_heat_source_map:
         params:
             plotting=config_provider("plotting"),
-            heat_sources=config_provider("sector", "heat_pump_sources"),
+            heat_sources=config_provider("sector", "heat_sources"),
         input:
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
             heat_source_temperature=lambda w: (

@@ -2,30 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-from enum import Enum
+import logging
 
 import xarray as xr
 
-
-class TesTemperatureMode(Enum):
-    """
-    TES temperature profile assumptions.
-
-    CONSTANT: Assumes fixed temperatures at operational limits.
-        - Top temperature: constant at max_top_temperature
-        - Bottom temperature: constant at min_bottom_temperature
-        - Assumes charge-boosting to maintain top temperature.
-        - NOTE: Assuming bottom_temperature = min_bottom_temperature ignores that cooling of the return temperature might be necessary in practice.
-
-    DYNAMIC: Assumes temperatures follow network conditions.
-        - Top temperature: follows forward_temperature (clipped at max_top_temperature)
-        - Bottom temperature: follows return_temperature
-        - Does not assume charge-boosting.
-        - Note: This ignores that the TES temperatures do not match the supply temperatures due to thermal losses or other factors.
-    """
-
-    CONSTANT = "constant"
-    DYNAMIC = "dynamic"
+logger = logging.getLogger(__name__)
 
 
 class PtesTemperatureApproximator:
@@ -41,17 +22,15 @@ class PtesTemperatureApproximator:
         The forward temperature profile from the district heating network.
     return_temperature : xr.DataArray
         The return temperature profile from the district heating network.
-    max_top_temperature : float
-        Maximum operational temperature of top layer in PTES.
-    min_bottom_temperature : float
-        Minimum operational temperature of bottom layer in PTES.
-    temperature_profile : TesTemperatureProfile
-        TES temperature profile assumption.
+    top_temperature : float | str
+        Operational temperature specification for top layer in PTES.
+    bottom_temperature : float | str
+        Operational temperature specification for bottom layer in PTES.
     charge_boosting_required : bool
         Whether charge boosting is required/allowed.
     discharge_boosting_required : bool
         Whether discharge boosting is required/allowed.
-    dynamic_capacity : bool
+    temperature_dependent_capacity : bool
         Whether storage capacity varies with temperature. If False, assumes constant capacity.
     """
 
@@ -59,12 +38,11 @@ class PtesTemperatureApproximator:
         self,
         forward_temperature: xr.DataArray,
         return_temperature: xr.DataArray,
-        max_top_temperature: float,
-        min_bottom_temperature: float,
-        temperature_profile: TesTemperatureMode,
+        top_temperature: float | str,
+        bottom_temperature: float | str,
         charge_boosting_required: bool,
         discharge_boosting_required: bool,
-        dynamic_capacity: bool,
+        temperature_dependent_capacity: bool,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -75,67 +53,90 @@ class PtesTemperatureApproximator:
             The forward temperature profile from the district heating network.
         return_temperature : xr.DataArray
             The return temperature profile from the district heating network.
-        max_top_temperature : float
-            Maximum operational temperature of top layer in PTES.
-        min_bottom_temperature : float
-            Minimum operational temperature of bottom layer in PTES.
-        temperature_profile : TesTemperatureProfile
-            TES temperature profile assumption.
+        top_temperature : float | str
+            Operational temperature of top layer in PTES. Either a float value or 'forward' for dynamic profiles.
+        bottom_temperature : float | str
+            Operational temperature of bottom layer in PTES. Either a float value or 'return' for dynamic profiles.
         charge_boosting_required : bool
             Whether charge boosting is required/allowed.
         discharge_boosting_required : bool
             Whether discharge boosting is required/allowed.
-        dynamic_capacity : bool
+        temperature_dependent_capacity : bool
             Whether storage capacity varies with temperature. If False, assumes constant capacity.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
-        self.max_top_temperature = max_top_temperature
-        self.min_bottom_temperature = min_bottom_temperature
-        self.temperature_profile = temperature_profile
+        self.top_temperature = top_temperature
+        self.bottom_temperature = bottom_temperature
         self.charge_boosting_required = charge_boosting_required
         self.discharge_boosting_required = discharge_boosting_required
-        self.dynamic_capacity = dynamic_capacity
+        self.temperature_dependent_capacity = temperature_dependent_capacity
+
+        if self.charge_boosting_required:
+            raise NotImplementedError(
+                "Charge boosting for PTES is currently not supported but might be retintroduced in the future."
+            )
 
     @property
-    def top_temperature(self) -> xr.DataArray:
+    def top_temperature_profile(self) -> xr.DataArray:
         """
-        Forward temperature clipped at the maximum PTES temperature or constant max temperature.
+        PTES top layer temperature profile.
+
+        Returns either the forward temperature (if top_temperature == 'forward')
+        or a constant temperature profile (if top_temperature is a numeric value).
 
         Returns
         -------
         xr.DataArray
             The resulting top temperature profile for PTES.
         """
-        if self.temperature_profile == TesTemperatureMode.CONSTANT:
-            return xr.full_like(self.forward_temperature, self.max_top_temperature)
-        elif self.temperature_profile == TesTemperatureMode.DYNAMIC:
-            return self.forward_temperature.where(
-                self.forward_temperature <= self.max_top_temperature,
-                self.max_top_temperature,
+        if self.top_temperature == "forward":
+            logger.info(
+                f"PTES top temperature profile: Using dynamic forward temperature from district heating network "
+                f"(shape: {self.forward_temperature.shape}, range: {float(self.forward_temperature.min().values):.1f}°C to {float(self.forward_temperature.max().values):.1f}°C)"
             )
+            return self.forward_temperature
+        elif isinstance(self.top_temperature, (int, float)):
+            logger.info(
+                f"PTES top temperature profile: Using constant temperature of {self.top_temperature}°C "
+                f"for all {self.forward_temperature.size} snapshots and nodes"
+            )
+            return xr.full_like(self.forward_temperature, self.top_temperature)
         else:
-            raise NotImplementedError(
-                f"Temperature profile {self.temperature_profile} not implemented"
+            raise ValueError(
+                f"Invalid top_temperature: {self.top_temperature}. "
+                "Must be 'forward' or a numeric value."
             )
 
     @property
-    def bottom_temperature(self) -> xr.DataArray:
+    def bottom_temperature_profile(self) -> xr.DataArray:
         """
-        Return temperature clipped at the minimum PTES temperature or constant min temperature.
+        PTES bottom layer temperature profile.
+
+        Returns either the return temperature (if bottom_temperature == 'return')
+        or a constant temperature profile (if bottom_temperature is a numeric value).
 
         Returns
         -------
         xr.DataArray
             The resulting bottom temperature profile for PTES.
         """
-        if self.temperature_profile == TesTemperatureMode.CONSTANT:
-            return xr.full_like(self.return_temperature, self.min_bottom_temperature)
-        elif self.temperature_profile == TesTemperatureMode.DYNAMIC:
+        if self.bottom_temperature == "return":
+            logger.info(
+                f"PTES bottom temperature profile: Using dynamic return temperature from district heating network "
+                f"(shape: {self.return_temperature.shape}, range: {float(self.return_temperature.min().values):.1f}°C to {float(self.return_temperature.max().values):.1f}°C)"
+            )
             return self.return_temperature
+        elif isinstance(self.bottom_temperature, (int, float)):
+            logger.info(
+                f"PTES bottom temperature profile: Using constant temperature of {self.bottom_temperature}°C "
+                f"for all {self.return_temperature.size} snapshots and nodes"
+            )
+            return xr.full_like(self.return_temperature, self.bottom_temperature)
         else:
-            raise NotImplementedError(
-                f"Temperature profile {self.temperature_profile} not implemented"
+            raise ValueError(
+                f"Invalid bottom_temperature: {self.bottom_temperature}. "
+                "Must be 'return' or a numeric value."
             )
 
     @property
@@ -149,15 +150,35 @@ class PtesTemperatureApproximator:
         xr.DataArray
             Normalized delta T values between 0 and 1, representing the
             available storage capacity as a percentage of maximum capacity.
-            If dynamic_capacity is False, returns constant capacity of 1.0.
+            If temperature_dependent_capacity is False, returns constant capacity of 1.0.
         """
-        if self.dynamic_capacity:
-            delta_t = self.top_temperature - self.bottom_temperature
-            normalized_delta_t = delta_t / (
-                self.max_top_temperature - self.min_bottom_temperature
+        if self.temperature_dependent_capacity:
+            delta_t = self.top_temperature_profile - self.bottom_temperature_profile
+            # Get max possible delta_t for normalization
+            max_top = (
+                self.top_temperature
+                if isinstance(self.top_temperature, (int, float))
+                else self.forward_temperature.max().values
             )
-            return normalized_delta_t.clip(min=0)  # Ensure non-negative values
+            min_bottom = (
+                self.bottom_temperature
+                if isinstance(self.bottom_temperature, (int, float))
+                else self.return_temperature.min().values
+            )
+            max_delta_t = max_top - min_bottom
+            normalized_delta_t = delta_t / max_delta_t
+            result = normalized_delta_t.clip(min=0)  # Ensure non-negative values
+            logger.info(
+                f"PTES capacity (e_max_pu): Calculating temperature-dependent capacity. "
+                f"Normalization: max_delta_t={max_delta_t:.2f}K (max_top={max_top:.2f}°C, min_bottom={min_bottom:.2f}°C). "
+                f"Resulting capacity range: {float(result.min().values):.3f} to {float(result.max().values):.3f} p.u."
+            )
+            return result
         else:
+            logger.info(
+                f"PTES capacity (e_max_pu): Using constant capacity of 1.0 p.u. (temperature-independent) "
+                f"for all {self.forward_temperature.size} snapshots and nodes"
+            )
             return xr.ones_like(self.forward_temperature)
 
     @property
@@ -193,11 +214,28 @@ class PtesTemperatureApproximator:
             The resulting fraction of PTES charge that must be further heated.
         """
         if self.discharge_boosting_required:
-            return (
-                (self.forward_temperature - self.top_temperature)
-                / (self.top_temperature - self.bottom_temperature)
-            ).where(self.forward_temperature > self.top_temperature, 0)
+            result = (
+                (self.forward_temperature - self.top_temperature_profile)
+                / (self.top_temperature_profile - self.bottom_temperature_profile)
+            ).where(self.forward_temperature > self.top_temperature_profile, 0)
+
+            # Count how many snapshots require boosting
+            boosting_needed = (
+                (self.forward_temperature > self.top_temperature_profile).sum().values
+            )
+            total_snapshots = self.forward_temperature.size
+
+            logger.info(
+                f"Discharge boosting (boost_per_discharge): Enabled. "
+                f"Boosting required for {int(boosting_needed)}/{total_snapshots} snapshot-node combinations "
+                f"(ratio range: {float(result.min().values):.3f} to {float(result.max().values):.3f})"
+            )
+            return result
         else:
+            logger.info(
+                f"Discharge boosting (boost_per_discharge): Not required. "
+                f"Returning boost_per_discharge=0 for all {self.forward_temperature.size} snapshots and nodes"
+            )
             return xr.zeros_like(self.forward_temperature)
 
     @property
@@ -234,16 +272,37 @@ class PtesTemperatureApproximator:
         Returns
         -------
         xr.DataArray
-            The fraction of the PTES's available storage capacity already used.
+            The ratio of additional boost energy needed to the energy already delivered by charging.
         """
         if self.charge_boosting_required:
-            return (
+            # Get the max top temperature value
+            max_top = (
+                self.top_temperature
+                if isinstance(self.top_temperature, (int, float))
+                else self.top_temperature_profile
+            )
+            result = (
                 (
-                    (self.max_top_temperature - self.forward_temperature)
+                    (max_top - self.forward_temperature)
                     / (self.forward_temperature - self.return_temperature)
                 )
-                .where(self.forward_temperature < self.max_top_temperature, 0)
+                .where(self.forward_temperature < max_top, 0)
                 .clip(max=1)
             )
+
+            # Count how many snapshots require boosting
+            boosting_needed = (self.forward_temperature < max_top).sum().values
+            total_snapshots = self.forward_temperature.size
+
+            logger.info(
+                f"Charge boosting (boost_per_charge): Enabled. "
+                f"Boosting required for {int(boosting_needed)}/{total_snapshots} snapshot-node combinations "
+                f"(ratio range: {float(result.min().values):.3f} to {float(result.max().values):.3f})"
+            )
+            return result
         else:
+            logger.info(
+                f"Charge boosting (boost_per_charge): Not required. "
+                f"Returning boost_per_charge=0 for all {self.forward_temperature.size} snapshots and nodes"
+            )
             return xr.zeros_like(self.forward_temperature)

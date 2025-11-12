@@ -73,7 +73,7 @@ rule add_brownfield:
         drop_leap_day=config_provider("enable", "drop_leap_day"),
         carriers=config_provider("electricity", "renewable_carriers"),
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
-        tes=config_provider("sector", "tes"),
+        ttes=config_provider("sector", "ttes"),
         dynamic_ptes_capacity=config_provider(
             "sector", "district_heating", "ptes", "dynamic_capacity"
         ),

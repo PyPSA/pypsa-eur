@@ -74,17 +74,17 @@ class HeatSource(Enum):
         return self.value
 
     @property
-    def constant_temperature_celsius(self) -> float | bool:
+    def has_constant_temperature(self) -> bool:
         """
         Returns the constant temperature in Celsius for the heat source.
 
         Returns
         -------
-        float | None
-            The constant temperature in Celsius, or None if not applicable.
+        bool
+            True if the heat source has a constant temperature else False.
         """
         if self == HeatSource.GEOTHERMAL:
-            return 65
+            return True
         else:
             return False
 
@@ -125,6 +125,21 @@ class HeatSource(Enum):
         else:
             return False
 
+    @property
+    def requires_preheater(self) -> bool:
+        """
+        Returns whether the heat source requires a pre-heater.
+
+        Returns
+        -------
+        bool
+            True if the heat source requires a pre-heater, False otherwise.
+        """
+        if self in [HeatSource.GEOTHERMAL, HeatSource.PTES]:
+            return True
+        else:
+            return False
+
     def get_capital_cost(self, costs, overdim_factor: float, heat_system) -> float:
         """
         Returns the capital cost for the heat source generator.
@@ -146,7 +161,7 @@ class HeatSource(Enum):
         # For direct utilisation heat sources, get cost from technology-data
         # For other limited sources (like river_water without direct utilisation), return 0.0
         # For inexhaustible sources, this method shouldn't be called
-        if self.supports_direct_utilisation:
+        if self in [HeatSource.GEOTHERMAL]:
             return (
                 costs.at[
                     heat_system.heat_source_costs_name(self),
@@ -176,14 +191,12 @@ class HeatSource(Enum):
         # For direct utilisation heat sources, get lifetime from technology-data
         # For other limited sources (like river_water without direct utilisation), return np.inf
         # For inexhaustible sources, this method shouldn't be called
-        if self.supports_direct_utilisation:
+        if self in [HeatSource.GEOTHERMAL]:
             return costs.at[heat_system.heat_source_costs_name(self), "lifetime"]
         else:
             return float("inf")
 
-    def get_heat_pump_bus2(
-        self, nodes, requires_preheater: bool, heat_carrier: str
-    ) -> str:
+    def get_heat_pump_bus2(self, nodes, heat_carrier: str) -> str:
         """
         Returns the bus2 configuration for the heat pump link.
 
@@ -204,12 +217,12 @@ class HeatSource(Enum):
         if not self.is_limited:
             # Inexhaustible sources (air, ground) don't have a bus2
             return ""
-        elif requires_preheater:
+        elif self.requires_preheater:
             # Sources with preheater use pre-chilled bus
-            return str(nodes) + f" {heat_carrier} pre-chilled"
+            return nodes + f" {heat_carrier} pre-chilled"
         else:
             # Limited sources without preheater use the heat carrier bus directly
-            return str(nodes) + f" {heat_carrier}"
+            return nodes + f" {heat_carrier}"
 
     def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
         """
@@ -235,66 +248,59 @@ class HeatSource(Enum):
             # This is 1 - (1/COP), representing (COP-1)/COP
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
-    def get_direct_utilisation_profile(
-        self, direct_utilisation_profile, nodes, n
-    ) -> float:
-        """
-        Returns the efficiency for direct heat utilisation.
+    # def get_preheater_utilisation_profile(
+    #     self, preheater_utilisation_profile, nodes, n
+    # ) -> float:
+    #     """
+    #     Returns the efficiency for direct heat utilisation.
 
-        Parameters
-        ----------
-        direct_heat_profile : xr.DataArray
-            DataArray containing direct heat utilisation profiles.
-        nodes : pd.Index or list
-            The nodes for which to get the efficiency.
-        n : pypsa.Network
-            The PyPSA network object (for accessing snapshots).
+    #     Parameters
+    #     ----------
+    #     preheater_utilisation_profile : xr.DataArray
+    #         DataArray containing direct heat utilisation profiles.
+    #     nodes : pd.Index or list
+    #         The nodes for which to get the efficiency.
+    #     n : pypsa.Network
+    #         The PyPSA network object (for accessing snapshots).
 
-        Returns
-        -------
-        float or pd.Series
-            The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
-        """
-        # Extract the efficiency profile from the data
-        # This is a binary or continuous value indicating when/how much heat
-        # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
-        return (
-            direct_utilisation_profile.sel(
-                heat_source=str(self),
-                name=nodes,
-            )
-            .to_pandas()
-            .reindex(index=n.snapshots)
-        )
+    #     Returns
+    #     -------
+    #     float or pd.Series
+    #         The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
+    #     """
+    #     # Extract the efficiency profile from the data
+    #     # This is a binary or continuous value indicating when/how much heat
+    #     # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
+    #     return (
+    #         preheater_utilisation_profile.sel(
+    #             heat_source=str(self),
+    #             name=nodes,
+    #         )
+    #         .to_pandas()
+    #         .reindex(index=n.snapshots)
+    #     )
 
-    def get_preheater_utilisation_profile(
-        self, preheater_utilisation_profile, nodes, n
-    ) -> float:
-        """
-        Returns the efficiency for direct heat utilisation.
+    # def get_source_temperature(self, snakemake_input: dict, snakemake_params) -> float | xr.DataArray:
+    #     """
+    #     Get the heat source temperature.
 
-        Parameters
-        ----------
-        preheater_utilisation_profile : xr.DataArray
-            DataArray containing direct heat utilisation profiles.
-        nodes : pd.Index or list
-            The nodes for which to get the efficiency.
-        n : pypsa.Network
-            The PyPSA network object (for accessing snapshots).
+    #     Args:
+    #     ----
+    #     snakemake_input: dict
+    #         Snakemake input dictionary containing the heat source temperature file path.
 
-        Returns
-        -------
-        float or pd.Series
-            The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
-        """
-        # Extract the efficiency profile from the data
-        # This is a binary or continuous value indicating when/how much heat
-        # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
-        return (
-            preheater_utilisation_profile.sel(
-                heat_source=str(self),
-                name=nodes,
-            )
-            .to_pandas()
-            .reindex(index=n.snapshots)
-        )
+    #     Returns:
+    #     -------
+    #     float | xr.DataArray
+    #         The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
+
+    #     """
+    #     if self.has_constant_temperature:
+    #         return snakemake_params[f"{str(self)}_constant_temperature"]
+    #     else:
+    #         try:
+    #             return xr.open_dataarray(snakemake_input[f"temp_{str(self)}"])
+    #         except KeyError:
+    #             raise ValueError(
+    #                 f"Missing input temperature for heat source {str(self)}."
+    #             )

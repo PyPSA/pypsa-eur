@@ -520,11 +520,13 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: false
+      enable: true
+      temperature_dependent_capacity: false
       charge_boosting_required: false
-      discharge_boosting_required: false
-      max_top_temperature: 90
-      min_bottom_temperature: 35
+      discharge_resistive_boosting: false
+      top_temperature: 90
+      bottom_temperature: 10
+      dynamic_temperature: false
     ates:
       enable: false
       suitable_aquifer_types:
@@ -543,19 +545,11 @@ sector:
       isentropic_compressor_efficiency: 0.8
       heat_loss: 0.0
       min_delta_t_lift: 10 #K
-    limited_heat_sources:
-      geothermal:
-        constant_temperature_celsius: 65
-        ignore_missing_regions: false
-      river_water:
-        constant_temperature_celsius: false
-    direct_utilisation_heat_sources:
-    - geothermal
-    temperature_limited_stores:
-    - ptes
     dh_areas:
       buffer: 1000
       handle_missing_countries: fill
+    geothermal:
+      constant_temperature_celsius: 65
   heat_sources:
     urban central:
     - air
@@ -663,7 +657,7 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-  tes: true
+  ttes: true
   boilers: true
   resistive_heaters: true
   oil_boilers: false
