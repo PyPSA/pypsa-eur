@@ -120,17 +120,21 @@ def get_investment_weighting(time_weighting: pd.Series, r: float = 0.01) -> pd.S
     """
     end = time_weighting.cumsum()
     start = time_weighting.cumsum().shift().fillna(0)
-    T = end.max()
 
     # Calculate social discount factor for each period using closed-form formula
-    # This sums the discount factors from start to end of each period,
-    # discounted from the final year T
-    delta = start.map(
-        lambda x: (
-            ((1 + r) ** (T - x) - (1 + r) ** (T - end[end > x].min()))
-            / ((1 + r) ** T * r)
-        )
-    )
+    # This sums the discount factors from start to end of each period
+    if r == 0:
+        # With zero discount rate, weight equals the duration
+        delta = end - start
+    else:
+        # Geometric series sum: sum of (1/(1+r)^t) for t from start to end-1
+        # Using closed form: (1/(1+r)^start) * (1 - (1/(1+r))^duration) / (1 - 1/(1+r))
+        # Simplified: ((1/(1+r)^start) - (1/(1+r)^end)) / (1 - 1/(1+r))
+        # Further: ((1/(1+r)^start) - (1/(1+r)^end)) * (1+r) / r
+        discount_start = 1 / ((1 + r) ** start)
+        discount_end = 1 / ((1 + r) ** end)
+        delta = (discount_start - discount_end) * (1 + r) / r
+
     return delta
 
 
@@ -373,8 +377,12 @@ def apply_investment_period_weightings(
         )
 
     # Calculate time weightings (duration of each period in years)
-    # Assumes last period has same duration as previous period
-    time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
+    # For single period, use 5 years as conservative default
+    # For multiple periods, each period lasts until next, last uses same as previous
+    if len(n.investment_periods) == 1:
+        time_w = pd.Series([5], index=n.investment_periods)
+    else:
+        time_w = n.investment_periods.to_series().diff().shift(-1).ffill()
     n.investment_period_weightings["years"] = time_w
 
     # Calculate objective weightings with social discounting

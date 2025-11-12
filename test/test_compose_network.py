@@ -664,6 +664,7 @@ def test_concatenate_basic_two_horizons():
     n2.add("Generator", "gen1", bus="bus1", carrier="solar", p_nom=100)
     n2.add("Generator", "gen2", bus="bus2", carrier="onwind", p_nom=200)
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)
@@ -702,6 +703,7 @@ def test_concatenate_three_horizons():
     n2.add("Generator", "gen1", bus="bus1", carrier="solar", p_nom=100)
     n2.add("Generator", "gen2", bus="bus1", carrier="onwind", p_nom=150)
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate first two
     n12 = concatenate_network_with_previous(n1, n2, 2040)
@@ -715,6 +717,7 @@ def test_concatenate_three_horizons():
     n3.add("Generator", "gen2", bus="bus1", carrier="onwind", p_nom=150)
     n3.add("Generator", "gen3", bus="bus2", carrier="offwind-ac", p_nom=300)
     n3.snapshot_weightings["objective"] = 1.0
+    n3.investment_periods = [2050]
 
     # Concatenate all three
     n_result = concatenate_network_with_previous(n12, n3, 2050)
@@ -748,6 +751,7 @@ def test_concatenate_with_time_series():
     n2.add("Generator", "gen1", bus="bus1", carrier="solar", p_nom=100)
     n2.add("Generator", "gen2", bus="bus1", carrier="onwind", p_nom=150)
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)
@@ -786,6 +790,7 @@ def test_concatenate_with_stores():
         e_nom=1000,
     )
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)
@@ -816,6 +821,7 @@ def test_concatenate_with_links():
     n2.add("Link", "link1", bus0="bus1", bus1="bus2", efficiency=0.9, p_nom=1000)
     n2.add("Link", "link2", bus0="bus2", bus1="bus1", efficiency=0.85, p_nom=800)
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)
@@ -841,6 +847,7 @@ def test_concatenate_preserves_metadata():
     n2.set_snapshots(pd.date_range("2040-01-01", periods=2, freq="h"))
     n2.add("Bus", "bus1")
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)
@@ -867,6 +874,7 @@ def test_concatenate_static_to_time_varying():
     n2.add("Generator", "gen1", bus="bus1", carrier="gas", marginal_cost=50.0)
     n2.add("Generator", "gen2", bus="bus1", carrier="solar", marginal_cost=0.0)
     n2.snapshot_weightings["objective"] = 1.0
+    n2.investment_periods = [2040]
 
     # Concatenate
     n_result = concatenate_network_with_previous(n1, n2, 2040)

@@ -45,8 +45,9 @@ class TestGetInvestmentWeighting:
 
         # Check dimensions
         assert len(result) == 3
-        # Earlier periods should still have higher weights
-        assert result[2030] > result[2045] > result[2060]
+        # Second period has longer duration (15 years) so higher weight despite being later
+        # Third period is both shorter and later, so lowest weight
+        assert result[2045] > result[2030] > result[2060]
 
     def test_high_discount_rate(self):
         """Test with high discount rate (5%)."""
@@ -66,8 +67,9 @@ class TestGetInvestmentWeighting:
         result = get_investment_weighting(time_weighting, r=0.02)
 
         assert len(result) == 1
-        # Single period weight should equal its duration (no discounting effect)
-        np.testing.assert_allclose(result[2030], 10.0, rtol=1e-10)
+        # Single period weight is discounted sum from year 0 to 10
+        expected = sum(1 / (1.02) ** t for t in range(0, 10))
+        np.testing.assert_allclose(result[2030], expected, rtol=1e-10)
 
     def test_two_periods(self):
         """Test with two periods."""
