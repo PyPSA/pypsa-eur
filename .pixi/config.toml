@@ -3,3 +3,4 @@
 # SPDX-License-Identifier: CC0-1.0
 
 pinning-strategy = "latest-up"
+run-post-link-scripts = "false" # set to "insecure" to allow running post-link scripts
