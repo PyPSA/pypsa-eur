@@ -6,8 +6,12 @@
 Compose network by combining all electricity and sector components.
 
 This script combines functionality from add_electricity.py, prepare_sector_network.py,
-add_existing_baseyear.py, add_brownfield.py, and prepare_network.py into a unified
-composition step for the streamlined workflow.
+add_existing_baseyear.py, add_brownfield.py, prepare_network.py, and
+prepare_perfect_foresight.py into a unified composition step for the streamlined
+workflow.
+
+Each major section is tagged with a subtitle indicating which legacy script it
+replaces (for example, 'ELECTRICITY COMPONENTS (from add_electricity.py)').
 
 All function calls are made directly in the main section without defining
 additional functions, following the additive approach of importing existing
@@ -1314,7 +1318,7 @@ if __name__ == "__main__":
     # Use snakemake inputs directly
     inputs = snakemake.input
 
-    # ========== ELECTRICITY COMPONENTS ==========
+    # ========== ELECTRICITY COMPONENTS (from add_electricity.py) ==========
     add_electricity_components(
         n,
         inputs,
@@ -1357,7 +1361,7 @@ if __name__ == "__main__":
                     )
                     n.remove(c.name, c.df.index[invalid])
 
-    # ========== SECTOR COMPONENTS ==========
+    # ========== SECTOR COMPONENTS (from prepare_sector_network.py) ==========
     if sector_mode:
         # Define spatial scope for sector components
         pop_layout = pd.read_csv(inputs["clustered_pop_layout"], index_col=0)
@@ -1380,14 +1384,14 @@ if __name__ == "__main__":
             n, "sector components", expected_components={"buses": 2}
         )
 
-    # ========== TEMPORAL AGGREGATION ==========
+    # ========== TEMPORAL AGGREGATION (from prepare_sector_network.py / prepare_network.py) ==========
     # Apply temporal aggregation before adding existing components
     apply_temporal_aggregation(n, inputs, params)
 
     # Validate after temporal aggregation
     validate_network_state(n, "temporal aggregation")
 
-    # ========== EXISTING CAPACITIES ==========
+    # ========== EXISTING CAPACITIES (from add_existing_baseyear.py) ==========
     if params.existing_capacities["enabled"] and is_first_horizon:
         baseyear = params.existing_capacities["baseyear"]
         add_existing_capacities(
@@ -1402,7 +1406,7 @@ if __name__ == "__main__":
         # Validate after existing capacities
         validate_network_state(n, "existing capacities")
 
-    # ========== BROWNFIELD FOR MYOPIC ==========
+    # ========== BROWNFIELD FOR MYOPIC (from add_brownfield.py) ==========
     # Apply brownfield constraints for myopic mode (non-first horizon)
     if foresight == "myopic" and not is_first_horizon:
         # Add build year to new assets (those from this planning horizon)
@@ -1438,7 +1442,7 @@ if __name__ == "__main__":
             n, str(current_horizon), params.renewable_carriers
         )
 
-    # ========== NETWORK PREPARATION ==========
+    # ========== NETWORK PREPARATION (from prepare_network.py) ==========
 
     prepare_network_for_solving(
         n,
@@ -1452,7 +1456,7 @@ if __name__ == "__main__":
     # Validate before finalization
     validate_network_state(n, "network preparation")
 
-    # ========== PERFECT FORESIGHT CONCATENATION ==========
+    # ========== PERFECT FORESIGHT CONCATENATION (from prepare_perfect_foresight.py) ==========
     # For perfect foresight, concatenate with previous composed network
     if foresight == "perfect":
         # Set build year for all new assets in the current horizon

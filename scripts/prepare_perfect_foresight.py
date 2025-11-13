@@ -843,6 +843,12 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: perfect-foresight concatenation now happens inside "
+        "compose_network.py under 'PERFECT FORESIGHT CONCATENATION "
+        "(from prepare_perfect_foresight.py)' (see concatenate_network_with_previous "
+        "and apply_investment_period_weightings). Run compose_network.py instead."
+    )
     # parameters -----------------------------------------------------------
     years = snakemake.config["scenario"]["planning_horizons"]
     social_discountrate = snakemake.params.costs["social_discountrate"]

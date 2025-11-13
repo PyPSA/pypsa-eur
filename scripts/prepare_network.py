@@ -415,6 +415,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: final network preparation is handled by "
+        "compose_network.py under 'NETWORK PREPARATION (from prepare_network.py)' "
+        "(see prepare_network_for_solving). Use compose_network.py instead."
+    )
 
     n = pypsa.Network(snakemake.input[0])
     Nyears = n.snapshot_weightings.objective.sum() / 8760.0

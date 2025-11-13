@@ -352,6 +352,13 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: brownfield application is now coordinated by compose_network.py "
+        "under 'BROWNFIELD FOR MYOPIC (from add_brownfield.py)' where add_brownfield "
+        "is orchestrated. Call compose_network instead of running add_brownfield "
+        "directly."
+        "Call compose_network instead of running add_brownfield directly."
+    )
 
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 

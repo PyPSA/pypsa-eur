@@ -1197,6 +1197,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake("add_electricity", clusters=100)
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
+    logger.warning(
+        "Deprecated: the standalone add_electricity workflow moved to "
+        "compose_network.py under 'ELECTRICITY COMPONENTS (from add_electricity.py)' "
+        "(see add_electricity_components). Run compose_network.py instead."
+    )
 
     params = snakemake.params
     max_hours = params.electricity["max_hours"]

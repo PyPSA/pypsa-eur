@@ -733,6 +733,11 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: existing-capacity injection now happens inside "
+        "compose_network.py under 'EXISTING CAPACITIES (from add_existing_baseyear.py)' "
+        "(see add_existing_capacities). Use compose_network.py instead."
+    )
 
     options = snakemake.params.sector
 

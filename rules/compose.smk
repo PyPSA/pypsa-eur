@@ -42,7 +42,7 @@ def get_compose_inputs(w):
         "base_network": resources("networks/simplified.nc"),
         "tech_costs": resources(f"costs_{horizon}_processed.csv"),
         "regions": resources("regions_onshore.geojson"),
-        "powerplants": resources("powerplants_s.csv"),
+        "powerplants": resources("powerplants.csv"),
         "hydro_capacities": ancient("data/hydro_capacities.csv"),
         "unit_commitment": "data/unit_commitment.csv",
         "fuel_price": (

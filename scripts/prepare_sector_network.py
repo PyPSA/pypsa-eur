@@ -6035,6 +6035,11 @@ if __name__ == "__main__":
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)
     update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+    logger.warning(
+        "Deprecated: standalone sector composition now runs inside "
+        "compose_network.py under 'SECTOR COMPONENTS (from prepare_sector_network.py)' "
+        "(see add_sector_components). Invoke compose_network.py for the sector stage."
+    )
 
     options = snakemake.params.sector
     cf_industry = snakemake.params.industry

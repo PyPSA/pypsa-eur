@@ -40,9 +40,9 @@ rule build_powerplants:
         network=resources("networks/clustered.nc"),
         custom_powerplants="data/custom_powerplants.csv",
     output:
-        resources("powerplants_s.csv"),
+        resources("powerplants.csv"),
     log:
-        logs("build_powerplants_s.log"),
+        logs("build_powerplants.log"),
     benchmark:
         benchmarks("build_powerplants_s")
     threads: 1
@@ -740,57 +740,6 @@ def input_conventional(w):
         for attr, fn in d.items()
         if str(fn).startswith("data/")
     }
-
-
-rule add_electricity:
-    params:
-        line_length_factor=config_provider("lines", "length_factor"),
-        link_length_factor=config_provider("links", "length_factor"),
-        scaling_factor=config_provider("load", "scaling_factor"),
-        countries=config_provider("countries"),
-        snapshots=config_provider("snapshots"),
-        renewable=config_provider("renewable"),
-        electricity=config_provider("electricity"),
-        conventional=config_provider("conventional"),
-        foresight=config_provider("foresight"),
-        drop_leap_day=config_provider("enable", "drop_leap_day"),
-        consider_efficiency_classes=config_provider(
-            "clustering", "consider_efficiency_classes"
-        ),
-        aggregation_strategies=config_provider("clustering", "aggregation_strategies"),
-        exclude_carriers=config_provider("clustering", "exclude_carriers"),
-    input:
-        unpack(input_profile_tech),
-        unpack(input_class_regions),
-        unpack(input_conventional),
-        base_network=resources("networks/simplified.nc"),
-        tech_costs=lambda w: resources(
-            f"costs_{config_provider('costs', 'year')(w)}_processed.csv"
-        ),
-        regions=resources("regions_onshore.geojson"),
-        powerplants=resources("powerplants_s.csv"),
-        hydro_capacities=ancient("data/hydro_capacities.csv"),
-        unit_commitment="data/unit_commitment.csv",
-        fuel_price=lambda w: (
-            resources("monthly_fuel_price.csv")
-            if config_provider("conventional", "dynamic_fuel_price")(w)
-            else []
-        ),
-        load=resources("electricity_demand_simplified.nc"),
-        busmap=resources("busmap.csv"),
-    output:
-        resources("networks/simplified_elec.nc"),
-    log:
-        logs("add_electricity.log"),
-    benchmark:
-        benchmarks("add_electricity")
-    threads: 1
-    resources:
-        mem_mb=10000,
-    conda:
-        "../envs/environment.yaml"
-    script:
-        "../scripts/add_electricity.py"
 
 
 if config["electricity"]["base_network"] == "osm-raw":
