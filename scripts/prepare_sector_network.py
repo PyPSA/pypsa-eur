@@ -2979,13 +2979,16 @@ def add_heat(
                 .multiply(factor)
             )
 
+            heat_dsm_restriction_value = (
+                options["residential_heat"]["restriction_value"].get(investment_year)
+            )
             heat_dsm_profile = (
-                heat_dsm_profile * options["residential_heat"]["restriction_value"]
+                heat_dsm_profile * heat_dsm_restriction_value
             )
             e_nom = e_nom.max()
 
             # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
-            n.madd(
+            n.add(
                 "Store",
                 nodes,
                 suffix=f" {heat_system} heat flexibility",
