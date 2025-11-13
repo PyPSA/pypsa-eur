@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 if PYPSA_V1:
     pypsa.options.params.add.return_names = True
 
+
 def add_new_buses(n, new_ports):
     # Add new buses for the ports which do not have an existing bus close by. If there are multiple ports at the same location, only one bus is added.
     duplicated = new_ports.duplicated(subset=["x", "y"], keep="first")
