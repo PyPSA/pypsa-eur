@@ -228,7 +228,17 @@ The feature is particularly valuable in scenarios with high renewable penetratio
 
 *References*
 
-The methodology is based on: smartEn and DNV (2022). "Demand-side flexibility in the EU: Quantification of benefits in 2030." The study quantifies how residential heat pumps can provide 195.5 TWh of activated flexibility (both upward and downward) across the EU27 through load shifting within daily time constraints.
+The methodology follows the approach proposed by Y. Akhmetov *et al.* (2025) in `"Flattening the peak demand curve through energy efficient buildings: A holistic approach towards net-zero carbon" <https://www.sciencedirect.com/science/article/pii/S0306261925001515>`__, and builds upon assumptions from smartEn and DNV (2022), `"Demand-side flexibility in the EU: Quantification of benefits in 2030"`.
+
+In this framework, heat pumps are assumed to provide flexibility to the energy system within daily operational constraints, represented by two time windows: from 9 am to 9 pm, and 9 pm to 9 am. These time windows are parametrizable, allowing sensitivity analyses of different flexibility periods.
+
+The potential for heat demand shifting is derived from the projected roll-out of heat pumps, as outlined in the European Commissions *Impact Assessment Report on the Heat Pump Action Plan* (`see page 55, Fig. 44 <https://eur-lex.europa.eu/resource.html?uri=cellar:6c154426-c5a6-11ee-95d9-01aa75ed71a1.0001.02/DOC_3&format=PDF>`__). The projected number of installed heat pumps is translated into the share of electrified households capable of participating in demand-side management (DSM).
+
+For example, a projected **58 million heat pumps** in 2030 corresponds to:
+
+``58 million / 202 million households in the EU ≈ 28 %``
+
+Thus, approximately 28 % of EU households are assumed to contribute to the residential DSM potential by 2030.
 
 **Retrofitting of the thermal envelope of buildings**
 
