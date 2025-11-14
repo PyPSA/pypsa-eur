@@ -662,11 +662,11 @@ def remove_elec_base_techs(n: pypsa.Network, carriers_to_keep: dict) -> None:
     """
     for c in n.components[list(carriers_to_keep.keys())]:
         to_keep = carriers_to_keep[c.name]
-        to_remove = pd.Index(c.df.carrier.unique()).symmetric_difference(to_keep)
+        to_remove = pd.Index(c.static.carrier.unique()).symmetric_difference(to_keep)
         if to_remove.empty:
             continue
         logger.info(f"Removing {c.list_name} with carrier {list(to_remove)}")
-        names = c.df.index[c.df.carrier.isin(to_remove)]
+        names = c.static.index[c.static.carrier.isin(to_remove)]
         n.remove(c.name, names)
         n.carriers.drop(to_remove, inplace=True, errors="ignore")
 
@@ -5673,7 +5673,7 @@ def cluster_heat_buses(n):
     components = ["Bus", "Carrier", "Generator", "Link", "Load", "Store"]
 
     for c in n.components[components]:
-        df = c.df
+        df = c.static
         cols = df.columns[df.columns.str.contains("bus") | (df.columns == "carrier")]
 
         # rename columns and index
@@ -5690,7 +5690,7 @@ def cluster_heat_buses(n):
         agg = define_clustering(df.columns, aggregate_dict)
         df = df.groupby(level=0).agg(agg, numeric_only=False)
         # time-varying data
-        pnl = c.pnl
+        pnl = c.dynamic
         agg = define_clustering(pd.Index(pnl.keys()), aggregate_dict)
         for k in pnl.keys():
 
@@ -5700,7 +5700,7 @@ def cluster_heat_buses(n):
             pnl[k] = pnl[k].T.groupby(renamer).agg(agg[k], numeric_only=False).T
 
         # remove unclustered assets of service/residential
-        to_drop = c.df.index.difference(df.index)
+        to_drop = c.static.index.difference(df.index)
         n.remove(c.name, to_drop)
         # add clustered assets
         to_add = df.index.difference(c.df.index)
@@ -5747,7 +5747,7 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         # Aggregation all time-varying data.
         for c in n.components:
             pnl = getattr(m, c.list_name + "_t")
-            for k, df in c.pnl.items():
+            for k, df in c.dynamic.items():
                 if not df.empty:
                     if c.list_name == "stores" and k == "e_max_pu":
                         pnl[k] = df.groupby(aggregation_map).min()

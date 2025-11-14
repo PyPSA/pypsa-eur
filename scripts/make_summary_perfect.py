@@ -47,9 +47,9 @@ def calculate_costs(n, label, costs):
 
     costs = reindex_columns(costs, cols)
 
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
+    ]:
         capital_costs = c.df.capital_cost * c.df[opt_name.get(c.name, "p") + "_nom_opt"]
         active = pd.concat(
             [
@@ -153,9 +153,9 @@ def calculate_cumulative_cost():
 
 def calculate_nodal_capacities(n, label, nodal_capacities):
     # Beware this also has extraneous locations for country (e.g. biomass) or continent-wide (e.g. fossil gas/oil) stuff
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
+    ]:
         nodal_capacities_c = c.df.groupby(["location", "carrier"])[
             opt_name.get(c.name, "p") + "_nom_opt"
         ].sum()
@@ -180,9 +180,9 @@ def calculate_capacities(n, label, capacities):
     )
     capacities = reindex_columns(capacities, cols)
 
-    for c in n.iterate_components(
+    for c in n.components[
         n.branch_components | n.controllable_one_port_components ^ {"Load"}
-    ):
+    ]:
         active = pd.concat(
             [
                 get_active_assets(n, c.name, inv_p).rename(inv_p)
@@ -232,7 +232,7 @@ def calculate_energy(n, label, energy):
     )
     energy = reindex_columns(energy, cols)
 
-    for c in n.iterate_components(n.one_port_components | n.branch_components):
+    for c in n.components[n.one_port_components | n.branch_components]:
         if c.name in n.one_port_components:
             c_energies = (
                 c.pnl.p.multiply(n.snapshot_weightings.generators, axis=0)
@@ -282,7 +282,7 @@ def calculate_supply(n, label, supply):
         bus_map = n.buses.carrier == i
         bus_map.at[""] = False
 
-        for c in n.iterate_components(n.one_port_components):
+        for c in n.components[n.one_port_components]:
             items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -301,7 +301,7 @@ def calculate_supply(n, label, supply):
             supply = supply.reindex(s.index.union(supply.index))
             supply.loc[s.index, label] = s
 
-        for c in n.iterate_components(n.branch_components):
+        for c in n.components[n.branch_components]:
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df["bus" + end].map(bus_map).fillna(False)]
 
@@ -345,7 +345,7 @@ def calculate_supply_energy(n, label, supply_energy):
         bus_map = n.buses.carrier == i
         bus_map.at[""] = False
 
-        for c in n.iterate_components(n.one_port_components):
+        for c in n.components[n.one_port_components]:
             items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
 
             if len(items) == 0:
@@ -380,7 +380,7 @@ def calculate_supply_energy(n, label, supply_energy):
             )
             supply_energy.loc[s.index, label] = s.values
 
-        for c in n.iterate_components(n.branch_components):
+        for c in n.components[n.branch_components]:
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
                 items = c.df.index[c.df[f"bus{str(end)}"].map(bus_map).fillna(False)]
 
