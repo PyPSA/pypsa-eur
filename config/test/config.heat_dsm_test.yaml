@@ -1,0 +1,130 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# Test configuration for residential heat DSM implementation
+# EU27 countries, 1-week run in 2019, 6h resolution
+
+tutorial: true
+
+run:
+  name: "test-heat-dsm-eu27"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+
+scenario:
+  clusters:
+  - 38
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2030
+
+countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
+            'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO',
+            'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+
+snapshots:
+  start: "2019-01-07"
+  end: "2019-01-14"
+
+electricity:
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+atlite:
+  default_cutout: europe-2019-sarah3-era5
+  cutouts:
+    europe-2019-sarah3-era5:
+      module: [sarah, era5]
+      x: [-12., 35.]
+      y: [33., 72.]
+      time: ["2019-01-01", "2019-12-31"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+clustering:
+  temporal:
+    resolution_sector: 6h
+
+sector:
+  gas_network: true
+  H2_retrofit: true
+  residential_heat:
+    dsm: true
+    restriction_value:
+      2020: 0.06
+      2025: 0.16
+      2030: 0.27
+      2035: 0.36
+      2040: 0.38
+      2045: 0.39
+      2050: 0.4
+    restriction_time: [10, 22]
+  district_heating:
+    progress:
+      2020: 0.0
+      2030: 0.3
+      2040: 0.5
+      2050: 0.8
+  heat_pump_sources:
+    urban central:
+    - air
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
+
+industry:
+  HVC_environment_sequestration_fraction: 0.5
+  waste_to_energy: true
+  waste_to_energy_cc: true
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+  mem: 8000
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: 10.0
+    y: 50.0
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
