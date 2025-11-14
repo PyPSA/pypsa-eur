@@ -1,0 +1,126 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+tutorial: true
+
+run:
+  name: "test-iterative"
+  disable_progressbar: true
+  shared_resources:
+    policy: false
+  shared_cutouts: true
+
+
+scenario:
+  clusters:
+  - 5
+  sector_opts:
+  - ''
+  planning_horizons:
+  - 2030
+
+countries: ['BE']
+
+snapshots:
+  start: "2013-03-01"
+  end: "2013-03-08"
+
+electricity:
+
+  extendable_carriers:
+    Generator: [OCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+
+  renewable_carriers: [solar, solar-hsat, onwind, offwind-ac, offwind-dc, offwind-float]
+
+atlite:
+  default_cutout: be-03-2013-era5
+  cutouts:
+    be-03-2013-era5:
+      module: era5
+      x: [4., 15.]
+      y: [46., 56.]
+      time: ["2013-03-01", "2013-03-08"]
+
+renewable:
+  offwind-ac:
+    max_depth: false
+  offwind-dc:
+    max_depth: false
+  offwind-float:
+    max_depth: false
+    min_depth: false
+
+clustering:
+  temporal:
+    resolution_sector: 24h
+
+sector:
+  gas_network: true
+  H2_retrofit: true
+  district_heating:
+    ptes:
+      supplemental_heating:
+        enable: true
+        booster_heat_pump: true
+    ates:
+      enable: true
+  heat_pump_sources:
+    urban central:
+    - air
+    - geothermal
+    - river_water
+    - sea_water
+    urban decentral:
+    - air
+    rural:
+    - air
+    - ground
+  hydrogen_turbine: false
+  regional_oil_demand: false
+  regional_co2_sequestration_potential:
+    enable: false
+  co2_spatial: false
+  co2_network: false
+  methanol:
+    methanol_to_power:
+      ocgt: false
+    biomass_to_methanol: false
+  ammonia: false
+  biomass_spatial: false
+  biomass_to_liquid: false
+  electrobiofuels: false
+
+industry:
+  HVC_environment_sequestration_fraction: 0.5
+  waste_to_energy: true
+  waste_to_energy_cc: true
+
+solving:
+  solver:
+    name: highs
+    options: highs-simplex
+
+  options:
+    skip_iterations: false  # Enable iterative optimization
+    track_iterations: true
+    min_iterations: 2
+    max_iterations: 3
+
+plotting:
+  map:
+    boundaries:
+  eu_node_location:
+    x: -5.5
+    y: 46.
+  costs_max: 1000
+  costs_threshold: 0.0000001
+  energy_max:
+  energy_min:
+  energy_threshold: 0.000001
+  interactive_bus_balance:
+    bus_name_pattern: "*central heat*"
+  enable_heat_source_maps: true
