@@ -11,7 +11,12 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from scripts._helpers import configure_logging, rename_techs, set_scenario_config
+from scripts._helpers import (
+    configure_logging,
+    create_placeholder_plot,
+    rename_techs,
+    set_scenario_config,
+)
 from scripts.prepare_sector_network import co2_emissions_year
 
 logger = logging.getLogger(__name__)
@@ -75,14 +80,27 @@ def plot_costs():
 
     to_drop = df.index[df.max(axis=1) < snakemake.params.plotting["costs_threshold"]]
 
-    logger.info(
+    logger.debug(
         f"Dropping technology with costs below {snakemake.params['plotting']['costs_threshold']} EUR billion per year"
     )
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total system cost of {round(df.sum().iloc[0])} EUR billion per year")
+    total_cost = df.sum().iloc[0]
+    logger.debug(f"Total system cost of {total_cost:.2f} EUR billion per year")
+
+    # Check if there's any data left to plot
+    if df.empty:
+        logger.warning(
+            "No cost data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.costs,
+            "No cost data available\n(all costs below threshold)",
+            ylabel="System Cost [EUR billion per year]",
+        )
+        return  # Early return is OK here since other functions will still be called
 
     new_index = preferred_order.intersection(df.index).append(
         df.index.difference(preferred_order)
@@ -104,7 +122,13 @@ def plot_costs():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim([0, snakemake.params.plotting["costs_max"]])
+    # Handle auto-scaling if configured
+    costs_max = snakemake.params.plotting["costs_max"]
+    if costs_max == "auto":
+        costs_max = None
+        logger.debug("Auto-scaling y-axis (costs_max='auto')")
+
+    ax.set_ylim([0, costs_max])
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -136,19 +160,25 @@ def plot_energy():
         df.abs().max(axis=1) < snakemake.params.plotting["energy_threshold"]
     ]
 
-    logger.info(
+    logger.debug(
         f"Dropping all technology with energy consumption or production below {snakemake.params['plotting']['energy_threshold']} TWh/a"
     )
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total energy of {round(df.sum().iloc[0])} TWh/a")
+    total_energy = df.sum().iloc[0]
+    logger.debug(f"Total energy of {total_energy:.2f} TWh/a")
 
     if df.empty:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        fig.savefig(snakemake.output.energy, bbox_inches="tight")
-        plt.close(fig)
+        logger.warning(
+            "No energy data to plot after filtering. Creating placeholder plot."
+        )
+        create_placeholder_plot(
+            snakemake.output.energy,
+            "No energy data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
         return
 
     new_index = preferred_order.intersection(df.index).append(
@@ -173,12 +203,19 @@ def plot_energy():
     handles.reverse()
     labels.reverse()
 
-    ax.set_ylim(
-        [
-            snakemake.params.plotting["energy_min"],
-            snakemake.params.plotting["energy_max"],
-        ]
-    )
+    # Handle auto-scaling if configured
+    energy_min = snakemake.params.plotting["energy_min"]
+    energy_max = snakemake.params.plotting["energy_max"]
+
+    if energy_max == "auto":
+        energy_max = None
+        logger.debug("Auto-scaling y-axis max (energy_max='auto')")
+
+    if energy_min == "auto":
+        energy_min = None
+        logger.debug("Auto-scaling y-axis min (energy_min='auto')")
+
+    ax.set_ylim([energy_min, energy_max])
 
     ax.set_ylabel("Energy [TWh/a]")
 
@@ -274,6 +311,17 @@ def plot_balances():
         )
         plt.close(fig)
 
+    # Ensure the main output file exists even if all balances were empty
+    import os
+
+    if not os.path.exists(snakemake.output.balances):
+        logger.warning("No balance data was plotted. Creating placeholder file.")
+        create_placeholder_plot(
+            snakemake.output.balances,
+            "No balance data available\n(all values below threshold)",
+            ylabel="Energy [TWh/a]",
+        )
+
 
 def historical_emissions(countries):
     """
@@ -328,7 +376,7 @@ def historical_emissions(countries):
         .rename(index=pd.Series(e.index, e.values))
     )
 
-    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0, axis=0).sum()  # Gton CO2
+    co2_totals = (1 / 1e6) * co2_totals.groupby(level=0).sum()  # Gton CO2
 
     co2_totals.loc["industrial non-elec"] = (
         co2_totals.loc["total energy"]
@@ -408,13 +456,20 @@ def plot_carbon_budget_distribution(input_eurostat, options):
         ]
         co2_cap *= e_1990
     else:
-        supply_energy = pd.read_csv(
-            snakemake.input.balances, index_col=[0, 1, 2], header=[0, 1, 2, 3]
-        )
-        co2_cap = (
-            supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T / 1e9
-        )
-        co2_cap.rename(index=lambda x: int(x), inplace=True)
+        try:
+            supply_energy = pd.read_csv(
+                snakemake.input.balances, index_col=[0, 1, 2], header=[0, 1, 2, 3]
+            )
+            co2_cap = (
+                supply_energy.loc["co2"].droplevel(0).drop("co2").sum().unstack().T
+                / 1e9
+            )
+            co2_cap.rename(index=lambda x: int(x), inplace=True)
+        except KeyError as e:
+            logger.warning(
+                f"Missing required key for carbon budget plot: {e}. Skipping plot."
+            )
+            return
 
     plt.figure(figsize=(10, 7))
     gs1 = gridspec.GridSpec(1, 1)
@@ -496,7 +551,7 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    n_header = 3
+    n_header = 1
 
     plot_costs()
 

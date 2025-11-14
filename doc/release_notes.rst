@@ -9,9 +9,319 @@ Release Notes
 Upcoming Release
 ================
 
-* Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
+**Breaking Changes**
 
-* Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
+* **Streamlined workflow with simplified configuration** (https://github.com/PyPSA/pypsa-eur/pull/1838):
+  The workflow has been restructured to use direct configuration values instead of
+  wildcards, simplifying the configuration system and improving maintainability.
+
+  **Migration Guide:**
+
+  The old wildcard-based configuration structure has been removed. Update your
+  ``config.yaml`` as follows:
+
+  .. code:: yaml
+
+    # OLD (no longer supported)
+    scenario:
+      clusters: [50, 100]
+      opts: ['', '3H']
+      sector_opts: ['', 'Co2L-3H']
+      planning_horizons: [2030, 2050]
+
+    # NEW (required format)
+    planning_horizons: [2030, 2050]  # or single value: 2050
+
+    clustering:
+      cluster_network:
+        n_clusters: 50  # Set your desired number of clusters
+
+    sector:
+      enabled: true  # Explicitly enable sector coupling if needed
+      transport:
+        enable: true
+      heating:
+        enable: true
+      # ... (set enable: true for each sector you need)
+
+  **What changed:**
+
+  - ``scenario.clusters`` → ``clustering.cluster_network.n_clusters``
+  - ``scenario.planning_horizons`` → top-level ``planning_horizons``
+  - ``scenario.opts`` and ``scenario.sector_opts`` → Removed. Options previously
+    encoded in wildcards are now configured directly in their respective config
+    sections (e.g., ``electricity``, ``sector``, ``clustering``)
+  - File naming simplified: Network files now use ``clustered.nc``,
+    ``composed_{horizon}.nc``, ``solved_{horizon}.nc`` instead of complex
+    wildcard-based names
+  - Deprecated scripts: ``prepare_perfect_foresight.py`` and
+    ``make_summary_perfect.py`` are no longer used
+
+  **Important:** Existing workflows using the old ``scenario`` structure will not
+  work and must be migrated to the new format.
+
+  **Detailed opts Migration:**
+
+  The following table shows how to migrate ``opts`` settings to the new configuration:
+
+  ==================== ======================================================
+  Old ``opts`` Trigger  New Configuration Location
+  ==================== ======================================================
+  ``nH`` (e.g. ``3H``)  ``clustering.temporal.resolution_sector: 3h``
+  ``nSEG`` (segmentation) ``clustering.temporal.time_segmentation.feature: 'components'``
+  ``Co2L`` + value      ``electricity.co2limit_enable: true`` + ``electricity.co2limit: <value>``
+  ``Ep``               ``costs.emission_prices.co2: <price>``
+  ``Ept``              ``costs.emission_prices.co2_monthly_prices: true``
+  ``CCL``              ``electricity.agg_p_nom_limits: <file>`` (default: ``data/agg_p_nom_minmax.csv``)
+  ``EQ`` + value       ``electricity.autarky.enable: true`` (node-level autarky)
+  ``ATK``              ``electricity.autarky.enable: true`` (removes all transmission)
+  ``ATKc``             ``electricity.autarky.enable: true`` + ``electricity.autarky.by_country: true``
+  ``BAU``              ``electricity.BAU_mincapacities: <config>``
+  ``CH4L`` + value     ``electricity.gaslimit_enable: true`` + ``electricity.gaslimit: <value>``
+  ``lv<factor>``       ``electricity.transmission_limit: v<factor>`` (e.g. ``v1.25``)
+  ``lc<factor>``       ``electricity.transmission_limit: c<factor>`` (e.g. ``c1.25``)
+  ``carrier+component+cfactor`` Carrier-specific config sections (e.g. ``solar.potential`` for potential, costs in ``costs`` section)
+  ==================== ======================================================
+
+  **Detailed sector_opts Migration:**
+
+  The following table shows how to migrate ``sector_opts`` settings to the new configuration:
+
+  ========================= ======================================================
+  Old ``sector_opts`` Trigger New Configuration Location
+  ========================= ======================================================
+  ``T``                     ``sector.transport.enable: true``
+  ``H``                     ``sector.heating.enable: true``
+  ``B``                     ``sector.biomass.enable: true``
+  ``I``                     ``sector.industry.enable: true``
+  ``A``                     ``sector.agriculture.enable: true``
+  ``Co2L`` + value          ``co2_budget`` unified co2 limit configuration (see below)
+  ``dist`` + value          ``sector.district_heating: <config>``
+  ``seq`` + value           ``sector.co2_sequestration_potential: <value>``
+  ========================= =======================================================
+
+  **Migration Examples:**
+
+  **Example 1: Simple electricity-only with time resolution**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [50]
+      opts: ['3H']
+      planning_horizons: [2050]
+
+    # NEW
+    planning_horizons: 2050
+    clustering:
+      cluster_network:
+        n_clusters: 50
+      temporal:
+        resolution_sector: 3h
+
+  **Example 2: Electricity with carbon budget and emission prices**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [100]
+      opts: ['Co2L0.05', 'Ep']
+      planning_horizons: [2030, 2050]
+
+    # NEW
+    planning_horizons: [2030, 2050]
+    clustering:
+      cluster_network:
+        n_clusters: 100
+    co2_budget:
+      values: absolute
+      upper:
+        enable: true
+        2030: 0.05  # Gt CO2 for 2030
+        2050: 0.03  # Gt CO2 for 2050
+    costs:
+      emission_prices:
+        co2: 50  # Set your desired CO2 price (EUR/t CO2)
+
+  **Example 3: Full sector-coupled with transmission limits**
+
+  .. code:: yaml
+
+    # OLD
+    scenario:
+      clusters: [50]
+      opts: ['lv1.25']
+      sector_opts: ['T-H-B-I']
+      planning_horizons: [2030, 2050]
+
+    # NEW
+    planning_horizons: [2030, 2050]
+    clustering:
+      cluster_network:
+        n_clusters: 50
+    electricity:
+      transmission_limit: v1.25
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+      biomass:
+        enable: true
+      industry:
+        enable: true
+
+  **Example 4: Perfect foresight with CO2 budget (fraction-based, like master)**
+
+  .. code:: yaml
+
+    # OLD (master branch style)
+    scenario:
+      clusters: [37]
+      opts: ['']
+      sector_opts: ['Co2L-T-H']
+      planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+    co2_budget:
+      2030: 0.450  # 45% of 1990 emissions
+      2040: 0.100  # 10% of 1990 emissions
+      2050: 0.000  # Climate neutral
+
+    # NEW (streamline-workflow)
+    planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+    clustering:
+      cluster_network:
+        n_clusters: 37
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+    co2_budget:
+      emissions_scope: All greenhouse gases - (CO2 equivalent)
+      values: fraction  # Interpret as fractions of 1990 baseline
+      upper:
+        enable: true
+        2030: 0.450  # 45% of 1990 emissions (55% reduction)
+        2040: 0.100  # 10% of 1990 emissions (90% reduction)
+        2050: 0.000  # Climate neutral
+      lower:
+        enable: false
+
+  **Example 5: Perfect foresight with absolute CO2 budget**
+
+  .. code:: yaml
+
+    # NEW - Using absolute values instead of fractions
+    planning_horizons: [2030, 2040, 2050]
+    foresight: perfect
+    clustering:
+      cluster_network:
+        n_clusters: 37
+    sector:
+      enabled: true
+      transport:
+        enable: true
+      heating:
+        enable: true
+    co2_budget:
+      emissions_scope: All greenhouse gases - (CO2 equivalent)
+      values: absolute  # Interpret as Gt CO2/year (default)
+      upper:
+        enable: true
+        2030: 2.04  # Gt CO2/year
+        2040: 0.45  # Gt CO2/year
+        2050: 0.00  # Climate neutral
+      lower:
+        enable: false
+
+  **Troubleshooting:**
+
+  * **Issue:** ``energy.emissions`` configuration no longer recognized
+
+    **Solution:** Move ``energy.emissions`` → ``co2_budget.emissions_scope``. The
+    ``energy.emissions`` field is deprecated. Update your config:
+
+    .. code:: yaml
+
+      # OLD
+      energy:
+        emissions: CO2
+
+      # NEW
+      co2_budget:
+        emissions_scope: CO2
+
+  * **Issue:** File not found errors for network files
+
+    **Solution:** Network files now use simplified naming: ``clustered.nc``,
+    ``composed_{horizon}.nc``, ``solved_{horizon}.nc`` instead of the old
+    ``elec_s_{clusters}_{opts}.nc`` format. Update any scripts or tools that
+    reference these files directly.
+
+  * **Issue:** "Config key not found" errors
+
+    **Solution:** Use the mapping tables above to find the new location for your
+    old ``opts`` or ``sector_opts`` settings. The configuration is now organized
+    by category (``electricity``, ``sector``, ``clustering``) rather than encoded
+    in wildcards.
+
+  * **Issue:** Wildcards not matching in custom Snakemake rules
+
+    **Solution:** The ``{opts}`` and ``{sector_opts}`` wildcards have been removed.
+    Update your custom rules to use the new file naming scheme or configuration
+    values directly from ``config_provider()``.
+
+  * **Issue:** Custom scripts expecting wildcard values
+
+    **Solution:** Replace wildcard parsing with passing config values as params
+    and using ``snakemake.params`` in the scripts.
+
+* **PyPSA 1.0 compatibility**: Updated minimum PyPSA version to 1.0.1. All
+  ``n.add()`` calls now use ``return_names=True`` for compatibility with PyPSA 1.0
+  where ``.add()`` returns ``None`` by default.
+
+* **Breaking change: Unified CO2 budget configuration**: The CO2 budget configuration
+  has been restructured to use a consistent format across all optimization modes
+  (overnight, myopic, perfect foresight). Key changes:
+
+  - **New nested structure**: Uses ``upper`` and ``lower`` sections with explicit
+    ``enable`` flags for clearer configuration
+  - **Emissions scope moved**: ``energy.emissions`` → ``co2_budget.emissions_scope``
+    to consolidate all CO2 budget settings in one place. This parameter is always used
+    when any CO2 budget constraint is enabled, as it determines baseline emissions for
+    fraction-based budgets and distribution calculations.
+  - **Emissions scope affects baseline calculations**: The ``emissions_scope`` parameter
+    determines baseline emissions in ``resources/<run>/co2_totals.csv`` (used for
+    fraction-based budgets and budget distribution), aligning with master branch behavior.
+  - **Explicit value interpretation**: New top-level ``values`` field (``fraction`` or
+    ``absolute``) explicitly controls how budget values are interpreted for both upper
+    and lower bounds:
+
+    - ``values: fraction`` - Values are percentages of 1990 baseline (e.g., ``2030: 0.450``
+      = 45% of 1990 emissions, scope-dependent)
+    - ``values: absolute`` - Values are Gt CO₂/year directly (default)
+
+  - **Optional yearly bounds**: When ``upper.enable: true`` or ``lower.enable: true``,
+    constraints are now applied only for planning horizons explicitly specified in the
+    configuration. Previously, all planning horizons required values when enabled. This
+    allows more flexible constraint definition (e.g., constraining only 2030 and 2050
+    while leaving 2040 unconstrained).
+
+  - **New preprocessing rule**: Carbon budget distribution is now calculated by a new
+    ``build_co2_budget_distribution`` rule that outputs ``co2_budget_distribution.csv``,
+    consumed by ``compose_network``
+
+  See ``config/config.default.yaml`` for the new structure and ``doc/foresight.rst``
+  for detailed migration examples. The streamlined workflow now fully supports carbon
+  budget constraints across all foresight modes with consistent behavior.
+
+**Features and Fixes**
 
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
 
@@ -22,12 +332,12 @@ Upcoming Release
 * Feature: Introduce a new method to overwrite costs (https://github.com/PyPSA/pypsa-eur/pull/1752, https://github.com/PyPSA/pypsa-eur/pull/1879). Modifications to the default techno-economic assumptions can now be configured via `costs:custom_cost_fn`, which applies changes to the `resources/costs_{planning_horizons}.csv` files. The default configuration includes minor adjustments to stabilize optimization results. The existing implementation via `costs:overwrites` and `costs:capital_cost`/`costs:marginal_cost` parameters remains available but will be deprecated in a future release.
 
 * Fixed `AttributeError` in `prepare_sector_network.py` when running sector-coupled
-  PyPSA-Eur with only one country and cluster. 
+  PyPSA-Eur with only one country and cluster.
   (https://github.com/PyPSA/pypsa-eur/pull/1835)
 
 * Added river-water and sea-water sourced heat pumps as well as interactive bus-balance plots and heat-source maps. Also introduced district heating areas in which heat sources must be located.
 
-* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors 
+* Added automatic retry for some (Zenodo) HTTP requests to handle transient errors
   like rate limiting and server errors.
 
 * Fixed `ValueError` in `prepare_sector_network.py` in function `add_storage_and_grids`
@@ -71,7 +381,20 @@ Upcoming Release
 
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
-* Running perfect foresight is now marked as unstable and may not work as expected.
+* **Perfect foresight optimization is currently incomplete** in the streamlined workflow.
+  The following critical functionality from ``prepare_perfect_foresight.py`` is not yet
+  implemented in ``compose_network.py``:
+
+  - Investment period objective weightings with social discount rate
+  - Store cycling behavior adjustments (``e_cyclic_per_period`` flags)
+  - Phase-out constraints for national energy policies
+  - Perfect-foresight-specific time segmentation
+  - Heat pump efficiency updates for all periods
+
+  Perfect foresight runs may produce incorrect results until these gaps are addressed.
+  See the ``prepare_perfect_foresight.py`` deprecation notice for details.
+
+* Added minimum unit dispatch setting option for electrolysis
 
 * Added minimum unit dispatch setting option for electrolysis
 

@@ -193,9 +193,9 @@ if config["enable"]["retrieve"] and config["enable"].get("retrieve_cost_data", T
         params:
             version=config_provider("costs", "version"),
         output:
-            resources("costs_{planning_horizons}.csv"),
+            resources("costs_{horizon}.csv"),
         log:
-            logs("retrieve_cost_data_{planning_horizons}.log"),
+            logs("retrieve_cost_data_{horizon}.log"),
         resources:
             mem_mb=1000,
         retries: 2
