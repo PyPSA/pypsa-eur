@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added existing biomass decentral/rural residential and services heating capacity.
+
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
 
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
