@@ -816,7 +816,7 @@ rule build_energy_totals:
 if (COUNTRY_HDD_DATASET := dataset_version("country_hdd"))["source"] in ["build"]:
 
     # This rule uses one or multiple cutouts.
-    # To updated the output files to include a new year, e.g. 2025 using an existing cutout,
+    # To update the output files to include a new year, e.g. 2025 using an existing cutout,
     # either create a new cutout covering the whole timespan or add another cutout that covers the additional year(s).
     # E.g. cutouts=[<cutout for 1940-2024>, <cutout for 2025-2025>]
     rule build_country_hdd:
