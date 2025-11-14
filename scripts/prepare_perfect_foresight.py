@@ -120,7 +120,7 @@ def add_year_to_constraints(n: pypsa.Network, baseyear: int) -> None:
         year in which optimized assets are built
     """
 
-    for c in n.iterate_components(["GlobalConstraint"]):
+    for c in n.components[["GlobalConstraint"]]:
         c.df["investment_period"] = baseyear
         c.df.rename(index=lambda x: x + "-" + str(baseyear), inplace=True)
 
@@ -220,7 +220,7 @@ def concat_networks(
         add_build_year_to_new_assets(network, year)
 
         # static ----------------------------------
-        for component in network.iterate_components(
+        for component in network.components[
             [
                 "Bus",
                 "Carrier",
@@ -231,7 +231,7 @@ def concat_networks(
                 "Line",
                 "StorageUnit",
             ]
-        ):
+        ]:
             df_year = component.df.copy()
             missing = get_missing(df_year, n, component.list_name)
 
@@ -277,7 +277,7 @@ def concat_networks(
         n.snapshot_weightings.loc[year, :] = network.snapshot_weightings.values
 
         # (3) global constraints
-        for component in network.iterate_components(["GlobalConstraint"]):
+        for component in network.components[["GlobalConstraint"]]:
             add_year_to_constraints(network, year)
             n.add(component.name, component.df.index, **component.df)
 
