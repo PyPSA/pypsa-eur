@@ -11,13 +11,11 @@ from zipfile import ZipFile
 
 
 # Configure the default storage provider for accessing remote files using http
-# do not expose `retrieve` to the config, as setting it to 'False' will break the workflow ungracefully
+# and the special storage plugin for accessing Zenodo files
 storage:
     provider="http",
     keep_local=True,
-    retrieve=True,
     retries=3,
-    max_requests_per_second=0.5,
 
 
 storage cached_http:
