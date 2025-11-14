@@ -47,10 +47,17 @@ def plot_map_perfect(
             [n.get_active_assets(comp, inv_p).rename(inv_p) for inv_p in investments],
             axis=1,
         ).astype(int)
-        capital_cost = n.components[comp].static[attr] * n.components[comp].static.capital_cost
+        capital_cost = (
+            n.components[comp].static[attr] * n.components[comp].static.capital_cost
+        )
         capital_cost_t = (
             (active.mul(capital_cost, axis=0))
-            .groupby([n.components[comp].static.location, n.components[comp].static.nice_group])
+            .groupby(
+                [
+                    n.components[comp].static.location,
+                    n.components[comp].static.nice_group,
+                ]
+            )
             .sum()
         )
 

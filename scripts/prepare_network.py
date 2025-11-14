@@ -61,7 +61,9 @@ def modify_attribute(n, adjustments, investment_year, modification="factor"):
             logger.warning(f"{c} needs to be a PyPSA Component")
             continue
         for carrier in change_dict[c].keys():
-            ind_i = n.components[c].static[n.components[c].static.carrier == carrier].index
+            ind_i = (
+                n.components[c].static[n.components[c].static.carrier == carrier].index
+            )
             if ind_i.empty:
                 continue
             for parameter in change_dict[c][carrier].keys():
