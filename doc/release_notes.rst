@@ -9,6 +9,10 @@ Release Notes
 Upcoming Release
 ================
 
+* Refactored `solve_network.py` and `solve_operations_network.py` to separate optimization problem preparation from solving, enabling inspection of optimization problems before solve execution. 
+
+* Added example configurations for rolling horizon and iterative optimization modes in `config/examples/`.
+
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
 
 * Fix: Configsettings for `heat_pump_cop_approximation` are now correctly passed to `CentralHeatingCopApproximator.py`
