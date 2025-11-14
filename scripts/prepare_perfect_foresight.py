@@ -243,7 +243,7 @@ def concat_networks(
         n.set_snapshots(snapshots)
 
         # Iterate all component types in the loaded network
-        for component in network.iterate_components():
+        for component in network.components:
             pnl = getattr(n, component.list_name + "_t")
             for k in iterkeys(component.pnl):
                 pnl_year = component.pnl[k].copy().reindex(snapshots, level=1)
@@ -545,7 +545,7 @@ def apply_time_segmentation_perfect(
     # get all time-dependent data
     columns = pd.MultiIndex.from_tuples([], names=["component", "key", "asset"])
     raw = pd.DataFrame(index=n.snapshots, columns=columns)
-    for c in n.iterate_components():
+    for c in n.components:
         for attr, pnl in c.pnl.items():
             # exclude e_min_pu which is used for SOC of EVs in the morning
             if not pnl.empty and attr != "e_min_pu":

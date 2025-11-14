@@ -5745,7 +5745,7 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
         m.snapshot_weightings = snapshot_weightings
 
         # Aggregation all time-varying data.
-        for c in n.iterate_components():
+        for c in n.components:
             pnl = getattr(m, c.list_name + "_t")
             for k, df in c.pnl.items():
                 if not df.empty:
