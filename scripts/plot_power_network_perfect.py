@@ -36,7 +36,7 @@ def plot_map_perfect(
 
     costs = {}
     for comp in components:
-        df_c = n.df(comp)
+        df_c = n.components[comp].static
         if df_c.empty:
             continue
         df_c["nice_group"] = df_c.carrier.map(rename_techs_tyndp)
@@ -47,10 +47,10 @@ def plot_map_perfect(
             [n.get_active_assets(comp, inv_p).rename(inv_p) for inv_p in investments],
             axis=1,
         ).astype(int)
-        capital_cost = n.df(comp)[attr] * n.df(comp).capital_cost
+        capital_cost = n.components[comp].static[attr] * n.components[comp].static.capital_cost
         capital_cost_t = (
             (active.mul(capital_cost, axis=0))
-            .groupby([n.df(comp).location, n.df(comp).nice_group])
+            .groupby([n.components[comp].static.location, n.components[comp].static.nice_group])
             .sum()
         )
 

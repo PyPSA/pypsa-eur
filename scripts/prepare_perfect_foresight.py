@@ -469,10 +469,10 @@ def adjust_lvlimit(n: pypsa.Network) -> None:
     c = "GlobalConstraint"
     cols = ["carrier_attribute", "sense", "constant", "type"]
     glc_type = "transmission_volume_expansion_limit"
-    if (n.df(c)[n.df(c).type == glc_type][cols].nunique() == 1).all():
-        glc = n.df(c)[n.df(c).type == glc_type][cols].iloc[[0]]
+    if (n.components[c].static[n.components[c].static.type == glc_type][cols].nunique() == 1).all():
+        glc = n.components[c].static[n.components[c].static.type == glc_type][cols].iloc[[0]]
         glc.index = pd.Index(["lv_limit"])
-        remove_i = n.df(c)[n.df(c).type == glc_type].index
+        remove_i = n.components[c].static[n.components[c].static.type == glc_type].index
         n.remove(c, remove_i)
         n.add(c, glc.index, **glc)
 
@@ -481,8 +481,8 @@ def adjust_CO2_glc(n: pypsa.Network) -> None:
     c = "GlobalConstraint"
     glc_name = "CO2Limit"
     glc_type = "primary_energy"
-    mask = (n.df(c).index.str.contains(glc_name)) & (n.df(c).type == glc_type)
-    n.df(c).loc[mask, "type"] = "co2_limit"
+    mask = (n.components[c].static.index.str.contains(glc_name)) & (n.components[c].static.type == glc_type)
+    n.components[c].static.loc[mask, "type"] = "co2_limit"
 
 
 def add_H2_boilers(n: pypsa.Network) -> None:
