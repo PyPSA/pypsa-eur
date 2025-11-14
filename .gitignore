@@ -24,7 +24,7 @@ gurobi.log
 /benchmarks
 /logs
 /notebooks
-/data
+/data/*
 /cutouts
 /tmp
 doc/_build
@@ -49,6 +49,8 @@ config/scenarios.yaml
 /data/.nfs*
 /data/retro/*
 data/gas_network/scigrid-gas/
+data/costs_*.csv
+!/data/custom_costs.csv
 
 dask-worker-space/
 publications.jrc.ec.europa.eu/
@@ -73,6 +75,7 @@ d1gam3xoknrgr2.cloudfront.net/
 merger-todos.md
 
 *.html
+
 # private dev folder
 dev/*
 
@@ -81,3 +84,6 @@ CLAUDE.md
 .claude/
 .github/copilot-instructions.md
 CLAUDE.local.md
+# pixi environments
+.pixi/*
+!.pixi/config.toml

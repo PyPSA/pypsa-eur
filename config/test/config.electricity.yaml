@@ -62,7 +62,6 @@ renewable:
     max_depth: false
     min_depth: false
 
-
 clustering:
   exclude_carriers: ["OCGT", "offwind-ac", "coal"]
   temporal:

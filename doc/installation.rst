@@ -26,38 +26,61 @@ First of all, clone the `PyPSA-Eur repository <https://github.com/PyPSA/pypsa-eu
 Install Python Dependencies
 ===============================
 
-PyPSA-Eur relies on a set of other Python packages to function. We recommend
-using the package manager `conda <https://docs.anaconda.com/miniconda/>` or
-`mamba <https://mamba.readthedocs.io/en/latest/>`__ to install them and manage
-your environments.
+Preferred method: ``pixi``
+--------------------------
 
-The package requirements are curated in the ``envs/environment.yaml`` file.
-There are also regularly updated locked environment files for each platform generated with conda-lock to
-ensure reproducibility. Choose the correct file for your platform:
+PyPSA-Eur relies on a set of other Python packages to function.
+We manage these using `pixi <https://pixi.sh/latest/>`_.
+Once pixi is installed, you can activate the project environment for your operating system and have access to all the PyPSA-Eur dependencies from the command line:
+
+.. code:: console
+
+    $ pixi shell
+
+.. tip::
+    You can also set up automatic shell activation in several popular editors (e.g. in `VSCode <https://pixi.sh/dev/integration/editor/vscode/>`_ or `Zed <https://pixi.sh/dev/integration/editor/zed/>`_).
+    Refer to the ``pixi`` documentation for the most up-to-date options.
+
+.. note::
+    We don't currently support linux operating systems using ARM processors since certain packages, such as ``PySCIPOpt``, require being built from source.
+
+Legacy method: ``conda``
+------------------------
+
+If you cannot access ``pixi`` on your machine, you can also install using `conda <https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html>`_ (or ``mamba``/``micromamba``).
+To do so, we highly recommend you install from one of our platform-specific environment files:
 
 * For Intel/AMD processors:
 
-  - Linux: ``envs/linux-64.lock.yaml``
-
-  - macOS: ``envs/osx-64.lock.yaml``
-
-  - Windows: ``envs/win-64.lock.yaml``
+  - Linux: ``envs/default_linux-64.pin.txt``
+  - macOS: ``envs/default_osx-64.pin.txt``
+  - Windows: ``envs/default_win-64.pin.txt``
 
 * For ARM processors:
 
-  - macOS (Apple Silicon): ``envs/osx-arm64.lock.yaml``
-
+  - macOS (Apple Silicon): ``envs/default_osx-arm64.pin.txt``
   - Linux (ARM): Currently not supported via lock files; requires building certain packages, such as ``PySCIPOpt``, from source
-
-We recommend using these locked files for a stable environment.
 
 .. code:: console
 
     $ conda update conda
 
-    $ conda env create -f envs/linux-64.lock.yaml # select the appropriate file for your platform
+    $ conda create -n pypsa-eur -f envs/default_linux-64.pin.txt # select the appropriate file for your platform
 
     $ conda activate pypsa-eur
+
+
+These platform-specific files have locked dependencies, to ensure reproducibility.
+If you are having difficulties with the above files, you can also install directly from the un-locked environment YAML file (not recommended):
+
+.. code:: console
+
+    $ conda update conda
+
+    $ conda env create -f envs/environment.yaml
+
+    $ conda activate pypsa-eur
+
 
 Install a Solver
 ================

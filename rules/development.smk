@@ -30,7 +30,5 @@ if (
         threads: 1
         resources:
             mem_mb=1000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/prepare_osm_network_release.py"

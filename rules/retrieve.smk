@@ -101,8 +101,6 @@ elif (CORINE_DATASET := dataset_version("corine"))["source"] in ["primary"]:
         resources:
             mem_mb=1000,
         retries: 2
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_corine_dataset_primary.py"
 
@@ -303,8 +301,6 @@ rule retrieve_bidding_zones:
     resources:
         mem_mb=1000,
     retries: 2
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/retrieve_bidding_zones.py"
 
@@ -357,9 +353,9 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
     rule retrieve_cost_data:
         input:
-            costs=storage(COSTS_DATASET["url"] + "/costs_{year}.csv"),
+            costs=storage(COSTS_DATASET["url"] + "/costs_{planning_horizon}.csv"),
         output:
-            costs=COSTS_DATASET["folder"] + "/costs_{year}.csv",
+            costs=COSTS_DATASET["folder"] + "/costs_{planning_horizon}.csv",
         run:
             copy2(input["costs"], output["costs"])
 
@@ -406,8 +402,6 @@ rule retrieve_electricity_demand:
     resources:
         mem_mb=5000,
     retries: 2
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/retrieve_electricity_demand.py"
 
@@ -809,8 +803,6 @@ rule retrieve_monthly_fuel_prices:
     resources:
         mem_mb=5000,
     retries: 2
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/retrieve_monthly_fuel_prices.py"
 
@@ -893,8 +885,6 @@ elif OSM_DATASET["source"] == "build":
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_raw.py"
 
@@ -933,8 +923,6 @@ elif NATURA_DATASET["source"] == "build":
             mem_mb=5000,
         log:
             "logs/build_natura.log",
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_natura.py"
 
@@ -949,8 +937,6 @@ if (OSM_BOUNDARIES_DATASET := dataset_version("osm_boundaries"))["source"] in [
         log:
             "logs/retrieve_osm_boundaries_{country}_adm1.log",
         threads: 1
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_osm_boundaries.py"
 
@@ -1022,8 +1008,6 @@ if (LAU_REGIONS_DATASET := dataset_version("lau_regions"))["source"] in [
             "logs/retrieve_seawater_temperature_{year}.log",
         resources:
             mem_mb=10000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/retrieve_seawater_temperature.py"
 
