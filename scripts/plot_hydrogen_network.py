@@ -72,13 +72,13 @@ def plot_h2_map(n, regions):
 
     elec = n.links[n.links.carrier.isin(carriers)].index
 
-    bus_sizes = (
+    bus_size = (
         n.links.loc[elec, "p_nom_opt"].groupby([n.links["bus0"], n.links.carrier]).sum()
         / bus_size_factor
     )
 
     # make a fake MultiIndex so that area is correct for legend
-    bus_sizes.rename(index=lambda x: x.replace(" H2", ""), level=0, inplace=True)
+    bus_size.rename(index=lambda x: x.replace(" H2", ""), level=0, inplace=True)
     # drop all links which are not H2 pipelines
     n.links.drop(
         n.links.index[~n.links.carrier.str.contains("H2 pipeline")], inplace=True
@@ -155,13 +155,13 @@ def plot_h2_map(n, regions):
     color_h2_pipe = "#b3f3f4"
     color_retrofit = "#499a9c"
 
-    bus_colors = {"H2 Electrolysis": "#ff29d9", "H2 Fuel Cell": "#805394"}
+    bus_color = {"H2 Electrolysis": "#ff29d9", "H2 Fuel Cell": "#805394"}
 
     n.plot(
         geomap=True,
-        bus_sizes=bus_sizes,
-        bus_colors=bus_colors,
-        link_colors=color_h2_pipe,
+        bus_size=bus_size,
+        bus_color=bus_color,
+        link_color=color_h2_pipe,
         link_width=link_width_total,
         branch_components=["Link"],
         ax=ax,
@@ -170,8 +170,8 @@ def plot_h2_map(n, regions):
 
     n.plot(
         geomap=True,
-        bus_sizes=0,
-        link_colors=color_retrofit,
+        bus_size=0,
+        link_color=color_retrofit,
         link_width=link_width_retro,
         branch_components=["Link"],
         ax=ax,
@@ -235,7 +235,7 @@ def plot_h2_map(n, regions):
         legend_kw=legend_kw,
     )
 
-    colors = [bus_colors[c] for c in carriers] + [color_h2_pipe, color_retrofit]
+    colors = [bus_color[c] for c in carriers] + [color_h2_pipe, color_retrofit]
     labels = carriers + ["H2 pipeline (total)", "H2 pipeline (repurposed)"]
 
     legend_kw = dict(

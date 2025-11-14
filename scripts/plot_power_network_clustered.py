@@ -41,7 +41,7 @@ if __name__ == "__main__":
         ax=ax,
         margin=0.06,
         line_width=n.lines.s_nom / lw_factor,
-        link_colors=n.links.p_nom.apply(
+        link_color=n.links.p_nom.apply(
             lambda x: "darkseagreen" if x > 0 else "skyblue"
         ),
         link_width=2.0,

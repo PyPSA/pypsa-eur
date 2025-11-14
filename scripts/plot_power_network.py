@@ -165,10 +165,10 @@ def plot_map(
     fig.set_size_inches(7, 6)
 
     n.plot(
-        bus_sizes=costs / bus_size_factor,
-        bus_colors=tech_colors,
-        line_colors=ac_color,
-        link_colors=dc_color,
+        bus_size=costs / bus_size_factor,
+        bus_color=tech_colors,
+        line_color=ac_color,
+        link_color=dc_color,
         line_width=line_width / linewidth_factor,
         link_width=link_width / linewidth_factor,
         ax=ax,

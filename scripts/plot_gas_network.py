@@ -87,12 +87,12 @@ def plot_ch4_map(n):
     # make a fake MultiIndex so that area is correct for legend
     biogas.index = pd.MultiIndex.from_product([biogas.index, ["biogas"]])
 
-    bus_sizes = pd.concat([fossil_gas, methanation, biogas])
-    non_buses = bus_sizes.index.unique(level=0).difference(n.buses.index)
+    bus_size = pd.concat([fossil_gas, methanation, biogas])
+    non_buses = bus_size.index.unique(level=0).difference(n.buses.index)
     if any(non_buses):
         logger.info(f"Dropping non-buses {non_buses.tolist()} for CH4 network plot.")
-        bus_sizes = bus_sizes.drop(non_buses)
-    bus_sizes.sort_index(inplace=True)
+        bus_size = bus_size.drop(non_buses)
+    bus_size.sort_index(inplace=True)
 
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
     n.links.drop(to_remove, inplace=True)
@@ -121,7 +121,7 @@ def plot_ch4_map(n):
     n.links.bus0 = n.links.bus0.str.replace(" gas", "")
     n.links.bus1 = n.links.bus1.str.replace(" gas", "")
 
-    bus_colors = {
+    bus_color = {
         "fossil gas": tech_colors["fossil gas"],
         "methanation": tech_colors["methanation"],
         "biogas": "seagreen",
@@ -130,9 +130,9 @@ def plot_ch4_map(n):
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
     n.plot(
-        bus_sizes=bus_sizes,
-        bus_colors=bus_colors,
-        link_colors=pipe_colors["gas pipeline (in 2020)"],
+        bus_size=bus_size,
+        bus_color=bus_color,
+        link_color=pipe_colors["gas pipeline (in 2020)"],
         link_width=link_width_orig,
         branch_components=["Link"],
         ax=ax,
@@ -141,21 +141,21 @@ def plot_ch4_map(n):
 
     n.plot(
         ax=ax,
-        bus_sizes=0.0,
-        link_colors=pipe_colors["gas pipeline (available)"],
+        bus_size=0.0,
+        link_color=pipe_colors["gas pipeline (available)"],
         link_width=link_width_rem,
         branch_components=["Link"],
-        geomap_colors=False,
+        geomap_color=False,
         boundaries=map_opts["boundaries"],
     )
 
     n.plot(
         ax=ax,
-        bus_sizes=0.0,
-        link_colors=link_color_used,
+        bus_size=0.0,
+        link_color=link_color_used,
         link_width=link_width_used,
         branch_components=["Link"],
-        geomap_colors=False,
+        geomap_color=False,
         boundaries=map_opts["boundaries"],
     )
 
@@ -203,8 +203,8 @@ def plot_ch4_map(n):
         legend_kw=legend_kw,
     )
 
-    colors = list(pipe_colors.values()) + list(bus_colors.values())
-    labels = list(pipe_colors.keys()) + list(bus_colors.keys())
+    colors = list(pipe_colors.values()) + list(bus_color.values())
+    labels = list(pipe_colors.keys()) + list(bus_color.keys())
 
     # legend on the side
     # legend_kw = dict(
