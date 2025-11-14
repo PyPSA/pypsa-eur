@@ -353,9 +353,9 @@ if (COSTS_DATASET := dataset_version("costs"))["source"] in [
 
     rule retrieve_cost_data:
         input:
-            costs=storage(COSTS_DATASET["url"] + "/costs_{planning_horizon}.csv"),
+            costs=storage(COSTS_DATASET["url"] + "/costs_{planning_horizons}.csv"),
         output:
-            costs=COSTS_DATASET["folder"] + "/costs_{planning_horizon}.csv",
+            costs=COSTS_DATASET["folder"] + "/costs_{planning_horizons}.csv",
         run:
             copy2(input["costs"], output["costs"])
 
