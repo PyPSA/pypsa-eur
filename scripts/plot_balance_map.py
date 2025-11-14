@@ -117,8 +117,8 @@ if __name__ == "__main__":
 
     # if there are not lines or links for the bus carrier, use fallback for plotting
     fallback = pd.Series()
-    line_widths = flow.get("Line", fallback).abs()
-    link_widths = flow.get("Link", fallback).abs()
+    line_width = flow.get("Line", fallback).abs()
+    link_width = flow.get("Link", fallback).abs()
 
     # define maximal size of buses and branch width
     bus_size_factor = config["bus_factor"]
@@ -166,8 +166,8 @@ if __name__ == "__main__":
         bus_sizes=bus_sizes * bus_size_factor,
         bus_colors=colors,
         bus_split_circles=True,
-        line_widths=line_widths * branch_width_factor,
-        link_widths=link_widths * branch_width_factor,
+        line_width=line_width * branch_width_factor,
+        link_width=link_width * branch_width_factor,
         line_flow=line_flow * flow_size_factor if line_flow is not None else None,
         link_flow=link_flow * flow_size_factor if link_flow is not None else None,
         transformer_flow=transformer_flow * flow_size_factor

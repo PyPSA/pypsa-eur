@@ -97,15 +97,15 @@ def plot_ch4_map(n):
     to_remove = n.links.index[~n.links.carrier.str.contains("gas pipeline")]
     n.links.drop(to_remove, inplace=True)
 
-    link_widths_rem = n.links.p_nom_opt / linewidth_factor
-    link_widths_rem[n.links.p_nom_opt < line_lower_threshold] = 0.0
+    link_width_rem = n.links.p_nom_opt / linewidth_factor
+    link_width_rem[n.links.p_nom_opt < line_lower_threshold] = 0.0
 
-    link_widths_orig = n.links.p_nom / linewidth_factor
-    link_widths_orig[n.links.p_nom < line_lower_threshold] = 0.0
+    link_width_orig = n.links.p_nom / linewidth_factor
+    link_width_orig[n.links.p_nom < line_lower_threshold] = 0.0
 
     max_usage = n.links_t.p0[n.links.index].abs().max(axis=0)
-    link_widths_used = max_usage / linewidth_factor
-    link_widths_used[max_usage < line_lower_threshold] = 0.0
+    link_width_used = max_usage / linewidth_factor
+    link_width_used[max_usage < line_lower_threshold] = 0.0
 
     tech_colors = snakemake.params.plotting["tech_colors"]
 
@@ -133,7 +133,7 @@ def plot_ch4_map(n):
         bus_sizes=bus_sizes,
         bus_colors=bus_colors,
         link_colors=pipe_colors["gas pipeline (in 2020)"],
-        link_widths=link_widths_orig,
+        link_width=link_width_orig,
         branch_components=["Link"],
         ax=ax,
         **map_opts,
@@ -143,7 +143,7 @@ def plot_ch4_map(n):
         ax=ax,
         bus_sizes=0.0,
         link_colors=pipe_colors["gas pipeline (available)"],
-        link_widths=link_widths_rem,
+        link_width=link_width_rem,
         branch_components=["Link"],
         geomap_colors=False,
         boundaries=map_opts["boundaries"],
@@ -153,7 +153,7 @@ def plot_ch4_map(n):
         ax=ax,
         bus_sizes=0.0,
         link_colors=link_color_used,
-        link_widths=link_widths_used,
+        link_width=link_width_used,
         branch_components=["Link"],
         geomap_colors=False,
         boundaries=map_opts["boundaries"],

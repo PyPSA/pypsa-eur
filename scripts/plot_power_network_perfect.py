@@ -96,17 +96,17 @@ def plot_map_perfect(
     ac_color = "gray"
     dc_color = "m"
 
-    line_widths = n.lines.s_nom_opt
-    link_widths = n.links.p_nom_opt
+    line_width = n.lines.s_nom_opt
+    link_width = n.links.p_nom_opt
     linewidth_factor = 2e3
     line_lower_threshold = 0.0
     title = "Today's transmission"
 
-    line_widths[line_widths < line_lower_threshold] = 0.0
-    link_widths[link_widths < line_lower_threshold] = 0.0
+    line_width[line_width < line_lower_threshold] = 0.0
+    link_width[link_width < line_lower_threshold] = 0.0
 
-    line_widths[line_widths > line_upper_threshold] = line_upper_threshold
-    link_widths[link_widths > line_upper_threshold] = line_upper_threshold
+    line_width[line_width > line_upper_threshold] = line_upper_threshold
+    link_width[link_width > line_upper_threshold] = line_upper_threshold
 
     for year in costs.columns:
         fig, ax = plt.subplots(subplot_kw={"projection": proj})
@@ -118,8 +118,8 @@ def plot_map_perfect(
             bus_colors=snakemake.config["plotting"]["tech_colors"],
             line_colors=ac_color,
             link_colors=dc_color,
-            line_widths=line_widths / linewidth_factor,
-            link_widths=link_widths / linewidth_factor,
+            line_width=line_width / linewidth_factor,
+            link_width=link_width / linewidth_factor,
             ax=ax,
             **map_opts,
         )

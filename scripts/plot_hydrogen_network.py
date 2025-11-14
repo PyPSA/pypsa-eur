@@ -127,7 +127,7 @@ def plot_h2_map(n, regions):
     else:
         h2_total = h2_new.p_nom_opt
 
-    link_widths_total = h2_total / linewidth_factor
+    link_width_total = h2_total / linewidth_factor
 
     n.links.rename(index=lambda x: x.split("-2")[0], inplace=True)
     # group links by summing up p_nom values and taking the first value of the rest of the columns
@@ -136,14 +136,14 @@ def plot_h2_map(n, regions):
         {"p_nom_opt": "sum", "p_nom": "sum", **other_cols}
     )
 
-    link_widths_total = link_widths_total.reindex(n.links.index).fillna(0.0)
-    link_widths_total[n.links.p_nom_opt < line_lower_threshold] = 0.0
+    link_width_total = link_width_total.reindex(n.links.index).fillna(0.0)
+    link_width_total[n.links.p_nom_opt < line_lower_threshold] = 0.0
 
     retro = n.links.p_nom_opt.where(
         n.links.carrier == "H2 pipeline retrofitted", other=0.0
     )
-    link_widths_retro = retro / linewidth_factor
-    link_widths_retro[n.links.p_nom_opt < line_lower_threshold] = 0.0
+    link_width_retro = retro / linewidth_factor
+    link_width_retro[n.links.p_nom_opt < line_lower_threshold] = 0.0
 
     n.links.bus0 = n.links.bus0.str.replace(" H2", "")
     n.links.bus1 = n.links.bus1.str.replace(" H2", "")
@@ -162,7 +162,7 @@ def plot_h2_map(n, regions):
         bus_sizes=bus_sizes,
         bus_colors=bus_colors,
         link_colors=color_h2_pipe,
-        link_widths=link_widths_total,
+        link_width=link_width_total,
         branch_components=["Link"],
         ax=ax,
         **map_opts,
@@ -172,7 +172,7 @@ def plot_h2_map(n, regions):
         geomap=True,
         bus_sizes=0,
         link_colors=color_retrofit,
-        link_widths=link_widths_retro,
+        link_width=link_width_retro,
         branch_components=["Link"],
         ax=ax,
         **map_opts,
