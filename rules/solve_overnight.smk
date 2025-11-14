@@ -38,7 +38,5 @@ rule solve_sector_network:
             RESULTS
             + "benchmarks/solve_sector_network/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/solve_network.py"
