@@ -64,7 +64,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pixi run unit-test
+        pixi run unit-tests
 
     - name: Upload artifacts
       if: always()
