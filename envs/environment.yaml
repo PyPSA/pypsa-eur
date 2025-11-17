@@ -1,77 +1,64 @@
-# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-#
-# SPDX-License-Identifier: CC0-1.0
-
 name: pypsa-eur
 channels:
 - conda-forge
 - bioconda
+- gurobi
+- nodefaults
 dependencies:
-- python>=3.10
-- pip
-
-# Inhouse packages
-- pypsa>=0.35.2
-- atlite>=0.3
-- linopy>=0.4.4
-- powerplantmatching>=0.5.15
-
-# Dependencies of the workflow itself
-- dask
-- xlrd
-- openpyxl
-- seaborn
-- snakemake-minimal>=9
-- snakemake-storage-plugin-http>=0.3
-- snakemake-executor-plugin-slurm
-- snakemake-executor-plugin-cluster-generic
-- memory_profiler
-- yaml
-- pytables
-- lxml
-- numpy
-- pandas>=2.1
-- geopandas>=1
-- xarray>=2024.03.0,<2025.07.0
-- rioxarray
-- netcdf4
-- libgdal-netcdf
-- networkx
-- scipy
-- glpk
-- shapely>=2.0
-- matplotlib
-- proj
-- fiona
-- country_converter
-- geopy
-- tqdm
-- tenacity
-- pytz
-- jpype1
-- pyxlsb
-- graphviz
-- geojson
-- copernicusmarine
-- pyscipopt
-- plotly
-- bokeh
-- folium
-
-# GIS dependencies:
-- cartopy
-- descartes
-- rasterio
-
-# Development dependencies
-- jupyter
-- ipython
-- pre-commit
-- ruff
-- pylint
-
-- pip:
-  - gurobipy
-  - highspy
-  - tsam>=2.3.1
-  - entsoe-py
+- atlite >=0.3
+- bokeh >=3.8.0
+- cartopy >=0.25.0
+- copernicusmarine >=2.2.4
+- country_converter >=1.3.2
+- dask >=2025.10.0
+- descartes >=1.1.0
+- entsoe-py >=0.7.8
+- fiona >=1.10.1
+- folium >=0.20.0
+- geojson >=3.2.0
+- geopandas >=1
+- geopy >=2.4.1
+- glpk >=5.0
+- graphviz >=12.2.1
+- gurobi >=12.0.3
+- highspy >=1.12.0
+- ipython >=9.7.0
+- jpype1 >=1.6.0
+- jupyter >=1.1.1
+- libgdal-netcdf >=3.10.3
+- linopy >=0.4.4
+- lxml >=6.0.2
+- matplotlib >=3.10.7
+- memory_profiler >=0.61.0
+- netcdf4 >=1.7.2
+- networkx >=3.5
+- numpy >=1.26.4
+- openpyxl >=3.1.5
+- pandas >=2.1
+- plotly >=6.4.0
+- powerplantmatching >=0.5.15
+- pre-commit >=4.3.0
+- proj >=9.6.2
+- pylint >=4.0.2
+- pypsa >=0.35.2
+- pyscipopt >=5.6.0
+- pytables >=3.10.2
+- python >=3.10
+- pytz >=2025.2
+- pyxlsb >=1.0.10
+- rasterio >=1.4.3
+- rioxarray >=0.20.0
+- ruff >=0.14.3
+- scipy >=1.16.3
+- seaborn >=0.13.2
+- shapely >=2.0
+- snakemake-executor-plugin-cluster-generic >=1.0.9
+- snakemake-executor-plugin-slurm >=1.9.2
+- snakemake-minimal >=9
+- snakemake-storage-plugin-http >=0.3
+- tenacity >=9.1.2
+- tqdm >=4.67.1
+- tsam >=2.3.1
+- xarray >=2024.3.0,<2025.7.0
+- xlrd >=2.0.2
+- yaml >=0.2.5
