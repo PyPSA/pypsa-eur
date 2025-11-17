@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # Test configuration for residential heat DSM implementation
-# EU27 countries, 1-week run in 2019, 6h resolution
+# EU27 countries, 6-month run (Mar-Aug 2019), 6h resolution, 38 clusters
 
 tutorial: true
 
@@ -28,8 +28,8 @@ countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'F
             'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
 
 snapshots:
-  start: "2019-01-07"
-  end: "2019-01-14"
+  start: "2019-03-01"
+  end: "2019-08-31"
 
 electricity:
 
@@ -113,8 +113,8 @@ industry:
 
 solving:
   solver:
-    name: highs
-    options: highs-default
+    name: gurobi
+    options: gurobi-default
   mem: 8000
 
 plotting:
