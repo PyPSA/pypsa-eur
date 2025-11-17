@@ -1430,6 +1430,7 @@ if __name__ == "__main__":
     )
 
     # Determine solve mode
+    rolling_horizon = cf_solving.get("rolling_horizon", False)
     skip_iterations = cf_solving.get("skip_iterations", False)
 
     if not n.lines.s_nom_extendable.any():
@@ -1444,7 +1445,25 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        if skip_iterations:
+        if rolling_horizon:
+            logger.info("Using rolling horizon optimization...")
+            model_kwargs, solve_kwargs = collect_kwargs(
+                snakemake.config, snakemake.params.solving, planning_horizons
+            )
+            all_kwargs = {**model_kwargs, **solve_kwargs}
+            all_kwargs["horizon"] = cf_solving.get("horizon", 365)
+            all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+            all_kwargs["log_fn"] = snakemake.log.solver
+
+            n.config = snakemake.config
+            n.params = snakemake.params
+            all_kwargs["extra_functionality"] = partial(
+                extra_functionality, planning_horizons=planning_horizons
+            )
+            n.optimize.optimize_with_rolling_horizon(**all_kwargs)
+            status, condition = "", ""
+
+        elif skip_iterations:
             logger.info("Using single-pass optimization...")
             model_kwargs, solve_kwargs = prepare_optimization_problem(
                 n,
@@ -1486,7 +1505,7 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     # Check results
-    if status != "ok":
+    if status != "ok" and not rolling_horizon:
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
