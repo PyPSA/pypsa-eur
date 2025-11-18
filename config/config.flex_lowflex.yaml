@@ -711,7 +711,7 @@ sector:
     2035: 100
     2040: 180
     2045: 250
-    2050: 250
+    2050: 400
   co2_sequestration_cost: 30
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -811,8 +811,8 @@ sector:
   solid_biomass_import:
     enable: true
     price: 54 #EUR/MWh
-    max_amount: 1390 # TWh
-    upstream_emissions_factor: .05 #share of solid biomass CO2 emissions at full combustion
+    max_amount: 4000 # TWh
+    upstream_emissions_factor: 0 #share of solid biomass CO2 emissions at full combustion
   imports:
     enable: false
     limit: .inf

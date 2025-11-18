@@ -19,47 +19,54 @@ electrolysis_flex:
     min_part_load_electrolysis: 0.2
 
 bev_dsm:
-  bev_dsm: true
-  bev_dsm_availability: 0.5
-  #bev_energy: 0.05
-  #bev_charge_efficiency: 0.9
-  #bev_charge_rate: 0.011
-  bev_avail_max: 0.95
-  bev_avail_mean: 0.8
+  sector:
+    bev_dsm: true
+    bev_dsm_availability: 0.5
+    #bev_energy: 0.05
+    #bev_charge_efficiency: 0.9
+    #bev_charge_rate: 0.011
+    bev_avail_max: 0.95
+    bev_avail_mean: 0.8
 
 bev_dsm_v2g:
-  bev_dsm: true
-  bev_dsm_availability: 0.5
-  bev_avail_max: 0.95
-  bev_avail_mean: 0.8
-  v2g: true
+  sector:
+    bev_dsm: true
+    bev_dsm_availability: 0.5
+    bev_avail_max: 0.95
+    bev_avail_mean: 0.8
+    v2g: true
 
 full_land_electrification:
-  land_transport_electric_share:
-    2050: 1
-  land_transport_ice_share:
-    2050: 0
+  sector:
+    land_transport_electric_share:
+      2050: 1
+    land_transport_ice_share:
+      2050: 0
 
 renovation:
-  reduce_space_heat_exogenously_factor:
-    2050: 0.2
+  sector:
+    reduce_space_heat_exogenously_factor:
+      2050: 0.2
 
 recycling:
-  HVC_primary_fraction:
-    2050: 0.4
-  HVC_mechanical_recycling_fraction:
-    2050: 0.3
-  HVC_chemical_recycling_fraction:
-    2050: 0.2
+  industry:
+    HVC_primary_fraction:
+      2050: 0.4
+    HVC_mechanical_recycling_fraction:
+      2050: 0.3
+    HVC_chemical_recycling_fraction:
+      2050: 0.2
 
 industry_progress:
-  sector_ratios_fraction_future:
-    2050: 1.0
+  industry:
+    sector_ratios_fraction_future:
+      2050: 1.0
 
 low_liquids_demand:
-  aviation_demand_factor: 1.2
-  HVC_demand_factor: 1.0
-  #add land transport and shipping, or separate?
+  sector:
+    aviation_demand_factor: 1.2
+    HVC_demand_factor: 1.0
+    #add land transport and shipping, or separate?
 
 thermal_storage:
   sector:
