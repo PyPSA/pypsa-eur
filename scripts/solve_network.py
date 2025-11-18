@@ -462,8 +462,7 @@ def prepare_network(
     if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
-        # TODO: retrieve color and nice name from config
-        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        n.add("Carrier", "load")
         buses_i = n.buses.index
         if isinstance(load_shedding, bool):
             load_shedding = 1e5  # Eur/MWh
