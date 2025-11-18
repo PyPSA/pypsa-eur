@@ -65,14 +65,19 @@ effects for renewable power generation and their varying resource availability.
 Sector-Coupled Energy System
 ============================
 
-A sector-coupled extension (previously known as **PyPSA-Eur-Sec**, which is now
-deprecated) adds demand and supply for the following sectors: transport, space
-and water heating, biomass, energy consumption in the agriculture, industry and
+A sector-coupled extension adds demand and supply for the following sectors:
+transport, space and water heating, biomass, energy consumption in the
+agriculture, industry and
 industrial feedstocks, carbon management, carbon capture and
 usage/sequestration. This completes the energy system and includes all
 greenhouse gas emitters except waste management, agriculture, forestry and land
 use. The diagram below gives an overview of the sectors and the links between
 them:
+
+.. note::
+
+   This extension replaces the functionality that shipped under the
+   **PyPSA-Eur-Sec** name, which remains deprecated.
 
 .. image:: img/multisector_figure.png
     :width: 70%
@@ -142,6 +147,13 @@ Workflow
 .. note::
     The graph above was generated using
     ``snakemake --rulegraph -F | sed -n "/digraph/,/}/p" | dot -Tpng -o workflow.png``
+
+The rule set follows ``base → simplified → clustered → composed
+→ solved``. Intermediate networks (`networks/simplified.nc`,
+`networks/clustered.nc`, `networks/composed_{horizon}.nc`) live under
+``resources/{run}``, while solved artefacts are always written to
+``results/{run}/networks/solved_{horizon}.nc``. For users upgrading from the
+legacy ``base_s`` naming scheme, see the dedicated :doc:`migration` guide.
 
 
 Learning Energy System Modelling
@@ -225,6 +237,7 @@ The PyPSA-Eur workflow is continuously tested for Linux, macOS and Windows (WSL 
    introduction
    installation
    tutorial
+   migration
    tutorial_sector
 
 .. toctree::

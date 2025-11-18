@@ -4,9 +4,9 @@ base_network,--,"Any value in {'entsoegridkit', 'osm-prebuilt', 'osm-raw'}","Spe
 osm-prebuilt-version,--,"float, any value in range 0.1-0.6","Choose the version of the prebuilt OSM network. Defaults to latest Zenodo release."
 gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
-co2limit_enable,bool,true or false,"Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` in :mod:`prepare_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
+co2limit_enable,bool,true or false,"Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` during :mod:`compose_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
 co2limit,:math:`t_{CO_2-eq}/a`,float,Cap on total annual system carbon dioxide emissions
-co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions if relative emission reduction target is specified in ``{opts}`` wildcard.
+co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions when ``electricity.co2limit`` is expressed as a relative reduction. Configure explicitly here rather than through legacy wildcards.
 operational_reserve,,,Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_
 ,,, 
 -- activate,bool,true or false,Whether to take operational reserve requirements into account during optimisation
@@ -27,11 +27,11 @@ custom_powerplants,--,"use `pandas.query <https://pandas.pydata.org/pandas-docs/
 ,,, 
 everywhere_powerplants,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to add to every node in the model with zero initial capacity. To be used in combination with ``extendable_carriers`` to allow for building conventional powerplants irrespective of existing locations."
 ,,, 
-conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/powerplants_s_{clusters}.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
+conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/<run>/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,, 
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
 estimate_renewable_capacities,,, 
--- enable,,bool,Activate routine to estimate renewable capacities in rule :mod:`add_electricity`. This option should not be used in combination with pathway planning ``foresight: myopic`` or ``foresight: perfect`` as renewable capacities are added differently in :mod:`add_existing_baseyear`.
+-- enable,,bool,Activate routine to estimate renewable capacities during :mod:`compose_network`. Do not enable this for ``foresight: myopic`` or ``foresight: perfect`` runs, since brownfield injections rely on solved/baseline capacities rather than this estimator.
 -- from_gem,--,bool,Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
 -- expansion_limit,--,float or false,"Artificially limit maximum IRENA capacities to a factor.  For example, an ``expansion_limit: 1.1`` means 110% of capacities . If false are chosen, the estimated renewable potentials determine by the workflow are used."

@@ -10,22 +10,16 @@ buses and transmission corridors.
 Outputs
 -------
 
-- ``resources/regions_onshore_base_s_{clusters}.geojson``:
+- ``resources/{run}/networks/regions_onshore.geojson``:
+  Onshore regions for clustered network
 
-    .. image:: img/regions_onshore_base_s_X.png
-        :scale: 33 %
+- ``resources/{run}/networks/regions_offshore.geojson``:
+  Offshore regions for clustered network
 
-- ``resources/regions_offshore_base_s_{clusters}.geojson``:
-
-    .. image:: img/regions_offshore_base_s_X.png
-        :scale: 33 %
-
-- ``resources/busmap.csv``: Mapping of buses from ``networks/simplified.nc`` to ``networks/clustered.nc``;
-- ``resources/linemap_base_s_{clusters}.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/clustered.nc``;
-- ``networks/clustered.nc``:
-
-    .. image:: img/base_s_X.png
-        :scale: 40  %
+- ``resources/{run}/networks/busmap.csv``: Mapping of buses from ``networks/simplified.nc`` to ``networks/clustered.nc``;
+- ``resources/{run}/networks/linemap.csv``: Mapping of lines from ``networks/base.nc`` to ``networks/clustered.nc``;
+- ``resources/{run}/networks/clustered.nc``:
+  Clustered network with aggregated buses and corridors
 
 Description
 -----------
@@ -40,25 +34,25 @@ Description
 
 Exemplary unsolved network clustered to 512 nodes:
 
-.. image:: img/base_s_512.png
+.. image:: img/clustered_512.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 256 nodes:
 
-.. image:: img/base_s_256.png
+.. image:: img/clustered_256.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 128 nodes:
 
-.. image:: img/base_s_128.png
+.. image:: img/clustered_128.png
     :scale: 40  %
     :align: center
 
 Exemplary unsolved network clustered to 37 nodes:
 
-.. image:: img/base_s_37.png
+.. image:: img/clustered_37.png
     :scale: 40  %
     :align: center
 """

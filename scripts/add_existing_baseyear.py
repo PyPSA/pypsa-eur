@@ -726,7 +726,7 @@ if __name__ == "__main__":
             clusters="5",
             opts="",
             sector_opts="",
-            planning_horizons=2030,
+            horizon=2030,
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606

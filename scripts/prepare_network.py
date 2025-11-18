@@ -4,8 +4,8 @@
 
 
 """
-Prepare PyPSA network for solving according to :ref:`opts` and :ref:`ll`, such
-as.
+Prepare PyPSA network for solving with various operational constraints and
+temporal adjustments.
 
 - adding an annual **limit** of carbon-dioxide emissions,
 - adding an exogenous **price** per tonne emissions of carbon-dioxide (or other kinds),
@@ -18,10 +18,15 @@ as.
 Description
 -----------
 
+.. note::
+
+    This script's functionality has been integrated into :mod:`compose_network`
+    in the streamlined workflow. This script is maintained for backwards compatibility.
+
 .. tip::
-    The rule :mod:`prepare_elec_networks` runs
-    for all ``scenario`` s in the configuration file
-    the rule :mod:`prepare_network`.
+    The deprecated rule :mod:`prepare_elec_networks` has been replaced by the
+    unified :mod:`compose_network` script which handles network preparation for
+    all scenarios.
 """
 
 import logging

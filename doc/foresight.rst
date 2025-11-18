@@ -8,21 +8,47 @@
 Foresight Options
 #####################
 
+Planning horizons and warm starts
+=================================
+
+All foresight modes share the same ``planning_horizons`` list at the top of the
+configuration file. The workflow iterates over this list and composes/solves a
+network for each year while persisting two canonical artefacts:
+
+- ``resources/{run}/networks/composed_{horizon}.nc`` — output of
+  :mod:`scripts/compose_network`
+- ``results/{run}/networks/solved_{horizon}.nc`` — output of
+  :mod:`scripts/solve_network`
+
+Warm-start behaviour depends on the foresight mode:
+
+- ``overnight`` expects a single value and does **not** reuse previous years.
+- ``myopic`` requires at least two horizons and feeds the solved network from
+  the previous year ``RESULTS/networks/solved_{prev}.nc`` into the next
+  ``compose_network`` call.
+- ``perfect`` also iterates sequentially but consumes
+  ``networks/composed_{prev}.nc`` to build the full multi-period optimisation.
+
+When in doubt, inspect :mod:`rules/compose.smk` to see how the helpers
+``solved_previous_horizon`` and ``compose_previous_horizon`` assemble these
+paths.
+
 .. _overnight:
 
 Overnight (greenfield) scenarios
 ================================
 
-The default is to calculate a rebuilding of the energy system to meet demand, a so-called overnight or greenfield approach.
+The default is to calculate a rebuilding of the energy system to meet demand, a
+so-called overnight or greenfield approach.
 
-In this case, the ``planning_horizons`` parameter specifies the reference year for exogenously given transition paths (e.g. the level of steel recycling).
-It does not affect the year for cost and technology assumptions, which is set separately in the config.
+In this case, the ``planning_horizons`` parameter specifies the reference year
+for exogenously given transition paths (e.g. the level of steel recycling). It
+does not affect the year for cost and technology assumptions, which is set
+separately in the config.
 
 .. code:: yaml
 
-  scenario:
-    planning_horizons:
-    - 2050
+  planning_horizons: 2050
 
   costs:
     year: 2030
@@ -106,9 +132,10 @@ For running myopic foresight transition scenarios, set in ``config/config.yaml``
 The following options included in the ``config/config.yaml`` file  are relevant for the
 myopic code.
 
-The ``{planning_horizons}`` wildcard indicates the year in which the network is
-optimized. For a myopic optimization, this is equivalent to the investment year.
-To set the investment years which are sequentially simulated for the myopic
+The ``{horizon}`` wildcard indicates the year in which the network is optimized.
+For a myopic optimization, this is equivalent to the investment year. The set
+of values is pulled directly from the top-level ``planning_horizons`` list. To
+set the investment years which are sequentially simulated for the myopic
 investment planning, select for example:
 
 .. literalinclude:: ../config/test/config.myopic.yaml
@@ -394,73 +421,51 @@ The choice of emissions scope affects:
 General myopic code structure
 ---------------------------------
 
-The myopic code solves the network for the time steps included in
-``planning_horizons`` in a recursive loop, so that:
+The myopic workflow iterates through ``planning_horizons`` inside a single
+:mod:`scripts/compose_network` entry point. For each horizon the rule performs:
 
-1. The existing capacities (those installed before the base year are added as
-   fixed capacities with p_nom=value, p_nom_extendable=False). E.g. for
-   baseyear=2020, capacities installed before 2020 are added. In addition, the
-   network comprises additional generator, storage, and link capacities with
-   p_nom_extendable=True. The non-solved network is saved in
-   ``resources/run_name/networks``.
+1. Load ``networks/clustered.nc`` together with all derived assets (busmaps,
+   demand profiles, sectoral inputs).
+2. If ``existing_capacities.enabled`` is ``true``, merge the brownfield assets
+   built before the base year via ``add_existing_capacities`` inside
+   ``compose_network.py``.
+3. When ``w.horizon`` is not the first element of ``planning_horizons``, import
+   ``RESULTS/networks/solved_{prev}.nc`` (myopic) or
+   ``networks/composed_{prev}.nc`` (perfect) as the warm-start baseline.
+4. Persist the assembled network as ``resources/{run}/networks/composed_{horizon}.nc``.
 
-The base year is the first element in ``planning_horizons``. Step 1 is
-implemented with the rule add_baseyear for the base year and with the rule
-add_brownfield for the remaining planning_horizons.
-
-2. The 2020 network is optimized. The solved network is saved in
-   ``results/run_name/networks``
-
-3. For the next planning horizon, e.g. 2030, the capacities from a previous time
-   step are added if they are still in operation (i.e., if they fulfil planning
-   horizon <= commissioned year + lifetime). In addition, the network comprises
-   additional generator, storage, and link capacities with
-   p_nom_extendable=True. The non-solved network is saved in
-   ``results/run_name/networks``.
-
-Steps 2 and 3 are solved recursively for all the planning_horizons included in
-``config/config.yaml``.
+After composition, :mod:`scripts/solve_network` optimises every horizon to
+produce ``results/{run}/networks/solved_{horizon}.nc``. Downstream plotting and
+reporting stages such as :mod:`scripts/make_summary` consume these solved files
+directly, so all foresight modes share the same results directory structure.
 
 Rule overview
 --------------
 
-- rule add_existing baseyear
+- :mod:`compose_network`
 
-  The rule add_existing_baseyear loads the network in
-  ``resources/run_name/networks`` and performs the following operations:
+  Performs the per-horizon assembly of simplified assets, existing capacities,
+  and warm-start seeding within a single entry point. Custom extensions should
+  hook into the clearly marked sections of ``scripts/compose_network.py``.
 
-  1. Add the conventional, wind and solar power generators that were installed
-     before the base year.
+  .. note::
 
-  2. Add the heating capacities that were installed before the base year.
+     Earlier workflows used dedicated ``add_*`` and ``prepare_*`` rules. Keep
+     bespoke injections inside ``compose_network.py`` to stay aligned with the
+     streamlined pipeline.
 
-  The existing conventional generators are retrieved from the `powerplants.csv
-  file
-  <https://pypsa-eur.readthedocs.io/en/latest/preparation/build_powerplants.html?highlight=powerplants>`__
-  generated by pypsa-eur which, in turn, is based on the `powerplantmatching
-  <https://github.com/PyPSA/powerplantmatching>`__ database.
+- :mod:`solve_network`
 
-  Existing wind and solar capacities are retrieved from `IRENA annual statistics
-  <https://www.irena.org/Statistics/Download-Data>`__ and distributed among the
-  nodes in a country proportional to capacity factor. (This will be updated to
-  include capacity distributions closer to reality.)
+  Applies the configured solver to each composed network and writes
+  ``results/{run}/networks/solved_{horizon}.nc`` alongside solver logs stored
+  in ``results/{run}/logs/solve_network``.
 
-  Existing heating capacities are retrieved from the report `Mapping and
-  analyses of the current and future (2020 - 2030) heating/cooling fuel
-  deployment (fossil/renewables)
-  <https://ec.europa.eu/energy/studies/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment_en?redir=1>`__.
+- :mod:`make_summary`
 
-  The heating capacities are assumed to have a lifetime indicated by the
-  parameter lifetime in the configuration file, e.g 25 years. They are assumed
-  to be decommissioned linearly starting on the base year, e.g., from 2020 to
-  2045.
+  Converts the solved networks into CSV/plot outputs for downstream dashboards.
 
-  Then, the resulting network is saved in
-  ``resources/run_name/networks``.
+  .. note::
 
-- rule add_brownfield
-
-  The rule add_brownfield loads the network and reads the capacities optimized
-  in the previous time step and add them to the
-     network if they are still in operation (i.e., if they fulfill planning
-     horizon < commissioned year + lifetime)
+     Legacy helper scripts such as ``make_summary_perfect.py`` distinguished
+     between foresight modes. The refactored workflow routes every summary
+     through ``scripts/make_summary.py``.

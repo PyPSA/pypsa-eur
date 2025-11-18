@@ -4,6 +4,11 @@
 """
 Adds all sector-coupling components to the network, including demand and supply
 technologies for the buildings, transport and industry sectors.
+
+.. note::
+
+    This script's functionality has been integrated into :mod:`compose_network`
+    in the streamlined workflow. This script is maintained for backwards compatibility.
 """
 
 import logging

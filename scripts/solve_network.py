@@ -21,9 +21,9 @@ Additionally, some extra constraints specified in :mod:`solve_network` are added
 
 .. note::
 
-    The rules ``solve_elec_networks`` and ``solve_sector_networks`` run
-    the workflow for all scenarios in the configuration file (``scenario:``)
-    based on the rule :mod:`solve_network`.
+    The rule :mod:`solve_network` handles both electricity-only and sector-coupled
+    network optimization. The deprecated rules ``solve_elec_networks`` and
+    ``solve_sector_networks`` have been replaced by this unified rule.
 """
 
 import importlib

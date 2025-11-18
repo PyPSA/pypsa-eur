@@ -349,7 +349,7 @@ def validate_network_state(
 
 
 def adjust_renewable_capacity_limits(
-    n: pypsa.Network, planning_horizons: str, renewable_carriers: list[str]
+    n: pypsa.Network, horizon: str, renewable_carriers: list[str]
 ) -> None:
     """
     Adjust renewable capacity limits by subtracting existing capacities from previous horizons.
@@ -364,7 +364,7 @@ def adjust_renewable_capacity_limits(
     ----------
     n : pypsa.Network
         Network containing renewable generators
-    planning_horizons : str
+    horizon : str
         The current planning horizon year as string
     renewable_carriers : list[str]
         List of renewable carrier names from config
@@ -381,7 +381,7 @@ def adjust_renewable_capacity_limits(
             f" {carrier}.*$", "", regex=True
         )
         existing = n.generators.loc[ext_i, "p_nom"].groupby(grouper).sum()
-        existing.index += f" {carrier}-{planning_horizons}"
+        existing.index += f" {carrier}-{horizon}"
         n.generators.loc[existing.index, "p_nom_max"] -= existing
 
     # Check if existing capacities are larger than technical potential

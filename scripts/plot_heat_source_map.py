@@ -29,14 +29,14 @@ Relevant Settings
 
 Inputs
 ------
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Regional boundaries
-- `resources/<run_name>/temp_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Temperature data
-- `resources/<run_name>/heat_source_energy_{carrier}_base_s_{clusters}_temporal_aggregate.nc`: Energy data (optional)
+- `resources/{run}/regions_onshore.geojson`: Regional boundaries
+- `resources/{run}/temp_{carrier}_temporal_aggregate.nc`: Temperature data
+- `resources/{run}/heat_source_energy_{carrier}_temporal_aggregate.nc`: Energy data (optional)
 
 Outputs
 -------
-- `results/<run_name>/plots/heat_source_map_{carrier}_temperature.html`: Interactive temperature map
-- `results/<run_name>/plots/heat_source_map_{carrier}_energy.html`: Interactive energy potential map
+- `results/{run}/plots/heat_source_map_{carrier}_temperature.html`: Interactive temperature map
+- `results/{run}/plots/heat_source_map_{carrier}_energy.html`: Interactive energy potential map
 
 Notes
 -----

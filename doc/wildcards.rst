@@ -10,17 +10,44 @@ Wildcards
 
 .. warning::
 
-   **MAJOR CHANGES:** The wildcard-based scenario system has been significantly
-   simplified. The ``{clusters}``, ``{opts}``, and ``{sector_opts}`` wildcards
-   have been removed in favor of direct configuration.
+   **MAJOR CHANGES:** The wildcard-based scenario system relies on direct
+   configuration.
 
-   The streamlined workflow now uses:
+   Key elements:
 
-   - ``{horizon}`` for planning horizons (replaces ``{planning_horizons}``)
+   - ``{horizon}`` for planning horizons
    - Direct configuration in ``config.yaml`` instead of wildcard combinations
-   - Simplified file naming (e.g., ``clustered.nc`` instead of ``base_s_{clusters}.nc``)
+   - Simplified file naming (e.g., ``clustered.nc``)
 
-   See the :ref:`release notes <Upcoming Release>` for migration instructions.
+   .. note::
+
+      Earlier releases exposed ``{clusters}``, ``{opts}``, and ``{sector_opts}``
+      wildcards. See :doc:`migration` and :doc:`release_notes` for guidance on
+      translating legacy targets.
+
+.. note::
+
+   A few common filename transitions are summarised below; see :doc:`migration`
+   for the complete table.
+
+   .. list-table::
+      :header-rows: 1
+
+      * - Legacy target
+        - New target
+        - Stage
+      * - ``networks/base_s_{clusters}.nc``
+        - ``networks/simplified.nc``
+        - Simplification
+      * - ``busmap_base_s_{clusters}.csv`` / ``linemap_base_s_{clusters}.csv``
+        - ``busmap.csv`` / ``linemap.csv``
+        - Clustering
+      * - ``networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
+        - ``networks/composed_{horizon}.nc``
+        - Composition
+      * - ``RESULTS/networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc``
+        - ``RESULTS/networks/solved_{horizon}.nc``
+        - Solving / results
 
 PyPSA-Eur uses the wildcards feature of ``snakemake`` to run multiple scenarios.
 Wildcards allow to generalise a rule to produce all files that follow a regular expression pattern
@@ -60,11 +87,9 @@ The ``{clusters}`` wildcard (DEPRECATED)
 
    **DEPRECATED:** This wildcard has been removed. Use
    ``clustering.cluster_network.n_clusters`` in the config file instead.
-
-**Legacy Information:**
-
-The ``{clusters}`` wildcard specified the number of buses a detailed
-network model should be reduced to in the rule :mod:`cluster_network`.
+   Legacy behaviour: the ``{clusters}`` wildcard specified the number of buses
+   a detailed network model should be reduced to in the rule
+   :mod:`cluster_network`.
 
 .. _opts:
 
@@ -75,12 +100,10 @@ The ``{opts}`` wildcard (DEPRECATED)
 
    **DEPRECATED:** This wildcard has been removed. Configure options directly
    in their respective config sections (e.g., ``electricity``, ``clustering``).
-
-**Legacy Information:**
-
-The ``{opts}`` wildcard was used for electricity-only studies. It triggered
-optional constraints, which were activated in either :mod:`prepare_network` or
-the :mod:`solve_network` step.
+   Legacy behaviour: the ``{opts}`` wildcard triggered optional constraints in
+   the electricity-only workflow and passed combinations to
+   ``prepare_network``/``solve_network``. Configure these options directly so
+   :mod:`compose_network` can apply them before :mod:`solve_network` runs.
 
 .. _sector_opts:
 
@@ -90,19 +113,17 @@ The ``{sector_opts}`` wildcard (DEPRECATED)
 .. note::
 
    **DEPRECATED:** This wildcard has been removed. Configure options directly
-   in the ``sector`` config section.
-
-**Legacy Information:**
-
-The ``{sector_opts}`` wildcard was only used for sector-coupling studies.
+   in the ``sector`` config section. Legacy behaviour: the
+   ``{sector_opts}`` wildcard controlled sector-coupling studies and is fully
+   represented by the dedicated config keys.
 
 .. _planning_horizons:
 
 The ``{horizon}`` wildcard
 ===========================
 
-The ``{horizon}`` wildcard (previously ``{planning_horizons}``) is used for
-multi-period optimization studies. It takes years as values, e.g. 2030, 2040, 2050.
+The ``{horizon}`` wildcard is used for multi-period optimization studies. It
+takes years as values, e.g. 2030, 2040, 2050.
 
 The planning horizons are configured in the top-level ``planning_horizons``
 config option:
@@ -115,3 +136,8 @@ This wildcard appears in composed and solved network filenames:
 
 - ``resources/{run}/networks/composed_{horizon}.nc``
 - ``results/{run}/networks/solved_{horizon}.nc``
+
+.. note::
+
+   Legacy documentation used the ``{planning_horizons}`` wildcard name. Update
+   custom scripts and configs to the ``{horizon}`` form.

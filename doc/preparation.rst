@@ -7,7 +7,10 @@ Building Electricity Networks
 ##########################################
 
 The preparation process of the PyPSA-Eur energy system model consists of a group of ``snakemake``
-rules which are briefly outlined and explained in detail in the sections below.
+rules which are briefly outlined and explained in detail in the sections below. The pipeline follows 
+the strict order ``base → simplified → clustered → composed → solved``;
+intermediate artifacts live under ``resources/{run}/networks`` while solved networks are written to
+``results/{run}/networks/solved_{horizon}.nc``.
 
 Not all data dependencies are shipped with the git repository.
 Instead we provide separate data bundles which can be obtained
@@ -34,8 +37,10 @@ Then, the process continues by calculating conventional power plant capacities, 
 - :mod:`build_renewable_profiles` for the hourly capacity factors and installation potentials constrained by land-use in each substation's Voronoi cell for PV, onshore and offshore wind, and
 - :mod:`build_hydro_profile` for the hourly per-unit hydro power availability time series.
 
-The rules :mod:`add_electricity` and :mod:`prepare_network` then tie all the different data inputs
-together into a detailed PyPSA network stored in ``networks/base_s_{clusters}_elec.nc``.
+Once ``networks/clustered.nc`` and the associated bus/line maps exist, the single rule
+:mod:`compose_network` stitches electricity, sector, and brownfield inputs together into
+``networks/composed_{horizon}.nc``. These per-horizon files are then consumed by
+:mod:`solve_network` without relying on any of the legacy ``add_*`` or ``prepare_*`` steps.
 
 .. _cutout:
 
@@ -193,17 +198,9 @@ Rule ``build_powerplants``
 
 .. automodule:: build_powerplants
 
-.. _electricity:
+.. _compose:
 
-Rule ``add_electricity``
-=============================
-
-.. automodule:: add_electricity
-
-.. _prepare:
-
-Rule ``prepare_network``
+Rule ``compose_network``
 ===========================
 
-.. automodule:: prepare_network
-
+.. automodule:: compose_network

@@ -9,9 +9,13 @@ greenfield and battery and hydrogen storage to the clustered network.
 Description
 -----------
 
+.. note::
+
+    This script's functionality has been integrated into :mod:`compose_network`
+    in the streamlined workflow. This script is maintained for backwards compatibility.
+
 The rule :mod:`add_electricity` ties all the different data inputs from the
-preceding rules together into a detailed PyPSA network that is stored in
-``networks/base_s_{clusters}_elec.nc``. It includes:
+preceding rules together into a detailed PyPSA network. It includes:
 
 - today's transmission topology and transfer capacities (optionally including
   lines which are under construction according to the config settings ``lines:
