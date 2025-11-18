@@ -19,11 +19,12 @@ import xarray as xr
 
 from scripts._helpers import (
     configure_logging,
+    load_costs,
     sanitize_custom_columns,
     set_scenario_config,
     update_config_from_wildcards,
 )
-from scripts.add_electricity import load_costs, sanitize_carriers
+from scripts.add_electricity import sanitize_carriers
 from scripts.build_energy_totals import cartesian
 from scripts.definitions.heat_system import HeatSystem
 from scripts.prepare_sector_network import cluster_heat_buses, define_spatial
@@ -598,17 +599,17 @@ def add_heating_capacities_installed_before_baseyear(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat pump-{grouping_year}",
-                    bus0=nodes_elec,
-                    bus1=nodes + " " + heat_system.value + " heat",
+                    bus0=nodes + " " + heat_system.value + " heat",
+                    bus1=nodes_elec,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=efficiency,
-                    capital_cost=costs.at[costs_name, "efficiency"]
-                    * costs.at[costs_name, "capital_cost"],
+                    efficiency=1 / efficiency.clip(lower=0.001),
+                    capital_cost=costs.at[costs_name, "capital_cost"],
                     p_nom=existing_capacities.loc[
                         nodes, (heat_system.value, f"{heat_source} heat pump")
                     ]
-                    * ratio
-                    / costs.at[costs_name, "efficiency"],
+                    * ratio,
+                    p_max_pu=0,
+                    p_min_pu=-1 * efficiency / efficiency.clip(lower=0.001),
                     build_year=int(grouping_year),
                     lifetime=costs.at[costs_name, "lifetime"],
                 )
@@ -745,12 +746,7 @@ if __name__ == "__main__":
     spatial = define_spatial(n.buses[n.buses.carrier == "AC"].index, options)
     add_build_year_to_new_assets(n, baseyear)
 
-    Nyears = n.snapshot_weightings.generators.sum() / 8760.0
-    costs = load_costs(
-        snakemake.input.costs,
-        snakemake.params.costs,
-        nyears=Nyears,
-    )
+    costs = load_costs(snakemake.input.costs)
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
     grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]

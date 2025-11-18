@@ -18,8 +18,10 @@ SPDX-License-Identifier = "CC-BY-4.0"
 path = [
     ".github/**",
     "borg-it",
-    "envs/*.lock.yaml",
+    "pixi.lock",
     "matplotlibrc",
+    "envs/*.pin.txt",
+    "envs/environment.yaml"
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC0-1.0"
