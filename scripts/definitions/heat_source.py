@@ -89,7 +89,7 @@ class HeatSource(Enum):
             return False
 
     @property
-    def is_limited(self) -> bool:
+    def requires_bus(self) -> bool:
         """
         Returns whether the heat source is limited (vs. inexhaustible).
 
@@ -104,7 +104,6 @@ class HeatSource(Enum):
         if self in [
             HeatSource.GEOTHERMAL,
             HeatSource.RIVER_WATER,
-            HeatSource.PTES,
         ]:
             return True
         else:
@@ -214,8 +213,8 @@ class HeatSource(Enum):
         str
             The bus2 name for the heat pump, or empty string if not applicable.
         """
-        if not self.is_limited:
-            # Inexhaustible sources (air, ground) don't have a bus2
+        if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
+            # Inexhaustible sources (air, ground, sea-water) don't have a bus2
             return ""
         elif self.requires_preheater:
             # Sources with preheater use pre-chilled bus
@@ -238,7 +237,8 @@ class HeatSource(Enum):
         float or pd.Series
             The efficiency2 value for the heat pump.
         """
-        if not self.is_limited:
+        if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
+            # Inexhaustible sources (air, ground, sea-water) don't have a bus2
             # Inexhaustible sources (air, ground, sea_water) have efficiency2 = 1
             # (no resource consumption from dummy bus)
             return 1.0
