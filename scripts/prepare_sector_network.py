@@ -3348,7 +3348,8 @@ def add_heat(
                     / (ptes_boost_per_discharge_profiles + 1),
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
-                    p_min_pu=-1,
+                    p_min_pu=-ptes_boost_per_discharge_profiles
+                    / ptes_boost_per_discharge_profiles.clip(lower=0.001),
                     p_max_pu=0,
                 )
 
