@@ -1,5 +1,4 @@
 ,Unit,Values,Description
-cutout_directory,--,str,"Directory to store cutouts."
 default_cutout,--,str|list,"Defines a default cutout. Can refer to a single cutout or a list of cutouts."
 nprocesses,--,int,"Number of parallel processes in cutout preparation"
 show_progress,bool,true/false,"Whether progressbar for atlite conversion processes should be shown. False saves time."
@@ -11,5 +10,8 @@ cutouts,,,
 -- -- dx,°,"Larger than 0.25","Grid resolution for longitude"
 -- -- dy,°,"Larger than 0.25","Grid resolution for latitude"
 -- -- time,,"Time interval within ['1979', '2018'] (with valid pandas date time strings)","Time span to download weather data for. If not defined, it defaults to the time interval spanned by the snapshots."
--- -- features,,"String or list of strings with valid cutout features ('influx', 'wind').","When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features."
--- -- sarah_dir,,str,"Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+-- -- prepare_kwargs,,,"Dictionary of keyword arguments passed to ``atlite.Cutout.prepare()`` when building the cutout."
+-- -- -- features,,"String or list of strings with valid cutout features ('influx', 'wind').","When freshly building a cutout, retrieve data only for those features. If not defined, it defaults to all available features."
+-- -- -- sarah_dir,,str,"Path to the location where SARAH-2 or SARAH-3 data is stored; SARAH data requires a manual separate download, see the https://atlite.readthedocs.io for details. Required for building cutouts with SARAH, not required for ERA5 cutouts."
+-- -- -- monthly_requests,,bool,"Whether to use monthly requests for ERA5 data when building the cutout. Helpful to avoid running into request limits with large cutouts. Defaults to False."
+-- -- -- tmpdir,,str,"Path to a temporary directory where intermediate files are stored when building the cutout. Helpful when building large cutouts. Defaults to None."

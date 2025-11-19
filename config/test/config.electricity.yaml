@@ -10,7 +10,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 scenario:
   clusters:
