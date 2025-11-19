@@ -264,7 +264,7 @@ def _apply_parameter_corrections(n, parameter_corrections):
         return
 
     for component, attrs in corrections.items():
-        df = n.df(component)
+        df = n.components[component].static
         oid = _get_oid(df)
         if attrs is None:
             continue
