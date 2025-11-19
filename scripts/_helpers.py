@@ -8,7 +8,6 @@ import hashlib
 import logging
 import os
 import re
-import shutil
 import time
 from functools import partial, wraps
 from pathlib import Path
@@ -431,30 +430,24 @@ def progress_retrieve(url, file, disable=False):
     # Raise HTTPError for transient errors
     # 429: Too Many Requests (rate limiting)
     # 500, 502, 503, 504: Server errors
-    if disable:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        with open(file, "wb") as f:
-            shutil.copyfileobj(response.raw, f)
-    else:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        total_size = int(response.headers.get("content-length", 0))
-        chunk_size = 1024
+    response = requests.get(url, headers=headers, stream=True)
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
+    total_size = int(response.headers.get("content-length", 0))
+    chunk_size = 1024
 
-        with tqdm(
-            total=total_size,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=str(file),
-        ) as t:
-            with open(file, "wb") as f:
-                for data in response.iter_content(chunk_size=chunk_size):
-                    f.write(data)
-                    t.update(len(data))
+    with tqdm(
+        total=total_size,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        desc=str(file),
+        disable=disable,
+    ) as t:
+        with open(file, "wb") as f:
+            for data in response.iter_content(chunk_size=chunk_size):
+                f.write(data)
+                t.update(len(data))
 
 
 def retry(func: Callable) -> Callable:
