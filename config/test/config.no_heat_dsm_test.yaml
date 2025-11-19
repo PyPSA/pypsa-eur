@@ -8,7 +8,7 @@
 tutorial: true
 
 run:
-  name: "test-heat-dsm-eu27"
+  name: "no-heat-dsm-eu27"
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -67,7 +67,7 @@ sector:
   gas_network: true
   H2_retrofit: true
   residential_heat:
-    dsm: true
+    dsm: false
     restriction_value:
       2020: 0.06
       2025: 0.16
