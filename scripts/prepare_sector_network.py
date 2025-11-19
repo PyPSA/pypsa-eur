@@ -3122,6 +3122,7 @@ def add_heat(
                 / 100,  # convert %/hour into unit/hour
                 capital_cost=costs.at["central water pit storage", "capital_cost"],
                 lifetime=costs.at["central water pit storage", "lifetime"],
+                e_nom_min=100000,
             )
 
         if enable_ates and heat_system == HeatSystem.URBAN_CENTRAL:
@@ -3343,8 +3344,9 @@ def add_heat(
                     bus1=nodes + f" {heat_system} resistive heat",
                     bus2=nodes + f" {heat_system} ptes heat",
                     carrier=f"{heat_system} water pits resistive booster",
-                    efficiency=1 / ptes_boost_per_discharge_profiles,
-                    efficiency2=1 - 1 / ptes_boost_per_discharge_profiles,
+                    efficiency=ptes_boost_per_discharge_profiles
+                    / (ptes_boost_per_discharge_profiles + 1),
+                    efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
                     p_min_pu=-1,
                     p_max_pu=0,
