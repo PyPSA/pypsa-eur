@@ -8,6 +8,7 @@ import hashlib
 import logging
 import os
 import re
+import shutil
 import time
 from functools import partial, wraps
 from pathlib import Path
@@ -424,8 +425,8 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 )
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    # Hotfix - Bug, tqdm not working with disable=False
-    disable = True
+
+    Path(file).parent.mkdir(parents=True, exist_ok=True)
 
     # Raise HTTPError for transient errors
     # 429: Too Many Requests (rate limiting)
@@ -435,7 +436,7 @@ def progress_retrieve(url, file, disable=False):
         if response.status_code in (429, 500, 502, 503, 504):
             response.raise_for_status()
         with open(file, "wb") as f:
-            f.write(response.content)
+            shutil.copyfileobj(response.raw, f)
     else:
         response = requests.get(url, headers=headers, stream=True)
         if response.status_code in (429, 500, 502, 503, 504):
