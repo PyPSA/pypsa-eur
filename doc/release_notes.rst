@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Add [custom storage plugin](https://github.com/PyPSA/snakemake-storage-plugin-cached-http) to handle retrievals from zenodo to address recurring failures.
+
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
