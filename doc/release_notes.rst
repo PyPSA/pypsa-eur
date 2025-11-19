@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
+
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
