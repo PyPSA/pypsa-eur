@@ -8,8 +8,6 @@ Retrieve cost data from ``technology-data``.
 import logging
 from pathlib import Path
 
-import pandas as pd
-
 from scripts._helpers import configure_logging, progress_retrieve, set_scenario_config
 
 logger = logging.getLogger(__name__)
@@ -43,7 +41,8 @@ if __name__ == "__main__":
     disable_progress = snakemake.config["run"].get("disable_progressbar", False)
     progress_retrieve(url, to_fn, disable=True)
 
-    df = pd.read_csv(to_fn)
-    logger.info(f"Reading in the file was successful: {df.head()}")
+    with open(to_fn, "rb") as f:
+        head = f.read(200).decode("utf-8", errors="replace")
+    logger.info(f"Head of the file:\n{head}")
 
     logger.info(f"Technology data available at at {to_fn}")
