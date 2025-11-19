@@ -43,6 +43,8 @@ class PtesTemperatureApproximator:
         charge_boosting_required: bool,
         discharge_boosting_required: bool,
         temperature_dependent_capacity: bool,
+        design_top_temperature: float,
+        design_bottom_temperature: float,
     ):
         """
         Initialize PtesTemperatureApproximator.
@@ -71,6 +73,8 @@ class PtesTemperatureApproximator:
         self.charge_boosting_required = charge_boosting_required
         self.discharge_boosting_required = discharge_boosting_required
         self.temperature_dependent_capacity = temperature_dependent_capacity
+        self.design_top_temperature = design_top_temperature
+        self.design_bottom_temperature = design_bottom_temperature
 
         if self.charge_boosting_required:
             raise NotImplementedError(
@@ -155,22 +159,12 @@ class PtesTemperatureApproximator:
         if self.temperature_dependent_capacity:
             delta_t = self.top_temperature_profile - self.bottom_temperature_profile
             # Get max possible delta_t for normalization
-            max_top = (
-                self.top_temperature
-                if isinstance(self.top_temperature, (int, float))
-                else self.forward_temperature.max().values
-            )
-            min_bottom = (
-                self.bottom_temperature
-                if isinstance(self.bottom_temperature, (int, float))
-                else self.return_temperature.min().values
-            )
-            max_delta_t = max_top - min_bottom
+            max_delta_t = self.design_top_temperature - self.design_bottom_temperature
             normalized_delta_t = delta_t / max_delta_t
             result = normalized_delta_t.clip(min=0)  # Ensure non-negative values
             logger.info(
                 f"PTES capacity (e_max_pu): Calculating temperature-dependent capacity. "
-                f"Normalization: max_delta_t={max_delta_t:.2f}K (max_top={max_top:.2f}°C, min_bottom={min_bottom:.2f}°C). "
+                f"Normalization: max_delta_t={max_delta_t:.2f}K (max_top={self.design_top_temperature:.2f}°C, min_bottom={self.design_bottom_temperature:.2f}°C). "
                 f"Resulting capacity range: {float(result.min().values):.3f} to {float(result.max().values):.3f} p.u."
             )
             return result

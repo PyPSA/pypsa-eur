@@ -93,6 +93,8 @@ if __name__ == "__main__":
         charge_boosting_required=snakemake.params.charge_boosting_required,
         discharge_boosting_required=discharge_boosting_required,
         temperature_dependent_capacity=snakemake.params.temperature_dependent_capacity,
+        design_bottom_temperature=snakemake.params.design_bottom_temperature,
+        design_top_temperature=snakemake.params.design_top_temperature,
     )
 
     ptes_temperature_approximator.top_temperature_profile.to_netcdf(

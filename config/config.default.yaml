@@ -526,7 +526,8 @@ sector:
       discharge_resistive_boosting: false
       top_temperature: 90
       bottom_temperature: 10
-      dynamic_temperature: false
+      design_top_temperature: 90
+      design_bottom_temperature: 35
     ates:
       enable: false
       suitable_aquifer_types:

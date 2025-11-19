@@ -695,6 +695,18 @@ rule build_ptes_operations:
         temperature_dependent_capacity=config_provider(
             "sector", "district_heating", "ptes", "temperature_dependent_capacity"
         ),
+        design_top_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "design_top_temperature",
+        ),
+        design_bottom_temperature=config_provider(
+            "sector",
+            "district_heating",
+            "ptes",
+            "design_bottom_temperature",
+        ),
     input:
         central_heating_forward_temperature_profiles=resources(
             "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
