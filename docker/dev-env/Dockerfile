@@ -2,31 +2,24 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-FROM condaforge/mambaforge
+FROM ghcr.io/prefix-dev/pixi:0.40.0 AS build
 
 LABEL org.opencontainers.image.source https://github.com/PyPSA/pypsa-eur
 
-RUN conda update -n base conda
-RUN conda install -n base conda-libmamba-solver
-RUN conda config --set solver libmamba
+RUN pixi self-update
 
-RUN apt-get update && apt-get install -y bash git make
-
-RUN conda --version
+RUN apt-get update && apt-get install -y bash git
 
 WORKDIR /pypsa-eur
 
-COPY ./envs ./temp
+COPY pixi.toml pixi.lock ./
 
-RUN conda env create -n pypsa-eur -f temp/linux-64.lock.yaml
-RUN conda init bash
-RUN echo "conda activate pypsa-eur" >> ~/.bashrc
+RUN pixi install -e default
+RUN pixi shell-hook -e default > /shell-hook.sh
 
-SHELL ["/bin/bash", "--login", "-c"]
-ENV PATH=/opt/conda/envs/pypsa-eur/bin:$PATH
+# extend the shell-hook script to run the command passed to the container
+RUN echo 'exec "$@"' >> /shell-hook.sh
 
-RUN rm -r temp
-RUN conda clean -afy && \
-    rm -rf /tmp/*
-
-CMD ["bash"]
+# set the entrypoint to the shell-hook script (activate the environment and run the command)
+# no more pixi needed in the prod container
+ENTRYPOINT ["/bin/bash", "/shell-hook.sh"]
