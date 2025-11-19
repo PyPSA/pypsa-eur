@@ -457,9 +457,8 @@ plotting:
     services rural air heat pump: '#5af95d'
     urban central air heat pump: '#6cfb6b'
     ptes heat pump: '#5dade2'
-    ptes heat preheater: '#5dade2'
-    ptes heat direct utilisation: '#5dade2'
-    urban central ptes heat pump: '#3498db'
+    ptes heat preheater: '#c3d9e8'
+    ptes heat direct utilisation: '#2013d1'
     urban central geothermal heat pump: '#4f2144'
     geothermal heat pump: '#4f2144'
     geothermal heat direct utilisation: '#ba91b1'
@@ -480,6 +479,8 @@ plotting:
     CHP electric: '#8a5751'
     district heating: '#e8beac'
     resistive heater: '#d8f9b8'
+    resistive heat stand-alone: '#a7f759'
+    water pits resistive booster: '#a4bf8a'
     residential rural resistive heater: '#bef5b5'
     residential urban decentral resistive heater: '#b2f1a9'
     services rural resistive heater: '#a5ed9d'
@@ -571,6 +572,7 @@ plotting:
     geothermal heat preheater: '#ba91b1'
     geothermal district heat: '#d19D00'
     geothermal organic rankine cycle: '#ffbf00'
+    urban central geothermal heat pre-chilled: '#ba91b1'
     AC: "#70af1d"
     AC-AC: "#70af1d"
     AC line: "#70af1d"
