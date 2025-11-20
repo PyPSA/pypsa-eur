@@ -17,9 +17,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BASE_ENV: envs/environment.yaml
-
 jobs:
   run-tests:
     name: OS
@@ -37,29 +34,13 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    - name: Setup env file path (ubuntu)
-      if: matrix.os == 'ubuntu'
-      run: |
-        echo "env_file=envs/linux-64.lock.yaml" >> $GITHUB_ENV
-
-    - name: Setup env file path (macos and windows)
-      if: matrix.os != 'ubuntu'
-      run: |
-        if [[ "${{ matrix.os }}" == "macos" ]]; then
-          echo "env_file=envs/osx-arm64.lock.yaml" >> $GITHUB_ENV
-        else
-          echo "env_file=envs/win-64.lock.yaml" >> $GITHUB_ENV
-        fi
-
-    - name: Use base env file if it was changed
-      run: |
-        git fetch origin master
-        if git diff --name-only origin/master | grep '${{ env.BASE_ENV }}'; then
-          echo "Base env ${{ env.BASE_ENV }} changed. Using it instead of locked envs."
-          echo "env_file=${{ env.BASE_ENV }}" >> $GITHUB_ENV
-        else
-          echo "Base env ${{ env.BASE_ENV }} not changed. Using locked envs."
-        fi
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.3
+      with:
+        pixi-version: v0.59.0
+        cache: true
+        # Do not cache in branches
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
     - name: Setup cache keys
       run: |
@@ -72,37 +53,21 @@ jobs:
           cutouts
         key: data-cutouts-${{ env.WEEK }}
 
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniforge-version: latest
-        activate-environment: pypsa-eur
-        channel-priority: strict
-
-    - name: Cache Conda env
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.CONDA }}/envs
-        key: conda-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles(format('{0}', env.env_file)) }}
-      id: cache-env
-
-    - name: Update environment
-      if: steps.cache-env.outputs.cache-hit != 'true'
-      run: |
-        conda env update -n pypsa-eur -f ${{ env.env_file }}
-        echo "Run conda list" && conda list
-
     - name: Run pylint check on scripts
       # check for undefined variables to reuse functions across scripts
       run: |
-        pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
+        pixi run pylint --disable=all --enable=E0601,E0606 --output-format=parseable scripts/add_* scripts/prepare_* scripts/solve_*
 
     - name: Run snakemake test workflows
+      env:
+        SNAKEMAKE_STORAGE_CACHED_HTTP_CACHE: ""
+        SNAKEMAKE_STORAGE_CACHED_HTTP_SKIP_REMOTE_CHECKS: "1"
       run: |
-        make test
+        pixi run integration-tests
 
     - name: Run unit tests
       run: |
-        make unit-test
+        pixi run unit-tests
 
     - name: Upload artifacts
       if: always()

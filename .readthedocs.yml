@@ -7,13 +7,18 @@ version: 2
 sphinx:
   configuration: doc/conf.py
 
-build:
-  os: ubuntu-22.04
-  tools:
-    python: "3.11"
-  apt_packages:
-  - graphviz
 
-python:
-  install:
-  - requirements: doc/requirements.txt
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  jobs:
+    create_environment:
+    - asdf plugin add pixi
+    - asdf install pixi latest
+    - asdf global pixi latest
+    install:
+    - pixi install -e doc --frozen
+    build:
+      html:
+      - pixi run build-docs $READTHEDOCS_OUTPUT html
