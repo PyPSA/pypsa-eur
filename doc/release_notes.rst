@@ -9,8 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
-* Add CO2 emission prices configurable per planning horizon to sector networks. The CO2
-  price is added as a marginal cost on the `co2 atmosphere` Store.
+* Add CO2 emission prices configurable per planning horizon for sector-coupled models.
+  The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
 
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
