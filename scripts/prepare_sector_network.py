@@ -3368,19 +3368,24 @@ def add_heat(
             else:
                 resistive_heater_bus1 = nodes + f" {heat_system} heat"
 
-            n.add(
-                "Link",
-                nodes + f" {heat_system} resistive heater",
-                bus0=nodes,
-                bus1=resistive_heater_bus1,
-                carrier=f"{heat_system} resistive heater",
-                efficiency=costs.at[key, "efficiency"],
-                capital_cost=costs.at[key, "efficiency"]
-                * costs.at[key, "capital_cost"]
-                * overdim_factor,
-                p_nom_extendable=True,
-                lifetime=costs.at[key, "lifetime"],
-            )
+            if heat_source.requires_heat_pump(
+                ptes_discharge_resistive_boosting=params.sector["district_heating"][
+                    "ptes"
+                ]["discharge_resistive_boosting"]
+            ):
+                n.add(
+                    "Link",
+                    nodes + f" {heat_system} resistive heater",
+                    bus0=nodes,
+                    bus1=resistive_heater_bus1,
+                    carrier=f"{heat_system} resistive heater",
+                    efficiency=costs.at[key, "efficiency"],
+                    capital_cost=costs.at[key, "efficiency"]
+                    * costs.at[key, "capital_cost"]
+                    * overdim_factor,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[key, "lifetime"],
+                )
 
         if options["boilers"]:
             key = f"{heat_system.central_or_decentral} gas boiler"
