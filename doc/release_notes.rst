@@ -9,7 +9,7 @@ Release Notes
 Upcoming Release
 ================
 
-* Add [custom storage plugin](https://github.com/PyPSA/snakemake-storage-plugin-cached-http) to handle retrievals from zenodo to address recurring failures.
+* Add `custom storage plugin <https://github.com/PyPSA/snakemake-storage-plugin-cached-http>`_ to handle retrievals from zenodo to address recurring failures.
 
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
