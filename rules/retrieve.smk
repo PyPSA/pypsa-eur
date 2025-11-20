@@ -9,6 +9,19 @@ from shutil import move, unpack_archive
 from shutil import copy2 as shcopy2
 from zipfile import ZipFile
 
+
+# Configure the default storage provider for accessing remote files using http
+# and the special storage plugin for accessing Zenodo files
+storage:
+    provider="http",
+    keep_local=True,
+    retries=3,
+
+
+storage cached_http:
+    provider="cached-http",
+
+
 if config["enable"].get("retrieve", "auto") == "auto":
     config["enable"]["retrieve"] = has_internet_access()
 
