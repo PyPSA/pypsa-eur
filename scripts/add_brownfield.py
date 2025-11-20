@@ -342,9 +342,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "add_brownfield",
-            clusters="39",
-            opts="",
-            sector_opts="",
             horizon=2050,
         )
 

@@ -414,8 +414,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_network",
-            clusters="37",
-            opts="Co2L-4H",
         )
     configure_logging(snakemake)  # pylint: disable=E0606
     set_scenario_config(snakemake)

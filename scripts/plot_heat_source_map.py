@@ -201,10 +201,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_heat_source_map",
-            clusters="39",
-            opts="",
-            sector_opts="",
-            planning_horizons="2050",
+            horizon=2050,
             carrier="river_water",
         )
 

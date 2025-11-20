@@ -27,11 +27,7 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "solve_operations_network",
-            configfiles="test/config.electricity.yaml",
-            opts="",
-            clusters="5",
-            sector_opts="",
-            planning_horizons="",
+            configfiles="config/test/config.electricity.yaml",
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606

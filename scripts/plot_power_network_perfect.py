@@ -179,9 +179,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network_perfect",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

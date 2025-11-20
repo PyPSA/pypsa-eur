@@ -1379,12 +1379,9 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            opts="",
-            clusters="5",
+            "solve_network",
             configfiles="config/test/config.overnight.yaml",
-            sector_opts="",
-            planning_horizons="2030",
+            horizon=2030,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1407,7 +1404,7 @@ if __name__ == "__main__":
         foresight=snakemake.params.foresight,
         planning_horizons=planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
-        limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
+        limit_max_growth=snakemake.params["sector"]["limit_max_growth"],
         resource_dir=resource_dir,
     )
 

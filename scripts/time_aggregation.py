@@ -34,11 +34,8 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "time_aggregation",
-            configfiles="test/config.overnight.yaml",
-            opts="",
-            clusters="37",
-            sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
-            horizon="2030",
+            configfiles="config/test/config.overnight.yaml",
+            horizon=2030,
         )
 
     configure_logging(snakemake)
