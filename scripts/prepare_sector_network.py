@@ -3296,23 +3296,28 @@ def add_heat(
             bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_carrier)
             efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
 
-            n.add(
-                "Link",
-                nodes,
-                suffix=f" {heat_system} {heat_source} heat pump",
-                bus0=nodes + f" {heat_system} heat",
-                bus1=nodes,
-                bus2=bus2_heat_pump,
-                carrier=f"{heat_system} {heat_source} heat pump",
-                efficiency=1 / cop_heat_pump.clip(lower=0.001),
-                efficiency2=efficiency2_heat_pump,
-                capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
-                * overdim_factor,
-                p_min_pu=-cop_heat_pump / cop_heat_pump.clip(lower=0.001),
-                p_max_pu=0,
-                p_nom_extendable=True,
-                lifetime=costs.at[costs_name_heat_pump, "lifetime"],
-            )
+            if heat_source.requires_heat_pump(
+                ptes_discharge_resistive_boosting=params.sector["district_heating"][
+                    "ptes"
+                ]["discharge_resistive_boosting"]
+            ):
+                n.add(
+                    "Link",
+                    nodes,
+                    suffix=f" {heat_system} {heat_source} heat pump",
+                    bus0=nodes + f" {heat_system} heat",
+                    bus1=nodes,
+                    bus2=bus2_heat_pump,
+                    carrier=f"{heat_system} {heat_source} heat pump",
+                    efficiency=1 / cop_heat_pump.clip(lower=0.001),
+                    efficiency2=efficiency2_heat_pump,
+                    capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
+                    * overdim_factor,
+                    p_min_pu=-cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_max_pu=0,
+                    p_nom_extendable=True,
+                    lifetime=costs.at[costs_name_heat_pump, "lifetime"],
+                )
 
         if options["resistive_heaters"]:
             key = f"{heat_system.central_or_decentral} resistive heater"
