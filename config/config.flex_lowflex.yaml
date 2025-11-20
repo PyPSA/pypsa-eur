@@ -1039,7 +1039,7 @@ solving:
 
   solver:
     name: gurobi
-    options: gurobi-numeric-focus
+    options: gurobi-default
 
   solver_options:
     highs-default:
