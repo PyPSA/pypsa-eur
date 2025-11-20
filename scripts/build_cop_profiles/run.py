@@ -23,7 +23,7 @@ Relevant Settings
                 isentropic_compressor_efficiency:
                 heat_loss:
                 min_delta_t_lift:
-            heat_pump_sources:
+            heat_sources:
                 urban central:
                 urban decentral:
                 rural:
@@ -47,6 +47,7 @@ from scripts.build_cop_profiles.central_heating_cop_approximator import (
 from scripts.build_cop_profiles.decentral_heating_cop_approximator import (
     DecentralHeatingCopApproximator,
 )
+from scripts.definitions.heat_source import HeatSource
 from scripts.definitions.heat_system_type import HeatSystemType
 
 
@@ -106,6 +107,58 @@ def get_cop(
         ).cop
 
 
+def get_source_temperature(
+    snakemake_params: dict, snakemake_input: dict, heat_source_name: str
+) -> float | xr.DataArray:
+    heat_source = HeatSource(heat_source_name)
+    if heat_source.has_constant_temperature:
+        try:
+            return snakemake_params[f"constant_temperature_{heat_source_name}"]
+        except KeyError:
+            raise ValueError(
+                f"Constant temperature for heat source {heat_source_name} not specified in parameters."
+            )
+
+    else:
+        if f"temp_{heat_source_name}" not in snakemake_input.keys():
+            raise ValueError(
+                f"Missing input temperature for heat source {heat_source_name}."
+            )
+        return xr.open_dataarray(snakemake_input[f"temp_{heat_source_name}"])
+
+
+def get_source_inlet_temperature(
+    heat_source_name: str,
+    source_temperature: float | xr.DataArray,
+    central_heating_return_temperature: xr.DataArray,
+) -> float | xr.DataArray:
+    heat_source = HeatSource(heat_source_name)
+    if heat_source.requires_preheater:
+        # pre-heater is only used when source temperature is below return temperature, otherwise sink inlet is at return temperature and source inlet is at source temperature
+        return central_heating_return_temperature.where(
+            central_heating_return_temperature < source_temperature, source_temperature
+        )
+    else:
+        return source_temperature
+
+
+def get_sink_inlet_temperature(
+    heat_source_name: str,
+    source_temperature: float | xr.DataArray,
+    central_heating_return_temperature: xr.DataArray,
+    central_heating_forward_temperature: xr.DataArray,
+) -> float | xr.DataArray:
+    heat_source = HeatSource(heat_source_name)
+    if heat_source.requires_preheater:
+        # pre-heater is only used when source temperature is below return temperature, otherwise sink inlet is at return temperature and source inlet is at source temperature
+        return central_heating_forward_temperature.where(
+            central_heating_return_temperature < source_temperature,
+            central_heating_return_temperature,
+        )
+    else:
+        return central_heating_return_temperature
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -125,33 +178,31 @@ if __name__ == "__main__":
     )
 
     cop_all_system_types = []
-    for heat_system_type, heat_sources in snakemake.params.heat_pump_sources.items():
+    for heat_system_type, heat_sources in snakemake.params.heat_sources.items():
         cop_this_system_type = []
-        for heat_source in heat_sources:
-            if (
-                heat_source in snakemake.params.limited_heat_sources
-                and snakemake.params.limited_heat_sources[heat_source][
-                    "constant_temperature_celsius"
-                ]
-                is not False
-            ):
-                source_inlet_temperature_celsius = (
-                    snakemake.params.limited_heat_sources[heat_source][
-                        "constant_temperature_celsius"
-                    ]
-                )
-            else:
-                if f"temp_{heat_source}" not in snakemake.input.keys():
-                    raise ValueError(
-                        f"Missing input temperature for heat source {heat_source}."
-                    )
-                source_inlet_temperature_celsius = xr.open_dataarray(
-                    snakemake.input[f"temp_{heat_source}"]
-                )
+        for heat_source_name in heat_sources:
+            source_temperature_celsius = get_source_temperature(
+                snakemake_params=snakemake.params,
+                snakemake_input=snakemake.input,
+                heat_source_name=heat_source_name,
+            )
+
+            source_inlet_temperature_celsius = get_source_inlet_temperature(
+                heat_source_name=heat_source_name,
+                source_temperature=source_temperature_celsius,
+                central_heating_return_temperature=central_heating_return_temperature,
+            )
+
+            sink_inlet_temperature_celsius = get_sink_inlet_temperature(
+                heat_source_name=heat_source_name,
+                source_temperature=source_temperature_celsius,
+                central_heating_forward_temperature=central_heating_forward_temperature,
+                central_heating_return_temperature=central_heating_return_temperature,
+            )
 
             cop_da = get_cop(
                 heat_system_type=heat_system_type,
-                heat_source=heat_source,
+                heat_source=heat_source_name,
                 source_inlet_temperature_celsius=source_inlet_temperature_celsius,
                 sink_outlet_temperature_celsius=central_heating_forward_temperature,
                 sink_inlet_temperature_celsius=central_heating_return_temperature,
@@ -165,7 +216,7 @@ if __name__ == "__main__":
 
     cop_dataarray = xr.concat(
         cop_all_system_types,
-        dim=pd.Index(snakemake.params.heat_pump_sources.keys(), name="heat_system"),
+        dim=pd.Index(snakemake.params.heat_sources.keys(), name="heat_system"),
     )
 
     cop_dataarray.to_netcdf(snakemake.output.cop_profiles)
