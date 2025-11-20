@@ -2,10 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import logging
 from enum import Enum
-
-logger = logging.getLogger(__name__)
 
 
 class HeatSource(Enum):
@@ -251,21 +248,59 @@ class HeatSource(Enum):
             # This is 1 - (1/COP), representing (COP-1)/COP
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
-    def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
-        """
-        Returns whether the heat source requires a heat pump.
+    # def get_preheater_utilisation_profile(
+    #     self, preheater_utilisation_profile, nodes, n
+    # ) -> float:
+    #     """
+    #     Returns the efficiency for direct heat utilisation.
 
-        Returns
-        -------
-        bool
-            True if the heat source requires a heat pump, False otherwise.
-        """
+    #     Parameters
+    #     ----------
+    #     preheater_utilisation_profile : xr.DataArray
+    #         DataArray containing direct heat utilisation profiles.
+    #     nodes : pd.Index or list
+    #         The nodes for which to get the efficiency.
+    #     n : pypsa.Network
+    #         The PyPSA network object (for accessing snapshots).
 
-        if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
-            logging.info(
-                "PTES configured with resistive boosting during discharge; "
-                "heat pump not built for PTES."
-            )
-            return False
-        else:
-            return True
+    #     Returns
+    #     -------
+    #     float or pd.Series
+    #         The efficiency for direct utilisation (1 if source temp exceeds forward temp, 0 otherwise).
+    #     """
+    #     # Extract the efficiency profile from the data
+    #     # This is a binary or continuous value indicating when/how much heat
+    #     # can be directly used (1 if source temperature > forward temperature, 0 otherwise)
+    #     return (
+    #         preheater_utilisation_profile.sel(
+    #             heat_source=str(self),
+    #             name=nodes,
+    #         )
+    #         .to_pandas()
+    #         .reindex(index=n.snapshots)
+    #     )
+
+    # def get_source_temperature(self, snakemake_input: dict, snakemake_params) -> float | xr.DataArray:
+    #     """
+    #     Get the heat source temperature.
+
+    #     Args:
+    #     ----
+    #     snakemake_input: dict
+    #         Snakemake input dictionary containing the heat source temperature file path.
+
+    #     Returns:
+    #     -------
+    #     float | xr.DataArray
+    #         The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
+
+    #     """
+    #     if self.has_constant_temperature:
+    #         return snakemake_params[f"{str(self)}_constant_temperature"]
+    #     else:
+    #         try:
+    #             return xr.open_dataarray(snakemake_input[f"temp_{str(self)}"])
+    #         except KeyError:
+    #             raise ValueError(
+    #                 f"Missing input temperature for heat source {str(self)}."
+    #             )
