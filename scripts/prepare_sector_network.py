@@ -3254,7 +3254,7 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat preheater",
-                    bus0=nodes + f" {heat_carrier}",
+                    bus0=nodes + f" {heat_carrier} to be boosted",
                     bus1=nodes + f" {heat_system} heat",
                     bus2=nodes + f" {heat_carrier} pre-chilled",
                     efficiency=preheater_utilisation_profile,
@@ -3263,6 +3263,7 @@ def add_heat(
                     / preheater_utilisation_profile.clip(lower=0.001),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
+                    marginal_cost=-0.3,
                 )
 
             # add link for direct usage of heat source when source temperature exceeds forward temperature
@@ -3282,15 +3283,27 @@ def add_heat(
                 requires_direct_utilisation = False
 
             if requires_direct_utilisation:
+                # if True:
+                n.add(
+                    "Bus",
+                    nodes,
+                    location=nodes,
+                    suffix=f" {heat_carrier} to be boosted",
+                    carrier=f"{heat_carrier} to be boosted",
+                )
+
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat direct utilisation",
                     bus0=nodes + f" {heat_carrier}",
                     bus1=nodes + f" {heat_system} heat",
+                    bus2=nodes + f" {heat_carrier} to be boosted",
                     efficiency=direct_utilisation_profile,
+                    efficiency2=1 - direct_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat direct utilisation",
                     p_nom_extendable=True,
+                    marginal_cost=0.1,
                 )
 
             bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_carrier)
@@ -3349,15 +3362,16 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=nodes + f" {heat_system} ptes heat",
-                    carrier=f"{heat_system} water pits resistive booster",
+                    bus2=nodes + f" {heat_system} ptes heat to be boosted",
                     efficiency=ptes_boost_per_discharge_profiles
                     / (ptes_boost_per_discharge_profiles + 1),
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
                     p_min_pu=-ptes_boost_per_discharge_profiles
                     / ptes_boost_per_discharge_profiles.clip(lower=0.001),
+                    carrier=f"{heat_system} water pits resistive booster",
                     p_max_pu=0,
+                    marginal_cost=-0.3,
                 )
 
                 n.add(
