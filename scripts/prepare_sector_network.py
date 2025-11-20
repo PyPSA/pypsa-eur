@@ -1256,7 +1256,7 @@ def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     nyears : float, optional
         Number of years for the CO2 budget, by default 1.0
     limit : float, optional
-        CO2 limit as a fraction of 1990 levels, by default 0.0
+        CO2 limit as a fraction of 1990 levels
 
     Returns
     -------
@@ -1271,6 +1271,9 @@ def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     to the network. The limit is calculated as a fraction of historical emissions
     multiplied by the number of years.
     """
+    if limit is None:
+        return
+
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
     sectors = determine_emission_sectors(options)
