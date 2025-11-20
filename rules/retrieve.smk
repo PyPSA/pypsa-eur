@@ -14,7 +14,6 @@ from zipfile import ZipFile
 # and the special storage plugin for accessing Zenodo files
 storage:
     provider="http",
-    keep_local=True,
     retries=3,
 
 
