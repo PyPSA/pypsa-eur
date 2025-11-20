@@ -186,7 +186,7 @@ Heat demand can be shifted within configurable time periods to avoid buildings a
 - **Day period**: 9am to 9pm (21:00)
 - **Night period**: 9pm (21:00) to 9am
 
-At the boundaries between these periods (configured via `residential_heat_restriction_time <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__, default: [10, 22] corresponding to 9am and 9pm UTC), the thermal storage state of charge must return to its baseline level. This ensures that heat consumption requirements are met within each time window while allowing temporal load shifting for demand response. Users can adjust the checkpoint hours to create different period lengths as needed.
+At the boundaries between these periods (configured via `residential_heat_restriction_time <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__, default: [10, 22] corresponding to 9am and 9pm local time), the thermal storage state of charge must return to its baseline level. The implementation automatically adjusts these checkpoint hours to each country's local timezone, ensuring consistent behavioral patterns across different regions. This ensures that heat consumption requirements are met within each time window while allowing temporal load shifting for demand response. Users can adjust the checkpoint hours to create different period lengths as needed.
 
 *Storage capacity and flexibility magnitude*
 
