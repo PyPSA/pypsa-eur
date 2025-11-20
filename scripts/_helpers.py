@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import time
+import warnings
 from functools import partial, wraps
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -244,6 +245,14 @@ def configure_logging(snakemake, skip_handlers=False):
     """
     import logging
     import sys
+
+    # Configure warnings to be raised as errors based on config
+    warnings_as_errors = snakemake.config.get("logging").get("warnings_as_errors")
+    if warnings_as_errors:
+        warnings.filterwarnings("error", category=DeprecationWarning)
+        warnings.filterwarnings("error", category=FutureWarning)
+        warnings.filterwarnings("error", category=UserWarning)
+        warnings.filterwarnings("error", category=RuntimeWarning)
 
     kwargs = snakemake.config.get("logging", dict()).copy()
     kwargs.setdefault("level", "INFO")
