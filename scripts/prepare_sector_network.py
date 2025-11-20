@@ -3259,6 +3259,8 @@ def add_heat(
                     bus2=nodes + f" {heat_carrier} pre-chilled",
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
+                    p_max_pu=preheater_utilisation_profile
+                    / preheater_utilisation_profile.clip(lower=0.001),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
                 )
