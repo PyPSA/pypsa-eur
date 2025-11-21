@@ -25,9 +25,25 @@ from scripts._helpers import (
 logger = logging.getLogger(__name__)
 
 
-def set_temporal_aggregation(n, resolution, snapshot_weightings):
+def set_temporal_aggregation(
+    n: pypsa.Network, resolution: str, snapshot_weightings_fn: str
+):
     """
     Aggregate time-varying data to the given snapshots.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        PyPSA network with hourly resolution.
+    resolution : str
+        Temporal resolution specification.
+    snapshot_weightings_fn : str
+        Path to CSV file containing snapshot weightings for aggregation.
+
+    Returns
+    -------
+    pypsa.Network
+        Network with aggregated temporal resolution.
     """
 
     if not resolution:
@@ -43,7 +59,7 @@ def set_temporal_aggregation(n, resolution, snapshot_weightings):
     else:
         # Otherwise, use the provided snapshots
         snapshot_weightings = pd.read_csv(
-            snapshot_weightings, index_col=0, parse_dates=True
+            snapshot_weightings_fn, index_col=0, parse_dates=True
         )
 
         # Define a series used for aggregation, mapping each hour in
@@ -100,7 +116,7 @@ if __name__ == "__main__":
     n = set_temporal_aggregation(
         n=n_h,
         resolution=snakemake.params.time_resolution,
-        snapshot_weightings=snakemake.input.snapshot_weightings,
+        snapshot_weightings_fn=snakemake.input.snapshot_weightings,
     )
 
     n.export_to_netcdf(snakemake.output[0])
