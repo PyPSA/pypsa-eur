@@ -137,10 +137,10 @@ def prepare_costs(
 
     # min_count=1 is important to generate NaNs which are then filled by fillna
     costs = costs.value.unstack(level=1).groupby("technology").sum(min_count=1)
-    costs = costs.fillna(config["fill_values"])
 
     # Process overwrites for various attributes
     costs = overwrite_costs(costs, custom_raw)
+    costs = costs.fillna(config["fill_values"])
     for attr in (
         "investment",
         "lifetime",
