@@ -9,6 +9,9 @@ Release Notes
 Upcoming Release
 ================
 
+* The myopic optimisation workflow is now able to incremantally optimise the transmission limit in
+  every planning horizon. The added expansion limit can be configured in the configuration file using `transmission_limit_myopic`.
+
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models.
   The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
 
