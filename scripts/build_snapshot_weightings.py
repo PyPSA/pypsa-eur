@@ -34,10 +34,10 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "build_snapshot_weightings",
-            configfiles="test/config.overnight.yaml",
+            configfiles="config/test/config.overnight.yaml",
             opts="",
-            clusters="37",
-            sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
+            clusters="5",
+            sector_opts="",
             planning_horizons="2030",
         )
 

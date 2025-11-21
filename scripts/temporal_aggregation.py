@@ -99,11 +99,11 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "time_aggregation",
-            configfiles="test/config.overnight.yaml",
+            "temporal_aggregation",
+            configfiles="config/test/config.overnight.yaml",
             opts="",
-            clusters="37",
-            sector_opts="Co2L0-24h-T-H-B-I-A-dist1",
+            clusters="5",
+            sector_opts="",
             planning_horizons="2030",
         )
 
