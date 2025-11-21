@@ -1317,7 +1317,7 @@ rule build_existing_heating_distribution:
         "../scripts/build_existing_heating_distribution.py"
 
 
-rule time_aggregation:
+rule build_snapshot_weightings:
     params:
         time_resolution=config_provider("clustering", "temporal"),
         drop_leap_day=config_provider("enable", "drop_leap_day"),
@@ -1342,11 +1342,15 @@ rule time_aggregation:
     resources:
         mem_mb=5000,
     log:
-        logs("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}.log"),
+        logs(
+            "build_snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.log"
+        ),
     benchmark:
-        benchmarks("time_aggregation_base_s_{clusters}_elec_{opts}_{sector_opts}")
+        benchmarks(
+            "build_snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}"
+        )
     script:
-        "../scripts/time_aggregation.py"
+        "../scripts/build_snapshot_weightings.py"
 
 
 def input_profile_offwind(w):
@@ -1404,7 +1408,6 @@ def input_heat_source_power(w):
 
 rule prepare_sector_network:
     params:
-        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
         co2_budget=config_provider("co2_budget"),
         conventional_carriers=config_provider(
             "existing_capacities", "conventional_carriers"
@@ -1440,9 +1443,6 @@ rule prepare_sector_network:
         unpack(input_heat_source_power),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
-        snapshot_weightings=resources(
-            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
-        ),
         retro_cost=lambda w: (
             resources("retro_cost_base_s_{clusters}.csv")
             if config_provider("sector", "retrofitting", "retro_endogen")(w)
@@ -1560,7 +1560,7 @@ rule prepare_sector_network:
         ),
     output:
         resources(
-            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_h.nc"
         ),
     threads: 1
     resources:
@@ -1575,3 +1575,32 @@ rule prepare_sector_network:
         )
     script:
         "../scripts/prepare_sector_network.py"
+
+
+rule temporal_aggregation:
+    params:
+        time_resolution=config_provider("clustering", "temporal", "resolution_sector"),
+    input:
+        network=resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_h.nc"
+        ),
+        snapshot_weightings=resources(
+            "snapshot_weightings_base_s_{clusters}_elec_{opts}_{sector_opts}.csv"
+        ),
+    output:
+        resources(
+            "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
+        ),
+    threads: 1
+    resources:
+        mem_mb=5000,
+    log:
+        logs(
+            "temporal_aggregation_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log"
+        ),
+    benchmark:
+        benchmarks(
+            "temporal_aggregation_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    script:
+        "../scripts/temporal_aggregation.py"
