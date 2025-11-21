@@ -21,8 +21,8 @@ from scripts._helpers import (
     update_config_from_wildcards,
 )
 from scripts.add_electricity import flatten, sanitize_carriers
-from scripts.prepare_network import set_transmission_limit
 from scripts.add_existing_baseyear import add_build_year_to_new_assets
+from scripts.prepare_network import set_transmission_limit
 
 logger = logging.getLogger(__name__)
 idx = pd.IndexSlice

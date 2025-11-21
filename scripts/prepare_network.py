@@ -155,7 +155,8 @@ def set_transmission_limit(n, kind, factor, costs):
     if "reversed" in n.links.columns:
         links_dc_b = (
             (n.links.carrier == "DC") & ~n.links.reversed
-            if not n.links.empty else pd.Series()
+            if not n.links.empty
+            else pd.Series()
         )
 
     _lines_s_nom = (
@@ -169,9 +170,10 @@ def set_transmission_limit(n, kind, factor, costs):
     else:
         attr_link = "p_nom"
 
-    if (n.lines.type == '').any():
+    if (n.lines.type == "").any():
         lines_s_nom = (
-            n.lines[["s_nom", "s_nom_min", "s_nom_opt"]].max(axis=1)
+            n.lines[["s_nom", "s_nom_min", "s_nom_opt"]]
+            .max(axis=1)
             .where(n.lines.type == "", _lines_s_nom)
         )
     else:
@@ -190,7 +192,9 @@ def set_transmission_limit(n, kind, factor, costs):
         n.lines["s_nom"] = lines_s_nom
         n.lines["s_nom_extendable"] = True
 
-        n.links.loc[links_dc_b, ["p_nom_min", "p_nom"]] = n.links.loc[links_dc_b, attr_link]
+        n.links.loc[links_dc_b, ["p_nom_min", "p_nom"]] = n.links.loc[
+            links_dc_b, attr_link
+        ]
         n.links.loc[links_dc_b, "p_nom_extendable"] = True
 
     if factor != "opt":
