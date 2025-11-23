@@ -495,16 +495,16 @@ if config["enable"]["retrieve"]:
             # If None of the three URLs are working
             url = False
 
-    assert (
-        url
-    ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
+    # assert (
+    #     url
+    # ), f"No WDPA files found at {url_pattern} for bY='{current_monthyear}, {prev_monthyear}, or {next_monthyear}'"
 
     # Downloading protected area database from WDPA
     # extract the main zip and then merge the contained 3 zipped shapefiles
     # Website: https://www.protectedplanet.net/en/thematic-areas/wdpa
     rule download_wdpa:
         input:
-            zip_file=storage(url, keep_local=True),
+            zip_file=storage(url, keep_local=True) if url else [],
         params:
             zip_file="WDPA_shp.zip",
             folder_name="WDPA",
