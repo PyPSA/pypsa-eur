@@ -2076,43 +2076,46 @@ def add_storage_and_grids(
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
 
-    n.add("Carrier", "battery")
 
-    n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
+    if "battery" in snakemake.params.electricity["extendable_carriers"].get("Store", []):
 
-    n.add(
-        "Store",
-        nodes + " battery",
-        bus=nodes + " battery",
-        e_cyclic=True,
-        e_nom_extendable=True,
-        carrier="battery",
-        capital_cost=costs.at["battery storage", "capital_cost"],
-        lifetime=costs.at["battery storage", "lifetime"],
-    )
+        n.add("Carrier", "battery")
 
-    n.add(
-        "Link",
-        nodes + " battery charger",
-        bus0=nodes,
-        bus1=nodes + " battery",
-        carrier="battery charger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        capital_cost=costs.at["battery inverter", "capital_cost"],
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
+        n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
 
-    n.add(
-        "Link",
-        nodes + " battery discharger",
-        bus0=nodes + " battery",
-        bus1=nodes,
-        carrier="battery discharger",
-        efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
-        p_nom_extendable=True,
-        lifetime=costs.at["battery inverter", "lifetime"],
-    )
+        n.add(
+            "Store",
+            nodes + " battery",
+            bus=nodes + " battery",
+            e_cyclic=True,
+            e_nom_extendable=True,
+            carrier="battery",
+            capital_cost=costs.at["battery storage", "capital_cost"],
+            lifetime=costs.at["battery storage", "lifetime"],
+        )
+
+        n.add(
+            "Link",
+            nodes + " battery charger",
+            bus0=nodes,
+            bus1=nodes + " battery",
+            carrier="battery charger",
+            efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+            capital_cost=costs.at["battery inverter", "capital_cost"],
+            p_nom_extendable=True,
+            lifetime=costs.at["battery inverter", "lifetime"],
+        )
+
+        n.add(
+            "Link",
+            nodes + " battery discharger",
+            bus0=nodes + " battery",
+            bus1=nodes,
+            carrier="battery discharger",
+            efficiency=costs.at["battery inverter", "efficiency"] ** 0.5,
+            p_nom_extendable=True,
+            lifetime=costs.at["battery inverter", "lifetime"],
+        )
 
     if options["methanation"]:
         n.add(
