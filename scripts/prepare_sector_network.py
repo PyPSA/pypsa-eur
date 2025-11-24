@@ -706,7 +706,9 @@ def add_eu_bus(n, x=-5.5, y=46):
     n.add("Carrier", "none")
 
 
-def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
+def add_co2_tracking(
+    n, costs, options, sequestration_potential_file=None, co2_price: float = 0.0
+):
     """
     Add CO2 tracking components to the network including atmospheric CO2,
     CO2 storage, and sequestration infrastructure.
@@ -730,6 +732,9 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
     sequestration_potential_file : str, optional
         Path to CSV file containing regional CO2 sequestration potentials.
         Required if options['regional_co2_sequestration_potential']['enable'] is True.
+    co2_price : float, optional
+        CO2 price that needs to be paid for emitting into the atmosphere and which is
+        gained by removing from the atmosphere.
 
     Returns
     -------
@@ -755,10 +760,11 @@ def add_co2_tracking(n, costs, options, sequestration_potential_file=None):
     n.add(
         "Store",
         "co2 atmosphere",
-        e_nom_extendable=True,
+        e_nom=np.inf,
         e_min_pu=-1,
         carrier="co2",
         bus="co2 atmosphere",
+        marginal_cost=-co2_price,
     )
 
     # add CO2 tanks
@@ -1250,7 +1256,7 @@ def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     nyears : float, optional
         Number of years for the CO2 budget, by default 1.0
     limit : float, optional
-        CO2 limit as a fraction of 1990 levels, by default 0.0
+        CO2 limit as a fraction of 1990 levels
 
     Returns
     -------
@@ -1265,6 +1271,9 @@ def add_co2limit(n, options, co2_totals_file, countries, nyears, limit):
     to the network. The limit is calculated as a fraction of historical emissions
     multiplied by the number of years.
     """
+    if limit is None:
+        return
+
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")
 
     sectors = determine_emission_sectors(options)
@@ -6239,11 +6248,18 @@ if __name__ == "__main__":
 
     add_eu_bus(n)
 
+    emission_prices = snakemake.params["emission_prices"]
+    co2_price = (
+        get(emission_prices["co2"], investment_year)
+        if emission_prices["enable"]
+        else 0.0
+    )
     add_co2_tracking(
         n,
         costs,
         options,
         sequestration_potential_file=snakemake.input.sequestration_potential,
+        co2_price=co2_price,
     )
 
     add_generation(
