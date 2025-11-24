@@ -90,7 +90,7 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 24h
+    resolution: 24h
   cluster_network:
     algorithm: kmeans
     n_clusters: 5  # Small number for testing

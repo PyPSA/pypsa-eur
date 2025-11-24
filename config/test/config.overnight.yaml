@@ -50,7 +50,7 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 24h
+    resolution: 24h
   cluster_network:
     n_clusters: 5
 

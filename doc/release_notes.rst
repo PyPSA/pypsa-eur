@@ -10,6 +10,7 @@ Upcoming Release
 ================
 
 * Streamlined workflow with simplified configuration (https://github.com/PyPSA/pypsa-eur/pull/1838). The workflow now relies on configuration entries rather than wildcards and uses ``{horizon}``-based filenames; see ``doc/migration.rst`` for migration guidance.
+* Unified temporal resolution configuration: ``clustering: temporal: resolution_elec`` and ``clustering: temporal: resolution_sector`` have been merged into a single ``clustering: temporal: resolution`` setting.
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models. The CO2 price is added as a marginal cost on the ``co2 atmosphere`` Store.
 * Add `custom storage plugin <https://github.com/PyPSA/snakemake-storage-plugin-cached-http>`_ to handle retrievals from zenodo to address recurring failures.
 * Move to `pixi <https://pixi.sh/latest/>`_ for robust cross-platform dependency management.

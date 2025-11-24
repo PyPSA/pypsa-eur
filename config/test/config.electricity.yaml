@@ -105,8 +105,7 @@ clustering:
   - offwind-ac
   - coal
   temporal:
-    resolution_elec: 24h
-    resolution_sector: false
+    resolution: 24h
     time_segmentation:
       enable: false
       resolution:

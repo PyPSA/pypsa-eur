@@ -1054,52 +1054,46 @@ def apply_temporal_aggregation(
     logger.info("Applying temporal aggregation")
 
     clustering_temporal_cfg = params.clustering_temporal
-    time_resolution_elec = clustering_temporal_cfg["resolution_elec"]
+    time_resolution = clustering_temporal_cfg["resolution"]
     time_segmentation = clustering_temporal_cfg["time_segmentation"]
 
     # Check for conflicting configuration
     has_averaging = isinstance(
-        time_resolution_elec, str
-    ) and time_resolution_elec.lower().endswith("h")
+        time_resolution, str
+    ) and time_resolution.lower().endswith("h")
     has_segmentation = time_segmentation["enable"] and time_segmentation["segments"]
 
     if has_averaging and has_segmentation:
         raise ValueError(
-            "Cannot use both temporal averaging (resolution_elec) and time "
+            "Cannot use both temporal averaging (resolution) and time "
             "segmentation simultaneously. Please configure only one method:\n"
-            f"  - resolution_elec: {time_resolution_elec}\n"
+            f"  - resolution: {time_resolution}\n"
             f"  - time_segmentation.segments: {time_segmentation['segments']}\n"
             "Set one to False/empty to use the other."
         )
 
     # Apply temporal resolution averaging if specified
     if has_averaging:
-        logger.info(f"Applying temporal averaging: {time_resolution_elec}")
-        n_new = average_every_nhours(n, time_resolution_elec, params.drop_leap_day)
-        # Replace network object content
-        n.__dict__.update(n_new.__dict__)
-
-    # Set temporal aggregation for sector components
-    if params.sector["enabled"]:
-        time_resolution = clustering_temporal_cfg["resolution_sector"]
-
-        if time_resolution:
+        logger.info(f"Applying temporal averaging: {time_resolution}")
+        if params.sector["enabled"]:
             snapshot_weightings_file = inputs.get("snapshot_weightings")
             n_new = set_temporal_aggregation(
                 n,
                 time_resolution,
                 snapshot_weightings_file,
             )
-            # Replace network object content
-            n.__dict__.update(n_new.__dict__)
+        else:
+            n_new = average_every_nhours(n, time_resolution, params.drop_leap_day)
+        # Replace network object content
+        n.__dict__.update(n_new.__dict__)
 
     # Apply time segmentation if specified
     if has_segmentation:
         logger.info("Applying time segmentation")
         apply_time_segmentation(
             n,
-            time_segmentation["resolution"],
             time_segmentation["segments"],
+            snakemake.config["solving"]["solver"]["name"],
         )
 
     logger.info("Completed temporal aggregation")

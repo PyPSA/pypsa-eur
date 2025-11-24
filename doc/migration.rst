@@ -82,6 +82,9 @@ Configuration changes
    and wildcards are respected. Prior releases collected many of these knobs via
    the ``scenario`` wildcard block, which is now ignored; encode them directly
    in configuration files and rely on ``run.scenarios`` for sweeps.
+6. Temporal resolution settings ``clustering.temporal.resolution_elec`` and
+   ``clustering.temporal.resolution_sector`` have been unified into a single
+   ``clustering.temporal.resolution`` setting.
 
 Warm-start expectations
 =======================
