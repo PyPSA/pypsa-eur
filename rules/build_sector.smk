@@ -1,5 +1,4 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
-# SPDX-FileCopyrightText: Open Energy Transition gGmbH
 #
 # SPDX-License-Identifier: MIT
 
@@ -1421,6 +1420,7 @@ rule prepare_sector_network:
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
         emissions_scope=config_provider("energy", "emissions"),
+        emission_prices=config_provider("costs", "emission_prices"),
         electricity=config_provider("electricity"),
         biomass=config_provider("biomass"),
         RDIR=RDIR,
