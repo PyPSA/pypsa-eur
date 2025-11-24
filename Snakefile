@@ -223,8 +223,6 @@ rule all:
 rule create_scenarios:
     output:
         config["run"]["scenarios"]["file"],
-    conda:
-        "envs/environment.yaml"
     script:
         "config/create_scenarios.py"
 
@@ -279,8 +277,6 @@ rule rulegraph:
         pdf=resources("dag_rulegraph.pdf"),
         png=resources("dag_rulegraph.png"),
         svg=resources("dag_rulegraph.svg"),
-    conda:
-        "envs/environment.yaml"
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
@@ -289,15 +285,17 @@ rule rulegraph:
 
         # Generate visualizations from the DOT file
         if [ -s {output.dot} ]; then
+            dot -c
+
             echo "[Rule rulegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule rulegraph] Successfully generated all formats."
         else
             echo "[Rule rulegraph] Error: Failed to generate valid DOT content." >&2
@@ -317,8 +315,6 @@ rule filegraph:
         pdf=resources("dag_filegraph.pdf"),
         png=resources("dag_filegraph.png"),
         svg=resources("dag_filegraph.svg"),
-    conda:
-        "envs/environment.yaml"
     shell:
         r"""
         # Generate DOT file using nested snakemake with the dumped final config
@@ -329,13 +325,13 @@ rule filegraph:
         if [ -s {output.dot} ]; then
             echo "[Rule filegraph] Generating PDF from DOT"
             dot -Tpdf -o {output.pdf} {output.dot} || {{ echo "Error: Failed to generate PDF. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating PNG from DOT"
             dot -Tpng -o {output.png} {output.dot} || {{ echo "Error: Failed to generate PNG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Generating SVG from DOT"
             dot -Tsvg -o {output.svg} {output.dot} || {{ echo "Error: Failed to generate SVG. Is graphviz installed?" >&2; exit 1; }}
-            
+
             echo "[Rule filegraph] Successfully generated all formats."
         else
             echo "[Rule filegraph] Error: Failed to generate valid DOT content." >&2
@@ -350,7 +346,7 @@ rule doc:
     output:
         directory("doc/_build"),
     shell:
-        "make -C doc html"
+        "pixi run build-docs {output} html"
 
 
 rule sync:
