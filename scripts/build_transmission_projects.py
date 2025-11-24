@@ -37,9 +37,12 @@ from pypsa.descriptors import nominal_attrs
 from scipy import spatial
 from shapely.geometry import LineString, Point
 
-from scripts._helpers import configure_logging, set_scenario_config
+from scripts._helpers import PYPSA_V1, configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
+
+if PYPSA_V1:
+    pypsa.options.params.add.return_names = True
 
 
 def add_new_buses(n, new_ports):

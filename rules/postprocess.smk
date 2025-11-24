@@ -180,8 +180,6 @@ if config["foresight"] == "perfect" and config.get("enable", {}).get(
         threads: 2
         resources:
             mem_mb=10000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/plot_power_network_perfect.py"
 
@@ -256,8 +254,6 @@ rule plot_summary:
         mem_mb=10000,
     log:
         RESULTS + "logs/plot_summary.log",
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/plot_summary.py"
 
@@ -277,6 +273,7 @@ rule plot_balance_timeseries:
         RESULTS + "logs/plot_balance_timeseries_{horizon}.log",
     benchmark:
         RESULTS
+
         +"benchmarks/plot_balance_timeseries_{horizon}"
     conda:
         "../envs/environment.yaml"
@@ -301,6 +298,7 @@ rule plot_heatmap_timeseries:
         RESULTS + "logs/plot_heatmap_timeseries_{horizon}.log",
     benchmark:
         RESULTS
+
         +"benchmarks/plot_heatmap_timeseries_{horizon}"
     conda:
         "../envs/environment.yaml"

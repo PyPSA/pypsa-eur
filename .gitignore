@@ -85,3 +85,6 @@ CLAUDE.md
 CLAUDE.local.md
 .envrc
 AGENTS.md
+# pixi environments
+.pixi/*
+!.pixi/config.toml

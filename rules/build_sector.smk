@@ -19,8 +19,6 @@ rule build_population_layouts:
     benchmark:
         benchmarks("build_population_layouts")
     threads: 8
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_population_layouts.py"
 
@@ -97,8 +95,6 @@ rule build_gas_network:
         logs("build_gas_network.log"),
     benchmark:
         benchmarks("build_gas_network")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_gas_network.py"
 
@@ -496,8 +492,6 @@ rule build_river_heat_potential:
     benchmark:
         benchmarks("build_river_water_heat_potential")
     threads: 1
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_surface_water_heat_potentials/build_river_water_heat_potential.py"
 
@@ -624,8 +618,6 @@ rule build_sea_heat_potential:
     benchmark:
         benchmarks("build_sea_water_heat_potential")
     threads: config["atlite"].get("nprocesses", 4)
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_surface_water_heat_potentials/build_sea_water_heat_potential.py"
 
@@ -806,8 +798,6 @@ rule build_energy_totals:
         logs("build_energy_totals.log"),
     benchmark:
         benchmarks("build_energy_totals")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_energy_totals.py"
 
@@ -825,8 +815,6 @@ rule build_heat_totals:
         logs("build_heat_totals.log"),
     benchmark:
         benchmarks("build_heat_totals")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_heat_totals.py"
 
@@ -896,8 +884,6 @@ rule build_biomass_transport_costs:
         logs("build_biomass_transport_costs.log"),
     benchmark:
         benchmarks("build_biomass_transport_costs")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_biomass_transport_costs.py"
 
@@ -919,8 +905,6 @@ rule build_co2_sequestration_potentials:
         logs("build_co2_sequestration_potentials.log"),
     benchmark:
         benchmarks("build_co2_sequestration_potentials")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_co2_sequestration_potentials.py"
 
@@ -981,8 +965,6 @@ rule build_ammonia_production:
         logs("build_ammonia_production.log"),
     benchmark:
         benchmarks("build_ammonia_production")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_ammonia_production.py"
 
@@ -1003,8 +985,6 @@ rule build_industry_sector_ratios:
         logs("build_industry_sector_ratios.log"),
     benchmark:
         benchmarks("build_industry_sector_ratios")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_industry_sector_ratios.py"
 
@@ -1055,8 +1035,6 @@ rule build_industrial_production_per_country:
         logs("build_industrial_production_per_country.log"),
     benchmark:
         benchmarks("build_industrial_production_per_country")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_production_per_country.py"
 
@@ -1181,8 +1159,6 @@ rule build_industrial_energy_demand_per_country_today:
         logs("build_industrial_energy_demand_per_country_today.log"),
     benchmark:
         benchmarks("build_industrial_energy_demand_per_country_today")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_industrial_energy_demand_per_country_today.py"
 
