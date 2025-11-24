@@ -199,6 +199,8 @@ def set_transmission_limit(n, kind, factor, costs):
 
     if factor != "opt":
         con_type = "expansion_cost" if kind == "c" else "volume_expansion"
+        if f"l{kind}_limit" in n.global_constraints.index:
+            n.remove("GlobalConstraint", f"l{kind}_limit")
         rhs = float(factor) * ref
         n.add(
             "GlobalConstraint",
