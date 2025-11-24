@@ -107,6 +107,7 @@ class HeatSource(Enum):
         if self in [
             HeatSource.GEOTHERMAL,
             HeatSource.RIVER_WATER,
+            HeatSource.PTES,
         ]:
             return True
         else:
@@ -198,7 +199,7 @@ class HeatSource(Enum):
         else:
             return float("inf")
 
-    def get_heat_pump_bus2(self, nodes, heat_carrier: str) -> str:
+    def get_heat_pump_bus2(self, nodes, heat_system: str) -> str:
         """
         Returns the bus2 configuration for the heat pump link.
 
@@ -221,10 +222,10 @@ class HeatSource(Enum):
             return ""
         elif self.requires_preheater:
             # Sources with preheater use return-temperature bus
-            return nodes + f" {heat_carrier} return-temperature"
+            return self.return_temperature_bus(nodes, heat_system)
         else:
             # Limited sources without preheater use the heat carrier bus directly
-            return nodes + f" {heat_carrier}"
+            return nodes + f" {heat_system}"
 
     def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
         """
@@ -269,3 +270,75 @@ class HeatSource(Enum):
             return False
         else:
             return True
+
+    def heat_carrier(self, heat_system) -> str:
+        """
+        Returns the heat carrier for the heat source.
+
+        Parameters
+        ----------
+        heat_system : HeatSystem
+            The heat system for which to get the heat carrier.
+
+        Returns
+        -------
+        str
+            The heat carrier name.
+        """
+
+        return f"{heat_system} {self} heat"
+
+    def medium_temperature_carrier(self, heat_system) -> str:
+        """
+        Returns the medium temperature carrier for the heat source.
+
+        Returns
+        -------
+        str
+            The medium temperature carrier name.
+        """
+        return f"{self.heat_carrier(heat_system)} medium-temperature"
+
+    def return_temperature_carrier(self, heat_system) -> str:
+        """
+        Returns the return temperature carrier for the heat source.
+
+        Returns
+        -------
+        str
+            The return temperature carrier name.
+        """
+        return f"{self.heat_carrier(heat_system)} return-temperature"
+
+    def medium_temperature_bus(self, nodes, heat_system) -> str:
+        """
+        Returns the medium temperature bus for the heat source.
+
+        Returns
+        -------
+        str
+            The medium temperature bus name.
+        """
+        return nodes + f" {self.medium_temperature_carrier(heat_system)}"
+
+    def return_temperature_bus(self, nodes, heat_system) -> str:
+        """
+        Returns the return temperature bus for the heat source.
+
+        Returns
+        -------
+        str
+            The return temperature bus name.
+        """
+        return nodes + f" {self.return_temperature_carrier(heat_system)}"
+
+    def resource_bus(self, nodes, heat_system) -> str:
+        """
+        Returns the resource bus for the heat source.
+
+        Returns
+        -------
+        str
+            The resource bus name.
+        """
+        return nodes + f" {self.heat_carrier(heat_system)}"

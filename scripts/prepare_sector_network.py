@@ -3095,7 +3095,7 @@ def add_heat(
                 nodes,
                 suffix=f" {heat_system} water pits discharger",
                 bus0=nodes + f" {heat_system} water pits",
-                bus1=nodes + f" {heat_system} ptes heat",
+                bus1=HeatSource.PTES.resource_bus(nodes, heat_system),
                 carrier=f"{heat_system} water pits discharger",
                 efficiency=costs.at[
                     "central water pit discharger",
@@ -3207,7 +3207,7 @@ def add_heat(
                 else costs.at[costs_name_heat_pump, "efficiency"]
             )
 
-            heat_carrier = f"{heat_system} {heat_source} heat"
+            heat_carrier = heat_source.heat_carrier(heat_system)
 
             if heat_source.requires_generator:
                 p_max_source = pd.read_csv(
@@ -3224,7 +3224,7 @@ def add_heat(
                     "Generator",
                     nodes,
                     suffix=f" {heat_carrier}",
-                    bus=nodes + f" {heat_carrier}",
+                    bus=heat_source.resource_bus(nodes, heat_system),
                     carrier=heat_carrier,
                     p_nom_extendable=True,
                     capital_cost=capital_cost,
@@ -3233,19 +3233,12 @@ def add_heat(
                 )
 
             if heat_source.requires_bus:
-                medium_temperature_carrier = f"{heat_carrier} medium-temperature"
-                return_temperature_carrier = f"{heat_carrier} return-temperature"
-                medium_temperature_bus = nodes + f" {medium_temperature_carrier}"
-                return_temperature_bus = nodes + f" {return_temperature_carrier}"
-                print(medium_temperature_bus, return_temperature_bus)
-
-                # add resource
+                # add heat source carrier and bus
                 n.add("Carrier", heat_carrier)
                 n.add(
                     "Bus",
-                    nodes,
+                    heat_source.resource_bus(nodes, heat_system),
                     location=nodes,
-                    suffix=f" {heat_carrier}",
                     carrier=heat_carrier,
                 )
 
@@ -3259,33 +3252,31 @@ def add_heat(
 
                 n.add(
                     "Bus",
-                    medium_temperature_bus,
+                    heat_source.medium_temperature_bus(nodes, heat_system),
                     location=nodes,
-                    carrier=medium_temperature_carrier,
+                    carrier=heat_source.medium_temperature_carrier(heat_system),
                 )
 
                 n.add(
                     "Bus",
-                    return_temperature_bus,
-                    suffix=return_temperature_carrier,
+                    heat_source.return_temperature_bus(nodes, heat_system),
                     location=nodes,
-                    carrier=return_temperature_carrier,
+                    carrier=heat_source.return_temperature_carrier(heat_system),
                 )
 
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat preheater",
-                    bus0=medium_temperature_bus,
+                    bus0=heat_source.medium_temperature_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=return_temperature_bus,
+                    bus2=heat_source.return_temperature_bus(nodes, heat_system),
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
                     p_max_pu=preheater_utilisation_profile
                     / preheater_utilisation_profile.clip(lower=0.001),
                     carrier=f"{heat_system} {heat_source} heat preheater",
                     p_nom_extendable=True,
-                    marginal_cost=-0.3,
                 )
 
                 direct_utilisation_profile = (
@@ -3302,17 +3293,16 @@ def add_heat(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat utilisation",
-                    bus0=nodes + f" {heat_carrier}",
+                    bus0=heat_source.resource_bus(nodes, heat_system),
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=medium_temperature_bus,
+                    bus2=heat_source.medium_temperature_bus(nodes, heat_system),
                     efficiency=direct_utilisation_profile,
                     efficiency2=1 - direct_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
-                    marginal_cost=0.1,
                 )
 
-            bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_carrier)
+            bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_system)
             efficiency2_heat_pump = heat_source.get_heat_pump_efficiency2(cop_heat_pump)
 
             if heat_source.requires_heat_pump(
@@ -3339,6 +3329,7 @@ def add_heat(
                 )
 
         if options["resistive_heaters"]:
+            ptes_heat_source = HeatSource.PTES
             key = f"{heat_system.central_or_decentral} resistive heater"
 
             if (
@@ -3368,7 +3359,7 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=nodes + f" {heat_system} ptes heat medium-temperature",
+                    bus2=ptes_heat_source.medium_temperature_bus(nodes, heat_system),
                     efficiency=ptes_boost_per_discharge_profiles
                     / (ptes_boost_per_discharge_profiles + 1),
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
