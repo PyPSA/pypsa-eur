@@ -154,6 +154,13 @@ electricity:
     by_country: false
 
   transmission_limit: vopt
+  transmission_limit_myopic:
+    2025: v1.05
+    2030: v1.05
+    2035: v1.05
+    2040: v1.05
+    2045: v1.05
+    2050: v1.05
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:

@@ -150,8 +150,14 @@ def set_line_s_max_pu(n, s_max_pu=0.7):
     logger.info(f"N-1 security margin of lines set to {s_max_pu}")
 
 
-def set_transmission_limit(n, kind, factor, costs, Nyears=1):
+def set_transmission_limit(n, kind, factor, costs):
     links_dc_b = n.links.carrier == "DC" if not n.links.empty else pd.Series()
+    if "reversed" in n.links.columns:
+        links_dc_b = (
+            (n.links.carrier == "DC") & ~n.links.reversed
+            if not n.links.empty
+            else pd.Series()
+        )
 
     _lines_s_nom = (
         np.sqrt(3)
@@ -159,25 +165,42 @@ def set_transmission_limit(n, kind, factor, costs, Nyears=1):
         * n.lines.num_parallel
         * n.lines.bus0.map(n.buses.v_nom)
     )
-    lines_s_nom = n.lines.s_nom.where(n.lines.type == "", _lines_s_nom)
+    if (n.links.loc[links_dc_b].p_nom_min > n.links.loc[links_dc_b].p_nom).any():
+        attr_link = "p_nom_min"
+    else:
+        attr_link = "p_nom"
+
+    if (n.lines.type == "").any():
+        lines_s_nom = (
+            n.lines[["s_nom", "s_nom_min", "s_nom_opt"]]
+            .max(axis=1)
+            .where(n.lines.type == "", _lines_s_nom)
+        )
+    else:
+        lines_s_nom = n.lines[["s_nom", "s_nom_min", "s_nom_opt"]].max(axis=1)
 
     col = "capital_cost" if kind == "c" else "length"
     ref = (
         lines_s_nom @ n.lines[col]
-        + n.links.loc[links_dc_b, "p_nom"] @ n.links.loc[links_dc_b, col]
+        + n.links.loc[links_dc_b, attr_link] @ n.links.loc[links_dc_b, col]
     )
 
     set_transmission_costs(n, costs)
 
     if factor == "opt" or float(factor) > 1.0:
         n.lines["s_nom_min"] = lines_s_nom
+        n.lines["s_nom"] = lines_s_nom
         n.lines["s_nom_extendable"] = True
 
-        n.links.loc[links_dc_b, "p_nom_min"] = n.links.loc[links_dc_b, "p_nom"]
+        n.links.loc[links_dc_b, ["p_nom_min", "p_nom"]] = n.links.loc[
+            links_dc_b, attr_link
+        ]
         n.links.loc[links_dc_b, "p_nom_extendable"] = True
 
     if factor != "opt":
         con_type = "expansion_cost" if kind == "c" else "volume_expansion"
+        if f"l{kind}_limit" in n.global_constraints.index:
+            n.remove("GlobalConstraint", f"l{kind}_limit")
         rhs = float(factor) * ref
         n.add(
             "GlobalConstraint",
@@ -350,7 +373,7 @@ if __name__ == "__main__":
 
     kind = snakemake.params.transmission_limit[0]
     factor = snakemake.params.transmission_limit[1:]
-    set_transmission_limit(n, kind, factor, costs, Nyears)
+    set_transmission_limit(n, kind, factor, costs)
 
     set_line_nom_max(
         n,
