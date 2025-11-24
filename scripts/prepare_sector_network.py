@@ -2076,12 +2076,14 @@ def add_storage_and_grids(
             lifetime=costs.at["H2 (g) pipeline", "lifetime"],
         )
 
-
-    if "battery" in snakemake.params.electricity["extendable_carriers"].get("Store", []):
-
+    if "battery" in snakemake.params.electricity["extendable_carriers"].get(
+        "Store", []
+    ):
         n.add("Carrier", "battery")
 
-        n.add("Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el")
+        n.add(
+            "Bus", nodes + " battery", location=nodes, carrier="battery", unit="MWh_el"
+        )
 
         n.add(
             "Store",
