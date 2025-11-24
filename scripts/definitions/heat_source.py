@@ -220,8 +220,8 @@ class HeatSource(Enum):
             # Inexhaustible sources (air, ground, sea-water) don't have a bus2
             return ""
         elif self.requires_preheater:
-            # Sources with preheater use pre-chilled bus
-            return nodes + f" {heat_carrier} pre-chilled"
+            # Sources with preheater use return-temperature bus
+            return nodes + f" {heat_carrier} return-temperature"
         else:
             # Limited sources without preheater use the heat carrier bus directly
             return nodes + f" {heat_carrier}"

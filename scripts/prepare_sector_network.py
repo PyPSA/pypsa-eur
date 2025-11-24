@@ -3199,16 +3199,6 @@ def add_heat(
             )
 
             heat_carrier = f"{heat_system} {heat_source} heat"
-            if heat_source.requires_bus:
-                # add resource
-                n.add("Carrier", heat_carrier)
-                n.add(
-                    "Bus",
-                    nodes,
-                    location=nodes,
-                    suffix=f" {heat_carrier}",
-                    carrier=heat_carrier,
-                )
 
             if heat_source.requires_generator:
                 p_max_source = pd.read_csv(
@@ -3233,8 +3223,23 @@ def add_heat(
                     p_max_pu=p_max_source,
                 )
 
-            # if any preheater value is non-zero
-            if heat_source.requires_preheater:
+            if heat_source.requires_bus:
+                medium_temperature_carrier = f"{heat_carrier} medium-temperature"
+                return_temperature_carrier = f"{heat_carrier} return-temperature"
+                medium_temperature_bus = nodes + f" {medium_temperature_carrier}"
+                return_temperature_bus = nodes + f" {return_temperature_carrier}"
+                print(medium_temperature_bus, return_temperature_bus)
+
+                # add resource
+                n.add("Carrier", heat_carrier)
+                n.add(
+                    "Bus",
+                    nodes,
+                    location=nodes,
+                    suffix=f" {heat_carrier}",
+                    carrier=heat_carrier,
+                )
+
                 preheater_utilisation_profile = (
                     heat_source_preheater_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
@@ -3242,21 +3247,29 @@ def add_heat(
                     .to_pandas()
                     .reindex(index=n.snapshots)
                 )
+
                 n.add(
                     "Bus",
-                    nodes,
+                    medium_temperature_bus,
                     location=nodes,
-                    suffix=f" {heat_carrier} pre-chilled",
-                    carrier=f"{heat_carrier} pre-chilled",
+                    carrier=medium_temperature_carrier,
+                )
+
+                n.add(
+                    "Bus",
+                    return_temperature_bus,
+                    suffix=return_temperature_carrier,
+                    location=nodes,
+                    carrier=return_temperature_carrier,
                 )
 
                 n.add(
                     "Link",
                     nodes,
                     suffix=f" {heat_system} {heat_source} heat preheater",
-                    bus0=nodes + f" {heat_carrier} to be boosted",
+                    bus0=medium_temperature_bus,
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=nodes + f" {heat_carrier} pre-chilled",
+                    bus2=return_temperature_bus,
                     efficiency=preheater_utilisation_profile,
                     efficiency2=1 - preheater_utilisation_profile,
                     p_max_pu=preheater_utilisation_profile
@@ -3266,8 +3279,6 @@ def add_heat(
                     marginal_cost=-0.3,
                 )
 
-            # add link for direct usage of heat source when source temperature exceeds forward temperature
-            if heat_source.value in heat_source_direct_utilisation_profile.heat_source:
                 direct_utilisation_profile = (
                     heat_source_direct_utilisation_profile.sel(
                         heat_source=heat_source.value, name=nodes
@@ -3276,32 +3287,18 @@ def add_heat(
                     .reindex(index=n.snapshots)
                 )
 
-                requires_direct_utilisation = (
-                    (direct_utilisation_profile > 0.001).any().any()
-                )
-            else:
-                requires_direct_utilisation = False
-
-            if requires_direct_utilisation:
-                # if True:
-                n.add(
-                    "Bus",
-                    nodes,
-                    location=nodes,
-                    suffix=f" {heat_carrier} to be boosted",
-                    carrier=f"{heat_carrier} to be boosted",
-                )
+                # add link for direct usage of heat source when source temperature exceeds forward temperature
 
                 n.add(
                     "Link",
                     nodes,
-                    suffix=f" {heat_system} {heat_source} heat direct utilisation",
+                    suffix=f" {heat_system} {heat_source} heat utilisation",
                     bus0=nodes + f" {heat_carrier}",
                     bus1=nodes + f" {heat_system} heat",
-                    bus2=nodes + f" {heat_carrier} to be boosted",
+                    bus2=medium_temperature_bus,
                     efficiency=direct_utilisation_profile,
                     efficiency2=1 - direct_utilisation_profile,
-                    carrier=f"{heat_system} {heat_source} heat direct utilisation",
+                    carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
                     marginal_cost=0.1,
                 )
@@ -3362,7 +3359,7 @@ def add_heat(
                     suffix=f" {heat_system} water pits resistive booster",
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
-                    bus2=nodes + f" {heat_system} ptes heat to be boosted",
+                    bus2=nodes + f" {heat_system} ptes heat medium-temperature",
                     efficiency=ptes_boost_per_discharge_profiles
                     / (ptes_boost_per_discharge_profiles + 1),
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
@@ -3371,7 +3368,6 @@ def add_heat(
                     / ptes_boost_per_discharge_profiles.clip(lower=0.001),
                     carrier=f"{heat_system} water pits resistive booster",
                     p_max_pu=0,
-                    marginal_cost=-0.3,
                 )
 
                 n.add(
