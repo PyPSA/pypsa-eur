@@ -384,7 +384,7 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 
     costs = {}
     for c, (p_nom, p_attr) in zip(
-        n.iterate_components(components.keys(), skip_empty=False), components.values()
+        n.components[list(components.keys())], components.values()
     ):
         if c.df.empty:
             continue
