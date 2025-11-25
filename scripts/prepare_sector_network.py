@@ -3209,29 +3209,6 @@ def add_heat(
 
             heat_carrier = heat_source.heat_carrier(heat_system)
 
-            if heat_source.requires_generator:
-                p_max_source = pd.read_csv(
-                    heat_source_profile_files[heat_source.value],
-                    index_col=0,
-                ).squeeze()[nodes]
-
-                capital_cost = heat_source.get_capital_cost(
-                    costs, overdim_factor, heat_system
-                )
-                lifetime = heat_source.get_lifetime(costs, heat_system)
-
-                n.add(
-                    "Generator",
-                    nodes,
-                    suffix=f" {heat_carrier}",
-                    bus=heat_source.resource_bus(nodes, heat_system),
-                    carrier=heat_carrier,
-                    p_nom_extendable=True,
-                    capital_cost=capital_cost,
-                    lifetime=lifetime,
-                    p_max_pu=p_max_source,
-                )
-
             if heat_source.requires_bus:
                 # add heat source carrier and bus
                 n.add("Carrier", heat_carrier)
@@ -3300,6 +3277,29 @@ def add_heat(
                     efficiency2=1 - direct_utilisation_profile,
                     carrier=f"{heat_system} {heat_source} heat utilisation",
                     p_nom_extendable=True,
+                )
+
+            if heat_source.requires_generator:
+                p_max_source = pd.read_csv(
+                    heat_source_profile_files[heat_source.value],
+                    index_col=0,
+                ).squeeze()[nodes]
+
+                capital_cost = heat_source.get_capital_cost(
+                    costs, overdim_factor, heat_system
+                )
+                lifetime = heat_source.get_lifetime(costs, heat_system)
+
+                n.add(
+                    "Generator",
+                    nodes,
+                    suffix=f" {heat_carrier}",
+                    bus=heat_source.resource_bus(nodes, heat_system),
+                    carrier=heat_carrier,
+                    p_nom_extendable=True,
+                    capital_cost=capital_cost,
+                    lifetime=lifetime,
+                    p_max_pu=p_max_source,
                 )
 
             bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_system)
