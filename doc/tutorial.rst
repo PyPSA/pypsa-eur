@@ -156,15 +156,45 @@ In the terminal, this will show up as a list of jobs to be run:
 
     Building DAG of jobs...
     Job stats:
-    job                              count
-    -----------------------------  -------
-    build_biomass_potentials             1
-    build_powerplants                    1
-    compose_network                      1
-    retrieve_jrc_enspreso_biomass        1
-    solve_network                        1
-    total                                5
-
+    job                                      count
+    -------------------------------------  -------
+    add_transmission_projects_and_dlr            1
+    base_network                                 1
+    build_co2_budget_distribution                1
+    build_electricity_demand                     1
+    build_electricity_demand_base                1
+    build_line_rating                            1
+    build_monthly_prices                         1
+    build_osm_boundaries                         4
+    build_population_layouts                     1
+    build_powerplants                            1
+    build_renewable_profiles                     3
+    build_shapes                                 1
+    build_solar_rooftop_potentials               1
+    build_solar_thermal_profiles                 1
+    build_transmission_projects                  1
+    cluster_network                              1
+    compose_network                              1
+    determine_availability_matrix                3
+    process_cost_data                            1
+    retrieve_cost_data                           1
+    retrieve_cutout                              1
+    retrieve_databundle                          1
+    retrieve_eez                                 1
+    retrieve_electricity_demand                  1
+    retrieve_eurostat_data                       1
+    retrieve_jrc_ardeco                          1
+    retrieve_monthly_co2_prices                  1
+    retrieve_monthly_fuel_prices                 1
+    retrieve_nuts_2021_shapes                    1
+    retrieve_osm_boundaries                      4
+    retrieve_osm_prebuilt                        1
+    retrieve_synthetic_electricity_demand        1
+    retrieve_worldbank_urban_population          1
+    simplify_network                             1
+    solve_network                                1
+    time_aggregation                             1
+    total                                       46
 
 ``snakemake`` then runs these jobs in the correct order.
 
