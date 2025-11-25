@@ -474,7 +474,7 @@ def prepare_network(
             bus=buses_i,
             carrier="load",
             marginal_cost=load_shedding,  # Eur/MWh
-            p_nom_extendable=True,
+            p_nom=np.inf
         )
 
     if solve_opts.get("curtailment_mode"):
