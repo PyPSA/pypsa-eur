@@ -128,7 +128,7 @@ if __name__ == "__main__":
     resource = params["resource"]  # pv panel params / wind turbine params
     resource["show_progress"] = not noprogress
 
-    tech = next(t for t in ["panel", "turbine", "wec_type"] if t in resource)
+    tech = next(t for t in ["panel", "turbine", "converter"] if t in resource)
     models = resource[tech]
     if not isinstance(models, dict):
         models = {0: models}

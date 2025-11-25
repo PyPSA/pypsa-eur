@@ -234,7 +234,7 @@ renewable:
     cutout: era5_2020_cutout #mrel_2020.cutout
     resource:
       method: wave
-      wec_type: Farshore_750kW
+      converter: Farshore_750kW
     capacity_per_sqkm: 50 #for the packing density the safe assumption is 10-20 MW/Km2, but with good assessment this is 20-50 MW/Km2
     correction_factor: 1
     corine: [44, 255]
@@ -251,7 +251,7 @@ renewable:
     cutout: era5_2020_cutout
     resource:
       method: wave
-      wec_type: Nearshore_400kW
+      converter: Nearshore_400kW
     capacity_per_sqkm: 35 #for the packing density the safe assumption is 10-20 MW/Km2, but with good assessment this is 20-40 MW/Km2
     correction_factor: 1
     corine: [44, 255]
@@ -267,7 +267,7 @@ renewable:
     cutout: era5_2020_cutout
     resource:
       method: wave
-      wec_type: Shallow_290kW
+      converter: Shallow_290kW
     capacity_per_sqkm: 30 #for the packing density the safe assumption is 10-20 MW/Km2, but with good assessment this is 20-40 MW/Km2
     correction_factor: 1
     corine: [44, 255]
