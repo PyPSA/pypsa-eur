@@ -32,6 +32,10 @@ class PtesTemperatureApproximator:
         Whether discharge boosting is required/allowed.
     temperature_dependent_capacity : bool
         Whether storage capacity varies with temperature. If False, assumes constant capacity.
+    design_top_temperature : float
+        Maximum design temperature for the top layer of PTES, used for capacity normalization.
+    design_bottom_temperature : float
+        Minimum design temperature for the bottom layer of PTES, used for capacity normalization.
     """
 
     def __init__(
@@ -65,6 +69,11 @@ class PtesTemperatureApproximator:
             Whether discharge boosting is required/allowed.
         temperature_dependent_capacity : bool
             Whether storage capacity varies with temperature. If False, assumes constant capacity.
+        design_top_temperature : float
+            Maximum design temperature for the top layer of PTES, used for capacity normalization
+            and clipping dynamic top temperature profiles.
+        design_bottom_temperature : float
+            Minimum design temperature for the bottom layer of PTES, used for capacity normalization.
         """
         self.forward_temperature = forward_temperature
         self.return_temperature = return_temperature
@@ -86,8 +95,9 @@ class PtesTemperatureApproximator:
         """
         PTES top layer temperature profile.
 
-        Returns either the forward temperature (if top_temperature == 'forward')
-        or a constant temperature profile (if top_temperature is a numeric value).
+        Returns either the forward temperature (if top_temperature == 'forward'),
+        clipped to the design_top_temperature, or a constant temperature profile
+        (if top_temperature is a numeric value).
 
         Returns
         -------
@@ -96,10 +106,13 @@ class PtesTemperatureApproximator:
         """
         if self.top_temperature == "forward":
             logger.info(
-                f"PTES top temperature profile: Using dynamic forward temperature from district heating network "
-                f"(shape: {self.forward_temperature.shape}, range: {float(self.forward_temperature.min().values):.1f}°C to {float(self.forward_temperature.max().values):.1f}°C)"
+                f"PTES top temperature profile: Using dynamic forward temperature from district heating network, clipped by design top temperature to {self.design_top_temperature}°C "
+                f"Forward temperature range: {float(self.forward_temperature.min().values):.1f}°C to {float(self.forward_temperature.max().values):.1f}°C)"
             )
-            return self.forward_temperature
+            return self.forward_temperature.where(
+                self.forward_temperature <= self.design_top_temperature,
+                self.design_top_temperature,
+            )
         elif isinstance(self.top_temperature, (int, float)):
             logger.info(
                 f"PTES top temperature profile: Using constant temperature of {self.top_temperature}°C "
@@ -146,14 +159,13 @@ class PtesTemperatureApproximator:
     @property
     def e_max_pu(self) -> xr.DataArray:
         """
-        Calculate the normalized delta T for TES capacity in relation to
-        max and min temperature.
+        Calculate e_max_pu for PTES as design_temperature_delta / actual_temperature_delta.
 
         Returns
         -------
         xr.DataArray
             Normalized delta T values between 0 and 1, representing the
-            available storage capacity as a percentage of maximum capacity.
+            available storage capacity as a fraction of maximum design capacity.
             If temperature_dependent_capacity is False, returns constant capacity of 1.0.
         """
         if self.temperature_dependent_capacity:
@@ -235,38 +247,39 @@ class PtesTemperatureApproximator:
     @property
     def boost_per_charge(self) -> xr.DataArray:
         """
-        Calculate how much of the total energy needed to fill the PTES to its
-        maximum capacity has already been delivered by charging up to the forward
-        temperature, versus how much extra energy remains to reach the maximum.
+        Calculate the additional boost energy ratio required during charging.
+
+        .. note::
+            Charge boosting is currently not implemented and will raise
+            NotImplementedError if charge_boosting_required is True.
+
+        This calculates how much additional energy is needed to raise the PTES
+        top layer from the forward temperature to the design top temperature,
+        relative to the energy delivered by charging.
 
         Notes
         -----
         To fill the storage from the return temperature all the way up to its
-        maximum top temperature, the total thermal energy required is split into:
+        design top temperature, the total thermal energy required is split into:
 
-            Q_charge   = Ṽ·ρ·cₚ·(T_forward − T_bottom)
+            Q_charge = Ṽ·ρ·cₚ·(T_forward − T_bottom)
             Q_boost  = Ṽ·ρ·cₚ·(T_top − T_forward)
 
-        - Q_forward is the energy already delivered by charging to the forward setpoint.
-        - Q_boosting is the extra boost energy still needed to reach maximum capacity.
+        - Q_charge is the energy delivered by charging to the forward setpoint.
+        - Q_boost is the extra boost energy needed to reach the design top temperature.
 
-        Defining α as the ratio of delivered energy to remaining boost energy:
+        Defining α as the ratio of boost energy to charge energy:
 
             α = Q_boost / Q_charge
-              = (T_top − T_forward) /
-                (T_forward − T_return)
+              = (T_top − T_forward) / (T_forward − T_return)
 
-        This ratio quantifies the share of the total charge process that has
-        already been completed (via Q_forward) relative to what is still
-        required (Q_boosting) to hit the maximum PTES top temperature.
-
-        Wherever the forward temperature meets or exceeds the maximum, α is set
-        to zero since no further boost is needed.
+        Wherever the forward temperature meets or exceeds the design top temperature,
+        α is set to zero since no further boost is needed.
 
         Returns
         -------
         xr.DataArray
-            The ratio of additional boost energy needed to the energy already delivered by charging.
+            The ratio of additional boost energy needed to the energy delivered by charging.
         """
         if self.charge_boosting_required:
             # Get the max top temperature value

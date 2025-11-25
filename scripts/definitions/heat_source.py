@@ -10,49 +10,41 @@ logger = logging.getLogger(__name__)
 
 class HeatSource(Enum):
     """
-    Enumeration representing different heat sources for heat pumps.
+    Enumeration representing different heat sources for heat pumps and direct utilisation.
+
+    Heat sources are categorized by their characteristics:
+
+    **Inexhaustible sources** (AIR, GROUND, SEA_WATER):
+        Always available, no resource bus needed, heat pump draws from ambient.
+
+    **Limited sources requiring a bus** (GEOTHERMAL, RIVER_WATER, PTES):
+        Have spatial/temporal constraints, require resource tracking via buses.
+        May support direct utilisation or preheating depending on temperature.
+
+    **Sources with preheater** (PTES):
+        When source temperature is between return and forward temperatures,
+        can preheat return flow before heat pump provides final lift.
 
     Attributes
     ----------
     GEOTHERMAL : str
-        Geothermal heat source.
+        Geothermal heat source with constant temperature.
     RIVER_WATER : str
-        River water heat source.
+        River water heat source with time-varying temperature.
     SEA_WATER : str
-        Sea water heat source.
+        Sea water heat source (treated as inexhaustible).
     AIR : str
-        Air heat source.
+        Ambient air heat source (inexhaustible).
     GROUND : str
-        Ground heat source.
-    PTES: str
-        Pit Thermal Energy Storage as heat source.
+        Ground/soil heat source (inexhaustible).
+    PTES : str
+        Pit Thermal Energy Storage discharge as heat source.
 
-    Methods
-    -------
-    __str__()
-        Returns the string representation of the heat source.
-    constant_temperature_celsius()
-        Returns the constant temperature in Celsius for the heat source.
-    is_limited()
-        Returns whether the heat source is limited (vs. inexhaustible).
-    requires_generator()
-        Returns whether the heat source requires a generator.
-    requires_preheater()
-        Returns whether the heat source requires a preheater.
-    supports_direct_utilisation()
-        Returns whether the heat source supports direct heat utilisation.
-    get_capital_cost(costs, overdim_factor, heat_system)
-        Returns the capital cost for the heat source generator.
-    get_lifetime(costs, heat_system)
-        Returns the lifetime for the heat source generator.
-    get_heat_pump_bus2(nodes, heat_system, heat_carrier)
-        Returns the bus2 configuration for the heat pump link.
-    get_heat_pump_efficiency2(cop_heat_pump)
-        Returns the efficiency2 for the heat pump link.
-    get_efficiency_pre_heater(efficiency_direct_utilisation)
-        Returns the efficiency for the preheater link.
-    get_efficiency_direct_utilisation(direct_heat_profile, nodes, n)
-        Returns the efficiency for direct heat utilisation.
+    See Also
+    --------
+    HeatSystem : Defines heat system types (urban central, urban decentral, rural).
+    build_heat_source_utilisation_profiles : Calculates utilisation profiles for heat sources.
+    build_cop_profiles : Calculates COP profiles for heat pumps using these sources.
     """
 
     GEOTHERMAL = "geothermal"
@@ -79,12 +71,15 @@ class HeatSource(Enum):
     @property
     def has_constant_temperature(self) -> bool:
         """
-        Returns the constant temperature in Celsius for the heat source.
+        Check if the heat source has a constant (time-invariant) temperature.
+
+        Constant-temperature sources (e.g., geothermal) have their temperature
+        specified in config rather than loaded from time series files.
 
         Returns
         -------
         bool
-            True if the heat source has a constant temperature else False.
+            True for geothermal, False for all other sources.
         """
         if self == HeatSource.GEOTHERMAL:
             return True
@@ -116,12 +111,15 @@ class HeatSource(Enum):
     @property
     def requires_generator(self) -> bool:
         """
-        Returns whether the heat source requires a generator.
+        Check if the heat source requires a generator component in the network.
+
+        Generators represent the extraction capacity from geothermal wells or
+        river water intakes, with associated capital costs and lifetimes.
 
         Returns
         -------
         bool
-            True if the heat source requires a generator, False otherwise.
+            True for geothermal and river_water, False otherwise.
         """
         if self in [HeatSource.GEOTHERMAL, HeatSource.RIVER_WATER]:
             return True
@@ -131,14 +129,18 @@ class HeatSource(Enum):
     @property
     def requires_preheater(self) -> bool:
         """
-        Returns whether the heat source requires a pre-heater.
+        Check if the heat source uses preheating when below forward temperature.
+
+        Preheating allows intermediate-temperature sources to warm the return
+        flow before a heat pump provides the final temperature lift, improving
+        overall system efficiency.
 
         Returns
         -------
         bool
-            True if the heat source requires a pre-heater, False otherwise.
+            True for PTES, False otherwise.
         """
-        if self in [HeatSource.GEOTHERMAL, HeatSource.PTES]:
+        if self in [HeatSource.PTES]:
             return True
         else:
             return False
@@ -201,16 +203,22 @@ class HeatSource(Enum):
 
     def get_heat_pump_bus2(self, nodes, heat_system: str) -> str:
         """
-        Returns the bus2 configuration for the heat pump link.
+        Get the secondary input bus for the heat pump link.
+
+        The heat pump link has bus0 (electricity input), bus1 (heat output),
+        and optionally bus2 (heat source input). This method determines bus2
+        based on the heat source type:
+
+        - Inexhaustible sources: No bus2 (empty string)
+        - Sources with preheater: Return-temperature bus (post-preheat)
+        - Other limited sources: Resource bus directly
 
         Parameters
         ----------
         nodes : pd.Index or list
             The nodes for which to generate the bus name.
-        requires_preheater : bool
-            Whether the heat source requires a preheater.
-        heat_carrier : str
-            The heat carrier name.
+        heat_system : str
+            The heat system identifier (e.g., 'urban central').
 
         Returns
         -------
@@ -225,11 +233,35 @@ class HeatSource(Enum):
             return self.return_temperature_bus(nodes, heat_system)
         else:
             # Limited sources without preheater use the heat carrier bus directly
-            return nodes + f" {heat_system}"
+            return self.resource_bus(nodes, heat_system)
 
     def get_heat_pump_efficiency2(self, cop_heat_pump) -> float:
         """
-        Returns the efficiency2 for the heat pump link.
+        Get the efficiency2 (heat source consumption) for the heat pump link.
+
+        The heat pump link uses an inverted bus configuration where bus0 is the
+        heat output (not input) to attribute capital costs to the heat bus. This
+        means the link operates with negative flow (p_max_pu=0, p_min_pu < 0).
+
+        For a standard heat pump energy balance:
+
+            Q_output = Q_source + W_electricity
+            COP = Q_output / W_electricity
+
+        The fraction of output heat from the source is:
+
+            Q_source / Q_output = (COP - 1) / COP
+
+        However, since bus0 is the output in our inverted configuration, PyPSA
+        interprets efficiency2 as: input_bus2 = p_bus0 * efficiency2
+
+        With negative p_bus0 (heat flowing out), we need efficiency2 to give the
+        correct heat drawn from the source. The formula simplifies to:
+
+            efficiency2 = 1 - 1/COP
+
+        This ensures that for each unit of heat output, the link draws the correct
+        amount from the heat source bus.
 
         Parameters
         ----------
@@ -239,29 +271,38 @@ class HeatSource(Enum):
         Returns
         -------
         float or pd.Series
-            The efficiency2 value for the heat pump.
+            1.0 for inexhaustible sources (no resource tracking needed),
+            1 - 1/COP for limited sources (tracks heat drawn from source bus).
+
+        See Also
+        --------
+        prepare_sector_network.add_heat : Creates heat pump links with this efficiency.
         """
         if self in [HeatSource.AIR, HeatSource.GROUND, HeatSource.SEA_WATER]:
-            # Inexhaustible sources (air, ground, sea-water) don't have a bus2
-            # Inexhaustible sources (air, ground, sea_water) have efficiency2 = 1
-            # (no resource consumption from dummy bus)
+            # Inexhaustible sources don't need resource tracking
             return 1.0
         else:
-            # Limited heat sources consume heat from the resource bus (either pre-chilled or direct)
-            # efficiency2 represents the fraction of heat drawn from the source
-            # This is 1 - (1/COP), representing (COP-1)/COP
+            # Limited sources: efficiency2 = 1 - 1/COP for inverted link configuration
             return 1 - (1 / cop_heat_pump.clip(lower=0.001))
 
     def requires_heat_pump(self, ptes_discharge_resistive_boosting: bool) -> bool:
         """
-        Returns whether the heat source requires a heat pump.
+        Check if a heat pump should be built for this heat source.
+
+        Most heat sources require a heat pump to lift temperature to the
+        forward temperature. PTES is special: it can use either a heat pump
+        or resistive boosting for temperature lift during discharge.
+
+        Parameters
+        ----------
+        ptes_discharge_resistive_boosting : bool
+            Whether PTES uses resistive heaters instead of heat pumps.
 
         Returns
         -------
         bool
-            True if the heat source requires a heat pump, False otherwise.
+            False for PTES with resistive boosting, True otherwise.
         """
-
         if self == HeatSource.PTES and ptes_discharge_resistive_boosting:
             logging.info(
                 "PTES configured with resistive boosting during discharge; "
@@ -273,72 +314,112 @@ class HeatSource(Enum):
 
     def heat_carrier(self, heat_system) -> str:
         """
-        Returns the heat carrier for the heat source.
+        Get the carrier name for heat from this source.
 
         Parameters
         ----------
-        heat_system : HeatSystem
-            The heat system for which to get the heat carrier.
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The heat carrier name.
+            Carrier name in format '{heat_system} {source} heat',
+            e.g., 'urban central ptes heat'.
         """
-
         return f"{heat_system} {self} heat"
 
     def medium_temperature_carrier(self, heat_system) -> str:
         """
-        Returns the medium temperature carrier for the heat source.
+        Get the carrier name for partially-cooled heat from this source.
+
+        Used in cascading temperature utilisation: heat that has been used
+        for direct supply but still has usable thermal energy.
+
+        Parameters
+        ----------
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The medium temperature carrier name.
+            Carrier name with '-medium-temperature' suffix in format '{heat_system} {source} medium-temperature'.
         """
         return f"{self.heat_carrier(heat_system)} medium-temperature"
 
     def return_temperature_carrier(self, heat_system) -> str:
         """
-        Returns the return temperature carrier for the heat source.
+        Get the carrier name for fully-cooled heat from this source.
+
+        Represents heat at return temperature after preheating, ready for
+        final temperature lift by heat pump.
+
+        Parameters
+        ----------
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The return temperature carrier name.
+            Carrier name with '-return-temperature' suffix in format '{heat_system} {source} return-temperature'.
         """
         return f"{self.heat_carrier(heat_system)} return-temperature"
 
     def medium_temperature_bus(self, nodes, heat_system) -> str:
         """
-        Returns the medium temperature bus for the heat source.
+        Get bus name for partially-cooled heat at the given nodes.
+
+        Parameters
+        ----------
+        nodes : pd.Index or str
+            Node identifier(s).
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The medium temperature bus name.
+            Bus name combining nodes with medium-temperature carrier in format 'nodes + {heat_system} {source} medium-temperature'.
         """
         return nodes + f" {self.medium_temperature_carrier(heat_system)}"
 
     def return_temperature_bus(self, nodes, heat_system) -> str:
         """
-        Returns the return temperature bus for the heat source.
+        Get bus name for fully-cooled heat at the given nodes.
+
+        Parameters
+        ----------
+        nodes : pd.Index or str
+            Node identifier(s).
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The return temperature bus name.
+            Bus name combining nodes with return-temperature carrier in format 'nodes + {heat_system} {source} return-temperature'.
         """
         return nodes + f" {self.return_temperature_carrier(heat_system)}"
 
     def resource_bus(self, nodes, heat_system) -> str:
         """
-        Returns the resource bus for the heat source.
+        Get the primary resource bus for heat from this source.
+
+        This is where heat enters the system from generators or storage
+        discharge, at the source's native temperature.
+
+        Parameters
+        ----------
+        nodes : pd.Index or str
+            Node identifier(s).
+        heat_system : HeatSystem or str
+            The heat system (e.g., 'urban central').
 
         Returns
         -------
         str
-            The resource bus name.
+            Bus name combining nodes with heat carrier in format 'nodes + {heat_system} {source} heat'.
         """
         return nodes + f" {self.heat_carrier(heat_system)}"

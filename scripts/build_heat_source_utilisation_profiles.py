@@ -2,16 +2,58 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build availability profiles for direct heat source utilisation (1 in regions and time steps where heat source can be utilised, 0 otherwise).
-When direct utilisation is possible, heat pump COPs are set to zero (c.f. `build_cop_profiles`).
+Build heat source utilisation profiles for district heating networks.
+
+This script calculates when and how much heat from various sources (geothermal,
+PTES, river water, etc.) can be used, based on the temperature relationship
+between the heat source and the district heating network.
+
+Two utilisation modes are calculated:
+
+1. **Direct utilisation**: When the source temperature meets or exceeds the
+   forward temperature (T_source ≥ T_forward), the heat source can directly
+   supply the district heating network. Profile value is 1.0 (full utilisation)
+   or 0.0 (not possible).
+
+2. **Preheater utilisation**: When the source temperature is between the return
+   and forward temperatures (T_return < T_source < T_forward), the heat source
+   can preheat the return flow before a heat pump lifts it to forward temperature.
+   The profile value represents that share of the heat above the return temperature which is utilised to increase the heat pump's sink inflow temperature. The return flow serves as the source inlet.
+
+These profiles are used by ``prepare_sector_network.py`` to configure heat
+utilisation links that model cascading temperature use: direct supply when
+possible, preheating when beneficial, with heat pumps handling the final lift.
+
+Relevant Settings
+-----------------
+.. code:: yaml
+
+    sector:
+        heat_sources:
+            urban central:
+                - air
+                - geothermal
+        district_heating:
+            heat_source_cooling: 6  # K
+            geothermal:
+                constant_temperature_celsius: 65
 
 Inputs
 ------
-- `resources/<run_name>/central_heating_forward_temperatures_base_s_{clusters}_{planning_horizons}.nc`: Central heating forward temperature profiles
+- ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``
+    Forward temperature profiles for district heating networks (°C).
+- ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``
+    Return temperature profiles for district heating networks (°C).
+- Heat source temperature profiles (for variable-temperature sources like PTES, air, ground).
 
 Outputs
 -------
-- `resources/<run_name>/direct_heat_source_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc`: Direct heat source utilisation profiles
+- ``resources/<run_name>/heat_source_direct_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc``
+    Direct utilisation profiles indexed by (time, name, heat_source).
+    Values: 1.0 when T_source ≥ T_forward, 0.0 otherwise.
+- ``resources/<run_name>/heat_source_preheater_utilisation_profiles_base_s_{clusters}_{planning_horizons}.nc``
+    Preheater utilisation profiles indexed by (time, name, heat_source).
+    Values: heat extraction efficiency when T_return < T_source < T_forward, 0.0 otherwise.
 """
 
 import logging
@@ -27,6 +69,29 @@ logger = logging.getLogger(__name__)
 def get_source_temperature(
     snakemake_params: dict, snakemake_input: dict, heat_source_name: str
 ) -> float | xr.DataArray:
+    """
+    Get the temperature profile or constant value for a heat source.
+
+    Parameters
+    ----------
+    snakemake_params : dict
+        Snakemake parameters containing constant temperatures for applicable sources.
+    snakemake_input : dict
+        Snakemake input files containing temperature profiles for variable sources.
+    heat_source_name : str
+        Name of the heat source (e.g., 'geothermal', 'ptes', 'air').
+
+    Returns
+    -------
+    float | xr.DataArray
+        Either a constant temperature (float) for sources like geothermal,
+        or a DataArray with time-varying temperatures for sources like PTES or air.
+
+    Raises
+    ------
+    ValueError
+        If the required temperature data is not available in params or inputs.
+    """
     heat_source = HeatSource(heat_source_name)
     if heat_source.has_constant_temperature:
         try:
@@ -48,20 +113,25 @@ def get_direct_utilisation_profile(
     source_temperature: float | xr.DataArray, forward_temperature: xr.DataArray
 ) -> xr.DataArray | float:
     """
-    Get the direct heat source utilisation profile.
+    Calculate when a heat source can directly supply district heating.
 
-    Args:
-    ----
-    source_temperature: float | xr.DataArray
-        The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `forward_temperature`.
-    forward_temperature: xr.DataArray
-        The central heating forward temperature profiles. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
+    Direct utilisation is possible when the source temperature meets or exceeds
+    the required forward temperature of the district heating network.
 
-    Returns:
+    Parameters
+    ----------
+    source_temperature : float | xr.DataArray
+        Heat source temperature in °C. If float, applies uniformly.
+        If DataArray, indexed by (time, name).
+    forward_temperature : xr.DataArray
+        District heating forward temperature profiles in °C,
+        indexed by (time, name).
+
+    Returns
     -------
-    xr.DataArray | float
-        The direct heat source utilisation profile.
-
+    xr.DataArray
+        Binary profile: 1.0 where T_source ≥ T_forward (direct use possible),
+        0.0 otherwise.
     """
     return xr.where(source_temperature >= forward_temperature, 1.0, 0.0)
 
@@ -73,22 +143,37 @@ def get_preheater_utilisation_profile(
     heat_source_cooling: float,
 ) -> xr.DataArray | float:
     """
-    Get the direct heat source utilisation profile.
+    Calculate preheater utilisation efficiency for intermediate-temperature sources.
 
-    Args:
-    ----
-    source_temperature: float | xr.DataArray
-        The constant temperature of the heat source in degrees Celsius. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `forward_temperature`.
-    forward_temperature: xr.DataArray
-        The central heating forward temperature profiles. If `xarray`, indexed by `time` and `region`. If a float, it is broadcasted to the shape of `return_temperature`.
-    return_temperature: xr.DataArray
-        The central heating return temperature profiles. If `xarray`, indexed by `time` and `region`.
+    When a heat source temperature is between the return and forward temperatures,
+    it can preheat the return flow before a heat pump provides the final temperature
+    lift. This improves overall efficiency by reducing the heat pump's lift.
 
-    Returns:
+    The efficiency accounts for the required cooling margin (heat_source_cooling)
+    to ensure adequate heat transfer:
+
+        efficiency = heat_source_cooling / (T_source - T_return + heat_source_cooling)
+
+    Parameters
+    ----------
+    source_temperature : float | xr.DataArray
+        Heat source temperature in °C. If float, applies uniformly.
+        If DataArray, indexed by (time, name).
+    forward_temperature : xr.DataArray
+        District heating forward temperature profiles in °C,
+        indexed by (time, name).
+    return_temperature : xr.DataArray
+        District heating return temperature profiles in °C,
+        indexed by (time, name).
+    heat_source_cooling : float
+        Required temperature drop (K) when extracting heat from the source,
+        ensuring adequate heat exchanger performance.
+
+    Returns
     -------
-    xr.DataArray | float
-        The direct heat source utilisation profile.
-
+    xr.DataArray
+        Preheater efficiency profile: value in (0, 1) where T_return < T_source < T_forward,
+        0.0 otherwise (source too cold or hot enough for direct use).
     """
     return xr.where(
         (source_temperature < forward_temperature)
