@@ -159,6 +159,26 @@ if config["enable"]["retrieve"]:
             "../scripts/retrieve_bidding_zones.py"
 
 
+if config["enable"]["retrieve"]:
+
+    rule retrieve_entsoe_outages:
+        params:
+            start_year=2014,
+            end_year=2024,
+            entsoe_token=config_provider("secrets", "entsoe_token"),
+        output:
+            "data/entsoe/outages_raw.csv",
+        log:
+            "logs/retrieve_entsoe_outages.log",
+        resources:
+            mem_mb=8000,
+        retries: 2
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/retrieve_entsoe_outages.py"
+
+
 if config["enable"]["retrieve"] and config["enable"].get("retrieve_cutout", True):
 
     rule retrieve_cutout:

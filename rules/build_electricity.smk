@@ -50,6 +50,26 @@ rule build_powerplants:
         "../scripts/build_powerplants.py"
 
 
+rule build_outages:
+    input:
+        outages="data/entsoe/outages_raw.csv",
+        powerplants=resources("powerplants_s_{clusters}.csv"),
+    output:
+        mapped=resources("outages_mapped_s_{clusters}.csv"),
+        unmapped=resources("outages_unmapped_s_{clusters}.csv"),
+    log:
+        logs("build_outages_s_{clusters}.log"),
+    benchmark:
+        benchmarks("build_outages_s_{clusters}")
+    threads: 1
+    resources:
+        mem_mb=4000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_outages.py"
+
+
 def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
     osm_prebuilt_version = config_provider("electricity", "osm-prebuilt-version")(w)
