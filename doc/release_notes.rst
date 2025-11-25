@@ -26,7 +26,7 @@ Upcoming Release
   **Breaking configuration changes:**
 
   - Removed ``scenario:`` block. The ``scenario: clusters/opts/sector_opts/planning_horizons`` section is removed. Use ``planning_horizons`` at top-level and ``clustering: cluster_network: n_clusters`` for cluster count.
-  - Removed ``electricity: co2limit_enable``, ``electricity: co2limit``, and ``electricity: co2base``. Use the unified ``co2_budget`` section with ``upper:``/``lower:`` bounds instead. The ``Co2L`` opts wildcard is also removed.
+  - Removed ``electricity: co2limit_enable``, ``electricity: co2limit``, and ``electricity: co2base``. Use the unified ``co2_budget`` section with ``upper:``/``lower:`` bounds instead. The ``Co2L`` and ``cb*`` wildcards (both opts and sector_opts) are also removed.
   - Restructured ``co2_budget:``. Now requires ``emissions_scope``, ``values`` (fraction/absolute), and nested ``upper:``/``lower:`` sections with ``enable`` toggles.
   - Renamed transmission extension keys. ``lines: max_extension`` → ``s_nom_max_extension``; ``links: max_extension`` → ``p_nom_max_extension``.
   - Changed ``lines: s_nom_max`` default. Now ``10_000`` MW instead of ``.inf``.

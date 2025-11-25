@@ -878,16 +878,6 @@ def update_config_from_wildcards(config, w, inplace=True):
             config["lines"]["max_extension"] = maxext * 1e3
             config["links"]["max_extension"] = maxext * 1e3
 
-        _, co2l_value = find_opt(opts, "Co2L")
-        if co2l_value is not None:
-            config["co2_budget"] = float(co2l_value)
-
-        if co2_distribution := get_opt(opts, r"^(cb)\d+(\.\d+)?(ex|be)$"):
-            config["co2_budget"] = co2_distribution
-
-        if co2_budget := get_opt(opts, r"^(cb)\d+(\.\d+)?$"):
-            config["co2_budget"] = float(co2_budget[2:])
-
         attr_lookup = {
             "p": "p_nom_max",
             "e": "e_nom_max",
