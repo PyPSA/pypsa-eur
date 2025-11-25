@@ -130,11 +130,14 @@ integration-tests = """
     snakemake -call --configfile config/test/config.electricity.yaml &&
     snakemake -call --configfile config/test/config.overnight.yaml &&
     snakemake -call --configfile config/test/config.myopic.yaml &&
-    snakemake -call --configfile config/test/config.electricity-perfect.yaml &&
-    snakemake -call --configfile config/test/config.electricity-myopic.yaml &&
-    snakemake -call --configfile config/test/config.clusters.yaml &&
+    snakemake -call resources/test-elec-clusters/networks/simplified.nc --configfile config/test/config.clusters.yaml &&
     snakemake -call --configfile config/test/config.scenarios.yaml -n &&
     snakemake -call results/test-elec-tyndp/maps/power_network_2030.pdf --configfile config/test/config.tyndp.yaml &&
+    echo "All tests completed successfully."
+"""
+integration-tests-streamlined = """
+    snakemake -call --configfile config/test/config.electricity-perfect.yaml &&
+    snakemake -call --configfile config/test/config.electricity-myopic.yaml &&
     echo "All tests completed successfully."
 """
 clean-tests = """
@@ -143,7 +146,7 @@ clean-tests = """
     snakemake -call --configfile config/test/config.myopic.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.electricity-perfect.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.electricity-myopic.yaml --delete-all-output ;
-    snakemake -call --configfile config/test/config.clusters.yaml --delete-all-output ;
+    snakemake -call resources/test-elec-clusters/networks/base.nc --configfile config/test/config.clusters.yaml --delete-all-output ;
     snakemake -call --configfile config/test/config.scenarios.yaml -n --delete-all-output ;
     snakemake -call results/test-elec-tyndp/maps/power_network_2030.pdf --configfile config/test/config.tyndp.yaml --delete-all-output ;
 	echo "All test outputs have been cleaned up."
