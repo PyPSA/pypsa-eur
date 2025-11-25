@@ -118,9 +118,6 @@ electricity:
   osm-prebuilt-version: 0.6
   gaslimit_enable: false
   gaslimit: false
-  co2limit_enable: false
-  co2limit: 7.75e+7
-  co2base: 1.487e+9
 
   operational_reserve:
     activate: false

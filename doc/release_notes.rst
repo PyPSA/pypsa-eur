@@ -9,7 +9,30 @@ Release Notes
 Upcoming Release
 ================
 
-* Streamlined workflow with simplified configuration (https://github.com/PyPSA/pypsa-eur/pull/1838). The workflow now relies on configuration entries rather than wildcards and uses ``{horizon}``-based filenames; see ``doc/migration.rst`` for migration guidance.
+* Streamlined workflow with simplified configuration (https://github.com/PyPSA/pypsa-eur/pull/1838). See ``doc/migration.rst`` for detailed migration guidance.
+
+  **Workflow structure:**
+
+  - The network pipeline now follows a clear 4-stage progression: ``base.nc`` → ``simplified.nc`` → ``clustered.nc`` → ``composed_{horizon}.nc`` → ``solved_{horizon}.nc``.
+  - Cryptic filenames like ``elec_s_37_lv1.25_3H_2030.nc`` are replaced with readable names. Scenario parameters (clusters, opts, sector_opts) are now set via configuration rather than filename wildcards.
+  - A unified ``compose_network`` rule handles greenfield, brownfield, and perfect foresight network assembly for both electricity-only and sector-coupled models.
+  - A single ``solve_network`` rule replaces the separate ``solve_electricity.smk``, ``solve_overnight.smk``, ``solve_myopic.smk``, and ``solve_perfect.smk`` rule files (now deleted).
+  - **Electricity-only models now support myopic and perfect foresight**, not just overnight optimization. New test configs ``config.electricity-myopic.yaml`` and ``config.electricity-perfect.yaml`` added.
+  - Post-processing (summaries, maps, plots) works uniformly across all foresight modes and model types.
+  - Results CSVs (``costs.csv``, ``capacities.csv``, ``energy.csv``, etc.) are unified across horizons.
+  - ``make_summary.py`` now handles all foresight modes, consolidating the functionality of ``make_summary_perfect.py`` and ``make_global_summary.py``.
+  - A new migration guide ``doc/migration.rst`` documents file name mappings and configuration changes in detail.
+
+  **Breaking configuration changes:**
+
+  - Removed ``scenario:`` block. The ``scenario: clusters/opts/sector_opts/planning_horizons`` section is removed. Use ``planning_horizons`` at top-level and ``clustering: cluster_network: n_clusters`` for cluster count.
+  - Removed ``electricity: co2limit_enable``, ``electricity: co2limit``, and ``electricity: co2base``. Use the unified ``co2_budget`` section with ``upper:``/``lower:`` bounds instead. The ``Co2L`` opts wildcard is also removed.
+  - Restructured ``co2_budget:``. Now requires ``emissions_scope``, ``values`` (fraction/absolute), and nested ``upper:``/``lower:`` sections with ``enable`` toggles.
+  - Renamed transmission extension keys. ``lines: max_extension`` → ``s_nom_max_extension``; ``links: max_extension`` → ``p_nom_max_extension``.
+  - Changed ``lines: s_nom_max`` default. Now ``10_000`` MW instead of ``.inf``.
+  - Restructured ``sector:`` toggles. Added ``sector: enabled`` master toggle. Individual sectors changed from ``transport: true`` to ``transport: enable: true`` (same for heating, biomass, industry, shipping, aviation, agriculture, fossil_fuels).
+  - Added ``existing_capacities:`` keys. New ``enabled`` toggle and ``baseyear`` setting required for brownfield runs.
+  - Added ``clustering: cluster_network: n_clusters``. Replaces the ``{clusters}`` wildcard in filenames.
 * Unified temporal resolution configuration: ``clustering: temporal: resolution_elec`` and ``clustering: temporal: resolution_sector`` have been merged into a single ``clustering: temporal: resolution`` setting.
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models. The CO2 price is added as a marginal cost on the ``co2 atmosphere`` Store.
 * Add `custom storage plugin <https://github.com/PyPSA/snakemake-storage-plugin-cached-http>`_ to handle retrievals from zenodo to address recurring failures.

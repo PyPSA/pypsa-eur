@@ -21,9 +21,14 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
+co2_budget:
+  values: absolute  # Values in Gt CO2/year
+  upper:
+    enable: true
+    2030: 0.1  # 100 Mt CO2/year = 0.1 Gt
+    2040: 0.05  # 50 Mt CO2/year = 0.05 Gt
+
 electricity:
-  co2limit_enable: true
-  co2limit: 100000000.0
   gaslimit_enable: false
   gaslimit: 0
   transmission_limit: vopt

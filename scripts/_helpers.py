@@ -762,14 +762,6 @@ def update_config_from_wildcards(config, w, inplace=True):
         if nhours := get_opt(opts, r"^\d+(h|seg)$"):
             config["clustering"]["temporal"]["resolution"] = nhours
 
-        co2l_enable, co2l_value = find_opt(opts, "Co2L")
-        if co2l_enable:
-            config["electricity"]["co2limit_enable"] = True
-            if co2l_value is not None:
-                config["electricity"]["co2limit"] = (
-                    co2l_value * config["electricity"]["co2base"]
-                )
-
         gasl_enable, gasl_value = find_opt(opts, "CH4L")
         if gasl_enable:
             config["electricity"]["gaslimit_enable"] = True

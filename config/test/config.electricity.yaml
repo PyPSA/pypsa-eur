@@ -18,9 +18,14 @@ snapshots:
   start: "2013-03-01"
   end: "2013-03-08"
 
+co2_budget:
+  emissions_scope: All greenhouse gases - (CO2 equivalent)
+  values: absolute  # Values in Gt CO2/year
+  upper:
+    enable: true
+    2050: 0.1  # 100 Mt CO2/year = 0.1 Gt
+
 electricity:
-  co2limit_enable: true
-  co2limit: 100000000.0
   gaslimit_enable: false
   gaslimit: 0
   transmission_limit: vopt

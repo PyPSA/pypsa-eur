@@ -1134,13 +1134,9 @@ def prepare_network_for_solving(
     """
     logger.info("Preparing network for solving")
 
-    # Add CO2 limit if specified
     electricity_cfg = params.electricity
-    if electricity_cfg["co2limit_enable"]:
-        co2limit = electricity_cfg["co2limit"]
-        add_co2limit(n, co2limit, nyears)
 
-    # Add gas limit if specified
+    # Add gas limit if specified (separate from CO2 budget system)
     if electricity_cfg["gaslimit_enable"]:
         gaslimit = electricity_cfg["gaslimit"]
         add_gaslimit(n, gaslimit, nyears)

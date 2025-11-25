@@ -4,9 +4,6 @@ base_network,--,"Any value in {'entsoegridkit', 'osm-prebuilt', 'osm-raw'}","Spe
 osm-prebuilt-version,--,"float, any value in range 0.1-0.6","Choose the version of the prebuilt OSM network. Defaults to latest Zenodo release."
 gaslimit_enable,bool,true or false,Add an overall absolute gas limit configured in ``electricity: gaslimit``.
 gaslimit,MWhth,float or false,Global gas usage limit
-co2limit_enable,bool,true or false,"Add an overall absolute carbon-dioxide emissions limit configured in ``electricity: co2limit`` during :mod:`compose_network`. **Warning:** This option should currently only be used with electricity-only networks, not for sector-coupled networks."
-co2limit,:math:`t_{CO_2-eq}/a`,float,Cap on total annual system carbon dioxide emissions
-co2base,:math:`t_{CO_2-eq}/a`,float,Reference value of total annual system carbon dioxide emissions when ``electricity.co2limit`` is expressed as a relative reduction. Configure explicitly here rather than through legacy wildcards.
 operational_reserve,,,Settings for reserve requirements following `GenX <https://genxproject.github.io/GenX/dev/core/#Reserves>`_
 ,,, 
 -- activate,bool,true or false,Whether to take operational reserve requirements into account during optimisation
