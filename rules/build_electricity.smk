@@ -24,8 +24,6 @@ rule build_electricity_demand:
         benchmarks("build_electricity_demand")
     resources:
         mem_mb=5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_electricity_demand.py"
 
@@ -48,8 +46,6 @@ rule build_powerplants:
     threads: 1
     resources:
         mem_mb=7000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_powerplants.py"
 
@@ -101,8 +97,6 @@ rule base_network:
     threads: 4
     resources:
         mem_mb=2000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/base_network.py"
 
@@ -118,8 +112,6 @@ rule build_osm_boundaries:
     threads: 1
     resources:
         mem_mb=1500,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_osm_boundaries.py"
 
@@ -143,8 +135,6 @@ rule build_bidding_zones:
     threads: 1
     resources:
         mem_mb=1500,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_bidding_zones.py"
 
@@ -181,8 +171,6 @@ rule build_shapes:
     threads: 1
     resources:
         mem_mb=1500,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_shapes.py"
 
@@ -204,8 +192,6 @@ if config["enable"].get("build_cutout", False):
         threads: config["atlite"].get("nprocesses", 4)
         resources:
             mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_cutout.py"
 
@@ -222,8 +208,6 @@ rule build_ship_raster:
         mem_mb=5000,
     benchmark:
         benchmarks("build_ship_raster")
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_ship_raster.py"
 
@@ -266,8 +250,6 @@ rule determine_availability_matrix_MD_UA:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/determine_availability_matrix_MD_UA.py"
 
@@ -334,44 +316,41 @@ rule determine_availability_matrix:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/determine_availability_matrix.py"
 
 
-if config["enable"].get("build_renewable_profiles", True):
-
-    rule build_renewable_profiles:
-        params:
-            snapshots=config_provider("snapshots"),
-            drop_leap_day=config_provider("enable", "drop_leap_day"),
-            renewable=config_provider("renewable"),
-        input:
-            availability_matrix=resources(
-                "availability_matrix_{clusters}_{technology}.nc"
-            ),
-            offshore_shapes=resources("offshore_shapes.geojson"),
-            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
-            cutout=lambda w: "cutouts/"
-            + CDIR
-            + config_provider("renewable", w.technology, "cutout")(w)
-            + ".nc",
-        output:
-            profile=resources("profile_{clusters}_{technology}.nc"),
-        log:
-            logs("build_renewable_profile_{clusters}_{technology}.log"),
-        benchmark:
-            benchmarks("build_renewable_profiles_{clusters}_{technology}")
-        threads: config["atlite"].get("nprocesses", 4)
-        resources:
-            mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
-        wildcard_constraints:
-            technology="(?!hydro).*",  # Any technology other than hydro
-        conda:
-            "../envs/environment.yaml"
-        script:
-            "../scripts/build_renewable_profiles.py"
+rule build_renewable_profiles:
+    params:
+        snapshots=config_provider("snapshots"),
+        drop_leap_day=config_provider("enable", "drop_leap_day"),
+        renewable=config_provider("renewable"),
+    input:
+        availability_matrix=resources("availability_matrix_{clusters}_{technology}.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+        distance_regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        resource_regions=lambda w: (
+            resources("regions_onshore_base_s_{clusters}.geojson")
+            if w.technology in ("onwind", "solar", "solar-hsat")
+            else resources("regions_offshore_base_s_{clusters}.geojson")
+        ),
+        cutout=lambda w: input_cutout(
+            w, config_provider("renewable", w.technology, "cutout")(w)
+        ),
+    output:
+        profile=resources("profile_{clusters}_{technology}.nc"),
+        class_regions=resources("regions_by_class_{clusters}_{technology}.geojson"),
+    log:
+        logs("build_renewable_profile_{clusters}_{technology}.log"),
+    benchmark:
+        benchmarks("build_renewable_profile_{clusters}_{technology}")
+    threads: config["atlite"].get("nprocesses", 4)
+    resources:
+        mem_mb=config["atlite"].get("nprocesses", 4) * 5000,
+    wildcard_constraints:
+        technology="(?!hydro).*",  # Any technology other than hydro
+    script:
+        "../scripts/build_renewable_profiles.py"
 
 
 rule build_monthly_prices:
@@ -388,8 +367,6 @@ rule build_monthly_prices:
     threads: 1
     resources:
         mem_mb=5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_monthly_prices.py"
 
@@ -416,8 +393,6 @@ rule build_hydro_profile:
         benchmarks("build_hydro_profile")
     resources:
         mem_mb=5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_hydro_profile.py"
 
@@ -440,8 +415,6 @@ rule build_line_rating:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=config["atlite"].get("nprocesses", 4) * 1000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_line_rating.py"
 
@@ -475,8 +448,6 @@ rule build_transmission_projects:
     resources:
         mem_mb=4000,
     threads: 1
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_transmission_projects.py"
 
@@ -513,8 +484,6 @@ rule add_transmission_projects_and_dlr:
     threads: 1
     resources:
         mem_mb=4000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/add_transmission_projects_and_dlr.py"
 
@@ -545,8 +514,6 @@ rule build_electricity_demand_base:
         benchmarks("build_electricity_demand_base_s")
     resources:
         mem_mb=5000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_electricity_demand_base.py"
 
@@ -568,8 +535,6 @@ rule build_hac_features:
     threads: config["atlite"].get("nprocesses", 4)
     resources:
         mem_mb=10000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_hac_features.py"
 
@@ -591,8 +556,6 @@ rule process_cost_data:
     threads: 1
     resources:
         mem_mb=4000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/process_cost_data.py"
 
@@ -626,8 +589,6 @@ rule simplify_network:
     threads: 1
     resources:
         mem_mb=12000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/simplify_network.py"
 
@@ -703,8 +664,6 @@ rule cluster_network:
     threads: 1
     resources:
         mem_mb=10000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/cluster_network.py"
 
@@ -779,8 +738,6 @@ rule add_electricity:
     threads: 1
     resources:
         mem_mb=10000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/add_electricity.py"
 
@@ -815,8 +772,6 @@ rule prepare_network:
     threads: 1
     resources:
         mem_mb=4000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/prepare_network.py"
 
@@ -860,8 +815,6 @@ if config["electricity"]["base_network"] == "osm-raw":
         threads: 1
         resources:
             mem_mb=4000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/clean_osm_data.py"
 
@@ -900,8 +853,6 @@ if config["electricity"]["base_network"] == "osm-raw":
         threads: 1
         resources:
             mem_mb=4000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_osm_network.py"
 
@@ -935,7 +886,5 @@ if config["electricity"]["base_network"] == "tyndp":
         threads: 1
         resources:
             mem_mb=4000,
-        conda:
-            "../envs/environment.yaml"
         script:
             "../scripts/build_tyndp_network.py"
