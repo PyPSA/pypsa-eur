@@ -29,11 +29,11 @@ Relevant Settings
 Inputs
 ------
 - `data/dh_areas.gpkg`: District heating areas data (GeoPackage format)
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions for reference
+- `resources/{run}/regions_onshore.geojson`: Onshore regions for reference
 
 Outputs
 -------
-- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: Processed district heating areas with missing countries handled
+- `resources/{run}/dh_areas.geojson`: Processed district heating areas with missing countries handled
 """
 
 import logging

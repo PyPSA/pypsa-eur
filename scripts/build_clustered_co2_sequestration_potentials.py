@@ -35,6 +35,10 @@ def allocate_sequestration_potential(
     overlay["share"] = area(overlay) / overlay["area_sqkm"]
     adjust_cols = overlay.columns.difference({"name", "area_sqkm", "geometry", "share"})
     overlay[adjust_cols] = overlay[adjust_cols].multiply(overlay["share"], axis=0)
+
+    if overlay.empty or "name" not in overlay.columns:
+        return pd.Series(dtype=float)
+
     return overlay.dissolve("name", aggfunc="sum")[attr].sum(axis=1)
 
 

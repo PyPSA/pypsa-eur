@@ -12,7 +12,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from pypsa.plot import add_legend_circles, add_legend_lines
+from pypsa.plot.maps.static import add_legend_circles, add_legend_lines
 
 from scripts._helpers import configure_logging, retry, set_scenario_config
 from scripts.make_summary import assign_locations
@@ -179,9 +179,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "plot_power_network_perfect",
-            opts="",
-            clusters="37",
-            sector_opts="4380H-T-H-B-I-A-dist1",
         )
 
     configure_logging(snakemake)

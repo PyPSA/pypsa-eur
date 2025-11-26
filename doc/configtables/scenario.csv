@@ -1,5 +1,3 @@
 ,Unit,Values,Description
-clusters,--,cf. :ref:`clusters`,"List of ``{clusters}`` wildcards to run."
-opts,--,cf. :ref:`opts`,"List of ``{opts}`` wildcards to run."
-sector_opts,--,cf. :ref:`sector_opts`,"List of ``{sector_opts}`` wildcards to run."
-planning_horizons,--,cf. :ref:`planning_horizons`,"List of ``{planning_horizon}`` wildcards to run."
+enable,bool,true or false,"Activates scenario sweeps via ``run.scenarios``. When true, Snakemake iterates over the entries defined in the external scenarios file and merges their overrides into the base config."
+file,--,Path relative to the repo root,"YAML file listing scenario overrides (default ``config/scenarios.yaml``). Each scenario may override any valid configuration key; ``config_provider``/``get_config`` ensure the merged values are honoured per wildcard combination."

@@ -1,4 +1,6 @@
 ,Unit,Values,Description
+enabled,bool,"{true, false}","Enable brownfield mode to include existing capacities from a base year. When enabled, the model considers existing infrastructure and only allows expansion from that baseline."
+baseyear,--,year (integer),"Reference year for existing capacities in brownfield mode. Typically set to 2020 or the most recent year with complete data."
 grouping_years_power ,--,A list of years,Intervals to group existing capacities for power
 grouping_years_heat ,--,A list of years below 2020,Intervals to group existing capacities for heat
 

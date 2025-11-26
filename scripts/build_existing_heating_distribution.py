@@ -10,7 +10,7 @@ Within the nodes, the capacities are distributed to sectors (residential and ser
 
 Outputs:
 --------
-- Existing heat generation capacities distributed to nodes: `resources/{run_name}/existing_heating_distribution_base_s_{clusters}_{planning_horizons}.csv`
+- Existing heat generation capacities distributed to nodes: `resources/{run}/existing_heating_distribution_{horizon}.csv`
 
 
 Notes

@@ -19,13 +19,13 @@ Relevant Settings
 
 Inputs
 ------
-- `resources/<run_name>/regions_onshore.geojson`
-- `resources/<run_name>/lau_regions.geojson`
-- `resources/<run_name>/isi_heat_potentials.xlsx`
+- `resources/{run}/regions_onshore.geojson`
+- `resources/{run}/lau_regions.geojson`
+- `resources/{run}/isi_heat_potentials.xlsx`
 
 Outputs
 -------
-- `resources/<run_name>/heat_source_technical_potential_{heat_source}_base_s_{clusters}.csv`
+- `resources/{run}/heat_source_technical_potential_{heat_source}.csv`
 
 Raises
 ------

@@ -29,13 +29,13 @@ Relevant Settings
 Inputs
 ------
 - `data/seawater_temperature.nc`: Sea water temperature data
-- `resources/<run_name>/regions_onshore_base_s_{clusters}.geojson`: Onshore regions
-- `resources/<run_name>/dh_areas_base_s_{clusters}.geojson`: District heating areas
+- `resources/{run}/regions_onshore.geojson`: Onshore regions
+- `resources/{run}/dh_areas.geojson`: District heating areas
 
 Outputs
 -------
-- `resources/<run_name>/temp_sea_water_base_s_{clusters}.nc`: Sea water temperature profiles by region
-- `resources/<run_name>/temp_sea_water_base_s_{clusters}_temporal_aggregate.nc`: Temporal aggregated temperature data
+- `resources/{run}/temp_sea_water.nc`: Sea water temperature profiles by region
+- `resources/{run}/temp_sea_water_temporal_aggregate.nc`: Temporal aggregated temperature data
 """
 
 import logging
