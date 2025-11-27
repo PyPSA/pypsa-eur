@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Added existing biomass decentral/rural residential and services heating capacity.
+
 * chore: disable PTES dynamic capacity by default 
 
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models.
