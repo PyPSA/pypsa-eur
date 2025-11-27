@@ -140,7 +140,7 @@ class HeatSource(Enum):
         bool
             True for PTES, False otherwise.
         """
-        if self in [HeatSource.PTES]:
+        if self in [HeatSource.PTES, HeatSource.GEOTHERMAL]:
             return True
         else:
             return False
