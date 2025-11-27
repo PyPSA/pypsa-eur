@@ -424,36 +424,30 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
 )
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    # Hotfix - Bug, tqdm not working with disable=False
-    disable = True
+
+    Path(file).parent.mkdir(parents=True, exist_ok=True)
 
     # Raise HTTPError for transient errors
     # 429: Too Many Requests (rate limiting)
     # 500, 502, 503, 504: Server errors
-    if disable:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        with open(file, "wb") as f:
-            f.write(response.content)
-    else:
-        response = requests.get(url, headers=headers, stream=True)
-        if response.status_code in (429, 500, 502, 503, 504):
-            response.raise_for_status()
-        total_size = int(response.headers.get("content-length", 0))
-        chunk_size = 1024
+    response = requests.get(url, headers=headers, stream=True)
+    if response.status_code in (429, 500, 502, 503, 504):
+        response.raise_for_status()
+    total_size = int(response.headers.get("content-length", 0))
+    chunk_size = 1024
 
-        with tqdm(
-            total=total_size,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=str(file),
-        ) as t:
-            with open(file, "wb") as f:
-                for data in response.iter_content(chunk_size=chunk_size):
-                    f.write(data)
-                    t.update(len(data))
+    with tqdm(
+        total=total_size,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        desc=str(file),
+        disable=disable,
+    ) as t:
+        with open(file, "wb") as f:
+            for data in response.iter_content(chunk_size=chunk_size):
+                f.write(data)
+                t.update(len(data))
 
 
 def retry(func: Callable) -> Callable:

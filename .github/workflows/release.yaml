@@ -16,7 +16,7 @@ jobs:
     outputs:
       prepared: ${{ steps.validate.outputs.prepared }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Validate commit message
       id: validate
@@ -46,7 +46,7 @@ jobs:
         app-id: ${{ vars.PYPSA_BOT_ID }}
         private-key: ${{ secrets.PYPSA_BOT_PRIVATE_KEY }}
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -56,25 +56,25 @@ jobs:
         echo "Branch found: $branch"
         echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         ref: ${{ env.BRANCH_NAME }}
         token: ${{ steps.generate-token.outputs.token }}
 
-    - name: Setup conda environment
-      uses: conda-incubator/setup-miniconda@v3
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.9.3
       with:
-        miniforge-version: latest
-        environment-file: ${{ env.BASE_ENV }}
-        activate-environment: pypsa-eur
-        channel-priority: strict
+        pixi-version: v0.59.0
+        cache: true
+        # Do not cache in branches
+        cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
     # Start of preparation script
 
     - name: Update DAGs in documentation
       run: |
-        conda run -n pypsa-eur make update-dags
+        pixi run update-dags
 
     # End of preparation script
 

@@ -20,8 +20,8 @@ For linting, formatting and checking your code contributions
 against our guidelines (e.g. we use `Black <https://github.com/psf/black>`_ as code style
 use `pre-commit <https://pre-commit.com/index.html>`_:
 
-1. Installation ``mamba install -c conda-forge pre-commit`` or ``pip install pre-commit``
-2. Usage:
+1. Install [pixi](https://pixi.sh/latest/).
+1. Usage:
     * To automatically activate ``pre-commit`` on every ``git commit``: Run ``pre-commit install``
     * To manually run it: ``pre-commit run --all``
 
@@ -40,9 +40,8 @@ Contributing to the documentation
 
 We strive to keep documentation useful and up to date for all PyPSA users. If you encounter an area where documentation is not available or insufficient, we very much welcome your contribution. Here is How To:
 
-#. Install the conda environment for documentation from the `PyPSA repository <https://github.com/PyPSA/PyPSA/blob/master/environment_docs.yml>`_.
-   (Here is `how to install a conda environment <https://pypsa-eur.readthedocs.io/en/latest/installation.html#install-python-dependencies>`_.)
+#. Install [pixi](https://pixi.sh/latest/).
 #. Make your changes in the corresponding .rst file under ``pypsa-eur/doc``.
-#. Compile your changes by running the following command in your terminal in the ``doc`` folder: ``make html``
+#. Compile your changes by running the following command in your terminal in the ``doc`` folder: ``pixi run build-docs doc/_build html``
    You may encounter some warnings, but end up with a message such as ``build succeeded, XX warnings.``. html files to review your changes can then be found under ``doc/_build/html``.
 #. Contribute your documentation in a pull request (`here is a guide <https://help.github.com/en/articles/about-pull-requests>`_).
