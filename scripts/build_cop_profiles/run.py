@@ -2,39 +2,57 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Approximate heat pump coefficient-of-performance (COP) profiles for different
-heat sources and systems. Returns zero where source temperature higher than sink temperature.
+Build heat pump coefficient-of-performance (COP) profiles for different heat
+sources and heating system types. COP values below 1 are set to zero (infeasible
+operating conditions).
 
-For central heating, this is based on Jensen et al. (2018) (c.f. `CentralHeatingCopApproximator <CentralHeatingCopApproximator.py>`_) and for decentral heating, the approximation is based on Staffell et al. (2012) (c.f. `DecentralHeatingCopApproximator <DecentralHeatingCopApproximator.py>`_).
+For central heating (district heating), the approximation is based on
+Jensen et al. (2018) using a thermodynamic model (see
+:class:`CentralHeatingCopApproximator`). For decentral heating (individual
+heating), the approximation uses quadratic regression from Staffell et al.
+(2012) (see :class:`DecentralHeatingCopApproximator`).
 
 Relevant Settings
 -----------------
 
 .. code:: yaml
+
     sector:
-        heat_pump_sink_T_decentral_heating:
+        heat_pump_sink_T_individual_heating:
+        heat_sources:
+            urban central:
+            urban decentral:
+            rural:
         district_heating:
             forward_temperature:
             return_temperature:
             heat_source_cooling:
             heat_pump_cop_approximation:
                 refrigerant:
-                heat_exchanger_pinch_point_temperature_difference
+                heat_exchanger_pinch_point_temperature_difference:
                 isentropic_compressor_efficiency:
                 heat_loss:
                 min_delta_t_lift:
-            heat_sources:
-                urban central:
-                urban decentral:
-                rural:
+            geothermal:
+                constant_temperature_celsius:
+
 Inputs
 ------
-- `resources/<run_name>/temp_soil_total`: Ground temperature
-- `resources/<run_name>/temp_air_total`: Air temperature
+- ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``:
+  District heating forward (supply) temperature profiles.
+- ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``:
+  District heating return temperature profiles.
+- ``resources/<run_name>/temp_air_total_base_s_{clusters}.nc``:
+  Ambient air temperature (if air source heat pumps are configured).
+- ``resources/<run_name>/temp_soil_total_base_s_{clusters}.nc``:
+  Ground/soil temperature (if ground source heat pumps are configured).
+- ``resources/<run_name>/temp_ptes_top_profiles_base_s_{clusters}_{planning_horizons}.nc``:
+  PTES top temperature profiles (if PTES is configured as heat source).
 
 Outputs
 -------
-- `resources/<run_name>/cop_profiles.nc`: Heat pump coefficient-of-performance (COP) profiles
+- ``resources/<run_name>/cop_profiles_base_s_{clusters}_{planning_horizons}.nc``:
+  Heat pump COP profiles with dimensions (time, name, heat_source, heat_system).
 """
 
 import pandas as pd
@@ -61,19 +79,29 @@ def get_cop(
     """
     Calculate the coefficient of performance (COP) for a heating system.
 
+    Uses different approximation methods depending on the heating system type:
+    - Central heating: Thermodynamic model from Jensen et al. (2018)
+    - Decentral heating: Quadratic regression from Staffell et al. (2012)
+
     Parameters
     ----------
     heat_system_type : str
-        The type of heating system.
+        The type of heating system (e.g., "urban central", "urban decentral", "rural").
     heat_source : str
-        The heat source used in the heating system.
+        The heat source used (e.g., "air", "ground", "ptes", "geothermal").
     source_inlet_temperature_celsius : xr.DataArray
         The inlet temperature of the heat source in Celsius.
+    sink_outlet_temperature_celsius : xr.DataArray, optional
+        The outlet temperature of the heat sink (forward temperature) in Celsius.
+        Required for central heating systems.
+    sink_inlet_temperature_celsius : xr.DataArray, optional
+        The inlet temperature of the heat sink (return temperature) in Celsius.
+        Required for central heating systems.
 
     Returns
     -------
     xr.DataArray
-        The calculated coefficient of performance (COP) for the heating system.
+        The calculated COP values. Values below 1 are set to zero.
     """
     if HeatSystemType(heat_system_type).is_central:
         return CentralHeatingCopApproximator(
@@ -110,6 +138,33 @@ def get_cop(
 def get_source_temperature(
     snakemake_params: dict, snakemake_input: dict, heat_source_name: str
 ) -> float | xr.DataArray:
+    """
+    Retrieve the temperature of a heat source.
+
+    Heat sources can have either constant temperatures (specified in config)
+    or time-varying temperatures (loaded from input files).
+
+    Parameters
+    ----------
+    snakemake_params : dict
+        Snakemake parameters containing constant temperature values.
+    snakemake_input : dict
+        Snakemake input files containing temperature profile paths.
+    heat_source_name : str
+        Name of the heat source (e.g., "air", "ground", "geothermal", "ptes").
+
+    Returns
+    -------
+    float | xr.DataArray
+        Temperature in Celsius. Returns a float for constant-temperature sources
+        or an xr.DataArray for time-varying sources.
+
+    Raises
+    ------
+    ValueError
+        If a constant-temperature source lacks its parameter or a time-varying
+        source lacks its input file.
+    """
     heat_source = HeatSource(heat_source_name)
     if heat_source.has_constant_temperature:
         try:
@@ -132,9 +187,35 @@ def get_source_inlet_temperature(
     source_temperature: float | xr.DataArray,
     central_heating_return_temperature: xr.DataArray,
 ) -> float | xr.DataArray:
+    """
+    Determine the effective source inlet temperature for the heat pump.
+
+    For heat sources with preheating capability (e.g., PTES), when the source
+    temperature exceeds the return temperature, a preheater can be used to
+    preheat the return flow. In this case, the heat pump sees the return
+    temperature as its effective source inlet (since it lifts from there).
+    Otherwise, the heat pump draws directly from the source temperature.
+
+    Parameters
+    ----------
+    heat_source_name : str
+        Name of the heat source.
+    source_temperature : float | xr.DataArray
+        Temperature of the heat source in Celsius.
+    central_heating_return_temperature : xr.DataArray
+        District heating return temperature in Celsius.
+
+    Returns
+    -------
+    float | xr.DataArray
+        Effective source inlet temperature for the heat pump in Celsius.
+    """
     heat_source = HeatSource(heat_source_name)
     if heat_source.requires_preheater:
-        # pre-heater is only used when source temperature is below return temperature, otherwise sink inlet is at return temperature and source inlet is at source temperature
+        # When source temperature > return temperature, preheater is used:
+        # heat pump lifts from return temperature (after preheating).
+        # When source temperature <= return temperature, no preheating:
+        # heat pump draws directly from the source.
         return central_heating_return_temperature.where(
             central_heating_return_temperature < source_temperature, source_temperature
         )
@@ -148,9 +229,37 @@ def get_sink_inlet_temperature(
     central_heating_return_temperature: xr.DataArray,
     central_heating_forward_temperature: xr.DataArray,
 ) -> float | xr.DataArray:
+    """
+    Determine the effective sink inlet temperature for the heat pump.
+
+    For heat sources with preheating capability (e.g., PTES), when the source
+    temperature exceeds the return temperature, a preheater raises the return
+    flow to forward temperature. The heat pump then lifts from return to forward
+    temperature. When preheating is not used (source <= return), the heat pump
+    receives water at return temperature and heats it to forward temperature.
+
+    Parameters
+    ----------
+    heat_source_name : str
+        Name of the heat source.
+    source_temperature : float | xr.DataArray
+        Temperature of the heat source in Celsius.
+    central_heating_return_temperature : xr.DataArray
+        District heating return temperature in Celsius.
+    central_heating_forward_temperature : xr.DataArray
+        District heating forward (supply) temperature in Celsius.
+
+    Returns
+    -------
+    float | xr.DataArray
+        Effective sink inlet temperature for the heat pump in Celsius.
+    """
     heat_source = HeatSource(heat_source_name)
     if heat_source.requires_preheater:
-        # pre-heater is only used when source temperature is below return temperature, otherwise sink inlet is at return temperature and source inlet is at source temperature
+        # When source temperature > return temperature, preheater is used:
+        # preheater raises return flow, heat pump inlet is at forward temp.
+        # When source temperature <= return temperature, no preheating:
+        # heat pump inlet is at return temperature.
         return central_heating_forward_temperature.where(
             central_heating_return_temperature < source_temperature,
             central_heating_return_temperature,
