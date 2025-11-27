@@ -116,6 +116,10 @@ if __name__ == "__main__":
         snakemake.output.ptes_top_temperature_profiles
     )
 
+    ptes_temperature_approximator.bottom_temperature_profile.to_netcdf(
+        snakemake.output.ptes_bottom_temperature_profiles
+    )
+
     ptes_temperature_approximator.e_max_pu.to_netcdf(
         snakemake.output.ptes_e_max_pu_profiles
     )

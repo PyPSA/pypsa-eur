@@ -184,6 +184,50 @@ def get_preheater_utilisation_profile(
     )
 
 
+def get_heat_source_cooling(
+    heat_source_name: str,
+    default_heat_source_cooling: float,
+    snakemake_input: dict,
+) -> float | xr.DataArray:
+    """
+    Get the effective heat source cooling (temperature drop) for a heat source.
+
+    For PTES, heat source cooling equals the temperature difference between
+    top and bottom layers (top_temperature - bottom_temperature), which can
+    be time-varying. For other sources, uses the default constant value.
+
+    Parameters
+    ----------
+    heat_source_name : str
+        Name of the heat source (e.g., 'ptes', 'geothermal', 'air').
+    default_heat_source_cooling : float
+        Default heat source cooling in Kelvin, from config.
+    snakemake_input : dict
+        Snakemake input files, may contain PTES temperature profiles.
+
+    Returns
+    -------
+    float | xr.DataArray
+        Heat source cooling in Kelvin. Returns a float for most sources,
+        or a DataArray for PTES when temperatures vary with time.
+
+    Raises
+    ------
+    ValueError
+        If heat source is PTES but bottom temperature profile is not provided.
+    """
+    if heat_source_name == "ptes":
+        if "temp_ptes_bottom" not in snakemake_input.keys():
+            raise ValueError(
+                "PTES heat source requires bottom temperature profile "
+                "(temp_ptes_bottom) to calculate heat source cooling."
+            )
+        ptes_top_temperature = xr.open_dataarray(snakemake_input["temp_ptes"])
+        ptes_bottom_temperature = xr.open_dataarray(snakemake_input["temp_ptes_bottom"])
+        return ptes_top_temperature - ptes_bottom_temperature
+    return default_heat_source_cooling
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -229,7 +273,11 @@ if __name__ == "__main__":
                 ),
                 forward_temperature=central_heating_forward_temperature,
                 return_temperature=central_heating_return_temperature,
-                heat_source_cooling=snakemake.params.heat_source_cooling,
+                heat_source_cooling=get_heat_source_cooling(
+                    heat_source_name=heat_source_key,
+                    default_heat_source_cooling=snakemake.params.heat_source_cooling,
+                    snakemake_input=snakemake.input,
+                ),
             ).assign_coords(heat_source=heat_source_key)
             for heat_source_key in heat_sources
         ],
