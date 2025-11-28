@@ -8,7 +8,7 @@
 tutorial: true
 
 run:
-  name: "test-heat-dsm-eu27"
+  name: "test-heat-dsm-eu5"
   disable_progressbar: true
   shared_resources:
     policy: false
@@ -17,19 +17,17 @@ run:
 
 scenario:
   clusters:
-  - 38
+  - 6
   sector_opts:
   - ''
   planning_horizons:
   - 2030
 
-countries: ['AL', 'AT', 'BA', 'BE', 'BG', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR',
-            'GB', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'ME', 'MK', 'NL', 'NO',
-            'PL', 'PT', 'RO', 'RS', 'SE', 'SI', 'SK']
+countries: ['DE', 'FR', 'CH', 'DK', 'NL']
 
 snapshots:
   start: "2019-01-01"
-  end: "2019-12-31"
+  end: "2019-02-28"
 
 electricity:
 
@@ -61,22 +59,24 @@ renewable:
 
 clustering:
   temporal:
-    resolution_sector: 6h
+    resolution_sector: 1h
 
 sector:
   gas_network: true
   H2_retrofit: true
   residential_heat:
-    dsm: true
-    restriction_value:
-      2020: 0.06
-      2025: 0.16
-      2030: 0.27
-      2035: 0.36
-      2040: 0.38
-      2045: 0.39
-      2050: 0.4
-    restriction_time: [10, 22]
+    dsm:
+      enable: true 
+      direction: "overheat-undercool"  # options: "overheat", "undercool", "overheat-undercool"
+      restriction_value:
+        2020: 0.06
+        2025: 0.16
+        2030: 0.27
+        2035: 0.36
+        2040: 0.38
+        2045: 0.39
+        2050: 0.4
+      restriction_time: [10, 22]
   district_heating:
     progress:
       2020: 0.0
@@ -113,6 +113,8 @@ industry:
 
 solving:
   solver:
+    # name: highs
+    # options: highs-default
     name: gurobi
     options: gurobi-default
   mem: 8000
