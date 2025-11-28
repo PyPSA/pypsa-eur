@@ -3000,7 +3000,7 @@ def add_heat(
                 nodes,
                 suffix=f" {heat_system} heat dsm",
                 bus=nodes + f" {heat_system} heat",
-                carrier="residential heating dsm",
+                carrier=f"{heat_system} heat dsm",
                 standing_loss=costs.at[
                     "decentral water tank storage", "standing_losses"
                 ]
