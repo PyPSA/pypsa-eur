@@ -2964,6 +2964,64 @@ def add_heat(
             p_set=heat_load.loc[n.snapshots],
         )
 
+        if options["residential_heat"]["dsm"]["enable"] and heat_system in [
+            HeatSystem.RESIDENTIAL_RURAL,
+            HeatSystem.RESIDENTIAL_URBAN_DECENTRAL,
+            HeatSystem.URBAN_CENTRAL,
+        ]:
+            factor = heat_system.heat_demand_weighting(
+                urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
+            )
+
+            heat_dsm_profile = pd.read_csv(
+                snakemake.input.heat_dsm_profile,
+                header=[1],
+                index_col=[0],
+                parse_dates=True,
+            )[nodes].reindex(n.snapshots)
+
+            e_nom = (
+                heat_demand[["residential space"]]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            )
+
+            heat_dsm_restriction_value = (
+                options["residential_heat"]["dsm"]["restriction_value"].get(investment_year)
+            )
+            heat_dsm_profile = (
+                heat_dsm_profile * heat_dsm_restriction_value
+            )
+            e_nom = e_nom.max()
+
+            # Allow to overshoot or undercool the target temperatures / heat demand in dsm
+            e_min_pu, e_max_pu = 0, 0
+            if "overheat" in options["residential_heat"]["dsm"]["direction"]:
+                e_max_pu = heat_dsm_profile
+            if "undercool" in options["residential_heat"]["dsm"]["direction"]:
+                e_min_pu = (-1) * heat_dsm_profile
+
+            # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} heat dsm",
+                bus=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} heat dsm",
+                standing_loss=costs.at[
+                    "decentral water tank storage", "standing_losses"
+                ]
+                / 100,  # convert %/hour into unit/hour
+                e_cyclic=True,
+                e_nom=e_nom,
+                e_max_pu=e_max_pu,
+                e_min_pu=e_min_pu,
+            )
+
+            logger.info(f"adding heat dsm in {heat_system} heating.")
+
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
