@@ -11,6 +11,8 @@ Upcoming Release
 
 * Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
 
+* chore: disable PTES dynamic capacity by default 
+
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models.
   The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
 
