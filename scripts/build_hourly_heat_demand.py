@@ -41,7 +41,7 @@ def heat_dsm_profile(nodes, options):
         Node identifiers for which to generate profiles.
     options : dict
         Configuration dictionary containing:
-        - options['residential_heat']['restriction_time']: list of int
+        - options['residential_heat']['dsm']['restriction_time']: list of int
             Hours at which storage must be empty (checkpoint hours).
 
     Returns
@@ -63,7 +63,7 @@ def heat_dsm_profile(nodes, options):
     prepare_sector_network.add_heat : Uses this profile to constrain heat flexibility stores
     """
     weekly_profile = np.ones(24 * 7)
-    for i in options["residential_heat"]["restriction_time"]:
+    for i in options["residential_heat"]['dsm']["restriction_time"]:
         weekly_profile[(np.arange(0, 7, 1) * 24 + int(i))] = 0
 
     dsm_profile = generate_periodic_profiles(

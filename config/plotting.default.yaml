@@ -485,7 +485,7 @@ plotting:
     urban central resistive heater: '#8cdf85'
     retrofitting: '#8487e8'
     building retrofitting: '#8487e8'
-    heating flexibility: '#daa520'
+    heating dsm: '#daa520'
     # hydrogen
     H2 for industry: "#f073da"
     H2 for shipping: "#ebaee0"
