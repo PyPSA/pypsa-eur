@@ -156,6 +156,9 @@ def add_power_capacities_installed_before_baseyear(
     capacity_threshold: float,
     lifetime_values: dict[str, float],
     renewable_carriers: list[str],
+    conventional_carriers: list[str],
+    conventional_params: dict[str, dict[str, str]],
+    conventional_inputs: dict[str, str],
 ) -> None:
     """
     Add power generation capacities installed before base year.
@@ -180,6 +183,12 @@ def add_power_capacities_installed_before_baseyear(
         Default values for missing data
     renewable_carriers: list
         List of renewable carriers in the network
+    conventional_carriers : list
+        List of conventional carriers
+    conventional_params : dict
+        Attributes to override per carrier
+    conventional_inputs : dict
+        Input file dictionary
     """
     logger.debug(f"Adding power capacities installed before {baseyear}")
 
@@ -411,6 +420,29 @@ def add_power_capacities_installed_before_baseyear(
                         efficiency2=costs.at[key, "efficiency-heat"],
                         lifetime=lifetime_assets.loc[new_capacity.index],
                     )
+
+            for carrier_i in set(conventional_params) & set(conventional_carriers):
+                # Links with technology affected
+                idx = n.links.query("carrier == @carrier_i").index
+
+                for attr in list(set(conventional_params[carrier_i]) & set(n.links)):
+                    values = conventional_params[carrier_i][attr]
+
+                    if f"conventional_{carrier_i}_{attr}" in conventional_inputs:
+                        # Values affecting links of technology k country-specific
+                        # First map link buses to countries; then map countries to p_max_pu
+                        values = pd.read_csv(
+                            conventional_inputs[f"conventional_{carrier_i}_{attr}"],
+                            index_col=0,
+                        ).iloc[:, 0]
+                        bus_values = n.buses.country.map(values)
+                        n.links.update(
+                            {attr: n.links.loc[idx].bus1.map(bus_values).dropna()}
+                        )
+                    else:
+                        # Single value affecting all links of technology k indiscriminately of country
+                        n.links.loc[idx, attr] = values
+
         # check if existing capacities are larger than technical potential
         existing_large = n.generators[
             n.generators["p_nom_min"] > n.generators["p_nom_max"]
@@ -750,6 +782,10 @@ if __name__ == "__main__":
 
     grouping_years_power = snakemake.params.existing_capacities["grouping_years_power"]
     grouping_years_heat = snakemake.params.existing_capacities["grouping_years_heat"]
+    conventional_inputs = {
+        k: v for k, v in snakemake.input.items() if k.startswith("conventional_")
+    }
+
     add_power_capacities_installed_before_baseyear(
         n=n,
         costs=costs,
@@ -760,6 +796,9 @@ if __name__ == "__main__":
         capacity_threshold=snakemake.params.existing_capacities["threshold_capacity"],
         lifetime_values=snakemake.params.costs["fill_values"],
         renewable_carriers=renewable_carriers,
+        conventional_carriers=snakemake.params.conventional_carriers,
+        conventional_params=snakemake.params.conventional,
+        conventional_inputs=conventional_inputs,
     )
 
     if options["heating"]:
