@@ -2,14 +2,6 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-rules
-scripts
-config
-config/test
-envs
-matplotlibrc
-Snakefile
-data
-pixi.toml
-pixi.lock
-matplotlibrc
+*
+!.gitignore
+!config.toml

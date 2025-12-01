@@ -40,6 +40,7 @@ import pandas as pd
 import pypsa
 import xarray as xr
 import yaml
+from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
 
@@ -456,17 +457,15 @@ def prepare_network(
             n.links_t.p_min_pu,
             n.storage_units_t.inflow,
         ):
-            df.where(df > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
+            df.where(df.abs() > solve_opts["clip_p_max_pu"], other=0.0, inplace=True)
 
     if load_shedding := solve_opts.get("load_shedding"):
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
-        # TODO: retrieve color and nice name from config
-        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        n.add("Carrier", "load")
         buses_i = n.buses.index
-        if not np.isscalar(load_shedding):
-            # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
-            load_shedding = 1e2  # Eur/kWh
+        if isinstance(load_shedding, bool):
+            load_shedding = 1e5  # Eur/MWh
 
         n.add(
             "Generator",
@@ -474,9 +473,8 @@ def prepare_network(
             " load",
             bus=buses_i,
             carrier="load",
-            sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
-            marginal_cost=load_shedding,  # Eur/kWh
-            p_nom=1e9,  # kW
+            marginal_cost=load_shedding,  # Eur/MWh
+            p_nom=np.inf,
         )
 
     if solve_opts.get("curtailment_mode"):
@@ -1334,6 +1332,17 @@ def solve_network(
     )
     kwargs["assign_all_duals"] = cf_solving.get("assign_all_duals", False)
     kwargs["io_api"] = cf_solving.get("io_api", None)
+
+    oetc = solving.get("oetc", None)
+    if oetc:
+        oetc["credentials"] = OetcCredentials(
+            email=os.environ["OETC_EMAIL"], password=os.environ["OETC_PASSWORD"]
+        )
+        oetc["solver"] = kwargs["solver_name"]
+        oetc["solver_options"] = kwargs["solver_options"]
+        oetc_settings = OetcSettings(**oetc)
+        oetc_handler = OetcHandler(oetc_settings)
+        kwargs["remote"] = oetc_handler
 
     kwargs["model_kwargs"] = cf_solving.get("model_kwargs", {})
     kwargs["keep_files"] = cf_solving.get("keep_files", False)
