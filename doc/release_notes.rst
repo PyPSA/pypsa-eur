@@ -9,7 +9,15 @@ Release Notes
 Upcoming Release
 ================
 
-* chore: disable PTES dynamic capacity by default 
+* Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
+
+* Fixed OSM raw data cleaning to include `section` line relation role.
+
+* Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
+
+* Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
+
+* chore: disable PTES dynamic capacity by default
 
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models.
   The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
