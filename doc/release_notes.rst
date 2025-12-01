@@ -11,6 +11,19 @@ Upcoming Release
 
 * Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
 
+* Fixed OSM raw data cleaning to include `section` line relation role.
+
+* Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
+
+* Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
+
+* chore: disable PTES dynamic capacity by default
+
+* Add CO2 emission prices configurable per planning horizon for sector-coupled models.
+  The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
+
+* Add `custom storage plugin <https://github.com/PyPSA/snakemake-storage-plugin-cached-http>`_ to handle retrievals from zenodo to address recurring failures.
+
 * Move to [pixi](https://pixi.sh/latest/) for robust cross-platform dependency management.
 
 * Fix: Allocate heat pump CAPEX on heat instead of electricity bus instead and remove nominal efficiency from CAPEX calculation
@@ -76,6 +89,8 @@ Upcoming Release
 * Increase minimum required `pypsa` version to 0.33.2 (https://github.com/PyPSA/pypsa-eur/pull/1849)
 
 * Running perfect foresight is now marked as unstable and may not work as expected.
+
+* Remove the hotfix in `progress_retrieve` and check that the directory exists (https://github.com/PyPSA/pypsa-eur/pull/1840).
 
 * Added minimum unit dispatch setting option for electrolysis
 
