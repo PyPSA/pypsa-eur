@@ -1,4 +1,3 @@
-# Trigger
 version: 6
 environments:
   default:
