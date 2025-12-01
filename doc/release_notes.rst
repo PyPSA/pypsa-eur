@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
+
 * Fixed OSM raw data cleaning to include `section` line relation role.
 
 * Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
