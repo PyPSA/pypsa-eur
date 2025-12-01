@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed OSM raw data cleaning to include `section` line relation role.
+
 * Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
 
 * Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
