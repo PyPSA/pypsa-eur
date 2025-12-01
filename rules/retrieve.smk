@@ -4,6 +4,7 @@
 
 import os
 import requests
+import json
 from datetime import datetime, timedelta
 from shutil import move, unpack_archive
 from shutil import copy2 as shcopy2
@@ -841,3 +842,33 @@ if config["enable"]["retrieve"]:
         retries: 2
         run:
             move(input[0], output[0])
+
+
+if config["enable"]["retrieve"]:
+
+    rule retrieve_ffe_load_profiles:
+        output:
+            "data/ffe_industry_load_profiles.json",
+        log:
+            "logs/retrieve_ffe_load_profiles.log",
+        resources:
+            mem_mb=1000,
+        retries: 2
+        run:
+            url = "https://api.opendata.ffe.de"
+            params = {"id_opendata": 59}
+
+            response = requests.get(url + "/health")
+            if response.status_code != 200:
+                raise ConnectionError(
+                    f"API not available. Status: {response.status_code}"
+                )
+
+            response = requests.get(url + "/opendata", params=params)
+            if response.status_code != 200:
+                raise ConnectionError(
+                    f"Request failed. Status: {response.status_code}"
+                )
+
+            with open(output[0], "w") as f:
+                json.dump(response.json(), f)
