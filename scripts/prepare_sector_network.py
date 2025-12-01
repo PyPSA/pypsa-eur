@@ -228,7 +228,7 @@ def define_spatial(nodes, options):
     else:
         spatial.hbi.nodes = nodes + " hbi"
         spatial.hbi.location = nodes
-    
+
     spatial.steel = SimpleNamespace()
     spatial.steel.nodes = nodes + " steel"
     spatial.steel.location = nodes
@@ -4445,57 +4445,60 @@ def add_biomass(
 
 
 def adjust_industry_demand(nodes):
-        # import ratios [MWh/t_Material]
-        fn = snakemake.input.industry_sector_ratios
-        sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
+    # import ratios [MWh/t_Material]
+    fn = snakemake.input.industry_sector_ratios
+    sector_ratios = pd.read_csv(fn, header=[0, 1], index_col=0)
 
-        # material demand per node and industry [kt/a]
-        fn = snakemake.input.industrial_production
-        nodal_production = pd.read_csv(fn, index_col=0) / 1e3  # kt/a -> Mt/a
+    # material demand per node and industry [kt/a]
+    fn = snakemake.input.industrial_production
+    nodal_production = pd.read_csv(fn, index_col=0) / 1e3  # kt/a -> Mt/a
 
-        nodal_sector_ratios = pd.concat(
-            {node: sector_ratios[node[:2]] for node in nodal_production.index}, axis=1
-        )
+    nodal_sector_ratios = pd.concat(
+        {node: sector_ratios[node[:2]] for node in nodal_production.index}, axis=1
+    )
 
-        nodal_production_stacked = nodal_production.stack()
-        nodal_production_stacked.index.names = [None, None]
+    nodal_production_stacked = nodal_production.stack()
+    nodal_production_stacked.index.names = [None, None]
 
-        # final energy consumption per node and industry (TWh/a)
-        nodal_df = (nodal_sector_ratios.multiply(nodal_production_stacked)).T
-        # rename the columns to correct unit
-        nodal_df.columns.name = "TWh/a"
+    # final energy consumption per node and industry (TWh/a)
+    nodal_df = (nodal_sector_ratios.multiply(nodal_production_stacked)).T
+    # rename the columns to correct unit
+    nodal_df.columns.name = "TWh/a"
 
-        # add up all industry sectors except the ones endogenously modelled
-        endogenous_sector = snakemake.params.sector["endogenous_sectors"]
-    
-        sector_dict = {
-            "steel": ["Integrated steelworks", "DRI + Electric arc"],
-            "cement": "Cement",
-        }
-        keys = [sector_dict[k] for k in endogenous_sector if k in sector_dict]
+    # add up all industry sectors except the ones endogenously modelled
+    endogenous_sector = snakemake.params.sector["endogenous_sectors"]
 
-        remaining_sectors = ~nodal_df.index.get_level_values(1).isin(
-            keys
-        )
+    sector_dict = {
+        "steel": ["Integrated steelworks", "DRI + Electric arc"],
+        "cement": "Cement",
+    }
+    keys = [sector_dict[k] for k in endogenous_sector if k in sector_dict]
 
-        remaining_demand = (
-            nodal_df.loc[(nodes, remaining_sectors), :].groupby(level=0).sum()
-        ).mul(1e6)
-        remaining_demand.columns.name="MWh/a"
-        remaining_demand.rename(columns={
+    remaining_sectors = ~nodal_df.index.get_level_values(1).isin(keys)
+
+    remaining_demand = (
+        nodal_df.loc[(nodes, remaining_sectors), :].groupby(level=0).sum()
+    ).mul(1e6)
+    remaining_demand.columns.name = "MWh/a"
+    remaining_demand.rename(
+        columns={
             "elec": "electricity",
             "biomass": "solid biomass",
-            "heat": "low-temperature heat"
-            }, inplace=True)
-        # adjust initial demand
+            "heat": "low-temperature heat",
+        },
+        inplace=True,
+    )
+    # adjust initial demand
 
-        # get the demand of steel and cement
-        steel = nodal_production[["Integrated steelworks", "DRI + Electric arc"]].sum(axis=1)
-        steel.name = "Mt/a"
-        cement = nodal_production["Cement"]
-        cement.name = "Mt/a"
+    # get the demand of steel and cement
+    steel = nodal_production[["Integrated steelworks", "DRI + Electric arc"]].sum(
+        axis=1
+    )
+    steel.name = "Mt/a"
+    cement = nodal_production["Cement"]
+    cement.name = "Mt/a"
 
-        return remaining_demand, steel, cement
+    return remaining_demand, steel, cement
 
 
 def add_industry(
@@ -4582,10 +4585,14 @@ def add_industry(
     nyears = nhours / 8760
 
     # 1e6 to convert TWh to MWh
-    industrial_demand_raw = pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
+    industrial_demand_raw = (
+        pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
+    )
     # adjust the industrial energy demand excluding endogenously modelled carriers
     adjusted_demand, steel, cement = adjust_industry_demand(nodes)
-    adjusted_demand["current electricity"] = industrial_demand_raw["current electricity"]
+    adjusted_demand["current electricity"] = industrial_demand_raw[
+        "current electricity"
+    ]
     industrial_demand = adjusted_demand.copy()
 
     n.add(
@@ -5168,7 +5175,7 @@ def add_industry(
             unit="t",
         )
 
-        p_set = steel*1e6/8760
+        p_set = steel * 1e6 / 8760
         n.add(
             "Load",
             spatial.steel.nodes,
@@ -5177,8 +5184,12 @@ def add_industry(
             p_set=p_set,
         )
         if investment_year > 2025:
-            electricity_input = costs.at["hydrogen direct iron reduction furnace", "electricity-input"]
-            hydrogen_input = costs.at["hydrogen direct iron reduction furnace", "hydrogen-input"]
+            electricity_input = costs.at[
+                "hydrogen direct iron reduction furnace", "electricity-input"
+            ]
+            hydrogen_input = costs.at[
+                "hydrogen direct iron reduction furnace", "hydrogen-input"
+            ]
 
             marginal_cost = (
                 costs.at["iron ore DRI-ready", "commodity"]
@@ -5192,7 +5203,9 @@ def add_industry(
                 spatial.nodes,
                 suffix=" H2 DRI",
                 carrier="H2 DRI",
-                capital_cost=costs.at["hydrogen direct iron reduction furnace", "capital_cost"]
+                capital_cost=costs.at[
+                    "hydrogen direct iron reduction furnace", "capital_cost"
+                ]
                 / electricity_input,
                 marginal_cost=marginal_cost,
                 p_nom=0,
@@ -5215,7 +5228,8 @@ def add_industry(
             spatial.nodes,
             suffix=" EAF",
             carrier="EAF",
-            capital_cost=costs.at["electric arc furnace", "capital_cost"] / electricity_input,
+            capital_cost=costs.at["electric arc furnace", "capital_cost"]
+            / electricity_input,
             p_nom=0,
             p_nom_extendable=True,
             p_min_pu=0,
@@ -5223,8 +5237,9 @@ def add_industry(
             bus1=spatial.steel.nodes,
             bus2=spatial.hbi.nodes,
             efficiency=1 / electricity_input,
-            efficiency2=-costs.at["electric arc furnace", "hbi-input"] / electricity_input,
-            lifetime=costs.at["electric arc furnace", "lifetime"]
+            efficiency2=-costs.at["electric arc furnace", "hbi-input"]
+            / electricity_input,
+            lifetime=costs.at["electric arc furnace", "lifetime"],
         )
         # fossil options
         # bus to decide whether to capture emissions or not
@@ -5251,7 +5266,9 @@ def add_industry(
             spatial.nodes,
             suffix=" gas DRI",
             carrier="gas DRI",
-            capital_cost=costs.at["natural gas direct iron reduction furnace", "capital_cost"]
+            capital_cost=costs.at[
+                "natural gas direct iron reduction furnace", "capital_cost"
+            ]
             / gas_input,
             marginal_cost=marginal_cost,
             p_nom=0,
@@ -5260,7 +5277,7 @@ def add_industry(
             bus0=spatial.gas.nodes,
             bus1=spatial.hbi.nodes,
             bus2=spatial.nodes + " gas DRI emission",
-            efficiency=1/gas_input,
+            efficiency=1 / gas_input,
             efficiency2=costs.at["gas", "CO2 intensity"],
             lifetime=costs.at["natural gas direct iron reduction furnace", "lifetime"],
         )
@@ -5269,7 +5286,8 @@ def add_industry(
         coal_input = costs.at["blast furnace-basic oxygen furnace", "coal-input"]
         marginal_cost = (
             costs.at["iron ore DRI-ready", "commodity"]
-            * costs.at["blast furnace-basic oxygen furnace", "ore-input"] / coal_input
+            * costs.at["blast furnace-basic oxygen furnace", "ore-input"]
+            / coal_input
         )
         n.add("Carrier", "BOF")
         n.add(
@@ -5285,7 +5303,8 @@ def add_industry(
             spatial.nodes,
             suffix=" BOF",
             carrier="BOF",
-            capital_cost=costs.at["blast furnace-basic oxygen furnace", "capital_cost"] / coal_input,
+            capital_cost=costs.at["blast furnace-basic oxygen furnace", "capital_cost"]
+            / coal_input,
             p_nom=0,
             p_nom_extendable=True,
             p_min_pu=0,
@@ -5293,7 +5312,7 @@ def add_industry(
             bus0="EU coal",
             bus1=spatial.steel.nodes,
             bus2=spatial.nodes + " BOF emission",
-            efficiency=1/coal_input,
+            efficiency=1 / coal_input,
             efficiency2=costs.at["coal", "CO2 intensity"],
             lifetime=costs.at["blast furnace-basic oxygen furnace", "lifetime"],
         )
@@ -5323,7 +5342,10 @@ def add_industry(
         if investment_year > 2025:
             # Assumption: enough waste heat to recover sorbent
             capture_rate = costs.at["cement capture", "capture_rate"]
-            electricity_input=costs.at["cement capture", "compression-electricity-input"] + costs.at["cement capture", "electricity-input"] # MWh/t_CO2
+            electricity_input = (
+                costs.at["cement capture", "compression-electricity-input"]
+                + costs.at["cement capture", "electricity-input"]
+            )  # MWh/t_CO2
             n.add("Carrier", "steel emission CC")
             n.add(
                 "Link",
@@ -5337,7 +5359,7 @@ def add_industry(
                 bus3="co2 atmosphere",
                 efficiency=capture_rate,
                 efficiency2=-electricity_input,
-                efficiency3=1-capture_rate,
+                efficiency3=1 - capture_rate,
                 p_nom=0,
                 p_nom_extendable=True,
                 lifetime=costs.at["cement capture", "lifetime"],
@@ -5354,7 +5376,7 @@ def add_industry(
                 bus3="co2 atmosphere",
                 efficiency=capture_rate,
                 efficiency2=-electricity_input,
-                efficiency3=1-capture_rate,
+                efficiency3=1 - capture_rate,
                 p_nom=0,
                 p_nom_extendable=True,
                 lifetime=costs.at["cement capture", "lifetime"],
@@ -5392,7 +5414,7 @@ def add_industry(
             unit="t",
         )
 
-        p_set = cement*1e6/8760
+        p_set = cement * 1e6 / 8760
         n.add(
             "Load",
             cement.index,
@@ -5401,14 +5423,17 @@ def add_industry(
             p_set=p_set,
         )
         # clinker production
-        gas_input = costs.at["cement dry clinker", "gas-input"] + costs.at["cement dry clinker", "heat-input"]
+        gas_input = (
+            costs.at["cement dry clinker", "gas-input"]
+            + costs.at["cement dry clinker", "heat-input"]
+        )
         electricity_input = costs.at["cement dry clinker", "electricity-input"]
-        co2_emission = 0.79/gas_input + costs.at["gas", "CO2 intensity"]
+        co2_emission = 0.79 / gas_input + costs.at["gas", "CO2 intensity"]
         n.add("Carrier", "cement kiln")
         n.add(
             "Link",
             spatial.clinker.nodes,
-            suffix = " kiln",
+            suffix=" kiln",
             bus0=spatial.gas.nodes,
             bus1=spatial.clinker.nodes,
             bus2=spatial.nodes,
@@ -5417,21 +5442,24 @@ def add_industry(
             p_nom_extendable=True,
             p_min_pu=0,
             capital_cost=costs.at["cement dry clinker", "capital_cost"] / gas_input,
-            efficiency=1/gas_input,
+            efficiency=1 / gas_input,
             efficiency2=-electricity_input,
             efficiency3=co2_emission,
             lifetime=costs.at["cement dry clinker", "lifetime"],
         )
 
         # cement finishing
-        electricity_input = costs.at["cement finishing", "electricity-input"] / costs.at["cement finishing", "clinker-input"]
+        electricity_input = (
+            costs.at["cement finishing", "electricity-input"]
+            / costs.at["cement finishing", "clinker-input"]
+        )
         clinker_input = costs.at["cement finishing", "clinker-input"]
 
         n.add("Carrier", "cement finishing")
         n.add(
             "Link",
             spatial.cement.nodes,
-            suffix = " production",
+            suffix=" production",
             bus0=spatial.clinker.nodes,
             bus1=spatial.cement.nodes,
             bus2=spatial.nodes,
@@ -5439,21 +5467,23 @@ def add_industry(
             p_nom_extendable=True,
             p_min_pu=0,
             capital_cost=costs.at["cement finishing", "capital_cost"] / gas_input,
-            efficiency=1/clinker_input,
+            efficiency=1 / clinker_input,
             efficiency2=-electricity_input,
             lifetime=costs.at["cement finishing", "lifetime"],
         )
 
         if investment_year > 2025:
             capture_rate = costs.at["cement capture", "capture_rate"]
-            electricity_input=costs.at["cement capture", "compression-electricity-input"]
-            
+            electricity_input = costs.at[
+                "cement capture", "compression-electricity-input"
+            ]
+
             # add post combustion retrofit
             n.add("Carrier", "cement emission CC")
             n.add(
                 "Link",
                 spatial.cement.nodes,
-                suffix = " CC",
+                suffix=" CC",
                 bus0=spatial.cement.nodes + " emission",
                 bus1=spatial.co2.nodes,
                 bus2=spatial.nodes,
@@ -5464,14 +5494,14 @@ def add_industry(
                 capital_cost=costs.at["cement capture", "capital_cost"],
                 efficiency=costs.at["cement capture", "capture_rate"],
                 efficiency2=-electricity_input,
-                efficiency3=1-costs.at["cement capture", "capture_rate"],
+                efficiency3=1 - costs.at["cement capture", "capture_rate"],
                 lifetime=25,
             )
         n.add("Carrier", "cement emission")
         n.add(
             "Link",
             spatial.cement.nodes,
-            suffix = " emission",
+            suffix=" emission",
             bus0=spatial.cement.nodes + " emission",
             bus1="co2 atmosphere",
             carrier="cement emission",
@@ -5500,16 +5530,16 @@ def add_industry(
             bus2=nodes,
             bus3=spatial.co2.process_emissions,
             efficiency=1
-                / costs.at[tech, "methanol-input"]
-                * naphtha_per_t_hvc,  # because MtO produces t HVC not MWh no MWh HVC
+            / costs.at[tech, "methanol-input"]
+            * naphtha_per_t_hvc,  # because MtO produces t HVC not MWh no MWh HVC
             efficiency2=-costs.at[tech, "electricity-input"]
-                / costs.at[tech, "methanol-input"],
+            / costs.at[tech, "methanol-input"],
             efficiency3=process_emissions,
             carrier=tech,
             p_nom_extendable=True,
         )
 
-    costs.at["grey methanol synthesis", "efficiency"] = 1/1.757469244
+    costs.at["grey methanol synthesis", "efficiency"] = 1 / 1.757469244
     # grey methanol
     capital_cost = (
         costs.at["SMR", "investment"]

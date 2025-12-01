@@ -833,10 +833,10 @@ sector:
       gas: 122
       oil: 125
   endogenous_sectors:
-    - steel
-    - cement
-    - ammonia
-    - methanol
+  - steel
+  - cement
+  - ammonia
+  - methanol
   industry_relocation: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
