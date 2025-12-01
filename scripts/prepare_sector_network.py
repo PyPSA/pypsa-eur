@@ -3267,7 +3267,9 @@ def add_heat(
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3328,7 +3330,9 @@ def add_heat(
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3344,7 +3348,9 @@ def add_heat(
                     efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_min_pu=(-cop_heat_pump / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
