@@ -3192,7 +3192,7 @@ def add_heat(
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
-                else costs.at[costs_name_heat_pump, "efficiency"]
+                else costs.loc[[costs_name_heat_pump], ["efficiency"]]
             )
 
             if heat_source in params.limited_heat_sources:
