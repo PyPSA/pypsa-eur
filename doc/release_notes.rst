@@ -9,9 +9,11 @@ Release Notes
 Upcoming Release
 ================
 
+* Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).
+
 * Fixed bugs with load shedding due to incorrect use of `sign` argument in `n.add` and `np.isscalar` (https://github.com/PyPSA/pypsa-eur/pull/1908).
 
-* chore: disable PTES dynamic capacity by default 
+* chore: disable PTES dynamic capacity by default
 
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models.
   The CO2 price is added as a marginal cost on the `co2 atmosphere` Store.
