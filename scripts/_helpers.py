@@ -4,7 +4,6 @@
 
 import contextlib
 import copy
-import hashlib
 import logging
 import os
 import re
@@ -23,14 +22,6 @@ import requests
 import xarray as xr
 import yaml
 from snakemake.utils import update_config
-from tenacity import (
-    retry as tenacity_retry,
-)
-from tenacity import (
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -415,13 +406,6 @@ def aggregate_costs(n, flatten=False, opts=None, existing_only=False):
     return costs
 
 
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
 def progress_retrieve(url, file, disable=False):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
@@ -848,78 +832,6 @@ def update_config_from_wildcards(config, w, inplace=True):
 
     if not inplace:
         return config
-
-
-@tenacity_retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(
-        (requests.HTTPError, requests.ConnectionError, requests.Timeout)
-    ),
-)
-def get_checksum_from_zenodo(file_url):
-    parts = file_url.split("/")
-    record_id = parts[parts.index("records") + 1]
-    filename = parts[-1]
-
-    response = requests.get(f"https://zenodo.org/api/records/{record_id}", timeout=30)
-    # Raise HTTPError for transient errors
-    # 429: Too Many Requests (rate limiting)
-    # 500, 502, 503, 504: Server errors
-    if response.status_code in (429, 500, 502, 503, 504):
-        response.raise_for_status()
-    response.raise_for_status()
-    data = response.json()
-
-    for file in data["files"]:
-        if file["key"] == filename:
-            return file["checksum"]
-    return None
-
-
-def validate_checksum(file_path, zenodo_url=None, checksum=None):
-    """
-    Validate file checksum against provided or Zenodo-retrieved checksum.
-    Calculates the hash of a file using 64KB chunks. Compares it against a
-    given checksum or one from a Zenodo URL.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the file for checksum validation.
-    zenodo_url : str, optional
-        URL of the file on Zenodo to fetch the checksum.
-    checksum : str, optional
-        Checksum (format 'hash_type:checksum_value') for validation.
-
-    Raises
-    ------
-    AssertionError
-        If the checksum does not match, or if neither `checksum` nor `zenodo_url` is provided.
-
-
-    Examples
-    --------
-    >>> validate_checksum("/path/to/file", checksum="md5:abc123...")
-    >>> validate_checksum(
-    ...     "/path/to/file",
-    ...     zenodo_url="https://zenodo.org/records/12345/files/example.txt",
-    ... )
-
-    If the checksum is invalid, an AssertionError will be raised.
-    """
-    assert checksum or zenodo_url, "Either checksum or zenodo_url must be provided"
-    if zenodo_url:
-        checksum = get_checksum_from_zenodo(zenodo_url)
-    hash_type, checksum = checksum.split(":")
-    hasher = hashlib.new(hash_type)
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):  # 64kb chunks
-            hasher.update(chunk)
-    calculated_checksum = hasher.hexdigest()
-    assert calculated_checksum == checksum, (
-        "Checksum is invalid. This may be due to an incomplete download. Delete the file and re-execute the rule."
-    )
 
 
 def get_snapshots(

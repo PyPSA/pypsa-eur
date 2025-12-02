@@ -2787,6 +2787,7 @@ def add_heat(
     retro_cost_file: str,
     floor_area_file: str,
     heat_source_profile_files: dict[str, str],
+    heat_dsm_profile_file: str,
     params: dict,
     pop_weighted_energy_totals: pd.DataFrame,
     heating_efficiencies: pd.DataFrame,
@@ -2822,6 +2823,8 @@ def add_heat(
         Path to CSV file containing floor area data
     heat_source_profile_files : dict[str, str]
         Dictionary mapping heat source names to their data file paths
+    heat_dsm_profile_file : str
+        Path to CSV file containing demand-side management profiles for heat
     params : dict
         Dictionary containing parameters including:
         - heat_pump_sources
@@ -2963,6 +2966,62 @@ def add_heat(
             carrier=f"{heat_system} heat",
             p_set=heat_load.loc[n.snapshots],
         )
+
+        if options["residential_heat"]["dsm"]["enable"] and heat_system in [
+            HeatSystem.RESIDENTIAL_RURAL,
+            HeatSystem.RESIDENTIAL_URBAN_DECENTRAL,
+            HeatSystem.URBAN_CENTRAL,
+        ]:
+            factor = heat_system.heat_demand_weighting(
+                urban_fraction=urban_fraction[nodes], dist_fraction=dist_fraction[nodes]
+            )
+
+            heat_dsm_profile = pd.read_csv(
+                heat_dsm_profile_file,
+                header=1,
+                index_col=0,
+                parse_dates=True,
+            )[nodes].reindex(n.snapshots)
+
+            e_nom = (
+                heat_demand[["residential space"]]
+                .T.groupby(level=1)
+                .sum()
+                .T[nodes]
+                .multiply(factor)
+            )
+
+            heat_dsm_restriction_value = options["residential_heat"]["dsm"][
+                "restriction_value"
+            ].get(investment_year)
+            heat_dsm_profile = heat_dsm_profile * heat_dsm_restriction_value
+            e_nom = e_nom.max()
+
+            # Allow to overshoot or undercool the target temperatures / heat demand in dsm
+            e_min_pu, e_max_pu = 0, 0
+            if "overheat" in options["residential_heat"]["dsm"]["direction"]:
+                e_max_pu = heat_dsm_profile
+            if "undercool" in options["residential_heat"]["dsm"]["direction"]:
+                e_min_pu = (-1) * heat_dsm_profile
+
+            # Thermal (standing) losses of buildings assumed to be the same as decentralized water tanks
+            n.add(
+                "Store",
+                nodes,
+                suffix=f" {heat_system} heat dsm",
+                bus=nodes + f" {heat_system} heat",
+                carrier=f"{heat_system} heat dsm",
+                standing_loss=costs.at[
+                    "decentral water tank storage", "standing_losses"
+                ]
+                / 100,  # convert %/hour into unit/hour
+                e_cyclic=True,
+                e_nom=e_nom,
+                e_max_pu=e_max_pu,
+                e_min_pu=e_min_pu,
+            )
+
+            logger.info(f"Adding DSM in {heat_system} heating.")
 
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
@@ -3201,7 +3260,7 @@ def add_heat(
                 .to_pandas()
                 .reindex(index=n.snapshots)
                 if options["time_dep_hp_cop"]
-                else costs.at[costs_name_heat_pump, "efficiency"]
+                else costs.loc[[costs_name_heat_pump], ["efficiency"]]
             )
 
             if heat_source in params.limited_heat_sources:
@@ -3271,12 +3330,14 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_carrier}",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)),
-                    efficiency2=1 - (1 / cop_heat_pump.clip(lower=0.001)),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
+                    efficiency2=(1 - (1 / cop_heat_pump.clip(lower=0.001))).squeeze(),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=-cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3332,12 +3393,14 @@ def add_heat(
                     bus1=nodes,
                     bus2=nodes + f" {heat_system} water pits",
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)),
-                    efficiency2=1 - 1 / cop_heat_pump.clip(lower=0.001),
+                    efficiency=(1 / (cop_heat_pump - 1).clip(lower=0.001)).squeeze(),
+                    efficiency2=(1 - 1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
                     p_nom_extendable=True,
-                    p_min_pu=-cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
                 )
@@ -3350,10 +3413,12 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes,
                     carrier=f"{heat_system} {heat_source} heat pump",
-                    efficiency=1 / cop_heat_pump.clip(lower=0.001),
+                    efficiency=(1 / cop_heat_pump.clip(lower=0.001)).squeeze(),
                     capital_cost=costs.at[costs_name_heat_pump, "capital_cost"]
                     * overdim_factor,
-                    p_min_pu=-cop_heat_pump / cop_heat_pump.clip(lower=0.001),
+                    p_min_pu=(
+                        -cop_heat_pump / cop_heat_pump.clip(lower=0.001)
+                    ).squeeze(),
                     p_max_pu=0,
                     p_nom_extendable=True,
                     lifetime=costs.at[costs_name_heat_pump, "lifetime"],
@@ -6328,6 +6393,7 @@ if __name__ == "__main__":
                 for source in snakemake.params.limited_heat_sources
                 if source in snakemake.input.keys()
             },
+            heat_dsm_profile_file=snakemake.input.heat_dsm_profile,
             params=snakemake.params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             heating_efficiencies=heating_efficiencies,

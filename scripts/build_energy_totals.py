@@ -1182,7 +1182,7 @@ def build_transport_data(
     Notes
     -----
     - The function first collects the number of passenger cars.
-    - For Switzerland, it reads the data from `data/gr-e-11.03.02.01.01-cc.csv`.
+    - For Switzerland, it reads the data from `data/*/vehicle_stock.csv`.
     - It fills missing data on the number of cars and fuel efficiency with average data.
 
     References

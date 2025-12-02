@@ -7,3 +7,5 @@ logging,,,
 remote,,,
 -- ssh,--,,Optionally specify the SSH of a remote cluster to be synchronized.
 -- path,--,,Optionally specify the file path within the remote cluster to be synchronized.
+secrets,,,
+-- corine,--,,API token for corine dataset retrieval. You can also pass the token by setting the environment variable "CORINE_API_TOKEN". See `scripts/retrieve_corine_dataset_primary.py` for more instructions.
