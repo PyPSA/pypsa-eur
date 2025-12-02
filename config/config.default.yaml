@@ -568,7 +568,9 @@ sector:
   residential_heat:
     dsm:
       enable: false
-      direction: "overheat-undercool"
+      direction:
+      - overheat
+      - undercool
       restriction_value:
         2020: 0.06
         2025: 0.16
@@ -577,7 +579,9 @@ sector:
         2040: 0.38
         2045: 0.39
         2050: 0.4
-      restriction_time: [10, 22]
+      restriction_time:
+      - 10
+      - 22
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.8

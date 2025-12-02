@@ -177,7 +177,7 @@ Residential heat demand-side management allows electric heating systems to provi
 
 *Implementation approach*
 
-The implementation is based on the `smartEn/DNV methodology <https://smarten.eu/wp-content/uploads/2022/09/SmartEn-DSF-benefits-2030-Report_DIGITAL.pdf>`__ (see Appendix A, Section 1.1.2.5 "Residential electric heating" and page 17 Section 3.6) for quantifying demand-side flexibility benefits from residential heat pumps in the European energy system. The study estimates 195.5 TWh of annual flexibility potential for EU27 heat pumps using 12-hour load shifting constraints. Building thermal mass is represented as energy stores connected to residential heat buses, with time-varying availability constraints that enforce consumption requirements within defined periods. In the PyPSA-Eur implementation, this methodology is applied to all residential electric heating sources.
+The implementation is based on the `smartEn/DNV methodology <https://smarten.eu/wp-content/uploads/2022/10/SmartEN-DSF-benefits-2030-Report_DIGITAL-1.pdf>`__ (see Appendix A, Section 1.1.2.5 "Residential electric heating" and page 17 Section 3.6) for quantifying demand-side flexibility benefits from residential heat pumps in the European energy system. The study estimates 195.5 TWh of annual flexibility potential for EU27 heat pumps using 12-hour load shifting constraints. Building thermal mass is represented as energy stores connected to residential heat buses, with time-varying availability constraints that enforce consumption requirements within defined periods.
 
 *Time windows and constraints*
 
@@ -186,13 +186,13 @@ Heat demand can be shifted within configurable time periods to avoid buildings a
 - **Day period**: 9am to 9pm (21:00)
 - **Night period**: 9pm (21:00) to 9am
 
-At the boundaries between these periods (configured via `residential_heat_restriction_time <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__, default: [10, 22] corresponding to 9am and 9pm local time), the thermal storage state of charge must return to its baseline level. The implementation automatically adjusts these checkpoint hours to each country's local timezone, ensuring consistent behavioral patterns across different regions. This ensures that heat consumption requirements are met within each time window while allowing temporal load shifting for demand response. Users can adjust the checkpoint hours to create different period lengths as needed.
+At the boundaries between these periods (configured via `residential_heat_restriction_time <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__, default: [10, 22] corresponding to 10am and 10pm UTC time), the thermal storage state of charge must return to its baseline level. The implementation automatically adjusts these checkpoint hours to each country's local timezone, ensuring consistent behavioral patterns across different regions. This ensures that heat consumption requirements are met within each time window while allowing temporal load shifting for demand response. Users can adjust the checkpoint hours to create different period lengths as needed.
 
 *Storage capacity and flexibility magnitude*
 
-The flexibility storage capacity is sized based on the maximum residential space heating demand at each node. The actual available flexibility is constrained by the `residential_heat_restriction_value <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ parameter (default: 0.27), which sets the maximum state of charge as a fraction of the storage capacity.
+The flexibility storage capacity is sized based on the maximum residential space heating demand at each node. The actual available flexibility is constrained by the `residential_heat_restriction_value <https://github.com/PyPSA/pypsa-eur/blob/master/config/config.default.yaml>`__ parameter, which sets the maximum state of charge as a fraction of the storage capacity.
 
-The default value of 0.27 represents a conservative assumption for the thermal buffer capacity available in residential buildings, balancing flexibility potential against thermal comfort constraints. This parameter is user-configurable and can be adjusted based on specific assumptions about building thermal mass, insulation quality, and acceptable temperature variations. Setting it to 0 disables heat flexibility, while values closer to 1.0 allow greater load shifting (though this may require stronger assumptions about building characteristics and occupant comfort tolerance).
+For instance, a value of 0.27 would represent a conservative assumption for the thermal buffer capacity available in residential buildings, balancing flexibility potential against thermal comfort constraints. This parameter is user-configurable and can be adjusted based on specific assumptions about building thermal mass, insulation quality, and acceptable temperature variations. Setting it to 0 disables heat flexibility, while values closer to 1.0 allow greater load shifting (though this may require stronger assumptions about building characteristics and occupant comfort tolerance).
 
 *Thermal characteristics*
 

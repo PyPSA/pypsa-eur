@@ -35,6 +35,11 @@ def heat_dsm_profile(nodes, options):
     (day: 9am-9pm, night: 9pm-9am). This implements building thermal mass flexibility
     based on the smartEn/DNV methodology for residential heat DSM.
 
+    The checkpoint approach operationally enforces the constraint that heat
+    consumption requirements must be met within each 12-hour period, preventing
+    the building thermal mass from acting as long-term seasonal storage while
+    allowing short-term load shifting for demand-side flexibility.
+
     Parameters
     ----------
     nodes : pd.Index or array-like
@@ -50,17 +55,6 @@ def heat_dsm_profile(nodes, options):
         DSM availability profile indexed by timestamp with columns for each node.
         Values are 1.0 (storage available) for most hours and 0.0 at checkpoint
         hours to force storage depletion and enforce consumption periods.
-
-    Notes
-    -----
-    The checkpoint approach operationally enforces the constraint that heat
-    consumption requirements must be met within each 12-hour period, preventing
-    the building thermal mass from acting as long-term seasonal storage while
-    allowing short-term load shifting for demand-side flexibility.
-
-    See Also
-    --------
-    prepare_sector_network.add_heat : Uses this profile to constrain heat flexibility stores
     """
     weekly_profile = np.ones(24 * 7)
     for i in options["residential_heat"]['dsm']["restriction_time"]:

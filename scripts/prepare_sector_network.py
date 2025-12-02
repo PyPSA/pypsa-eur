@@ -2975,8 +2975,8 @@ def add_heat(
 
             heat_dsm_profile = pd.read_csv(
                 snakemake.input.heat_dsm_profile,
-                header=[1],
-                index_col=[0],
+                header=1,
+                index_col=0,
                 parse_dates=True,
             )[nodes].reindex(n.snapshots)
 
@@ -3020,7 +3020,7 @@ def add_heat(
                 e_min_pu=e_min_pu,
             )
 
-            logger.info(f"adding heat dsm in {heat_system} heating.")
+            logger.info(f"Adding DSM in {heat_system} heating.")
 
         if options["tes"]:
             n.add("Carrier", f"{heat_system} water tanks")
