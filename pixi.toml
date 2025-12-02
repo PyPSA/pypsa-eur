@@ -154,6 +154,3 @@ pytest = ">=8.4.2"
 [environments]
 doc = { features = ["doc"], no-default-feature = true }
 test = ["test"]
-
-[pypi-dependencies]
-snakemake-storage-plugin-cached-http = { git = "https://github.com/PyPSA/snakemake-storage-plugin-cached-http.git" }
