@@ -45,6 +45,7 @@ path = [
     "data/transmission_projects/**",
     "data/unit_commitment.csv",
     "data/versions.csv",
+    "data/custom_costs.csv",
 ]
 SPDX-FileCopyrightText = "The PyPSA-Eur Authors"
 SPDX-License-Identifier = "CC-BY-4.0"
