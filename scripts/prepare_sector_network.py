@@ -2991,12 +2991,10 @@ def add_heat(
                 .multiply(factor)
             )
 
-            heat_dsm_restriction_value = (
-                options["residential_heat"]["dsm"]["restriction_value"].get(investment_year)
-            )
-            heat_dsm_profile = (
-                heat_dsm_profile * heat_dsm_restriction_value
-            )
+            heat_dsm_restriction_value = options["residential_heat"]["dsm"][
+                "restriction_value"
+            ].get(investment_year)
+            heat_dsm_profile = heat_dsm_profile * heat_dsm_restriction_value
             e_nom = e_nom.max()
 
             # Allow to overshoot or undercool the target temperatures / heat demand in dsm
