@@ -32,10 +32,21 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v5
+    - name: Free up disk space
+      run: |
+        echo "Initial disk space"
+        df -h
+        echo "Free up disk space"
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        sudo docker builder prune -a --force
+        echo "Final disk space"
+        df -h
+
+    - uses: actions/checkout@v6
 
     - name: Setup Pixi
-      uses: prefix-dev/setup-pixi@v0.9.1
+      uses: prefix-dev/setup-pixi@v0.9.3
       with:
         pixi-version: v0.59.0
         cache: true
@@ -67,7 +78,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pixi run unit-test
+        pixi run unit-tests
 
     - name: Upload artifacts
       if: always()
@@ -79,3 +90,7 @@ jobs:
           .snakemake/log
           results
         retention-days: 3
+
+    - name: Show remaining disk space
+      if: always()
+      run: df -h
