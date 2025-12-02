@@ -80,7 +80,7 @@ Upcoming Release
 * Deprecate `shared_cutouts`: This configuration entry is no longer supported. Cutouts are always shared.
   To use scenario specific cutouts with different time or spatial resolution, make sure to name those cutouts differently in the `atlite:` configuration entry.
 
-* Move cutouts into `data/cutouts/` directory for consistency. Note: This will trigger all cutouts to be re-downloaded or rebuild.
+* Move cutouts into `data/cutouts/` directory for consistency. Note: This will trigger all cutouts to be re-downloaded or rebuild. If you need to retain downloaded cutouts, move them manually into `data/cutouts/`.
 
 * Deprecate the ability to determine ``cutout`` bounds based on ``regions_onshore`` and ``regions_offshore``.
   Instead ``cutouts`` need to have their bounds explicitly defined in the configuration file.
