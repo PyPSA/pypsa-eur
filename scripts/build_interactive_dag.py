@@ -8,10 +8,11 @@ from Graphviz HTML labels.
 """
 
 import json
-import pydot
 import re
 import textwrap
 import urllib.request
+
+import pydot
 import yaml
 
 from scripts._helpers import (
@@ -633,22 +634,23 @@ def build_html(svg_embed: str, node_tables: dict[str, str], svg_panzoom_js: str)
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
+
         snakemake = mock_snakemake("build_interactive_dag")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    svg_raw = open(snakemake.input.svg, "r", encoding="utf-8").read()
+    svg_raw = open(snakemake.input.svg, encoding="utf-8").read()
     svg_embed = clean_svg(svg_raw)
 
-    filegraph_raw = open(snakemake.input.filegraph, "r", encoding="utf-8").read()
+    filegraph_raw = open(snakemake.input.filegraph, encoding="utf-8").read()
     filegraph = pydot.graph_from_dot_data(filegraph_raw)[0]
 
     # Extract HTML tables from filegraph nodes
     node_tables = parse_filegraph_html_tables(filegraph)
 
     # Load SVG panzoom JS
-    with open(snakemake.input.js, "r", encoding="utf-8") as f:
+    with open(snakemake.input.js, encoding="utf-8") as f:
         svg_panzoom_js = f.read()
 
     # Build final HTML

@@ -1162,12 +1162,12 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
 
 rule retrieve_svg_pan_zoom:
     output:
-        js = "data/js/svg-pan-zoom.min.js",
+        js="data/js/svg-pan-zoom.min.js",
     log:
         "logs/retrieve_svg_pan_zoom.log",
-    threads: 1,
+    threads: 1
     resources:
-        mem_mb = 200,
+        mem_mb=200,
     run:
         import urllib.request
 
@@ -1177,5 +1177,3 @@ rule retrieve_svg_pan_zoom:
         )
 
         urllib.request.urlretrieve(url, output.js)
-
-

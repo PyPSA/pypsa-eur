@@ -6,18 +6,18 @@
 rule build_interactive_dag:
     """Create interactive HTML DAG with rule I/O popup."""
     input:
-        svg = resources("dag/dag_rulegraph.svg"),
-        filegraph = resources("dag/dag_filegraph.dot"),
-        js = "data/js/svg-pan-zoom.min.js",
+        svg=resources("dag/dag_rulegraph.svg"),
+        filegraph=resources("dag/dag_filegraph.dot"),
+        js="data/js/svg-pan-zoom.min.js",
     output:
-        html = resources("dag/dag_interactive.html"),
+        html=resources("dag/dag_interactive.html"),
     log:
         logs("build_interactive_dag.log"),
     benchmark:
-        benchmarks("build_interactive_dag"),
+        benchmarks("build_interactive_dag")
     threads: 1
     resources:
-        mem_mb = 500,
+        mem_mb=500,
     script:
         "../scripts/build_interactive_dag.py"
 
