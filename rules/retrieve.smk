@@ -1158,3 +1158,24 @@ if (MOBILITY_PROFILES_DATASET := dataset_version("mobility_profiles"))["source"]
         run:
             copy2(input["kfz"], output["kfz"])
             copy2(input["pkw"], output["pkw"])
+
+
+rule retrieve_svg_pan_zoom:
+    output:
+        js = "data/js/svg-pan-zoom.min.js",
+    log:
+        "logs/retrieve_svg_pan_zoom.log",
+    threads: 1,
+    resources:
+        mem_mb = 200,
+    run:
+        import urllib.request
+
+        url = (
+            "https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/"
+            "svg-pan-zoom.min.js"
+        )
+
+        urllib.request.urlretrieve(url, output.js)
+
+
