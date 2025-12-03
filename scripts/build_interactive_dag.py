@@ -31,12 +31,20 @@ def load_linguist_extension_colors() -> dict[str, str]:
         "linguist/main/lib/linguist/languages.yml"
     )
 
+    # Network fetch
     try:
         with urllib.request.urlopen(url, timeout=5) as r:
-            data = r.read().decode("utf-8")
+            raw = r.read()
     except Exception:
         return {}
 
+    # Decode
+    try:
+        data = raw.decode("utf-8")
+    except Exception:
+        return {}
+
+    # YAML parse
     try:
         languages = yaml.safe_load(data)
     except Exception:
@@ -45,16 +53,18 @@ def load_linguist_extension_colors() -> dict[str, str]:
     if not isinstance(languages, dict):
         return {}
 
-    ext_to_color = {}
+    ext_to_color: dict[str, str] = {}
 
     for attrs in languages.values():
         if not isinstance(attrs, dict):
             continue
 
         color = attrs.get("color")
-        exts = attrs.get("extensions", [])
+        exts = attrs.get("extensions")
 
-        if not color or not isinstance(exts, list):
+        if not isinstance(color, str):
+            continue
+        if not isinstance(exts, list):
             continue
 
         for ext in exts:
@@ -100,8 +110,6 @@ def clean_svg(svg_text: str) -> str:
 def _highlight_extensions(html: str) -> str:
     if not html:
         return html
-
-    exts = sorted(FILE_EXTENSION_COLORS.keys(), key=len, reverse=True)
 
     def color_last_ext(filename: str) -> str:
         before, _, tail = filename.rpartition("/")
