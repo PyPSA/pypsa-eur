@@ -253,7 +253,6 @@ plotting:
       - 100
       branch_sizes:
   balance_map_interactive:
-    enable: true
     bus_carriers:
     - AC
     - co2_stored # underscore for slurm compatibility
