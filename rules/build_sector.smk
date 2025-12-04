@@ -1402,6 +1402,27 @@ def input_heat_source_power(w):
     }
 
 
+rule build_industry_plants:
+    params:
+        countries=config_provider("countries"),
+    input:
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        ammonia="data/ammonia_plants.csv",
+        isi_database="data/1-s2.0-S0196890424010586-mmc2.xlsx",
+        gem_gcct="data/gem/Global-Cement-and-Concrete-Tracker_July-2025.xlsx",
+    output:
+        industry_plants=resources("industry_plants_{clusters}.csv"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    log:
+        logs("build_industry_plants_{clusters}.log"),
+    benchmark:
+        benchmarks("build_industry_plants_{clusters}")
+    script:
+        "../scripts/build_industry_plants.py"
+
+
 rule prepare_sector_network:
     params:
         time_resolution=config_provider("clustering", "temporal", "resolution_sector"),

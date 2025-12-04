@@ -228,3 +228,10 @@ imports,,,
 -- limit_sense,--,"{==, <=, >=}",Sense of the limit
 -- price,,"{H2, NH3, methanol, gas, oil}",
 -- -- {carrier},currency/MWh,float,Price for importing renewable energy of carrier
+endogenous_sectors,,,
+-- {steel, cement}, Endogenously model given subsectors
+hbi_relocation,--,"{true, false}",Allow the relocation of iron ore reduction step
+steel_bof,,,
+-- pledge,--,"{true, false}",decommissions coal blast furnaces at their pledged phase out year
+-- pledge_delay,--,int,delays the decommission year by number of years
+-- default_phase_out,--,{false, int}",decommissions the coal blast furnaces that do not have a pledged phase out year

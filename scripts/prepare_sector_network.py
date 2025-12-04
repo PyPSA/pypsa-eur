@@ -222,7 +222,7 @@ def define_spatial(nodes, options):
 
     # industry
     spatial.hbi = SimpleNamespace()
-    if options["industry_relocation"]:
+    if options["hbi_relocation"]:
         spatial.hbi.nodes = ["EU hbi"]
         spatial.hbi.location = ["EU"]
     else:
@@ -4588,12 +4588,15 @@ def add_industry(
     industrial_demand_raw = (
         pd.read_csv(industrial_demand_file, index_col=0) * 1e6 * nyears
     )
-    # adjust the industrial energy demand excluding endogenously modelled carriers
-    adjusted_demand, steel, cement = adjust_industry_demand(nodes)
-    adjusted_demand["current electricity"] = industrial_demand_raw[
-        "current electricity"
-    ]
-    industrial_demand = adjusted_demand.copy()
+    if snakemake.params.sector["endogenous_sectors"]:
+        # adjust the industrial energy demand excluding endogenously modelled carriers
+        adjusted_demand, steel, cement = adjust_industry_demand(nodes)
+        adjusted_demand["current electricity"] = industrial_demand_raw[
+            "current electricity"
+        ]
+        industrial_demand = adjusted_demand.copy()
+    else:
+        industrial_demand = industrial_demand_raw.copy()
 
     n.add(
         "Bus",
@@ -5539,17 +5542,13 @@ def add_industry(
             p_nom_extendable=True,
         )
 
-    costs.at["grey methanol synthesis", "efficiency"] = 1 / 1.757469244
     # grey methanol
     capital_cost = (
-        costs.at["SMR", "investment"]
-        + costs.at["methanolisation", "investment"]
-        * costs.at["grey methanol synthesis", "efficiency"]
+        costs.at["grey methanol synthesis", "investment"]
+        / costs.at["grey methanol synthesis", "efficiency"]
     )
     co2_emissions = (
-        costs.at["gas", "CO2 intensity"]
-        - costs.at["grey methanol synthesis", "efficiency"]
-        * costs.at["methanol", "CO2 intensity"]
+        costs.at["grey methanol synthesis", "carbondioxide-output"]
     )
     n.add(
         "Link",
@@ -5562,38 +5561,6 @@ def add_industry(
         carrier="grey methanol",
         efficiency=costs.at["grey methanol synthesis", "efficiency"],
         efficiency2=co2_emissions,
-        capital_cost=capital_cost,
-        lifetime=costs.at["SMR", "lifetime"],
-    )
-
-    # blue methanol
-    options["cc_fraction"] = 0.9
-    co2_emissions = (
-        costs.at["gas", "CO2 intensity"]
-        - costs.at["grey methanol synthesis", "efficiency"]
-        * costs.at["methanol", "CO2 intensity"]
-    )
-    capital_cost = (
-        costs.at["SMR", "investment"]
-        + costs.at["methanolisation", "investment"]
-        * costs.at["grey methanol synthesis", "efficiency"]
-        + costs.at["cement capture", "investment"]
-        * co2_emissions
-        * options["cc_fraction"]
-    )
-    n.add(
-        "Link",
-        spatial.methanol.demand_locations,
-        suffix=" blue methanol",
-        bus0=spatial.gas.nodes,
-        bus1=spatial.methanol.nodes,
-        bus2="co2 atmosphere",
-        bus3=spatial.co2.nodes,
-        p_nom_extendable=True,
-        carrier="blue methanol",
-        efficiency=costs.at["grey methanol synthesis", "efficiency"],
-        efficiency2=co2_emissions * (1 - options["cc_fraction"]),
-        efficiency3=co2_emissions * options["cc_fraction"],
         capital_cost=capital_cost,
         lifetime=costs.at["SMR", "lifetime"],
     )
