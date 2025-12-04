@@ -88,17 +88,34 @@ rule solve_sector_networks_perfect:
         ),
 
 
+def balance_map_paths(kind, w):
+    """
+    kind = "static" or "interactive"
+    """
+    return expand(
+        RESULTS
+        + f"maps/{kind}/base_s_{{clusters}}_{{opts}}_{{sector_opts}}_{{planning_horizons}}"
+          f"-balance_map_{{carrier}}.{ 'pdf' if kind=='static' else 'html'}",
+        **config["scenario"],
+        run=config["run"]["name"],
+        carrier=config_provider("plotting", f"balance_map_{kind}", "bus_carriers")(w),
+    )
+
+
+rule plot_balance_maps:
+    input:
+        static=lambda w: balance_map_paths("static", w),
+        interactive=lambda w: balance_map_paths("interactive", w)
+
+
 rule plot_balance_maps_static:
     input:
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map_static", "bus_carriers")(w),
-        ),
+        lambda w: balance_map_paths("static", w)
+
+
+rule plot_balance_maps_interactive:
+    input:
+        lambda w: balance_map_paths("interactive", w)
 
 
 rule plot_power_networks_clustered:

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Create energy balance maps for the defined carriers.
+Create static energy balance maps for the defined carriers using`n.plot()`.
 """
 
 import geopandas as gpd
@@ -28,14 +28,6 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        # snakemake = mock_snakemake(
-        #     "plot_balance_map_static",
-        #     clusters="10",
-        #     opts="",
-        #     sector_opts="",
-        #     planning_horizons="2050",
-        #     carrier="H2",
-        # )
         snakemake = mock_snakemake(
             "plot_balance_map_static",
             clusters="50",
@@ -43,7 +35,6 @@ if __name__ == "__main__":
             sector_opts="",
             planning_horizons="2050",
             carrier="H2",
-            configfiles=["config/config.new-balance-maps.yaml"],
         )
 
     configure_logging(snakemake)
@@ -59,6 +50,8 @@ if __name__ == "__main__":
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
     config = snakemake.params.plotting
     carrier = snakemake.wildcards.carrier
+    settings = snakemake.params.settings
+    carrier = carrier.replace("_", " ") # needed for slurm environment where [space] is not allowed
 
     # fill empty colors or "" with light grey
     mask = n.carriers.color.isna() | n.carriers.color.eq("")
@@ -70,8 +63,8 @@ if __name__ == "__main__":
 
     # get balance map plotting parameters
     boundaries = config["map"]["boundaries"]
-    config = config["balance_map_static"][carrier]
-    conversion = config["unit_conversion"]
+    conversion = settings["conversion"]
+    branch_color = settings.get("branch_color") or "darkseagreen"
 
     if carrier not in n.buses.carrier.unique():
         raise ValueError(
@@ -130,9 +123,9 @@ if __name__ == "__main__":
     link_widths = flow.get("Link", fallback).abs()
 
     # define maximal size of buses and branch width
-    bus_size_factor = config["bus_factor"]
-    branch_width_factor = config["branch_factor"]
-    flow_size_factor = config["flow_factor"]
+    bus_size_factor = settings["bus_factor"]
+    branch_width_factor = settings["branch_factor"]
+    flow_size_factor = settings["flow_factor"]
 
     # get prices per region as colormap
     buses = n.buses.query("carrier in @carrier").index
@@ -154,10 +147,10 @@ if __name__ == "__main__":
         shift = 0
 
     vmin, vmax = regions.price.min() - shift, regions.price.max() + shift
-    if config["vmin"] is not None:
-        vmin = config["vmin"]
-    if config["vmax"] is not None:
-        vmax = config["vmax"]
+    if settings["region_vmin"] is not None:
+        vmin = settings["region_vmin"]
+    if settings["region_vmax"] is not None:
+        vmax = settings["region_vmax"]
 
     crs = load_projection(snakemake.params.plotting)
 
@@ -179,6 +172,7 @@ if __name__ == "__main__":
         link_widths=link_widths * branch_width_factor,
         line_flow=line_flow * flow_size_factor if line_flow is not None else None,
         link_flow=link_flow * flow_size_factor if link_flow is not None else None,
+        link_color=branch_color,
         transformer_flow=transformer_flow * flow_size_factor
         if transformer_flow is not None
         else None,
@@ -192,7 +186,7 @@ if __name__ == "__main__":
     regions.to_crs(crs.proj4_init).plot(
         ax=ax,
         column="price",
-        cmap=config["cmap"],
+        cmap=settings["region_cmap"],
         vmin=vmin,
         vmax=vmax,
         edgecolor="None",
@@ -203,8 +197,8 @@ if __name__ == "__main__":
 
     # Add colorbar
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
-    sm = plt.cm.ScalarMappable(cmap=config["cmap"], norm=norm)
-    price_unit = config["region_unit"]
+    sm = plt.cm.ScalarMappable(cmap=settings["region_cmap"], norm=norm)
+    price_unit = settings["region_unit"]
     cbr = fig.colorbar(
         sm,
         ax=ax,
@@ -274,8 +268,8 @@ if __name__ == "__main__":
     )
 
     # Add bus legend
-    legend_bus_sizes = config["bus_sizes"]
-    carrier_unit = config["unit"]
+    legend_bus_sizes = settings["bus_sizes"]
+    carrier_unit = settings["carrier_unit"]
     if legend_bus_sizes is not None:
         add_legend_semicircles(
             ax,
@@ -292,7 +286,7 @@ if __name__ == "__main__":
         )
 
     # Add branch legend
-    legend_branch_sizes = config["branch_sizes"]
+    legend_branch_sizes = settings["branch_sizes"]
     if legend_branch_sizes is not None:
         add_legend_lines(
             ax,

@@ -114,6 +114,9 @@ if config["foresight"] != "perfect":
     rule plot_balance_map_static:
         params:
             plotting=config_provider("plotting"),
+            settings=lambda w: config_provider(
+                "plotting", "balance_map_static", w.carrier
+            ),
         input:
             network=RESULTS
             + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -134,6 +137,34 @@ if config["foresight"] != "perfect":
             )
         script:
             "../scripts/plot_balance_map_static.py"
+
+    rule plot_balance_map_interactive:
+        params:
+            settings=lambda w: config_provider(
+                "plotting", "balance_map_interactive", w.carrier
+            )
+        input:
+            network=RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        output:
+            RESULTS
+            + "maps/interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.html",
+        threads: 1
+        resources:
+            mem_mb=8000,
+        log:
+            RESULTS
+            + "logs/plot_balance_map_interactive/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_interactive_map/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}_{carrier}"
+            )
+        conda:
+            "../envs/environment.yaml"
+        script:
+            "../scripts/plot_balance_map_interactive.py"
 
     rule plot_heat_source_map:
         params:

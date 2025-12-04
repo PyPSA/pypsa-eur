@@ -126,15 +126,6 @@ rule all:
             ),
             run=config["run"]["name"],
         ),
-        lambda w: expand(
-            (
-                RESULTS
-                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
-            ),
-            **config["scenario"],
-            run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map_static", "bus_carriers")(w),
-        ),
         expand(
             RESULTS
             + "graphics/balance_timeseries/s_{clusters}_{opts}_{sector_opts}_{planning_horizons}",
@@ -215,6 +206,8 @@ rule all:
             run=config["run"]["name"],
             **config["scenario"],
         ),
+        lambda w: balance_map_paths("static", w),
+        lambda w: balance_map_paths("interactive", w),
     default_target: True
 
 
