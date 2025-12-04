@@ -82,22 +82,22 @@ rule solve_sector_networks_perfect:
     input:
         expand(
             RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
             **config["scenario"],
             run=config["run"]["name"],
         ),
 
 
-rule plot_balance_maps:
+rule plot_balance_maps_static:
     input:
         lambda w: expand(
             (
                 RESULTS
-                + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf"
             ),
             **config["scenario"],
             run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+            carrier=config_provider("plotting", "balance_map_static", "bus_carriers")(w),
         ),
 
 

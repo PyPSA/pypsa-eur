@@ -1198,12 +1198,10 @@ def build_transport_data(
             first_line = f.readline()
         sep = ";" if ";" in first_line and "," not in first_line else ","
 
-        swiss_df = pd.read_csv(fn, index_col=0, sep=sep)
+        swiss_cars = pd.read_csv(fn, index_col=0, sep=sep).loc[years, ["passenger cars"]]
 
         # Ensure index is integer years
-        swiss_df.index = swiss_df.index.astype(int)
-
-        swiss_cars = pd.read_csv(fn, index_col=0).loc[years, ["passenger cars"]]
+        swiss_cars.index = swiss_cars.index.astype(int)
 
         swiss_cars.index = pd.MultiIndex.from_product(
             [["CH"], swiss_cars.index], names=["country", "year"]

@@ -100,7 +100,7 @@ plotting:
     - methanol
     - oil
     - urban central water tanks
-  balance_map:
+  balance_map_static:
     bus_carriers:
     - AC
     - H2

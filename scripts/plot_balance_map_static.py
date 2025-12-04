@@ -28,13 +28,22 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
+        # snakemake = mock_snakemake(
+        #     "plot_balance_map_static",
+        #     clusters="10",
+        #     opts="",
+        #     sector_opts="",
+        #     planning_horizons="2050",
+        #     carrier="H2",
+        # )
         snakemake = mock_snakemake(
-            "plot_balance_map",
-            clusters="10",
+            "plot_balance_map_static",
+            clusters="50",
             opts="",
             sector_opts="",
             planning_horizons="2050",
             carrier="H2",
+            configfiles=["config/config.new-balance-maps.yaml"],
         )
 
     configure_logging(snakemake)
@@ -43,7 +52,7 @@ if __name__ == "__main__":
 
     n = pypsa.Network(snakemake.input.network)
     sanitize_carriers(n, snakemake.config)
-    pypsa.set_option("params.statistics.round", 3)
+    pypsa.set_option("params.statistics.round", 8)
     pypsa.set_option("params.statistics.drop_zero", True)
     pypsa.set_option("params.statistics.nice_names", False)
 
@@ -61,12 +70,12 @@ if __name__ == "__main__":
 
     # get balance map plotting parameters
     boundaries = config["map"]["boundaries"]
-    config = config["balance_map"][carrier]
+    config = config["balance_map_static"][carrier]
     conversion = config["unit_conversion"]
 
     if carrier not in n.buses.carrier.unique():
         raise ValueError(
-            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map: bus_carriers`."
+            f"Carrier {carrier} is not in the network. Remove from configuration `plotting: balance_map_static: bus_carriers`."
         )
 
     # for plotting change bus to location
