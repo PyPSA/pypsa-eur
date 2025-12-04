@@ -133,7 +133,7 @@ rule all:
             ),
             **config["scenario"],
             run=config["run"]["name"],
-            carrier=config_provider("plotting", "balance_map", "bus_carriers")(w),
+            carrier=config_provider("plotting", "balance_map_static", "bus_carriers")(w),
         ),
         expand(
             RESULTS

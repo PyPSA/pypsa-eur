@@ -47,7 +47,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -72,7 +72,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-h2_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -96,7 +96,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-ch4_network_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,
@@ -120,7 +120,7 @@ if config["foresight"] != "perfect":
             regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         output:
             RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-balance_map_{carrier}.pdf",
         threads: 1
         resources:
             mem_mb=8000,
@@ -159,9 +159,9 @@ if config["foresight"] != "perfect":
             ),
         output:
             temp_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_temperature_map_{carrier}.html",
             energy_map=RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}-heat_source_energy_map_{carrier}.html",
         threads: 1
         resources:
             mem_mb=150000,
@@ -182,7 +182,7 @@ if config["foresight"] == "perfect":
     def output_map_year(w):
         return {
             f"map_{year}": RESULTS
-            + "maps/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-costs-all_"
             + f"{year}.pdf"
             for year in config_provider("scenario", "planning_horizons")(w)
         }
