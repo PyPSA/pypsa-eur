@@ -304,8 +304,8 @@ plotting:
     H2:
       region_cmap: Blues
       region_unit: €/MWh
-      region_vmin: 0
-      region_vmax: 500
+      region_vmin:
+      region_vmax:
       region_alpha: 0.8
       conversion: 1_000_000
       branch_color: pink
