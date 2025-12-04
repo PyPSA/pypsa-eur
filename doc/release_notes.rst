@@ -9,6 +9,8 @@ Release Notes
 Upcoming Release
 ================
 
+* Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934).
+
 * Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
 
 * Fixed OSM raw data cleaning to include `section` line relation role.
