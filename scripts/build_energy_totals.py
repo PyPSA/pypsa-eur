@@ -1204,6 +1204,17 @@ def build_transport_data(
 
     if "CH" in countries:
         fn = snakemake.input.swiss_transport
+
+        # Detect delimiter automatically; BFS files often use ';'
+        with open(fn) as f:
+            first_line = f.readline()
+        sep = ";" if ";" in first_line and "," not in first_line else ","
+
+        swiss_df = pd.read_csv(fn, index_col=0, sep=sep)
+
+        # Ensure index is integer years
+        swiss_df.index = swiss_df.index.astype(int)
+
         swiss_cars = pd.read_csv(fn, index_col=0).loc[years, ["passenger cars"]]
 
         swiss_cars.index = pd.MultiIndex.from_product(
