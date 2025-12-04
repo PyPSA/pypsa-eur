@@ -51,7 +51,9 @@ if __name__ == "__main__":
     config = snakemake.params.plotting
     carrier = snakemake.wildcards.carrier
     settings = snakemake.params.settings
-    carrier = carrier.replace("_", " ") # needed for slurm environment where [space] is not allowed
+    carrier = carrier.replace(
+        "_", " "
+    )  # needed for slurm environment where [space] is not allowed
 
     # fill empty colors or "" with light grey
     mask = n.carriers.color.isna() | n.carriers.color.eq("")

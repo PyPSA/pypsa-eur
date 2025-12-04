@@ -142,7 +142,7 @@ if config["foresight"] != "perfect":
         params:
             settings=lambda w: config_provider(
                 "plotting", "balance_map_interactive", w.carrier
-            )
+            ),
         input:
             network=RESULTS
             + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",

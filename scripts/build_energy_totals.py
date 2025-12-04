@@ -1198,7 +1198,9 @@ def build_transport_data(
             first_line = f.readline()
         sep = ";" if ";" in first_line and "," not in first_line else ","
 
-        swiss_cars = pd.read_csv(fn, index_col=0, sep=sep).loc[years, ["passenger cars"]]
+        swiss_cars = pd.read_csv(fn, index_col=0, sep=sep).loc[
+            years, ["passenger cars"]
+        ]
 
         # Ensure index is integer years
         swiss_cars.index = swiss_cars.index.astype(int)

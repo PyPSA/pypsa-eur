@@ -5,12 +5,11 @@
 Create interactive energy balance maps for the defined carriers using `n.explore()`.
 """
 
+import geopandas as gpd
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-import geopandas as gpd
-import pypsa
 import pydeck as pdk
-
+import pypsa
 from pypsa.plot.maps.interactive import PydeckPlotter
 from pypsa.statistics import get_transmission_carriers
 
@@ -19,7 +18,6 @@ from scripts._helpers import (
     set_scenario_config,
     update_config_from_wildcards,
 )
-
 from scripts.add_electricity import sanitize_carriers
 
 VALID_MAP_STYLES = PydeckPlotter.VALID_MAP_STYLES
@@ -94,12 +92,10 @@ if __name__ == "__main__":
     region_alpha = settings.get("region_alpha") or 0.7
     region_unit = settings.get("region_unit") or ""
     branch_color = settings.get("branch_color") or "darkseagreen"
-    arrow_size_factor = settings.get("arrow_size_factor") or 1.5 # PyPSA default
+    arrow_size_factor = settings.get("arrow_size_factor") or 1.5  # PyPSA default
     bus_size_max = settings.get("bus_size_max") or 10000  # PyPSA default
-    branch_width_max = settings.get("branch_width_max") or 10 # PyPSA default
-    map_style = (
-        str(settings.get("map_style")) or "road"
-    ).lower()
+    branch_width_max = settings.get("branch_width_max") or 10  # PyPSA default
+    map_style = (str(settings.get("map_style")) or "road").lower()
     map_style = VALID_MAP_STYLES.get(map_style, "road")
     tooltip = settings.get("tooltip") or True
 
@@ -119,10 +115,9 @@ if __name__ == "__main__":
     b_missing = n.carriers.query("color == '' or color.isnull()").index
     n.carriers.loc[b_missing, "color"] = missing_color
 
-    transmission_carriers = get_transmission_carriers(
-        n,
-        bus_carrier=carrier
-    ).rename({"name": "carrier"})
+    transmission_carriers = get_transmission_carriers(n, bus_carrier=carrier).rename(
+        {"name": "carrier"}
+    )
     components = transmission_carriers.unique("component")
     carriers = transmission_carriers.unique("carrier")
 
@@ -135,10 +130,7 @@ if __name__ == "__main__":
     # Only carriers that are also in the energy balance
     carriers_in_eb = carriers[carriers.isin(eb.index.get_level_values("carrier"))]
 
-    eb.loc[components] = eb.loc[components].drop(
-        index=carriers_in_eb,
-        level="carrier"
-    )
+    eb.loc[components] = eb.loc[components].drop(index=carriers_in_eb, level="carrier")
     eb = eb.dropna()
     bus_size = eb.groupby(level=["bus", "carrier"]).sum()
 
@@ -152,8 +144,16 @@ if __name__ == "__main__":
         flow = flow[~flow_reversed_mask].subtract(flow_reversed, fill_value=0)
 
     # only line first index
-    line_flow = flow.loc[flow.index.get_level_values(0).str.contains("Line")].copy().droplevel(0)
-    link_flow = flow.loc[flow.index.get_level_values(0).str.contains("Link")].copy().droplevel(0)
+    line_flow = (
+        flow.loc[flow.index.get_level_values(0).str.contains("Line")]
+        .copy()
+        .droplevel(0)
+    )
+    link_flow = (
+        flow.loc[flow.index.get_level_values(0).str.contains("Link")]
+        .copy()
+        .droplevel(0)
+    )
 
     branch_components = ["Link"]
     if carrier == "AC":
@@ -161,15 +161,31 @@ if __name__ == "__main__":
 
     ### Prices
     buses = n.buses.query("carrier in @carrier").index
-    demand = n.statistics.energy_balance(bus_carrier=carrier, aggregate_time=False, groupby=["bus", "carrier"]).clip(lower=0).groupby("bus").sum().reindex(buses).rename(n.buses.location).T
-    
+    demand = (
+        n.statistics.energy_balance(
+            bus_carrier=carrier, aggregate_time=False, groupby=["bus", "carrier"]
+        )
+        .clip(lower=0)
+        .groupby("bus")
+        .sum()
+        .reindex(buses)
+        .rename(n.buses.location)
+        .T
+    )
+
     weights = n.snapshot_weightings.generators
-    price = weights @ n.buses_t.marginal_price.reindex(buses, axis=1).rename(n.buses.location, axis=1) / weights.sum()
+    price = (
+        weights
+        @ n.buses_t.marginal_price.reindex(buses, axis=1).rename(
+            n.buses.location, axis=1
+        )
+        / weights.sum()
+    )
 
     if carrier == "co2 stored" and "CO2Limit" in n.global_constraints.index:
         co2_price = n.global_constraints.loc["CO2Limit", "mu"]
         price = price - co2_price
-   
+
     # if only one price is available, use this price for all regions
     if price.size == 1:
         regions["price"] = price.values[0]
@@ -197,10 +213,15 @@ if __name__ == "__main__":
 
     # Create tooltips
     regions["tooltip_html"] = (
-        "<b>" + regions.index + "</b><br>"
-        +"<b>Weighted price:</b> " + regions["price"].round(2).astype(str) + " " + region_unit
+        "<b>"
+        + regions.index
+        + "</b><br>"
+        + "<b>Weighted price:</b> "
+        + regions["price"].round(2).astype(str)
+        + " "
+        + region_unit
     )
-    # regions["tooltip_html"] = regions["price"].round(2).astype(str) 
+    # regions["tooltip_html"] = regions["price"].round(2).astype(str)
     # Create layer
     regions_layer = pdk.Layer(
         "GeoJsonLayer",
