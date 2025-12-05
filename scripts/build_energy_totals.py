@@ -1598,9 +1598,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake(
-            "build_energy_totals", configfiles=["config/config.new-balance-maps.yaml"]
-        )
+        snakemake = mock_snakemake("build_energy_totals")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
