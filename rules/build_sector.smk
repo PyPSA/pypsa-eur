@@ -1118,6 +1118,7 @@ rule build_industrial_energy_demand_per_country_today:
         industry=config_provider("industry"),
         ammonia=config_provider("sector", "ammonia", default=False),
     input:
+        process_temperature_bands="data/ente202300981-sup-0001-suppdata-s1.xlsx",
         transformation_output_coke=resources("transformation_output_coke.csv"),
         jrc="data/jrc-idees-2021",
         industrial_production_per_country=resources(

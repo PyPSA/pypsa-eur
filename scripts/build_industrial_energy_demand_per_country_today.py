@@ -53,6 +53,7 @@ import multiprocessing as mp
 from functools import partial
 
 import country_converter as coco
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -98,7 +99,7 @@ fuels = {
     "Solid fossil fuels": "solid",
     "Peat and peat products": "solid",
     "Oil shale and oil sands": "solid",
-    "Oil and petroleum products": "liquid",
+    "Oil and petroleum products": "naphtha",
     "Manufactured gases": "gas",
     "Natural gas": "gas",
     "Nuclear heat": "heat",
@@ -106,6 +107,105 @@ fuels = {
     "Renewables and biofuels": "biomass",
     "Non-renewable waste": "waste",
     "Electricity": "electricity",
+}
+
+idx = pd.IndexSlice
+
+# maps processes to temperature bands distributions from Fleiter et al. 2025
+process_temperature_band_mapper = {
+    "Aluminium - secondary production": idx[
+        "Non-ferrous metals", "NE metals", ["Aluminium, secondary"]
+    ],
+    "Aluminium - primary production": idx[
+        "Non-ferrous metals", "NE metals", ["Aluminium, primary"]
+    ],
+    "Other non-ferrous metals": idx[
+        "Non-ferrous metals",
+        "NE metals",
+        [
+            "Copper, primary",
+            "Copper, secondary",
+            "Copper further treatment",
+            "Zinc, primary",
+            "Zinc, secondary",
+        ],
+    ],
+    # 'HVC': idx['Chemical industry', ['Other chemicals', 'Methanol', 'Olefins '], :],
+    "HVC": idx[
+        :,
+        :,
+        [
+            "Adipic acid",
+            "Calcium carbide",
+            "Carbon black",
+            "Nitric acid",
+            "Soda ash",
+            "TDI",
+            "Titanium dioxide",
+        ],
+    ],
+    "Cement": idx["Non-metallic mineral products", "Clinker", :],
+    "Ceramics & other NMM": idx["Non-metallic mineral products", "Ceramics", :],
+    "Glass production": idx["Non-metallic mineral products", "Glass", :],
+    "Pulp production": idx[
+        "Paper and printing", "Paper products", ["Paper", "Paper Electrical"]
+    ],
+    "Paper production": idx[
+        "Paper and printing", "Paper products", ["Chemical pulp", "Mechanical pulp"]
+    ],
+    "Printing and media reproduction": idx[
+        "Paper and printing", "Paper products", ["Chemical pulp", "Mechanical pulp"]
+    ],
+    "Food, beverages and tobacco": idx["Food, drink and tobacco", :, :],
+}
+
+backup_temperature_band_shares = {
+    # from JRC IDEES EU26 Industry
+    "Alumina production": {
+        "heat<100": 0.0,
+        "heat100-200": 0.0,
+        "heat200-500": 0.0,
+        "heat>500": 1.0,
+    },
+    "Pharmaceutical products etc.": {
+        "heat<100": 0.3,
+        "heat100-200": 0.6,
+        "heat200-500": 0.1,
+        "heat>500": 1.0,
+    },
+    # from https://energyinnovation.org/data-explorer/overcoming-all-barriers-to-industrial-electrification
+    "Other industrial sectors": {
+        "heat<100": 0.1,
+        "heat100-200": 0.65,
+        "heat200-500": 0.25,
+        "heat>500": 0.0,
+    },
+    "Transport equipment": {
+        "heat<100": 0.25,
+        "heat100-200": 0.6,
+        "heat200-500": 0.15,
+        "heat>500": 0.0,
+    },
+    "Machinery equipment": {
+        "heat<100": 0.25,
+        "heat100-200": 0.6,
+        "heat200-500": 0.15,
+        "heat>500": 0.0,
+    },
+    # from https://www.fpl.fs.usda.gov/documents/fplgtr/fplgtr118.pdf
+    "Wood and wood products": {
+        "heat<100": 0.65,
+        "heat100-200": 0.35,
+        "heat200-500": 0.0,
+        "heat>500": 0.0,
+    },
+    # from https://www.ifc.org/content/dam/ifc/doc/2000/2007-textiles-manufacturing-ehs-guidelines-en.pdf
+    "Textiles and leather": {
+        "heat<100": 0.7,
+        "heat100-200": 0.2,
+        "heat200-500": 0.1,
+        "heat>500": 0.0,
+    },
 }
 
 eu27 = cc.EU27as("ISO2").ISO2.tolist()
@@ -287,6 +387,31 @@ if __name__ == "__main__":
     year = params.get("reference_year", 2019)
     countries = pd.Index(snakemake.params.countries)
 
+    process_temperature_bands = pd.read_excel(
+        snakemake.input.process_temperature_bands,
+        sheet_name="Industry_ESC_FEC",
+        index_col=[0, 1, 2],
+        header=[0, 1],
+    )
+    process_temperature_bands.columns = process_temperature_bands.columns.droplevel(0)
+    process_temperature_bands.rename(
+        columns={
+            "<\xa0100\xa0°C": "heat<100",
+            "<\xa0100–200\xa0°C": "heat100-200",
+            "200–500\xa0°C": "heat200-500",
+            "500–1000\xa0°C": "heat500-1000",
+            ">\xa01000\xa0°C": "heat>1000",
+        },
+        inplace=True,
+    )
+    process_temperature_bands.loc[:, "heat>500"] = (
+        process_temperature_bands.loc[:, "heat500-1000"]
+        + process_temperature_bands.loc[:, "heat>1000"]
+    )
+    process_temperature_bands = process_temperature_bands[
+        ["heat<100", "heat100-200", "heat200-500", "heat>500"]
+    ]
+
     demand = industrial_energy_demand(countries.intersection(eu27), year)
 
     # output in MtMaterial/a
@@ -305,8 +430,54 @@ if __name__ == "__main__":
     # add energy consumption of coke ovens
     demand = add_coke_ovens(demand, snakemake.input.transformation_output_coke, year)
 
+    heat_carriers = ["waste", "heat", "biomass", "gas"]
+    bands = ["heat<100", "heat100-200", "heat200-500", "heat>500"]
+
+    endog_heat = demand.copy()
+    endog_heat = endog_heat.reindex(demand.index.union(bands)).replace(np.nan, 0)
+
+    print(endog_heat.columns.get_level_values(1).unique())
+
+    # for each heat-endogenous process, split energy in heat carriers into the respective temperature bands
+    for process, key in process_temperature_band_mapper.items():
+        as_fuels = endog_heat.loc[heat_carriers, idx[:, process]]
+
+        as_heat = pd.DataFrame(
+            np.outer(
+                process_temperature_bands.loc[key].mean().values, as_fuels.sum().values
+            ),
+            index=bands,
+            columns=as_fuels.sum().index,
+        )
+
+        endog_heat.loc[bands, idx[:, process]] = as_heat
+        endog_heat.loc[heat_carriers, idx[:, process]] = 0.0
+
+    for process, band_shares in backup_temperature_band_shares.items():
+        band_shares = pd.Series(band_shares)
+
+        as_fuels = endog_heat.loc[heat_carriers, idx[:, process]]
+
+        as_heat = pd.DataFrame(
+            np.outer(band_shares.values, as_fuels.sum().values),
+            index=band_shares.index,
+            columns=as_fuels.sum().index,
+        )
+
+        endog_heat.loc[bands, idx[:, process]] = as_heat
+        endog_heat.loc[heat_carriers, idx[:, process]] = 0.0
+
+    # heat is only nonzero in processes that are not endogenous, so this does not produce an error
+    endog_heat.loc["heat<100"] += endog_heat.loc["heat"]
+    endog_heat.drop("heat", inplace=True)
+
+    demand.rename(index={"heat": "heat<100"}, inplace=True)
+    demand = pd.concat(
+        [endog_heat, demand], axis=0, keys=["endogenous", "exogenous"]
+    ).replace(np.nan, 0)
+
     # style and annotation
-    demand.index.name = "TWh/a"
+    demand.index.names = ["heat_mode", "TWh/a"]
     demand.sort_index(axis=1, inplace=True)
 
     fn = snakemake.output.industrial_energy_demand_per_country_today
