@@ -175,7 +175,7 @@ rule build_hourly_heat_demand:
         heat_demand=resources("daily_heat_demand_total.nc"),
     output:
         heat_demand=resources("hourly_heat_demand_total.nc"),
-        heat_dsm_profile=resources("residential_heat_dsm_profile_total.csv"),
+        heat_dsm_profile=resources("residential_heat_dsm_profile.csv"),
     resources:
         mem_mb=2000,
     threads: 8
