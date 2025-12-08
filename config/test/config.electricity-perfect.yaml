@@ -9,7 +9,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 foresight: perfect
 planning_horizons: [2030, 2040]
@@ -36,8 +35,6 @@ co2_budget:
     enable: false
 
 electricity:
-  co2limit_enable: false  # Disabled - using unified co2_budget instead
-  co2limit: 100000000.0
   gaslimit_enable: false
   gaslimit: 0
   transmission_limit: vopt

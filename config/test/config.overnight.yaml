@@ -111,7 +111,7 @@ solving:
   solver:
     name: highs
     options: highs-simplex
-  mem: 4000
+  mem_mb: 4000
 
   check_objective:
     enable: false

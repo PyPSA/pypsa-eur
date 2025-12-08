@@ -21,7 +21,10 @@ snapshots:
 
 sector:
   enabled: true
-  central_heat_vent: true
+  heat_vent:
+    urban central: true
+    urban decentral: true
+    rural: true
   solid_biomass_import:
     enable: true
   district_heating:
@@ -107,7 +110,7 @@ solving:
   solver:
     name: highs
     options: highs-simplex
-  mem: 4000
+  mem_mb: 4000
 
 plotting:
   map:
