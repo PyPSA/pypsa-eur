@@ -53,8 +53,7 @@ def benchmarks(fn):
     return str(path)
 
 
-cutout_dir = config["atlite"]["cutout_directory"]
-CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
+# CDIR will be set after common.smk is included
 RESULTS = "results/" + RDIR
 
 
@@ -67,6 +66,14 @@ wildcard_constraints:
 
 
 include: "rules/common.smk"
+
+
+# Set cutout directory after dataset_version function is available
+cutout_dir = dataset_version("cutout")["folder"]
+shared_cutouts = run.get("shared_cutouts", False)
+CDIR = Path(cutout_dir).joinpath("" if shared_cutouts else RDIR)
+
+
 include: "rules/collect.smk"
 include: "rules/retrieve.smk"
 include: "rules/build_electricity.smk"

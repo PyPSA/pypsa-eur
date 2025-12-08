@@ -73,7 +73,7 @@ def get_compose_inputs(w):
                 **input_heat_source_power(w),
                 **rules.cluster_gas_network.output,
                 **rules.build_gas_input_locations.output,
-                "eurostat": "data/eurostat/Balances-April2023",
+                "eurostat": rules.retrieve_eurostat_balances.output["directory"],
                 "pop_weighted_energy_totals": resources(
                     "pop_weighted_energy_totals.csv"
                 ),
@@ -83,6 +83,7 @@ def get_compose_inputs(w):
                 "transport_data": resources("transport_data.csv"),
                 "avail_profile": resources("avail_profile.csv"),
                 "dsm_profile": resources("dsm_profile.csv"),
+                "heat_dsm_profile": resources("residential_heat_dsm_profile.csv"),
                 "co2_totals_name": resources("co2_totals.csv"),
                 "co2": "data/bundle/eea/UNFCCC_v23.csv",
                 "biomass_potentials": resources("biomass_potentials_{horizon}.csv"),

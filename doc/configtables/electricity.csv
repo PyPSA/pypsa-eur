@@ -13,7 +13,7 @@ operational_reserve,,,Settings for reserve requirements following `GenX <https:/
 max_hours,,, 
 -- battery,h,float,Maximum state of charge capacity of the battery in terms of hours at full output capacity ``p_nom``. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
 -- H2,h,float,Maximum state of charge capacity of the hydrogen storage in terms of hours at full output capacity ``p_nom``. Cf. `PyPSA documentation <https://pypsa.readthedocs.io/en/latest/components.html#storage-unit>`_.
-extendable_carriers,,, 
+extendable_carriers,,,
 -- Generator,--,Any extendable carrier,"Defines existing or non-existing conventional and renewable power plants to be extendable during the optimization. Conventional generators can only be built/expanded where already existent today. If a listed conventional carrier is not included in the ``conventional_carriers`` list, the lower limit of the capacity expansion is set to 0."
 -- StorageUnit,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
 -- Store,--,"Any subset of {'battery','H2'}",Adds extendable storage units (battery and/or hydrogen) at every node/bus after clustering without capacity limits and with zero initial capacity.
@@ -27,7 +27,7 @@ everywhere_powerplants,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignit
 conventional_carriers,--,"Any subset of {nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass}","List of conventional power plants to include in the model from ``resources/<run>/powerplants.csv``. If an included carrier is also listed in ``extendable_carriers``, the capacity is taken as a lower bound."
 ,,, 
 renewable_carriers,--,"Any subset of {solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro}",List of renewable generators to include in the model.
-estimate_renewable_capacities,,, 
+estimate_renewable_capacities,,,
 -- enable,,bool,Activate routine to estimate renewable capacities during :mod:`compose_network`. Do not enable this for ``foresight: myopic`` or ``foresight: perfect`` runs, since brownfield injections rely on solved/baseline capacities rather than this estimator.
 -- from_gem,--,bool,Add renewable capacities from `Global Energy Monitor's Global Solar Power Tracker <https://globalenergymonitor.org/projects/global-solar-power-tracker/>`_ and `Global Energy Monitor's Global Wind Power Tracker <https://globalenergymonitor.org/projects/global-wind-power-tracker/>`_.
 -- year,--,bool,Renewable capacities are based on existing capacities reported by IRENA (IRENASTAT) for the specified year
@@ -36,7 +36,7 @@ estimate_renewable_capacities,,,
 -- -- Offshore,--,"{onwind}","PyPSA-Eur carrier that is considered for existing onshore wind capacities (IRENA, GEM)."
 -- -- Offshore,--,"Any of {offwind-ac, offwind-dc, offwind-float}","PyPSA-Eur carrier that is considered for existing offshore wind technology (IRENA, GEM)."
 -- -- PV,--,{solar},"PyPSA-Eur carrier that is considered for existing solar PV capacities (IRENA, GEM)."
-autarky,,,
+autarky,,, 
 -- enable,bool,true or false,Require each node to be autarkic by removing all lines and links.
 -- by_country,bool,true or false,"Require each country to be autarkic by removing all cross-border lines and links. ``electricity: autarky`` must be enabled."
 exclude_carriers,--,List of carrier names,"List of carrier names to exclude from the electricity sector model. Useful for selectively removing specific technologies from the network."

@@ -1,7 +1,7 @@
 ,Unit,Values,Description
 options,,,
 -- clip_p_max_pu,p.u.,float,To avoid too small values in the renewables` per-unit availability time series values below this threshold are set to zero.
--- load_shedding,bool/float,"{'true','false', float}","Add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. If load shedding is a float, it denotes the marginal cost in EUR/kWh."
+-- load_shedding,bool/float,"{'true','false', float}",Set to true to add generators with very high marginal cost to simulate load shedding and avoid problem infeasibilities. The default value is 1e5 €/MWh = 100 €/kWh (see http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full). Override this value by setting a float denoting the new cost in MWh. Consider lowering the cost if you are struggling with long solve times.
 -- curtailment_mode,bool/float,"{'true','false'}",Fixes the dispatch profiles of generators with time-varying p_max_pu by setting ``p_min_pu = p_max_pu`` and adds an auxiliary curtailment generator (with negative sign to absorb excess power) at every AC bus. This can speed up the solving process as the curtailment decision is aggregated into a single generator per region. Defaults to ``false``.
 -- noisy_costs,bool,"{'true','false'}","Add random noise to marginal cost of generators by :math:`\mathcal{U}(0.009,0,011)` and capital cost of lines and links by :math:`\mathcal{U}(0.09,0,11)`."
 -- skip_iterations,bool,"{'true','false'}","Skip iterating, do not update impedances of branches. Defaults to true."

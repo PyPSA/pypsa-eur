@@ -814,6 +814,7 @@ def add_sector_components(
             retro_cost_file=inputs.get("retro_cost"),
             floor_area_file=inputs.get("floor_area"),
             heat_source_profile_files=heat_source_profiles,
+            heat_dsm_profile_file=inputs.get("heat_dsm_profile"),
             params=params,
             pop_weighted_energy_totals=pop_weighted_energy_totals,
             heating_efficiencies=heating_efficiencies,

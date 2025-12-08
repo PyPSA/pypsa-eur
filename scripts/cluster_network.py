@@ -4,7 +4,7 @@
 
 
 """
-Creates networks clustered to ``{cluster}`` number of zones with aggregated
+Creates networks clustered to configured number of zones with aggregated
 buses and transmission corridors.
 
 Outputs
