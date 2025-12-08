@@ -1080,38 +1080,6 @@ rule build_industrial_production_per_node:
         "../scripts/build_industrial_production_per_node.py"
 
 
-rule build_industrial_energy_demand_per_node:
-    input:
-        industry_sector_ratios=resources(
-            "industry_sector_ratios_{planning_horizons}.csv"
-        ),
-        industrial_production_per_node=resources(
-            "industrial_production_base_s_{clusters}_{planning_horizons}.csv"
-        ),
-        industrial_energy_demand_per_node_today=resources(
-            "industrial_energy_demand_today_base_s_{clusters}.csv"
-        ),
-    output:
-        industrial_energy_demand_per_node=resources(
-            "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
-        ),
-    threads: 1
-    resources:
-        mem_mb=1000,
-    log:
-        logs(
-            "build_industrial_energy_demand_per_node_{clusters}_{planning_horizons}.log"
-        ),
-    benchmark:
-        (
-            benchmarks(
-                "build_industrial_energy_demand_per_node/s_{clusters}_{planning_horizons}"
-            )
-        )
-    script:
-        "../scripts/build_industrial_energy_demand_per_node.py"
-
-
 rule build_industrial_energy_demand_per_country_today:
     params:
         countries=config_provider("countries"),
@@ -1160,6 +1128,38 @@ rule build_industrial_energy_demand_per_node_today:
         benchmarks("build_industrial_energy_demand_per_node_today/s_{clusters}")
     script:
         "../scripts/build_industrial_energy_demand_per_node_today.py"
+
+
+rule build_industrial_energy_demand_per_node:
+    input:
+        industry_sector_ratios=resources(
+            "industry_sector_ratios_{planning_horizons}.csv"
+        ),
+        industrial_production_per_node=resources(
+            "industrial_production_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+        industrial_energy_demand_per_node_today=resources(
+            "industrial_energy_demand_today_base_s_{clusters}.csv"
+        ),
+    output:
+        industrial_energy_demand_per_node=resources(
+            "industrial_energy_demand_base_s_{clusters}_{planning_horizons}.csv"
+        ),
+    threads: 1
+    resources:
+        mem_mb=1000,
+    log:
+        logs(
+            "build_industrial_energy_demand_per_node_{clusters}_{planning_horizons}.log"
+        ),
+    benchmark:
+        (
+            benchmarks(
+                "build_industrial_energy_demand_per_node/s_{clusters}_{planning_horizons}"
+            )
+        )
+    script:
+        "../scripts/build_industrial_energy_demand_per_node.py"
 
 
 rule build_retro_cost:
