@@ -436,8 +436,6 @@ if __name__ == "__main__":
     endog_heat = demand.copy()
     endog_heat = endog_heat.reindex(demand.index.union(bands)).replace(np.nan, 0)
 
-    print(endog_heat.columns.get_level_values(1).unique())
-
     # for each heat-endogenous process, split energy in heat carriers into the respective temperature bands
     for process, key in process_temperature_band_mapper.items():
         as_fuels = endog_heat.loc[heat_carriers, idx[:, process]]
