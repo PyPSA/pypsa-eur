@@ -308,20 +308,33 @@ rule build_geothermal_heat_potential:
             "geothermal",
             "ignore_missing_regions",
         ),
+        heat_source_cooling=config_provider(
+            "sector", "district_heating", "heat_source_cooling"
+        ),
     input:
         isi_heat_potentials="data/isi_heat_utilisation_potentials.xlsx",
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        central_heating_forward_temperature_profiles=resources(
+            "central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
+        central_heating_return_temperature_profiles=resources(
+            "central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc"
+        ),
         lau_regions="data/lau_regions.zip",
     output:
         heat_source_power=resources(
-            "heat_source_power_geothermal_base_s_{clusters}.csv"
+            "heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv"
         ),
     resources:
         mem_mb=2000,
     log:
-        logs("build_heat_source_potentials_geothermal_s_{clusters}.log"),
+        logs(
+            "build_heat_source_potentials_geothermal_s_{clusters}_{planning_horizons}.log"
+        ),
     benchmark:
-        benchmarks("build_heat_source_potentials/geothermal_s_{clusters}")
+        benchmarks(
+            "build_heat_source_potentials/geothermal_s_{clusters}_{planning_horizons}"
+        )
     script:
         "../scripts/build_geothermal_heat_potential.py"
 
@@ -1449,7 +1462,9 @@ def input_heat_source_power(w):
     for heat_source_name in heat_sources:
         if HeatSource(heat_source_name).requires_generator:
             result[heat_source_name] = resources(
-                "heat_source_power_" + heat_source_name + "_base_s_{clusters}.csv"
+                "heat_source_power_"
+                + heat_source_name
+                + "_base_s_{clusters}_{planning_horizons}.csv"
             )
 
     return result

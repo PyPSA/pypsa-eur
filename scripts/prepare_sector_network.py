@@ -3280,10 +3280,18 @@ def add_heat(
                 )
 
             if heat_source.requires_generator:
-                p_max_source = pd.read_csv(
+                # Load time-varying heat source power (MW)
+                heat_source_power = pd.read_csv(
                     heat_source_profile_files[heat_source.value],
                     index_col=0,
-                ).squeeze()[nodes]
+                    parse_dates=True,
+                )[nodes]
+
+                # p_nom_max is the maximum available capacity across all timesteps
+                p_nom_max = heat_source_power.max()
+
+                # p_max_pu is the per-unit availability (0-1) relative to p_nom_max
+                p_max_pu = heat_source_power / p_nom_max
 
                 capital_cost = heat_source.get_capital_cost(
                     costs, overdim_factor, heat_system
@@ -3297,9 +3305,10 @@ def add_heat(
                     bus=heat_source.resource_bus(nodes, heat_system),
                     carrier=heat_carrier,
                     p_nom_extendable=True,
+                    p_nom_max=p_nom_max,
                     capital_cost=capital_cost,
                     lifetime=lifetime,
-                    p_max_pu=p_max_source,
+                    p_max_pu=p_max_pu,
                 )
 
             bus2_heat_pump = heat_source.get_heat_pump_bus2(nodes, heat_system)
@@ -3360,8 +3369,11 @@ def add_heat(
                     bus0=nodes + f" {heat_system} heat",
                     bus1=nodes + f" {heat_system} resistive heat",
                     bus2=ptes_heat_source.medium_temperature_bus(nodes, heat_system),
+                    # eff = 1 - eff2 (energy conservation)
                     efficiency=ptes_boost_per_discharge_profiles
                     / (ptes_boost_per_discharge_profiles + 1),
+                    # Use 1 unit of medium-temperature heat to produce (ptes_boost_per_discharge_profiles + 1) units of district heating
+                    # (similar to HP balance: p_el x COP = p_source + p_el )
                     efficiency2=1 / (ptes_boost_per_discharge_profiles + 1),
                     p_nom_extendable=True,
                     p_min_pu=-ptes_boost_per_discharge_profiles
