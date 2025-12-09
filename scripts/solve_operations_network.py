@@ -63,18 +63,18 @@ if __name__ == "__main__":
         limit_max_growth=snakemake.params.get("sector", {}).get("limit_max_growth"),
     )
 
-    # Collect solver arguments
-    model_kwargs, solve_kwargs = collect_kwargs(
-        snakemake.config, snakemake.params.solving, planning_horizons
-    )
-    all_kwargs = {**model_kwargs, **solve_kwargs}
-    all_kwargs["log_fn"] = snakemake.log.solver
-
     # Check if rolling horizon is enabled
     rolling_horizon = cf_solving.get("rolling_horizon", False)
-    if rolling_horizon:
-        all_kwargs["horizon"] = cf_solving.get("horizon", 365)
-        all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+    mode = "rolling_horizon" if rolling_horizon else "single"
+
+    # Collect solver arguments
+    all_kwargs, _ = collect_kwargs(
+        snakemake.config,
+        snakemake.params.solving,
+        planning_horizons,
+        log_fn=snakemake.log.solver,
+        mode=mode,
+    )
 
     logging_frequency = snakemake.config.get("solving", {}).get(
         "mem_logging_frequency", 30

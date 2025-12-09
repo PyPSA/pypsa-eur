@@ -512,7 +512,7 @@ def prepare_network(
         n.set_snapshots(n.snapshots[:nhours])
         n.snapshot_weightings[:] = 8760.0 / nhours
 
-    if foresight == "myopic":
+    if foresight == "myopic" and planning_horizons:
         add_land_use_constraint(n, planning_horizons)
 
     if foresight == "perfect":
@@ -1274,6 +1274,8 @@ def collect_kwargs(
     config: dict,
     solving: dict,
     planning_horizons: str | None = None,
+    log_fn: str | None = None,
+    mode: str = "single",
 ) -> tuple[dict, dict]:
     """
     Prepare keyword arguments separated for model creation and model solving.
@@ -1286,6 +1288,11 @@ def collect_kwargs(
         Dictionary of solving options and configuration
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
+    log_fn : str, optional
+        Path to solver log file
+    mode : str, optional
+        Optimization mode: 'single', 'rolling_horizon', or 'iterative'
+        Default is 'single'
 
     Returns
     -------
@@ -1293,6 +1300,8 @@ def collect_kwargs(
         Two dictionaries: (model_kwargs, solve_kwargs)
         - model_kwargs: Arguments for n.optimize.create_model()
         - solve_kwargs: Arguments for n.optimize.solve_model()
+        For 'rolling_horizon' and 'iterative' modes, returns merged kwargs
+        with additional mode-specific parameters
     """
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
@@ -1316,6 +1325,9 @@ def collect_kwargs(
     solve_kwargs["io_api"] = cf_solving.get("io_api", None)
     solve_kwargs["keep_files"] = cf_solving.get("keep_files", False)
 
+    if log_fn:
+        solve_kwargs["log_fn"] = log_fn
+
     oetc = solving.get("oetc", None)
     if oetc:
         oetc["credentials"] = OetcCredentials(
@@ -1330,25 +1342,43 @@ def collect_kwargs(
     if solver_name == "gurobi":
         logging.getLogger("gurobipy").setLevel(logging.CRITICAL)
 
+    # Handle special modes
+    if mode == "rolling_horizon":
+        all_kwargs = {**model_kwargs, **solve_kwargs}
+        all_kwargs["horizon"] = cf_solving.get("horizon", 365)
+        all_kwargs["overlap"] = cf_solving.get("overlap", 0)
+        return all_kwargs, {}
+
+    elif mode == "iterative":
+        all_kwargs = {**model_kwargs, **solve_kwargs}
+        all_kwargs["track_iterations"] = cf_solving["track_iterations"]
+        all_kwargs["min_iterations"] = cf_solving["min_iterations"]
+        all_kwargs["max_iterations"] = cf_solving["max_iterations"]
+
+        if cf_solving["post_discretization"].get("enable", False):
+            logger.info("Add post-discretization parameters.")
+            all_kwargs.update(cf_solving["post_discretization"])
+
+        return all_kwargs, {}
+
     return model_kwargs, solve_kwargs
 
 
-def prepare_optimization_problem(
+def create_optimization_model(
     n: pypsa.Network,
     config: dict,
     params: dict,
-    solving: dict,
+    model_kwargs: dict,
+    solve_kwargs: dict,
     planning_horizons: str | None = None,
-    **model_kwargs_override,
-) -> tuple[dict, dict]:
+) -> None:
     """
     Prepare optimization problem by creating model and adding extra functionality.
 
     This function:
     1. Attaches config and params to network for extra_functionality
-    2. Collects model and solver kwargs
-    3. Creates the optimization model
-    4. Adds extra functionality (custom constraints)
+    2. Creates the optimization model
+    3. Adds extra functionality (custom constraints)
 
     Parameters
     ----------
@@ -1358,27 +1388,16 @@ def prepare_optimization_problem(
         Configuration dictionary containing solver settings
     params : dict
         Dictionary of solving parameters
-    solving : dict
-        Dictionary of solving options and configuration
+    model_kwargs : dict
+        Arguments for n.optimize.create_model()
+    solve_kwargs : dict
+        Arguments for n.optimize.solve_model()
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
-    **model_kwargs_override
-        Override specific model_kwargs (e.g., log_fn)
-
-    Returns
-    -------
-    tuple[dict, dict]
-        (model_kwargs, solve_kwargs) used for problem creation
     """
     # Add config and params to network for extra_functionality
     n.config = config
     n.params = params
-
-    # Prepare solver kwargs
-    model_kwargs, solve_kwargs = collect_kwargs(config, solving, planning_horizons)
-
-    # Apply any overrides
-    model_kwargs.update(model_kwargs_override)
 
     # Create optimization model
     logger.info("Creating optimization model...")
@@ -1387,8 +1406,6 @@ def prepare_optimization_problem(
     # Add extra functionality (custom constraints)
     logger.info("Adding extra functionality (custom constraints)...")
     extra_functionality(n, n.snapshots, planning_horizons)
-
-    return model_kwargs, solve_kwargs
 
 
 if __name__ == "__main__":
@@ -1442,15 +1459,15 @@ if __name__ == "__main__":
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=logging_frequency
     ) as mem:
-        if rolling_horizon:
+        if rolling_horizon and snakemake.rule == "solve_operations_network":
             logger.info("Using rolling horizon optimization...")
-            model_kwargs, solve_kwargs = collect_kwargs(
-                snakemake.config, snakemake.params.solving, planning_horizons
+            all_kwargs, _ = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="rolling_horizon",
             )
-            all_kwargs = {**model_kwargs, **solve_kwargs}
-            all_kwargs["horizon"] = cf_solving.get("horizon", 365)
-            all_kwargs["overlap"] = cf_solving.get("overlap", 0)
-            all_kwargs["log_fn"] = snakemake.log.solver
 
             n.config = snakemake.config
             n.params = snakemake.params
@@ -1462,14 +1479,21 @@ if __name__ == "__main__":
 
         elif skip_iterations:
             logger.info("Using single-pass optimization...")
-            model_kwargs, solve_kwargs = prepare_optimization_problem(
+            model_kwargs, solve_kwargs = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="single",
+            )
+            create_optimization_model(
                 n,
                 config=snakemake.config,
                 params=snakemake.params,
-                solving=snakemake.params.solving,
+                model_kwargs=model_kwargs,
+                solve_kwargs=solve_kwargs,
                 planning_horizons=planning_horizons,
             )
-            solve_kwargs["log_fn"] = snakemake.log.solver
 
             logger.info("Solving model...")
             status, condition = n.optimize.solve_model(**solve_kwargs)
@@ -1477,18 +1501,13 @@ if __name__ == "__main__":
         else:
             logger.info("Using iterative transmission expansion optimization...")
 
-            model_kwargs, solve_kwargs = collect_kwargs(
-                snakemake.config, snakemake.params.solving, planning_horizons
+            all_kwargs, _ = collect_kwargs(
+                snakemake.config,
+                snakemake.params.solving,
+                planning_horizons,
+                log_fn=snakemake.log.solver,
+                mode="iterative",
             )
-            all_kwargs = {**model_kwargs, **solve_kwargs}
-            all_kwargs["track_iterations"] = cf_solving["track_iterations"]
-            all_kwargs["min_iterations"] = cf_solving["min_iterations"]
-            all_kwargs["max_iterations"] = cf_solving["max_iterations"]
-            all_kwargs["log_fn"] = snakemake.log.solver
-
-            if cf_solving["post_discretization"].get("enable", False):
-                logger.info("Add post-discretization parameters.")
-                all_kwargs.update(cf_solving["post_discretization"])
 
             n.config = snakemake.config
             n.params = snakemake.params
@@ -1502,11 +1521,12 @@ if __name__ == "__main__":
     logger.info(f"Maximum memory usage: {mem.mem_usage}")
 
     # Check results
-    if status != "ok" and not rolling_horizon:
-        logger.warning(
-            f"Solving status '{status}' with termination condition '{condition}'"
-        )
-    check_objective_value(n, snakemake.params.solving)
+    if not rolling_horizon:
+        if status != "ok":
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+        check_objective_value(n, snakemake.params.solving)
 
     if "warning" in condition:
         raise RuntimeError("Solving status 'warning'. Discarding solution.")
