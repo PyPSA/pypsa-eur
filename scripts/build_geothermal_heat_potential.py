@@ -2,38 +2,69 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Build heat source potentials for a given heat source.
+Build geothermal heat source potentials for district heating networks.
 
-This script maps and aggregates geothermal heat source potentials `onshore_regions`. Input data is provided on LAU-level and is aggregated to the onshore regions.
-It scales the heat source utilisation potentials to technical potentials by dividing the utilisation potentials by the full load hours of the heat source, also taking into account the energy unit set for the respective source in the config.
+This script maps and aggregates geothermal heat source potentials from LAU-level
+data to onshore regions. It converts supply potentials from Manz et al. (2024)
+to technical potentials (MW) and scales them based on the actual temperature
+differences in the district heating system.
 
+Temperature-Based Scaling
+-------------------------
+Manz et al. (2024) assume a design temperature difference of 15 K when computing
+geothermal heat potentials. This script scales the potentials based on the actual
+temperature delta achievable in the district heating system:
+
+a) If source_temperature > forward_temperature (direct utilisation):
+   scale_factor = (source_temperature - return_temperature) / 15 K
+
+b) If forward_temperature >= source_temperature > return_temperature (preheating):
+   scale_factor = (source_temperature - return_temperature + heat_source_cooling) / 15 K
+
+c) If source_temperature <= return_temperature (heat pump only):
+   scale_factor = heat_source_cooling / 15 K
+
+This results in time-varying heat source power profiles that reflect the actual
+extractable heat capacity at each timestep.
 
 Relevant Settings
 -----------------
 .. code:: yaml
+
     sector:
         district_heating:
+            heat_source_cooling: 6  # K
+            geothermal:
+                constant_temperature_celsius: 65
             limited_heat_sources:
                 geothermal:
-                    constant_temperature_celsius
+                    ignore_missing_regions: false
 
 Inputs
 ------
-- `resources/<run_name>/regions_onshore.geojson`
-- `resources/<run_name>/lau_regions.geojson`
-- `resources/<run_name>/isi_heat_potentials.xlsx`
+- ``data/isi_heat_utilisation_potentials.xlsx``: Heat potentials from Manz et al. (2024)
+- ``resources/<run_name>/regions_onshore_base_s_{clusters}.geojson``: Onshore regions
+- ``resources/<run_name>/central_heating_forward_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Forward temperature profiles
+- ``resources/<run_name>/central_heating_return_temperature_profiles_base_s_{clusters}_{planning_horizons}.nc``: Return temperature profiles
+- ``data/lau_regions.zip``: LAU region geometries
 
 Outputs
 -------
-- `resources/<run_name>/heat_source_technical_potential_{heat_source}_base_s_{clusters}.csv`
+- ``resources/<run_name>/heat_source_power_geothermal_base_s_{clusters}_{planning_horizons}.csv``:
+  Time-varying geothermal heat source power (MW) with time as index and regions as columns.
 
 Raises
 ------
-- ValueError if some LAU regions in ISI heat potentials are missing from the LAU Regions data.
+ValueError
+    If LAU regions in ISI heat potentials are missing from the LAU Regions data.
+ValueError
+    If onshore regions outside EU-27 have no heat source power and ignore_missing_regions is False.
 
 Source
-----------
-- Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111, https://doi.org/10.1016/j.renene.2024.120111
+------
+Manz et al. 2024: "Spatial analysis of renewable and excess heat potentials for
+climate-neutral district heating in Europe", Renewable Energy, vol. 224, no. 120111,
+https://doi.org/10.1016/j.renene.2024.120111
 """
 
 import logging
@@ -139,7 +170,7 @@ def scale_heat_source_power(
 
     # Convert heat_source_power to DataArray and broadcast
     heat_source_power_da = xr.DataArray(
-        heat_source_power.values,
+        heat_source_power.squeeze().values,
         dims=["name"],
         coords={"name": regions},
     )
