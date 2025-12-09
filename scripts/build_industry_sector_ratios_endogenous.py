@@ -1,6 +1,26 @@
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
 # SPDX-License-Identifier: MIT
+"""
+Build endogenous industry sector ratios.
+
+Description
+-------
+
+This rule first builds energy needs in MWh/t for different industry sectors and production routes.
+
+These energy needs are expressed in primary energy carriers methane, biomass, low-grade heat etc.
+
+However, a large share of that primary energy is used to produce heat which, depending on the
+temperature requirement, can be substituted by other heat carriers.
+
+To the end of endogenising this decision in the model, the heat-producing input energies are here
+translated and split into the respective temperature bands, depending on industry sector and process.
+
+These splits are mostly taken from Fleiter et al. 2025.
+
+The script does not cover the steel sector. Its endogenisation is taken care of elsewhere.
+"""
 
 import logging
 
@@ -188,6 +208,7 @@ def build_industry_sector_ratios_endogenous():
         endogenous_sector_ratios.loc[bands, idx[:, process]] = as_heat
         endogenous_sector_ratios.loc[heat_carriers, idx[:, process]] = 0.0
 
+    # for processes not covered by Fleiter et al. 2025
     for process, band_shares in backup_temperature_band_shares.items():
         band_shares = pd.Series(band_shares)
 
@@ -202,7 +223,7 @@ def build_industry_sector_ratios_endogenous():
         endogenous_sector_ratios.loc[bands, idx[:, process]] = as_heat
         endogenous_sector_ratios.loc[heat_carriers, idx[:, process]] = 0.0
 
-    # heat is only nonzero in processes that are not endogenous, so this does not produce an error
+    # heat is only nonzero in processes that are not endogenous here, so this does not produce an error
     endogenous_sector_ratios.loc["heat<100"] += endogenous_sector_ratios.loc["heat"]
     endogenous_sector_ratios.drop("heat", inplace=True)
 
