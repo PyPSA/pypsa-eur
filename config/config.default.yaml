@@ -8,7 +8,7 @@ tutorial: false
 
 logging:
   level: INFO
-  format: '%(levelname)s:%(name)s:%(message)s'
+  format: "%(levelname)s:%(name)s:%(message)s"
 
 remote:
   ssh: ""
@@ -25,7 +25,6 @@ run:
   shared_resources:
     policy: false
     exclude: []
-  shared_cutouts: true
   use_shadow_directory: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
@@ -88,11 +87,6 @@ snapshots:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
-  retrieve: auto
-  retrieve_databundle: true
-  retrieve_cost_data: true
-  build_cutout: false
-  retrieve_cutout: true
   drop_leap_day: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -108,8 +102,7 @@ co2_budget:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages: [220., 300., 330., 380., 400., 500., 750.]
-  base_network: osm-prebuilt
-  osm-prebuilt-version: 0.6
+  base_network: osm
   gaslimit_enable: false
   gaslimit: false
   co2limit_enable: false
@@ -157,7 +150,6 @@ electricity:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
-  cutout_directory: cutouts
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 16
   show_progress: false
@@ -172,8 +164,22 @@ atlite:
       dx: 0.3
       dy: 0.3
       time: ['2013', '2013']
-      # features: [] 
-      # sarah_dir: ""
+      # prepare_kwargs:
+      #   features: []
+      #   sarah_dir: ""
+    europe-1940-2024-era5:
+      module: era5
+      x: [-12., 42.]
+      y: [33., 72.]
+      dx: 0.3
+      dy: 0.3
+      time: ['1940', '2024']
+      chunks:
+        time: 500
+      prepare_kwargs:
+        features: ['temperature', 'height', 'runoff']
+        monthly_requests: true
+        tmpdir: "./cutouts_tmp/"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#renewable
 renewable:
@@ -520,7 +526,7 @@ sector:
       rolling_window_ambient_temperature: 72
       relative_annual_temperature_reduction: 0.01
     ptes:
-      dynamic_capacity: true
+      dynamic_capacity: false
       supplemental_heating:
         enable: false
         booster_heat_pump: false
@@ -565,6 +571,23 @@ sector:
     rural:
     - air
     - ground
+  residential_heat:
+    dsm:
+      enable: false
+      direction:
+      - overheat
+      - undercool
+      restriction_value:
+        2020: 0.06
+        2025: 0.16
+        2030: 0.27
+        2035: 0.36
+        2040: 0.38
+        2045: 0.39
+        2050: 0.4
+      restriction_time:
+      - 10
+      - 22
   cluster_heat_buses: true
   heat_demand_cutout: default
   bev_dsm_restriction_value: 0.8
@@ -921,7 +944,6 @@ industry:
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
 costs:
   year: 2050
-  version: v0.13.3
   social_discountrate: 0.02
   fill_values:
     FOM: 0
@@ -979,6 +1001,150 @@ adjustments:
         electricity distribution grid:
           capital_cost: 1.0
     absolute: false
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#data
+data:
+  hotmaps_industrial_sites:
+    source: archive
+    version: latest
+  enspreso_biomass:
+    source: archive
+    version: latest
+  osm:
+    source: archive
+    version: latest
+  worldbank_urban_population:
+    source: archive
+    version: latest
+  gem_europe_gas_tracker:
+    source: archive
+    version: latest
+  co2stop:
+    source: archive
+    version: latest
+  nitrogen_statistics:
+    source: archive
+    version: latest
+  eu_nuts2013:
+    source: archive
+    version: latest
+  eu_nuts2021:
+    source: archive
+    version: latest
+  eurostat_balances:
+    source: archive
+    version: latest
+  eurostat_household_balances:
+    source: archive
+    version: latest
+  wdpa:
+    source: archive
+    version: latest
+  wdpa_marine:
+    source: archive
+    version: latest
+  luisa_land_cover:
+    source: archive
+    version: latest
+  jrc_idees:
+    source: archive
+    version: latest
+  scigrid_gas:
+    source: primary
+    version: latest
+  synthetic_electricity_demand:
+    source: primary
+    version: latest
+  copernicus_land_cover:
+    source: primary
+    version: latest
+  ship_raster:
+    source: archive
+    version: latest
+  eez:
+    source: archive
+    version: latest
+  nuts3_population:
+    source: archive
+    version: latest
+  gdp_per_capita:
+    source: archive
+    version: latest
+  population_count:
+    source: archive
+    version: latest
+  ghg_emissions:
+    source: archive
+    version: latest
+  gebco:
+    source: archive
+    version: latest
+  attributed_ports:
+    source: archive
+    version: latest
+  corine:
+    source: archive
+    version: latest
+  emobility:
+    source: archive
+    version: latest
+  h2_salt_caverns:
+    source: archive
+    version: latest
+  lau_regions:
+    source: archive
+    version: latest
+  aquifer_data:
+    source: archive
+    version: latest
+  osm_boundaries:
+    source: archive
+    version: latest
+  gem_gspt:
+    source: archive
+    version: latest
+  tyndp:
+    source: archive
+    version: latest
+  powerplants:
+    source: primary
+    version: latest
+  costs:
+    source: primary
+    version: latest
+  country_runoff:
+    source: archive
+    version: latest
+  country_hdd:
+    source: archive
+    version: latest
+  natura:
+    source: archive
+    version: latest
+  bfs_road_vehicle_stock:
+    source: primary
+    version: latest
+  bfs_gdp_and_population:
+    source: primary
+    version: latest
+  mobility_profiles:
+    source: archive
+    version: latest
+  cutout:
+    source: archive
+    version: latest
+  dh_areas:
+    source: archive
+    version: latest
+  geothermal_heat_utilisation_potentials:
+    source: archive
+    version: latest
+  jrc_ardeco:
+    source: archive
+    version: latest
+
+secrets:
+  corine: '' #Add API key here if primary source is used for retrieving corine dataset after registering in https://land.copernicus.eu/user/login
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
 solving:

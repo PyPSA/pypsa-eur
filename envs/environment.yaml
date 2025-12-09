@@ -62,3 +62,4 @@ dependencies:
 - xarray >=2024.3.0,<2025.7.0
 - xlrd >=2.0.2
 - yaml >=0.2.5
+- snakemake-storage-plugin-cached-http >=0.1.0
