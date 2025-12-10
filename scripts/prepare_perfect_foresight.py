@@ -412,7 +412,7 @@ def set_carbon_constraints(
     pypsa.Network
         Network with carbon constraints added
     """
-    if co2_budget and isinstance(co2_budget, float):
+    if co2_budget is not None and isinstance(co2_budget, float):
         budget = co2_budget * 1e9  # convert to t CO2
 
         logger.info(f"add carbon budget of {budget}")
