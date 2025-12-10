@@ -13,9 +13,9 @@ if (
         input:
             base_network=resources("networks/base.nc"),
             stations_polygon=resources(
-                "osm/upstream/build/geojson/stations_polygon.geojson"
+                "osm/geojson/stations_polygon.geojson"
             ),
-            buses_polygon=resources("osm/upstream/build/geojson/buses_polygon.geojson"),
+            buses_polygon=resources("osm/geojson/buses_polygon.geojson"),
         output:
             buses=resources("osm/upstream/release/buses.csv"),
             converters=resources("osm/upstream/release/converters.csv"),

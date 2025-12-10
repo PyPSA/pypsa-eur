@@ -17,7 +17,7 @@ import time
 
 import requests
 
-from scripts._helpers import (  # set_scenario_config,; update_config_from_wildcards,; update_config_from_wildcards,
+from scripts._helpers import (
     configure_logging,
     set_scenario_config,
 )
@@ -35,6 +35,10 @@ def retrieve_osm_data(
         "substations_way",
         "substations_relation",
     ],
+    url="https://overpass-api.de/api/interpreter",
+    max_tries=3,
+    timeout=600,
+    user_agent="",
 ):
     """
     Retrieve OSM data for the specified country and save it to the specified
@@ -55,9 +59,18 @@ def retrieve_osm_data(
             "substations_way",
             "substations_relation",
             ].
+    url : str, optional
+        The URL of the overpass API endpoint. The default is
+        "https://overpass-api.de/api/interpreter".
+    max_tries : int, optional
+        The maximum number of attempts to retrieve the data in case of failure. The
+        default is 3.
+    timeout : int, optional
+        The timeout in seconds for the overpass API requests. The default is 600.
+    user_agent : str
+        The User-Agent string to include in the request headers for fair use policy compliance.
+
     """
-    # Overpass API endpoint URL
-    overpass_url = "https://overpass-api.de/api/interpreter"
 
     features_dict = {
         "cables_way": ['way["power"="cable"]'],
@@ -66,8 +79,12 @@ def retrieve_osm_data(
         "substations_way": ['way["power"="substation"]'],
         "substations_relation": ['relation["power"="substation"]'],
     }
-
+    
     wait_time = 5
+
+    headers = {
+        "User-Agent": user_agent
+    }
 
     for f in features:
         if f not in features_dict:
@@ -78,16 +95,16 @@ def retrieve_osm_data(
                 f"Invalid feature: {f}. Supported features: {list(features_dict.keys())}"
             )
 
-        retries = 3
-        for attempt in range(retries):
+        max_tries = 3
+        for attempt in range(max_tries):
             logger.info(
                 f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt + 1})..."
             )
-
+            
             # Build the overpass query
             op_area = f'area["ISO3166-1"="{country}"]'
             op_query = f"""
-                [out:json];
+                [out:json][timeout:{timeout}];
                 {op_area}->.searchArea;
                 (
                 {" ".join(f"{i}(area.searchArea);" for i in features_dict[f])}
@@ -96,7 +113,7 @@ def retrieve_osm_data(
             """
             try:
                 # Send the request
-                response = requests.post(overpass_url, data=op_query)
+                response = requests.post(url, data=op_query, headers=headers)
                 response.raise_for_status()  # Raise HTTPError for bad responses
 
                 filepath = output[f]
@@ -113,13 +130,13 @@ def retrieve_osm_data(
                 logger.debug(
                     f"Response text: {response.text if response else 'No response'}"
                 )
-                if attempt < retries - 1:
+                if attempt < max_tries - 1:
                     wait_time += 15
                     logger.info(f"Waiting {wait_time} seconds before retrying...")
                     time.sleep(wait_time)
                 else:
                     logger.error(
-                        f"Failed to retrieve data for feature '{f}' in country {country} after {retries} attempts."
+                        f"Failed to retrieve data for feature '{f}' in country {country} after {max_tries} attempts."
                     )
             except Exception as e:
                 # For now, catch any other exceptions and log them. Treat this
@@ -127,13 +144,13 @@ def retrieve_osm_data(
                 logger.error(
                     f"Unexpected error for feature '{f}' in country {country}: {e}"
                 )
-                if attempt < retries - 1:
+                if attempt < max_tries - 1:
                     wait_time += 10
                     logger.info(f"Waiting {wait_time} seconds before retrying...")
                     time.sleep(wait_time)
                 else:
                     logger.error(
-                        f"Failed to retrieve data for feature '{f}' in country {country} after {retries} attempts."
+                        f"Failed to retrieve data for feature '{f}' in country {country} after {max_tries} attempts."
                     )
 
 
@@ -141,12 +158,40 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("retrieve_osm_data", country="BE")
-    configure_logging(snakemake)
-    set_scenario_config(snakemake)
+        snakemake = mock_snakemake("retrieve_osm_data_raw", country="BE")
+    default_url = "https://overpass-api.de/api/interpreter"
+
+    overpass_api = snakemake.params.get("overpass_api", {})
+    url = overpass_api.get("url", default_url) or default_url
+    max_tries = overpass_api.get("max_tries", 3)
+    timeout = overpass_api.get("timeout", 600)
+
+    # Build User-Agent header
+    ua_cfg = overpass_api.get("user_agent", {})
+    project = ua_cfg.get("project_name", "UnknownProject")
+    email = ua_cfg.get("email", "no-email")
+    website = ua_cfg.get("website", "no-website")
+
+    user_agent = (
+        f"{project} (Contact: {email}; Website: {website})"
+    )
 
     # Retrieve the OSM data
     country = snakemake.wildcards.country
     output = snakemake.output
 
-    retrieve_osm_data(country, output)
+    retrieve_osm_data(
+        country, 
+        output,
+        features=[
+            "cables_way",
+            "lines_way",
+            "routes_relation",
+            "substations_way",
+            "substations_relation",
+        ],
+        url=url,
+        max_tries=max_tries,
+        timeout=timeout,
+        user_agent=user_agent,
+    )

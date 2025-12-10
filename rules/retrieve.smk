@@ -834,9 +834,9 @@ if (TYDNP_DATASET := dataset_version("tyndp"))["source"] in ["primary", "archive
                 rmtree(macosx_dir, ignore_errors=True)
 
 
+if OSM_DATASET["source"] in ["archive"]:
 
-if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
-    OSM_FILES = [
+    OSM_ARCHIVE_FILES = [
         "buses.csv",
         "converters.csv",
         "lines.csv",
@@ -850,10 +850,10 @@ if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
         input:
             **{
                 file: storage(f"{OSM_DATASET['url']}/files/{file}")
-                for file in OSM_FILES
+                for file in OSM_ARCHIVE_FILES
             },
         output:
-            **{file: f"{OSM_DATASET['folder']}/{file}" for file in OSM_FILES},
+            **{file: f"{OSM_DATASET['folder']}/{file}" for file in OSM_ARCHIVE_FILES},
         log:
             "logs/retrieve_osm_archive.log",
         threads: 1
@@ -866,7 +866,7 @@ if (OSM_DATASET := dataset_version("osm"))["source"] in ["archive"]:
 
 elif OSM_DATASET["source"] == "build":
 
-    OSM_FILES = [
+    OSM_RAW_JSON = [
         "cables_way.json",
         "lines_way.json",
         "routes_relation.json",
@@ -874,26 +874,28 @@ elif OSM_DATASET["source"] == "build":
         "substations_relation.json",
     ]
 
-    rule retrieve_osm_raw:
+    rule retrieve_osm_data_raw:
+        params:
+            overpass_api=config_provider("overpass_api"),
         output:
             **{
                 file.replace(
                     ".json", ""
-                ): f"{OSM_DATASET['folder']}/raw/{{country}}/{file}"
-                for file in files
+                ): f"{OSM_DATASET['folder']}/{{country}}/{file}"
+                for file in OSM_RAW_JSON
             },
         log:
             "logs/retrieve_osm_data_{country}.log",
         threads: 1
         script:
-            "../scripts/retrieve_osm_raw.py"
+            "../scripts/retrieve_osm_data.py"
 
-    rule retrieve_osm_raw_all:
+    rule retrieve_osm_data_raw_all:
         input:
             expand(
-                f"{OSM_DATASET['folder']}/raw/{{country}}/{{file}}",
+                f"{OSM_DATASET['folder']}/{{country}}/{{file}}",
                 country=config_provider("countries"),
-                file=OSM_FILES,
+                file=OSM_RAW_JSON,
             ),
 
 

@@ -53,10 +53,13 @@ rule build_powerplants:
 
 def input_base_network(w):
     base_network = config_provider("electricity", "base_network")(w)
+    source = config_provider("data", "osm", "source")(w)
     components = {"buses", "lines", "links", "converters", "transformers"}
-    if base_network == "osm":
+    if (base_network == "osm") and (source == "archive"):
         OSM_DATASET = dataset_version("osm")
         inputs = {c: f"{OSM_DATASET['folder']}/{c}.csv" for c in components}
+    elif base_network == "osm" and (source == "build"):
+        inputs = {c: resources(f"osm/build/{c}.csv") for c in components}
     elif base_network == "tyndp":
         inputs = {c: resources(f"tyndp/build/{c}.csv") for c in components}
     elif base_network == "entsoegridkit":
@@ -796,42 +799,37 @@ if (
     rule clean_osm_data:
         input:
             cables_way=expand(
-                "data/osm/{OSM_VERSION}/raw/{country}/cables_way.json",
-                OSM_VERSION=OSM_VERSION,
+                f"{OSM_DATASET['folder']}/{{country}}/cables_way.json",
                 country=config_provider("countries"),
             ),
             lines_way=expand(
-                "data/osm/{OSM_VERSION}/raw/{country}/lines_way.json",
-                OSM_VERSION=OSM_VERSION,
+                f"{OSM_DATASET['folder']}/{{country}}/lines_way.json",
                 country=config_provider("countries"),
             ),
             routes_relation=expand(
-                "data/osm/{OSM_VERSION}/raw/{country}/routes_relation.json",
-                OSM_VERSION=OSM_VERSION,
+                f"{OSM_DATASET['folder']}/{{country}}/routes_relation.json",
                 country=config_provider("countries"),
             ),
             substations_way=expand(
-                "data/osm/{OSM_VERSION}/raw/{country}/substations_way.json",
-                OSM_VERSION=OSM_VERSION,
+                f"{OSM_DATASET['folder']}/{{country}}/substations_way.json",
                 country=config_provider("countries"),
             ),
             substations_relation=expand(
-                "data/osm/{OSM_VERSION}/raw/{country}/substations_relation.json",
-                OSM_VERSION=OSM_VERSION,
+                f"{OSM_DATASET['folder']}/{{country}}/substations_relation.json",
                 country=config_provider("countries"),
             ),
             offshore_shapes=resources("offshore_shapes.geojson"),
             country_shapes=resources("country_shapes.geojson"),
         output:
-            substations=resources(f"osm/{OSM_VERSION}/clean/substations.geojson"),
+            substations=resources(f"osm/clean/substations.geojson"),
             substations_polygon=resources(
-                f"osm/{OSM_VERSION}/clean/substations_polygon.geojson"
+                f"osm/clean/substations_polygon.geojson"
             ),
             converters_polygon=resources(
-                f"osm/{OSM_VERSION}/clean/converters_polygon.geojson"
+                f"osm/clean/converters_polygon.geojson"
             ),
-            lines=resources(f"osm/{OSM_VERSION}/clean/lines.geojson"),
-            links=resources(f"osm/{OSM_VERSION}/clean/links.geojson"),
+            lines=resources(f"osm/clean/lines.geojson"),
+            links=resources(f"osm/clean/links.geojson"),
         log:
             logs("clean_osm_data.log"),
         benchmark:
@@ -848,35 +846,35 @@ if (
             voltages=config_provider("electricity", "voltages"),
             line_types=config_provider("lines", "types"),
         input:
-            substations=resources(f"osm/{OSM_VERSION}/clean/substations.geojson"),
+            substations=resources(f"osm/clean/substations.geojson"),
             substations_polygon=resources(
-                f"osm/{OSM_VERSION}/clean/substations_polygon.geojson"
+                f"osm/clean/substations_polygon.geojson"
             ),
             converters_polygon=resources(
-                f"osm/{OSM_VERSION}/clean/converters_polygon.geojson"
+                f"osm/clean/converters_polygon.geojson"
             ),
-            lines=resources(f"osm/{OSM_VERSION}/clean/lines.geojson"),
-            links=resources(f"osm/{OSM_VERSION}/clean/links.geojson"),
+            lines=resources(f"osm/clean/lines.geojson"),
+            links=resources(f"osm/clean/links.geojson"),
             country_shapes=resources("country_shapes.geojson"),
         output:
-            lines=resources(f"osm/{OSM_VERSION}/lines.csv"),
-            links=resources(f"osm/{OSM_VERSION}/links.csv"),
-            converters=resources(f"osm/{OSM_VERSION}/converters.csv"),
-            transformers=resources(f"osm/{OSM_VERSION}/transformers.csv"),
-            substations=resources(f"osm/{OSM_VERSION}/buses.csv"),
-            lines_geojson=resources(f"osm/{OSM_VERSION}/geojson/lines.geojson"),
-            links_geojson=resources(f"osm/{OSM_VERSION}/geojson/links.geojson"),
+            lines=resources(f"osm/build/lines.csv"),
+            links=resources(f"osm/build/links.csv"),
+            converters=resources(f"osm/build/converters.csv"),
+            transformers=resources(f"osm/build/transformers.csv"),
+            substations=resources(f"osm/build/buses.csv"),
+            lines_geojson=resources(f"osm/geojson/lines.geojson"),
+            links_geojson=resources(f"osm/geojson/links.geojson"),
             converters_geojson=resources(
-                f"osm/{OSM_VERSION}/geojson/converters.geojson"
+                f"osm/geojson/converters.geojson"
             ),
             transformers_geojson=resources(
-                f"osm/{OSM_VERSION}/geojson/transformers.geojson"
+                f"osm/geojson/transformers.geojson"
             ),
-            substations_geojson=resources(f"osm/{OSM_VERSION}/geojson/buses.geojson"),
+            substations_geojson=resources(f"osm/geojson/buses.geojson"),
             stations_polygon=resources(
-                f"osm/{OSM_VERSION}/geojson/stations_polygon.geojson"
+                f"osm/geojson/stations_polygon.geojson"
             ),
-            buses_polygon=resources(f"osm/{OSM_VERSION}/geojson/buses_polygon.geojson"),
+            buses_polygon=resources(f"osm/geojson/buses_polygon.geojson"),
         log:
             logs("build_osm_network.log"),
         benchmark:
