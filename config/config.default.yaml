@@ -529,9 +529,9 @@ sector:
       enable: true
       temperature_dependent_capacity: false
       charge_boosting_required: false
-      discharge_resistive_boosting: false
+      discharge_resistive_boosting: true
       top_temperature: 90
-      bottom_temperature: 10
+      bottom_temperature: 35
       design_top_temperature: 90
       design_bottom_temperature: 35
     ates:
