@@ -3030,7 +3030,7 @@ def add_heat(
 
             logger.info(f"Adding DSM in {heat_system} heating.")
 
-        if options["tes"]:
+        if options["ttes"]:
             n.add("Carrier", f"{heat_system} water tanks")
 
             n.add(
@@ -3300,7 +3300,6 @@ def add_heat(
                     carrier=heat_source.return_temperature_carrier(heat_system),
                 )
 
-                breakpoint()
                 n.add(
                     "Link",
                     nodes,

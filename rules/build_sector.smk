@@ -785,7 +785,7 @@ rule build_heat_source_utilisation_profiles:
             "build_heat_source_utilisation_profiles/s_{clusters}_{planning_horizons}"
         )
     script:
-        "../scripts/build_direct_heat_source_utilisation_profiles.py"
+        "../scripts/build_heat_source_utilisation_profiles.py"
 
 
 rule build_solar_thermal_profiles:
