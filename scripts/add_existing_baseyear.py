@@ -589,10 +589,10 @@ def add_heating_capacities_installed_before_baseyear(
                     * ratio
                 )
 
-                if p_nom > 0:
+                if p_nom.sum() > 0:
                     heat_source = HeatSource(heat_source)
 
-                    if not heat_source.baseyear_capacities_supported():
+                    if heat_source not in [HeatSource.AIR, HeatSource.GROUND]:
                         raise ValueError(
                             f"Currently, only air-sourced and ground-sourced heat pumps are supported for baseyear capacities. Heat source {heat_source} is not."
                         )
@@ -602,7 +602,7 @@ def add_heating_capacities_installed_before_baseyear(
                     efficiency = (
                         heat_pump_cop.sel(
                             heat_system=heat_system.system_type.value,
-                            heat_source=heat_source,
+                            heat_source=heat_source.value,
                             name=nodes,
                         )
                         .to_pandas()

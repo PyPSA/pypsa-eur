@@ -145,9 +145,7 @@ def build_existing_heating():
 
     # add large-scale heat pump sources as columns for district heating with 0 capacity
 
-    for heat_pump_source in snakemake.params.sector["heat_pump_sources"][
-        "urban central"
-    ]:
+    for heat_pump_source in snakemake.params.sector["heat_sources"]["urban central"]:
         nodal_heat_name_tech[("urban central", f"{heat_pump_source} heat pump")] = 0.0
 
     nodal_heat_name_tech.to_csv(snakemake.output.existing_heating_distribution)
