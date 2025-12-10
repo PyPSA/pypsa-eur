@@ -43,6 +43,7 @@ import yaml
 from linopy.remote.oetc import OetcCredentials, OetcHandler, OetcSettings
 from pypsa.descriptors import get_activity_mask
 from pypsa.descriptors import get_switchable_as_dense as get_as_dense
+from snakemake.script import Snakemake
 
 from scripts._benchmark import memory_logger
 from scripts._helpers import (
@@ -1163,7 +1164,10 @@ def add_co2_atmosphere_constraint(n, snapshots):
 
 
 def extra_functionality(
-    n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
+    n: pypsa.Network,
+    snapshots: pd.DatetimeIndex,
+    snakemake: Snakemake,
+    planning_horizons: str | None = None,
 ) -> None:
     """
     Add custom constraints and functionality.
@@ -1174,6 +1178,8 @@ def extra_functionality(
         The PyPSA network instance with config and params attributes
     snapshots : pd.DatetimeIndex
         Simulation timesteps
+    snakemake : snakemake.script.Snakemake
+        Snakemake instance for accessing workflow parameters
     planning_horizons : str, optional
         The current planning horizon year or None in perfect foresight
 
@@ -1275,6 +1281,7 @@ def solve_network(
     config: dict,
     params: dict,
     solving: dict,
+    snakemake: Snakemake,
     rule_name: str | None = None,
     planning_horizons: str | None = None,
     **kwargs,
@@ -1292,6 +1299,8 @@ def solve_network(
         Dictionary of solving parameters
     solving : Dict
         Dictionary of solving options and configuration
+    snakemake : snakemake.script.Snakemake
+        Snakemake instance for accessing workflow parameters
     rule_name : str, optional
         Name of the snakemake rule being executed
     planning_horizons : str, optional
@@ -1315,6 +1324,7 @@ def solve_network(
     ObjectiveValueError
         If objective value differs from expected value
     """
+
     set_of_options = solving["solver"]["options"]
     cf_solving = solving["options"]
 
@@ -1324,7 +1334,7 @@ def solve_network(
     )
     kwargs["solver_name"] = solving["solver"]["name"]
     kwargs["extra_functionality"] = partial(
-        extra_functionality, planning_horizons=planning_horizons
+        extra_functionality, snakemake=snakemake, planning_horizons=planning_horizons
     )
     kwargs["transmission_losses"] = cf_solving.get("transmission_losses", False)
     kwargs["linearized_unit_commitment"] = cf_solving.get(
@@ -1438,6 +1448,7 @@ if __name__ == "__main__":
             config=snakemake.config,
             params=snakemake.params,
             solving=snakemake.params.solving,
+            snakemake=snakemake,
             planning_horizons=planning_horizons,
             rule_name=snakemake.rule,
             log_fn=snakemake.log.solver,
