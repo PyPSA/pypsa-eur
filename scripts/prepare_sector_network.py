@@ -1008,9 +1008,9 @@ def add_biomass_to_methanol(n, costs):
         + costs.at["biomass-to-methanol", "CO2 stored"],
         p_nom_extendable=True,
         capital_cost=costs.at["biomass-to-methanol", "capital_cost"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
     )
 
 
@@ -1033,11 +1033,11 @@ def add_biomass_to_methanol_cc(n, costs):
         * costs.at["biomass-to-methanol", "capture rate"],
         p_nom_extendable=True,
         capital_cost=costs.at["biomass-to-methanol", "capital_cost"]
-        / costs.at["biomass-to-methanol", "efficiency"]
+        * costs.at["biomass-to-methanol", "efficiency"]
         + costs.at["biomass CHP capture", "capital_cost"]
         * costs.at["biomass-to-methanol", "CO2 stored"],
         marginal_cost=costs.loc["biomass-to-methanol", "VOM"]
-        / costs.at["biomass-to-methanol", "efficiency"],
+        * costs.at["biomass-to-methanol", "efficiency"],
     )
 
 
