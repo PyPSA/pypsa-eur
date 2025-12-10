@@ -38,6 +38,10 @@ Upcoming Release
 * Unified temporal resolution configuration: ``clustering: temporal: resolution_elec`` and ``clustering: temporal: resolution_sector`` have been merged into a single ``clustering: temporal: resolution`` setting.
 * Add CO2 emission prices configurable per planning horizon for sector-coupled models. The CO2 price is added as a marginal cost on the ``co2 atmosphere`` Store.
 * Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934).
+* Added existing biomass decentral/rural residential and services heating capacity.
+
+* Fix parsing in Swiss passenger cars data (https://github.com/PyPSA/pypsa-eur/pull/1934 and https://github.com/PyPSA/pypsa-eur/pull/1936).
+
 * Fix: ValueError with `cop_heat_pump` in `prepare_sector_network.py` if `tim_dep_hp_cop` is `false`.
 * Fixed OSM raw data cleaning to include `section` line relation role.
 * Fixed missing raw OSM HVDC links defined using the ``power=circuit`` tag (NOTE: ``type=route``+``route=power`` is `deprecated <https://wiki.openstreetmap.org/wiki/Tag%3Aroute%3Dpower>`_).

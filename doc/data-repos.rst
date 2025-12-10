@@ -22,7 +22,7 @@ New data should generally not be added to the data, but externally retrieved in 
 - **Source:** European Commission DG ENER; Mapping and analyses of the current and future (2020 - 2030) heating/cooling fuel deployment
 - **Link:** https://energy.ec.europa.eu/publications/mapping-and-analyses-current-and-future-2020-2030-heatingcooling-fuel-deployment-fossilrenewables-1_en
 - **License:** CC-BY 4.0 (`reference <https://commission.europa.eu/legal-notice_en>`__)
-- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal boilers, resistive heaters, air- and ground-sourced heat pumps.
+- **Description:** Contains country-level data on existing heating infrastructure, i.e. gas, oil, coal, biomass boilers, resistive heaters, air- and ground-sourced heat pumps.
 
 ``data/retro/comparative_level_investment.csv``
 
