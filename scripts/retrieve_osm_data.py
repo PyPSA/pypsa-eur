@@ -17,11 +17,6 @@ import time
 
 import requests
 
-from scripts._helpers import (
-    configure_logging,
-    set_scenario_config,
-)
-
 logger = logging.getLogger(__name__)
 
 
@@ -79,12 +74,10 @@ def retrieve_osm_data(
         "substations_way": ['way["power"="substation"]'],
         "substations_relation": ['relation["power"="substation"]'],
     }
-    
+
     wait_time = 5
 
-    headers = {
-        "User-Agent": user_agent
-    }
+    headers = {"User-Agent": user_agent}
 
     for f in features:
         if f not in features_dict:
@@ -100,7 +93,7 @@ def retrieve_osm_data(
             logger.info(
                 f" - Fetching OSM data for feature '{f}' in {country} (Attempt {attempt + 1})..."
             )
-            
+
             # Build the overpass query
             op_area = f'area["ISO3166-1"="{country}"]'
             op_query = f"""
@@ -172,16 +165,14 @@ if __name__ == "__main__":
     email = ua_cfg.get("email", "no-email")
     website = ua_cfg.get("website", "no-website")
 
-    user_agent = (
-        f"{project} (Contact: {email}; Website: {website})"
-    )
+    user_agent = f"{project} (Contact: {email}; Website: {website})"
 
     # Retrieve the OSM data
     country = snakemake.wildcards.country
     output = snakemake.output
 
     retrieve_osm_data(
-        country, 
+        country,
         output,
         features=[
             "cables_way",

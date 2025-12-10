@@ -822,12 +822,8 @@ if (
             country_shapes=resources("country_shapes.geojson"),
         output:
             substations=resources(f"osm/clean/substations.geojson"),
-            substations_polygon=resources(
-                f"osm/clean/substations_polygon.geojson"
-            ),
-            converters_polygon=resources(
-                f"osm/clean/converters_polygon.geojson"
-            ),
+            substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
+            converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
             lines=resources(f"osm/clean/lines.geojson"),
             links=resources(f"osm/clean/links.geojson"),
         log:
@@ -847,12 +843,8 @@ if (
             line_types=config_provider("lines", "types"),
         input:
             substations=resources(f"osm/clean/substations.geojson"),
-            substations_polygon=resources(
-                f"osm/clean/substations_polygon.geojson"
-            ),
-            converters_polygon=resources(
-                f"osm/clean/converters_polygon.geojson"
-            ),
+            substations_polygon=resources(f"osm/clean/substations_polygon.geojson"),
+            converters_polygon=resources(f"osm/clean/converters_polygon.geojson"),
             lines=resources(f"osm/clean/lines.geojson"),
             links=resources(f"osm/clean/links.geojson"),
             country_shapes=resources("country_shapes.geojson"),
@@ -864,16 +856,10 @@ if (
             substations=resources(f"osm/build/buses.csv"),
             lines_geojson=resources(f"osm/geojson/lines.geojson"),
             links_geojson=resources(f"osm/geojson/links.geojson"),
-            converters_geojson=resources(
-                f"osm/geojson/converters.geojson"
-            ),
-            transformers_geojson=resources(
-                f"osm/geojson/transformers.geojson"
-            ),
+            converters_geojson=resources(f"osm/geojson/converters.geojson"),
+            transformers_geojson=resources(f"osm/geojson/transformers.geojson"),
             substations_geojson=resources(f"osm/geojson/buses.geojson"),
-            stations_polygon=resources(
-                f"osm/geojson/stations_polygon.geojson"
-            ),
+            stations_polygon=resources(f"osm/geojson/stations_polygon.geojson"),
             buses_polygon=resources(f"osm/geojson/buses_polygon.geojson"),
         log:
             logs("build_osm_network.log"),

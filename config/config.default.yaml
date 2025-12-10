@@ -1150,7 +1150,7 @@ overpass_api:
   timeout: 600
   user_agent:
     project_name: PyPSA-Eur
-    email: contact@pypsa.org 
+    email: contact@pypsa.org
     website: https://github.com/PyPSA/pypsa-eur
 
 secrets:
