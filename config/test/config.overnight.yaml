@@ -9,7 +9,6 @@ run:
   disable_progressbar: true
   shared_resources:
     policy: false
-  shared_cutouts: true
 
 
 scenario:
@@ -61,6 +60,18 @@ clustering:
 sector:
   gas_network: true
   H2_retrofit: true
+  residential_heat:
+    dsm:
+      enable: true
+      direction:
+      - overheat
+      restriction_value:
+        2020: 0.06
+        2025: 0.16
+        2030: 0.27
+      restriction_time:
+      - 10
+      - 21
   district_heating:
     ptes:
       supplemental_heating:
